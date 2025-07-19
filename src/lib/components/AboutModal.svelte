@@ -90,7 +90,7 @@
           <div class="grid grid-cols-2 gap-3 sm:gap-4">
             <div class="col-span-2 flex justify-center">
              <img
-               src="https://contrib.rocks/image?repo=BetterSEQTA/TauriSEQTA&columns=6"
+               src="https://contrib.rocks/image?repo=BetterSEQTA/DesQTA&columns=6"
                 alt="Contributers to DesQTA"
                 class="w-full max-w-[500px] h-auto object-contain"
                />
