@@ -13,6 +13,14 @@ function getRandomItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// Generate a random Dicebear avatar URL for sensitive content hider mode
+export function getRandomDicebearAvatar(): string {
+  const styles = ['adventurer', 'avataaars', 'big-ears', 'bottts', 'croodles', 'fun-emoji', 'micah', 'miniavs', 'personas'];
+  const style = getRandomItem(styles);
+  const seed = Math.random().toString(36).substring(2, 10);
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+}
+
 function mockApiResponse(url: string): any {
   // Add more endpoints and shapes as needed
   if (url.includes('/seqta/student/login?')) {
@@ -325,5 +333,18 @@ export async function openURL(url: string): Promise<any> {
   } catch (error) {
     console.error('openURL error:', error);
     throw new Error(error instanceof Error ? error.message : 'Unknown fetch error');
+  }
+}
+
+export async function uploadSeqtaFile(fileName: string, filePath: string): Promise<string> {
+  try {
+    const response = await invoke<string>('upload_seqta_file', {
+      fileName: fileName,
+      filePath: filePath,
+    });
+    return response;
+  } catch (error) {
+    console.error('uploadSeqtaFile error:', error);
+    throw new Error(error instanceof Error ? error.message : 'Unknown upload error');
   }
 }

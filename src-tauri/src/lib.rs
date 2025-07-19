@@ -23,7 +23,9 @@ use tauri_plugin_notification;
 use tauri_plugin_single_instance;
 use tauri_plugin_autostart;
 use tauri_plugin_autostart::ManagerExt;
-use urlencoding::decode;
+use tauri_plugin_dialog;
+
+use url::form_urlencoded::{byte_serialize, parse};
 
 /// Boilerplate example command
 #[tauri::command]
@@ -95,6 +97,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--minimize"]),
@@ -129,7 +132,8 @@ pub fn run() {
                                 println!("[Desqta] Found parameter - key: {}, value: {}", key, value);
                                 match key {
                                     "cookie" => {
-                                        if let Ok(decoded) = decode(value) {
+                                        let decoded: String = parse(value.as_bytes()).map(|(key, val)| [key, val].concat()).collect();
+                                        if !decoded.is_empty() {
                                             cookie = Some(decoded.to_string());
                                             println!("[Desqta] Decoded cookie: {}", decoded);
                                         } else {
@@ -137,7 +141,8 @@ pub fn run() {
                                         }
                                     },
                                     "url" => {
-                                        if let Ok(decoded) = decode(value) {
+                                        let decoded: String = parse(value.as_bytes()).map(|(key, val)| [key, val].concat()).collect();
+                                        if !decoded.is_empty() {
                                             base_url = Some(decoded.to_string());
                                             println!("[Desqta] Decoded URL: {}", decoded);
                                         } else {
@@ -189,6 +194,7 @@ pub fn run() {
             netgrab::post_api_data,
             netgrab::fetch_api_data,
             netgrab::get_seqta_file,
+            netgrab::upload_seqta_file,
             login::check_session_exists,
             login::save_session,
             login::create_login_window,

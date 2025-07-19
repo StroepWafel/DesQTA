@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { seqtaFetch } from '../../utils/netUtil';
+import { seqtaFetch, getRandomDicebearAvatar } from '../../utils/netUtil';
 import { cache } from '../../utils/cache';
 
 export interface UserInfo {
@@ -58,6 +58,8 @@ export const authService = {
   },
 
   async logout(): Promise<boolean> {
+    // Clear user info cache on logout
+    cache.delete('userInfo');
     return await invoke('logout');
   },
 
@@ -79,7 +81,19 @@ export const authService = {
       });
       const userInfo: UserInfo = JSON.parse(res).payload;
 
-      if (!options?.disableSchoolPicture) {
+      // Check if sensitive content hider mode is enabled
+      let devSensitiveInfoHider = false;
+      try {
+        const settings = await invoke<{ dev_sensitive_info_hider?: boolean }>('get_settings');
+        devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
+      } catch (e) {
+        devSensitiveInfoHider = false;
+      }
+
+      if (devSensitiveInfoHider) {
+        // Use random Dicebear avatar in sensitive content hider mode
+        userInfo.profilePicture = getRandomDicebearAvatar();
+      } else if (!options?.disableSchoolPicture) {
         const profileImage = await seqtaFetch(`/seqta/student/photo/get`, {
           params: { uuid: userInfo.personUUID, format: 'low' },
           is_image: true,

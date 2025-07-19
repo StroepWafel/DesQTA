@@ -2,6 +2,8 @@
   import { Icon, ArrowRightOnRectangle } from 'svelte-hero-icons';
   import { fly } from 'svelte/transition';
   import { invoke } from '@tauri-apps/api/core';
+  import { getRandomDicebearAvatar } from '../../utils/netUtil';
+  import { onMount } from 'svelte';
 
   interface UserInfo {
     clientIP: string;
@@ -53,6 +55,28 @@
     onClickOutside,
     disableSchoolPicture = false
   }: Props = $props();
+
+  let devSensitiveInfoHider = $state(false);
+  let randomAvatarUrl = $state('');
+
+  onMount(async () => {
+    try {
+      const settings = await invoke<{ dev_sensitive_info_hider?: boolean }>('get_settings');
+      devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
+      if (devSensitiveInfoHider) {
+        randomAvatarUrl = getRandomDicebearAvatar();
+      }
+    } catch (e) {
+      devSensitiveInfoHider = false;
+    }
+  });
+
+  // Close dropdown when userInfo becomes undefined (logout)
+  $effect(() => {
+    if (!userInfo) {
+      showUserDropdown = false;
+    }
+  });
 </script>
 
 <div class="relative user-dropdown-container">
@@ -61,7 +85,12 @@
     onclick={onToggleUserDropdown}
     aria-label="User menu"
     tabindex="0">
-    {#if !disableSchoolPicture && userInfo.profilePicture}
+    {#if devSensitiveInfoHider && randomAvatarUrl}
+      <img
+        src={randomAvatarUrl}
+        alt="Random avatar"
+        class="object-cover w-8 h-8 rounded-full border-2 shadow-sm border-white/60 dark:border-slate-600/60" />
+    {:else if !disableSchoolPicture && userInfo.profilePicture}
       <img
         src={userInfo.profilePicture}
         alt=""

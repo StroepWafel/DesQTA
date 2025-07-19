@@ -7,6 +7,7 @@
   import LoginScreen from '../lib/components/LoginScreen.svelte';
   import { authService, type UserInfo } from '../lib/services/authService';
   import { weatherService, type WeatherData } from '../lib/services/weatherService';
+  import { errorService } from '../lib/services/errorService';
 
   import { onMount, onDestroy } from 'svelte';
   import '../app.css';
@@ -164,6 +165,9 @@
   async function handleLogout() {
     const success = await authService.logout();
     if (success) {
+      // Immediately clear user info and close dropdown
+      userInfo = undefined;
+      showUserDropdown = false;
       await checkSession();
     }
   }
@@ -317,6 +321,13 @@
     }
   });
 
+  // Force sidebar closed when on login screen
+  $effect(() => {
+    if ($needsSetup) {
+      sidebarOpen = false;
+    }
+  });
+
   onMount(() => {
     const checkMobile = () => {
       isMobile = window.innerWidth < 768;
@@ -358,25 +369,29 @@
   <LoadingScreen />
 {:else}
   <div class="flex flex-col h-screen">
-    <AppHeader
-      {sidebarOpen}
-      {weatherEnabled}
-      {weatherData}
-      {userInfo}
-      {showUserDropdown}
-      onToggleSidebar={() => (sidebarOpen = !sidebarOpen)}
-      onToggleUserDropdown={() => (showUserDropdown = !showUserDropdown)}
-      onLogout={handleLogout}
-      onShowAbout={() => (showAboutModal = true)}
-      onClickOutside={handleClickOutside}
-      disableSchoolPicture={disableSchoolPicture}
-    />
+    {#if !$needsSetup}
+      <AppHeader
+        {sidebarOpen}
+        {weatherEnabled}
+        {weatherData}
+        {userInfo}
+        {showUserDropdown}
+        onToggleSidebar={() => (sidebarOpen = !sidebarOpen)}
+        onToggleUserDropdown={() => (showUserDropdown = !showUserDropdown)}
+        onLogout={handleLogout}
+        onShowAbout={() => (showAboutModal = true)}
+        onClickOutside={handleClickOutside}
+        disableSchoolPicture={disableSchoolPicture}
+      />
+    {/if}
 
     <div class="flex flex-1 min-h-0">
-      <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+      {#if !$needsSetup}
+        <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+      {/if}
 
       <main
-        class="overflow-y-auto flex-1 border-t border-l border-slate-200 dark:border-slate-700/50"
+        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} border-slate-200 dark:border-slate-700/50"
         style="background: var(--background-color);">
         {#if $needsSetup}
           <LoginScreen

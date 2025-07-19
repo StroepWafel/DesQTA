@@ -1,20 +1,21 @@
-use reqwest::multipart::{Form, Part};
-use reqwest::{self, Method, Response};
+use reqwest::{self, RequestBuilder};
 use reqwest::Client;
 use rss::Channel;
 use serde::{Deserialize, Serialize};
 use xmltree::{Element, XMLNode};
 use serde_json::{json, Value};
-use std::{io::Cursor, sync::OnceLock, collections::HashMap};
+use std::{io::Cursor, sync::OnceLock, fs};
+use std::collections::HashMap;
 use anyhow::{Result, anyhow};
 use url::Url;
+use url::form_urlencoded;
 
 use base64::{engine::general_purpose, Engine as _};
 // opens a file using the default program:
 
 use crate::session;
 
-static GLOBAL_REQWEST: OnceLock<reqwest::Client> = OnceLock::new();
+static GLOBAL_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HomeworkItem {
@@ -37,31 +38,10 @@ pub enum RequestMethod {
 }
 
 /// Build an HTTP client with headers based on the saved session.
-fn create_client() -> reqwest::Client {
-    GLOBAL_REQWEST.get_or_init(|| {
-        let session = session::Session::load();
+fn create_client() -> &'static reqwest::Client {
+
+    GLOBAL_CLIENT.get_or_init(|| {
         let mut headers = reqwest::header::HeaderMap::new();
-
-        // Build the complete cookie string with JSESSIONID and additional cookies
-        let mut cookie_parts = Vec::new();
-
-        // Add JSESSIONID first if it exists
-        if !session.jsessionid.is_empty() {
-            cookie_parts.push(format!("JSESSIONID={}", session.jsessionid));
-        }
-
-        // Add all additional cookies
-        for cookie in session.additional_cookies {
-            cookie_parts.push(format!("{}={}", cookie.name, cookie.value));
-        }
-
-        // Set the combined cookie header if we have any cookies
-        if !cookie_parts.is_empty() {
-            headers.insert(
-                reqwest::header::COOKIE,
-                cookie_parts.join("; ").parse().unwrap(),
-            );
-        }
 
         headers.insert(
             reqwest::header::USER_AGENT,
@@ -76,17 +56,48 @@ fn create_client() -> reqwest::Client {
             "en-US,en;q=0.9".parse().unwrap(),
         );
 
-        if !session.base_url.is_empty() {
-            headers.insert(reqwest::header::ORIGIN, session.base_url.parse().unwrap());
-            headers.insert(reqwest::header::REFERER, session.base_url.parse().unwrap());
-        }
 
         reqwest::Client::builder()
             .default_headers(headers)
             .build()
             .expect("Failed to create HTTP client")
-        }
-    ).clone()
+
+        
+    })
+
+
+}   
+
+async fn append_default_headers(req: RequestBuilder) -> RequestBuilder {
+    let session = session::Session::load();
+    let mut headers = reqwest::header::HeaderMap::new();
+
+    // Build the complete cookie string with JSESSIONID and additional cookies
+    let mut cookie_parts = Vec::new();
+
+        // Add JSESSIONID first if it exists
+    if !session.jsessionid.is_empty() {
+        cookie_parts.push(format!("JSESSIONID={}", session.jsessionid));
+    }
+
+    // Add all additional cookies
+    for cookie in session.additional_cookies {
+        cookie_parts.push(format!("{}={}", cookie.name, cookie.value));
+    }
+
+        // Set the combined cookie header if we have any cookies
+    if !cookie_parts.is_empty() {
+        headers.insert(
+            reqwest::header::COOKIE,
+            cookie_parts.join("; ").parse().unwrap(),
+        );
+    }
+
+    if !session.base_url.is_empty() {
+            headers.insert(reqwest::header::ORIGIN, session.base_url.parse().unwrap());
+            headers.insert(reqwest::header::REFERER, session.base_url.parse().unwrap());
+    }
+    req.headers(headers)
 }
 
 #[tauri::command]
@@ -111,6 +122,8 @@ pub async fn fetch_api_data(
         RequestMethod::GET => client.get(&full_url),
         RequestMethod::POST => client.post(&full_url),
     };
+
+    request = append_default_headers(request).await;
 
     // Add custom headers if provided
     if let Some(headers) = headers {
@@ -170,25 +183,26 @@ pub async fn get_seqta_file(file_type: &str, uuid: &str) -> Result<String, Strin
 
 #[tauri::command]
 pub async fn upload_seqta_file(file_name: String, file_path: String) -> Result<String, String> {
-    let mut head: HashMap<String, String> = HashMap::new();
-    head.insert(String::from("X-Accept-Mimes"), String::from("null"));
-    head.insert(String::from("X-File-Name"), String::from(&file_name));
-    head.insert(String::from("X-Requested-With"), String::from("XMLHttpRequest"));
-    
     
     let client = create_client();
     let session = session::Session::load();
 
-    let form = Form::new().file(file_name.clone(), file_path.clone()).await.unwrap();
+    // Read the file content
+    let file_content = fs::read(&file_path)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
     
     let url = format!("{}/seqta/student/file/upload/xhr2", session.base_url.parse::<String>().unwrap());
     let mut request = client.post(&url);
+    request = append_default_headers(request).await;
 
-    for (key, value) in head {
-            request = request.header(&key, value);
-    }
+    let url_filename: String = form_urlencoded::byte_serialize(&file_name.as_bytes()).collect();
 
-    match request.multipart(form).send().await {
+    // Set headers exactly like the web UI
+    request = request.header("X-File-Name", url_filename);
+    request = request.header("X-Accept-Mimes", "null");
+    request = request.header("X-Requested-With", "XMLHttpRequest");
+
+    match request.body(file_content).send().await {
         Ok(resp) => {
             let text = resp.text().await.map_err(|e| e.to_string())?;
             Ok(text)

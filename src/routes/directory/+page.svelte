@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { seqtaFetch } from '../../utils/netUtil';
+  import { seqtaFetch, getRandomDicebearAvatar } from '../../utils/netUtil';
   import { Icon } from 'svelte-hero-icons';
   import { MagnifyingGlass, Funnel, User, AcademicCap, MapPin } from 'svelte-hero-icons';
+  import { invoke } from '@tauri-apps/api/core';
 
   interface Student {
     id: number;
@@ -26,11 +27,32 @@
   let selectedHouse = $state('all');
   let selectedCampus = $state('all');
   let showFilters = $state(false);
+  let devSensitiveInfoHider = $state(false);
+  let currentPage = $state(1);
+  let itemsPerPage = $state(24); // 6 rows of 4 cards on large screens
 
   let years: string[] = $state([]);
   let subSchools: string[] = $state([]);
   let houses: string[] = $state([]);
   let campuses: string[] = $state([]);
+
+  // Generate random avatars for each student when in sensitive content hider mode
+  function getStudentAvatar(student: Student): string {
+    if (devSensitiveInfoHider) {
+      // Use student ID as seed for consistent avatar per student
+      return `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.id}`;
+    }
+    return '';
+  }
+
+  async function checkSensitiveInfoHider() {
+    try {
+      const settings = await invoke<{ dev_sensitive_info_hider?: boolean }>('get_settings');
+      devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
+    } catch (e) {
+      devSensitiveInfoHider = false;
+    }
+  }
 
   async function loadStudents() {
     loading = true;
@@ -115,13 +137,51 @@
     selectedSubSchool = 'all';
     selectedHouse = 'all';
     selectedCampus = 'all';
+    currentPage = 1; // Reset to first page when clearing filters
   }
 
   function getFilteredStudents() {
     return students.filter(studentMatches);
   }
 
-  onMount(loadStudents);
+  function getPaginatedStudents() {
+    const filtered = getFilteredStudents();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  }
+
+  function getTotalPages() {
+    return Math.ceil(getFilteredStudents().length / itemsPerPage);
+  }
+
+  function goToPage(page: number) {
+    currentPage = Math.max(1, Math.min(page, getTotalPages()));
+  }
+
+  function nextPage() {
+    if (currentPage < getTotalPages()) {
+      currentPage++;
+    }
+  }
+
+  function prevPage() {
+    if (currentPage > 1) {
+      currentPage--;
+    }
+  }
+
+  // Reset to first page when filters change
+  $effect(() => {
+    if (search || selectedYear !== 'all' || selectedSubSchool !== 'all' || selectedHouse !== 'all' || selectedCampus !== 'all') {
+      currentPage = 1;
+    }
+  });
+
+  onMount(async () => {
+    await checkSensitiveInfoHider();
+    await loadStudents();
+  });
 </script>
 
 <div class="p-6 space-y-6">
@@ -251,7 +311,7 @@
     <!-- Results Summary -->
     <div class="flex items-center justify-between">
       <p class="text-sm text-gray-600 dark:text-gray-400">
-        Showing {getFilteredStudents().length} of {students.length} students
+        Showing {getPaginatedStudents().length} of {getFilteredStudents().length} students (Page {currentPage} of {getTotalPages()})
       </p>
     </div>
 
@@ -288,16 +348,24 @@
     {:else}
       <!-- Students Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {#each getFilteredStudents() as student (student.id)}
+        {#each getPaginatedStudents() as student (student.id)}
           <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-all duration-200 transform hover:scale-[1.02]">
             <!-- Student Avatar -->
             <div class="flex items-center gap-3 mb-3">
-              <div 
-                class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-                style="background-color: {student.house_colour}"
-              >
-                {student.firstname.charAt(0)}{student.surname.charAt(0)}
-              </div>
+              {#if devSensitiveInfoHider}
+                <img
+                  src={getStudentAvatar(student)}
+                  alt="Student avatar"
+                  class="w-10 h-10 rounded-full object-cover border-2 border-white/60 dark:border-slate-600/60"
+                />
+              {:else}
+                <div 
+                  class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                  style="background-color: {student.house_colour}"
+                >
+                  {student.firstname.charAt(0)}{student.surname.charAt(0)}
+                </div>
+              {/if}
               <div class="flex-1 min-w-0">
                 <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {student.xx_display}
@@ -337,6 +405,45 @@
           </div>
         {/each}
       </div>
+
+      <!-- Pagination -->
+      {#if getTotalPages() > 1}
+        <div class="flex items-center justify-center gap-2 mt-6">
+          <button
+            class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={currentPage === 1}
+            onclick={prevPage}
+          >
+            Previous
+          </button>
+          
+          <div class="flex items-center gap-1 overflow-hidden">
+            {#each Array.from({ length: getTotalPages() }, (_, i) => {
+              const pageNum = i + 1;
+              const isActive = pageNum === currentPage;
+              const isVisible = pageNum >= Math.max(1, currentPage - 2) && pageNum <= Math.min(getTotalPages(), currentPage + 2);
+              return { pageNum, isActive, isVisible };
+            }) as pageInfo}
+              {#if pageInfo.isVisible}
+                <button
+                  class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 {pageInfo.isActive ? 'text-white accent-bg' : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600'}"
+                  onclick={() => goToPage(pageInfo.pageNum)}
+                >
+                  {pageInfo.pageNum}
+                </button>
+              {/if}
+            {/each}
+          </div>
+          
+          <button
+            class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={currentPage === getTotalPages()}
+            onclick={nextPage}
+          >
+            Next
+          </button>
+        </div>
+      {/if}
     {/if}
   </div>
 </div> 
