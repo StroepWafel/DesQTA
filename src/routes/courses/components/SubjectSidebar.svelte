@@ -1,30 +1,63 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { Subject, Folder } from '../types';
+  import { onMount } from 'svelte';
 
-  export let search: string = '';
-  export let loading: boolean = false;
-  export let error: string | null = null;
-  export let activeSubjects: Subject[] = [];
-  export let otherFolders: Folder[] = [];
-  export let selectedSubject: Subject | null = null;
-  export let expandedFolders: Record<string, boolean> = {};
-  export let subjectMatches: (subj: Subject) => boolean;
-  export let folderMatches: (folder: Folder) => boolean;
-  export let isMobile: boolean = false;
+  let {
+    search = '',
+    loading = false,
+    error = null,
+    activeSubjects = [],
+    otherFolders = [],
+    selectedSubject = null,
+    expandedFolders = {},
+    subjectMatches,
+    folderMatches,
+    closeOnMainSidebar = false
+  } = $props();
+
+  let isMobile = $state(false);
+  onMount(() => {
+    const checkMobile = () => {
+      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
+      if (tauri_platform == "ios" || tauri_platform == "android") {
+        isMobile = true;
+      } else {
+        isMobile = false;
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  });
 
   const dispatch = createEventDispatcher<{
     selectSubject: Subject;
     toggleFolder: string;
     close: void;
   }>();
+
+  $effect(() => {
+    if (closeOnMainSidebar && isMobile) {
+      dispatch('close');
+    }
+  });
 </script>
 
 <aside
   class="flex flex-col w-80 h-full border-r backdrop-blur-sm bg-white/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50 {isMobile ? 'fixed inset-0 z-40 w-full' : ''}">
   <div class="px-4 py-3 border-b border-slate-300/50 dark:border-slate-700/50">
     {#if isMobile}
-      <div class="flex justify-between items-center mb-3">
+      <div class="flex flex-col items-center mb-3">
+        <button
+          onclick={() => dispatch('close')}
+          class="mb-2 p-3 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 text-2xl"
+          aria-label="Back"
+        >
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
         <h2 class="text-lg font-bold text-slate-900 dark:text-white">Subjects</h2>
         <button
           onclick={() => dispatch('close')}

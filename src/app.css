@@ -159,3 +159,14 @@ body {
 .enhanced-animations .playful-extra:active {
   transform: scale(0.9);
 }
+
+/* Default theme mobile sidebar background fix */
+@media (max-width: 767px) {
+  aside.fixed.z-30.w-full {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(8px);
+  }
+  html.dark aside.fixed.z-30.w-full {
+    background: rgba(30,41,59,0.8); /* dark:bg-slate-900/80 */
+  }
+}

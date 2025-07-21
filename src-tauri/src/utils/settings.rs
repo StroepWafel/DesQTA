@@ -127,7 +127,7 @@ impl Default for Settings {
             weather_country: String::new(),
             reminders_enabled: true,
             accent_color: "#3b82f6".to_string(), // Default to blue-500
-            theme: "system".to_string(), // Default to system theme
+            theme: "default".to_string(), // Default to DesQTA theme
             disable_school_picture: false,
             enhanced_animations: true,
             gemini_api_key: None,
@@ -137,7 +137,7 @@ impl Default for Settings {
             auto_collapse_sidebar: false,
             auto_expand_sidebar_hover: false,
             global_search_enabled: false,
-            current_theme: None,
+            current_theme: Some("default".to_string()),
             widget_layout: vec![
                 WidgetLayout { id: "shortcuts".to_string(), x: 0, y: 0, width: 2, height: 1, enabled: true },
                 WidgetLayout { id: "today_schedule".to_string(), x: 0, y: 1, width: 2, height: 1, enabled: true },
