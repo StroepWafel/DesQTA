@@ -9,6 +9,8 @@
   import { weatherService, type WeatherData } from '../lib/services/weatherService';
   import { errorService } from '../lib/services/errorService';
 
+  import jsQR from 'jsqr';
+
   import { onMount, onDestroy } from 'svelte';
   import '../app.css';
   import { accentColor, loadAccentColor, theme, loadTheme, loadCurrentTheme } from '../lib/stores/theme';
@@ -45,7 +47,6 @@
   let loadingWeather = $state(false);
   let weatherError = $state('');
 
-  let isMobileMenuOpen = $state(false);
   let isMobile = $state(false);
 
   let sidebarOpen = $state(true);
@@ -129,6 +130,10 @@
     if (autoCollapseSidebar) {
       sidebarOpen = false;
     }
+    // Auto-close sidebar on mobile when menu item is clicked
+    if (isMobile) {
+      sidebarOpen = false;
+    }
   }
 
   // Function to handle mouse hover for auto-expand
@@ -147,19 +152,106 @@
   }
 
   async function startLogin() {
-    if (!seqtaUrl) return;
+    console.log('[LOGIN_FRONTEND] startLogin called');
+    
+    const input = document.getElementById('seqta-qrcode') as HTMLInputElement;
+    console.log('america ya')
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      console.log('[LOGIN_FRONTEND] Processing QR code file:', file.name);
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageData = e.target?.result as ArrayBuffer;
+        console.log('[LOGIN_FRONTEND] Image data loaded, size:', imageData.byteLength);
+        
+        // Create a blob URL from the array buffer
+        const blob = new Blob([imageData], { type: file.type });
+        const imageUrl = URL.createObjectURL(blob);
+        
+        // Create an image element to load the image
+        const img = new Image();
+        img.onload = () => {
+          console.log('[LOGIN_FRONTEND] Image loaded, dimensions:', img.width, 'x', img.height);
+          
+          // Create a canvas to get pixel data
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            console.error('[LOGIN_FRONTEND] Could not get canvas context');
+            return;
+          }
+          
+          // Set canvas size to image size
+          canvas.width = img.width;
+          canvas.height = img.height;
+          
+          // Draw image to canvas
+          ctx.drawImage(img, 0, 0);
+          
+          // Get pixel data
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          console.log('[LOGIN_FRONTEND] Canvas pixel data size:', imageData.data.length);
+          
+          // Decode QR code
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          console.log('[LOGIN_FRONTEND] QR code decoded:', code ? 'Success' : 'Failed');
+          
+        if (code) {
+            console.log('[LOGIN_FRONTEND] QR code data:', code.data);
+            // Check if this is a SEQTA deeplink
+            if (code.data.startsWith('seqtalearn://')) {
+              seqtaUrl = code.data;
+              console.log('[LOGIN_FRONTEND] Found SEQTA deeplink:', seqtaUrl);
+            } else {
+              console.error('[LOGIN_FRONTEND] QR code does not contain a valid SEQTA deeplink');
+            }
+          }
+          
+          // Clean up
+          URL.revokeObjectURL(imageUrl);
+        };
+        
+        img.onerror = () => {
+          console.error('[LOGIN_FRONTEND] Failed to load image');
+          URL.revokeObjectURL(imageUrl);
+        };
+        
+        // Load the image
+        img.src = imageUrl;
+      };
+      reader.readAsArrayBuffer(file);
+    }
+    
+    // Wait a bit for the file reader to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    if (!seqtaUrl) {
+      console.error('[LOGIN_FRONTEND] No valid SEQTA URL found');
+      return;
+    }
+
+    console.log('[LOGIN_FRONTEND] Starting authentication with URL:', seqtaUrl);
     await authService.startLogin(seqtaUrl);
+    console.log('[LOGIN_FRONTEND] Authentication request sent to backend');
 
     const timer = setInterval(async () => {
       const sessionExists = await authService.checkSession();
+      console.log('[LOGIN_FRONTEND] Session check result:', sessionExists);
+      
       if (sessionExists) {
+        console.log('[LOGIN_FRONTEND] Session found, completing login');
         clearInterval(timer);
         needsSetup.set(false);
         await loadUserInfo();
       }
     }, 1000);
 
-    setTimeout(() => clearInterval(timer), 5 * 60 * 1000);
+    setTimeout(() => {
+      console.log('[LOGIN_FRONTEND] Login timeout reached');
+      clearInterval(timer);
+    }, 5 * 60 * 1000);
   }
 
   async function handleLogout() {
@@ -280,7 +372,7 @@
     // Check SEQTA cookie/session on app launch
     if (!($needsSetup)) {
       try {
-        const appUrl = seqtaUrl || 'https://learn.cardijn.catholic.edu.au/#?page=/home';
+        const appUrl = seqtaUrl;
         const response = await seqtaFetch('/seqta/student/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -296,8 +388,15 @@
         const foundAbbrev = responseStr.includes('site.name.abbrev');
         console.debug('Contains site.name.abbrev:', foundAbbrev);
         if (foundAbbrev) {
-          console.debug('Triggering handleLogout() due to detected logout');
+          console.debug('User is authenticated - site info found in response');
+          // User is authenticated, no need to logout
+        } else {
+          console.debug('No site info found - user may be logged out');
+          // Check if this is actually an error response that indicates logout
+          if (responseStr.includes('error') || responseStr.includes('unauthorized') || responseStr.includes('401')) {
+            console.debug('Detected logout/error response, triggering logout');
           await handleLogout();
+          }
         }
       } catch (e) {
         console.error('SEQTA session check failed', e);
@@ -385,9 +484,21 @@
       />
     {/if}
 
-    <div class="flex flex-1 min-h-0">
+    <div class="flex flex-1 min-h-0 relative">
       {#if !$needsSetup}
         <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+      {/if}
+
+      <!-- Mobile Sidebar Overlay -->
+      {#if sidebarOpen && isMobile && !$needsSetup}
+        <div
+          class="fixed inset-0 z-20 bg-black/50 sm:hidden"
+          onclick={() => (sidebarOpen = false)}
+          onkeydown={(e) => e.key === 'Escape' && (sidebarOpen = false)}
+          role="button"
+          tabindex="0"
+          aria-label="Close sidebar overlay">
+        </div>
       {/if}
 
       <main
@@ -407,17 +518,7 @@
   </div>
 {/if}
 
-<!-- Mobile Menu Overlay -->
-{#if isMobileMenuOpen}
-  <div
-    class="fixed inset-0 z-40 bg-black/50"
-    onclick={() => (isMobileMenuOpen = false)}
-    onkeydown={(e) => e.key === 'Escape' && (isMobileMenuOpen = false)}
-    role="button"
-    tabindex="0"
-    aria-label="Close mobile menu">
-  </div>
-{/if}
+
 
 <!-- About Modal -->
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />

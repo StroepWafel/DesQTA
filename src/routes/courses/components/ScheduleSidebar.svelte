@@ -7,19 +7,23 @@
     selectedLesson = null,
     showingOverview = false,
     coursePayload = null,
+    isMobile = false,
     onSelectLesson,
     onSelectOverview,
+    onClose,
   }: {
     schedule?: TermSchedule[];
     selectedLesson?: Lesson | null;
     showingOverview?: boolean;
     coursePayload?: CoursePayload | null;
+    isMobile?: boolean;
     onSelectLesson: (data: {
       termSchedule: TermSchedule;
       lesson: Lesson;
       lessonIndex: number;
     }) => void;
     onSelectOverview: () => void;
+    onClose?: () => void;
   } = $props();
 
   let filteredSchedule = $derived(
@@ -157,9 +161,20 @@
 </script>
 
 <aside
-  class="flex flex-col w-64 h-[calc(100vh-4rem)] border-r bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm border-slate-300/50 dark:border-slate-700/50">
+  class="flex flex-col w-64 h-[calc(100vh-4rem)] border-r bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm border-slate-300/50 dark:border-slate-700/50 {isMobile ? 'fixed inset-0 z-40 w-full' : ''}">
   <div class="px-4 py-3 border-b border-slate-300/50 dark:border-slate-700/50 shrink-0">
-    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Course Content</h3>
+    <div class="flex justify-between items-center">
+      <h3 class="text-lg font-bold text-slate-900 dark:text-white">Course Content</h3>
+      {#if isMobile && onClose}
+        <button
+          onclick={onClose}
+          class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+          aria-label="Close sidebar"
+        >
+          ✕
+        </button>
+      {/if}
+    </div>
   </div>
   <div class="overflow-y-auto flex-1 min-h-0">
     <div

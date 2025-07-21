@@ -8,14 +8,28 @@ use std::{
 /// Location: `$DATA_DIR/DesQTA/session.json`
 #[allow(dead_code)]
 pub fn session_file() -> PathBuf {
-    // e.g. %APPDATA%/DesQTA on Windows, ~/.local/share/DesQTA on Linux/macOS
-    let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
-    dir.push("DesQTA");
-    if !dir.exists() {
-        fs::create_dir_all(&dir).expect("Unable to create data dir");
+    #[cfg(target_os = "android")]
+    {
+        // On Android, use the app's internal storage directory
+        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).expect("Unable to create data dir");
+        }
+        dir.push("session.json");
+        dir
     }
-    dir.push("session.json");
-    dir
+    #[cfg(not(target_os = "android"))]
+    {
+        // e.g. %APPDATA%/DesQTA on Windows, ~/.local/share/DesQTA on Linux/macOS
+        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).expect("Unable to create data dir");
+        }
+        dir.push("session.json");
+        dir
+    }
 }
 
 /// Saved session state.

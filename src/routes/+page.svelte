@@ -395,20 +395,20 @@
   });
 </script>
 
-<div class="p-8 mx-auto min-h-screen">
+<div class="p-4 sm:p-6 lg:p-8 xl:p-12 mx-auto min-h-screen max-w-7xl">
   <!-- Edit Mode Toggle -->
-  <div class="flex justify-between items-center mb-4">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
     {#if isEditMode}
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button
           onclick={() => addWidget()}
-          class="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-500 text-white hover:bg-accent-600 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+          class="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base rounded-lg bg-accent-500 text-white hover:bg-accent-600 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         >
           + Add Widget
         </button>
         <button
           onclick={resetLayout}
-          class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-500 text-white hover:bg-slate-600 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+          class="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base rounded-lg bg-slate-500 text-white hover:bg-slate-600 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
         >
           <Icon src={ArrowPath} class="w-4 h-4" />
           Reset Layout
@@ -419,13 +419,13 @@
   </div>
 
   <!-- Widget Grid -->
-  <div class="widget-grid relative" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; min-height: 100vh;">
+  <div class="widget-grid relative grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 min-h-screen">
     {#if isEditMode}
       <!-- Grid Overlay for Visual Feedback -->
-      <div class="absolute inset-0 pointer-events-none" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      <div class="absolute inset-0 pointer-events-none hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
         {#each Array.from({ length: 20 }, (_, i) => i) as row}
           <div class="border border-dashed border-slate-300 dark:border-slate-600 opacity-30" style="grid-row: {row + 1}; grid-column: 1;"></div>
-          <div class="border border-dashed border-slate-300 dark:border-slate-600 opacity-30" style="grid-row: {row + 1}; grid-column: 2;"></div>
+          <div class="border border-dashed border-slate-300 dark:border-slate-600 opacity-30 hidden lg:block" style="grid-row: {row + 1}; grid-column: 2;"></div>
         {/each}
       </div>
     {/if}
@@ -435,8 +435,8 @@
       
       {#if renderedWidget}
         <div
-          class="widget-container relative {isEditMode ? 'cursor-move' : ''} bg-white/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 transition-all duration-200 {draggedWidget === layout.id ? 'opacity-75 shadow-lg scale-105 z-50' : 'hover:shadow-md'} {isEditMode ? 'hover:border-accent-300 dark:hover:border-accent-600' : ''}"
-          style="grid-column: {layout.x + 1} / span {layout.width}; grid-row: {layout.y + 1} / span {layout.height};"
+          class="widget-container relative {isEditMode ? 'cursor-move' : ''} bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6 transition-all duration-200 {draggedWidget === layout.id ? 'opacity-75 shadow-lg scale-105 z-50' : 'hover:shadow-md'} {isEditMode ? 'hover:border-accent-300 dark:hover:border-accent-600' : ''}"
+          style="grid-column: {layout.width === 2 ? '1 / span 2' : layout.x === 0 ? '1 / span 1' : '2 / span 1'}; grid-row: {layout.y + 1} / span {layout.height};"
           onmousedown={(e) => handleDragStart(e, layout.id)}
         >
           <!-- Widget Header (Edit Mode) -->
@@ -445,7 +445,7 @@
               <button
                 onclick={() => toggleWidgetSize(layout.id)}
                 onmousedown={(e) => e.stopPropagation()}
-                class="p-1 rounded bg-slate-800/80 text-white hover:bg-slate-700/80 transition-colors"
+                class="p-1.5 sm:p-1 rounded bg-slate-800/80 text-white hover:bg-slate-700/80 transition-colors text-xs sm:text-sm"
                 title={layout.width === 1 ? 'Expand' : 'Shrink'}
               >
                 {layout.width === 1 ? '↔' : '↕'}
@@ -453,7 +453,7 @@
               <button
                 onclick={() => toggleWidgetEnabled(layout.id)}
                 onmousedown={(e) => e.stopPropagation()}
-                class="p-1 rounded bg-red-600/80 text-white hover:bg-red-500/80 transition-colors"
+                class="p-1.5 sm:p-1 rounded bg-red-600/80 text-white hover:bg-red-500/80 transition-colors"
                 title="Remove Widget"
               >
                 <Icon src={XMark} class="w-3 h-3" />
@@ -473,10 +473,10 @@
   </div>
 
   <!-- Move Edit Layout button to the bottom -->
-  <div class="flex justify-end mt-8">
+  <div class="flex justify-end mt-6 sm:mt-8">
     <button
       onclick={toggleEditMode}
-      class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+      class="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
     >
       {#if isEditMode}
         <Icon src={ArrowsPointingIn} class="w-4 h-4" />
@@ -512,7 +512,19 @@
   }
   
   .widget-container {
-    min-height: 200px;
+    min-height: 150px;
+  }
+  
+  @media (min-width: 640px) {
+    .widget-container {
+      min-height: 200px;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .widget-container {
+      min-height: 250px;
+    }
   }
 </style>
 
@@ -520,22 +532,22 @@
 <Modal
   bind:open={showWidgetPicker}
   onclose={() => showWidgetPicker = false}
-  maxWidth="w-96"
+  maxWidth="w-[90vw] sm:w-96"
   maxHeight="h-auto"
-  customClasses="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
+  customClasses="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-2xl"
   ariaLabel="Widget Picker Modal">
-  <div class="p-6">
-    <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Add Widget</h2>
+  <div class="p-4 sm:p-6">
+    <h2 class="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white mb-4">Add Widget</h2>
     <div class="grid grid-cols-1 gap-3">
       {#each getAvailableWidgets() as widget}
         <button
           onclick={() => selectWidget(widget.id)}
           class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         >
-          <span class="text-2xl">{widget.icon}</span>
+          <span class="text-xl sm:text-2xl">{widget.icon}</span>
           <div class="text-left">
-            <div class="font-medium text-slate-900 dark:text-white">{widget.title}</div>
-            <div class="text-sm text-slate-500 dark:text-slate-400">
+            <div class="font-medium text-slate-900 dark:text-white text-sm sm:text-base">{widget.title}</div>
+            <div class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               {widget.defaultWidth === 1 ? 'Half width' : 'Full width'} • 
               {widget.defaultHeight === 1 ? 'Normal height' : 'Double height'}
             </div>

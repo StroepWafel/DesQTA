@@ -1,9 +1,4 @@
-#[cfg(not(any(target_os = "ios", target_os = "android")))]
 #[path = "auth/login.rs"]
-mod login;
-
-#[cfg(any(target_os = "ios", target_os = "android"))]
-#[path = "mobilechanges/login.rs"]
 mod login;
 
 #[path = "utils/netgrab.rs"]
@@ -15,17 +10,24 @@ mod analytics;
 #[path = "utils/session.rs"]
 mod session;
 
+
 use tauri::Manager;
+#[cfg(desktop)]
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+#[cfg(desktop)]
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, WindowEvent, Window};
 use tauri_plugin_notification;
+#[cfg(desktop)]
 use tauri_plugin_single_instance;
+#[cfg(desktop)]
 use tauri_plugin_autostart;
+#[cfg(desktop)]
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_dialog;
 
-use url::form_urlencoded::{byte_serialize, parse};
+#[cfg(desktop)]
+use url::form_urlencoded::parse;
 
 /// Boilerplate example command
 #[tauri::command]
@@ -77,6 +79,7 @@ fn is_autostart_enabled(window: Window) -> Result<bool, String> {
     }
 }
 
+#[cfg(desktop)]
 fn run_on_tray<T: FnOnce() -> ()>(f: T) {
     #[cfg(target_os = "macos")]
     {
@@ -97,11 +100,15 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_autostart::init(
+        .plugin(tauri_plugin_dialog::init());
+
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--minimize"]),
         ));
+    }
 
     #[cfg(not(any(target_os = "ios", target_os = "android")))]
     {
@@ -212,60 +219,66 @@ pub fn run() {
             settings::check_cloud_settings,
             analytics::save_analytics,
             analytics::load_analytics,
-            analytics::delete_analytics,
+            analytics::delete_analytics
         ])
         .setup(|app| {
-            // Configure the existing main window
-            if let Some(window) = app.webview_windows().get("main") {
-                let _ = window.set_title("DesQTA");
-                let _ = window.set_min_size(Some(tauri::Size::Logical(tauri::LogicalSize::new(900.0, 700.0))));
-                let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(900.0, 700.0)));
-                let _ = window.set_decorations(false);
-                let _ = window.center();
-            }
+            #[cfg(desktop)]
+            {
+                // Configure the existing main window
+                if let Some(window) = app.webview_windows().get("main") {
+                    let _ = window.set_title("DesQTA");
+                    let _ = window.set_min_size(Some(tauri::Size::Logical(tauri::LogicalSize::new(900.0, 700.0))));
+                    let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(900.0, 700.0)));
+                    let _ = window.set_decorations(false);
+                    let _ = window.center();
+                }
 
-            // Create tray menu
-            let menu = Menu::with_items(
-                app,
-                &[
-                    &MenuItem::with_id(app, "open", "Open DesQTA", true, None::<&str>)?,
-                    &PredefinedMenuItem::separator(app)?,
-                    &MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?,
-                ],
-            )?;
+                // Create tray menu
+                let menu = Menu::with_items(
+                    app,
+                    &[
+                        &MenuItem::with_id(app, "open", "Open DesQTA", true, None::<&str>)?,
+                        &PredefinedMenuItem::separator(app)?,
+                        &MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?,
+                    ],
+                )?;
 
-            // Setup tray icon
-            run_on_tray(|| {
-                TrayIconBuilder::new()
-                    .icon(app.default_window_icon().unwrap().clone())
-                    .menu(&menu)
-                    .on_menu_event(move |app, event| match event.id.as_ref() {
-                        "open" => {
-                            if let Some(window) = app.webview_windows().get("main") {
-                                let _ = window.show();
-                                let _ = window.set_focus();
+                // Setup tray icon
+                run_on_tray(|| {
+                    TrayIconBuilder::new()
+                        .icon(app.default_window_icon().unwrap().clone())
+                        .menu(&menu)
+                        .on_menu_event(move |app, event| match event.id.as_ref() {
+                            "open" => {
+                                if let Some(window) = app.webview_windows().get("main") {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
                             }
-                        }
-                        "quit" => {
-                            app.exit(0);
-                        }
-                        _ => {
-                            println!("Menu event not handled: {:?}", event.id);
-                        }
-                    })
-                    .build(app)
-                    .expect("Error while setting up tray menu");
-            });
+                            "quit" => {
+                                app.exit(0);
+                            }
+                            _ => {
+                                println!("Menu event not handled: {:?}", event.id);
+                            }
+                        })
+                        .build(app)
+                        .expect("Error while setting up tray menu");
+                });
+            }
 
             Ok(())
         })
         .on_window_event(|window, event| {
-            if let WindowEvent::CloseRequested { api, .. } = event {
-                // Hide window instead of closing when user clicks X
-                run_on_tray(|| {
-                    window.hide().unwrap();
-                    api.prevent_close();
-                });
+            #[cfg(desktop)]
+            {
+                if let WindowEvent::CloseRequested { api, .. } = event {
+                    // Hide window instead of closing when user clicks X
+                    run_on_tray(|| {
+                        window.hide().unwrap();
+                        api.prevent_close();
+                    });
+                }
             }
         })
         .run(tauri::generate_context!())

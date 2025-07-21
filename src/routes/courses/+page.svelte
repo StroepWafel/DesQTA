@@ -32,6 +32,9 @@
   let selectedLesson: Lesson | null = $state(null);
   let selectedLessonContent: WeeklyLessonContent | null = $state(null);
   let showingOverview = $state(true); // Start with overview by default
+  let isMobile = $state(false);
+  let showSubjectSidebar = $state(true);
+  let showScheduleSidebar = $state(true);
 
   async function loadSubjects() {
     loading = true;
@@ -132,6 +135,10 @@
   // Event handlers with proper typing
   function handleSelectSubject(event: CustomEvent<Subject>) {
     selectSubject(event.detail);
+    // Close subject sidebar on mobile when subject is selected
+    if (isMobile) {
+      showSubjectSidebar = false;
+    }
   }
 
   function handleToggleFolder(event: CustomEvent<string>) {
@@ -144,10 +151,18 @@
     lessonIndex: number;
   }) {
     selectLesson(data.termSchedule, data.lesson, data.lessonIndex);
+    // Close schedule sidebar on mobile when lesson is selected
+    if (isMobile) {
+      showScheduleSidebar = false;
+    }
   }
 
   function handleSelectOverview() {
     selectOverview();
+    // Close schedule sidebar on mobile when overview is selected
+    if (isMobile) {
+      showScheduleSidebar = false;
+    }
   }
 
   function getQueryParams() {
@@ -224,26 +239,64 @@
     }
   }
 
-  onMount(async () => {
-    await loadSubjects();
-    await autoSelectFromQuery();
+  onMount(() => {
+    loadSubjects();
+    autoSelectFromQuery();
+    
+    // Check for mobile on mount and resize
+    const checkMobile = () => {
+      isMobile = window.innerWidth < 1024; // Use lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
   });
 </script>
 
 <div class="flex w-full h-full overflow-y-hidden">
+  <!-- Mobile Toggle Buttons -->
+  {#if isMobile}
+    <div class="fixed top-4 left-4 z-50 flex gap-2">
+      <button
+        onclick={() => showSubjectSidebar = !showSubjectSidebar}
+        class="p-2 rounded-lg bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-lg"
+        aria-label="Toggle subjects sidebar"
+      >
+        📚
+      </button>
+      {#if selectedSubject}
+        <button
+          onclick={() => showScheduleSidebar = !showScheduleSidebar}
+          class="p-2 rounded-lg bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-lg"
+          aria-label="Toggle schedule sidebar"
+        >
+          📅
+        </button>
+      {/if}
+    </div>
+  {/if}
+
   <!-- Subject Selection Sidebar -->
-  <SubjectSidebar
-    bind:search
-    {loading}
-    {error}
-    {activeSubjects}
-    {otherFolders}
-    {selectedSubject}
-    {expandedFolders}
-    {subjectMatches}
-    {folderMatches}
-    on:selectSubject={handleSelectSubject}
-    on:toggleFolder={handleToggleFolder} />
+      {#if !isMobile || showSubjectSidebar}
+      <SubjectSidebar
+        bind:search
+        {loading}
+        {error}
+        {activeSubjects}
+        {otherFolders}
+        {selectedSubject}
+        {expandedFolders}
+        {subjectMatches}
+        {folderMatches}
+        {isMobile}
+        on:selectSubject={handleSelectSubject}
+        on:toggleFolder={handleToggleFolder}
+        on:close={() => showSubjectSidebar = false} />
+    {/if}
 
   <!-- Course Content Area -->
   <div class="flex flex-1 h-full">
@@ -260,13 +313,17 @@
         </div>
       {:else if coursePayload}
         <!-- Schedule Navigation -->
-        <ScheduleSidebar
-          schedule={coursePayload.d}
-          {selectedLesson}
-          {showingOverview}
-          {coursePayload}
-          onSelectLesson={handleSelectLesson}
-          onSelectOverview={handleSelectOverview} />
+        {#if !isMobile || showScheduleSidebar}
+          <ScheduleSidebar
+            schedule={coursePayload.d}
+            {selectedLesson}
+            {showingOverview}
+            {coursePayload}
+            {isMobile}
+            onSelectLesson={handleSelectLesson}
+            onSelectOverview={handleSelectOverview}
+            onClose={() => showScheduleSidebar = false} />
+        {/if}
 
         <!-- Main Content -->
         <CourseContent {coursePayload} {parsedDocument} {selectedLessonContent} {showingOverview} />

@@ -139,6 +139,7 @@
   let loadingNotifications = $state(false);
   let notifications = $state<Notification[]>([]);
   let unreadNotifications = $state(0);
+  let isMobile = $state(false);
 
   function handleSelect(page: { name: string; path: string }) {
     searchStore.set('');
@@ -288,6 +289,19 @@
     loadGlobalSearchSetting();
     fetchNotifications();
     
+    // Check for mobile on mount and resize
+    const checkMobile = async () => {
+      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM
+      if (tauri_platform == "ios" || tauri_platform == "android") {
+        isMobile = true
+      } else {
+        isMobile = false
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
     // Add click outside handler for notifications
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -299,6 +313,7 @@
     document.addEventListener('click', handleClickOutside);
     
     return () => {
+      window.removeEventListener('resize', checkMobile);
       document.removeEventListener('click', handleClickOutside);
     };
   });
@@ -414,27 +429,29 @@
       />
     {/if}
 
-    <!-- Window Controls -->
-    <div class="flex items-center ml-4 space-x-2">
-      <button
-        class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 accent-ring playful"
-        onclick={() => appWindow.minimize()}
-        aria-label="Minimize">
-        <Icon src={Minus} class="w-4 h-4 text-slate-600 dark:text-slate-400" />
-      </button>
-      <button
-        class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 accent-ring playful"
-        onclick={() => appWindow.toggleMaximize()}
-        aria-label="Maximize">
-        <Icon src={Square2Stack} class="w-4 h-4 text-slate-600 dark:text-slate-400" />
-      </button>
-      <button
-        class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 group hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 playful"
-        onclick={() => appWindow.close()}
-        aria-label="Close">
-        <Icon src={XMark} class="w-4 h-4 transition duration-200 text-slate-600 dark:text-slate-400 group-hover:text-white" />
-      </button>
-    </div>
+    <!-- Window Controls - Desktop Only -->
+    {#if !isMobile}
+      <div class="flex items-center ml-4 space-x-2">
+        <button
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 accent-ring playful"
+          onclick={() => appWindow.minimize()}
+          aria-label="Minimize">
+          <Icon src={Minus} class="w-4 h-4 text-slate-600 dark:text-slate-400" />
+        </button>
+        <button
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 accent-ring playful"
+          onclick={() => appWindow.toggleMaximize()}
+          aria-label="Maximize">
+          <Icon src={Square2Stack} class="w-4 h-4 text-slate-600 dark:text-slate-400" />
+        </button>
+        <button
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 group hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 playful"
+          onclick={() => appWindow.close()}
+          aria-label="Close">
+          <Icon src={XMark} class="w-4 h-4 transition duration-200 text-slate-600 dark:text-slate-400 group-hover:text-white" />
+        </button>
+      </div>
+    {/if}
   </div>
   {#if showPagesMenu}
     <PagesMenu on:close={closePagesMenu} />

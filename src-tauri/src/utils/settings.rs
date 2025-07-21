@@ -12,23 +12,51 @@ mod session;
 
 /// Location: `$DATA_DIR/DesQTA/settings.json`
 fn settings_file() -> PathBuf {
-    let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
-    dir.push("DesQTA");
-    if !dir.exists() {
-        fs::create_dir_all(&dir).expect("Unable to create data dir");
+    #[cfg(target_os = "android")]
+    {
+        // On Android, use the app's internal storage directory
+        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).expect("Unable to create data dir");
+        }
+        dir.push("settings.json");
+        dir
     }
-    dir.push("settings.json");
-    dir
+    #[cfg(not(target_os = "android"))]
+    {
+        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).expect("Unable to create data dir");
+        }
+        dir.push("settings.json");
+        dir
+    }
 }
 
 fn cloud_token_file() -> PathBuf {
-    let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
-    dir.push("DesQTA");
-    if !dir.exists() {
-        fs::create_dir_all(&dir).expect("Unable to create data dir");
+    #[cfg(target_os = "android")]
+    {
+        // On Android, use the app's internal storage directory
+        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).expect("Unable to create data dir");
+        }
+        dir.push("cloud_token.json");
+        dir
     }
-    dir.push("cloud_token.json");
-    dir
+    #[cfg(not(target_os = "android"))]
+    {
+        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).expect("Unable to create data dir");
+        }
+        dir.push("cloud_token.json");
+        dir
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -108,7 +136,7 @@ impl Default for Settings {
             lesson_summary_analyser_enabled: Some(true),
             auto_collapse_sidebar: false,
             auto_expand_sidebar_hover: false,
-            global_search_enabled: true,
+            global_search_enabled: false,
             current_theme: None,
             widget_layout: vec![
                 WidgetLayout { id: "shortcuts".to_string(), x: 0, y: 0, width: 2, height: 1, enabled: true },

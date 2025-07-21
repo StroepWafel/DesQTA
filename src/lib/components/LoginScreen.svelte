@@ -2,6 +2,11 @@
   import { Window } from '@tauri-apps/api/window';
   import { Icon } from 'svelte-hero-icons';
   import { Minus, Square2Stack, XMark } from 'svelte-hero-icons';
+  import jsQR from 'jsqr';
+  import { authService } from '$lib/services/authService';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { theme } from '$lib/stores/theme';
 
   interface Props {
     seqtaUrl: string;
@@ -12,6 +17,34 @@
   let { seqtaUrl, onStartLogin, onUrlChange }: Props = $props();
 
   const appWindow = Window.getCurrent();
+  
+  let qrProcessing = $state(false);
+  let qrError = $state('');
+  let qrSuccess = $state('');
+  let jwtExpiredError = $state(false);
+
+  // Global error handler to catch JWT expiration errors
+  function handleGlobalError(event: ErrorEvent) {
+    if (event.error && typeof event.error === 'string' && event.error.includes('JWT token has expired')) {
+      jwtExpiredError = true;
+      qrError = '';
+      qrSuccess = '';
+      qrProcessing = false;
+    }
+  }
+
+  // Add global error listener
+  if (typeof window !== 'undefined') {
+    window.addEventListener('error', handleGlobalError);
+    window.addEventListener('unhandledrejection', (event) => {
+      if (event.reason && typeof event.reason === 'string' && event.reason.includes('JWT token has expired')) {
+        jwtExpiredError = true;
+        qrError = '';
+        qrSuccess = '';
+        qrProcessing = false;
+      }
+    });
+  }
 </script>
 
 <div class="flex flex-col h-full">
@@ -109,7 +142,19 @@
                 id="seqta-url"
                 type="text"
                 bind:value={seqtaUrl}
-                oninput={(e) => onUrlChange((e.target as HTMLInputElement).value)}
+                oninput={(e) => {
+                  const url = (e.target as HTMLInputElement).value;
+                  onUrlChange(url);
+                  
+                  // Enable button if URL is entered and no JWT expiration error
+                  const signinButton = document.getElementById('signin-button') as HTMLButtonElement;
+                  if (url.trim() && !jwtExpiredError) {
+                    signinButton.disabled = false;
+                  } else if (!qrSuccess || jwtExpiredError) {
+                    // Disable if no QR code was processed or JWT expired
+                    signinButton.disabled = true;
+                  }
+                }}
                 placeholder="your-school.seqta.com.au"
                 class="py-3 pr-4 pl-10 w-full rounded-lg border transition-colors text-slate-900 bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
             </div>
@@ -118,10 +163,78 @@
             </p>
           </div>
 
+          <div>
+            <label
+              for="seqta-qrcode"
+              class="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              SEQTA QR Code
+            </label>
+            <div class="relative">
+              <div
+                class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                <svg
+                  class="w-5 h-5 text-slate-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor">
+                  <path
+                    fill-rule="evenodd"
+                    d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
+                    clip-rule="evenodd" />
+                </svg>
+              </div>
+              <input
+                id="seqta-qrcode"
+                type="file"
+                accept="image/*"
+                class="py-3 pr-4 pl-10 w-full rounded-lg border transition-colors text-slate-900 bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+            </div>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Upload your SEQTA Login QR Code to get started from your mobile login email
+            </p>
+            
+            {#if qrProcessing}
+              <div class="mt-2 text-sm text-blue-600 dark:text-blue-400">
+                Processing QR code...
+              </div>
+            {/if}
+            
+            {#if qrSuccess}
+              <div class="mt-2 text-sm text-green-600 dark:text-green-400">
+                {qrSuccess}
+              </div>
+            {/if}
+            
+            {#if qrError}
+              <div class="mt-2 text-sm text-red-600 dark:text-red-400">
+                {qrError}
+              </div>
+            {/if}
+            
+            {#if jwtExpiredError}
+              <div class="mt-2 p-3 text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div class="flex items-start space-x-2">
+                  <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                  <div>
+                    <p class="font-medium text-amber-800 dark:text-amber-200">QR Code Expired</p>
+                    <p class="text-amber-700 dark:text-amber-300">The QR code from your mobile login email has expired. Please request a new QR code from your mobile device and try again.</p>
+                  </div>
+                </div>
+              </div>
+            {/if}
+          </div>
+
           <button
+            id="signin-button"
             class="py-3 w-full text-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg shadow-lg transition-all duration-200 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
-            onclick={onStartLogin}
-            disabled={!seqtaUrl}>
+            onclick={() => {
+              // Clear JWT expiration error when starting new login
+              jwtExpiredError = false;
+              onStartLogin();
+            }}
+            disabled={jwtExpiredError}>
             Sign In
           </button>
 

@@ -38,7 +38,7 @@ pub enum RequestMethod {
 }
 
 /// Build an HTTP client with headers based on the saved session.
-fn create_client() -> &'static reqwest::Client {
+pub fn create_client() -> &'static reqwest::Client {
 
     GLOBAL_CLIENT.get_or_init(|| {
         let mut headers = reqwest::header::HeaderMap::new();
@@ -69,34 +69,90 @@ fn create_client() -> &'static reqwest::Client {
 }   
 
 async fn append_default_headers(req: RequestBuilder) -> RequestBuilder {
-    let session = session::Session::load();
+    let mut session = session::Session::load();
     let mut headers = reqwest::header::HeaderMap::new();
 
-    // Build the complete cookie string with JSESSIONID and additional cookies
-    let mut cookie_parts = Vec::new();
-
-        // Add JSESSIONID first if it exists
-    if !session.jsessionid.is_empty() {
-        cookie_parts.push(format!("JSESSIONID={}", session.jsessionid));
-    }
-
-    // Add all additional cookies
-    for cookie in session.additional_cookies {
-        cookie_parts.push(format!("{}={}", cookie.name, cookie.value));
-    }
-
-        // Set the combined cookie header if we have any cookies
-    if !cookie_parts.is_empty() {
-        headers.insert(
-            reqwest::header::COOKIE,
-            cookie_parts.join("; ").parse().unwrap(),
-        );
-    }
-
-    if !session.base_url.is_empty() {
+    // Check if we're using JWT-based authentication (QR code login)
+    if session.jsessionid.starts_with("eyJ") {
+        // Check if we have JSESSIONID cookies from previous responses
+        let mut has_jsessionid_cookie = false;
+        let mut jsessionid_cookies: Vec<String> = Vec::new();
+        for cookie in &session.additional_cookies {
+            if cookie.name == "JSESSIONID" {
+                has_jsessionid_cookie = true;
+                jsessionid_cookies.push(cookie.value.clone());
+            }
+        }
+        
+        if jsessionid_cookies.len() > 1 {
+            // Clear duplicate JSESSIONID cookies to prevent errors
+            session.additional_cookies.retain(|cookie| cookie.name != "JSESSIONID");
+            let _ = session.save();
+            has_jsessionid_cookie = false;
+        }
+        
+        if has_jsessionid_cookie {
+            // Use both JWT Bearer token and JSESSIONID cookie
+            headers.insert(
+                reqwest::header::AUTHORIZATION,
+                format!("Bearer {}", session.jsessionid).parse().unwrap(),
+            );
+            
+            // Add JSESSIONID cookie
+            let mut cookie_parts = Vec::new();
+            for cookie in &session.additional_cookies {
+                if cookie.name == "JSESSIONID" {
+                    cookie_parts.push(format!("JSESSIONID={}", cookie.value));
+                }
+            }
+            
+            if !cookie_parts.is_empty() {
+                headers.insert(
+                    reqwest::header::COOKIE,
+                    cookie_parts.join("; ").parse().unwrap(),
+                );
+            }
+        } else {
+            // This is a JWT token, use Bearer authentication only
+            headers.insert(
+                reqwest::header::AUTHORIZATION,
+                format!("Bearer {}", session.jsessionid).parse().unwrap(),
+            );
+        }
+        
+        if !session.base_url.is_empty() {
             headers.insert(reqwest::header::ORIGIN, session.base_url.parse().unwrap());
             headers.insert(reqwest::header::REFERER, session.base_url.parse().unwrap());
+        }
+    } else {
+        // Traditional cookie-based authentication
+        let mut cookie_parts = Vec::new();
+
+        // Add JSESSIONID first if it exists
+        if !session.jsessionid.is_empty() {
+            cookie_parts.push(format!("JSESSIONID={}", session.jsessionid));
+        }
+
+        // Add all additional cookies
+        for cookie in session.additional_cookies {
+            cookie_parts.push(format!("{}={}", cookie.name, cookie.value));
+        }
+
+        // Set the combined cookie header if we have any cookies
+        if !cookie_parts.is_empty() {
+            let cookie_header = cookie_parts.join("; ");
+            headers.insert(
+                reqwest::header::COOKIE,
+                cookie_header.parse().unwrap(),
+            );
+        }
+
+        if !session.base_url.is_empty() {
+            headers.insert(reqwest::header::ORIGIN, session.base_url.parse().unwrap());
+            headers.insert(reqwest::header::REFERER, session.base_url.parse().unwrap());
+        }
     }
+    
     req.headers(headers)
 }
 
@@ -111,7 +167,8 @@ pub async fn fetch_api_data(
     return_url: bool
 ) -> Result<String, String> {
     let client = create_client();
-    let session = session::Session::load();
+    let mut session = session::Session::load();
+    
     let full_url = if url.starts_with("http") {
         url.to_string()
     } else {
@@ -139,13 +196,54 @@ pub async fn fetch_api_data(
 
     // Add body for POST requests if provided
     if let RequestMethod::POST = method {
-        if let Some(body_data) = body {
-            request = request.json(&body_data);
+        let mut final_body = body.unwrap_or_else(|| json!({}));
+        
+        // For JWT-based sessions, automatically include the JWT token in the body
+        if session.jsessionid.starts_with("eyJ") {
+            if let Some(body_obj) = final_body.as_object_mut() {
+                body_obj.insert("jwt".to_string(), json!(session.jsessionid));
+            }
         }
+        
+        request = request.json(&final_body);
     }
 
     match request.send().await {
     Ok(resp) => {
+        
+        // Check for JSESSIONID cookie in response headers for JWT-based sessions
+        if session.jsessionid.starts_with("eyJ") {
+            if let Some(set_cookie_header) = resp.headers().get("set-cookie") {
+                let set_cookie_str = set_cookie_header.to_str().unwrap_or("");
+                
+                if set_cookie_str.contains("JSESSIONID=") {
+                    // Extract JSESSIONID value
+                    if let Some(jsessionid_start) = set_cookie_str.find("JSESSIONID=") {
+                        let jsessionid_part = &set_cookie_str[jsessionid_start..];
+                        if let Some(jsessionid_end) = jsessionid_part.find(';') {
+                            let jsessionid_value = &jsessionid_part[11..jsessionid_end]; // Skip "JSESSIONID="
+                            
+                            // Update session in memory and save to disk
+                            if session.jsessionid.starts_with("eyJ") {
+                                // Remove any existing JSESSIONID cookies first
+                                session.additional_cookies.retain(|cookie| cookie.name != "JSESSIONID");
+                                
+                                // Add the new JSESSIONID cookie
+                                session.additional_cookies.push(session::Cookie {
+                                    name: "JSESSIONID".to_string(),
+                                    value: jsessionid_value.to_string(),
+                                    domain: None,
+                                    path: None,
+                                });
+                                
+                                let _ = session.save();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         if is_image == true {
             // Get the bytes (await and ? to bubble up errors)
             let bytes = resp.bytes().await.map_err(|e| e.to_string())?;
@@ -154,14 +252,17 @@ pub async fn fetch_api_data(
             Ok(base64_str)
         }
         else if return_url == true {
-            Ok(String::from(resp.url().as_str()))
+            let url = String::from(resp.url().as_str());
+            Ok(url)
         }
         else {
             let text = resp.text().await.map_err(|e| e.to_string())?;
             Ok(text)
         }
     }
-    Err(e) => Err(format!("HTTP request failed: {e}")),
+    Err(e) => {
+        Err(format!("HTTP request failed: {e}"))
+    },
 }
 }
 
@@ -336,36 +437,42 @@ pub fn channel_to_json(channel: &Channel) -> Result<Value> {
 /// Open a login window and harvest the cookie once the user signs in.
 #[tauri::command]
 pub async fn open_url(app: tauri::AppHandle, url: String) -> Result<(), String>{
-    use tauri::{WebviewUrl, WebviewWindowBuilder};
+    #[cfg(desktop)]
+    {
+        use tauri::{WebviewUrl, WebviewWindowBuilder};
 
-    let http_url;
+        let http_url;
 
-    match url.starts_with("https://") {
-        true => http_url = url.clone(),
-        false => {
-            http_url = format!("https://{}", url.clone());
+        match url.starts_with("https://") {
+            true => http_url = url.clone(),
+            false => {
+                http_url = format!("https://{}", url.clone());
+            }
         }
+
+        let parsed_url = match Url::parse(&http_url) {
+            Ok(u) => u,
+            Err(e) => return Err(format!("Invalid URL: {}", e))
+        };
+
+        let full_url: Url = match Url::parse(&format!("{}", parsed_url)) {
+            Ok(u) => u,
+            Err(e) => return Err(format!("Invalid URL: {}", e))// Nothing
+
+        };
+
+        // Spawn the login window
+        WebviewWindowBuilder::new(&app, "seqta_login", WebviewUrl::External(full_url.clone()))
+            .title("SEQTA Login")
+            .inner_size(900.0, 700.0)
+            .build()
+            .map_err(|e| format!("Failed to build window: {}", e))?;
     }
-
-    let parsed_url = match Url::parse(&http_url) {
-        Ok(u) => u,
-        Err(e) => return Err(format!("Invalid URL: {}", e))
-    };
-
-    let full_url: Url = match Url::parse(&format!("{}", parsed_url)) {
-        Ok(u) => u,
-        Err(e) => return Err(format!("Invalid URL: {}", e))// Nothing
-
-    };
-
-    // Spawn the login window
-    WebviewWindowBuilder::new(&app, "seqta_login", WebviewUrl::External(full_url.clone()))
-        .title("SEQTA Login")
-        .inner_size(900.0, 700.0)
-        .build()
-        .map_err(|e| format!("Failed to build window: {}", e))?;
+    #[cfg(not(desktop))]
+    {
+        return Err("Webview windows not supported on mobile platforms".to_string());
+    }
     Ok(())
-
 }
 
 #[tauri::command]
