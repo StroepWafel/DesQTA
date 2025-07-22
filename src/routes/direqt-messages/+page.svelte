@@ -36,10 +36,12 @@
   // Derived state for mobile modal
   let showMobileModal = $derived(!!selectedMessage);
   let selectedTab = $state('SEQTA'); // 'SEQTA' or 'BetterSEQTA'
+  let seqtaLoadFailed = $state(false);
 
   async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '') {
     loading = true;
     error = null;
+    seqtaLoadFailed = false;
     console.log(folderLabel);
     try {
       if (folderLabel === 'sent') {
@@ -167,14 +169,16 @@
     } catch (e) {
       error = 'Failed to load messages.';
       messages = [];
+      seqtaLoadFailed = true;
     } finally {
       loading = false;
     }
   }
 
   $effect(() => {
-    // This effect will replace onMount
-    fetchMessages('inbox');
+    if (selectedTab === 'SEQTA') {
+      fetchMessages('inbox');
+    }
   });
 
   async function openMessage(msg: Message) {
@@ -339,34 +343,58 @@
   }
 </script>
 
+<!-- Tab Switcher -->
+<div class="flex gap-2 p-4 border-b border-slate-300/50 dark:border-slate-800/50 bg-white dark:bg-slate-900">
+  <button
+    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+      {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+    onclick={() => openTab('SEQTA')}
+    disabled={selectedTab === 'SEQTA'}>
+    SEQTA Messages
+  </button>
+  <button
+    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+      {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+    onclick={() => openTab('BetterSEQTA')}
+    disabled={selectedTab === 'BetterSEQTA'}>
+    Cloud Messaging
+  </button>
+</div>
+
 <div class="flex h-full">
   <div class="flex w-full h-full max-xl:flex-col">
-    <Sidebar {selectedFolder} {openFolder} {openCompose} {selectedTab} {openTab} />
-
     {#if selectedTab === 'SEQTA'}
-      <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
-      <!-- Message detail view - full screen on mobile -->
-      <div class="hidden flex-1 xl:block">
-        <MessageDetail
-          {selectedMessage}
-          {selectedFolder}
-          {detailLoading}
-          {detailError}
-          {openCompose}
-          {starMessage}
-          {deleteMessage}
-          {restoreMessage}
-          {starring}
-          {deleting}
-          {restoring} />
-      </div>
+      {#if seqtaLoadFailed}
+        <div class="flex flex-col items-center justify-center w-full h-full p-8 text-center">
+          <div class="text-red-500 dark:text-red-400 text-lg font-semibold mb-4">SEQTA messaging is disabled or failed to load.</div>
+          <div class="text-slate-500 dark:text-slate-300 mb-4">You can still use BetterSEQTA messaging by switching tabs above.</div>
+        </div>
+      {:else}
+        <Sidebar {selectedFolder} {openFolder} {openCompose} />
+        <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
+        <!-- Message detail view - full screen on mobile -->
+        <div class="hidden flex-1 xl:block">
+          <MessageDetail
+            {selectedMessage}
+            {selectedFolder}
+            {detailLoading}
+            {detailError}
+            {openCompose}
+            {starMessage}
+            {deleteMessage}
+            {restoreMessage}
+            {starring}
+            {deleting}
+            {restoring} />
+        </div>
+      {/if}
     {:else if selectedTab === 'BetterSEQTA'}
       <BetterSeqtaChat />
     {/if}
   </div>
 
   <!-- Mobile message detail modal -->
-  {#if selectedTab === 'SEQTA'}
+  {#if selectedTab === 'SEQTA' && !seqtaLoadFailed}
     <div class="xl:hidden">
       <Modal
         open={showMobileModal}
