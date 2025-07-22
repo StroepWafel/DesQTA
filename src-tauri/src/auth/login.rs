@@ -172,16 +172,8 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         .default_headers(headers)
         .build()
         .unwrap();
-
-    // Step 1 - Authenticate the token to allow it for use with other things. 
-    let recovery_url = format!("{}/seqta/student/recover", base_url);
     
-    let recovery_body = json!({
-        "mode": "info",
-        "recovery": &token
-    });
-    
-    // Step 2: First login request (empty body)
+    // Step 1: First login request (empty body)
     let first_login_url = format!("{}/seqta/student/login", base_url);
 
     let first_login_body = json!({
@@ -200,7 +192,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
     }
 
 
-    // Step 3: Second login request with JWT (this is where we get the user data and JSESSIONID)
+    // Step 2: Second login request with JWT (this is where we get the user data and JSESSIONID)
     let second_login_body = json!({
         "jwt": &token
     });
@@ -216,7 +208,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         return Err(format!("Second login failed with status: {}", status));
     }
 
-    // Step 4 - get cookie (which should be stored here)
+    // Step 3 - get cookie (which should be stored here)
     let jsessionid = second_response.headers().get("Set-Cookie")
         .and_then(|v| v.to_str().ok())
         .and_then(|cookie_str| {
@@ -227,7 +219,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         });
 
 
-    // Step 5: Send a heartbeat - Defib. Check if the JSESSIONID/JWT is valid
+    // Step 4: Send a heartbeat - Defib. Check if the JSESSIONID/JWT is valid
     let heartbeat_url = format!("{}/seqta/student/heartbeat", base_url);
 
     let heartbeat_body = json!({
