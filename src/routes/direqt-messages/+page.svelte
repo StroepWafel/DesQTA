@@ -3,6 +3,7 @@
   import { seqtaFetch, getRSS } from '../../utils/netUtil';
   import { type Message } from './types';
   import { cache } from '../../utils/cache';
+  import { invoke } from '@tauri-apps/api/core';
 
   // Components
   import Sidebar from './components/Sidebar.svelte';
@@ -37,6 +38,34 @@
   let showMobileModal = $derived(!!selectedMessage);
   let selectedTab = $state('SEQTA'); // 'SEQTA' or 'BetterSEQTA'
   let seqtaLoadFailed = $state(false);
+  let seqtaMessagesEnabled = $state<boolean | null>(null);
+
+  onMount(async () => {
+    try {
+      const config = await invoke('load_seqta_config');
+      let enabled: string | undefined = undefined;
+      if (config && typeof config === 'object') {
+        // Try payload first
+        if ('payload' in config && typeof config.payload === 'object' && config.payload !== null) {
+          enabled = (config.payload as Record<string, any>)[
+            'coneqt-s.messages.enabled'
+          ]?.value;
+        }
+        // Fallback to root if not found in payload
+        if (!enabled && 'coneqt-s.messages.enabled' in config) {
+          enabled = (config as Record<string, any>)[
+            'coneqt-s.messages.enabled'
+          ]?.value;
+        }
+      }
+      seqtaMessagesEnabled = enabled === 'enabled';
+      if (!seqtaMessagesEnabled) {
+        selectedTab = 'BetterSEQTA';
+      }
+    } catch (e) {
+      seqtaMessagesEnabled = null;
+    }
+  });
 
   async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '') {
     loading = true;
@@ -345,29 +374,50 @@
 
 <!-- Tab Switcher -->
 <div class="flex gap-2 p-4 border-b border-slate-300/50 dark:border-slate-800/50 bg-white dark:bg-slate-900">
-  <button
-    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
-      {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
-    onclick={() => openTab('SEQTA')}
-    disabled={selectedTab === 'SEQTA'}>
-    SEQTA Messages
-  </button>
-  <button
-    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
-      {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
-    onclick={() => openTab('BetterSEQTA')}
-    disabled={selectedTab === 'BetterSEQTA'}>
-    Cloud Messaging
-  </button>
+  {#if seqtaMessagesEnabled === null}
+    <div class="text-slate-500 dark:text-slate-300">Loading messaging config...</div>
+  {:else if seqtaMessagesEnabled}
+    <button
+      class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+        {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+      onclick={() => openTab('SEQTA')}
+      disabled={selectedTab === 'SEQTA'}>
+      SEQTA Messages
+    </button>
+    <button
+      class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+        {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+      onclick={() => openTab('BetterSEQTA')}
+      disabled={selectedTab === 'BetterSEQTA'}>
+      Cloud Messaging
+    </button>
+  {:else}
+    <button
+      class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base accent-bg text-white cursor-not-allowed opacity-60"
+      disabled>
+      SEQTA Messages (Disabled)
+    </button>
+    <button
+      class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+        {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+      onclick={() => openTab('BetterSEQTA')}
+      disabled={selectedTab === 'BetterSEQTA'}>
+      Cloud Messaging
+    </button>
+  {/if}
 </div>
 
 <div class="flex h-full">
   <div class="flex w-full h-full max-xl:flex-col">
-    {#if selectedTab === 'SEQTA'}
+    {#if seqtaMessagesEnabled === null}
+      <div class="flex flex-col items-center justify-center w-full h-full p-8 text-center">
+        <div class="text-slate-500 dark:text-slate-300 text-lg font-semibold mb-4">Loading messaging config...</div>
+      </div>
+    {:else if seqtaMessagesEnabled && selectedTab === 'SEQTA'}
       {#if seqtaLoadFailed}
         <div class="flex flex-col items-center justify-center w-full h-full p-8 text-center">
           <div class="text-red-500 dark:text-red-400 text-lg font-semibold mb-4">SEQTA messaging is disabled or failed to load.</div>
-          <div class="text-slate-500 dark:text-slate-300 mb-4">You can still use BetterSEQTA messaging by switching tabs above.</div>
+          <div class="text-slate-500 dark:text-slate-300 mb-4">You can still use Cloud Messaging by switching tabs above.</div>
         </div>
       {:else}
         <Sidebar {selectedFolder} {openFolder} {openCompose} />
@@ -394,7 +444,7 @@
   </div>
 
   <!-- Mobile message detail modal -->
-  {#if selectedTab === 'SEQTA' && !seqtaLoadFailed}
+  {#if seqtaMessagesEnabled && selectedTab === 'SEQTA' && !seqtaLoadFailed}
     <div class="xl:hidden">
       <Modal
         open={showMobileModal}
