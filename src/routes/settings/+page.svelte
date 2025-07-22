@@ -51,7 +51,7 @@
   let keyBuffer = '';
 
   // Set the API URL for cloud sync
-  const CLOUD_API_URL = 'http://smb.adenmgb.com:100';
+  const CLOUD_API_URL = 'https://accounts.betterseqta.adenmgb.com';
 
   async function loadSettings() {
     loading = true;

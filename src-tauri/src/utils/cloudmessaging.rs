@@ -70,7 +70,7 @@ pub struct Message {
     pub receiver: Option<Friend>,
 }
 
-const BASE_URL: &str = "http://smb.adenmgb.com:100"; // Change if needed
+const BASE_URL: &str = "https://accounts.betterseqta.adenmgb.com"; // Change if needed
 
 async fn get_auth_client(token: &str) -> Client {
     let mut headers = reqwest::header::HeaderMap::new();
