@@ -439,10 +439,8 @@
         { label: 'Courses', icon: BookOpen, path: '/courses' },
         { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
         { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
-        // Only show DM if enabled
-        ...(seqtaConfig?.payload?.['coneqt-s.messages.enabled']?.value !== 'disabled'
-          ? [{ label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' }]
-          : []),
+        // Always show DM (Messages) page
+        { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
         { label: 'Notices', icon: DocumentText, path: '/notices' },
         { label: 'News', icon: Newspaper, path: '/news' },
         { label: 'Directory', icon: User, path: '/directory' },
