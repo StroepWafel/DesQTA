@@ -53,6 +53,7 @@
   let showStudentDropdown = $state(false);
   let showStaffDropdown = $state(false);
   let isSubmitting = $state(false);
+  let studentsEnabled = $state(true);
 
   const filteredStudents = $derived(
     students
@@ -186,6 +187,24 @@
   onMount(() => {
     loadRecipients();
 
+    // Fetch settings to determine if student messaging is enabled
+    seqtaFetch('/seqta/student/load/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {},
+    }).then((res) => {
+      const data = typeof res === 'string' ? JSON.parse(res) : res;
+      if (
+        data?.payload?.['coneqt-s.messages.students.enabled']?.value === 'disabled'
+      ) {
+        studentsEnabled = false;
+      } else {
+        studentsEnabled = true;
+      }
+    }).catch(() => {
+      studentsEnabled = true; // fallback to enabled if error
+    });
+
     document.addEventListener('click', (e) => handleClickOutside(e, 'student'));
     document.addEventListener('click', (e) => handleClickOutside(e, 'staff'));
 
@@ -249,43 +268,45 @@
 
     <!-- Sidebar (right) column -->
     <div class="flex flex-col w-full sm:w-[320px] min-w-0 sm:min-w-[260px] sm:max-w-[360px] border-t sm:border-t-0 sm:border-l border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 gap-4">
-      <!-- Student selector -->
-      <div class="relative mb-2">
-        <label for="student-search" class="block mb-1 text-sm">Select student</label>
-        <input
-          id="student-search"
-          type="text"
-          placeholder="Search students..."
-          bind:value={studentSearchQuery}
-          onfocus={() => (showStudentDropdown = true)}
-          class="px-4 py-2 w-full bg-white rounded-lg placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        {#if showStudentDropdown}
-          <div
-            id="student-dropdown"
-            class="overflow-y-auto absolute z-10 mt-1 w-full max-h-60 bg-white rounded-lg border shadow-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-            {#if loadingStudents}
-              <div class="p-3 text-center text-slate-600 dark:text-slate-400">
-                Loading students...
-              </div>
-            {:else if filteredStudents.length === 0}
-              <div class="p-3 text-center text-slate-600 dark:text-slate-400">
-                {studentSearchQuery ? 'No matching students' : 'Type to search students'}
-              </div>
-            {:else}
-              {#each filteredStudents as student}
-                <button
-                  class="flex justify-between items-center px-4 py-2 w-full text-left text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
-                  onclick={() => addRecipient(student.id, student.xx_display, false)}>
-                  <span>{student.xx_display}</span>
-                  <span class="text-xs text-slate-600 dark:text-slate-400">
-                    Year {student.year} · {student['sub-school']}
-                  </span>
-                </button>
-              {/each}
-            {/if}
-          </div>
-        {/if}
-      </div>
+      <!-- Student selector (conditionally rendered) -->
+      {#if studentsEnabled}
+        <div class="relative mb-2">
+          <label for="student-search" class="block mb-1 text-sm">Select student</label>
+          <input
+            id="student-search"
+            type="text"
+            placeholder="Search students..."
+            bind:value={studentSearchQuery}
+            onfocus={() => (showStudentDropdown = true)}
+            class="px-4 py-2 w-full bg-white rounded-lg placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          {#if showStudentDropdown}
+            <div
+              id="student-dropdown"
+              class="overflow-y-auto absolute z-10 mt-1 w-full max-h-60 bg-white rounded-lg border shadow-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+              {#if loadingStudents}
+                <div class="p-3 text-center text-slate-600 dark:text-slate-400">
+                  Loading students...
+                </div>
+              {:else if filteredStudents.length === 0}
+                <div class="p-3 text-center text-slate-600 dark:text-slate-400">
+                  {studentSearchQuery ? 'No matching students' : 'Type to search students'}
+                </div>
+              {:else}
+                {#each filteredStudents as student}
+                  <button
+                    class="flex justify-between items-center px-4 py-2 w-full text-left text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
+                    onclick={() => addRecipient(student.id, student.xx_display, false)}>
+                    <span>{student.xx_display}</span>
+                    <span class="text-xs text-slate-600 dark:text-slate-400">
+                      Year {student.year} · {student['sub-school']}
+                    </span>
+                  </button>
+                {/each}
+              {/if}
+            </div>
+          {/if}
+        </div>
+      {/if}
 
       <!-- Staff selector -->
       <div class="relative mb-2">
