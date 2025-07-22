@@ -10,6 +10,7 @@
   import MessageDetail from './components/Message.svelte';
   import ComposeModal from './components/ComposeModal.svelte';
   import Modal from '$lib/components/Modal.svelte';
+  import BetterSeqtaChat from './components/BetterSeqtaChat.svelte';
 
   // External Libraries
   import dayjs from 'dayjs';
@@ -34,6 +35,7 @@
 
   // Derived state for mobile modal
   let showMobileModal = $derived(!!selectedMessage);
+  let selectedTab = $state('SEQTA'); // 'SEQTA' or 'BetterSEQTA'
 
   async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '') {
     loading = true;
@@ -330,82 +332,92 @@
       restoring = false;
     }
   }
+
+  function openTab(tab: string) {
+    selectedTab = tab;
+    selectedMessage = null;
+  }
 </script>
 
 <div class="flex h-full">
   <div class="flex w-full h-full max-xl:flex-col">
-    <Sidebar {selectedFolder} {openFolder} {openCompose} />
+    <Sidebar {selectedFolder} {openFolder} {openCompose} {selectedTab} {openTab} />
 
-    <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
-
-    <!-- Message detail view - full screen on mobile -->
-    <div class="hidden flex-1 xl:block">
-      <MessageDetail
-        {selectedMessage}
-        {selectedFolder}
-        {detailLoading}
-        {detailError}
-        {openCompose}
-        {starMessage}
-        {deleteMessage}
-        {restoreMessage}
-        {starring}
-        {deleting}
-        {restoring} />
-    </div>
+    {#if selectedTab === 'SEQTA'}
+      <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
+      <!-- Message detail view - full screen on mobile -->
+      <div class="hidden flex-1 xl:block">
+        <MessageDetail
+          {selectedMessage}
+          {selectedFolder}
+          {detailLoading}
+          {detailError}
+          {openCompose}
+          {starMessage}
+          {deleteMessage}
+          {restoreMessage}
+          {starring}
+          {deleting}
+          {restoring} />
+      </div>
+    {:else if selectedTab === 'BetterSEQTA'}
+      <BetterSeqtaChat />
+    {/if}
   </div>
 
   <!-- Mobile message detail modal -->
-  <div class="xl:hidden">
-    <Modal
-      open={showMobileModal}
-      onclose={() => (selectedMessage = null)}
-      maxWidth="w-full"
-      maxHeight="h-full"
-      customClasses="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-none"
-      showCloseButton={false}
-      closeOnBackdrop={false}
-      ariaLabel="Message Detail">
-      <div class="flex flex-col h-full">
-        <div
-          class="flex justify-between items-center p-4 border-b border-slate-300/50 dark:border-slate-800/50">
-          <button
-            class="flex gap-2 items-center transition-colors text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-            onclick={() => (selectedMessage = null)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-5 h-5"
-              viewBox="0 0 20 20"
-              fill="currentColor">
-              <path
-                fill-rule="evenodd"
-                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                clip-rule="evenodd" />
-            </svg>
-            <span class="text-sm font-medium">Back</span>
-          </button>
-          <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Message</span>
-          <div class="w-8"></div>
-          <!-- Spacer for alignment -->
-        </div>
+  {#if selectedTab === 'SEQTA'}
+    <div class="xl:hidden">
+      <Modal
+        open={showMobileModal}
+        onclose={() => (selectedMessage = null)}
+        maxWidth="w-full"
+        maxHeight="h-full"
+        customClasses="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-none"
+        showCloseButton={false}
+        closeOnBackdrop={false}
+        ariaLabel="Message Detail">
+        <div class="flex flex-col h-full">
+          <div
+            class="flex justify-between items-center p-4 border-b border-slate-300/50 dark:border-slate-800/50">
+            <button
+              class="flex gap-2 items-center transition-colors text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              onclick={() => (selectedMessage = null)}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-5 h-5"
+                viewBox="0 0 20 20"
+                fill="currentColor">
+                <path
+                  fill-rule="evenodd"
+                  d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                  clip-rule="evenodd" />
+              </svg>
+              <span class="text-sm font-medium">Back</span>
+            </button>
+            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Message</span>
+            <div class="w-8"></div>
+            <!-- Spacer for alignment -->
+          </div>
 
-        <div class="overflow-y-auto flex-1">
-          <MessageDetail
-            {selectedMessage}
-            {selectedFolder}
-            {detailLoading}
-            {detailError}
-            {openCompose}
-            {starMessage}
-            {deleteMessage}
-            {restoreMessage}
-            {starring}
-            {deleting}
-            {restoring} />
+          <div class="overflow-y-auto flex-1">
+            <MessageDetail
+              {selectedMessage}
+              {selectedFolder}
+              {detailLoading}
+              {detailError}
+              {openCompose}
+              {starMessage}
+              {deleteMessage}
+              {restoreMessage}
+              {starring}
+              {deleting}
+              {restoring} />
+          </div>
         </div>
-      </div>
-    </Modal>
-  </div>
+      </Modal>
+    </div>
+  {/if}
 </div>
 
 <ComposeModal {showComposeModal} {composeSubject} {composeBody} {closeModal} />

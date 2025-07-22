@@ -1,13 +1,15 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
-  import { Plus, Inbox, PaperAirplane, Trash, Star, Rss } from 'svelte-hero-icons';
+  import { Plus, Inbox, PaperAirplane, Trash, Star, Rss, ChatBubbleLeftRight } from 'svelte-hero-icons';
   import { getRSS } from '../../../utils/netUtil';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  let { selectedFolder, openFolder, openCompose } = $props<{
+  let { selectedFolder, openFolder, openCompose, selectedTab, openTab } = $props<{
     selectedFolder: any;
     openFolder: (folder: any) => void;
     openCompose: () => void;
+    selectedTab: string;
+    openTab: (tab: string) => void;
   }>();
 
   interface Feed {
@@ -49,7 +51,19 @@
       <span>Compose</span>
     </button>
   </div>
-
+  <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
+    <button
+      class="w-full flex items-center gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
+        {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white border-l-4 accent-bg pl-[1.25rem] shadow-md' : 'border-l-4 border-transparent text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700 hover:scale-[1.02]'}
+        focus:outline-none focus:ring-2 accent-ring"
+      onclick={() => openTab('BetterSEQTA')}>
+      <Icon src={ChatBubbleLeftRight} class="w-5 h-5" />
+      <span>BetterSEQTA Messaging</span>
+      {#if selectedTab === 'BetterSEQTA'}
+        <div class="absolute right-2 top-1/2 w-1.5 h-1.5 accent-bg rounded-full -translate-y-1/2"></div>
+      {/if}
+    </button>
+  </nav>
   {#await rssFeeds}
     <p>Loading Data...</p>
   {:then folders}

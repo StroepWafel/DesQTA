@@ -50,6 +50,9 @@
   let showDevSettings = false;
   let keyBuffer = '';
 
+  // Set the API URL for cloud sync
+  const CLOUD_API_URL = 'http://smb.adenmgb.com:100';
+
   async function loadSettings() {
     loading = true;
     try {
@@ -329,7 +332,7 @@
     <div class="space-y-6 sm:space-y-8">
       <!-- Cloud Sync Section -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-slate-100/60 dark:bg-slate-800/30 sm:rounded-2xl border-slate-300/30 dark:border-slate-800/30 animate-fade-in-up relative opacity-60">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-slate-100/60 dark:bg-slate-800/30 sm:rounded-2xl border-slate-300/30 dark:border-slate-800/30 animate-fade-in-up relative">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/30 dark:border-slate-800/30">
           <h2 class="text-base font-semibold sm:text-lg text-slate-500 dark:text-slate-400">Cloud Sync</h2>
           <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500">
@@ -337,15 +340,7 @@
           </p>
         </div>
         <div class="p-4 sm:p-6 relative">
-          <!-- Coming Soon Overlay -->
-          <div class="absolute inset-0 flex items-center justify-center bg-slate-200/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg z-10">
-            <div class="text-center">
-              <div class="text-2xl font-bold text-slate-600 dark:text-slate-400 mb-2">Coming Soon</div>
-              <div class="text-sm text-slate-500 dark:text-slate-500">Cloud sync functionality will be available in a future update</div>
-            </div>
-          </div>
-          
-          <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in opacity-50">
+          <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
             <div class="flex flex-col gap-4">
               <div>
                 <h3 class="text-sm font-semibold sm:text-base mb-2 text-slate-500 dark:text-slate-400">Settings Synchronization</h3>
@@ -359,11 +354,14 @@
                     Create a free BetterSEQTA Plus account
                   </a> to get started with cloud syncing.
                 </p>
+                <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                  <strong>Cloud API URL:</strong> {CLOUD_API_URL}
+                </p>
               </div>
               <div class="flex flex-col gap-3 sm:flex-row">
                 <button
-                  class="flex gap-2 items-center justify-center px-6 py-3 text-slate-400 bg-slate-300 dark:bg-slate-600 rounded-lg shadow transition-all duration-200 cursor-not-allowed"
-                  disabled>
+                  class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition-all duration-200"
+                  onclick={openCloudSyncModal}>
                   <Icon src={CloudArrowUp} class="w-5 h-5" />
                   Sync Settings
                 </button>
