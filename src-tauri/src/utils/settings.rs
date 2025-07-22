@@ -434,6 +434,7 @@ pub async fn save_cloud_token(token: String) -> Result<CloudUser, String> {
     let mut cloud_token = CloudToken::load();
     cloud_token.token = Some(token);
     cloud_token.user = Some(user.clone());
+    // This uses cloud_token_file(), which saves to the correct Android folder on Android
     cloud_token.save().map_err(|e| e.to_string())?;
     Ok(user)
 }

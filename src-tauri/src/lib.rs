@@ -229,7 +229,10 @@ pub fn run() {
             seqta_config::is_seqta_config_different,
             cloudmessaging::get_friends,
             cloudmessaging::send_message,
-            cloudmessaging::get_messages
+            cloudmessaging::get_messages,
+            cloudmessaging::list_groups,
+            cloudmessaging::create_group,
+            cloudmessaging::upload_attachment
         ])
         .setup(|app| {
             #[cfg(desktop)]

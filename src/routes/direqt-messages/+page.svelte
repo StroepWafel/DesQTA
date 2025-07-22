@@ -206,7 +206,7 @@
 
   $effect(() => {
     if (selectedTab === 'SEQTA') {
-      fetchMessages('inbox');
+    fetchMessages('inbox');
     }
   });
 
@@ -421,22 +421,22 @@
         </div>
       {:else}
         <Sidebar {selectedFolder} {openFolder} {openCompose} />
-        <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
-        <!-- Message detail view - full screen on mobile -->
-        <div class="hidden flex-1 xl:block">
-          <MessageDetail
-            {selectedMessage}
-            {selectedFolder}
-            {detailLoading}
-            {detailError}
-            {openCompose}
-            {starMessage}
-            {deleteMessage}
-            {restoreMessage}
-            {starring}
-            {deleting}
-            {restoring} />
-        </div>
+      <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
+      <!-- Message detail view - full screen on mobile -->
+      <div class="hidden flex-1 xl:block">
+        <MessageDetail
+          {selectedMessage}
+          {selectedFolder}
+          {detailLoading}
+          {detailError}
+          {openCompose}
+          {starMessage}
+          {deleteMessage}
+          {restoreMessage}
+          {starring}
+          {deleting}
+          {restoring} />
+      </div>
       {/if}
     {:else if selectedTab === 'BetterSEQTA'}
       <BetterSeqtaChat />
