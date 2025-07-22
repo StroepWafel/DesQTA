@@ -1,5 +1,4 @@
 use reqwest::header;
-use serde_json::Number;
 use tauri::{Emitter, Manager};
 use time::OffsetDateTime;
 use url::Url;
@@ -9,12 +8,7 @@ use base64::{Engine as _, engine::general_purpose};
 
 use std::sync::Arc;
 
-use reqwest::{cookie::{Jar, CookieStore}};
-
-use tokio::time::{sleep, Duration};
-
-use tokio_util::sync::CancellationToken;
-use std::sync::{Mutex};
+use reqwest::{cookie::Jar};
 
 use crate::netgrab;
 use crate::session;
@@ -27,23 +21,14 @@ struct SeqtaSSOPayload {
 }
 
 #[derive(Deserialize)]
-struct AppLinkPayload {
-    app_link: String,
-    password_editable: bool
-}
+struct AppLinkPayload {}
 
 #[derive(Deserialize)]
-struct AppLinkResponse {
-    payload: AppLinkPayload,
-    status: String
-}
+struct AppLinkResponse {}
 
 #[derive(Debug, Deserialize)]
 struct SeqtaJWT {
-    sub: String,    // Subject (user ID)
     exp: i64,       // Expiration timestamp
-    t: String,      // Type/role
-    scope: String,  // Permission scope
 }
 
 
