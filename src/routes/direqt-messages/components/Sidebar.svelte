@@ -18,6 +18,7 @@
   async function a() {
     // Folder definitions
     let folders = [
+      { name: 'BetterSEQTA Messaging', icon: ChatBubbleLeftRight, id: 'betterseqta' },
       { name: 'Inbox', icon: Inbox, id: 'inbox' },
       { name: 'Sent', icon: PaperAirplane, id: 'sent' },
       { name: 'Starred', icon: Star, id: 'starred' },
@@ -51,39 +52,28 @@
       <span>Compose</span>
     </button>
   </div>
-  <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
-    <button
-      class="w-full flex items-center gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
-        {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white border-l-4 accent-bg pl-[1.25rem] shadow-md' : 'border-l-4 border-transparent text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700 hover:scale-[1.02]'}
-        focus:outline-none focus:ring-2 accent-ring"
-      onclick={() => openTab('BetterSEQTA')}>
-      <Icon src={ChatBubbleLeftRight} class="w-5 h-5" />
-      <span>BetterSEQTA Messaging</span>
-      {#if selectedTab === 'BetterSEQTA'}
-        <div class="absolute right-2 top-1/2 w-1.5 h-1.5 accent-bg rounded-full -translate-y-1/2"></div>
-      {/if}
-    </button>
-  </nav>
   {#await rssFeeds}
     <p>Loading Data...</p>
   {:then folders}
     <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
       {#each folders as folder}
-        <button
-          class="w-full flex items-center gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
-              {selectedFolder === folder.name
-            ? 'accent-bg text-white border-l-4 accent-bg pl-[1.25rem] shadow-md'
-            : 'border-l-4 border-transparent text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700 hover:scale-[1.02]'}
-              focus:outline-none focus:ring-2 accent-ring"
-          onclick={() => openFolder(folder)}>
-          <Icon src={folder.icon} class="w-5 h-5" />
-          <span>{folder.name}</span>
-          {#if selectedFolder === folder.name}
-            <div
-              class="absolute right-2 top-1/2 w-1.5 h-1.5 accent-bg rounded-full -translate-y-1/2">
-            </div>
-          {/if}
-        </button>
+        {#if folder.id === 'betterseqta' || selectedTab !== 'BetterSEQTA' && folder.id !== 'betterseqta'}
+          <button
+            class="w-full flex items-center gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
+                {(folder.id === 'betterseqta' ? selectedTab === 'BetterSEQTA' : selectedFolder === folder.name)
+              ? 'accent-bg text-white border-l-4 accent-bg pl-[1.25rem] shadow-md'
+              : 'border-l-4 border-transparent text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700 hover:scale-[1.02]'}
+                focus:outline-none focus:ring-2 accent-ring"
+            onclick={() => folder.id === 'betterseqta' ? openTab('BetterSEQTA') : openFolder(folder)}>
+            <Icon src={folder.icon} class="w-5 h-5" />
+            <span>{folder.name}</span>
+            {#if (folder.id === 'betterseqta' ? selectedTab === 'BetterSEQTA' : selectedFolder === folder.name)}
+              <div
+                class="absolute right-2 top-1/2 w-1.5 h-1.5 accent-bg rounded-full -translate-y-1/2">
+              </div>
+            {/if}
+          </button>
+        {/if}
       {/each}
     </nav>
   {:catch error}
