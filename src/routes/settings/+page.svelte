@@ -292,7 +292,7 @@
 
 <div class="p-4 mx-auto max-w-4xl sm:p-6 md:p-8">
   <div
-    class="sticky top-0 z-50 flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center animate-fade-in-up backdrop-blur-md bg-white/80 dark:bg-slate-900/80 py-4 px-6 border-b border-slate-200 dark:border-slate-800 rounded-xl">
+    class="sticky top-0 z-20 flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center animate-fade-in-up backdrop-blur-md bg-white/80 dark:bg-slate-900/80 py-4 px-6 border-b border-slate-200 dark:border-slate-800 rounded-xl">
     <h1 class="text-xl font-bold sm:text-2xl px-2 py-1 rounded-lg">Settings</h1>
     <div class="flex flex-col gap-2 items-start w-full sm:flex-row sm:items-center sm:w-auto">
       <button
