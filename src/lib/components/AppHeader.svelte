@@ -293,6 +293,15 @@
     return '';
   }
 
+  function handleNotificationClick(notification: Notification) {
+    if (notification.type === 'coneqtassessments' && notification.coneqtAssessments) {
+      const { assessmentID, metaclassID } = notification.coneqtAssessments;
+      goto(`/assessments/${assessmentID}/${metaclassID}`);
+    } else if (notification.type === 'report') {
+      goto('/reports');
+    }
+  }
+
   onMount(() => {
     loadGlobalSearchSetting();
     fetchNotifications();
@@ -403,7 +412,12 @@
               </div>
             {:else}
               {#each notifications as notification (notification.notificationID)}
-                <div class="p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
+                <button type="button"
+                  class="p-3 w-full text-left rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                  role="button"
+                  aria-label={getNotificationTitle(notification)}
+                  onclick={() => handleNotificationClick(notification)}
+                  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleNotificationClick(notification); } }}>
                   <div class="flex gap-3">
                     <div class="flex-shrink-0 w-2 h-2 bg-accent rounded-full mt-2"></div>
                     <div class="flex-1 min-w-0">
@@ -420,7 +434,7 @@
                       </p>
                     </div>
                   </div>
-                </div>
+                </button>
               {/each}
             {/if}
           </div>
@@ -498,7 +512,12 @@
             </div>
           {:else}
             {#each sortedNotifications as notification (notification.notificationID)}
-              <div class="p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
+              <button type="button"
+                class="p-3 w-full text-left rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                role="button"
+                aria-label={getNotificationTitle(notification)}
+                onclick={() => handleNotificationClick(notification)}
+                onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleNotificationClick(notification); } }}>
                 <div class="flex gap-3">
                   <div class="flex-shrink-0 w-2 h-2 bg-accent rounded-full mt-2"></div>
                   <div class="flex-1 min-w-0">
@@ -515,7 +534,7 @@
                     </p>
                   </div>
                 </div>
-              </div>
+              </button>
             {/each}
           {/if}
         </div>
