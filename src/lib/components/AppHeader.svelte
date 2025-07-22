@@ -140,6 +140,7 @@
   let notifications = $state<Notification[]>([]);
   let unreadNotifications = $state(0);
   let isMobile = $state(false);
+  let showNotificationsModal = $state(false);
 
   function handleSelect(page: { name: string; path: string }) {
     searchStore.set('');
@@ -238,9 +239,16 @@
   }
 
   function toggleNotifications() {
-    showNotifications = !showNotifications;
-    if (showNotifications && notifications.length === 0) {
-      fetchNotifications();
+    if (isMobile) {
+      showNotificationsModal = !showNotificationsModal;
+      if (showNotificationsModal && notifications.length === 0) {
+        fetchNotifications();
+      }
+    } else {
+      showNotifications = !showNotifications;
+      if (showNotifications && notifications.length === 0) {
+        fetchNotifications();
+      }
     }
   }
 
@@ -324,6 +332,9 @@
   $effect(() => {
     if ($searchStore) selectedIndex = -1;
   });
+
+  // Sort notifications by timestamp descending (latest first)
+  let sortedNotifications = $derived([...notifications].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
 </script>
 
 <header class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-[999999]" data-tauri-drag-region style="background: var(--background-color);">
@@ -455,5 +466,60 @@
   </div>
   {#if showPagesMenu}
     <PagesMenu on:close={closePagesMenu} />
+  {/if}
+  {#if showNotificationsModal}
+    <div
+      class="fixed inset-0 z-[9999999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Notifications"
+      tabindex="0"
+      onclick={() => { showNotificationsModal = false; }}
+      onkeydown={e => { if (e.key === 'Escape') showNotificationsModal = false; }}
+    >
+      <div class="relative w-full max-w-xl mx-auto rounded-2xl bg-white/70 dark:bg-gray-900/80 shadow-2xl border border-white/20 dark:border-gray-700/40 backdrop-blur-xl p-0 flex flex-col animate-in pointer-events-auto" role="document">
+        <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Notifications</h3>
+          <button
+            class="ml-2 px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold text-base"
+            onclick={() => { showNotificationsModal = false; }}>
+            Close
+          </button>
+        </div>
+        <div class="p-2 max-h-[70vh] overflow-y-auto">
+          {#if loadingNotifications}
+            <div class="flex justify-center items-center py-8">
+              <div class="w-6 h-6 rounded-full border-2 animate-spin border-accent/30 border-t-accent"></div>
+            </div>
+          {:else if sortedNotifications.length === 0}
+            <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+              <Icon src={Bell} class="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No notifications</p>
+            </div>
+          {:else}
+            {#each sortedNotifications as notification (notification.notificationID)}
+              <div class="p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
+                <div class="flex gap-3">
+                  <div class="flex-shrink-0 w-2 h-2 bg-accent rounded-full mt-2"></div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      {getNotificationTitle(notification)}
+                    </p>
+                    {#if getNotificationSubtitle(notification)}
+                      <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate">
+                        {getNotificationSubtitle(notification)}
+                      </p>
+                    {/if}
+                    <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                      {formatNotificationTime(notification.timestamp)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            {/each}
+          {/if}
+        </div>
+      </div>
+    </div>
   {/if}
 </header>
