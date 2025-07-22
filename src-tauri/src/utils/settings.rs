@@ -411,7 +411,7 @@ pub fn save_settings_from_json(json: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn save_cloud_token(token: String) -> Result<CloudUser, String> {
-    let base_url = "http://smb.adenmgb.com:100";
+    let base_url = "http://smb.adenmgb.com:100/api";
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/auth/me", base_url))
@@ -456,7 +456,7 @@ pub fn clear_cloud_token() -> Result<(), String> {
 pub async fn upload_settings_to_cloud() -> Result<(), String> {
     let cloud_token = CloudToken::load();
     let token = cloud_token.token.clone().ok_or("No cloud token found. Please authenticate first.")?;
-    let base_url = "http://smb.adenmgb.com:100";
+    let base_url = "http://smb.adenmgb.com:100/api";
     let settings = Settings::load();
     let settings_json = settings.to_json()?;
     let client = reqwest::Client::new();
@@ -483,7 +483,7 @@ pub async fn upload_settings_to_cloud() -> Result<(), String> {
 pub async fn download_settings_from_cloud() -> Result<Settings, String> {
     let cloud_token = CloudToken::load();
     let token = cloud_token.token.clone().ok_or("No cloud token found. Please authenticate first.")?;
-    let base_url = "http://smb.adenmgb.com:100";
+    let base_url = "http://smb.adenmgb.com:100/api";
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/files/list", base_url))
