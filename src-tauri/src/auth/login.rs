@@ -46,7 +46,6 @@ struct SeqtaJWT {
     scope: String,  // Permission scope
 }
 
-static RENEWAL_CANCELLATION_TOKEN: Mutex<Option<CancellationToken>> = Mutex::new(None);
 
 #[tauri::command]
 pub fn force_reload(app: tauri::AppHandle) {
@@ -73,15 +72,6 @@ pub fn save_session(base_url: String, jsessionid: String) -> Result<(), String> 
 
 #[tauri::command]
 pub async fn logout() -> bool {
-
-     // Cancel the renewal loop first
-    {
-        let mut global_token = RENEWAL_CANCELLATION_TOKEN.lock().unwrap();
-        if let Some(token) = global_token.take() {
-            token.cancel();
-            println!("Cancelled QR renewal loop");
-        }
-    }
 
     if let Ok(_) = netgrab::clear_session().await {
         true
@@ -161,10 +151,9 @@ fn validate_token(token: &str) -> Result<bool, String> {
     Ok(is_valid)
 }
 
+
 /// Perform the QR code authentication flow
 async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Session, String> {
-    let payload_for_renewal = sso_payload.clone();
-    
     let base_url = sso_payload.u;
     let token = sso_payload.t;
 
@@ -183,8 +172,16 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         .default_headers(headers)
         .build()
         .unwrap();
+
+    // Step 1 - Authenticate the token to allow it for use with other things. 
+    let recovery_url = format!("{}/seqta/student/recover", base_url);
     
-    // Step 1: First login request (empty body)
+    let recovery_body = json!({
+        "mode": "info",
+        "recovery": &token
+    });
+    
+    // Step 2: First login request (empty body)
     let first_login_url = format!("{}/seqta/student/login", base_url);
 
     let first_login_body = json!({
@@ -203,7 +200,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
     }
 
 
-    // Step 2: Second login request with JWT (this is where we get the user data)
+    // Step 3: Second login request with JWT (this is where we get the user data and JSESSIONID)
     let second_login_body = json!({
         "jwt": &token
     });
@@ -213,33 +210,24 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         .send()
         .await
         .map_err(|e| format!("Second login request failed: {}", e))?;
-
+    
     if !second_response.status().is_success() {
         let status = second_response.status();
         return Err(format!("Second login failed with status: {}", status));
     }
 
+    // Step 4 - get cookie (which should be stored here)
+    let jsessionid = second_response.headers().get("Set-Cookie")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|cookie_str| {
+            // Extract just the JSESSIONID value from "JSESSIONID=value; Path=/; HttpOnly"
+            cookie_str.split(';')
+                .find(|part| part.trim().starts_with("JSESSIONID="))
+                .map(|jsession_part| jsession_part.trim().strip_prefix("JSESSIONID=").unwrap_or("").to_string())
+        });
 
-    // Step 3: Recovery request
-    let recovery_url = format!("{}/seqta/student/recover", base_url);
-    
-    let recovery_body = json!({
-        "mode": "info",
-        "recovery": &token
-    });
-    
-    let recovery_response = client.post(&recovery_url)
-        .json(&recovery_body)
-        .send()
-        .await
-        .map_err(|e| format!("Recovery request failed: {}", e))?;
 
-    if !recovery_response.status().is_success() {
-        let status = recovery_response.status();
-        return Err(format!("Recovery failed with status: {}", status));
-    }
-
-    // Step 4: Send a heartbeat - Defib
+    // Step 5: Send a heartbeat - Defib. This is required.
     let heartbeat_url = format!("{}/seqta/student/heartbeat", base_url);
 
     let heartbeat_body = json!({
@@ -257,201 +245,16 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         return Err(format!("Heartbeat failed with status: {}", status));
     }
 
-
-    // Step 5: Get your new AppLink
-    let applink_url = format!("{}/seqta/student/load/profile", base_url);
-
-    let applink_body = json!({});
-
-    let applink_response = client.post(&applink_url)
-        .json(&applink_body)
-        .send()
-        .await
-        .map_err(|e| format!("Applink request failed: {}", e))?;
-
-    if !applink_response.status().is_success() {
-        let status = applink_response.status();
-        return Err(format!("Applink failed with status: {}", status));
-    }
-
-
-    let applink_json = &applink_response.json::<AppLinkResponse>().await.map_err(|e| format!("Failed to deserialize App link response: {}", e))?;
-    // Get the deeplink from the returned JSON
-    let deep = parse_deeplink(&applink_json.payload.app_link)?;
-
-    // Create session with the JWT token as the session ID
+    // Create session with the newly obtained JSESSIONID as the token
     let session = session::Session {
         base_url,
-        jsessionid: deep.t,
+        jsessionid: jsessionid.ok_or("Could not get JSESSIONID from response headers")?,
         additional_cookies: vec![], // QR auth doesn't use traditional cookies
     };
-
-    // Cancel any existing renewal loop before starting a new one
-    {
-        let mut global_token = RENEWAL_CANCELLATION_TOKEN.lock().unwrap();
-        if let Some(existing_token) = global_token.take() {
-            existing_token.cancel();
-            println!("Cancelled previous QR renewal loop");
-        }
-    }
-
-    // Create a NEW cancellation token for this session
-    let cancellation_token = CancellationToken::new();
-    
-    // Store the NEW token globally
-    {
-        let mut global_token = RENEWAL_CANCELLATION_TOKEN.lock().unwrap();
-        *global_token = Some(cancellation_token.clone());
-    }
-
-    tokio::task::spawn(async move {
-        qr_renewal_loop(payload_for_renewal, cancellation_token).await;
-    });
 
     Ok(session)
 }
 
-async fn qr_renewal_loop(sso_payload: SeqtaSSOPayload, cancellation_token: CancellationToken) {
-    loop {
-
-        if cancellation_token.is_cancelled() {
-            println!("QR renewal loop cancelled");
-            break;
-        }
-        
-        match perform_qr_renewal(&sso_payload).await {
-            Ok(_) => {
-                println!("QR renewal successful");
-            },
-            Err(e) => {
-                eprintln!("QR renewal failed: {}", e);
-                // Continue the loop to retry later
-            }
-        }
-
-        // Use cancellation-aware sleep
-        tokio::select! {
-            _ = tokio::time::sleep(Duration::from_secs(60 * 60)) => {
-                // Sleep completed normally, continue loop
-            }
-            _ = cancellation_token.cancelled() => {
-                println!("QR renewal loop cancelled during sleep");
-                break;
-            }
-        }
-    }
-}
-
-// Dedicated renewal function that doesn't spawn additional tasks
-async fn perform_qr_renewal(sso_payload: &SeqtaSSOPayload) -> Result<(), String> {
-    let base_url = sso_payload.u.clone();
-    let token = sso_payload.t.clone();
-
-    let jar = Arc::new(Jar::default());
-    jar.add_cookie_str(&format!("JSESSIONID={}", &token), &base_url.parse::<Url>().unwrap());
-    
-    let mut headers = header::HeaderMap::new();
-    headers.insert("Content-Type", header::HeaderValue::from_static("application/json"));
-    headers.insert("X-User-Number", header::HeaderValue::from_str(&sso_payload.n.clone()).unwrap());
-    headers.insert("Accept", header::HeaderValue::from_static("application/json"));
-    headers.insert("Authorization", header::HeaderValue::from_str(&format!("Bearer {}", &token)).unwrap());
-
-    let client = reqwest::Client::builder()
-        .cookie_provider(jar.clone())
-        .cookie_store(true)
-        .default_headers(headers)
-        .build()
-        .unwrap();
-    
-    // Step 1: First login request
-    let first_login_url = format!("{}/seqta/student/login", base_url);
-    let first_login_body = json!({"token": &token});
-    
-    let first_response = client.post(&first_login_url)
-        .json(&first_login_body)
-        .send()
-        .await
-        .map_err(|e| format!("Renewal first login request failed: {}", e))?;
-
-    if !first_response.status().is_success() {
-        return Err(format!("Renewal first login failed with status: {}", first_response.status()));
-    }
-
-    // Step 2: Second login request with JWT
-    let second_login_body = json!({"jwt": &token});
-    
-    let second_response = client.post(&first_login_url)
-        .json(&second_login_body)
-        .send()
-        .await
-        .map_err(|e| format!("Renewal second login request failed: {}", e))?;
-
-    if !second_response.status().is_success() {
-        return Err(format!("Renewal second login failed with status: {}", second_response.status()));
-    }
-
-    // Step 3: Recovery request
-    let recovery_url = format!("{}/seqta/student/recover", base_url);
-    let recovery_body = json!({
-        "mode": "info",
-        "recovery": &token
-    });
-    
-    let recovery_response = client.post(&recovery_url)
-        .json(&recovery_body)
-        .send()
-        .await
-        .map_err(|e| format!("Renewal recovery request failed: {}", e))?;
-
-    if !recovery_response.status().is_success() {
-        return Err(format!("Renewal recovery failed with status: {}", recovery_response.status()));
-    }
-
-    // Step 4: Heartbeat
-    let heartbeat_url = format!("{}/seqta/student/heartbeat", base_url);
-    let heartbeat_body = json!({"heartbeat": true});
-
-    let heartbeat_response = client.post(&heartbeat_url)
-        .json(&heartbeat_body)
-        .send()
-        .await
-        .map_err(|e| format!("Renewal heartbeat request failed: {}", e))?;
-
-    if !heartbeat_response.status().is_success() {
-        return Err(format!("Renewal heartbeat failed with status: {}", heartbeat_response.status()));
-    }
-
-    // Step 5: Get new AppLink
-    let applink_url = format!("{}/seqta/student/load/profile", base_url);
-    let applink_body = json!({});
-
-    let applink_response = client.post(&applink_url)
-        .json(&applink_body)
-        .send()
-        .await
-        .map_err(|e| format!("Renewal applink request failed: {}", e))?;
-
-    if !applink_response.status().is_success() {
-        return Err(format!("Renewal applink failed with status: {}", applink_response.status()));
-    }
-
-    let applink_json = applink_response.json::<AppLinkResponse>().await
-        .map_err(|e| format!("Failed to deserialize renewal app link response: {}", e))?;
-    
-    let deep = parse_deeplink(&applink_json.payload.app_link)?;
-
-    // Update the session with the renewed token
-    let session = session::Session {
-        base_url,
-        jsessionid: deep.t,
-        additional_cookies: vec![],
-    };
-
-    session.save().map_err(|e| format!("Failed to save renewed session: {}", e))?;
-    
-    println!("Session renewed and saved successfully");
-    Ok(())
-}
 
 
 
