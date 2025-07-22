@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use reqwest::Client;
-use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Friend {
@@ -15,6 +13,8 @@ pub struct Friend {
     pub pfp_url: Option<String>,
 }
 
+// Suppress non_snake_case warnings for compatibility with frontend naming
+#[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Message {
     pub id: i32,
@@ -73,6 +73,8 @@ pub async fn send_message(token: String, receiver_id: i32, content: String) -> R
     Ok(msg)
 }
 
+// Suppress non_snake_case warning for function parameter
+#[allow(non_snake_case)]
 #[tauri::command]
 pub async fn get_messages(token: String, userId: i32) -> Result<Vec<Message>, String> {
     let client = get_auth_client(&token).await;
