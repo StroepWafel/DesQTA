@@ -227,7 +227,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         });
 
 
-    // Step 5: Send a heartbeat - Defib. This is required.
+    // Step 5: Send a heartbeat - Defib. Check if the JSESSIONID/JWT is valid
     let heartbeat_url = format!("{}/seqta/student/heartbeat", base_url);
 
     let heartbeat_body = json!({
@@ -249,7 +249,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
     let session = session::Session {
         base_url,
         jsessionid: jsessionid.ok_or("Could not get JSESSIONID from response headers")?,
-        additional_cookies: vec![], // QR auth doesn't use traditional cookies
+        additional_cookies: vec![], // No additional cookies given by QR auth (same as SSO and normal login now)
     };
 
     Ok(session)
