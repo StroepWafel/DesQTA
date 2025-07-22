@@ -11,7 +11,7 @@
 
   import jsQR from 'jsqr';
 
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount as svelteOnMount, onDestroy } from 'svelte';
   import '../app.css';
   import { accentColor, loadAccentColor, theme, loadTheme, loadCurrentTheme } from '../lib/stores/theme';
   import { Icon } from 'svelte-hero-icons';
@@ -64,6 +64,22 @@
   let autoCollapseSidebar = $state(false);
   let autoExpandSidebarHover = $state(false);
 
+  let seqtaConfig: any = $state(null);
+  let menu = $state([
+    { label: 'Dashboard', icon: Home, path: '/' },
+    { label: 'Courses', icon: BookOpen, path: '/courses' },
+    { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
+    { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
+    { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { label: 'Notices', icon: DocumentText, path: '/notices' },
+    { label: 'News', icon: Newspaper, path: '/news' },
+    { label: 'Directory', icon: User, path: '/directory' },
+    { label: 'Reports', icon: ChartBar, path: '/reports' },
+    { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
+    { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
+  ]);
+  let menuLoading = $state(true);
+
   function handleClickOutside(event: MouseEvent) {
     const target = event.target as Element;
     if (!target.closest('.user-dropdown-container')) {
@@ -79,10 +95,10 @@
     }
   }
 
-  onMount(checkSession);
+  svelteOnMount(checkSession);
 
   let unlisten: (() => void) | undefined;
-  onMount(async () => {
+  svelteOnMount(async () => {
     unlisten = await listen<string>('reload', () => {
       location.reload();
     });
@@ -280,7 +296,7 @@
     }
   });
 
-  onMount(async () => {
+  svelteOnMount(async () => {
     await Promise.all([
       checkSession(),
       loadWeatherSettings(),
@@ -354,7 +370,7 @@
     }
   });
 
-  onMount(() => {
+  svelteOnMount(() => {
     const checkMobile = () => {
       const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM
       if (tauri_platform == "ios" || tauri_platform == "android") {
@@ -381,19 +397,70 @@
     };
   });
 
-  const menu = [
-    { label: 'Dashboard', icon: Home, path: '/' },
-    { label: 'Courses', icon: BookOpen, path: '/courses' },
-    { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
-    { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
-    { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
-    { label: 'Notices', icon: DocumentText, path: '/notices' },
-    { label: 'News', icon: Newspaper, path: '/news' },
-    { label: 'Directory', icon: User, path: '/directory' },
-    { label: 'Reports', icon: ChartBar, path: '/reports' },
-    { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
-    { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
-  ];
+  async function loadSeqtaConfigAndMenu() {
+    try {
+      let config = await invoke('load_seqta_config');
+      let needsFetch = false;
+      let latestConfig = null;
+      if (!config) {
+        needsFetch = true;
+      } else {
+        // Fetch latest config from SEQTA
+        const res = await seqtaFetch('/seqta/student/load/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: {},
+        });
+        latestConfig = typeof res === 'string' ? JSON.parse(res) : res;
+        // Check if config is outdated
+        const isDifferent = await invoke('is_seqta_config_different', { newConfig: latestConfig });
+        if (isDifferent) {
+          needsFetch = true;
+        } else {
+          seqtaConfig = config;
+        }
+      }
+      if (needsFetch) {
+        // Save the latest config
+        if (!latestConfig) {
+          const res = await seqtaFetch('/seqta/student/load/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: {},
+          });
+          latestConfig = typeof res === 'string' ? JSON.parse(res) : res;
+        }
+        seqtaConfig = latestConfig;
+        await invoke('save_seqta_config', { config: latestConfig });
+      }
+      // Now, build the menu based on config
+      let newMenu = [
+        { label: 'Dashboard', icon: Home, path: '/' },
+        { label: 'Courses', icon: BookOpen, path: '/courses' },
+        { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
+        { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
+        // Only show DM if enabled
+        ...(seqtaConfig?.payload?.['coneqt-s.messages.enabled']?.value !== 'disabled'
+          ? [{ label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' }]
+          : []),
+        { label: 'Notices', icon: DocumentText, path: '/notices' },
+        { label: 'News', icon: Newspaper, path: '/news' },
+        { label: 'Directory', icon: User, path: '/directory' },
+        { label: 'Reports', icon: ChartBar, path: '/reports' },
+        { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
+        { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
+      ];
+      menu = newMenu;
+    } catch (e) {
+      console.error('Failed to load SEQTA config or menu:', e);
+    } finally {
+      menuLoading = false;
+    }
+  }
+
+  svelteOnMount(() => {
+    loadSeqtaConfigAndMenu();
+  });
 </script>
 
 {#if isLoading}
@@ -418,7 +485,9 @@
 
     <div class="flex flex-1 min-h-0 relative">
       {#if !$needsSetup}
-        <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+        {#if !menuLoading}
+          <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+        {/if}
       {/if}
 
       <!-- Mobile Sidebar Overlay -->

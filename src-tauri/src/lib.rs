@@ -9,6 +9,8 @@ mod settings;
 mod analytics;
 #[path = "utils/session.rs"]
 mod session;
+#[path = "utils/seqta_config.rs"]
+mod seqta_config;
 
 
 use tauri::Manager;
@@ -219,7 +221,10 @@ pub fn run() {
             settings::check_cloud_settings,
             analytics::save_analytics,
             analytics::load_analytics,
-            analytics::delete_analytics
+            analytics::delete_analytics,
+            seqta_config::load_seqta_config,
+            seqta_config::save_seqta_config,
+            seqta_config::is_seqta_config_different
         ])
         .setup(|app| {
             #[cfg(desktop)]
