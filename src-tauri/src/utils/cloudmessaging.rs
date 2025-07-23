@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
 use reqwest::Client;
+use std::io::Write;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Friend {
-    pub id: i32,
+    pub id: String,
     pub username: String,
     #[serde(default)]
     #[serde(rename = "displayName")]
@@ -15,7 +16,7 @@ pub struct Friend {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GroupMember {
-    pub id: i32,
+    pub id: String,
     #[serde(default)]
     #[serde(rename = "displayName")]
     pub display_name: Option<String>,
@@ -23,31 +24,39 @@ pub struct GroupMember {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Group {
-    pub id: i32,
+    pub id: String,
     pub name: String,
     #[serde(default)]
-    pub iconUrl: Option<String>,
+    #[serde(rename = "iconUrl")]
+    pub icon_url: Option<String>,
+    #[serde(default)]
     pub members: Vec<GroupMember>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Attachment {
-    pub id: Option<i32>,
+    pub id: Option<String>,
     pub filename: Option<String>,
-    pub storedName: Option<String>,
-    pub mimeType: Option<String>,
+    #[serde(rename = "storedName")]
+    pub stored_name: Option<String>,
+    #[serde(rename = "mimeType")]
+    pub mime_type: Option<String>,
     pub size: Option<i64>,
     pub url: Option<String>,
-    pub isPublic: Option<bool>,
-    pub createdAt: Option<String>,
-    pub userId: Option<i32>,
+    #[serde(rename = "isPublic")]
+    pub is_public: Option<bool>,
+    #[serde(rename = "createdAt")]
+    pub created_at: Option<String>,
+    #[serde(rename = "userId")]
+    pub user_id: Option<String>,
     pub path: Option<String>,
-    pub updatedAt: Option<String>,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MessageReply {
-    pub id: i32,
+    pub id: String,
     pub content: String,
 }
 
@@ -55,19 +64,20 @@ pub struct MessageReply {
 #[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Message {
-    pub id: i32,
-    pub senderId: i32,
-    pub receiverId: Option<i32>,
-    pub groupId: Option<i32>,
+    pub id: String,
+    pub senderId: String,
+    pub receiverId: Option<String>,
+    pub groupId: Option<String>,
     pub content: String,
     pub read: bool,
     pub createdAt: String,
-    pub replyToId: Option<i32>,
+    pub replyToId: Option<String>,
     pub replyTo: Option<MessageReply>,
-    pub attachmentId: Option<i32>,
+    pub attachmentId: Option<String>,
     pub attachment: Option<Attachment>,
     pub sender: Option<Friend>,
     pub receiver: Option<Friend>,
+    pub group: Option<Group>,
 }
 
 const BASE_URL: &str = "https://accounts.betterseqta.adenmgb.com"; // Change if needed
@@ -103,7 +113,7 @@ pub async fn get_friends(token: String) -> Result<Vec<Friend>, String> {
 #[tauri::command]
 pub async fn list_groups(token: String) -> Result<Vec<Group>, String> {
     let client = get_auth_client(&token).await;
-    let url = format!("{}/api/messages", BASE_URL);
+    let url = format!("{}/api/groups", BASE_URL);
     let resp = client.get(&url).send().await.map_err(|e| e.to_string())?;
     if !resp.status().is_success() {
         return Err(format!("Failed to fetch groups: {}", resp.status()));
@@ -113,9 +123,9 @@ pub async fn list_groups(token: String) -> Result<Vec<Group>, String> {
 }
 
 #[tauri::command]
-pub async fn create_group(token: String, name: String, member_ids: Vec<i32>) -> Result<Group, String> {
+pub async fn create_group(token: String, name: String, member_ids: Vec<String>) -> Result<Group, String> {
     let client = get_auth_client(&token).await;
-    let url = format!("{}/api/messages/create-group", BASE_URL);
+    let url = format!("{}/api/groups", BASE_URL);
     let body = serde_json::json!({
         "name": name,
         "memberIds": member_ids
@@ -131,20 +141,29 @@ pub async fn create_group(token: String, name: String, member_ids: Vec<i32>) -> 
 #[tauri::command]
 pub async fn send_message(
     token: String,
-    receiver_id: Option<i32>,
-    group_id: Option<i32>,
+    receiver_id: Option<String>,
+    group_id: Option<String>,
     content: String,
-    reply_to_id: Option<i32>,
-    attachment_id: Option<i32>,
+    reply_to_id: Option<String>,
+    attachment_id: Option<String>,
 ) -> Result<Message, String> {
     let client = get_auth_client(&token).await;
-    let url = format!("{}/api/messages", BASE_URL);
+    
+    // Determine the chat ID based on whether it's a DM or group message
+    let chat_id = if let Some(ref gid) = group_id {
+        gid.clone()
+    } else if let Some(ref rid) = receiver_id {
+        rid.clone()
+    } else {
+        return Err("No recipient specified".to_string());
+    };
+    
+    let url = format!("{}/api/messages/{}", BASE_URL, chat_id);
     let mut body = serde_json::Map::new();
     body.insert("content".to_string(), serde_json::json!(content));
-    if let Some(rid) = receiver_id { body.insert("receiverId".to_string(), serde_json::json!(rid)); }
-    if let Some(gid) = group_id { body.insert("groupId".to_string(), serde_json::json!(gid)); }
-    if let Some(rid) = reply_to_id { body.insert("replyToId".to_string(), serde_json::json!(rid)); }
-    if let Some(aid) = attachment_id { body.insert("attachmentId".to_string(), serde_json::json!(aid)); }
+    if let Some(ref rid) = reply_to_id { body.insert("replyToId".to_string(), serde_json::json!(rid)); }
+    if let Some(ref aid) = attachment_id { body.insert("attachmentId".to_string(), serde_json::json!(aid)); }
+    
     let resp = client.post(&url).json(&body).send().await.map_err(|e| e.to_string())?;
     let status = resp.status();
     let resp_text = resp.text().await.unwrap_or_else(|_| "<Failed to read response body>".to_string());
@@ -162,9 +181,15 @@ pub async fn send_message(
 // Suppress non_snake_case warning for function parameter
 #[allow(non_snake_case)]
 #[tauri::command]
-pub async fn get_messages(token: String, id: i32) -> Result<Vec<Message>, String> {
+pub async fn get_messages(token: String, id: String, page: Option<i32>) -> Result<Vec<Message>, String> {
     let client = get_auth_client(&token).await;
-    let url = format!("{}/api/messages/{}", BASE_URL, id);
+    let mut url = format!("{}/api/messages/{}", BASE_URL, id);
+    
+    // Add page parameter if provided
+    if let Some(page_num) = page {
+        url = format!("{}?page={}", url, page_num);
+    }
+    
     let resp = client.get(&url).send().await.map_err(|e| e.to_string())?;
     if !resp.status().is_success() {
         return Err(format!("Failed to fetch messages: {}", resp.status()));
@@ -174,9 +199,61 @@ pub async fn get_messages(token: String, id: i32) -> Result<Vec<Message>, String
     Ok(messages)
 }
 
-// (Optional) Stub for file upload endpoint
+// Helper functions for temporary file handling
+#[tauri::command]
+pub async fn write_temp_file(file_name: String, data: Vec<u8>) -> Result<(), String> {
+    let temp_dir = std::env::temp_dir();
+    let file_path = temp_dir.join(&file_name);
+    
+    let mut file = std::fs::File::create(&file_path)
+        .map_err(|e| format!("Failed to create temp file: {}", e))?;
+    
+    file.write_all(&data)
+        .map_err(|e| format!("Failed to write temp file: {}", e))?;
+    
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_temp_file(file_name: String) -> Result<(), String> {
+    let temp_dir = std::env::temp_dir();
+    let file_path = temp_dir.join(&file_name);
+    
+    if file_path.exists() {
+        std::fs::remove_file(&file_path)
+            .map_err(|e| format!("Failed to delete temp file: {}", e))?;
+    }
+    
+    Ok(())
+}
+
+// File upload endpoint
 #[tauri::command]
 pub async fn upload_attachment(token: String, file_path: String) -> Result<Attachment, String> {
-    // TODO: Implement file upload using multipart/form-data
-    Err("Not implemented yet".to_string())
+    let client = get_auth_client(&token).await;
+    let url = format!("{}/api/files/upload", BASE_URL);
+    
+    // Use temp directory for the full path
+    let temp_dir = std::env::temp_dir();
+    let full_path = temp_dir.join(&file_path);
+    
+    // Read the file
+    let file_bytes = std::fs::read(&full_path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let file_name = std::path::Path::new(&file_path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown");
+    
+    // Create multipart form
+    let form = reqwest::multipart::Form::new()
+        .part("file", reqwest::multipart::Part::bytes(file_bytes)
+            .file_name(file_name.to_string()));
+    
+    let resp = client.post(&url).multipart(form).send().await.map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Err(format!("Failed to upload file: {}", resp.status()));
+    }
+    
+    let attachment = resp.json::<Attachment>().await.map_err(|e| e.to_string())?;
+    Ok(attachment)
 } 

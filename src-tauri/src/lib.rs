@@ -232,7 +232,9 @@ pub fn run() {
             cloudmessaging::get_messages,
             cloudmessaging::list_groups,
             cloudmessaging::create_group,
-            cloudmessaging::upload_attachment
+            cloudmessaging::upload_attachment,
+            cloudmessaging::write_temp_file,
+            cloudmessaging::delete_temp_file
         ])
         .setup(|app| {
             #[cfg(desktop)]

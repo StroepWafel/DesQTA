@@ -178,7 +178,7 @@ pub struct WidgetLayout {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CloudUser {
-    pub id: i32,
+    pub id: String,
     pub email: String,
     pub username: String,
     #[serde(rename = "displayName")]
@@ -198,9 +198,9 @@ pub struct CloudUserWithToken {
 // Cloud API types
 #[derive(Debug, Serialize, Deserialize)]
 struct CloudFile {
-    id: i32,
+    id: String,
     #[serde(rename = "userId")]
-    user_id: i32, // Now guaranteed to be present
+    user_id: String, // Now guaranteed to be present
     filename: String,
     #[serde(rename = "storedName")]
     stored_name: String,
@@ -542,7 +542,7 @@ pub async fn download_settings_from_cloud() -> Result<Settings, String> {
 pub async fn check_cloud_settings() -> Result<bool, String> {
     let cloud_token = CloudToken::load();
     let token = cloud_token.token.clone().ok_or("No cloud token found. Please authenticate first.")?;
-    let base_url = "https://accounts.betterseqta.adenmgb.com";
+    let base_url = "https://accounts.betterseqta.adenmgb.com/api";
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/files/list", base_url))
