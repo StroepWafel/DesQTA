@@ -49,7 +49,7 @@
   let devSensitiveInfoHider = false;
   let showDevSettings = false;
   let keyBuffer = '';
-  
+
   // Cloud user state
   let cloudUser: any = null;
   let cloudToken: string | null = null;
@@ -421,41 +421,41 @@
             </div>
           {:else}
             <!-- Not logged in state -->
-            <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
-              <div class="flex flex-col gap-4">
+          <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
+            <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-3">
                   <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
                   <span class="text-sm font-semibold text-slate-600 dark:text-slate-300">Not logged in to BetterSEQTA Plus</span>
                 </div>
-                <div>
-                  <h3 class="text-sm font-semibold sm:text-base mb-2 text-slate-500 dark:text-slate-400">Settings Synchronization</h3>
-                  <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
-                    Upload your current settings to the cloud or download settings from another device. 
-                    This includes all your shortcuts, feeds, theme preferences, and other customizations.
-                  </p>
-                  <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
-                    <a href="https://accounts.betterseqta.org" target="_blank" rel="noopener noreferrer" 
-                       class="text-slate-400 dark:text-slate-500 hover:underline">
-                      Create a free BetterSEQTA Plus account
-                    </a> to get started with cloud syncing.
-                  </p>
-                  <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
-                    <strong>Cloud API URL:</strong> {CLOUD_API_URL}
-                  </p>
-                </div>
-                <div class="flex flex-col gap-3 sm:flex-row">
-                  <button
+              <div>
+                <h3 class="text-sm font-semibold sm:text-base mb-2 text-slate-500 dark:text-slate-400">Settings Synchronization</h3>
+                <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                  Upload your current settings to the cloud or download settings from another device. 
+                  This includes all your shortcuts, feeds, theme preferences, and other customizations.
+                </p>
+                <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                  <a href="https://accounts.betterseqta.org" target="_blank" rel="noopener noreferrer" 
+                     class="text-slate-400 dark:text-slate-500 hover:underline">
+                    Create a free BetterSEQTA Plus account
+                  </a> to get started with cloud syncing.
+                </p>
+                <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                  <strong>Cloud API URL:</strong> {CLOUD_API_URL}
+                </p>
+              </div>
+              <div class="flex flex-col gap-3 sm:flex-row">
+                <button
                     class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    onclick={openCloudSyncModal}>
-                    <Icon src={CloudArrowUp} class="w-5 h-5" />
+                  onclick={openCloudSyncModal}>
+                  <Icon src={CloudArrowUp} class="w-5 h-5" />
                     Login & Sync Settings
-                  </button>
-                  <div class="text-xs text-slate-500 dark:text-slate-500 sm:self-center">
-                    Requires BetterSEQTA Plus account
-                  </div>
+                </button>
+                <div class="text-xs text-slate-500 dark:text-slate-500 sm:self-center">
+                  Requires BetterSEQTA Plus account
                 </div>
               </div>
             </div>
+          </div>
           {/if}
         </div>
       </section>

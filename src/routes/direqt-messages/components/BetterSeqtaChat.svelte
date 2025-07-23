@@ -246,7 +246,7 @@ function selectFriend(friend: Friend) {
 
 async function fetchMessagesForFriend(friend: Friend, page: number = 1) {
   if (page === 1) {
-    messagesLoading = true;
+  messagesLoading = true;
     currentPage = 1;
     hasMoreMessages = true;
   } else {
@@ -271,11 +271,11 @@ async function fetchMessagesForFriend(friend: Friend, page: number = 1) {
   } catch (e) {
     messagesError = e instanceof Error ? e.message : String(e) || 'Failed to load messages.';
     if (page === 1) {
-      messages = [];
+    messages = [];
     }
   } finally {
     if (page === 1) {
-      messagesLoading = false;
+    messagesLoading = false;
     } else {
       loadingOlderMessages = false;
     }
@@ -290,7 +290,7 @@ function selectGroup(group: Group) {
 
 async function fetchMessagesForGroup(group: Group, page: number = 1) {
   if (page === 1) {
-    messagesLoading = true;
+  messagesLoading = true;
     currentPage = 1;
     hasMoreMessages = true;
   } else {
@@ -315,11 +315,11 @@ async function fetchMessagesForGroup(group: Group, page: number = 1) {
   } catch (e) {
     messagesError = e instanceof Error ? e.message : String(e) || 'Failed to load messages.';
     if (page === 1) {
-      messages = [];
+    messages = [];
     }
   } finally {
     if (page === 1) {
-      messagesLoading = false;
+    messagesLoading = false;
     } else {
       loadingOlderMessages = false;
     }
@@ -401,9 +401,9 @@ afterUpdate(() => {
       <div class="flex items-center gap-3 mb-4">
         {#if cloudUser.pfpUrl}
           <img src={getFullPfpUrl(cloudUser.pfpUrl) || `https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`} alt={cloudUser.displayName || cloudUser.username} class="w-10 h-10 rounded-full object-cover" />
-        {:else}
+    {:else}
           <img src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`} alt={cloudUser.displayName || cloudUser.username} class="w-10 h-10 rounded-full object-cover" />
-        {/if}
+              {/if}
         <div>
           <div class="font-semibold text-base text-slate-900 dark:text-white">{cloudUser.displayName || cloudUser.username}</div>
           <div class="text-xs text-slate-500 dark:text-slate-300">{cloudUser.email}</div>
@@ -414,7 +414,7 @@ afterUpdate(() => {
     <div class="flex items-center justify-between mb-2">
       <h2 class="font-semibold text-lg text-slate-900 dark:text-white">Conversations</h2>
       <button class="px-3 py-1 rounded-lg bg-orange-500 text-white text-xs hover:bg-orange-600 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 ring-orange-500" on:click={() => (creatingGroup = true)}>+ New Group</button>
-    </div>
+      </div>
 
     <div class="flex-1 overflow-y-auto">
       <!-- Groups Section -->
@@ -430,7 +430,7 @@ afterUpdate(() => {
               <button class="flex items-center gap-3 w-full px-3 py-3 rounded-lg transition-all duration-200 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02] focus:outline-none focus:ring-2 ring-accent-500 {selectedGroup?.id === group.id ? 'bg-accent-500/20 text-accent-500' : 'text-slate-900 dark:text-white'}" on:click={() => selectGroup(group)}>
                 {#if group.iconUrl}
                   <img src={getFullPfpUrl(group.iconUrl) || `https://api.dicebear.com/7.x/initials/svg?seed=${group.name}`} alt={group.name} class="w-10 h-10 rounded-full object-cover" />
-                {:else}
+      {:else}
                   <div class="w-10 h-10 rounded-full bg-accent-500 flex items-center justify-center">
                     <Icon src={ChatBubbleLeftRight} class="w-5 h-5 text-white" />
                   </div>
@@ -440,7 +440,7 @@ afterUpdate(() => {
                   <div class="text-xs text-slate-500 dark:text-slate-400">Group</div>
                 </div>
               </button>
-            {/each}
+          {/each}
           </div>
         </div>
       {/if}
@@ -468,7 +468,7 @@ afterUpdate(() => {
                   <div class="text-xs text-slate-500 dark:text-slate-400">@{friend.username}</div>
                 </div>
               </button>
-            {/each}
+              {/each}
           </div>
         </div>
       {/if}
@@ -666,7 +666,7 @@ afterUpdate(() => {
         </label>
         {#if attachmentPreview}
           <div class="relative">
-            <img src={attachmentPreview} alt="Attachment preview" class="w-10 h-10 object-cover rounded" />
+          <img src={attachmentPreview} alt="Attachment preview" class="w-10 h-10 object-cover rounded" />
             <button type="button" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs flex items-center justify-center" on:click={() => { attachmentFile = null; attachmentPreview = null; }}>✕</button>
           </div>
         {/if}

@@ -27,6 +27,7 @@
     Cog6Tooth,
     CalendarDays,
     User,
+    GlobeAlt,
   } from 'svelte-hero-icons';
 
   import { writable } from 'svelte/store';
@@ -71,6 +72,7 @@
     { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
     { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
     { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { label: 'Portals', icon: GlobeAlt, path: '/portals' },
     { label: 'Notices', icon: DocumentText, path: '/notices' },
     { label: 'News', icon: Newspaper, path: '/news' },
     { label: 'Directory', icon: User, path: '/directory' },
@@ -441,6 +443,7 @@
         { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
         // Always show DM (Messages) page
         { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+        { label: 'Portals', icon: GlobeAlt, path: '/portals' },
         { label: 'Notices', icon: DocumentText, path: '/notices' },
         { label: 'News', icon: Newspaper, path: '/news' },
         { label: 'Directory', icon: User, path: '/directory' },
