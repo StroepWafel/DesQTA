@@ -117,7 +117,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 /* prevent overscrolling on safari based browsers */
 html, body, #app, #svelte {
-  background: #18181b !important;
+  background: transparent !important;
   margin: 0 !important;
   padding: 0 !important;
   min-width: 100vw;
