@@ -433,12 +433,12 @@
                   Upload your current settings to the cloud or download settings from another device. 
                   This includes all your shortcuts, feeds, theme preferences, and other customizations.
                 </p>
-                <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
-                  <a href="https://accounts.betterseqta.org" target="_blank" rel="noopener noreferrer" 
-                     class="text-slate-400 dark:text-slate-500 hover:underline">
-                    Create a free BetterSEQTA Plus account
-                  </a> to get started with cloud syncing.
-                </p>
+                  <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                    <a href="https://accounts.betterseqta.org" target="_blank" rel="noopener noreferrer"
+                      class="text-blue-600 dark:text-blue-500 hover:underline">
+                      Create a free BetterSEQTA Plus account
+                    </a> to get started with cloud syncing.
+                  </p>
                 <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
                   <strong>Cloud API URL:</strong> {CLOUD_API_URL}
                 </p>
