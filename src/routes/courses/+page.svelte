@@ -245,7 +245,12 @@
     
     // Check for mobile on mount and resize
     const checkMobile = () => {
-      isMobile = window.innerWidth < 1024; // Use lg breakpoint
+      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM
+      if (tauri_platform == "ios" || tauri_platform == "android") {
+        isMobile = true
+      } else {
+        isMobile = false
+      }
     };
     
     checkMobile();

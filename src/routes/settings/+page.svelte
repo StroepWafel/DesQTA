@@ -50,6 +50,27 @@
   let showDevSettings = false;
   let keyBuffer = '';
 
+  // Cloud user state
+  let cloudUser: any = null;
+  let cloudToken: string | null = null;
+  let cloudUserLoading = true;
+
+  // Set the API URL for cloud sync
+  const CLOUD_API_URL = 'https://accounts.betterseqta.adenmgb.com';
+
+  async function loadCloudUser() {
+    cloudUserLoading = true;
+    try {
+      const result = await invoke<{ user: any; token: string | null }>('get_cloud_user');
+      cloudUser = result.user;
+      cloudToken = result.token;
+    } catch (e) {
+      cloudUser = null;
+      cloudToken = null;
+    }
+    cloudUserLoading = false;
+  }
+
   async function loadSettings() {
     loading = true;
     try {
@@ -125,6 +146,24 @@
       devSensitiveInfoHider = false;
     }
     loading = false;
+  }
+
+  // Helper function to get full profile picture URL
+  function getFullPfpUrl(pfpUrl: string | null | undefined): string | null {
+    if (!pfpUrl) return null;
+    
+    // If it's already a full URL, return as is
+    if (pfpUrl.startsWith('http://') || pfpUrl.startsWith('https://')) {
+      return pfpUrl;
+    }
+    
+    // If it's a relative path, prepend the base domain
+    if (pfpUrl.startsWith('/api/files/public/')) {
+      return `https://accounts.betterseqta.adenmgb.com${pfpUrl}`;
+    }
+    
+    // Fallback to DiceBear if it's not a recognized format
+    return pfpUrl;
   }
 
   async function saveSettings() {
@@ -279,7 +318,7 @@
   }
 
   onMount(async () => {
-    await Promise.all([loadSettings(), loadTheme()]);
+    await Promise.all([loadSettings(), loadTheme(), loadCloudUser()]);
     window.addEventListener('keydown', handleKeydown);
   });
   onDestroy(() => {
@@ -289,7 +328,7 @@
 
 <div class="p-4 mx-auto max-w-4xl sm:p-6 md:p-8">
   <div
-    class="sticky top-0 z-50 flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center animate-fade-in-up backdrop-blur-md bg-white/80 dark:bg-slate-900/80 py-4 px-6 border-b border-slate-200 dark:border-slate-800 rounded-xl">
+    class="sticky top-0 z-20 flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center animate-fade-in-up backdrop-blur-md bg-white/80 dark:bg-slate-900/80 py-4 px-6 border-b border-slate-200 dark:border-slate-800 rounded-xl">
     <h1 class="text-xl font-bold sm:text-2xl px-2 py-1 rounded-lg">Settings</h1>
     <div class="flex flex-col gap-2 items-start w-full sm:flex-row sm:items-center sm:w-auto">
       <button
@@ -329,7 +368,7 @@
     <div class="space-y-6 sm:space-y-8">
       <!-- Cloud Sync Section -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-slate-100/60 dark:bg-slate-800/30 sm:rounded-2xl border-slate-300/30 dark:border-slate-800/30 animate-fade-in-up relative opacity-60">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-slate-100/60 dark:bg-slate-800/30 sm:rounded-2xl border-slate-300/30 dark:border-slate-800/30 animate-fade-in-up relative">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/30 dark:border-slate-800/30">
           <h2 class="text-base font-semibold sm:text-lg text-slate-500 dark:text-slate-400">Cloud Sync</h2>
           <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500">
@@ -337,16 +376,57 @@
           </p>
         </div>
         <div class="p-4 sm:p-6 relative">
-          <!-- Coming Soon Overlay -->
-          <div class="absolute inset-0 flex items-center justify-center bg-slate-200/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg z-10">
-            <div class="text-center">
-              <div class="text-2xl font-bold text-slate-600 dark:text-slate-400 mb-2">Coming Soon</div>
-              <div class="text-sm text-slate-500 dark:text-slate-500">Cloud sync functionality will be available in a future update</div>
+          {#if cloudUserLoading}
+            <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
+              <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded-full border-2 animate-spin border-slate-400/30 border-t-slate-400"></div>
+                <span class="text-sm text-slate-500 dark:text-slate-400">Loading account status...</span>
+              </div>
             </div>
-          </div>
-          
-          <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in opacity-50">
+          {:else if cloudUser && cloudToken}
+            <!-- Logged in state -->
+            <div class="p-4 rounded-lg bg-green-100/60 dark:bg-green-900/30 animate-fade-in border border-green-200 dark:border-green-800">
+              <div class="flex items-start gap-4">
+                {#if cloudUser.pfpUrl}
+                  <img src={getFullPfpUrl(cloudUser.pfpUrl) || `https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`} alt={cloudUser.displayName || cloudUser.username} class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
+                {:else}
+                  <img src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`} alt={cloudUser.displayName || cloudUser.username} class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
+                {/if}
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span class="text-sm font-semibold text-green-800 dark:text-green-200">Logged in to BetterSEQTA Plus</span>
+                  </div>
+                  <div class="text-sm text-green-700 dark:text-green-300 mb-1">
+                    <strong>{cloudUser.displayName || cloudUser.username}</strong>
+                  </div>
+                  <div class="text-xs text-green-600 dark:text-green-400 mb-3">@{cloudUser.username}</div>
+                </div>
+              </div>
+              <div class="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
+                <h4 class="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">Settings Synchronization</h4>
+                <p class="text-xs text-green-700 dark:text-green-300 mb-4">
+                  Upload your current settings to the cloud or download settings from another device. 
+                  This includes all your shortcuts, feeds, theme preferences, and other customizations.
+                </p>
+                <div class="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                    onclick={openCloudSyncModal}>
+                    <Icon src={CloudArrowUp} class="w-5 h-5" />
+                    Sync Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+          {:else}
+            <!-- Not logged in state -->
+          <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
             <div class="flex flex-col gap-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+                  <span class="text-sm font-semibold text-slate-600 dark:text-slate-300">Not logged in to BetterSEQTA Plus</span>
+                </div>
               <div>
                 <h3 class="text-sm font-semibold sm:text-base mb-2 text-slate-500 dark:text-slate-400">Settings Synchronization</h3>
                 <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
@@ -359,13 +439,16 @@
                     Create a free BetterSEQTA Plus account
                   </a> to get started with cloud syncing.
                 </p>
+                <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                  <strong>Cloud API URL:</strong> {CLOUD_API_URL}
+                </p>
               </div>
               <div class="flex flex-col gap-3 sm:flex-row">
                 <button
-                  class="flex gap-2 items-center justify-center px-6 py-3 text-slate-400 bg-slate-300 dark:bg-slate-600 rounded-lg shadow transition-all duration-200 cursor-not-allowed"
-                  disabled>
+                    class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                  onclick={openCloudSyncModal}>
                   <Icon src={CloudArrowUp} class="w-5 h-5" />
-                  Sync Settings
+                    Login & Sync Settings
                 </button>
                 <div class="text-xs text-slate-500 dark:text-slate-500 sm:self-center">
                   Requires BetterSEQTA Plus account
@@ -373,6 +456,7 @@
               </div>
             </div>
           </div>
+          {/if}
         </div>
       </section>
 

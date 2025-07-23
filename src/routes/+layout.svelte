@@ -11,7 +11,7 @@
 
   import jsQR from 'jsqr';
 
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount as svelteOnMount, onDestroy } from 'svelte';
   import '../app.css';
   import { accentColor, loadAccentColor, theme, loadTheme, loadCurrentTheme } from '../lib/stores/theme';
   import { Icon } from 'svelte-hero-icons';
@@ -27,6 +27,7 @@
     Cog6Tooth,
     CalendarDays,
     User,
+    GlobeAlt,
   } from 'svelte-hero-icons';
 
   import { writable } from 'svelte/store';
@@ -64,6 +65,23 @@
   let autoCollapseSidebar = $state(false);
   let autoExpandSidebarHover = $state(false);
 
+  let seqtaConfig: any = $state(null);
+  let menu = $state([
+    { label: 'Dashboard', icon: Home, path: '/' },
+    { label: 'Courses', icon: BookOpen, path: '/courses' },
+    { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
+    { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
+    { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { label: 'Portals', icon: GlobeAlt, path: '/portals' },
+    { label: 'Notices', icon: DocumentText, path: '/notices' },
+    { label: 'News', icon: Newspaper, path: '/news' },
+    { label: 'Directory', icon: User, path: '/directory' },
+    { label: 'Reports', icon: ChartBar, path: '/reports' },
+    { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
+    { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
+  ]);
+  let menuLoading = $state(true);
+
   function handleClickOutside(event: MouseEvent) {
     const target = event.target as Element;
     if (!target.closest('.user-dropdown-container')) {
@@ -79,10 +97,10 @@
     }
   }
 
-  onMount(checkSession);
+  svelteOnMount(checkSession);
 
   let unlisten: (() => void) | undefined;
-  onMount(async () => {
+  svelteOnMount(async () => {
     unlisten = await listen<string>('reload', () => {
       location.reload();
     });
@@ -153,79 +171,6 @@
 
   async function startLogin() {
     console.log('[LOGIN_FRONTEND] startLogin called');
-    
-    const input = document.getElementById('seqta-qrcode') as HTMLInputElement;
-    console.log('america ya')
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      console.log('[LOGIN_FRONTEND] Processing QR code file:', file.name);
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageData = e.target?.result as ArrayBuffer;
-        console.log('[LOGIN_FRONTEND] Image data loaded, size:', imageData.byteLength);
-        
-        // Create a blob URL from the array buffer
-        const blob = new Blob([imageData], { type: file.type });
-        const imageUrl = URL.createObjectURL(blob);
-        
-        // Create an image element to load the image
-        const img = new Image();
-        img.onload = () => {
-          console.log('[LOGIN_FRONTEND] Image loaded, dimensions:', img.width, 'x', img.height);
-          
-          // Create a canvas to get pixel data
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          if (!ctx) {
-            console.error('[LOGIN_FRONTEND] Could not get canvas context');
-            return;
-          }
-          
-          // Set canvas size to image size
-          canvas.width = img.width;
-          canvas.height = img.height;
-          
-          // Draw image to canvas
-          ctx.drawImage(img, 0, 0);
-          
-          // Get pixel data
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          console.log('[LOGIN_FRONTEND] Canvas pixel data size:', imageData.data.length);
-          
-          // Decode QR code
-          const code = jsQR(imageData.data, imageData.width, imageData.height);
-          console.log('[LOGIN_FRONTEND] QR code decoded:', code ? 'Success' : 'Failed');
-          
-        if (code) {
-            console.log('[LOGIN_FRONTEND] QR code data:', code.data);
-            // Check if this is a SEQTA deeplink
-            if (code.data.startsWith('seqtalearn://')) {
-              seqtaUrl = code.data;
-              console.log('[LOGIN_FRONTEND] Found SEQTA deeplink:', seqtaUrl);
-            } else {
-              console.error('[LOGIN_FRONTEND] QR code does not contain a valid SEQTA deeplink');
-            }
-          }
-          
-          // Clean up
-          URL.revokeObjectURL(imageUrl);
-        };
-        
-        img.onerror = () => {
-          console.error('[LOGIN_FRONTEND] Failed to load image');
-          URL.revokeObjectURL(imageUrl);
-        };
-        
-        // Load the image
-        img.src = imageUrl;
-      };
-      reader.readAsArrayBuffer(file);
-    }
-    
-    // Wait a bit for the file reader to complete
-    await new Promise(resolve => setTimeout(resolve, 100));
     
     if (!seqtaUrl) {
       console.error('[LOGIN_FRONTEND] No valid SEQTA URL found');
@@ -353,7 +298,7 @@
     }
   });
 
-  onMount(async () => {
+  svelteOnMount(async () => {
     await Promise.all([
       checkSession(),
       loadWeatherSettings(),
@@ -427,9 +372,14 @@
     }
   });
 
-  onMount(() => {
+  svelteOnMount(() => {
     const checkMobile = () => {
-      isMobile = window.innerWidth < 768;
+      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM
+      if (tauri_platform == "ios" || tauri_platform == "android") {
+        isMobile = true
+      } else {
+        isMobile = false
+      }
       if (isMobile) {
         sidebarOpen = false;
       }
@@ -449,19 +399,69 @@
     };
   });
 
-  const menu = [
-    { label: 'Dashboard', icon: Home, path: '/' },
-    { label: 'Courses', icon: BookOpen, path: '/courses' },
-    { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
-    { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
-    { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
-    { label: 'Notices', icon: DocumentText, path: '/notices' },
-    { label: 'News', icon: Newspaper, path: '/news' },
-    { label: 'Directory', icon: User, path: '/directory' },
-    { label: 'Reports', icon: ChartBar, path: '/reports' },
-    { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
-    { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
-  ];
+  async function loadSeqtaConfigAndMenu() {
+    try {
+      let config = await invoke('load_seqta_config');
+      let needsFetch = false;
+      let latestConfig = null;
+      if (!config) {
+        needsFetch = true;
+      } else {
+        // Fetch latest config from SEQTA
+        const res = await seqtaFetch('/seqta/student/load/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: {},
+        });
+        latestConfig = typeof res === 'string' ? JSON.parse(res) : res;
+        // Check if config is outdated
+        const isDifferent = await invoke('is_seqta_config_different', { newConfig: latestConfig });
+        if (isDifferent) {
+          needsFetch = true;
+        } else {
+          seqtaConfig = config;
+        }
+      }
+      if (needsFetch) {
+        // Save the latest config
+        if (!latestConfig) {
+          const res = await seqtaFetch('/seqta/student/load/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: {},
+          });
+          latestConfig = typeof res === 'string' ? JSON.parse(res) : res;
+        }
+        seqtaConfig = latestConfig;
+        await invoke('save_seqta_config', { config: latestConfig });
+      }
+      // Now, build the menu based on config
+      let newMenu = [
+        { label: 'Dashboard', icon: Home, path: '/' },
+        { label: 'Courses', icon: BookOpen, path: '/courses' },
+        { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
+        { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
+        // Always show DM (Messages) page
+        { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+        { label: 'Portals', icon: GlobeAlt, path: '/portals' },
+        { label: 'Notices', icon: DocumentText, path: '/notices' },
+        { label: 'News', icon: Newspaper, path: '/news' },
+        { label: 'Directory', icon: User, path: '/directory' },
+        { label: 'Reports', icon: ChartBar, path: '/reports' },
+        { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
+        { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
+      ];
+      menu = newMenu;
+    } catch (e) {
+      console.error('Failed to load SEQTA config or menu:', e);
+    } finally {
+      menuLoading = false;
+    }
+  }
+
+  svelteOnMount(() => {
+    loadSeqtaConfigAndMenu();
+  });
 </script>
 
 {#if isLoading}
@@ -486,7 +486,9 @@
 
     <div class="flex flex-1 min-h-0 relative">
       {#if !$needsSetup}
-        <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+        {#if !menuLoading}
+          <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+        {/if}
       {/if}
 
       <!-- Mobile Sidebar Overlay -->

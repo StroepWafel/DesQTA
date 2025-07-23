@@ -178,7 +178,7 @@ pub struct WidgetLayout {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CloudUser {
-    pub id: i32,
+    pub id: String,
     pub email: String,
     pub username: String,
     #[serde(rename = "displayName")]
@@ -189,12 +189,18 @@ pub struct CloudUser {
     pub created_at: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CloudUserWithToken {
+    pub user: Option<CloudUser>,
+    pub token: Option<String>,
+}
+
 // Cloud API types
 #[derive(Debug, Serialize, Deserialize)]
 struct CloudFile {
-    id: i32,
+    id: String,
     #[serde(rename = "userId")]
-    user_id: i32, // Now guaranteed to be present
+    user_id: String, // Now guaranteed to be present
     filename: String,
     #[serde(rename = "storedName")]
     stored_name: String,
@@ -405,7 +411,7 @@ pub fn save_settings_from_json(json: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn save_cloud_token(token: String) -> Result<CloudUser, String> {
-    let base_url = "https://accounts.betterseqta.org/api";
+    let base_url = "https://accounts.betterseqta.adenmgb.com/api";
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/auth/me", base_url))
@@ -428,14 +434,18 @@ pub async fn save_cloud_token(token: String) -> Result<CloudUser, String> {
     let mut cloud_token = CloudToken::load();
     cloud_token.token = Some(token);
     cloud_token.user = Some(user.clone());
+    // This uses cloud_token_file(), which saves to the correct Android folder on Android
     cloud_token.save().map_err(|e| e.to_string())?;
     Ok(user)
 }
 
 #[tauri::command]
-pub fn get_cloud_user() -> Option<CloudUser> {
+pub fn get_cloud_user() -> CloudUserWithToken {
     let cloud_token = CloudToken::load();
-    cloud_token.user
+    CloudUserWithToken {
+        user: cloud_token.user,
+        token: cloud_token.token,
+    }
 }
 
 #[tauri::command]
@@ -447,7 +457,7 @@ pub fn clear_cloud_token() -> Result<(), String> {
 pub async fn upload_settings_to_cloud() -> Result<(), String> {
     let cloud_token = CloudToken::load();
     let token = cloud_token.token.clone().ok_or("No cloud token found. Please authenticate first.")?;
-    let base_url = "https://accounts.betterseqta.org/api";
+    let base_url = "https://accounts.betterseqta.adenmgb.com/api";
     let settings = Settings::load();
     let settings_json = settings.to_json()?;
     let client = reqwest::Client::new();
@@ -474,7 +484,7 @@ pub async fn upload_settings_to_cloud() -> Result<(), String> {
 pub async fn download_settings_from_cloud() -> Result<Settings, String> {
     let cloud_token = CloudToken::load();
     let token = cloud_token.token.clone().ok_or("No cloud token found. Please authenticate first.")?;
-    let base_url = "https://accounts.betterseqta.org/api";
+    let base_url = "https://accounts.betterseqta.adenmgb.com/api";
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/files/list", base_url))
@@ -532,7 +542,7 @@ pub async fn download_settings_from_cloud() -> Result<Settings, String> {
 pub async fn check_cloud_settings() -> Result<bool, String> {
     let cloud_token = CloudToken::load();
     let token = cloud_token.token.clone().ok_or("No cloud token found. Please authenticate first.")?;
-    let base_url = "https://accounts.betterseqta.org/api";
+    let base_url = "https://accounts.betterseqta.adenmgb.com/api";
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/files/list", base_url))

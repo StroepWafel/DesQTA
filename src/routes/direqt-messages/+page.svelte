@@ -3,6 +3,7 @@
   import { seqtaFetch, getRSS } from '../../utils/netUtil';
   import { type Message } from './types';
   import { cache } from '../../utils/cache';
+  import { invoke } from '@tauri-apps/api/core';
 
   // Components
   import Sidebar from './components/Sidebar.svelte';
@@ -10,6 +11,7 @@
   import MessageDetail from './components/Message.svelte';
   import ComposeModal from './components/ComposeModal.svelte';
   import Modal from '$lib/components/Modal.svelte';
+  import BetterSeqtaChat from './components/BetterSeqtaChat.svelte';
 
   // External Libraries
   import dayjs from 'dayjs';
@@ -34,10 +36,41 @@
 
   // Derived state for mobile modal
   let showMobileModal = $derived(!!selectedMessage);
+  let selectedTab = $state('SEQTA'); // 'SEQTA' or 'BetterSEQTA'
+  let seqtaLoadFailed = $state(false);
+  let seqtaMessagesEnabled = $state<boolean | null>(null);
+
+  onMount(async () => {
+    try {
+      const config = await invoke('load_seqta_config');
+      let enabled: string | undefined = undefined;
+      if (config && typeof config === 'object') {
+        // Try payload first
+        if ('payload' in config && typeof config.payload === 'object' && config.payload !== null) {
+          enabled = (config.payload as Record<string, any>)[
+            'coneqt-s.messages.enabled'
+          ]?.value;
+        }
+        // Fallback to root if not found in payload
+        if (!enabled && 'coneqt-s.messages.enabled' in config) {
+          enabled = (config as Record<string, any>)[
+            'coneqt-s.messages.enabled'
+          ]?.value;
+        }
+      }
+      seqtaMessagesEnabled = enabled === 'enabled';
+      if (!seqtaMessagesEnabled) {
+        selectedTab = 'BetterSEQTA';
+      }
+    } catch (e) {
+      seqtaMessagesEnabled = null;
+    }
+  });
 
   async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '') {
     loading = true;
     error = null;
+    seqtaLoadFailed = false;
     console.log(folderLabel);
     try {
       if (folderLabel === 'sent') {
@@ -165,14 +198,16 @@
     } catch (e) {
       error = 'Failed to load messages.';
       messages = [];
+      seqtaLoadFailed = true;
     } finally {
       loading = false;
     }
   }
 
   $effect(() => {
-    // This effect will replace onMount
+    if (selectedTab === 'SEQTA') {
     fetchMessages('inbox');
+    }
   });
 
   async function openMessage(msg: Message) {
@@ -330,82 +365,137 @@
       restoring = false;
     }
   }
+
+  function openTab(tab: string) {
+    selectedTab = tab;
+    selectedMessage = null;
+  }
 </script>
+
+<!-- Tab Switcher -->
+<div class="flex gap-2 p-4 border-b border-slate-300/50 dark:border-slate-800/50 bg-white dark:bg-slate-900">
+  {#if seqtaMessagesEnabled === null}
+    <div class="text-slate-500 dark:text-slate-300">Loading messaging config...</div>
+  {:else if seqtaMessagesEnabled}
+    <button
+      class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+        {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+      onclick={() => openTab('SEQTA')}
+      disabled={selectedTab === 'SEQTA'}>
+      SEQTA Messages
+    </button>
+    <button
+      class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+        {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+      onclick={() => openTab('BetterSEQTA')}
+      disabled={selectedTab === 'BetterSEQTA'}>
+      Cloud Messaging
+    </button>
+  {:else}
+    <button
+      class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base accent-bg text-white cursor-not-allowed opacity-60"
+      disabled>
+      SEQTA Messages (Disabled)
+    </button>
+    <button
+      class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+        {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+      onclick={() => openTab('BetterSEQTA')}
+      disabled={selectedTab === 'BetterSEQTA'}>
+      Cloud Messaging
+    </button>
+  {/if}
+</div>
 
 <div class="flex h-full">
   <div class="flex w-full h-full max-xl:flex-col">
-    <Sidebar {selectedFolder} {openFolder} {openCompose} />
-
-    <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
-
-    <!-- Message detail view - full screen on mobile -->
-    <div class="hidden flex-1 xl:block">
-      <MessageDetail
-        {selectedMessage}
-        {selectedFolder}
-        {detailLoading}
-        {detailError}
-        {openCompose}
-        {starMessage}
-        {deleteMessage}
-        {restoreMessage}
-        {starring}
-        {deleting}
-        {restoring} />
-    </div>
+    {#if seqtaMessagesEnabled === null}
+      <div class="flex flex-col items-center justify-center w-full h-full p-8 text-center">
+        <div class="text-slate-500 dark:text-slate-300 text-lg font-semibold mb-4">Loading messaging config...</div>
+      </div>
+    {:else if seqtaMessagesEnabled && selectedTab === 'SEQTA'}
+      {#if seqtaLoadFailed}
+        <div class="flex flex-col items-center justify-center w-full h-full p-8 text-center">
+          <div class="text-red-500 dark:text-red-400 text-lg font-semibold mb-4">SEQTA messaging is disabled or failed to load.</div>
+          <div class="text-slate-500 dark:text-slate-300 mb-4">You can still use Cloud Messaging by switching tabs above.</div>
+        </div>
+      {:else}
+        <Sidebar {selectedFolder} {openFolder} {openCompose} />
+      <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
+      <!-- Message detail view - full screen on mobile -->
+      <div class="hidden flex-1 xl:block">
+        <MessageDetail
+          {selectedMessage}
+          {selectedFolder}
+          {detailLoading}
+          {detailError}
+          {openCompose}
+          {starMessage}
+          {deleteMessage}
+          {restoreMessage}
+          {starring}
+          {deleting}
+          {restoring} />
+      </div>
+      {/if}
+    {:else if selectedTab === 'BetterSEQTA'}
+      <BetterSeqtaChat />
+    {/if}
   </div>
 
   <!-- Mobile message detail modal -->
-  <div class="xl:hidden">
-    <Modal
-      open={showMobileModal}
-      onclose={() => (selectedMessage = null)}
-      maxWidth="w-full"
-      maxHeight="h-full"
-      customClasses="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-none"
-      showCloseButton={false}
-      closeOnBackdrop={false}
-      ariaLabel="Message Detail">
-      <div class="flex flex-col h-full">
-        <div
-          class="flex justify-between items-center p-4 border-b border-slate-300/50 dark:border-slate-800/50">
-          <button
-            class="flex gap-2 items-center transition-colors text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-            onclick={() => (selectedMessage = null)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-5 h-5"
-              viewBox="0 0 20 20"
-              fill="currentColor">
-              <path
-                fill-rule="evenodd"
-                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                clip-rule="evenodd" />
-            </svg>
-            <span class="text-sm font-medium">Back</span>
-          </button>
-          <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Message</span>
-          <div class="w-8"></div>
-          <!-- Spacer for alignment -->
-        </div>
+  {#if seqtaMessagesEnabled && selectedTab === 'SEQTA' && !seqtaLoadFailed}
+    <div class="xl:hidden">
+      <Modal
+        open={showMobileModal}
+        onclose={() => (selectedMessage = null)}
+        maxWidth="w-full"
+        maxHeight="h-full"
+        customClasses="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-none"
+        showCloseButton={false}
+        closeOnBackdrop={false}
+        ariaLabel="Message Detail">
+        <div class="flex flex-col h-full">
+          <div
+            class="flex justify-between items-center p-4 border-b border-slate-300/50 dark:border-slate-800/50">
+            <button
+              class="flex gap-2 items-center transition-colors text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              onclick={() => (selectedMessage = null)}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-5 h-5"
+                viewBox="0 0 20 20"
+                fill="currentColor">
+                <path
+                  fill-rule="evenodd"
+                  d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                  clip-rule="evenodd" />
+              </svg>
+              <span class="text-sm font-medium">Back</span>
+            </button>
+            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Message</span>
+            <div class="w-8"></div>
+            <!-- Spacer for alignment -->
+          </div>
 
-        <div class="overflow-y-auto flex-1">
-          <MessageDetail
-            {selectedMessage}
-            {selectedFolder}
-            {detailLoading}
-            {detailError}
-            {openCompose}
-            {starMessage}
-            {deleteMessage}
-            {restoreMessage}
-            {starring}
-            {deleting}
-            {restoring} />
+          <div class="overflow-y-auto flex-1">
+            <MessageDetail
+              {selectedMessage}
+              {selectedFolder}
+              {detailLoading}
+              {detailError}
+              {openCompose}
+              {starMessage}
+              {deleteMessage}
+              {restoreMessage}
+              {starring}
+              {deleting}
+              {restoring} />
+          </div>
         </div>
-      </div>
-    </Modal>
-  </div>
+      </Modal>
+    </div>
+  {/if}
 </div>
 
 <ComposeModal {showComposeModal} {composeSubject} {composeBody} {closeModal} />

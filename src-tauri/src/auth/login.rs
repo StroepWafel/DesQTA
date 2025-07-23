@@ -1,5 +1,4 @@
 use reqwest::header;
-use serde_json::Number;
 use tauri::{Emitter, Manager};
 use time::OffsetDateTime;
 use url::Url;
@@ -9,12 +8,12 @@ use base64::{Engine as _, engine::general_purpose};
 
 use std::sync::Arc;
 
-use reqwest::{cookie::{Jar, CookieStore}};
+use reqwest::{cookie::Jar};
 
 use crate::netgrab;
 use crate::session;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct SeqtaSSOPayload {
     t: String, // JWT token
     u: String, // Server URL
@@ -22,24 +21,16 @@ struct SeqtaSSOPayload {
 }
 
 #[derive(Deserialize)]
-struct AppLinkPayload {
-    app_link: String,
-    password_editable: bool
-}
+struct AppLinkPayload {}
 
 #[derive(Deserialize)]
-struct AppLinkResponse {
-    payload: AppLinkPayload,
-    status: String
-}
+struct AppLinkResponse {}
 
 #[derive(Debug, Deserialize)]
 struct SeqtaJWT {
-    sub: String,    // Subject (user ID)
     exp: i64,       // Expiration timestamp
-    t: String,      // Type/role
-    scope: String,  // Permission scope
 }
+
 
 #[tauri::command]
 pub fn force_reload(app: tauri::AppHandle) {
@@ -66,6 +57,7 @@ pub fn save_session(base_url: String, jsessionid: String) -> Result<(), String> 
 
 #[tauri::command]
 pub async fn logout() -> bool {
+
     if let Ok(_) = netgrab::clear_session().await {
         true
     } else {
@@ -144,6 +136,7 @@ fn validate_token(token: &str) -> Result<bool, String> {
     Ok(is_valid)
 }
 
+
 /// Perform the QR code authentication flow
 async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Session, String> {
     let base_url = sso_payload.u;
@@ -184,7 +177,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
     }
 
 
-    // Step 2: Second login request with JWT (this is where we get the user data)
+    // Step 2: Second login request with JWT (this is where we get the user data and JSESSIONID)
     let second_login_body = json!({
         "jwt": &token
     });
@@ -194,33 +187,24 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         .send()
         .await
         .map_err(|e| format!("Second login request failed: {}", e))?;
-
+    
     if !second_response.status().is_success() {
         let status = second_response.status();
         return Err(format!("Second login failed with status: {}", status));
     }
 
+    // Step 3 - get cookie (which should be stored here)
+    let jsessionid = second_response.headers().get("Set-Cookie")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|cookie_str| {
+            // Extract just the JSESSIONID value from "JSESSIONID=value; Path=/; HttpOnly"
+            cookie_str.split(';')
+                .find(|part| part.trim().starts_with("JSESSIONID="))
+                .map(|jsession_part| jsession_part.trim().strip_prefix("JSESSIONID=").unwrap_or("").to_string())
+        });
 
-    // Step 3: Recovery request
-    let recovery_url = format!("{}/seqta/student/recover", base_url);
-    
-    let recovery_body = json!({
-        "mode": "info",
-        "recovery": &token
-    });
-    
-    let recovery_response = client.post(&recovery_url)
-        .json(&recovery_body)
-        .send()
-        .await
-        .map_err(|e| format!("Recovery request failed: {}", e))?;
 
-    if !recovery_response.status().is_success() {
-        let status = recovery_response.status();
-        return Err(format!("Recovery failed with status: {}", status));
-    }
-
-    // Step 4: Send a heartbeat - Defib
+    // Step 4: Send a heartbeat - Defib. Check if the JSESSIONID/JWT is valid
     let heartbeat_url = format!("{}/seqta/student/heartbeat", base_url);
 
     let heartbeat_body = json!({
@@ -238,37 +222,18 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         return Err(format!("Heartbeat failed with status: {}", status));
     }
 
-
-    // Step 5: Get your new AppLink
-    let applink_url = format!("{}/seqta/student/load/profile", base_url);
-
-    let applink_body = json!({});
-
-    let applink_response = client.post(&applink_url)
-        .json(&applink_body)
-        .send()
-        .await
-        .map_err(|e| format!("Applink request failed: {}", e))?;
-
-    if !applink_response.status().is_success() {
-        let status = applink_response.status();
-        return Err(format!("Applink failed with status: {}", status));
-    }
-
-
-    let applink_json = &applink_response.json::<AppLinkResponse>().await.map_err(|e| format!("Failed to deserialize App link response: {}", e))?;
-    // Get the deeplink from the returned JSON
-    let deep = parse_deeplink(&applink_json.payload.app_link)?;
-
-    // Create session with the JWT token as the session ID
+    // Create session with the newly obtained JSESSIONID as the token
     let session = session::Session {
         base_url,
-        jsessionid: deep.t,
-        additional_cookies: vec![], // QR auth doesn't use traditional cookies
+        jsessionid: jsessionid.ok_or("Could not get JSESSIONID from response headers")?,
+        additional_cookies: vec![], // No additional cookies given by QR auth (same as SSO and normal login now)
     };
 
     Ok(session)
 }
+
+
+
 
 /// Open a login window and harvest the cookie once the user signs in.
 #[tauri::command]

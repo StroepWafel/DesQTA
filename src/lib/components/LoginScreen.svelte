@@ -90,6 +90,7 @@
         console.debug('[QR] Scan success:', qrCodeData);
         qrSuccess = 'QR code scanned successfully!';
         onUrlChange(qrCodeData);
+        onStartLogin();
       } else {
         console.warn('[QR] No QR code found in the image.');
         qrError = 'No QR code found in the image.';
@@ -137,6 +138,7 @@
         (decodedText) => {
           qrSuccess = 'QR code scanned successfully!';
           onUrlChange(decodedText);
+          onStartLogin();
           stopLiveScan();
         },
         (err) => {

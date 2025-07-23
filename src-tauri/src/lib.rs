@@ -9,6 +9,10 @@ mod settings;
 mod analytics;
 #[path = "utils/session.rs"]
 mod session;
+#[path = "utils/seqta_config.rs"]
+mod seqta_config;
+#[path = "utils/cloudmessaging.rs"]
+mod cloudmessaging;
 
 
 use tauri::Manager;
@@ -219,7 +223,18 @@ pub fn run() {
             settings::check_cloud_settings,
             analytics::save_analytics,
             analytics::load_analytics,
-            analytics::delete_analytics
+            analytics::delete_analytics,
+            seqta_config::load_seqta_config,
+            seqta_config::save_seqta_config,
+            seqta_config::is_seqta_config_different,
+            cloudmessaging::get_friends,
+            cloudmessaging::send_message,
+            cloudmessaging::get_messages,
+            cloudmessaging::list_groups,
+            cloudmessaging::create_group,
+            cloudmessaging::upload_attachment,
+            cloudmessaging::write_temp_file,
+            cloudmessaging::delete_temp_file
         ])
         .setup(|app| {
             #[cfg(desktop)]

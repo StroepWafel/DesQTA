@@ -938,6 +938,7 @@ dependencies = [
  "tauri-plugin-single-instance",
  "time",
  "tokio",
+ "tokio-util",
  "url",
  "urlencoding",
  "xmltree",
