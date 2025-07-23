@@ -486,7 +486,7 @@
                     placeholder="Name"
                     bind:value={shortcut.name} />
                   <input
-                    class="px-2 py-1.5 w-full bg-white rounded transition sm:w-10 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
+                    class="px-2 py-1.5 w-full bg-white rounded transition sm:w-12 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
                     placeholder="Icon emoji"
                     bind:value={shortcut.icon} />
                   <input
