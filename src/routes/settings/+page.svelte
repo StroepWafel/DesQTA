@@ -486,7 +486,7 @@
                     placeholder="Name"
                     bind:value={shortcut.name} />
                   <input
-                    class="px-2 py-1.5 w-full bg-white rounded transition sm:w-10 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
+                    class="px-2 py-1.5 w-full bg-white rounded transition sm:w-12 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
                     placeholder="Icon emoji"
                     bind:value={shortcut.icon} />
                   <input
@@ -980,7 +980,7 @@
       {#if showDevSettings}
         <section class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-400 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
           <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
-            <h2 class="text-base font-semibold sm:text-lg">Dev Settings</h2>
+            <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
             <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
               Developer options for debugging and testing
             </p>
