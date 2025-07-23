@@ -368,10 +368,10 @@
     <div class="space-y-6 sm:space-y-8">
       <!-- Cloud Sync Section -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-slate-100/60 dark:bg-slate-800/30 sm:rounded-2xl border-slate-300/30 dark:border-slate-800/30 animate-fade-in-up relative">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up relative">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/30 dark:border-slate-800/30">
           <h2 class="text-base font-semibold sm:text-lg text-slate-500 dark:text-slate-400">Cloud Sync</h2>
-          <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500">
+          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
             Sync your settings across devices with BetterSEQTA Plus account cloud syncing
           </p>
         </div>
@@ -433,12 +433,12 @@
                   Upload your current settings to the cloud or download settings from another device. 
                   This includes all your shortcuts, feeds, theme preferences, and other customizations.
                 </p>
-                <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
-                  <a href="https://accounts.betterseqta.org" target="_blank" rel="noopener noreferrer" 
-                     class="text-slate-400 dark:text-slate-500 hover:underline">
-                    Create a free BetterSEQTA Plus account
-                  </a> to get started with cloud syncing.
-                </p>
+                  <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                    <a href="https://accounts.betterseqta.org" target="_blank" rel="noopener noreferrer"
+                      class="text-blue-600 dark:text-blue-500 hover:underline">
+                      Create a free BetterSEQTA Plus account
+                    </a> to get started with cloud syncing.
+                  </p>
                 <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
                   <strong>Cloud API URL:</strong> {CLOUD_API_URL}
                 </p>
