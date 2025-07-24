@@ -15,6 +15,8 @@ mod seqta_config;
 mod cloudmessaging;
 #[path = "utils/logger.rs"]
 mod logger;
+#[path = "utils/theme_manager.rs"]
+mod theme_manager;
 mod global_search;
 
 
@@ -274,7 +276,14 @@ pub fn run() {
             logger::clear_logs,
             logger::set_log_level_command,
             logger::export_logs_for_support,
-            logger::logger_log_from_frontend
+            logger::logger_log_from_frontend,
+            theme_manager::get_available_themes,
+            theme_manager::load_theme_manifest,
+            theme_manager::save_custom_theme,
+            theme_manager::delete_custom_theme,
+            theme_manager::import_theme_from_file,
+            theme_manager::get_themes_directory_path,
+            theme_manager::export_theme_to_file
         ])
         .setup(|app| {
             // Initialize logger first

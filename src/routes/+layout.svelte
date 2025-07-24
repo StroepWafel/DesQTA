@@ -12,29 +12,15 @@
 
   import jsQR from 'jsqr';
 
-  import { onMount as svelteOnMount, onDestroy } from 'svelte';
   import '../app.css';
   import { accentColor, loadAccentColor, theme, loadTheme, loadCurrentTheme } from '../lib/stores/theme';
-  import { Icon } from 'svelte-hero-icons';
-  import {
-    Home,
-    Newspaper,
-    ClipboardDocumentList,
-    BookOpen,
-    ChatBubbleLeftRight,
-    DocumentText,
-    AcademicCap,
-    ChartBar,
-    Cog6Tooth,
-    CalendarDays,
-    User,
-    GlobeAlt,
-  } from 'svelte-hero-icons';
+  import { Icon, Home, Newspaper, ClipboardDocumentList, BookOpen, ChatBubbleLeftRight, DocumentText, AcademicCap, ChartBar, Cog6Tooth, CalendarDays, User, GlobeAlt, Swatch, XMark } from 'svelte-hero-icons';
 
   import { writable } from 'svelte/store';
   import { seqtaFetch } from '../utils/netUtil';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import { page } from '$app/stores';
+  import { onMount, onDestroy } from 'svelte';
   export const needsSetup = writable(false);
 
   let seqtaUrl = $state<string>('');
@@ -83,6 +69,10 @@
   ]);
   let menuLoading = $state(true);
 
+  import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
+  import { themeBuilderSidebarOpen } from '../lib/stores/themeBuilderSidebar';
+  import { get } from 'svelte/store';
+
   function handleClickOutside(event: MouseEvent) {
     const target = event.target as Element;
     if (!target.closest('.user-dropdown-container')) {
@@ -111,14 +101,14 @@
     }
   }
 
-  svelteOnMount(() => {
+  onMount(() => {
     logger.logComponentMount('layout');
     logger.info('layout', 'onMount', 'Application layout mounted');
     checkSession();
   });
 
   let unlisten: (() => void) | undefined;
-  svelteOnMount(async () => {
+  onMount(async () => {
     logger.debug('layout', 'onMount', 'Setting up reload listener');
     unlisten = await listen<string>('reload', () => {
       logger.info('layout', 'reload_listener', 'Received reload event');
@@ -322,7 +312,7 @@
     }
   });
 
-  svelteOnMount(async () => {
+  onMount(async () => {
     await Promise.all([
       checkSession(),
       loadWeatherSettings(),
@@ -396,7 +386,7 @@
     }
   });
 
-  svelteOnMount(() => {
+  onMount(() => {
     const checkMobile = () => {
       const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM
       if (tauri_platform == "ios" || tauri_platform == "android") {
@@ -483,7 +473,7 @@
     }
   }
 
-  svelteOnMount(() => {
+  onMount(() => {
     loadSeqtaConfigAndMenu();
   });
 </script>
@@ -527,9 +517,11 @@
         </div>
       {/if}
 
+      <!-- Main Content with ThemeBuilder Sidebar -->
       <main
-        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} border-slate-200 dark:border-slate-700/50"
-        style="background: var(--background-color);">
+        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} border-slate-200 dark:border-slate-700/50 transition-all duration-200"
+        style="background: var(--background-color); margin-right: { $themeBuilderSidebarOpen ? '384px' : '0'};"
+      >
         {#if $needsSetup}
           <LoginScreen
             {seqtaUrl}
@@ -540,6 +532,17 @@
           {@render children()}
         {/if}
       </main>
+
+      <!-- ThemeBuilder Sidebar -->
+      {#if $themeBuilderSidebarOpen}
+        <aside class="fixed top-0 right-0 h-full w-96 z-50 bg-white dark:bg-slate-900 shadow-xl border-l border-slate-200 dark:border-slate-700 flex flex-col transition-transform duration-200" style="transform: translateX(0);">
+          <ThemeBuilder>
+            <button slot="close" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors ml-auto" onclick={() => themeBuilderSidebarOpen.set(false)} aria-label="Close Theme Builder">
+              <Icon src={XMark} class="w-6 h-6" />
+            </button>
+          </ThemeBuilder>
+        </aside>
+      {/if}
     </div>
   </div>
 {/if}
