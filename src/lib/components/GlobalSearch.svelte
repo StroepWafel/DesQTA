@@ -72,6 +72,7 @@ const searchItems: SearchItem[] = [
   { id: 'messages', name: 'Direqt Messages', path: '/direqt-messages', category: 'page', icon: ChatBubbleLeftRight, description: 'Direqt messaging system', keywords: ['chat', 'messages', 'communication'], priority: 7 },
   { id: 'news', name: 'News', path: '/news', category: 'page', icon: Newspaper, description: 'Latest News and updates', keywords: ['News', 'updates', 'information'], priority: 5 },
   { id: 'notices', name: 'Notices', path: '/notices', category: 'page', icon: BellAlert, description: 'Important notices from staff', keywords: ['notifications', 'alerts', 'important'], priority: 6 },
+  { id: 'portals', name: 'Portals', path: '/portals', category: 'page', icon: Squares2x2, description: 'External portals and links', keywords: ['portals', 'external', 'links', 'websites'], priority: 5 },
   { id: 'reports', name: 'Reports', path: '/reports', category: 'page', icon: DocumentDuplicate, description: 'Academic reports', keywords: ['grades', 'progress', 'academic'], priority: 7 },
   { id: 'settings', name: 'Settings', path: '/settings', category: 'page', icon: Cog6Tooth, description: 'App configuration and preferences', keywords: ['config', 'preferences', 'options'], priority: 4 },
   { id: 'welcome', name: 'Welcome', path: '/welcome', category: 'page', icon: Sparkles, description: 'SEQTA Welcome Page', keywords: ['welcome', 'seqta', 'help'], priority: 3 },
