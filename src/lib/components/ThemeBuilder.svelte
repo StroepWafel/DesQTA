@@ -542,11 +542,12 @@
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="themeName">
                 Theme Name <span class="text-red-500">*</span>
               </label>
               <input
                 type="text"
+                id="themeName"
                 bind:value={themeName}
                 placeholder="my-awesome-theme"
                 class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
@@ -557,11 +558,12 @@
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="themeDisplayName">
                 Display Name <span class="text-red-500">*</span>
               </label>
               <input
                 type="text"
+                id="themeDisplayName"
                 bind:value={themeDisplayName}
                 placeholder="My Awesome Theme"
                 class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
@@ -569,10 +571,11 @@
             </div>
             
             <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="themeDescription">
                 Description <span class="text-red-500">*</span>
               </label>
               <textarea
+                id="themeDescription"
                 bind:value={themeDescription}
                 placeholder="A beautiful theme with..."
                 rows="3"
@@ -581,11 +584,12 @@
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="themeAuthor">
                 Author <span class="text-red-500">*</span>
               </label>
               <input
                 type="text"
+                id="themeAuthor"
                 bind:value={themeAuthor}
                 placeholder="Your Name"
                 class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
@@ -593,10 +597,11 @@
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="themeCategory">
                 Category
               </label>
               <select
+                id="themeCategory"
                 bind:value={themeCategory}
                 class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
               >
@@ -609,9 +614,7 @@
           
           <!-- Tags -->
           <div class="mt-6">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Tags
-            </label>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="newTagInput">Tags</label>
             
             <div class="flex flex-wrap gap-2 mb-3">
               {#each themeTags as tag}
@@ -627,6 +630,7 @@
             <div class="flex gap-2 mb-3">
               <input
                 type="text"
+                id="newTagInput"
                 bind:value={newTag}
                 placeholder="Add a tag..."
                 class="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
@@ -670,15 +674,17 @@
                   <div class="flex items-center gap-3">
                     <input
                       type="color"
+                      id={property + '-color'}
                       bind:value={themeConfig.customProperties[property]}
                       class="w-12 h-12 rounded-lg border-2 border-slate-300 dark:border-slate-600 cursor-pointer"
                     />
                     <div class="flex-1">
-                      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300" for={property + '-color'}>
                         {property.replace('--', '').replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </label>
                       <input
                         type="text"
+                        id={property + '-text'}
                         bind:value={themeConfig.customProperties[property]}
                         class="w-full text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                       />
@@ -732,11 +738,12 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             {#each Object.entries(themeConfig.fonts) as [fontType, fontValue]}
               <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for={fontType + 'Font'}>
                   {fontType.charAt(0).toUpperCase() + fontType.slice(1)} Font
                 </label>
                 <input
                   type="text"
+                  id={fontType + 'Font'}
                   bind:value={themeConfig.fonts[fontType as keyof typeof themeConfig.fonts]}
                   placeholder="Font family name"
                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
@@ -819,11 +826,12 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             {#each Object.entries(themeConfig.animations) as [animType, animValue]}
               <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for={animType + 'Animation'}>
                   {animType.charAt(0).toUpperCase() + animType.slice(1)}
                 </label>
                 <input
                   type="text"
+                  id={animType + 'Animation'}
                   bind:value={themeConfig.animations[animType as keyof typeof themeConfig.animations]}
                   placeholder="Animation value"
                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"

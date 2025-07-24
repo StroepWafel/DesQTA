@@ -310,7 +310,7 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
         }
 
         // Spawn the login window with unique ID
-        let webview_window = WebviewWindowBuilder::new(&app, &window_id, WebviewUrl::External(full_url.clone()))
+        let _webview_window = WebviewWindowBuilder::new(&app, &window_id, WebviewUrl::External(full_url.clone()))
             .title("SEQTA Login")
             .inner_size(900.0, 700.0)
             .build()

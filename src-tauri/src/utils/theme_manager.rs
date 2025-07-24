@@ -120,6 +120,7 @@ impl ThemeManager {
         Ok(themes_dir)
     }
 
+    #[allow(dead_code)]
     pub fn get_static_themes_directory(&self) -> PathBuf {
         // This would be the path to static/themes in the bundled app
         // For now, we'll use a placeholder - in reality this would be resolved
