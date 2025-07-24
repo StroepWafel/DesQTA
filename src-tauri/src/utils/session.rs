@@ -4,6 +4,7 @@ use std::{
     io::{self, Read},
     path::PathBuf,
 };
+use crate::logger;
 
 /// Location: `$DATA_DIR/DesQTA/session.json`
 #[allow(dead_code)]
@@ -52,15 +53,45 @@ pub struct Cookie {
 impl Session {
     /// Load from disk; returns empty/default if none.
     pub fn load() -> Self {
+        if let Some(logger) = logger::get_logger() {
+            let _ = logger.log(
+                logger::LogLevel::DEBUG,
+                "session",
+                "load",
+                "Loading session from disk",
+                serde_json::json!({})
+            );
+        }
+        
         let path = session_file();
         if let Ok(mut file) = fs::File::open(path) {
             let mut contents = String::new();
             if file.read_to_string(&mut contents).is_ok() {
                 if let Ok(sess) = serde_json::from_str::<Session>(&contents) {
+                    if let Some(logger) = logger::get_logger() {
+                        let _ = logger.log(
+                            logger::LogLevel::DEBUG,
+                            "session",
+                            "load",
+                            "Session loaded successfully from disk",
+                            serde_json::json!({"has_base_url": !sess.base_url.is_empty()})
+                        );
+                    }
                     return sess;
                 }
             }
         }
+        
+        if let Some(logger) = logger::get_logger() {
+            let _ = logger.log(
+                logger::LogLevel::DEBUG,
+                "session",
+                "load",
+                "No existing session found, creating default",
+                serde_json::json!({})
+            );
+        }
+        
         Session {
             base_url: String::new(),
             jsessionid: String::new(),

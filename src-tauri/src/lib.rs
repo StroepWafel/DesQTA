@@ -13,6 +13,8 @@ mod session;
 mod seqta_config;
 #[path = "utils/cloudmessaging.rs"]
 mod cloudmessaging;
+#[path = "utils/logger.rs"]
+mod logger;
 mod global_search;
 
 
@@ -265,9 +267,20 @@ pub fn run() {
             global_search::hide_window,
             global_search::show_notification,
             global_search::open_file_explorer,
-            global_search::get_app_data_dir
+            global_search::get_app_data_dir,
+            logger::get_log_file_path_command,
+            logger::get_logs_for_troubleshooting,
+            logger::clear_logs,
+            logger::set_log_level_command,
+            logger::export_logs_for_support,
+            logger::logger_log_from_frontend
         ])
         .setup(|app| {
+            // Initialize logger first
+            if let Err(e) = logger::init_logger() {
+                eprintln!("Failed to initialize logger: {}", e);
+            }
+
             #[cfg(desktop)]
             {
                 // Configure the existing main window

@@ -6,6 +6,7 @@ use std::{
 };
 use reqwest;
 use serde_json;
+use crate::logger;
 
 #[path = "session.rs"]
 mod session;
@@ -389,12 +390,56 @@ impl Settings {
 
 #[tauri::command]
 pub fn get_settings() -> Settings {
+    if let Some(logger) = logger::get_logger() {
+        let _ = logger.log(
+            logger::LogLevel::DEBUG,
+            "settings",
+            "get_settings",
+            "Loading application settings",
+            serde_json::json!({})
+        );
+    }
     Settings::load()
 }
 
 #[tauri::command]
 pub fn save_settings(new_settings: Settings) -> Result<(), String> {
-    new_settings.save().map_err(|e| e.to_string())
+    if let Some(logger) = logger::get_logger() {
+        let _ = logger.log(
+            logger::LogLevel::INFO,
+            "settings",
+            "save_settings",
+            "Saving application settings",
+            serde_json::json!({})
+        );
+    }
+    
+    match new_settings.save() {
+        Ok(_) => {
+            if let Some(logger) = logger::get_logger() {
+                let _ = logger.log(
+                    logger::LogLevel::DEBUG,
+                    "settings",
+                    "save_settings",
+                    "Settings saved successfully",
+                    serde_json::json!({})
+                );
+            }
+            Ok(())
+        }
+        Err(e) => {
+            if let Some(logger) = logger::get_logger() {
+                let _ = logger.log(
+                    logger::LogLevel::ERROR,
+                    "settings",
+                    "save_settings",
+                    &format!("Failed to save settings: {}", e),
+                    serde_json::json!({"error": e.to_string()})
+                );
+            }
+            Err(e.to_string())
+        }
+    }
 }
 
 #[tauri::command]

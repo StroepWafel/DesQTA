@@ -8,6 +8,7 @@
   import { authService, type UserInfo } from '../lib/services/authService';
   import { weatherService, type WeatherData } from '../lib/services/weatherService';
   import { errorService } from '../lib/services/errorService';
+  import { logger } from '../utils/logger';
 
   import jsQR from 'jsqr';
 
@@ -90,24 +91,47 @@
   }
 
   async function checkSession() {
-    const sessionExists = await authService.checkSession();
-    needsSetup.set(!sessionExists);
-    if (sessionExists) {
-      loadUserInfo();
+    logger.logFunctionEntry('layout', 'checkSession');
+    logger.info('layout', 'checkSession', 'Checking user session');
+    
+    try {
+      const sessionExists = await authService.checkSession();
+      needsSetup.set(!sessionExists);
+      
+      logger.info('layout', 'checkSession', `Session exists: ${sessionExists}`, { sessionExists });
+      
+      if (sessionExists) {
+        logger.debug('layout', 'checkSession', 'Loading user info');
+        loadUserInfo();
+      }
+      
+      logger.logFunctionExit('layout', 'checkSession', { sessionExists });
+    } catch (error) {
+      logger.error('layout', 'checkSession', `Failed to check session: ${error}`, { error });
     }
   }
 
-  svelteOnMount(checkSession);
+  svelteOnMount(() => {
+    logger.logComponentMount('layout');
+    logger.info('layout', 'onMount', 'Application layout mounted');
+    checkSession();
+  });
 
   let unlisten: (() => void) | undefined;
   svelteOnMount(async () => {
+    logger.debug('layout', 'onMount', 'Setting up reload listener');
     unlisten = await listen<string>('reload', () => {
+      logger.info('layout', 'reload_listener', 'Received reload event');
       location.reload();
     });
   });
 
   onDestroy(() => {
-    if (unlisten) unlisten();
+    logger.logComponentUnmount('layout');
+    if (unlisten) {
+      logger.debug('layout', 'onDestroy', 'Cleaning up reload listener');
+      unlisten();
+    }
   });
 
   // Function to reload enhanced animations setting
@@ -115,9 +139,9 @@
     try {
       const settings = await invoke<{ enhanced_animations?: boolean }>('get_settings');
       enhancedAnimations = settings.enhanced_animations ?? true;
-      console.log('Enhanced animations setting reloaded:', enhancedAnimations);
+      logger.debug('layout', 'reloadEnhancedAnimationsSetting', `Enhanced animations setting reloaded: ${enhancedAnimations}`, { enhancedAnimations });
     } catch (e) {
-      console.error('Failed to reload enhanced animations setting:', e);
+      logger.error('layout', 'reloadEnhancedAnimationsSetting', `Failed to reload enhanced animations setting: ${e}`, { error: e });
     }
   }
 

@@ -18,6 +18,7 @@
   import PagesMenu from './PagesMenu.svelte';
   import GlobalSearch from './GlobalSearch.svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
 
   interface Props {
@@ -183,11 +184,14 @@
   }
 
   async function loadGlobalSearchSetting() {
+    logger.debug('AppHeader', 'loadGlobalSearchSetting', 'Loading global search setting');
+    
     try {
       const settings = await invoke<{ global_search_enabled?: boolean }>('get_settings');
       globalSearchEnabled = settings.global_search_enabled ?? true;
+      logger.info('AppHeader', 'loadGlobalSearchSetting', `Global search enabled: ${globalSearchEnabled}`);
     } catch (error) {
-      console.error('Failed to load global search setting:', error);
+      logger.error('AppHeader', 'loadGlobalSearchSetting', `Failed to load global search setting: ${error}`, { error });
       globalSearchEnabled = true; // Default to enabled if loading fails
     }
   }
@@ -239,9 +243,12 @@
   }
 
   function toggleNotifications() {
+    logger.debug('AppHeader', 'toggleNotifications', 'Toggling notifications panel', { isMobile });
+    
     if (isMobile) {
       showNotificationsModal = !showNotificationsModal;
       if (showNotificationsModal && notifications.length === 0) {
+        logger.debug('AppHeader', 'toggleNotifications', 'Fetching notifications for mobile modal');
         fetchNotifications();
       }
     } else {

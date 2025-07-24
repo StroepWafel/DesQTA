@@ -1,4 +1,5 @@
 import { goto } from '$app/navigation';
+import { logger } from '../../utils/logger';
 import { page } from '$app/stores';
 import { get } from 'svelte/store';
 
@@ -20,8 +21,14 @@ class ErrorService {
   }
 
   private setupGlobalErrorHandlers() {
+    logger.debug('errorService', 'setupGlobalErrorHandlers', 'Setting up global error handlers');
+    
     // Handle unhandled promise rejections
     window.addEventListener('unhandledrejection', (event) => {
+      logger.warn('errorService', 'unhandledrejection', 'Unhandled promise rejection detected', {
+        reason: event.reason?.message || 'Unknown reason'
+      });
+      
       this.handleError({
         message: event.reason?.message || 'Unhandled Promise Rejection',
         status: event.reason?.status || 500,
