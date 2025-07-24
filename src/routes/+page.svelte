@@ -586,77 +586,77 @@
         >
           <!-- Widget Header (Edit Mode) -->
           {#if isEditMode}
-            <div class="absolute top-2 right-2 z-10 flex flex-col gap-1" onclick={(e) => e.stopPropagation()}>
-              <!-- Movement Controls -->
-              <div class="flex flex-col bg-slate-800/90 rounded-lg p-1 gap-1">
-                <!-- Up Arrow -->
-                <button
-                  onclick={() => moveWidget(layout.id, 'up')}
-                  class="p-1 rounded bg-slate-700/80 text-white hover:bg-slate-600/80 transition-colors"
-                  title="Move Up"
-                  disabled={layout.y === 0}
-                >
-                                     <Icon src={ChevronUp} class="w-3 h-3" />
-                </button>
-                
-                <!-- Horizontal Controls (Desktop Only) -->
-                {#if !isMobile}
-                  <div class="flex gap-1">
-                    <button
-                      onclick={() => moveWidget(layout.id, 'left')}
-                      class="p-1 rounded bg-slate-700/80 text-white hover:bg-slate-600/80 transition-colors"
-                      title="Move Left"
-                      disabled={layout.x === 0}
-                    >
-                                             <Icon src={ChevronLeft} class="w-3 h-3" />
+            <div class="absolute top-2 right-2 z-10 flex flex-col gap-1" role="toolbar" aria-label="Widget controls" tabindex="0" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === 'Escape') e.stopPropagation(); }}>
+                             <!-- Movement Controls -->
+               <div class="flex flex-col bg-slate-800/90 rounded-lg p-2 gap-2">
+                 <!-- Up Arrow -->
+                 <button
+                   onclick={() => moveWidget(layout.id, 'up')}
+                   class="p-2 sm:p-2.5 rounded bg-slate-700/80 text-white hover:bg-slate-600/80 transition-colors min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center"
+                   title="Move Up"
+                   disabled={layout.y === 0}
+                 >
+                   <Icon src={ChevronUp} class="w-4 h-4 sm:w-5 sm:h-5" />
+                 </button>
+                 
+                 <!-- Horizontal Controls (Desktop Only) -->
+                 {#if !isMobile}
+                   <div class="flex gap-2">
+                     <button
+                       onclick={() => moveWidget(layout.id, 'left')}
+                       class="p-2 sm:p-2.5 rounded bg-slate-700/80 text-white hover:bg-slate-600/80 transition-colors min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center"
+                       title="Move Left"
+                       disabled={layout.x === 0}
+                     >
+                       <Icon src={ChevronLeft} class="w-4 h-4 sm:w-5 sm:h-5" />
                      </button>
                      <button
                        onclick={() => moveWidget(layout.id, 'right')}
-                       class="p-1 rounded bg-slate-700/80 text-white hover:bg-slate-600/80 transition-colors"
+                       class="p-2 sm:p-2.5 rounded bg-slate-700/80 text-white hover:bg-slate-600/80 transition-colors min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center"
                        title="Move Right"
                        disabled={layout.x + layout.width >= 2}
                      >
-                       <Icon src={ChevronRight} class="w-3 h-3" />
-                    </button>
-                  </div>
-                {/if}
-                
-                <!-- Down Arrow -->
-                <button
-                  onclick={() => moveWidget(layout.id, 'down')}
-                  class="p-1 rounded bg-slate-700/80 text-white hover:bg-slate-600/80 transition-colors"
-                  title="Move Down"
-                >
-                                     <Icon src={ChevronDown} class="w-3 h-3" />
-                </button>
-              </div>
+                       <Icon src={ChevronRight} class="w-4 h-4 sm:w-5 sm:h-5" />
+                     </button>
+                   </div>
+                 {/if}
+                 
+                 <!-- Down Arrow -->
+                 <button
+                   onclick={() => moveWidget(layout.id, 'down')}
+                   class="p-2 sm:p-2.5 rounded bg-slate-700/80 text-white hover:bg-slate-600/80 transition-colors min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center"
+                   title="Move Down"
+                 >
+                   <Icon src={ChevronDown} class="w-4 h-4 sm:w-5 sm:h-5" />
+                 </button>
+               </div>
               
-              <!-- Widget Controls -->
-              <div class="flex gap-1">
-                {#if !isMobile}
-                  <button
-                    onclick={() => toggleWidgetSize(layout.id)}
-                    class="p-1.5 rounded bg-slate-800/80 text-white hover:bg-slate-700/80 transition-colors text-xs"
-                    title={layout.width === 1 ? 'Expand to Full Width' : 'Shrink to Half Width'}
-                  >
-                                         <Icon src={ArrowsRightLeft} class="w-3 h-3" />
-                  </button>
-                {/if}
-                <button
-                  onclick={() => toggleWidgetEnabled(layout.id)}
-                  class="p-1.5 rounded bg-red-600/80 text-white hover:bg-red-500/80 transition-colors"
-                  title="Remove Widget"
-                >
-                  <Icon src={XMark} class="w-3 h-3" />
-                </button>
-              </div>
+                             <!-- Widget Controls -->
+               <div class="flex gap-2">
+                 {#if !isMobile}
+                   <button
+                     onclick={() => toggleWidgetSize(layout.id)}
+                     class="p-2 sm:p-2.5 rounded bg-slate-800/80 text-white hover:bg-slate-700/80 transition-colors min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center"
+                     title={layout.width === 1 ? 'Expand to Full Width' : 'Shrink to Half Width'}
+                   >
+                     <Icon src={ArrowsRightLeft} class="w-4 h-4 sm:w-5 sm:h-5" />
+                   </button>
+                 {/if}
+                 <button
+                   onclick={() => toggleWidgetEnabled(layout.id)}
+                   class="p-2 sm:p-2.5 rounded bg-red-600/80 text-white hover:bg-red-500/80 transition-colors min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center"
+                   title="Remove Widget"
+                 >
+                   <Icon src={XMark} class="w-4 h-4 sm:w-5 sm:h-5" />
+                 </button>
+               </div>
             </div>
           {/if}
 
           <!-- Widget Content -->
           <div class="h-full">
             {#if renderedWidget.component}
-              <svelte:component this={renderedWidget.component} {...renderedWidget.props} />
+              <renderedWidget.component {...renderedWidget.props} />
             {/if}
           </div>
         </div>
