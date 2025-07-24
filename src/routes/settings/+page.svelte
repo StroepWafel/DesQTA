@@ -491,40 +491,6 @@
           </p>
         </div>
         <div class="p-4 space-y-6 sm:p-6">
-          <!-- Shortcuts -->
-          <div>
-            <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Quick Access Shortcuts</h3>
-            <p class="mb-4 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
-              Add shortcuts to frequently used websites that will appear at the top of your
-              homepage.
-            </p>
-            <div class="space-y-3 sm:space-y-4">
-              {#each shortcuts as shortcut, idx}
-                <div
-                  class="flex flex-col gap-2 items-start p-3 rounded-lg transition-all duration-200 sm:flex-row sm:items-center bg-slate-100/80 dark:bg-slate-800/50 hover:shadow-lg hover:bg-slate-200/80 dark:hover:bg-slate-700/50 animate-fade-in">
-                  <input
-                    class="px-2 py-1.5 w-full bg-white rounded transition sm:w-32 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Name"
-                    bind:value={shortcut.name} />
-                  <input
-                    class="px-2 py-1.5 w-full bg-white rounded transition sm:w-12 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Icon emoji"
-                    bind:value={shortcut.icon} />
-                  <input
-                    class="px-2 py-1.5 w-full bg-white rounded transition sm:flex-10 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
-                    placeholder="URL"
-                    bind:value={shortcut.url} />
-                  <button
-                    class="px-2 text-red-400 transition-transform duration-200 hover:text-red-600 active:scale-110"
-                    onclick={() => removeShortcut(idx)}
-                    title="Remove">❌</button>
-                </div>
-              {/each}
-              <button
-                class="px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
-                onclick={addShortcut}>Add Shortcut</button>
-            </div>
-          </div>
           <!-- Widget Settings -->
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Widget Settings</h3>
