@@ -22,6 +22,8 @@ Welcome to the comprehensive documentation for DesQTA - a modern student managem
 
 ### 🔧 Development & Deployment
 - [Build Process & Deployment](./development/build-deployment.md) - Build system and deployment guide
+- [Logging System](./development/logging-system.md) - Comprehensive logging and debugging
+- [Logging Quick Reference](./development/logging-quick-reference.md) - Quick reference for logging APIs
 
 ### 📱 Core Features
 - [Assessment System](./features/assessments.md) - Assessment management and tracking
