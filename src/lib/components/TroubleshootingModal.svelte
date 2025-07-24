@@ -165,7 +165,7 @@
     <!-- Status Messages -->
     {#if error}
       <div class="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
-        <Icon src={ExclamationTriangleIcon} class="w-5 h-5 text-red-500" />
+        <Icon src={ExclamationTriangle} class="w-5 h-5 text-red-500" />
         <span class="text-red-700 dark:text-red-300 text-sm">{error}</span>
         <button 
           class="ml-auto text-red-500 hover:text-red-700" 
@@ -177,7 +177,7 @@
 
     {#if success}
       <div class="mx-6 mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-2">
-        <Icon src={InformationCircleIcon} class="w-5 h-5 text-green-500" />
+        <Icon src={InformationCircle} class="w-5 h-5 text-green-500" />
         <span class="text-green-700 dark:text-green-300 text-sm">{success}</span>
         <button 
           class="ml-auto text-green-500 hover:text-green-700" 
@@ -195,7 +195,7 @@
             class="px-4 py-2 bg-accent-500 text-white rounded-lg hover:bg-accent-600 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 disabled:opacity-50 flex items-center gap-2"
             onclick={exportLogs}
             disabled={loading}>
-            <Icon src={DocumentArrowDownIcon} class="w-4 h-4" />
+            <Icon src={DocumentArrowDown} class="w-4 h-4" />
             Export Support Logs
           </button>
 
@@ -203,7 +203,7 @@
             class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 flex items-center gap-2"
             onclick={copyLogsToClipboard}
             disabled={loading}>
-            <Icon src={ClipboardDocumentIcon} class="w-4 h-4" />
+            <Icon src={ClipboardDocument} class="w-4 h-4" />
             Copy to Clipboard
           </button>
 
@@ -211,7 +211,7 @@
             class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 flex items-center gap-2"
             onclick={clearLogs}
             disabled={loading}>
-            <Icon src={TrashIcon} class="w-4 h-4" />
+            <Icon src={Trash} class="w-4 h-4" />
             Clear Logs
           </button>
         </div>
@@ -306,7 +306,7 @@
         
         <button
           class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-500"
-          onclick={onClose}>
+          onclick={onclose}>
           Close
         </button>
       </div>

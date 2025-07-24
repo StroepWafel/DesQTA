@@ -1,9 +1,11 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { Icon } from 'svelte-hero-icons';
-  import { ExclamationTriangle, Home, ArrowLeft, ArrowPath } from 'svelte-hero-icons';
+  import { ExclamationTriangle, Home, ArrowLeft, ArrowPath, Cog } from 'svelte-hero-icons';
   import { goto } from '$app/navigation';
   import { accentColor } from '../lib/stores/theme';
+  import TroubleshootingModal from '../lib/components/TroubleshootingModal.svelte';
+  import { logger } from '../utils/logger';
 
   let { error, status } = $props<{
     error: Error & { status?: number; message?: string };
@@ -46,6 +48,24 @@
 
   function refreshPage() {
     window.location.reload();
+  }
+
+  // Troubleshooting modal state
+  let showTroubleshootingModal = $state(false);
+
+  function openTroubleshooting() {
+    logger.info('errorPage', 'openTroubleshooting', 'Opening troubleshooting modal from global error page', {
+      errorStatus,
+      errorType,
+      errorMessage,
+      stack: error?.stack
+    });
+    showTroubleshootingModal = true;
+  }
+
+  function closeTroubleshooting() {
+    logger.debug('errorPage', 'closeTroubleshooting', 'Closing troubleshooting modal');
+    showTroubleshootingModal = false;
   }
 
   function reportError() {
@@ -122,6 +142,14 @@
         </button>
 
         <button
+          onclick={openTroubleshooting}
+          class="w-full px-4 py-3 bg-blue-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
+        >
+          <Icon src={Cog} size="20" class="inline mr-2" />
+          View Logs & Troubleshooting
+        </button>
+
+        <button
           onclick={goHome}
           class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
@@ -144,4 +172,10 @@
       {/if}
     </div>
   </div>
-</div> 
+</div>
+
+<!-- Troubleshooting Modal -->
+<TroubleshootingModal 
+  open={showTroubleshootingModal} 
+  onclose={closeTroubleshooting} 
+/> 
