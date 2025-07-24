@@ -295,9 +295,6 @@
         {otherFolders}
         {selectedSubject}
         {expandedFolders}
-        {subjectMatches}
-        {folderMatches}
-        {isMobile}
         on:selectSubject={handleSelectSubject}
         on:toggleFolder={handleToggleFolder}
         on:close={() => showSubjectSidebar = false} />
@@ -324,7 +321,6 @@
             {selectedLesson}
             {showingOverview}
             {coursePayload}
-            {isMobile}
             onSelectLesson={handleSelectLesson}
             onSelectOverview={handleSelectOverview}
             onClose={() => showScheduleSidebar = false} />

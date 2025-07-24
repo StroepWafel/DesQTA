@@ -9,7 +9,7 @@
   import TimetableHeader from '$lib/components/TimetableHeader.svelte';
   import TimetableGrid from '$lib/components/TimetableGrid.svelte';
   import TimetablePdfViewer from '$lib/components/TimetablePdfViewer.svelte';
-  import { createEvents, EventStatus } from 'ics';
+  import { createEvents, type EventStatus } from 'ics';
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';

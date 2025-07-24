@@ -4,7 +4,7 @@
   import { onMount } from 'svelte';
 
   let {
-    search = '',
+    search = $bindable(''),
     loading = false,
     error = null,
     activeSubjects = [],

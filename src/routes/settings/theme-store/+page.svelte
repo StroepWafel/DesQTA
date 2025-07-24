@@ -137,9 +137,11 @@
   {:else}
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
       {#each availableThemes as theme, i (theme.name)}
-        <div
-          class="rounded-xl shadow-lg p-6 flex flex-col items-center bg-white/10 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all duration-200 hover:scale-105 hover:shadow-2xl cursor-pointer {currentThemeName === theme.name.toLowerCase() ? 'ring-2 ring-accent' : ''}"
+        <button
+          type="button"
+          class="rounded-xl shadow-lg p-6 flex flex-col items-center bg-white/10 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all duration-200 hover:scale-105 hover:shadow-2xl cursor-pointer {currentThemeName === theme.name.toLowerCase() ? 'ring-2 ring-accent' : ''} focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
           on:click={() => openThemeModal(theme)}
+          aria-label="Select {theme.name} theme"
         >
           {#if !imgErrors[i]}
             <img
@@ -164,7 +166,7 @@
           {#if currentThemeName === theme.name.toLowerCase()}
             <div class="mt-2 px-2 py-1 text-xs bg-accent text-white rounded-full">Active</div>
           {/if}
-        </div>
+        </button>
       {/each}
     </div>
 
