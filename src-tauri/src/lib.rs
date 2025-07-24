@@ -13,6 +13,7 @@ mod session;
 mod seqta_config;
 #[path = "utils/cloudmessaging.rs"]
 mod cloudmessaging;
+mod global_search;
 
 
 use tauri::Manager;
@@ -234,7 +235,19 @@ pub fn run() {
             cloudmessaging::create_group,
             cloudmessaging::upload_attachment,
             cloudmessaging::write_temp_file,
-            cloudmessaging::delete_temp_file
+            cloudmessaging::delete_temp_file,
+            global_search::get_global_search_data,
+            global_search::save_global_search_data,
+            global_search::clear_search_history,
+            global_search::clear_recent_items,
+            global_search::add_custom_shortcut,
+            global_search::remove_custom_shortcut,
+            global_search::update_search_preferences,
+            global_search::get_search_analytics,
+            global_search::increment_search_usage,
+            global_search::export_search_data,
+            global_search::import_search_data,
+            global_search::reset_search_data
         ])
         .setup(|app| {
             #[cfg(desktop)]
