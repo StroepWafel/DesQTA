@@ -240,4 +240,220 @@ pub fn reset_search_data() -> Result<(), String> {
     let default_data = GlobalSearchData::default();
     save_global_search_data(default_data)?;
     Ok(())
+}
+
+// Window Management Commands
+#[command]
+pub async fn toggle_fullscreen(window: tauri::Window) -> Result<(), String> {
+    let is_fullscreen = window.is_fullscreen().map_err(|e| e.to_string())?;
+    window.set_fullscreen(!is_fullscreen).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[command]
+pub async fn minimize_window(window: tauri::Window) -> Result<(), String> {
+    window.minimize().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[command]
+pub async fn maximize_window(window: tauri::Window) -> Result<(), String> {
+    window.maximize().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[command]
+pub async fn unmaximize_window(window: tauri::Window) -> Result<(), String> {
+    window.unmaximize().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[command]
+pub async fn close_window(window: tauri::Window) -> Result<(), String> {
+    window.close().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// Developer Tools Commands
+#[command]
+pub async fn open_devtools(_window: tauri::Window) -> Result<(), String> {
+    #[cfg(debug_assertions)]
+    {
+        // In Tauri v2, dev tools are opened via keyboard shortcut F12 or menu
+        println!("Developer tools can be opened with F12 or through the application menu");
+        Ok(())
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        Err("Developer tools are only available in debug builds".to_string())
+    }
+}
+
+#[command]
+pub async fn close_devtools(_window: tauri::Window) -> Result<(), String> {
+    #[cfg(debug_assertions)]
+    {
+        println!("Developer tools can be closed with F12 or through the application menu");
+        Ok(())
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        Err("Developer tools are only available in debug builds".to_string())
+    }
+}
+
+// Zoom Commands - Using webview evaluation since direct zoom API is not available
+#[command]
+pub async fn zoom_in(_window: tauri::Window) -> Result<(), String> {
+    // In Tauri v2, zoom is typically handled by the frontend
+    println!("Zoom in requested - implement on frontend with CSS transform or zoom");
+    Ok(())
+}
+
+#[command]
+pub async fn zoom_out(_window: tauri::Window) -> Result<(), String> {
+    // In Tauri v2, zoom is typically handled by the frontend
+    println!("Zoom out requested - implement on frontend with CSS transform or zoom");
+    Ok(())
+}
+
+#[command]
+pub async fn zoom_reset(_window: tauri::Window) -> Result<(), String> {
+    // In Tauri v2, zoom is typically handled by the frontend
+    println!("Zoom reset requested - implement on frontend with CSS transform or zoom");
+    Ok(())
+}
+
+// Cache Management Commands
+#[command]
+pub async fn clear_cache() -> Result<(), String> {
+    // Clear application cache
+    let cache_dirs = [
+        "cache",
+        "temp",
+        "logs"
+    ];
+    
+    for cache_dir in &cache_dirs {
+        let cache_path = get_cache_path(cache_dir);
+        if cache_path.exists() {
+            if cache_path.is_dir() {
+                fs::remove_dir_all(&cache_path).map_err(|e| {
+                    format!("Failed to remove cache directory {}: {}", cache_dir, e)
+                })?;
+            } else {
+                fs::remove_file(&cache_path).map_err(|e| {
+                    format!("Failed to remove cache file {}: {}", cache_dir, e)
+                })?;
+            }
+        }
+    }
+    
+    Ok(())
+}
+
+fn get_cache_path(cache_type: &str) -> PathBuf {
+    #[cfg(target_os = "android")]
+    {
+        let mut dir = PathBuf::from("/data/data/com.desqta.app/cache");
+        dir.push(cache_type);
+        dir
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        let mut dir = dirs_next::cache_dir().unwrap_or_else(|| PathBuf::from("."));
+        dir.push("DesQTA");
+        dir.push(cache_type);
+        dir
+    }
+}
+
+// System Information Commands
+#[command]
+pub fn get_system_info() -> Result<SystemInfo, String> {
+    Ok(SystemInfo {
+        platform: std::env::consts::OS.to_string(),
+        arch: std::env::consts::ARCH.to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        tauri_version: "2.0".to_string(), // Update as needed
+    })
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SystemInfo {
+    pub platform: String,
+    pub arch: String,
+    pub version: String,
+    pub tauri_version: String,
+}
+
+// Application State Commands
+#[command]
+pub async fn restart_app(app: tauri::AppHandle) -> Result<(), String> {
+    app.restart();
+}
+
+#[command]
+pub async fn show_window(window: tauri::Window) -> Result<(), String> {
+    window.show().map_err(|e| e.to_string())?;
+    window.set_focus().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[command]
+pub async fn hide_window(window: tauri::Window) -> Result<(), String> {
+    window.hide().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// Notification Commands
+#[command]
+pub async fn show_notification(title: String, body: String) -> Result<(), String> {
+    // This would integrate with the notification plugin
+    println!("Notification: {} - {}", title, body);
+    Ok(())
+}
+
+// File System Commands
+#[command]
+pub async fn open_file_explorer(path: Option<String>) -> Result<(), String> {
+    let target_path = path.unwrap_or_else(|| {
+        dirs_next::home_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .to_string_lossy()
+            .to_string()
+    });
+    
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(&target_path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&target_path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&target_path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
+}
+
+#[command]
+pub async fn get_app_data_dir() -> Result<String, String> {
+    let path = get_search_data_path();
+    let parent = path.parent().unwrap_or(&path);
+    Ok(parent.to_string_lossy().to_string())
 } 

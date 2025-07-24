@@ -27,7 +27,9 @@ import {
   ChatBubbleLeftRight,
   Newspaper,
   DocumentDuplicate,
-  UserGroup
+  UserGroup,
+  Cloud,
+  MapPin
 } from 'svelte-hero-icons';
 import { scale, fly, fade } from 'svelte/transition';
 import { invoke } from '@tauri-apps/api/core';
@@ -78,10 +80,40 @@ const searchItems: SearchItem[] = [
   { id: 'action-theme', name: 'Toggle Theme', path: '/settings/theme-store', category: 'action', icon: Sparkles, description: 'Switch between light and dark mode', keywords: ['dark', 'light', 'appearance'], shortcut: 'Ctrl+Shift+T' },
   { id: 'action-focus', name: 'Start Focus Timer', path: '/?focus=true', category: 'action', icon: Fire, description: 'Begin a focused study session', keywords: ['timer', 'focus', 'study', 'pomodoro'], shortcut: 'Ctrl+F' },
   { id: 'action-refresh', name: 'Refresh Data', path: '/?refresh=true', category: 'action', icon: ArrowPath, description: 'Sync latest information', keywords: ['sync', 'update', 'reload'], shortcut: 'Ctrl+R' },
+  { id: 'action-fullscreen', name: 'Toggle Fullscreen', path: '#', category: 'action', icon: Squares2x2, description: 'Enter or exit fullscreen mode', keywords: ['fullscreen', 'maximize', 'window'], shortcut: 'F11' },
+  { id: 'action-minimize', name: 'Minimize Window', path: '#', category: 'action', icon: XMark, description: 'Minimize the application window', keywords: ['minimize', 'hide', 'window'] },
+  { id: 'action-close', name: 'Close Application', path: '#', category: 'action', icon: XMark, description: 'Close the application', keywords: ['close', 'quit', 'exit'], shortcut: 'Ctrl+Q' },
+  { id: 'action-sidebar-toggle', name: 'Toggle Sidebar', path: '#', category: 'action', icon: Squares2x2, description: 'Show or hide the sidebar', keywords: ['sidebar', 'navigation', 'menu'] },
+  { id: 'action-dev-tools', name: 'Open Developer Tools', path: '#', category: 'action', icon: Cog6Tooth, description: 'Open browser developer tools', keywords: ['dev', 'debug', 'inspect'], shortcut: 'F12' },
+  { id: 'action-clear-cache', name: 'Clear Cache', path: '#', category: 'action', icon: ArrowPath, description: 'Clear application cache and data', keywords: ['cache', 'clear', 'reset', 'clean'] },
+  { id: 'action-export-data', name: 'Export Data', path: '#', category: 'action', icon: DocumentDuplicate, description: 'Export your data for backup', keywords: ['export', 'backup', 'save', 'download'] },
+  { id: 'action-import-data', name: 'Import Data', path: '#', category: 'action', icon: DocumentDuplicate, description: 'Import data from backup', keywords: ['import', 'restore', 'upload', 'load'] },
+  { id: 'action-print-page', name: 'Print Current Page', path: '#', category: 'action', icon: DocumentText, description: 'Print the current page', keywords: ['print', 'pdf', 'document'], shortcut: 'Ctrl+P' },
+  { id: 'action-zoom-in', name: 'Zoom In', path: '#', category: 'action', icon: MagnifyingGlass, description: 'Increase page zoom level', keywords: ['zoom', 'magnify', 'larger'], shortcut: 'Ctrl+=' },
+  { id: 'action-zoom-out', name: 'Zoom Out', path: '#', category: 'action', icon: MagnifyingGlass, description: 'Decrease page zoom level', keywords: ['zoom', 'shrink', 'smaller'], shortcut: 'Ctrl+-' },
+  { id: 'action-zoom-reset', name: 'Reset Zoom', path: '#', category: 'action', icon: MagnifyingGlass, description: 'Reset zoom to default level', keywords: ['zoom', 'reset', 'default'], shortcut: 'Ctrl+0' },
+  { id: 'action-open-data-folder', name: 'Open Data Folder', path: '#', category: 'action', icon: DocumentDuplicate, description: 'Open the app data directory', keywords: ['data', 'folder', 'directory', 'files'] },
+  { id: 'action-copy-system-info', name: 'Copy System Info', path: '#', category: 'action', icon: DocumentText, description: 'Copy system information to clipboard', keywords: ['system', 'info', 'version', 'copy'] },
+  { id: 'action-restart-app', name: 'Restart Application', path: '#', category: 'action', icon: ArrowPath, description: 'Restart the application', keywords: ['restart', 'reboot', 'reload'] },
 
   // Settings Subcategories
   { id: 'settings-plugins', name: 'Plugin Settings', path: '/settings/plugins', category: 'setting', icon: Cog6Tooth, description: 'Manage extensions and plugins', keywords: ['extensions', 'addons', 'plugins'] },
   { id: 'settings-theme', name: 'Theme Store', path: '/settings/theme-store', category: 'setting', icon: Sparkles, description: 'Customize app appearance', keywords: ['themes', 'colors', 'appearance', 'style'] },
+  
+  // Toggleable Settings
+  { id: 'toggle-animations', name: 'Toggle Enhanced Animations', path: '#', category: 'setting', icon: Sparkles, description: 'Enable or disable enhanced animations', keywords: ['animations', 'effects', 'performance'] },
+  { id: 'toggle-sidebar-collapse', name: 'Toggle Auto-Collapse Sidebar', path: '#', category: 'setting', icon: Squares2x2, description: 'Automatically collapse sidebar on small screens', keywords: ['sidebar', 'collapse', 'auto'] },
+  { id: 'toggle-sidebar-hover', name: 'Toggle Sidebar Hover Expand', path: '#', category: 'setting', icon: Squares2x2, description: 'Expand sidebar on hover when collapsed', keywords: ['sidebar', 'hover', 'expand'] },
+  { id: 'toggle-notifications', name: 'Toggle Notifications', path: '#', category: 'setting', icon: BellAlert, description: 'Enable or disable desktop notifications', keywords: ['notifications', 'alerts', 'desktop'] },
+  { id: 'toggle-weather', name: 'Toggle Weather Widget', path: '#', category: 'setting', icon: Cloud, description: 'Show or hide weather information', keywords: ['weather', 'forecast', 'widget'] },
+  { id: 'toggle-reminders', name: 'Toggle Reminders', path: '#', category: 'setting', icon: Clock, description: 'Enable or disable reminder notifications', keywords: ['reminders', 'alerts', 'notifications'] },
+  { id: 'toggle-force-location', name: 'Toggle Force Location', path: '#', category: 'setting', icon: MapPin, description: 'Force use of specific location for weather', keywords: ['location', 'weather', 'gps'] },
+  { id: 'toggle-school-picture', name: 'Toggle School Picture', path: '#', category: 'setting', icon: AcademicCap, description: 'Show or hide school picture on login', keywords: ['school', 'picture', 'login', 'image'] },
+  { id: 'toggle-ai-integrations', name: 'Toggle AI Integrations', path: '#', category: 'setting', icon: Sparkles, description: 'Enable or disable AI-powered features', keywords: ['ai', 'artificial', 'intelligence', 'gemini'] },
+  { id: 'toggle-grade-analyser', name: 'Toggle Grade Analyser', path: '#', category: 'setting', icon: ChartBar, description: 'Enable or disable grade analysis features', keywords: ['grades', 'analysis', 'ai', 'analytics'] },
+  { id: 'toggle-lesson-summary', name: 'Toggle Lesson Summary Analyser', path: '#', category: 'setting', icon: DocumentText, description: 'Enable or disable lesson summary analysis', keywords: ['lessons', 'summary', 'analysis', 'ai'] },
+  { id: 'toggle-global-search', name: 'Toggle Global Search', path: '#', category: 'setting', icon: MagnifyingGlass, description: 'Enable or disable global search functionality', keywords: ['search', 'global', 'find'] },
+  { id: 'toggle-dev-info-hider', name: 'Toggle Dev Info Hider', path: '#', category: 'setting', icon: Cog6Tooth, description: 'Hide sensitive development information', keywords: ['dev', 'development', 'sensitive', 'info'] },
 ];
 
 // Search state management
@@ -339,6 +371,25 @@ async function handleSelect(item: SearchItem) {
   }
 }
 
+async function toggleSetting(settingKey: string, inverted: boolean = false) {
+  try {
+    // Get current settings
+    const settings = await invoke<any>('get_settings');
+    
+    // Toggle the setting
+    const currentValue = settings[settingKey];
+    const newValue = inverted ? !currentValue : !currentValue;
+    settings[settingKey] = newValue;
+    
+    // Save updated settings
+    await invoke('save_settings', { newSettings: settings });
+    
+    console.log(`${settingKey} toggled to:`, newValue);
+  } catch (e) {
+    console.warn(`Failed to toggle ${settingKey}:`, e);
+  }
+}
+
 async function handleAction(item: SearchItem) {
   switch (item.id) {
     case 'action-theme':
@@ -352,6 +403,166 @@ async function handleAction(item: SearchItem) {
     case 'action-refresh':
       // Refresh data
       window.location.reload();
+      break;
+    case 'action-fullscreen':
+      try {
+        await invoke('toggle_fullscreen');
+      } catch (e) {
+        console.warn('Failed to toggle fullscreen:', e);
+      }
+      break;
+    case 'action-minimize':
+      try {
+        await invoke('minimize_window');
+      } catch (e) {
+        console.warn('Failed to minimize window:', e);
+      }
+      break;
+    case 'action-close':
+      try {
+        await invoke('quit');
+      } catch (e) {
+        console.warn('Failed to close application:', e);
+      }
+      break;
+    case 'action-sidebar-toggle':
+      // Dispatch event to toggle sidebar
+      dispatch('toggle-sidebar');
+      break;
+    case 'action-dev-tools':
+      try {
+        await invoke('open_devtools');
+      } catch (e) {
+        console.warn('Failed to open dev tools:', e);
+      }
+      break;
+    case 'action-clear-cache':
+      try {
+        await invoke('clear_cache');
+        // Show success message
+        console.log('Cache cleared successfully');
+      } catch (e) {
+        console.warn('Failed to clear cache:', e);
+      }
+      break;
+    case 'action-export-data':
+      try {
+        const data = await invoke<string>('export_search_data');
+        // Create download link
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'desqta-search-data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.warn('Failed to export data:', e);
+      }
+      break;
+    case 'action-import-data':
+      // Create file input for import
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          try {
+            const text = await file.text();
+            await invoke('import_search_data', { jsonData: text });
+            await loadSearchData(); // Reload data
+            console.log('Data imported successfully');
+          } catch (e) {
+            console.warn('Failed to import data:', e);
+          }
+        }
+      };
+      input.click();
+      break;
+    case 'action-print-page':
+      window.print();
+      break;
+    case 'action-zoom-in':
+      // Handle zoom on frontend
+      const currentZoom = parseFloat(document.body.style.zoom || '1');
+      document.body.style.zoom = Math.min(currentZoom * 1.1, 3.0).toString();
+      break;
+    case 'action-zoom-out':
+      // Handle zoom on frontend
+      const currentZoomOut = parseFloat(document.body.style.zoom || '1');
+      document.body.style.zoom = Math.max(currentZoomOut / 1.1, 0.5).toString();
+      break;
+    case 'action-zoom-reset':
+      // Handle zoom on frontend
+      document.body.style.zoom = '1';
+      break;
+    case 'action-open-data-folder':
+      try {
+        const dataDir = await invoke<string>('get_app_data_dir');
+        await invoke('open_file_explorer', { path: dataDir });
+      } catch (e) {
+        console.warn('Failed to open data folder:', e);
+      }
+      break;
+    case 'action-copy-system-info':
+      try {
+        const systemInfo = await invoke<any>('get_system_info');
+        const infoText = `DesQTA v${systemInfo.version}\nPlatform: ${systemInfo.platform}\nArchitecture: ${systemInfo.arch}\nTauri: ${systemInfo.tauri_version}`;
+        await navigator.clipboard.writeText(infoText);
+        console.log('System info copied to clipboard');
+      } catch (e) {
+        console.warn('Failed to copy system info:', e);
+      }
+      break;
+    case 'action-restart-app':
+      try {
+        await invoke('restart_app');
+      } catch (e) {
+        console.warn('Failed to restart app:', e);
+      }
+      break;
+    // Toggle settings
+    case 'toggle-animations':
+      await toggleSetting('enhanced_animations');
+      break;
+    case 'toggle-sidebar-collapse':
+      await toggleSetting('auto_collapse_sidebar');
+      break;
+    case 'toggle-sidebar-hover':
+      await toggleSetting('auto_expand_sidebar_hover');
+      break;
+    case 'toggle-notifications':
+      await toggleSetting('reminders_enabled');
+      break;
+    case 'toggle-weather':
+      await toggleSetting('weather_enabled');
+      break;
+    case 'toggle-reminders':
+      await toggleSetting('reminders_enabled');
+      break;
+    case 'toggle-force-location':
+      await toggleSetting('force_use_location');
+      break;
+    case 'toggle-school-picture':
+      await toggleSetting('disable_school_picture', true); // Inverted logic
+      break;
+    case 'toggle-ai-integrations':
+      await toggleSetting('ai_integrations_enabled');
+      break;
+    case 'toggle-grade-analyser':
+      await toggleSetting('grade_analyser_enabled');
+      break;
+    case 'toggle-lesson-summary':
+      await toggleSetting('lesson_summary_analyser_enabled');
+      break;
+    case 'toggle-global-search':
+      await toggleSetting('global_search_enabled');
+      break;
+    case 'toggle-dev-info-hider':
+      await toggleSetting('dev_sensitive_info_hider');
       break;
     default:
       goto(item.path);
@@ -446,7 +657,7 @@ function handleKeydown(e: KeyboardEvent) {
         const category = categories.find(c => c.id === currentCategory);
         if (category && category.items[$selectedIndex]) {
           handleSelect(category.items[$selectedIndex]);
-        }
+    }
       } else if ($visibleCategories.length > 0 && $selectedIndex < $visibleCategories.length) {
         openCategory($visibleCategories[$selectedIndex].id);
       } else if (items[$selectedIndex]) {
@@ -475,8 +686,8 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       isAdvancedMode = !isAdvancedMode;
       break;
+    }
   }
-}
 
 // Mobile detection
 function checkMobile() {
@@ -525,7 +736,7 @@ onMount(() => {
     }
   };
   window.addEventListener('mousedown', handleClick);
-  
+
   return () => {
     window.removeEventListener('resize', checkMobile);
     window.removeEventListener('keydown', handleGlobalKeydown);
@@ -680,8 +891,8 @@ onDestroy(() => {
           <div class="p-4">
             <div class="grid gap-3">
               {#each $visibleCategories as category, i}
-                                 <button
-                   type="button"
+              <button
+                type="button"
                    class="flex items-center gap-4 w-full p-4 rounded-xl transition-all duration-200 hover:bg-white/50 dark:hover:bg-gray-800/50 text-left group {$selectedIndex === i ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected' : 'text-slate-900 dark:text-white'}"
                    onclick={() => openCategory(category.id)}
                    onmouseenter={() => selectedIndex.set(i)}
@@ -694,8 +905,8 @@ onDestroy(() => {
                     <div class="text-sm opacity-75">{category.items.length} items</div>
                   </div>
                   <Icon src={ArrowRight} class="w-5 h-5 opacity-50 group-hover:translate-x-1 transition-transform" />
-                </button>
-              {/each}
+              </button>
+            {/each}
             </div>
           </div>
         {:else if $filteredItems.length > 0}
@@ -703,8 +914,8 @@ onDestroy(() => {
           <div class="p-4 max-h-96 overflow-y-auto">
             <div class="grid gap-2">
               {#each $filteredItems as item, i}
-                                 <button
-                   type="button"
+            <button
+              type="button"
                    class="flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-200 hover:bg-white/50 dark:hover:bg-gray-800/50 text-left group {$selectedIndex === i ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected' : 'text-slate-900 dark:text-white'}"
                    onclick={() => handleSelect(item)}
                    onmouseenter={() => selectedIndex.set(i)}
@@ -718,7 +929,7 @@ onDestroy(() => {
                       {#if item.badge}
                         <span class="px-2 py-0.5 rounded-full bg-white/20 dark:bg-gray-700/50 text-xs font-normal opacity-75">
                           {item.badge}
-                        </span>
+              </span>
                       {/if}
                     </div>
                     {#if item.description}
@@ -740,8 +951,8 @@ onDestroy(() => {
                    >
                      <Icon src={Star} class="w-4 h-4 {$favoriteItems.includes(item.id) ? 'text-yellow-400 fill-current' : ''}" />
                    </div>
-                </button>
-              {/each}
+            </button>
+          {/each}
             </div>
           </div>
         {:else if $searchStore.trim()}

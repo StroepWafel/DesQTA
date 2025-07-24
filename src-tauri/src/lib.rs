@@ -247,7 +247,25 @@ pub fn run() {
             global_search::increment_search_usage,
             global_search::export_search_data,
             global_search::import_search_data,
-            global_search::reset_search_data
+            global_search::reset_search_data,
+            global_search::toggle_fullscreen,
+            global_search::minimize_window,
+            global_search::maximize_window,
+            global_search::unmaximize_window,
+            global_search::close_window,
+            global_search::open_devtools,
+            global_search::close_devtools,
+            global_search::zoom_in,
+            global_search::zoom_out,
+            global_search::zoom_reset,
+            global_search::clear_cache,
+            global_search::get_system_info,
+            global_search::restart_app,
+            global_search::show_window,
+            global_search::hide_window,
+            global_search::show_notification,
+            global_search::open_file_explorer,
+            global_search::get_app_data_dir
         ])
         .setup(|app| {
             #[cfg(desktop)]
