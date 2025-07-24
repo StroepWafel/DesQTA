@@ -70,6 +70,15 @@ export const authService = {
       console.log('[AUTH_SERVICE] No URL provided, skipping login');
       return;
     }
+    
+    // Clean up any existing login windows before starting new login
+    try {
+      await invoke('cleanup_login_windows');
+      console.log('[AUTH_SERVICE] Cleaned up existing login windows');
+    } catch (e) {
+      console.warn('[AUTH_SERVICE] Failed to cleanup login windows:', e);
+    }
+    
     console.log('[AUTH_SERVICE] Calling create_login_window backend command');
     await invoke('create_login_window', { url: seqtaUrl });
     console.log('[AUTH_SERVICE] create_login_window command completed');
@@ -79,6 +88,14 @@ export const authService = {
     console.log('[AUTH_SERVICE] Logging out');
     // Clear user info cache on logout
     cache.delete('userInfo');
+    
+    // Clean up any lingering login windows
+    try {
+      await invoke('cleanup_login_windows');
+    } catch (e) {
+      console.warn('[AUTH_SERVICE] Failed to cleanup login windows:', e);
+    }
+    
     const result = await invoke<boolean>('logout');
     console.log('[AUTH_SERVICE] Logout result:', result);
     return result;

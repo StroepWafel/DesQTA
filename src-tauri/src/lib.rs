@@ -214,6 +214,7 @@ pub fn run() {
             login::create_login_window,
             login::logout,
             login::force_reload,
+            login::cleanup_login_windows,
             settings::get_settings,
             settings::save_settings,
             settings::get_settings_json,

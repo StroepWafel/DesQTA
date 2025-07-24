@@ -57,11 +57,27 @@ pub fn save_session(base_url: String, jsessionid: String) -> Result<(), String> 
 
 #[tauri::command]
 pub async fn logout() -> bool {
-
     if let Ok(_) = netgrab::clear_session().await {
         true
     } else {
         false
+    }
+}
+
+/// Clean up any existing login windows
+#[tauri::command]
+pub fn cleanup_login_windows(app: tauri::AppHandle) {
+    // Clean up the old static window ID
+    if let Some(window) = app.get_webview_window("seqta_login") {
+        let _ = window.destroy();
+    }
+    
+    // Clean up any numbered login windows (in case of multiple attempts)
+    for i in 0..10 {
+        let window_id = format!("seqta_login_{}", i);
+        if let Some(window) = app.get_webview_window(&window_id) {
+            let _ = window.destroy();
+        }
     }
 }
 
@@ -262,6 +278,11 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
     {
         use tauri::{WebviewUrl, WebviewWindowBuilder};
         use tokio::time::{sleep, Duration};
+        use std::sync::atomic::{AtomicU64, Ordering};
+        
+        // Generate unique window ID to prevent conflicts
+        static WINDOW_COUNTER: AtomicU64 = AtomicU64::new(0);
+        let window_id = format!("seqta_login_{}", WINDOW_COUNTER.fetch_add(1, Ordering::SeqCst));
 
         let http_url = if url.starts_with("https://") {
             url.clone()
@@ -283,8 +304,13 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
             }
         };
 
-        // Spawn the login window
-        WebviewWindowBuilder::new(&app, "seqta_login", WebviewUrl::External(full_url.clone()))
+        // Close any existing login windows first
+        if let Some(existing_window) = app.get_webview_window("seqta_login") {
+            let _ = existing_window.destroy();
+        }
+
+        // Spawn the login window with unique ID
+        let webview_window = WebviewWindowBuilder::new(&app, &window_id, WebviewUrl::External(full_url.clone()))
             .title("SEQTA Login")
             .inner_size(900.0, 700.0)
             .build()
@@ -292,17 +318,25 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
 
         // Clone handles for async block
         let app_handle_clone = app.clone();
+        let window_id_clone = window_id.clone();
 
         let mut counter = 0; // Creates a counter so that we don't quit authentication upon the first request (which redirects)
                              // Start polling in a background task
         tauri::async_runtime::spawn(async move {
+            // Helper function to properly destroy the window
+            let destroy_login_window = || {
+                if let Some(window) = app_handle_clone.get_webview_window(&window_id_clone) {
+                    let _ = window.destroy(); // Use destroy() instead of close() for complete cleanup
+                }
+            };
+
             for _ in 0..1920 {
                 // Poll for 1920 seconds max
                 // Wait 1 second between polls
                 sleep(Duration::from_secs(1)).await;
 
                 // Try to get cookies from the login window
-                if let Some(webview) = app_handle_clone.get_webview_window("seqta_login") {
+                if let Some(webview) = app_handle_clone.get_webview_window(&window_id_clone) {
                     if counter > 5 {
                         // Check if the auth has finished through url
                         match webview.url() {
@@ -364,8 +398,13 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
 
                                                 let _ = session.save();
 
-                                                let _ = webview.close();
-                                                force_reload(app);
+                                                // Properly destroy the window to ensure complete cleanup
+                                                destroy_login_window();
+                                                
+                                                // Small delay to ensure window is fully destroyed before reload
+                                                sleep(Duration::from_millis(100)).await;
+                                                
+                                                force_reload(app_handle_clone);
                                                 return; // Stop polling once found
                                             }
                                         }
@@ -377,11 +416,15 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                             }
                         }
                     }
+                } else {
+                    // Window was closed by user, exit polling
+                    return;
                 }
                 counter += 1; // increment the counter at the end of the loop
             }
 
-            // JSESSIONID not found within timeout
+            // Timeout reached - destroy window if it still exists
+            destroy_login_window();
         });
     }
 
