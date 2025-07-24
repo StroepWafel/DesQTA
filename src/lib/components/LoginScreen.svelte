@@ -89,57 +89,63 @@
       }, 300);
     }
     
-    // Typewriter animation
-    let typewriterInterval: number;
-    let pauseTimeout: number;
-    
-    const startTypewriter = () => {
-      const currentFeature = features[currentFeatureIndex];
-      let charIndex = 0;
+    // Typewriter animation (only on desktop)
+    if (!isMobile) {
+      let typewriterInterval: number;
+      let pauseTimeout: number;
       
-      // Typing phase
-      if (isTyping) {
-        typewriterInterval = setInterval(() => {
-          if (charIndex <= currentFeature.length) {
-            currentText = currentFeature.slice(0, charIndex);
-            charIndex++;
-          } else {
-            clearInterval(typewriterInterval);
-            // Pause before erasing
-            pauseTimeout = setTimeout(() => {
-              isTyping = false;
-              startTypewriter();
-            }, 2000);
-          }
-        }, 80);
-      } else {
-        // Erasing phase
-        charIndex = currentText.length;
-        typewriterInterval = setInterval(() => {
-          if (charIndex >= 0) {
-            currentText = currentFeature.slice(0, charIndex);
-            charIndex--;
-          } else {
-            clearInterval(typewriterInterval);
-            // Move to next feature
-            currentFeatureIndex = (currentFeatureIndex + 1) % features.length;
-            isTyping = true;
-            // Pause before typing next
-            pauseTimeout = setTimeout(() => {
-              startTypewriter();
-            }, 500);
-          }
-        }, 50);
-      }
-    };
-    
-    // Start the animation
-    startTypewriter();
+      const startTypewriter = () => {
+        const currentFeature = features[currentFeatureIndex];
+        let charIndex = 0;
+        
+        // Typing phase
+        if (isTyping) {
+          typewriterInterval = setInterval(() => {
+            if (charIndex <= currentFeature.length) {
+              currentText = currentFeature.slice(0, charIndex);
+              charIndex++;
+            } else {
+              clearInterval(typewriterInterval);
+              // Pause before erasing
+              pauseTimeout = setTimeout(() => {
+                isTyping = false;
+                startTypewriter();
+              }, 2000);
+            }
+          }, 80);
+        } else {
+          // Erasing phase
+          charIndex = currentText.length;
+          typewriterInterval = setInterval(() => {
+            if (charIndex >= 0) {
+              currentText = currentFeature.slice(0, charIndex);
+              charIndex--;
+            } else {
+              clearInterval(typewriterInterval);
+              // Move to next feature
+              currentFeatureIndex = (currentFeatureIndex + 1) % features.length;
+              isTyping = true;
+              // Pause before typing next
+              pauseTimeout = setTimeout(() => {
+                startTypewriter();
+              }, 500);
+            }
+          }, 50);
+        }
+      };
+      
+      // Start the animation
+      startTypewriter();
+      
+      return () => {
+        window.removeEventListener('resize', checkMobile);
+        if (typewriterInterval) clearInterval(typewriterInterval);
+        if (pauseTimeout) clearTimeout(pauseTimeout);
+      };
+    }
     
     return () => {
       window.removeEventListener('resize', checkMobile);
-      if (typewriterInterval) clearInterval(typewriterInterval);
-      if (pauseTimeout) clearTimeout(pauseTimeout);
     };
   });
 
@@ -267,10 +273,10 @@
   }
 </script>
 
-<div class="flex flex-col h-full relative overflow-hidden bg-slate-100 dark:bg-slate-950">
+<div class="flex flex-col h-full relative {isMobile ? 'overflow-y-auto' : 'overflow-hidden'} bg-slate-100 dark:bg-slate-950">
   <!-- Window Controls Bar -->
   <div 
-    class="relative flex justify-between items-center px-6 py-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-slate-700/30 z-10"
+    class="relative flex justify-between items-center px-6 py-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-slate-700/30 z-10 {isMobile ? 'flex-shrink-0' : ''}"
     data-tauri-drag-region>
     <!-- Draggable area with branding -->
     <div class="flex items-center space-x-3" data-tauri-drag-region>
@@ -306,13 +312,16 @@
   </div>
 
   <!-- Login Content -->
-  <div class="relative flex justify-center items-center p-8 flex-1 z-10">
+  <div class="relative flex justify-center items-center {isMobile ? 'p-4 min-h-0 flex-1' : 'p-8 flex-1'} z-10 {isMobile ? 'overflow-y-auto' : ''}">
+    {#if !isMobile}
     <!-- Preview Components Around Login -->
     <!-- Top Left - Mini Header Preview -->
-    <div 
-      class="absolute top-8 left-8 w-80 h-16 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-1"
-      onclick={() => openPreviewModal('header')}>
-      <div class="flex items-center justify-between h-full px-6">
+    <button 
+      type="button"
+      class="absolute top-8 left-8 w-80 h-16 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      onclick={() => openPreviewModal('header')}
+      aria-label="Preview application header">
+      <div class="flex items-center justify-between h-full px-6 pointer-events-none">
         <div class="flex items-center space-x-3">
           <div class="w-3 h-3 bg-indigo-400 rounded-full"></div>
           <div class="w-16 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
@@ -322,13 +331,15 @@
           <div class="w-8 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
         </div>
       </div>
-    </div>
+    </button>
 
     <!-- Top Right - Mini Sidebar Preview -->
-    <div 
-      class="absolute top-8 right-8 w-64 h-52 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-2"
-      onclick={() => openPreviewModal('sidebar')}>
-      <div class="p-4 space-y-3">
+    <button 
+      type="button"
+      class="absolute top-8 right-8 w-64 h-52 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      onclick={() => openPreviewModal('sidebar')}
+      aria-label="Preview navigation sidebar">
+      <div class="p-4 space-y-3 pointer-events-none">
         <div class="flex items-center space-x-3">
           <div class="w-4 h-4 bg-indigo-400 rounded"></div>
           <div class="w-20 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
@@ -350,13 +361,15 @@
           <div class="w-16 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
         </div>
       </div>
-    </div>
+    </button>
 
         <!-- Bottom Left - Mini Assessment Card -->
-    <div 
-      class="absolute bottom-8 left-8 w-72 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 border-l-4 border-l-green-400 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-3"
-      onclick={() => openPreviewModal('assessment')}>
-      <div class="p-5">
+    <button 
+      type="button"
+      class="absolute bottom-8 left-8 w-72 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 border-l-4 border-l-green-400 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      onclick={() => openPreviewModal('assessment')}
+      aria-label="Preview assessment card">
+      <div class="p-5 pointer-events-none">
         <div class="flex items-center justify-between mb-3">
           <div class="w-20 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
           <div class="w-16 h-5 bg-green-400/80 rounded text-xs"></div>
@@ -365,13 +378,15 @@
         <div class="w-24 h-3 bg-slate-300/30 dark:bg-slate-600/30 rounded mb-2"></div>
         <div class="w-32 h-2 bg-slate-300/20 dark:bg-slate-600/20 rounded"></div>
       </div>
-    </div>
+    </button>
 
     <!-- Bottom Right - Mini Timetable Preview -->
-    <div 
-      class="absolute bottom-8 right-8 w-72 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-4"
-      onclick={() => openPreviewModal('timetable')}>
-      <div class="p-3">
+    <button 
+      type="button"
+      class="absolute bottom-8 right-8 w-72 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      onclick={() => openPreviewModal('timetable')}
+      aria-label="Preview weekly timetable">
+      <div class="p-3 pointer-events-none">
         <!-- Timetable Header -->
         <div class="grid grid-cols-6 gap-px mb-2 bg-gradient-to-r from-slate-100/50 to-slate-200/50 dark:from-slate-700/50 dark:to-slate-800/50 rounded-lg p-1">
           <div class="w-8 h-4 bg-slate-300/30 dark:bg-slate-600/30 rounded-sm"></div>
@@ -454,13 +469,15 @@
           </div>
         </div>
       </div>
-    </div>
+    </button>
 
     <!-- Left Side - Mini Dashboard Widget -->
-    <div 
-      class="absolute left-8 top-1/2 -translate-y-1/2 w-56 h-36 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-5"
-      onclick={() => openPreviewModal('dashboard')}>
-      <div class="p-4">
+    <button 
+      type="button"
+      class="absolute left-8 top-1/2 -translate-y-1/2 w-56 h-36 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      onclick={() => openPreviewModal('dashboard')}
+      aria-label="Preview dashboard widget">
+      <div class="p-4 pointer-events-none">
         <div class="flex items-center space-x-3 mb-4">
           <div class="w-5 h-5 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full"></div>
           <div class="w-24 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
@@ -472,13 +489,15 @@
           <div class="w-2/3 h-2 bg-slate-300/30 dark:bg-slate-600/30 rounded"></div>
         </div>
       </div>
-    </div>
+    </button>
 
     <!-- Right Side - Mini Analytics Chart -->
-    <div 
-      class="absolute right-8 top-1/2 -translate-y-1/2 w-64 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-6"
-      onclick={() => openPreviewModal('analytics')}>
-      <div class="p-4">
+    <button 
+      type="button"
+      class="absolute right-8 top-1/2 -translate-y-1/2 w-64 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-6 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      onclick={() => openPreviewModal('analytics')}
+      aria-label="Preview analytics dashboard">
+      <div class="p-4 pointer-events-none">
         <div class="w-20 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded mb-4"></div>
         <div class="flex items-end justify-between h-20 space-x-1">
           <div class="w-4 h-10 bg-indigo-400/60 rounded"></div>
@@ -491,24 +510,26 @@
           <div class="w-4 h-14 bg-teal-400/60 rounded"></div>
         </div>
       </div>
-    </div>
+    </button>
+    {/if}
 
-    <div class="w-full max-w-5xl">
+    <div class="w-full {isMobile ? 'max-w-md' : 'max-w-5xl'}">
       <!-- Main Login Card -->
-      <div class="relative overflow-hidden rounded-3xl bg-white/5 dark:bg-slate-900/5 backdrop-blur-3xl border border-white/20 dark:border-slate-700/15 shadow-2xl">
+      <div class="relative overflow-hidden {isMobile ? 'rounded-2xl' : 'rounded-3xl'} bg-white/5 dark:bg-slate-900/5 backdrop-blur-3xl border border-white/20 dark:border-slate-700/15 shadow-2xl">
         <!-- Animated Background Behind Card -->
-        <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-orange-50 to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700 rounded-3xl"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-orange-50 to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
         
         <!-- Animated Pastel Gradient Overlay -->
-        <div class="absolute inset-0 opacity-15 dark:opacity-25 rounded-3xl">
-          <div class="absolute inset-0 bg-gradient-to-br from-orange-200/8 via-rose-200/10 to-pink-200/8 dark:from-orange-300/15 dark:via-rose-300/18 dark:to-pink-300/15 animate-gradient-shift rounded-3xl"></div>
+        <div class="absolute inset-0 opacity-15 dark:opacity-25 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}">
+          <div class="absolute inset-0 bg-gradient-to-br from-orange-200/8 via-rose-200/10 to-pink-200/8 dark:from-orange-300/15 dark:via-rose-300/18 dark:to-pink-300/15 animate-gradient-shift {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
         </div>
         
         <!-- Glass effect overlay -->
-        <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-white/5 dark:from-slate-800/20 dark:via-slate-800/10 dark:to-slate-800/5 rounded-3xl"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-white/5 dark:from-slate-800/20 dark:via-slate-800/10 dark:to-slate-800/5 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
         
-        <div class="relative flex flex-col lg:flex-row">
+        <div class="relative flex flex-col {isMobile ? '' : 'lg:flex-row'}">
           <!-- Left side - Hero Section -->
+          {#if !isMobile}
           <div class="lg:w-1/2 p-12 flex flex-col justify-center relative overflow-hidden">
             <div class="space-y-8">
               <div class="space-y-4">
@@ -531,17 +552,30 @@
               </div>
             </div>
           </div>
+          {/if}
 
           <!-- Right side - Login Form -->
-          <div class="lg:w-1/2 p-12 px-20 flex flex-col justify-center">
+          <div class="{isMobile ? 'w-full p-6' : 'lg:w-1/2 p-12 px-20'} flex flex-col justify-center">
+            {#if isMobile}
+            <!-- Mobile Title -->
+            <div class="text-center space-y-4 mb-8">
+              <h1 class="text-3xl font-bold text-slate-900 dark:text-white">
+                Welcome to <span class="text-indigo-600 dark:text-indigo-400">DesQTA</span>
+              </h1>
+              <p class="text-slate-600 dark:text-slate-300">
+                Experience SEQTA Learn like never before
+              </p>
+            </div>
+            {/if}
             <div class="space-y-8">
               <!-- Login method toggle -->
+              {#if !isMobile}
               <div class="flex items-center justify-center">
                 <div class="flex p-1 bg-white/15 dark:bg-slate-800/20 backdrop-blur-xl rounded-2xl relative overflow-hidden border border-white/20 dark:border-slate-700/20">
                   <!-- Animated background slider -->
                   <div 
                     class="absolute top-1 bottom-1 bg-white/30 dark:bg-slate-700/40 backdrop-blur-xl rounded-xl shadow-sm transition-all duration-300 ease-out border border-white/40 dark:border-slate-600/40"
-                    style="left: {loginMethod === 'qr' ? '4px' : isMobile ? '4px' : 'calc(50% - 4px)'}; width: {isMobile ? 'calc(100% - 8px)' : 'calc(50% - 4px)'}"
+                    style="left: {loginMethod === 'qr' ? '4px' : 'calc(50% - 4px)'}; width: calc(50% - 4px)"
                   ></div>
                   <button
                     class="px-6 py-3 rounded-xl font-medium transition-all duration-300 relative z-10 transform hover:scale-105 {loginMethod === 'qr' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
@@ -550,21 +584,20 @@
                     <Icon src={QrCode} class="w-5 h-5 inline mr-2 transition-transform duration-300 {loginMethod === 'qr' ? 'scale-110' : ''}" />
                     QR Code
                   </button>
-                  {#if !isMobile}
-                    <button
-                      class="px-6 py-3 rounded-xl font-medium transition-all duration-300 relative z-10 transform hover:scale-105 {loginMethod === 'url' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
-                      onclick={() => loginMethod = 'url'}
-                    >
-                      Manual URL
-                    </button>
-                  {/if}
+                  <button
+                    class="px-6 py-3 rounded-xl font-medium transition-all duration-300 relative z-10 transform hover:scale-105 {loginMethod === 'url' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
+                    onclick={() => loginMethod = 'url'}
+                  >
+                    Manual URL
+                  </button>
                 </div>
               </div>
+              {/if}
 
                             <!-- Content Container with Height Animation -->
-              <div class="transition-all duration-500 ease-in-out overflow-hidden" style="height: {loginMethod === 'qr' ? '400px' : '200px'};">
+              <div class="transition-all duration-500 ease-in-out overflow-hidden" style="height: {isMobile || loginMethod === 'qr' ? '400px' : '200px'};">
                 <!-- QR Code Method -->
-                {#if loginMethod === 'qr'}
+                {#if isMobile || loginMethod === 'qr'}
                   <div class="space-y-6 px-2">
                     <div class="text-center space-y-2">
                       <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Quick Login</h2>
@@ -699,7 +732,7 @@
               jwtExpiredError = false;
               onStartLogin();
             }}
-                  disabled={jwtExpiredError || (loginMethod === 'url' && !seqtaUrl.trim()) || (loginMethod === 'qr' && !qrSuccess)}
+                  disabled={jwtExpiredError || (!isMobile && loginMethod === 'url' && !seqtaUrl.trim()) || ((isMobile || loginMethod === 'qr') && !qrSuccess)}
                 >
                   <span class="transition-transform duration-300 group-hover:translate-x-1">Sign In to DesQTA</span>
           </button>
