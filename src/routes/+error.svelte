@@ -2,19 +2,18 @@
   import { page } from '$app/stores';
   import { Icon } from 'svelte-hero-icons';
   import { 
-    ExclamationTriangle, 
-    Home, 
     ArrowLeft, 
+    Home, 
     ArrowPath, 
     Cog, 
     InformationCircle,
     ComputerDesktop,
     Wifi,
-    HardDrive,
+    CircleStack,
     Clock,
     ChartBar,
     DocumentText,
-    Bug,
+    ExclamationTriangle,
     LightBulb,
     ShieldCheck,
     ExclamationCircle,
@@ -180,7 +179,7 @@
       case ErrorCategory.NETWORK: return Wifi;
       case ErrorCategory.AUTHENTICATION: return ShieldCheck;
       case ErrorCategory.PERFORMANCE: return ChartBar;
-      case ErrorCategory.RESOURCE: return HardDrive;
+      case ErrorCategory.RESOURCE: return CircleStack;
       case ErrorCategory.TIMEOUT: return Clock;
       case ErrorCategory.DATABASE: return ComputerDesktop;
       default: return ExclamationTriangle;
@@ -269,7 +268,7 @@
               {/if}
               {#if storageStatus}
                 <div class="flex items-center gap-2">
-                  <Icon src={HardDrive} size="16" class="text-slate-500" />
+                  <Icon src={CircleStack} size="16" class="text-slate-500" />
                   <span class="text-sm text-slate-600 dark:text-slate-400">Storage:</span>
                   <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
                     {storageStatus.localStorage} items
@@ -384,7 +383,7 @@
       {#if recentErrors.length > 0}
         <div class="mb-8 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
           <h3 class="text-sm font-semibold text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
-            <Icon src={Bug} size="16" />
+            <Icon src={ExclamationTriangle} size="16" />
             Recent Errors ({recentErrors.length})
           </h3>
           <div class="space-y-2 max-h-32 overflow-y-auto">
