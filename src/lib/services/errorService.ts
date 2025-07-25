@@ -370,6 +370,12 @@ class ErrorService {
     window.fetch = async (...args) => {
       const startTime = performance.now();
       const requestId = this.generateRequestId();
+      const url = args[0] as string;
+      
+      // Skip logging for certain URLs to avoid circular dependencies
+      if (url.includes('ipc.localhost') || url.includes('logger_log_from_frontend') || url.includes('localhost:1420')) {
+        return originalFetch(...args);
+      }
       
       try {
         const response = await originalFetch(...args);
@@ -394,25 +400,25 @@ class ErrorService {
             category: this.categorizeHttpError(response.status),
             severity: this.categorizeHttpSeverity(response.status),
             source: ErrorSource.FETCH,
-                       context: {
-             requestId,
-             operation: 'fetch',
-             file: args[0] as string
-           },
-           performanceMetrics: {
-             responseTime,
-             timestamp: new Date().toISOString()
-           }
-         });
+            context: {
+              requestId,
+              operation: 'fetch',
+              file: args[0] as string
+            },
+            performanceMetrics: {
+              responseTime,
+              timestamp: new Date().toISOString()
+            }
+          });
 
-         logger.warn('errorService', 'fetch_error', 'Fetch request failed', {
-           errorId: errorInfo.id,
-           requestId,
-           url: args[0],
-           status: response.status,
-           statusText: response.statusText,
-           responseTime: `${responseTime.toFixed(2)}ms`
-         });
+          logger.warn('errorService', 'fetch_error', 'Fetch request failed', {
+            errorId: errorInfo.id,
+            requestId,
+            url: args[0],
+            status: response.status,
+            statusText: response.statusText,
+            responseTime: `${responseTime.toFixed(2)}ms`
+          });
 
           // Don't redirect for auth errors as they're handled by auth service
           if (response.status !== 401 && response.status !== 403) {
@@ -432,11 +438,11 @@ class ErrorService {
           category: ErrorCategory.NETWORK,
           severity: ErrorSeverity.HIGH,
           source: ErrorSource.FETCH,
-                     context: {
-             requestId,
-             operation: 'fetch',
-             file: args[0] as string
-           },
+          context: {
+            requestId,
+            operation: 'fetch',
+            file: args[0] as string
+          },
           performanceMetrics: {
             responseTime,
             timestamp: new Date().toISOString()
