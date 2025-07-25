@@ -8,7 +8,7 @@
     Clock, 
     ChartBar, 
     DocumentText, 
-    ExclamationTriangle, 
+    ExclamationTriangle,
     LightBulb, 
     ShieldCheck, 
     ExclamationCircle, 
@@ -159,7 +159,7 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
+      
       logger.info('troubleshootingModal', 'exportLogs', 'Logs exported successfully');
     } catch (error) {
       logger.error('troubleshootingModal', 'exportLogs', 'Failed to export logs', { error });
@@ -216,7 +216,7 @@
 
       <!-- Modal panel -->
       <div class="relative bg-white dark:bg-slate-900 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all w-full max-w-6xl max-h-[90vh]">
-        <!-- Header -->
+    <!-- Header -->
         <div class="bg-slate-50 dark:bg-slate-800 px-6 py-4 border-b border-slate-200 dark:border-slate-700">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -229,8 +229,8 @@
             >
               <Icon src={XMark} size="20" />
             </button>
-          </div>
-        </div>
+      </div>
+    </div>
 
         <!-- Tabs -->
         <div class="border-b border-slate-200 dark:border-slate-700">
@@ -244,13 +244,13 @@
               { id: 'storage', label: 'Storage', icon: CircleStack },
               { id: 'troubleshooting', label: 'Troubleshooting', icon: LightBulb }
             ] as tab}
-              <button
+        <button 
                 onclick={() => activeTab = tab.id}
                 class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 flex items-center gap-2 {activeTab === tab.id ? 'border-accent-500 text-accent-600 dark:text-accent-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}"
               >
                 <Icon src={tab.icon} size="16" />
                 {tab.label}
-              </button>
+        </button>
             {/each}
           </nav>
         </div>
@@ -281,10 +281,10 @@
                         <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
                           {Math.round(errorReport.diagnostics.systemHealth.memoryUsage / 1024 / 1024)} MB
                         </span>
-                      </div>
+      </div>
                     {:else}
                       <div class="text-sm text-slate-500 dark:text-slate-400">No health data available</div>
-                    {/if}
+    {/if}
                   </div>
                 </div>
 
@@ -362,30 +362,30 @@
                   <Icon src={Beaker} size="16" class="inline mr-2" />
                   Run Diagnostics
                 </button>
-                <button
+        <button 
                   onclick={generateDiagnosticReport}
                   class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                 >
                   <Icon src={ClipboardDocument} size="16" class="inline mr-2" />
                   {copiedToClipboard ? 'Copied!' : 'Copy Report'}
-                </button>
+        </button>
               </div>
-            </div>
-          {/if}
+      </div>
+    {/if}
 
           <!-- Error Logs Tab -->
           {#if activeTab === 'errors'}
             <div class="space-y-4">
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Recent Error Logs</h3>
-                <button
+          <button
                   onclick={clearErrorLogs}
                   class="px-3 py-1 bg-red-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
                 >
-                  Clear Logs
-                </button>
-              </div>
-              
+            Clear Logs
+          </button>
+        </div>
+
               <div class="space-y-3 max-h-64 overflow-y-auto">
                 {#each errorService.getErrorQueue().slice(-20).reverse() as error}
                   <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
@@ -440,8 +440,8 @@
                   >
                     Export All
                   </button>
-                </div>
-              </div>
+        </div>
+      </div>
 
               <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
                 <div class="space-y-3 max-h-96 overflow-y-auto">
@@ -459,9 +459,9 @@
                       <Icon src={DocumentText} size="48" class="mx-auto mb-4 opacity-50" />
                       <p>No logs loaded</p>
                       <p class="text-xs mt-2">Click "Load Logs" to fetch recent system logs</p>
-                    </div>
-                  {/if}
-                </div>
+        </div>
+      {/if}
+    </div>
               </div>
             </div>
           {/if}
@@ -510,13 +510,13 @@
                         <span class="text-sm text-slate-600 dark:text-slate-400">DOM Ready:</span>
                         <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
                           {Math.round((performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart) / 1000)}s
-                        </span>
+          </span>
                       </div>
                       <div class="flex items-center justify-between">
                         <span class="text-sm text-slate-600 dark:text-slate-400">Page Load:</span>
                         <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
                           {Math.round((performance.timing.loadEventEnd - performance.timing.navigationStart) / 1000)}s
-                        </span>
+          </span>
                       </div>
                     </div>
                   {:else}
@@ -559,7 +559,7 @@
                       <span class="text-sm text-slate-600 dark:text-slate-400">Status:</span>
                       <span class="text-sm font-medium {navigator.onLine ? 'text-green-500' : 'text-red-500'}">
                         {navigator.onLine ? 'Online' : 'Offline'}
-                      </span>
+          </span>
                     </div>
                     <div class="flex items-center justify-between">
                       <span class="text-sm text-slate-600 dark:text-slate-400">Type:</span>
@@ -570,7 +570,7 @@
                         <span class="text-sm text-slate-600 dark:text-slate-400">Latency:</span>
                         <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
                           {Math.round(errorReport.diagnostics.networkStatus.latency)}ms
-                        </span>
+          </span>
                       </div>
                     {/if}
                   </div>
@@ -607,10 +607,10 @@
                     <span class="text-sm text-slate-600 dark:text-slate-400">Status:</span>
                     <span class="text-sm font-medium {apiTestResult.success ? 'text-green-500' : 'text-red-500'}">
                       {apiTestResult.message}
-                    </span>
-                  </div>
-                </div>
-              {/if}
+          </span>
+        </div>
+      </div>
+    {/if}
             </div>
           {/if}
 
@@ -644,12 +644,12 @@
                     <div class="flex items-center justify-between">
                       <span class="text-sm text-slate-600 dark:text-slate-400">Items:</span>
                       <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{sessionStorage.length}</span>
-                    </div>
+        </div>
                     <div class="flex items-center justify-between">
                       <span class="text-sm text-slate-600 dark:text-slate-400">Size:</span>
                       <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
                         {JSON.stringify(sessionStorage).length} bytes
-                      </span>
+            </span>
                     </div>
                   </div>
                 </div>
@@ -699,8 +699,8 @@
                       4. <strong>Restart the application</strong> - Close and reopen the app
                     </div>
                   </div>
-                </div>
-
+          </div>
+          
                 <!-- Advanced Troubleshooting -->
                 <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
                   <h4 class="text-sm font-semibold text-yellow-700 dark:text-yellow-400 mb-3 flex items-center gap-2">
@@ -720,8 +720,8 @@
                     <div class="text-sm text-yellow-600 dark:text-yellow-300">
                       4. <strong>Contact support</strong> - If problems persist, provide the diagnostic report
                     </div>
-                  </div>
-                </div>
+          </div>
+        </div>
 
                 <!-- Error-Specific Solutions -->
                 {#if errorReport?.recommendations?.length > 0}
@@ -738,9 +738,9 @@
                         </li>
                       {/each}
                     </ul>
-                  </div>
-                {/if}
-              </div>
+        </div>
+      {/if}
+    </div>
             </div>
           {/if}
         </div>

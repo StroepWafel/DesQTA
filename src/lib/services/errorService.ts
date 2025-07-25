@@ -591,7 +591,7 @@ class ErrorService {
 
     try {
       // Add to error queue and update stores
-      this.errorQueue.push(errorInfo);
+    this.errorQueue.push(errorInfo);
       this.errors.update(errors => [...errors, errorInfo]);
 
       // Log comprehensive error information
@@ -647,10 +647,10 @@ class ErrorService {
         stack: handlingError instanceof Error ? handlingError.stack : undefined
       });
     } finally {
-      // Reset flag after a delay
-      setTimeout(() => {
-        this.isHandlingError = false;
-      }, 1000);
+    // Reset flag after a delay
+    setTimeout(() => {
+      this.isHandlingError = false;
+    }, 1000);
     }
   }
 
