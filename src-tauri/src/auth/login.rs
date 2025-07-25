@@ -65,6 +65,7 @@ pub async fn logout() -> bool {
 }
 
 /// Clean up any existing login windows
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 #[tauri::command]
 pub fn cleanup_login_windows(app: tauri::AppHandle) {
     // Clean up the old static window ID
@@ -79,6 +80,12 @@ pub fn cleanup_login_windows(app: tauri::AppHandle) {
             let _ = window.destroy();
         }
     }
+}
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+#[tauri::command]
+pub fn cleanup_login_windows(_app: tauri::AppHandle) {
+    // No-op on mobile platforms
 }
 
 /// Parse and validate a Seqta Learn SSO deeplink
