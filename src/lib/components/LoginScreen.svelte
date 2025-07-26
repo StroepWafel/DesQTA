@@ -639,7 +639,7 @@
                                       <!-- Live scan button -->
                   <button
                     type="button"
-                    class="w-full py-4 px-6 bg-gradient-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-slate-700 dark:text-slate-800 font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 ease-out transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2"
+                    class="w-full py-3 px-6 bg-gradient-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-slate-700 dark:text-slate-800 font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 ease-out transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2"
                     onclick={startLiveScan}
                   >
                       <Icon src={Camera} class="w-5 h-5 inline mr-3 transition-transform duration-300 group-hover:rotate-12" />
@@ -657,7 +657,7 @@
                     </div>
 
                     <div class="space-y-4">
-                      <div class="relative">
+                      <div class="relative px-4">
                         <input
                           type="text"
                           bind:value={seqtaUrl}
@@ -666,7 +666,7 @@
                             onUrlChange(url);
                           }}
                           placeholder="school.seqta.com.au"
-                          class="w-full py-4 px-6 bg-white/10 dark:bg-slate-800/10 backdrop-blur-xl border border-white/20 dark:border-slate-700/20 rounded-2xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:scale-[1.01] focus:bg-white/20 dark:focus:bg-slate-800/20"
+                          class="w-full py-4 px-6 bg-white/10 dark:bg-slate-800/10 backdrop-blur-xl border border-white/20 dark:border-slate-700/20 rounded-2xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-slate-800/20"
                         />
                       </div>
                     </div>
