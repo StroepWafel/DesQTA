@@ -662,7 +662,11 @@
                           type="text"
                           bind:value={seqtaUrl}
                           oninput={(e) => {
-                            const url = (e.target as HTMLInputElement).value;
+                            let url = (e.target as HTMLInputElement).value;
+                            // Add https:// if no protocol is specified
+                            if (url && !url.match(/^https?:\/\//)) {
+                              url = 'https://' + url;
+                            }
                             onUrlChange(url);
                           }}
                           placeholder="school.seqta.com.au"
