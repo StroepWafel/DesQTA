@@ -4,7 +4,7 @@ use rss::Channel;
 use serde::{Deserialize, Serialize};
 use xmltree::{Element, XMLNode};
 use serde_json::{json, Value};
-use std::{io::Cursor, sync::OnceLock, fs};
+use std::{io::Cursor, sync::OnceLock, fs, io::Read};
 use std::collections::HashMap;
 use anyhow::{Result, anyhow};
 use url::Url;
@@ -342,11 +342,66 @@ pub async fn get_seqta_file(file_type: &str, uuid: &str) -> Result<String, Strin
     fetch_api_data("/seqta/student/load/file", RequestMethod::GET, None, None, Some(params), false, true).await
 }
 
+/// Helper function to get file size limit from seqtaConfig.json
+fn get_file_size_limit_from_config() -> Option<u64> {
+    use std::path::PathBuf;
+    use dirs_next;
+    
+    // Get the config file path
+    let mut config_path = if cfg!(target_os = "android") {
+        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("DesQTA");
+        dir.push("seqtaConfig.json");
+        dir
+    } else {
+        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
+        dir.push("DesQTA");
+        dir.push("seqtaConfig.json");
+        dir
+    };
+    
+    // Read and parse the config file
+    if let Ok(mut file) = fs::File::open(&config_path) {
+        let mut contents = String::new();
+        if file.read_to_string(&mut contents).is_ok() {
+            if let Ok(config_value) = serde_json::from_str::<Value>(&contents) {
+                if let Some(coneqt_s) = config_value.get("coneqt-s") {
+                    if let Some(filesize) = coneqt_s.get("filesize") {
+                        if let Some(limit) = filesize.get("limit") {
+                            if let Some(value) = limit.get("value") {
+                                if let Some(size_str) = value.as_str() {
+                                    if let Ok(size_mb) = size_str.parse::<u64>() {
+                                        return Some(size_mb);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 #[tauri::command]
 pub async fn upload_seqta_file(file_name: String, file_path: String) -> Result<String, String> {
     
     let client = create_client();
     let session = session::Session::load();
+
+    // Check file size limit from seqtaConfig.json
+    let file_size_limit_mb = get_file_size_limit_from_config();
+    if let Some(limit_mb) = file_size_limit_mb {
+        let file_metadata = fs::metadata(&file_path)
+            .map_err(|e| format!("Failed to read file metadata: {}", e))?;
+        
+        let file_size_mb = file_metadata.len() / (1024 * 1024); // Convert bytes to MB
+        if file_size_mb > limit_mb {
+            return Err(format!("File size ({:.1} MB) exceeds the limit of {} MB", 
+                file_size_mb as f64, limit_mb));
+        }
+    }
 
     // Read the file content
     let file_content = fs::read(&file_path)

@@ -41,6 +41,8 @@ pub fn load_seqta_config() -> Option<Value> {
     None
 }
 
+
+
 /// Saves the given serde_json::Value to seqtaConfig.json.
 #[command]
 pub fn save_seqta_config(config: Value) -> Result<(), String> {
