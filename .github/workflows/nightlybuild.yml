@@ -30,8 +30,9 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Install zip
+        
+      - name: Install zip (Windows)
+        if: runner.os == 'Windows'
         run: choco install zip -y
         
       - name: Build app
