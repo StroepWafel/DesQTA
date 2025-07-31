@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
+          
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install zip
+        run: choco install zip -y
+        
       - name: Build app
         run: npm run tauri build
 
