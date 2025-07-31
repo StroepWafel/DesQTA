@@ -32,7 +32,7 @@ jobs:
       - name: Archive build output
         run: |
           mkdir -p nightly_artifacts
-          cp -r ./dist ./nightly_artifacts/
+          cp -r ./build ./nightly_artifacts/
       - name: Create branch name artifact
         run: |
           echo "${GITHUB_REF#refs/heads/}" > nightly_artifacts/branch.txt
