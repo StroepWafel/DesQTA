@@ -64,7 +64,7 @@ jobs:
           body: |
             This release is a nightly release, It will be unstable compared to the official releases, use with caution!
 
-            Last build successfully completed at ${{ steps.build_time.outputs.BUILD_TIME }} UTC
+            Last build successfully completed at ${{ steps.build_time.outputs.BUILD_TIME }}
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
