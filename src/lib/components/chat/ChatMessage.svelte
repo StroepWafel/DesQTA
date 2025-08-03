@@ -2,6 +2,7 @@
   import type { Message } from './types.js';
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
+  import { openUrl } from '@tauri-apps/plugin-opener';
 
   let { 
     message, 
@@ -20,13 +21,39 @@
     const html = marked.parse(md, { breaks: true }) as string;
     return DOMPurify.sanitize(html);
   }
+
+  async function handleLinkClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const anchor = target.closest('a') as HTMLAnchorElement | null;
+    if (!anchor) return;
+    let href = anchor.getAttribute('href');
+    if (!href) return;
+
+    // Prepend https:// if no scheme is provided (e.g., example.com or www.example.com)
+    const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href);
+    if (!hasScheme) {
+      if (href.startsWith('//')) {
+        href = 'https:' + href;
+      } else {
+        href = 'https://' + href.replace(/^\/+/, '');
+      }
+    }
+
+    event.preventDefault();
+    try {
+      await openUrl(href);
+    } catch (e) {
+      // Fallback: if opener fails, allow default behavior
+      window.open(href, '_blank');
+    }
+  }
 </script>
 
 <div class="flex {isOwnMessage ? 'justify-end' : 'justify-start'}">
   <div class="max-w-[70%] px-4 py-2 rounded-2xl shadow-md
     {isOwnMessage
       ? 'bg-accent-500 text-white border border-accent-600 dark:border-accent-400 drop-shadow-lg'
-      : 'bg-white/30 dark:bg-slate-800/60 text-slate-900 dark:text-white'}">
+      : 'bg-white/30 dark:bg-slate-800/60 text-slate-900 dark:text-white'}" on:click={handleLinkClick}>
     
     {#if showSenderName && message.sender}
       <div class="text-xs font-semibold mb-1 text-accent-500">{message.sender.displayName || message.sender.username}</div>
