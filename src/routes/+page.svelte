@@ -10,6 +10,8 @@
   import FocusTimer from '$lib/components/FocusTimer.svelte';
   import Homework from '$lib/components/Homework.svelte';
   import ShortcutsWidget from '$lib/components/ShortcutsWidget.svelte';
+  import RecentNews from '$lib/components/RecentNews.svelte';
+  import MessagesPreview from '$lib/components/MessagesPreview.svelte';
   import { Icon } from 'svelte-hero-icons';
   import { 
     ArrowsPointingOut, 
@@ -52,6 +54,7 @@
     icon: string;
     defaultWidth: number;
     defaultHeight: number;
+    defaultLayout?: { x: number; y: number; width: number; height: number; enabled: boolean };
   }
 
   let homepageShortcuts = $state<Shortcut[]>([
@@ -93,6 +96,8 @@
     { id: 'homework', component: Homework, title: 'Homework', icon: '📚', defaultWidth: 1, defaultHeight: 1 },
     { id: 'todo_list', component: TodoList, title: 'Todo List', icon: '✅', defaultWidth: 1, defaultHeight: 1 },
     { id: 'focus_timer', component: FocusTimer, title: 'Focus Timer', icon: '⏱️', defaultWidth: 1, defaultHeight: 2 },
+    { id: 'recent_news', component: RecentNews, title: 'Recent News', icon: '📰', defaultWidth: 2, defaultHeight: 1, defaultLayout: { x: 0, y: 0, width: 2, height: 1, enabled: true } },
+    { id: 'messages_preview', component: MessagesPreview, title: 'Messages', icon: '💬', defaultWidth: 2, defaultHeight: 1, defaultLayout: { x: 0, y: 1, width: 2, height: 1, enabled: true } },
   ];
 
   function checkMobile() {
@@ -530,9 +535,29 @@
     showPortalModal = false;
   }
 
+  function seedDefaultsIfMissing() {
+    // For any widget not present in layouts, add its defaultLayout if provided, else create a sensible default
+    const existingIds = new Set(widgetLayouts.map((l) => l.id));
+    const seeds: WidgetLayout[] = [];
+    for (const w of widgets) {
+      if (!existingIds.has(w.id)) {
+        if (w.defaultLayout) {
+          seeds.push({ id: w.id, ...w.defaultLayout });
+        } else {
+          seeds.push({ id: w.id, x: 0, y: 0, width: w.defaultWidth, height: w.defaultHeight, enabled: false });
+        }
+      }
+    }
+    if (seeds.length) {
+      widgetLayouts = [...widgetLayouts, ...seeds];
+    }
+  }
+
   onMount(() => {
     loadHomepageShortcuts();
     loadWidgetLayouts();
+    // After loading existing layouts, ensure defaults exist for new widgets
+    seedDefaultsIfMissing();
     
     checkMobile();
     window.addEventListener('resize', checkMobile);
