@@ -148,9 +148,16 @@ async function uploadAttachmentFile(file: File): Promise<Attachment | null> {
 }
 
 async function sendMessage() {
-  if (!newMessage.trim() || (!selectedFriend && !selectedGroup) || !token) return;
-  // Extra guard: if both are null, do not proceed
+  if (!newMessage.trim()) {
+    // No content; rely on disabled button, but guard here too
+    return;
+  }
   if (!selectedFriend && !selectedGroup) {
+    sendError = 'Select a friend or group to send a message.';
+    return;
+  }
+  if (!token) {
+    sendError = 'Not logged in to BetterSEQTA Cloud.';
     return;
   }
   sending = true;
@@ -173,8 +180,14 @@ async function sendMessage() {
     };
     if (selectedFriend) args.receiverId = selectedFriend.id;
     if (selectedGroup) args.groupId = selectedGroup.id;
-    // Do not send if neither is set
-    if (!args.receiverId && !args.groupId) throw new Error('No recipient selected');
+    if (!args.receiverId && !args.groupId) {
+      sendError = 'Select a friend or group to send a message.';
+      return;
+    }
+
+    // Debug: confirm we are about to call the backend
+    console.debug('send_message invoke', { hasToken: !!token, hasReceiver: !!args.receiverId, hasGroup: !!args.groupId, hasAttachment: !!attachmentId });
+
     const msg = await invoke<Message>('send_message', args);
     messages = [...messages, msg];
     newMessage = '';
