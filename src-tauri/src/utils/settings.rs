@@ -115,6 +115,7 @@ pub struct Settings {
     pub current_theme: Option<String>,
     pub widget_layout: Vec<WidgetLayout>,
     pub dev_sensitive_info_hider: bool,
+    pub accepted_cloud_eula: bool,
 }
 
 impl Default for Settings {
@@ -150,6 +151,7 @@ impl Default for Settings {
                 WidgetLayout { id: "focus_timer".to_string(), x: 1, y: 5, width: 1, height: 2, enabled: true },
             ],
             dev_sensitive_info_hider: false,
+            accepted_cloud_eula: false,
         }
     }
 }
@@ -341,6 +343,7 @@ impl Settings {
         default_settings.global_search_enabled = get_bool(&existing_json, "global_search_enabled", default_settings.global_search_enabled);
         default_settings.current_theme = get_opt_string(&existing_json, "current_theme");
         default_settings.dev_sensitive_info_hider = get_bool(&existing_json, "dev_sensitive_info_hider", default_settings.dev_sensitive_info_hider);
+        default_settings.accepted_cloud_eula = get_bool(&existing_json, "accepted_cloud_eula", default_settings.accepted_cloud_eula);
         
         // Merge widget layout
         let widget_layout_json = get_array(&existing_json, "widget_layout");

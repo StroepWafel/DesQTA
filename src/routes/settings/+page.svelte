@@ -52,6 +52,42 @@
   let devSensitiveInfoHider = false;
   let showDevSettings = false;
   let keyBuffer = '';
+  let acceptedCloudEula = false;
+  let showEulaModal = false;
+
+  // Inline EULA text (can be updated here)
+  const CLOUD_EULA_TEXT = `
+BetterSeqta Cloud End-User License Agreement (EULA)
+
+This End-User License Agreement ("EULA") is a binding legal agreement between you, the user ("User"), and BetterSeqta ("Company") for the use of the BetterSeqta Cloud service ("Service"). By accessing or using the Service, you agree to be bound by the terms of this EULA.
+
+1. License Grant
+
+The Company grants you a limited, non-exclusive, non-transferable, revocable license to access and use the Service for your personal or internal business purposes, subject to the terms and conditions of this EULA.
+
+2. Data Privacy
+
+The Company is committed to protecting your data. We will not intentionally sell, lease, or distribute any user data to third parties. We will also not intentionally access your data unless required to maintain the Service, troubleshoot a technical issue, or as required by law.
+
+3. Beta Product Disclaimer
+
+BetterSeqta Cloud is currently in a beta testing phase. As such, the Service may contain bugs, errors, and vulnerabilities. The Company makes no guarantee regarding the stability, reliability, or security of the Service. You acknowledge and agree that your use of the Service is at your own risk.
+
+4. Security
+
+Due to the beta nature of the Service, the Company cannot guarantee the security of any data stored on BetterSeqta Cloud. You are strongly advised not to store any sensitive, confidential, or critical data on the Service. The Company will not be liable for any loss or corruption of data, or for any unauthorized access to your data.
+
+5. No Warranty
+
+THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
+
+6. Limitation of Liability
+
+In no event shall the Company be liable for any direct, indirect, incidental, special, consequential, or punitive damages, including but not limited to, loss of profits, data, or other intangible losses, resulting from (i) your access to or use of or inability to access or use the Service; (ii) any conduct or content of any third party on the Service; (iii) any content obtained from the Service; and (iv) unauthorized access, use, or alteration of your transmissions or content.
+
+7. Termination
+
+The Company reserves the right to terminate your access to the Service at any time, with or without cause, with or without notice, effective immediately.`;
 
   // Cloud user state
   let cloudUser: any = null;
@@ -97,6 +133,7 @@
         auto_expand_sidebar_hover?: boolean;
         global_search_enabled?: boolean;
         dev_sensitive_info_hider?: boolean;
+        accepted_cloud_eula?: boolean;
       }>('get_settings');
       shortcuts = settings.shortcuts || [];
       feeds = settings.feeds || [];
@@ -117,6 +154,7 @@
       autoExpandSidebarHover = settings.auto_expand_sidebar_hover ?? false;
       globalSearchEnabled = settings.global_search_enabled ?? true;
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
+      acceptedCloudEula = settings.accepted_cloud_eula ?? false;
 
       console.log('Loading settings', {
         shortcuts,
@@ -147,6 +185,7 @@
       autoExpandSidebarHover = false;
       globalSearchEnabled = true;
       devSensitiveInfoHider = false;
+      acceptedCloudEula = false;
     }
     loading = false;
   }
@@ -208,6 +247,7 @@
         auto_expand_sidebar_hover: autoExpandSidebarHover,
         global_search_enabled: globalSearchEnabled,
         dev_sensitive_info_hider: devSensitiveInfoHider,
+        accepted_cloud_eula: acceptedCloudEula,
       };
       await invoke('save_settings', { newSettings });
       saveSuccess = true;
@@ -315,6 +355,7 @@
     autoExpandSidebarHover = cloudSettings.auto_expand_sidebar_hover ?? false;
         globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
+    acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
 
     notify({
       title: 'Settings Downloaded',
@@ -404,7 +445,21 @@
                 <span class="text-sm text-slate-500 dark:text-slate-400">Loading account status...</span>
               </div>
             </div>
-          {:else if cloudUser && cloudToken}
+          {:else}
+            {#if !acceptedCloudEula}
+              <!-- EULA gate overlay -->
+              <div class="absolute inset-0 z-10 flex flex-col justify-center items-center p-6 bg-black/40 backdrop-blur-sm rounded-xl">
+                <div class="max-w-xl w-full p-5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-300/50 dark:border-slate-800/50 shadow-lg text-slate-800 dark:text-white">
+                  <h3 class="text-base sm:text-lg font-semibold mb-2">Accept BetterSEQTA Cloud EULA</h3>
+                  <p class="text-sm opacity-80 mb-4">You must read and accept the Cloud Sync EULA before using cloud features.</p>
+                  <div class="flex gap-2">
+                    <button class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" onclick={() => showEulaModal = true}>Read & Accept</button>
+                  </div>
+                </div>
+              </div>
+            {/if}
+
+            {#if cloudUser && cloudToken}
             <!-- Logged in state -->
             <div class="p-4 rounded-lg bg-green-100/60 dark:bg-green-900/30 animate-fade-in border border-green-200 dark:border-green-800">
               <div class="flex items-start gap-4">
@@ -432,8 +487,10 @@
                 </p>
                 <div class="flex flex-col gap-3 sm:flex-row">
                   <button
-                    class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    onclick={openCloudSyncModal}>
+                    class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                    onclick={openCloudSyncModal}
+                    disabled={!acceptedCloudEula}
+                  >
                     <Icon src={CloudArrowUp} class="w-5 h-5" />
                     Sync Settings
                   </button>
@@ -443,6 +500,12 @@
           {:else}
             <!-- Not logged in state -->
           <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
+            <div class="mb-3 p-3 rounded bg-yellow-100/60 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800">
+              <div class="flex items-center gap-2">
+                <input id="accept-eula-loggedout" type="checkbox" class="w-4 h-4 accent-blue-600" bind:checked={acceptedCloudEula} />
+                <label for="accept-eula-loggedout" class="text-sm">I have read and accept the Cloud Sync Terms (EULA)</label>
+              </div>
+            </div>
             <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-3">
                   <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
@@ -466,8 +529,10 @@
               </div>
               <div class="flex flex-col gap-3 sm:flex-row">
                 <button
-                    class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                  onclick={openCloudSyncModal}>
+                    class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  onclick={openCloudSyncModal}
+                  disabled={!acceptedCloudEula}
+                >
                   <Icon src={CloudArrowUp} class="w-5 h-5" />
                     Login & Sync Settings
                 </button>
@@ -477,6 +542,7 @@
               </div>
             </div>
           </div>
+          {/if}
           {/if}
         </div>
       </section>
@@ -1075,6 +1141,33 @@
   open={showTroubleshootingModal} 
   onclose={closeTroubleshootingModal} 
 />
+
+{#if showEulaModal}
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick={() => showEulaModal = false}></div>
+    <div class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 animate-fade-in">
+      <h3 class="text-lg font-semibold mb-3">BetterSEQTA Cloud EULA</h3>
+      <div class="overflow-auto p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 text-sm text-slate-800 dark:text-slate-200" style="max-height: 50vh;">
+        <pre class="whitespace-pre-wrap font-sans">{CLOUD_EULA_TEXT}</pre>
+      </div>
+      <div class="mt-4 flex justify-end gap-2">
+        <button class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-400" onclick={() => showEulaModal = false}>Decline</button>
+        <button class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" onclick={async () => {
+          try {
+            // Load and save settings with EULA accepted
+            const current = await invoke<any>('get_settings');
+            const updated = { ...current, accepted_cloud_eula: true };
+            await invoke('save_settings', { newSettings: updated });
+            acceptedCloudEula = true;
+            showEulaModal = false;
+          } catch (e) {
+            console.error('Failed to save EULA acceptance', e);
+          }
+        }}>Accept</button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
   @keyframes fade-in-up {
