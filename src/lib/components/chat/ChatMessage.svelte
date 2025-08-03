@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Message } from './types.js';
+  import { marked } from 'marked';
+  import DOMPurify from 'dompurify';
 
   let { 
     message, 
@@ -12,6 +14,12 @@
     showSenderName: boolean;
     onReply: (message: Message) => void;
   }>();
+
+  function renderMarkdown(md?: string): string {
+    if (!md) return '';
+    const html = marked.parse(md, { breaks: true }) as string;
+    return DOMPurify.sanitize(html);
+  }
 </script>
 
 <div class="flex {isOwnMessage ? 'justify-end' : 'justify-start'}">
@@ -26,11 +34,11 @@
     
     {#if message.replyTo}
       <div class="mb-1 p-2 rounded bg-slate-200/60 dark:bg-slate-800/60 text-xs text-slate-700 dark:text-slate-300">
-        Replying to: {message.replyTo.content}
+        <div class="prose prose-sm dark:prose-invert max-w-none">{@html renderMarkdown(message.replyTo.content)}</div>
       </div>
     {/if}
     
-    <div class="text-sm">{message.content}</div>
+    <div class="text-sm prose prose-sm dark:prose-invert max-w-none">{@html renderMarkdown(message.content)}</div>
     
     {#if message.attachment}
       <div class="mt-2">
