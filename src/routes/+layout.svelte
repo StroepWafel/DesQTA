@@ -290,21 +290,22 @@
   $effect(() => {
     document.documentElement.setAttribute('data-accent-color', '');
     document.documentElement.style.setProperty('--accent-color-value', $accentColor);
+    logger.debug('layout', '$effect', 'Applied accent color to root as CSS var', { accent: $accentColor });
   });
 
   async function loadEnhancedAnimationsSetting() {
     try {
       const settings = await invoke<{ enhanced_animations?: boolean }>('get_settings');
       enhancedAnimations = settings.enhanced_animations ?? true;
-      console.log('Enhanced animations setting loaded:', enhancedAnimations);
+      logger.info('layout', 'loadEnhancedAnimationsSetting', 'Enhanced animations setting loaded', { enhancedAnimations });
     } catch (e) {
-      console.error('Failed to load enhanced animations setting:', e);
+      logger.error('layout', 'loadEnhancedAnimationsSetting', 'Failed to load enhanced animations setting', { error: e });
       enhancedAnimations = true;
     }
   }
 
   $effect(() => {
-    console.log('Enhanced animations effect triggered:', enhancedAnimations);
+    logger.debug('layout', '$effect', 'Enhanced animations effect triggered', { enhancedAnimations });
     if (enhancedAnimations) {
       document.body.classList.add('enhanced-animations');
     } else {
@@ -313,12 +314,16 @@
   });
 
   onMount(async () => {
+    // Normalize theme initialization order: load accent/theme first
     await Promise.all([
-      checkSession(),
-      loadWeatherSettings(),
       loadAccentColor(),
       loadTheme(),
       loadCurrentTheme(),
+    ]);
+
+    await Promise.all([
+      checkSession(),
+      loadWeatherSettings(),
       loadEnhancedAnimationsSetting(),
       reloadAutoCollapseSidebarSetting(),
       reloadAutoExpandSidebarHoverSetting()
@@ -342,23 +347,23 @@
           },
         });
         // Debug: log the raw response
-        console.debug('SEQTA session check response:', response);
+        logger.debug('layout', 'onMount', 'SEQTA session check response', { response });
         const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
         const foundAbbrev = responseStr.includes('site.name.abbrev');
-        console.debug('Contains site.name.abbrev:', foundAbbrev);
+        logger.debug('layout', 'onMount', 'Contains site.name.abbrev', { foundAbbrev });
         if (foundAbbrev) {
-          console.debug('User is authenticated - site info found in response');
+          logger.info('layout', 'onMount', 'User is authenticated - site info found in response');
           // User is authenticated, no need to logout
         } else {
-          console.debug('No site info found - user may be logged out');
+          logger.debug('layout', 'onMount', 'No site info found - user may be logged out');
           // Check if this is actually an error response that indicates logout
           if (responseStr.includes('error') || responseStr.includes('unauthorized') || responseStr.includes('401')) {
-            console.debug('Detected logout/error response, triggering logout');
+            logger.warn('layout', 'onMount', 'Detected logout/error response, triggering logout');
           await handleLogout();
           }
         }
       } catch (e) {
-        console.error('SEQTA session check failed', e);
+        logger.error('layout', 'onMount', 'SEQTA session check failed', { error: e });
       }
     }
     isLoading = false;
