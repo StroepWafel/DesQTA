@@ -58,11 +58,21 @@
 
   const fetchAustraliaNews = async (url: string) => {
     try {
-      const result = await fetch(url);
-      const response = await result.json();
-      if (response.code === 'rateLimited') {
-        return fetchAustraliaNews(url + '%00');
+      // First attempt
+      let result = await fetch(url);
+      let response: any = null;
+
+      if (result.status === 429) {
+        // One-time cache-busting retry
+        result = await fetch(url + '%00');
       }
+
+      response = await result.json().catch(() => ({}));
+
+      if (result.status === 429 || response?.code === 'rateLimited') {
+        return { articles: [] };
+      }
+
       return response;
     } catch (error) {
       console.error('Error fetching Australian news:', error);

@@ -48,13 +48,27 @@
     try {
       const date = new Date();
       const from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate() - 5}`;
-      const url = `https://newsapi.org/v2/everything?domains=abc.net.au&from=${from}&apiKey=17c0da766ba347c89d094449504e3080`;
-      const res = await fetch(url);
-      const response = await res.json();
-      if (response.code === 'rateLimited') {
-        return fetchAustraliaNews();
+      let url = `https://newsapi.org/v2/everything?domains=abc.net.au&from=${from}&apiKey=17c0da766ba347c89d094449504e3080`;
+
+      // First attempt
+      let res = await fetch(url);
+      let response: any = null;
+
+      if (res.status === 429) {
+        // One-time fallback with cache-busting suffix
+        url += '%00';
+        res = await fetch(url);
       }
-      const articles = (response.articles || []) as any[];
+
+      // Parse response (second attempt result if fallback was used)
+      response = await res.json().catch(() => ({}));
+
+      if (res.status === 429 || response?.code === 'rateLimited') {
+        error = 'News temporarily unavailable due to rate limits. Please try again later.';
+        return [];
+      }
+
+      const articles = (response?.articles || []) as any[];
       return articles.map((a) => ({
         title: a.title,
         link: a.url,

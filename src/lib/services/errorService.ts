@@ -422,6 +422,14 @@ class ErrorService {
 
           // Don't redirect for auth errors as they're handled by auth service
           if (response.status !== 401 && response.status !== 403) {
+            // For rate limit responses, do not report to the error service; let the component handle gracefully
+            if (response.status === 429) {
+              return response;
+            }
+            // For third-party 5xx, avoid reporting globally; let callers decide UI state
+            if (response.status >= 500 && response.status < 600) {
+              return response;
+            }
             this.handleError(errorInfo);
           }
         }
@@ -945,23 +953,26 @@ class ErrorService {
   private shouldShowErrorPage(errorInfo: ErrorInfo): boolean {
     // Don't show error page for low severity errors
     if (errorInfo.severity === ErrorSeverity.LOW) return false;
-    
+
+    // Never show error page for HTTP 429 (rate limit) so widgets can recover gracefully
+    if (errorInfo.status === 429) return false;
+
     // Don't show error page for resolved errors
     if (errorInfo.resolved) return false;
-    
+
     // Don't show error page for auth errors (handled by auth service)
     if (errorInfo.category === ErrorCategory.AUTHENTICATION) return false;
-    
+
     // Show error page for critical errors and high severity errors
     if (errorInfo.severity === ErrorSeverity.CRITICAL || errorInfo.severity === ErrorSeverity.HIGH) {
       return true;
     }
-    
+
     // Show error page for medium severity errors after retries are exhausted
     if (errorInfo.severity === ErrorSeverity.MEDIUM && errorInfo.retryCount >= errorInfo.maxRetries) {
       return true;
     }
-    
+
     return false;
   }
 
