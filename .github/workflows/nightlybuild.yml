@@ -2,7 +2,7 @@ name: Nightly Build
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight UTC
+    - cron: '0 2 * * 0' # Runs weekly on Sunday at 02:00 UTC
   workflow_dispatch:
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
       - name: Build app
         run: npm run tauri build
 
-      - name: Upload build artifacts as nightly
+      - name: Upload build artifacts (workflow run)
         uses: actions/upload-artifact@v4
         with:
           name: nightly-tauri-build-${{ matrix.os }}-${{ github.ref_name }}
@@ -48,35 +48,4 @@ jobs:
         id: build_time
         run: echo "BUILD_TIME=$(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_OUTPUT
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: nightly-tauri-build-${{ matrix.os }}-${{ github.ref_name }}
-          path: nightly-artifacts
-
-      - name: Zip nightly build
-        run: |
-          cd nightly-artifacts
-          zip -r ../nightly-tauri-build-${{ matrix.os }}-${{ github.ref_name }}.zip .
-        shell: bash
-
-      - name: Create or update nightly prerelease
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: nightly-release
-          name: Nightly Release
-          body: |
-            This release is a nightly release, It will be unstable compared to the official releases, use with caution!
-
-            Last build successfully completed at ${{ steps.build_time.outputs.BUILD_TIME }}
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload nightly build to prerelease
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: nightly-release
-          files: nightly-tauri-build-${{ matrix.os }}-${{ github.ref_name }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Removed GitHub Release publishing. Artifacts are attached to this workflow run only.
