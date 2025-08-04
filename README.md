@@ -8,8 +8,10 @@
 </p>
 
 - [Features](#features)
+- [Nightly Builds](#nightly-builds)
+- [Full Releases](#full-releases)
 - [Getting Started](#getting-started)
-  - [Running Development](#running-development)
+  - [Building For Production](#building-for-production)
   - [Folder Structure](#folder-structure)
 - [Contributors](#contributors)
 
@@ -36,6 +38,15 @@
   - Utilizes Tailwind CSS for styling.
   - Ensures a responsive and modern UI across different devices.
 
+## Nightly Builds
+Nightly builds are available under the releases tab, tagged with nightly-release.   
+[Quick access link](https://github.com/StroepWafel/DesQTA/releases/tag/nightly-release)
+
+## Full Releases
+Full Releases are available under the releases tab.  
+[Quick access link](https://github.com/BetterSEQTA/DesQTA/releases/latest)
+
+
 ## Getting Started
 > [!IMPORTANT]  
 > To run the dev script you must have [rust, cargo (included with rust)](https://www.rust-lang.org/tools/install) and pnpm (`npm install -g pnpm`) on your system or it will not build.
@@ -50,7 +61,7 @@ Run the program:
 npm run start
 ```
 
-## Optionally run both commands manually:
+# Optionally run both commands manually:
 Install modules
 ```bash
 npm install
@@ -60,7 +71,7 @@ Run the script
 npm run tauri dev
 ```
 
-## Building for production:
+# Building for production:
 Build app
 ```bash
 npm run tauri build
