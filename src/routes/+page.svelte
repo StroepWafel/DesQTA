@@ -68,6 +68,7 @@
   let widgetLayouts = $state<WidgetLayout[]>([]);
   let isEditMode = $state(false);
   let showWidgetPicker = $state(false);
+  let shouldAutoEnterEdit = false;
 
   function checkCurrentLessons() {
     const now = new Date();
@@ -556,6 +557,19 @@
   onMount(() => {
     loadHomepageShortcuts();
     loadWidgetLayouts();
+    // If settings contains a transient flag set by Settings page, enable edit mode and clear it
+    (async () => {
+      try {
+        const settings = await invoke<any>('get_settings');
+        if (settings && settings.homepage_edit_mode) {
+          isEditMode = true;
+          const updated = { ...settings, homepage_edit_mode: false };
+          await invoke('save_settings', { newSettings: updated });
+        }
+      } catch (e) {
+        console.error('Failed to check homepage_edit_mode flag', e);
+      }
+    })();
     // After loading existing layouts, ensure defaults exist for new widgets
     seedDefaultsIfMissing();
     

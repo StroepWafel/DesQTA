@@ -11,10 +11,11 @@
     updateTheme,
   } from '../../lib/stores/theme';
   import { Icon } from 'svelte-hero-icons';
-  import { Plus, ArrowPath, Trash, Rss, Sun, Moon, ComputerDesktop, CloudArrowUp, Cog } from 'svelte-hero-icons';
+  import { Plus, ArrowPath, Trash, Rss, Sun, Moon, ComputerDesktop, CloudArrowUp, Cog, Squares2x2 } from 'svelte-hero-icons';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
   import { logger } from '../../utils/logger';
+  import { goto } from '$app/navigation';
 
   interface Shortcut {
     name: string;
@@ -134,6 +135,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         global_search_enabled?: boolean;
         dev_sensitive_info_hider?: boolean;
         accepted_cloud_eula?: boolean;
+        homepage_edit_mode?: boolean;
       }>('get_settings');
       shortcuts = settings.shortcuts || [];
       feeds = settings.feeds || [];
@@ -155,6 +157,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       globalSearchEnabled = settings.global_search_enabled ?? true;
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
+      showDevSettings = settings.homepage_edit_mode ?? false;
 
       console.log('Loading settings', {
         shortcuts,
@@ -186,6 +189,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       globalSearchEnabled = true;
       devSensitiveInfoHider = false;
       acceptedCloudEula = false;
+      showDevSettings = false;
     }
     loading = false;
   }
@@ -248,6 +252,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         global_search_enabled: globalSearchEnabled,
         dev_sensitive_info_hider: devSensitiveInfoHider,
         accepted_cloud_eula: acceptedCloudEula,
+        homepage_edit_mode: showDevSettings,
       };
       await invoke('save_settings', { newSettings });
       saveSuccess = true;
@@ -356,6 +361,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
+    showDevSettings = cloudSettings.homepage_edit_mode ?? false;
 
     notify({
       title: 'Settings Downloaded',
@@ -378,6 +384,18 @@ The Company reserves the right to terminate your access to the Service at any ti
   onDestroy(() => {
     window.removeEventListener('keydown', handleKeydown);
   });
+
+  // Navigate to homepage and trigger edit layout mode there
+  async function goToHomepageAndEditLayout() {
+    try {
+      const current = await invoke<any>('get_settings');
+      const updated = { ...current, homepage_edit_mode: true };
+      await invoke('save_settings', { newSettings: updated });
+    } catch (e) {
+      console.error('Failed to set homepage edit mode flag', e);
+    }
+    goto('/');
+  }
 </script>
 
 <div class="p-4 mx-auto max-w-4xl sm:p-6 md:p-8">
@@ -387,10 +405,10 @@ The Company reserves the right to terminate your access to the Service at any ti
     <div class="flex flex-col gap-2 items-start w-full sm:flex-row sm:items-center sm:w-auto">
       <div class="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
         <button
-          class="px-4 py-2 w-full text-white bg-blue-500 rounded-lg shadow transition-all duration-200 sm:w-auto hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
-          onclick={openTroubleshootingModal}>
-          <Icon src={Cog} class="w-4 h-4" />
-          Troubleshooting
+          class="px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:outline-none focus:ring-2 accent-ring active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
+          onclick={goToHomepageAndEditLayout}>
+          <Icon src={Squares2x2} class="w-4 h-4" />
+          Edit Homescreen Layout
         </button>
         <button
           class="px-6 py-2 w-full text-white bg-gradient-to-r from-green-600 to-green-500 rounded-lg shadow-lg transition-all duration-200 sm:w-auto hover:from-green-700 hover:to-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 playful"
@@ -1071,6 +1089,23 @@ The Company reserves the right to terminate your access to the Service at any ti
               Open Plugin Store
             </a>
           </div>
+        </div>
+      </section>
+
+      <!-- Troubleshooting button moved to bottom -->
+      <section class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="p-4 sm:p-6 flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-semibold sm:text-lg">Troubleshooting</h2>
+            <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">Open the troubleshooting tools and diagnostics.</p>
+          </div>
+          <button
+            class="px-4 py-2 text-white bg-blue-500 rounded-lg shadow transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
+            onclick={openTroubleshootingModal}
+          >
+            <Icon src={Cog} class="w-4 h-4" />
+            Open
+          </button>
         </div>
       </section>
 
