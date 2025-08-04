@@ -3,6 +3,7 @@
   import { fade } from 'svelte/transition';
   import { cache } from '../../utils/cache';
   import { getRSS } from '../../utils/netUtil';
+  import { invoke } from '@tauri-apps/api/core';
 
   interface NewsArticle {
     title: string;
@@ -56,23 +57,9 @@
     netherlands: ['https://www.dutchnews.nl/feed/', 'https://www.nrc.nl/rss/'],
   };
 
-  const fetchAustraliaNews = async (url: string) => {
+  const fetchAustraliaNews = async (from: string, domains: string) => {
     try {
-      // First attempt
-      let result = await fetch(url);
-      let response: any = null;
-
-      if (result.status === 429) {
-        // One-time cache-busting retry
-        result = await fetch(url + '%00');
-      }
-
-      response = await result.json().catch(() => ({}));
-
-      if (result.status === 429 || response?.code === 'rateLimited') {
-        return { articles: [] };
-      }
-
+      const response = await invoke<any>('get_news_australia', { from, domains });
       return response;
     } catch (error) {
       console.error('Error fetching Australian news:', error);
@@ -93,9 +80,8 @@
       if (source === 'australia') {
         const date = new Date();
         const from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate() - 5}`;
-        const url = `https://newsapi.org/v2/everything?domains=abc.net.au&from=${from}&apiKey=17c0da766ba347c89d094449504e3080`;
-        const response = await fetchAustraliaNews(url);
-        news = response.articles || [];
+        const response = await fetchAustraliaNews(from, 'abc.net.au');
+        news = (response && response.articles) ? response.articles : [];
       } else {
         let feeds: string[];
 

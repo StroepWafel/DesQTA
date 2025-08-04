@@ -17,6 +17,8 @@ mod cloudmessaging;
 mod logger;
 #[path = "utils/theme_manager.rs"]
 mod theme_manager;
+#[path = "utils/news.rs"]
+mod news;
 mod global_search;
 
 
@@ -283,7 +285,8 @@ pub fn run() {
             theme_manager::delete_custom_theme,
             theme_manager::import_theme_from_file,
             theme_manager::get_themes_directory_path,
-            theme_manager::export_theme_to_file
+            theme_manager::export_theme_to_file,
+            news::get_news_australia
         ])
         .setup(|app| {
             // Initialize logger first
