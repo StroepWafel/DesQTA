@@ -226,6 +226,8 @@ pub fn run() {
             settings::save_cloud_token,
             settings::get_cloud_user,
             settings::clear_cloud_token,
+            settings::get_cloud_base_url,
+            settings::set_cloud_base_url,
             settings::upload_settings_to_cloud,
             settings::download_settings_from_cloud,
             settings::check_cloud_settings,

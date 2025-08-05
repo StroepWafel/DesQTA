@@ -55,6 +55,10 @@
   let keyBuffer = '';
   let acceptedCloudEula = false;
   let showEulaModal = false;
+  let cloudBaseUrl: string = '';
+  let cloudBaseUrlSaving = false;
+  let cloudBaseUrlError: string | null = null;
+  let cloudBaseUrlChanged = false;
 
   // Inline EULA text (can be updated here)
   const CLOUD_EULA_TEXT = `
@@ -104,11 +108,43 @@ The Company reserves the right to terminate your access to the Service at any ti
       const result = await invoke<{ user: any; token: string | null }>('get_cloud_user');
       cloudUser = result.user;
       cloudToken = result.token;
+      // Also load current cloud base URL
+      cloudBaseUrl = await invoke<string>('get_cloud_base_url');
     } catch (e) {
       cloudUser = null;
       cloudToken = null;
+      cloudBaseUrl = '';
     }
     cloudUserLoading = false;
+  }
+
+  function validateCloudUrl(url: string): string | null {
+    if (!url) return 'URL cannot be empty';
+    if (!/^https?:\/\//i.test(url)) return 'URL must start with http:// or https://';
+    try { new URL(url); } catch { return 'Invalid URL format'; }
+    return null;
+  }
+
+  async function saveCloudBaseUrl() {
+    cloudBaseUrlError = validateCloudUrl(cloudBaseUrl);
+    if (cloudBaseUrlError) return;
+    cloudBaseUrlSaving = true;
+    try {
+      await invoke('set_cloud_base_url', { newBaseUrl: cloudBaseUrl });
+      cloudBaseUrlChanged = true;
+      notify({
+        title: 'Cloud Provider',
+        body: 'Cloud provider URL updated. Some actions may require re-authentication.'
+      });
+    } catch (e: any) {
+      cloudBaseUrlError = e?.message || 'Failed to save Cloud URL';
+    } finally {
+      cloudBaseUrlSaving = false;
+    }
+  }
+
+  function resetCloudBaseUrlToDefault() {
+    cloudBaseUrl = 'https://accounts.betterseqta.adenmgb.com';
   }
 
   async function loadSettings() {
@@ -904,6 +940,49 @@ The Company reserves the right to terminate your access to the Service at any ti
               class="px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
               onclick={sendTestNotification}>
               Send Test Notification
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cloud Provider Settings -->
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+          <h2 class="text-base font-semibold sm:text-lg">Cloud Provider</h2>
+          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            Configure the BetterSeqta Cloud provider URL. Changing this may require re-authentication.
+          </p>
+        </div>
+        <div class="p-4 space-y-4 sm:p-6">
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-slate-800 dark:text-slate-200">Base URL</label>
+            <input
+              class="w-full px-3 py-2 rounded-lg border border-slate-300/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-white focus:outline-none focus:ring-2 accent-ring transition-colors duration-200"
+              placeholder="https://accounts.example.com"
+              bind:value={cloudBaseUrl}
+              oninput={() => { cloudBaseUrlError = null; cloudBaseUrlChanged = false; }}
+            />
+            {#if cloudBaseUrlError}
+              <p class="text-xs text-red-500">{cloudBaseUrlError}</p>
+            {/if}
+            {#if cloudBaseUrlChanged}
+              <p class="text-xs text-yellow-500">Cloud URL updated. You may need to re-login for the new provider.</p>
+            {/if}
+          </div>
+          <div class="flex gap-3">
+            <button
+              class="px-4 py-2 text-white rounded-lg shadow transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
+              disabled={cloudBaseUrlSaving}
+              onclick={saveCloudBaseUrl}
+            >
+              {cloudBaseUrlSaving ? 'Saving...' : 'Save URL'}
+            </button>
+            <button
+              class="px-4 py-2 rounded-lg border border-slate-300/70 dark:border-slate-700/70 text-slate-800 dark:text-white bg-slate-100/60 dark:bg-slate-800/40 hover:bg-slate-200/60 dark:hover:bg-slate-700/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
+              onclick={resetCloudBaseUrlToDefault}
+            >
+              Reset to Default
             </button>
           </div>
         </div>

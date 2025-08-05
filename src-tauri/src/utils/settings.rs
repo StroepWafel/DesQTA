@@ -64,6 +64,8 @@ fn cloud_token_file() -> PathBuf {
 pub struct CloudToken {
     pub token: Option<String>,
     pub user: Option<CloudUser>,
+    #[serde(default)]
+    pub base_url: Option<String>,
 }
 
 impl CloudToken {
@@ -391,6 +393,16 @@ impl Settings {
     }
 }
 
+fn default_base_url() -> String {
+    "https://accounts.betterseqta.adenmgb.com".to_string()
+}
+
+fn get_base_api_url() -> String {
+    let tok = CloudToken::load();
+    let base = tok.base_url.unwrap_or_else(|| default_base_url());
+    if base.ends_with("/api") { base } else { format!("{}/api", base.trim_end_matches('/')) }
+}
+
 #[tauri::command]
 pub fn get_settings() -> Settings {
     if let Some(logger) = logger::get_logger() {
@@ -459,7 +471,7 @@ pub fn save_settings_from_json(json: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn save_cloud_token(token: String) -> Result<CloudUser, String> {
-    let base_url = "https://accounts.betterseqta.adenmgb.com/api";
+    let base_url = get_base_api_url();
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/auth/me", base_url))
@@ -502,10 +514,27 @@ pub fn clear_cloud_token() -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn get_cloud_base_url() -> String {
+    let tok = CloudToken::load();
+    tok.base_url.unwrap_or_else(|| default_base_url())
+}
+
+#[tauri::command]
+pub fn set_cloud_base_url(new_base_url: String) -> Result<(), String> {
+    // Basic validation
+    if !(new_base_url.starts_with("http://") || new_base_url.starts_with("https://")) {
+        return Err("Base URL must start with http:// or https://".to_string());
+    }
+    let mut tok = CloudToken::load();
+    tok.base_url = Some(new_base_url);
+    tok.save().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn upload_settings_to_cloud() -> Result<(), String> {
     let cloud_token = CloudToken::load();
     let token = cloud_token.token.clone().ok_or("No cloud token found. Please authenticate first.")?;
-    let base_url = "https://accounts.betterseqta.adenmgb.com/api";
+    let base_url = get_base_api_url();
     let settings = Settings::load();
     let settings_json = settings.to_json()?;
     let client = reqwest::Client::new();
@@ -532,7 +561,7 @@ pub async fn upload_settings_to_cloud() -> Result<(), String> {
 pub async fn download_settings_from_cloud() -> Result<Settings, String> {
     let cloud_token = CloudToken::load();
     let token = cloud_token.token.clone().ok_or("No cloud token found. Please authenticate first.")?;
-    let base_url = "https://accounts.betterseqta.adenmgb.com/api";
+    let base_url = get_base_api_url();
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/files/list", base_url))
@@ -590,7 +619,7 @@ pub async fn download_settings_from_cloud() -> Result<Settings, String> {
 pub async fn check_cloud_settings() -> Result<bool, String> {
     let cloud_token = CloudToken::load();
     let token = cloud_token.token.clone().ok_or("No cloud token found. Please authenticate first.")?;
-    let base_url = "https://accounts.betterseqta.adenmgb.com/api";
+    let base_url = get_base_api_url();
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/files/list", base_url))

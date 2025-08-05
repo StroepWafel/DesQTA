@@ -1,6 +1,16 @@
 use serde::{Deserialize, Serialize};
 use reqwest::Client;
 use std::io::Write;
+use crate::settings::CloudToken;
+
+fn default_base_url() -> String {
+    "https://accounts.betterseqta.adenmgb.com".to_string()
+}
+
+fn get_base_url() -> String {
+    let tok = CloudToken::load();
+    tok.base_url.unwrap_or_else(|| default_base_url())
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Friend {
@@ -80,8 +90,6 @@ pub struct Message {
     pub group: Option<Group>,
 }
 
-const BASE_URL: &str = "https://accounts.betterseqta.adenmgb.com"; // Change if needed
-
 async fn get_auth_client(token: &str) -> Client {
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(
@@ -101,7 +109,7 @@ async fn get_auth_client(token: &str) -> Client {
 #[tauri::command]
 pub async fn get_friends(token: String) -> Result<Vec<Friend>, String> {
     let client = get_auth_client(&token).await;
-    let url = format!("{}/api/friends", BASE_URL);
+    let url = format!("{}/api/friends", get_base_url());
     let resp = client.get(&url).send().await.map_err(|e| e.to_string())?;
     if !resp.status().is_success() {
         return Err(format!("Failed to fetch friends: {}", resp.status()));
@@ -113,7 +121,7 @@ pub async fn get_friends(token: String) -> Result<Vec<Friend>, String> {
 #[tauri::command]
 pub async fn list_groups(token: String) -> Result<Vec<Group>, String> {
     let client = get_auth_client(&token).await;
-    let url = format!("{}/api/groups", BASE_URL);
+    let url = format!("{}/api/groups", get_base_url());
     let resp = client.get(&url).send().await.map_err(|e| e.to_string())?;
     if !resp.status().is_success() {
         return Err(format!("Failed to fetch groups: {}", resp.status()));
@@ -125,7 +133,7 @@ pub async fn list_groups(token: String) -> Result<Vec<Group>, String> {
 #[tauri::command]
 pub async fn create_group(token: String, name: String, member_ids: Vec<String>) -> Result<Group, String> {
     let client = get_auth_client(&token).await;
-    let url = format!("{}/api/groups", BASE_URL);
+    let url = format!("{}/api/groups", get_base_url());
     let body = serde_json::json!({
         "name": name,
         "memberIds": member_ids
@@ -158,7 +166,7 @@ pub async fn send_message(
         return Err("No recipient specified".to_string());
     };
     
-    let url = format!("{}/api/messages/{}", BASE_URL, chat_id);
+    let url = format!("{}/api/messages/{}", get_base_url(), chat_id);
     let mut body = serde_json::Map::new();
     body.insert("content".to_string(), serde_json::json!(content));
     if let Some(ref rid) = reply_to_id { body.insert("replyToId".to_string(), serde_json::json!(rid)); }
@@ -183,7 +191,7 @@ pub async fn send_message(
 #[tauri::command]
 pub async fn get_messages(token: String, id: String, page: Option<i32>) -> Result<Vec<Message>, String> {
     let client = get_auth_client(&token).await;
-    let mut url = format!("{}/api/messages/{}", BASE_URL, id);
+    let mut url = format!("{}/api/messages/{}", get_base_url(), id);
     
     // Add page parameter if provided
     if let Some(page_num) = page {
@@ -231,7 +239,7 @@ pub async fn delete_temp_file(file_name: String) -> Result<(), String> {
 #[tauri::command]
 pub async fn upload_attachment(token: String, file_path: String) -> Result<Attachment, String> {
     let client = get_auth_client(&token).await;
-    let url = format!("{}/api/files/upload", BASE_URL);
+    let url = format!("{}/api/files/upload", get_base_url());
     
     // Use temp directory for the full path
     let temp_dir = std::env::temp_dir();
