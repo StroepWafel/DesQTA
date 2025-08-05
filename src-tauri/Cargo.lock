@@ -923,6 +923,7 @@ dependencies = [
  "cocoa",
  "dirs-next",
  "objc",
+ "once_cell",
  "rand 0.8.5",
  "rayon",
  "reqwest",
