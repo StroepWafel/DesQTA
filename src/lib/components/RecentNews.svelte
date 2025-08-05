@@ -7,6 +7,7 @@
   import relativeTime from 'dayjs/plugin/relativeTime';
   import { logger } from '../../utils/logger';
   import { getRSS } from '../../utils/netUtil';
+  import { invoke } from '@tauri-apps/api/core';
 
   dayjs.extend(relativeTime);
 
@@ -48,25 +49,8 @@
     try {
       const date = new Date();
       const from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate() - 5}`;
-      let url = `https://newsapi.org/v2/everything?domains=abc.net.au&from=${from}&apiKey=17c0da766ba347c89d094449504e3080`;
-
-      // First attempt
-      let res = await fetch(url);
-      let response: any = null;
-
-      if (res.status === 429) {
-        // One-time fallback with cache-busting suffix
-        url += '%00';
-        res = await fetch(url);
-      }
-
-      // Parse response (second attempt result if fallback was used)
-      response = await res.json().catch(() => ({}));
-
-      if (res.status === 429 || response?.code === 'rateLimited') {
-        error = 'News temporarily unavailable due to rate limits. Please try again later.';
-        return [];
-      }
+      // Use the same Rust command as +page.svelte
+      const response: any = await invoke('get_news_australia', { from, domains: 'abc.net.au' });
 
       const articles = (response?.articles || []) as any[];
       return articles.map((a) => ({
@@ -76,7 +60,13 @@
         source: 'abc.net.au',
         image: a.urlToImage ?? null,
       }));
-    } catch (e) {
+    } catch (e: any) {
+      const msg = typeof e === 'string' ? e : (e?.message ?? 'Failed to fetch Australia news');
+      if (String(msg).includes('rate_limited')) {
+        error = 'News temporarily unavailable due to rate limits. Please try again later.';
+      } else {
+        error = 'Failed to fetch Australia news.';
+      }
       logger.error('RecentNews', 'fetchAustraliaNews', 'Failed to fetch Australia news', { error: e });
       return [];
     }
