@@ -43,6 +43,24 @@
   interface SubjectItem { code: string; title: string; programme: string | number; metaclass: string | number; colour?: string }
   interface FullAssessment { id: string | number; title: string; due: string; code: string; subject?: string; metaclass?: string | number; colour?: string }
 
+  // Helpers to resolve subject code and colour
+  function getSubjectCodeFromLabel(label?: string | null): string | null {
+    if (!label) return null;
+    const code = label.split(' — ')[0]?.trim();
+    return code || null;
+  }
+
+  function chipStylesForCode(code?: string | null): string {
+    if (!code) return '';
+    const color = subjectColours[code] || '#8e8e8e';
+    // Build rgba-like with hex alpha for bg/border while keeping text as full color
+    // Convert #rrggbb to with alpha suffix
+    const hex = color.startsWith('#') ? color : `#${color}`;
+    const bg = `${hex}1A`;      // ~10% opacity
+    const border = `${hex}66`;  // ~40% opacity
+    return `background-color:${bg}; border-color:${border}; color:${hex};`;
+  }
+
   let todos: TodoItem[] = [];
   let loading = true;
   let error: string | null = null;
@@ -513,10 +531,14 @@
                       </div>
                       <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
                         {#if todo.related_subject}
-                          <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{todo.related_subject}</span>
+                          {#key todo.related_subject}
+                            <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(getSubjectCodeFromLabel(todo.related_subject))}>{todo.related_subject}</span>
+                          {/key}
                         {/if}
                         {#if todo.related_assessment}
-                          <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{todo.related_assessment}</span>
+                          {#key todo.related_assessment}
+                            <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(getSubjectCodeFromLabel(todo.related_subject) || null)}>{todo.related_assessment}</span>
+                          {/key}
                         {/if}
                         {#if todo.due_date}
                           <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{todo.due_date}{todo.due_time ? ` ${todo.due_time}` : ''}</span>
@@ -547,6 +569,12 @@
                       <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div class="relative">
                           <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} on:input={(e) => { subjectQuery[todo.id] = (e.target as HTMLInputElement).value; showSubjectDropdown[todo.id] = true; }} on:focus={() => showSubjectDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showSubjectDropdown[todo.id]=false, 150)} />
+                          {#if getSubjectCodeFromLabel(todo.related_subject)}
+                            <div class="mt-1 inline-flex items-center gap-2">
+                              <span class="inline-block w-2 h-2 rounded-full" style="background-color: {subjectColours[getSubjectCodeFromLabel(todo.related_subject) || ''] || '#8e8e8e'}"></span>
+                              <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(getSubjectCodeFromLabel(todo.related_subject))}>{todo.related_subject}</span>
+                            </div>
+                          {/if}
                           {#if showSubjectDropdown[todo.id]}
                             <div class="absolute z-20 mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md max-h-56 overflow-auto">
                               {#each subjects.filter(s => (subjectQuery[todo.id] ?? todo.related_subject ?? '').toLowerCase().split(' ').every(q => s.title.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))) as s}
@@ -560,6 +588,17 @@
                         </div>
                         <div class="relative">
                           <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} on:input={(e) => { assessmentQuery[todo.id] = (e.target as HTMLInputElement).value; showAssessmentDropdown[todo.id] = true; }} on:focus={() => showAssessmentDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showAssessmentDropdown[todo.id]=false, 150)} />
+                          {#if todo.related_assessment}
+                            <div class="mt-1 inline-flex items-center gap-2">
+                              {#if getSubjectCodeFromLabel(todo.related_subject)}
+                                <span class="inline-block w-2 h-2 rounded-full" style="background-color: {subjectColours[getSubjectCodeFromLabel(todo.related_subject) || ''] || '#8e8e8e'}"></span>
+                                <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(getSubjectCodeFromLabel(todo.related_subject))}>{todo.related_assessment}</span>
+                              {:else}
+                                <span class="inline-block w-2 h-2 rounded-full" style="background-color: #8e8e8e"></span>
+                                <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(null)}>{todo.related_assessment}</span>
+                              {/if}
+                            </div>
+                          {/if}
                           {#if showAssessmentDropdown[todo.id]}
                             <div class="absolute z-20 mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md max-h-64 overflow-auto">
                               {#each assessmentsAll.filter(a => {
