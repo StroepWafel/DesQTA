@@ -48,6 +48,7 @@
   let sortBy: SortKey = 'due';
   let query = '';
   let expanded: Record<string, boolean> = {};
+  let editMode: Record<string, boolean> = {};
 
   // Tabs
   type TabKey = 'tasks' | 'notes';
@@ -208,6 +209,8 @@
       },
       ...todos
     ];
+    // New tasks start in edit mode
+    editMode[todos[0].id] = true;
     saveTodos();
   }
 
@@ -387,40 +390,77 @@
 
             {#each filteredSortedTodos as todo (todo.id)}
               <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 transition-all duration-200 hover:scale-[1.02]">
-                <div class="flex items-start gap-3">
-                  <input type="checkbox" bind:checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <input class="flex-1 bg-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400 text-base font-medium" placeholder="Task title" bind:value={todo.title} on:blur={() => { updateField(todo.id, 'title', todo.title); blurSave(); }} />
-                      <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
-                    </div>
-                    <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} on:blur={() => { updateField(todo.id, 'related_subject', todo.related_subject ?? ''); blurSave(); }} />
-                      <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} on:blur={() => { updateField(todo.id, 'related_assessment', todo.related_assessment ?? ''); blurSave(); }} />
-                      <div class="flex gap-3">
-                        <input type="date" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_date} on:blur={() => { updateField(todo.id, 'due_date', todo.due_date ?? ''); blurSave(); }} />
-                        <input type="time" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_time} on:blur={() => { updateField(todo.id, 'due_time', todo.due_time ?? ''); blurSave(); }} />
-                      </div>
-                      <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:blur={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); blurSave(); }} />
-                      <div class="flex items-center gap-2">
-                        {#each todo.tags ?? [] as tag}
-                          <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{tag}</span>
-                        {/each}
-                      </div>
-                      <div class="md:col-span-2 flex items-center justify-between">
-                        <button class="px-3 py-1.5 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>Add subtask</button>
+                {#if !editMode[todo.id]}
+                  <!-- Condensed View -->
+                  <div class="flex items-start gap-3">
+                    <input type="checkbox" bind:checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <div class="truncate text-slate-900 dark:text-white font-medium">{todo.title || 'Untitled task'}</div>
                         <div class="flex items-center gap-2">
-                          <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => expanded[todo.id] = !expanded[todo.id]} aria-expanded={expanded[todo.id] ?? false}>{expanded[todo.id] ? 'Hide details' : 'Show details'}</button>
-                          <button class="px-3 py-1.5 text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Delete</button>
+                          <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
+                          <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => editMode[todo.id]=true}>Edit</button>
+                          <button class="px-2 py-1 text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Delete</button>
                         </div>
                       </div>
+                      <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                        {#if todo.related_subject}
+                          <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{todo.related_subject}</span>
+                        {/if}
+                        {#if todo.related_assessment}
+                          <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{todo.related_assessment}</span>
+                        {/if}
+                        {#if todo.due_date}
+                          <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{todo.due_date}{todo.due_time ? ` ${todo.due_time}` : ''}</span>
+                        {/if}
+                        {#if (todo.tags ?? []).length}
+                          <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{(todo.tags ?? []).join(', ')}</span>
+                        {/if}
+                      </div>
+                      <div class="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">{todo.description}</div>
+                      {#if (todo.subtasks ?? []).length}
+                        <div class="mt-2 text-xs text-slate-500 dark:text-slate-400">{(todo.subtasks ?? []).filter(s=>s.completed).length}/{todo.subtasks?.length} subtasks done</div>
+                      {/if}
                     </div>
+                  </div>
+                {:else}
+                  <!-- Edit Mode -->
+                  <div class="flex items-start gap-3">
+                    <input type="checkbox" bind:checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-base font-medium" placeholder="Task title" bind:value={todo.title} on:blur={() => { updateField(todo.id, 'title', todo.title); }} />
+                        <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
+                      </div>
+                      <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div class="relative">
+                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} />
+                          <!-- typeahead dropdown placeholder -->
+                        </div>
+                        <div class="relative">
+                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} />
+                          <!-- typeahead dropdown placeholder -->
+                        </div>
+                        <div class="flex gap-3">
+                          <input type="date" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_date} />
+                          <input type="time" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_time} />
+                        </div>
+                        <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:input={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); }} />
+                        <div class="flex items-center gap-2">
+                          {#each todo.tags ?? [] as tag}
+                            <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{tag}</span>
+                          {/each}
+                        </div>
+                      </div>
 
-                    {#if expanded[todo.id]}
+                      <!-- Always visible description and subtasks -->
                       <div class="mt-3">
-                        <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Description" bind:value={todo.description} on:blur={() => { updateField(todo.id, 'description', todo.description ?? ''); blurSave(); }}></textarea>
+                        <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Description" bind:value={todo.description}></textarea>
                         <div class="mt-3 space-y-2">
-                          <h3 class="text-sm font-medium text-slate-900 dark:text-white">Subtasks</h3>
+                          <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-medium text-slate-900 dark:text-white">Subtasks</h3>
+                            <button class="px-3 py-1.5 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>Add subtask</button>
+                          </div>
                           {#if (todo.subtasks ?? []).length === 0}
                             <div class="text-sm text-slate-500 dark:text-slate-400">No subtasks yet.</div>
                           {:else}
@@ -428,16 +468,20 @@
                               {#each todo.subtasks ?? [] as sub (sub.id)}
                                 <div class="flex items-center gap-3">
                                   <input type="checkbox" bind:checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle subtask" />
-                                  <input class="flex-1 bg-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); blurSave(); }} />
+                                  <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); }} placeholder="Subtask title" />
                                 </div>
                               {/each}
                             </div>
                           {/if}
                         </div>
                       </div>
-                    {/if}
+
+                      <div class="mt-4 flex items-center justify-end gap-2">
+                        <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => { editMode[todo.id] = false; saveTodos(); }}>Save Task</button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                {/if}
               </div>
             {/each}
           </div>
