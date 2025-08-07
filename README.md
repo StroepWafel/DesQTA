@@ -40,7 +40,7 @@
 
 ## Nightly Builds
 Nightly builds are available under the releases tab, tagged with nightly-release.   
-[Quick access link](https://github.com/StroepWafel/DesQTA/releases/tag/nightly-release)
+[Quick access link](https://github.com/BetterSEQTA/DesQTA/actions/workflows/nightlybuild.yml)
 
 ## Full Releases
 Full Releases are available under the releases tab.  
