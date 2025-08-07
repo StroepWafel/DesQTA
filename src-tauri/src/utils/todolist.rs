@@ -39,13 +39,30 @@ pub struct TodoItem {
     pub updated_at: Option<String>, // ISO timestamp
 }
 
-fn todos_file_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let app_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
-    let path = app_dir.join("todolist.json");
-    Ok(path)
+/// Location strategy mirrors settings.rs:
+/// - Android: /data/data/com.desqta.app/files/DesQTA/todolist.json
+/// - Other platforms: <OS data dir>/DesQTA/todolist.json
+fn todos_file_path(_app: &AppHandle) -> Result<PathBuf, String> {
+    #[cfg(target_os = "android")]
+    {
+        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).map_err(|e| format!("Failed to create data dir: {}", e))?;
+        }
+        dir.push("todolist.json");
+        Ok(dir)
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        let mut dir = dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).map_err(|e| format!("Failed to create data dir: {}", e))?;
+        }
+        dir.push("todolist.json");
+        Ok(dir)
+    }
 }
 
 fn ensure_parent_dir(path: &PathBuf) -> Result<(), String> {
