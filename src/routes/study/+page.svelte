@@ -39,6 +39,10 @@
     colour?: string;
   }
 
+  // Subjects and assessments data for typeahead
+  interface SubjectItem { code: string; title: string; programme: string | number; metaclass: string | number; colour?: string }
+  interface FullAssessment { id: string | number; title: string; due: string; code: string; subject?: string; metaclass?: string | number; colour?: string }
+
   let todos: TodoItem[] = [];
   let loading = true;
   let error: string | null = null;
@@ -47,7 +51,6 @@
   let filter: FilterKey = 'all';
   let sortBy: SortKey = 'due';
   let query = '';
-  let expanded: Record<string, boolean> = {};
   let editMode: Record<string, boolean> = {};
 
   // Tabs
@@ -58,6 +61,17 @@
   let upcomingAssessments: AssessmentItem[] = [];
   let loadingAssessments = true;
 
+  // SEQTA data stores
+  let subjects: SubjectItem[] = [];
+  let subjectColours: Record<string, string> = {};
+  let assessmentsAll: FullAssessment[] = [];
+
+  // Per-task typeahead states
+  let subjectQuery: Record<string, string> = {};
+  let showSubjectDropdown: Record<string, boolean> = {};
+  let assessmentQuery: Record<string, string> = {};
+  let showAssessmentDropdown: Record<string, boolean> = {};
+
   function computeStatusISO(dueISO: string): 'upcoming' | 'soon' | 'overdue' {
     const now = new Date();
     const due = new Date(dueISO);
@@ -66,6 +80,84 @@
     if (diff < 0) return 'overdue';
     if (diff <= 3 * dayMs) return 'soon';
     return 'upcoming';
+  }
+
+  async function loadSubjectsAndColours() {
+    // Cache subjects
+    const cachedSubjects = cache.get<SubjectItem[]>('seqta_subjects_all');
+    const cachedColours = cache.get<Record<string, string>>('lesson_colours_map');
+    if (cachedSubjects) subjects = cachedSubjects;
+    if (cachedColours) subjectColours = cachedColours;
+    if (cachedSubjects && cachedColours) return;
+
+    const studentId = 69;
+    const classesRes = await seqtaFetch('/seqta/student/load/subjects?', {
+      method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: {}
+    });
+    const prefsRes = await seqtaFetch('/seqta/student/load/prefs?', {
+      method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: { request: 'userPrefs', asArray: true, user: studentId }
+    });
+
+    const classesJson = JSON.parse(classesRes);
+    const folders = classesJson.payload;
+    // flatten and dedupe by programme+metaclass
+    const all: SubjectItem[] = folders.flatMap((f: any) => f.subjects).map((s: any) => ({ code: s.code, title: s.title, programme: s.programme, metaclass: s.metaclass }));
+    const map = new Map<string, SubjectItem>();
+    for (const s of all) {
+      const key = `${s.programme}-${s.metaclass}`;
+      if (!map.has(key)) map.set(key, s);
+    }
+    subjects = Array.from(map.values());
+    cache.set('seqta_subjects_all', subjects, 10 * 60 * 1000);
+
+    // colours
+    const colours = JSON.parse(prefsRes).payload as any[];
+    subjectColours = {};
+    for (const p of colours) {
+      if (typeof p.name === 'string' && p.name.startsWith('timetable.subject.colour.')) {
+        const code = p.name.split('timetable.subject.colour.')[1];
+        subjectColours[code] = p.value;
+      }
+    }
+    cache.set('lesson_colours_map', subjectColours, 10 * 60 * 1000);
+  }
+
+  async function loadAllAssessments() {
+    // Check cache
+    const cached = cache.get<FullAssessment[]>('seqta_all_assessments_flat');
+    if (cached) { assessmentsAll = cached; return; }
+
+    const studentId = 69;
+    // upcoming for all
+    const upcomingRes = await seqtaFetch('/seqta/student/assessment/list/upcoming?', {
+      method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: { student: studentId }
+    });
+    const upcoming = JSON.parse(upcomingRes).payload as any[];
+
+    // load subjects list if not loaded for past requests
+    if (!subjects.length) await loadSubjectsAndColours();
+
+    // past per subject
+    const pastPromises = subjects.map((s) => seqtaFetch('/seqta/student/assessment/list/past?', {
+      method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: { programme: s.programme, metaclass: s.metaclass, student: studentId }
+    }));
+    const pastResponses = await Promise.all(pastPromises);
+    const past = pastResponses.map((res) => JSON.parse(res).payload.tasks || []).flat();
+
+    // combine + dedupe by id, enrich with colours
+    const allCombined = [...upcoming, ...past];
+    const dedupMap = new Map<string | number, any>();
+    for (const a of allCombined) {
+      if (!dedupMap.has(a.id)) dedupMap.set(a.id, a);
+    }
+    const list = Array.from(dedupMap.values()) as any[];
+    assessmentsAll = list.map((a: any) => {
+      const color = subjectColours[a.code] || '#8e8e8e';
+      return { id: a.id, title: a.title, due: a.due, code: a.code, subject: a.subject, metaclass: a.metaclass, colour: color } as FullAssessment;
+    }).sort((a, b) => new Date(a.due).getTime() - new Date(b.due).getTime());
+
+    cache.set('seqta_all_assessments_flat', assessmentsAll, 10 * 60 * 1000);
   }
 
   async function loadUpcomingAssessments() {
@@ -92,77 +184,76 @@
           })
           .sort((a: AssessmentItem, b: AssessmentItem) => new Date(`${a.due_date}T${a.due_time ?? '00:00'}:00`).getTime() - new Date(`${b.due_date}T${b.due_time ?? '00:00'}:00`).getTime())
           .slice(0, 5);
-        loadingAssessments = false;
-        return;
-      }
+      } else {
+        // Fallback to live fetch if no cache
+        const studentId = 69;
+        const [assessmentsRes, classesRes] = await Promise.all([
+          seqtaFetch('/seqta/student/assessment/list/upcoming?', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: { student: studentId },
+          }),
+          seqtaFetch('/seqta/student/load/subjects?', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: {},
+          }),
+        ]);
 
-      const studentId = 69;
-      const [assessmentsRes, classesRes] = await Promise.all([
-        seqtaFetch('/seqta/student/assessment/list/upcoming?', {
+        const prefsRes = await seqtaFetch('/seqta/student/load/prefs?', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json; charset=utf-8' },
-          body: { student: studentId },
-        }),
-        seqtaFetch('/seqta/student/load/subjects?', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json; charset=utf-8' },
-          body: {},
-        }),
-      ]);
+          body: { request: 'userPrefs', asArray: true, user: studentId },
+        });
+        const colours = JSON.parse(prefsRes).payload;
 
-      const prefsRes = await seqtaFetch('/seqta/student/load/prefs?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: { request: 'userPrefs', asArray: true, user: studentId },
-      });
-      const colours = JSON.parse(prefsRes).payload;
+        const classesJson = JSON.parse(classesRes);
+        const activeClass = classesJson.payload.find((c: any) => c.active);
+        const activeSubjects = activeClass ? activeClass.subjects : [];
+        const activeCodes = activeSubjects.map((s: any) => s.code);
 
-      const classesJson = JSON.parse(classesRes);
-      const activeClass = classesJson.payload.find((c: any) => c.active);
-      const activeSubjects = activeClass ? activeClass.subjects : [];
-      const activeCodes = activeSubjects.map((s: any) => s.code);
-
-      const rawAssessments = JSON.parse(assessmentsRes).payload as any[];
-      const filtered = rawAssessments
-        .filter((a: any) => activeCodes.includes(a.code))
-        .filter((a: any) => new Date(a.due) >= new Date())
-        .map((a: any) => {
-          const prefName = `timetable.subject.colour.${a.code}`;
-          const c = colours.find((p: any) => p.name === prefName);
-          const d = new Date(a.due);
-          const due_date = d.toISOString().split('T')[0];
-          const due_time = a.due?.includes('T') ? a.due.split('T')[1]?.substring(0, 5) : null;
-          return {
-            id: a.id?.toString() ?? crypto.randomUUID(),
-            subject: a.subject ?? a.code ?? '—',
-            title: a.title ?? 'Assessment',
-            due_date,
-            due_time,
-            status: computeStatusISO(a.due),
-            colour: c ? c.value : '#8e8e8e',
-          } as AssessmentItem;
-        })
-        .sort((a: AssessmentItem, b: AssessmentItem) => new Date(`${a.due_date}T${a.due_time ?? '00:00'}:00`).getTime() - new Date(`${b.due_date}T${b.due_time ?? '00:00'}:00`).getTime())
-        .slice(0, 5);
-
-      upcomingAssessments = filtered;
-
-      cache.set(
-        'upcoming_assessments_data',
-        {
-          assessments: rawAssessments.map((a: any) => {
+        const rawAssessments = JSON.parse(assessmentsRes).payload as any[];
+        const filtered = rawAssessments
+          .filter((a: any) => activeCodes.includes(a.code))
+          .filter((a: any) => new Date(a.due) >= new Date())
+          .map((a: any) => {
             const prefName = `timetable.subject.colour.${a.code}`;
             const c = colours.find((p: any) => p.name === prefName);
-            return { ...a, colour: c ? c.value : '#8e8e8e' };
-          }),
-          subjects: activeSubjects,
-          filters: activeSubjects.reduce((acc: Record<string, boolean>, s: any) => {
-            acc[s.code] = true;
-            return acc;
-          }, {}),
-        },
-        60 * 60 * 1000
-      );
+            const d = new Date(a.due);
+            const due_date = d.toISOString().split('T')[0];
+            const due_time = a.due?.includes('T') ? a.due.split('T')[1]?.substring(0, 5) : null;
+            return {
+              id: a.id?.toString() ?? crypto.randomUUID(),
+              subject: a.subject ?? a.code ?? '—',
+              title: a.title ?? 'Assessment',
+              due_date,
+              due_time,
+              status: computeStatusISO(a.due),
+              colour: c ? c.value : '#8e8e8e',
+            } as AssessmentItem;
+          })
+          .sort((a: AssessmentItem, b: AssessmentItem) => new Date(`${a.due_date}T${a.due_time ?? '00:00'}:00`).getTime() - new Date(`${b.due_date}T${b.due_time ?? '00:00'}:00`).getTime())
+          .slice(0, 5);
+
+        upcomingAssessments = filtered;
+
+        cache.set(
+          'upcoming_assessments_data',
+          {
+            assessments: rawAssessments.map((a: any) => {
+              const prefName = `timetable.subject.colour.${a.code}`;
+              const c = colours.find((p: any) => p.name === prefName);
+              return { ...a, colour: c ? c.value : '#8e8e8e' };
+            }),
+            subjects: activeSubjects,
+            filters: activeSubjects.reduce((acc: Record<string, boolean>, s: any) => {
+              acc[s.code] = true;
+              return acc;
+            }, {}),
+          },
+          60 * 60 * 1000
+        );
+      }
     } catch (e) {
       console.error('Failed to load upcoming assessments:', e);
     } finally {
@@ -191,26 +282,23 @@
 
   function addTodo() {
     const now = new Date().toISOString();
-    todos = [
-      {
-        id: crypto.randomUUID(),
-        title: 'New task',
-        description: '',
-        related_subject: '',
-        related_assessment: '',
-        due_date: '',
-        due_time: '',
-        tags: [],
-        subtasks: [],
-        completed: false,
-        priority: 'medium',
-        created_at: now,
-        updated_at: now
-      },
-      ...todos
-    ];
-    // New tasks start in edit mode
-    editMode[todos[0].id] = true;
+    const newTask: TodoItem = {
+      id: crypto.randomUUID(),
+      title: 'New task',
+      description: '',
+      related_subject: '',
+      related_assessment: '',
+      due_date: '',
+      due_time: '',
+      tags: [],
+      subtasks: [],
+      completed: false,
+      priority: 'medium',
+      created_at: now,
+      updated_at: now
+    };
+    todos = [newTask, ...todos];
+    editMode[newTask.id] = true;
     saveTodos();
   }
 
@@ -227,6 +315,36 @@
       }
       return t;
     });
+    saveTodos();
+  }
+
+  function markAllSubtasksDone(id: string) {
+    todos = todos.map(t => {
+      if (t.id === id) {
+        const list = (t.subtasks ?? []).map(s => ({ ...s, completed: true }));
+        return { ...t, subtasks: list, updated_at: new Date().toISOString() } as TodoItem;
+      }
+      return t;
+    });
+    saveTodos();
+  }
+
+  function duplicateTodo(id: string) {
+    const idx = todos.findIndex(t => t.id === id);
+    if (idx === -1) return;
+    const src = todos[idx];
+    const now = new Date().toISOString();
+    const copy: TodoItem = {
+      ...src,
+      id: crypto.randomUUID(),
+      title: src.title ? `Copy of ${src.title}` : 'Copy',
+      completed: false,
+      created_at: now,
+      updated_at: now,
+      subtasks: (src.subtasks ?? []).map(s => ({ ...s, id: crypto.randomUUID(), completed: false }))
+    };
+    todos = [copy, ...todos];
+    editMode[copy.id] = true;
     saveTodos();
   }
 
@@ -258,9 +376,7 @@
     todos = todos.map(t => (t.id === todoId ? { ...t, [field]: value, updated_at: new Date().toISOString() } as TodoItem : t));
   }
 
-  function blurSave() {
-    saveTodos();
-  }
+  function blurSave() { saveTodos(); }
 
   function isToday(dateStr?: string | null) {
     if (!dateStr) return false;
@@ -281,9 +397,7 @@
     return d >= monday && d <= sunday;
   }
 
-  function priorityOrder(p?: string | null) {
-    return p === 'high' ? 0 : p === 'medium' ? 1 : 2;
-  }
+  function priorityOrder(p?: string | null) { return p === 'high' ? 0 : p === 'medium' ? 1 : 2; }
 
   $: filteredSortedTodos = todos
     .filter(t => {
@@ -309,9 +423,12 @@
       return bu - au;
     });
 
-  onMount(() => {
-    loadTodos();
-    loadUpcomingAssessments();
+  onMount(async () => {
+    await Promise.all([
+      loadTodos(),
+      loadUpcomingAssessments(),
+      loadSubjectsAndColours().then(loadAllAssessments)
+    ]);
   });
 </script>
 
@@ -346,7 +463,7 @@
     <div class="xl:col-span-2 space-y-6">
       {#if activeTab === 'tasks'}
         <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
-          <!-- Tasks Controls moved here -->
+          <!-- Tasks Controls -->
           <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div class="flex flex-wrap gap-2">
               <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='all'}>All</button>
@@ -355,18 +472,9 @@
               <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='completed'}>Completed</button>
             </div>
             <div class="flex items-center gap-3">
-              <button
-                class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
-                on:click={addTodo}
-                aria-label="Add new task">
-                New Task
-              </button>
+              <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={addTodo} aria-label="Add new task">New Task</button>
               <div class="relative">
-                <input
-                  class="pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring"
-                  placeholder="Search tasks..."
-                  bind:value={query}
-                />
+                <input class="pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Search tasks..." bind:value={query} />
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
               </div>
               <select class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={sortBy}>
@@ -421,6 +529,10 @@
                       {#if (todo.subtasks ?? []).length}
                         <div class="mt-2 text-xs text-slate-500 dark:text-slate-400">{(todo.subtasks ?? []).filter(s=>s.completed).length}/{todo.subtasks?.length} subtasks done</div>
                       {/if}
+                      <div class="mt-3 flex items-center gap-2">
+                        <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>Mark all subtasks done</button>
+                        <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => duplicateTodo(todo.id)}>Duplicate</button>
+                      </div>
                     </div>
                   </div>
                 {:else}
@@ -429,17 +541,44 @@
                     <input type="checkbox" bind:checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2">
-                        <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-base font-medium" placeholder="Task title" bind:value={todo.title} on:blur={() => { updateField(todo.id, 'title', todo.title); }} />
+                        <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-base font-medium" placeholder="Task title" bind:value={todo.title} />
                         <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
                       </div>
                       <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div class="relative">
-                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} />
-                          <!-- typeahead dropdown placeholder -->
+                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} on:input={(e) => { subjectQuery[todo.id] = (e.target as HTMLInputElement).value; showSubjectDropdown[todo.id] = true; }} on:focus={() => showSubjectDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showSubjectDropdown[todo.id]=false, 150)} />
+                          {#if showSubjectDropdown[todo.id]}
+                            <div class="absolute z-20 mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md max-h-56 overflow-auto">
+                              {#each subjects.filter(s => (subjectQuery[todo.id] ?? todo.related_subject ?? '').toLowerCase().split(' ').every(q => s.title.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))) as s}
+                                <button class="flex items-center w-full px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" on:mousedown={() => { todo.related_subject = `${s.code} — ${s.title}`; subjectQuery[todo.id] = s.code; showSubjectDropdown[todo.id] = false; }}>
+                                  <span class="mr-2 inline-block w-2 h-2 rounded-full" style="background-color: {subjectColours[s.code] || '#8e8e8e'}"></span>
+                                  <span class="flex-1 text-slate-900 dark:text-white">{s.code} — {s.title}</span>
+                                </button>
+                              {/each}
+                            </div>
+                          {/if}
                         </div>
                         <div class="relative">
-                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} />
-                          <!-- typeahead dropdown placeholder -->
+                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} on:input={(e) => { assessmentQuery[todo.id] = (e.target as HTMLInputElement).value; showAssessmentDropdown[todo.id] = true; }} on:focus={() => showAssessmentDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showAssessmentDropdown[todo.id]=false, 150)} />
+                          {#if showAssessmentDropdown[todo.id]}
+                            <div class="absolute z-20 mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md max-h-64 overflow-auto">
+                              {#each assessmentsAll.filter(a => {
+                                const q = (assessmentQuery[todo.id] ?? todo.related_assessment ?? '').toLowerCase();
+                                const subjectCode = (subjectQuery[todo.id] ?? todo.related_subject ?? '').split(' — ')[0]?.toLowerCase();
+                                const matchesText = a.title.toLowerCase().includes(q) || a.code.toLowerCase().includes(q);
+                                const matchesSubject = subjectCode ? a.code.toLowerCase() === subjectCode : true;
+                                return matchesText && matchesSubject;
+                              }).slice(0, 20) as a}
+                                <button class="flex items-center w-full px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" on:mousedown={() => { todo.related_assessment = a.title; if (!todo.related_subject) { const subj = subjects.find(s => s.code === a.code); if (subj) { todo.related_subject = `${subj.code} — ${subj.title}`; } } showAssessmentDropdown[todo.id] = false; }}>
+                                  <span class="mr-2 inline-block w-2 h-2 rounded-full" style="background-color: {subjectColours[a.code] || a.colour || '#8e8e8e'}"></span>
+                                  <div class="flex-1 overflow-hidden">
+                                    <div class="text-slate-900 dark:text-white truncate">{a.title}</div>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400 truncate">{a.code} • {new Date(a.due).toLocaleDateString()}</div>
+                                  </div>
+                                </button>
+                              {/each}
+                            </div>
+                          {/if}
                         </div>
                         <div class="flex gap-3">
                           <input type="date" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_date} />
@@ -453,13 +592,16 @@
                         </div>
                       </div>
 
-                      <!-- Always visible description and subtasks -->
+                      <!-- Description and Subtasks -->
                       <div class="mt-3">
                         <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Description" bind:value={todo.description}></textarea>
                         <div class="mt-3 space-y-2">
                           <div class="flex items-center justify-between">
                             <h3 class="text-sm font-medium text-slate-900 dark:text-white">Subtasks</h3>
-                            <button class="px-3 py-1.5 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>Add subtask</button>
+                            <div class="flex items-center gap-2">
+                              <button class="px-3 py-1.5 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>Add subtask</button>
+                              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>Mark all done</button>
+                            </div>
                           </div>
                           {#if (todo.subtasks ?? []).length === 0}
                             <div class="text-sm text-slate-500 dark:text-slate-400">No subtasks yet.</div>
