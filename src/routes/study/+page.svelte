@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fade } from 'svelte/transition';
   import { invoke } from '@tauri-apps/api/core';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
@@ -343,7 +342,7 @@
     <!-- Left Column: Tabbed content -->
     <div class="xl:col-span-2 space-y-6">
       {#if activeTab === 'tasks'}
-        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" transition:fade>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
           <!-- Tasks Controls moved here -->
           <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div class="flex flex-wrap gap-2">
@@ -445,7 +444,7 @@
         </div>
       {:else}
         <!-- Notes Tab Content -->
-        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" transition:fade>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
           <div class="flex items-center justify-between mb-2">
             <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
             <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Create Note</button>
@@ -457,7 +456,7 @@
 
     <!-- Right Column: Upcoming Assessments Widget -->
     <div class="space-y-6">
-      <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" transition:fade>
+      <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Upcoming Assessments</h2>
           <span class="text-sm text-slate-500 dark:text-slate-400">{upcomingAssessments.length}</span>
