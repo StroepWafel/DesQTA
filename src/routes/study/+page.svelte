@@ -50,6 +50,10 @@
   let query = '';
   let expanded: Record<string, boolean> = {};
 
+  // Tabs
+  type TabKey = 'tasks' | 'notes';
+  let activeTab: TabKey = 'tasks';
+
   // Upcoming assessments state (real data)
   let upcomingAssessments: AssessmentItem[] = [];
   let loadingAssessments = true;
@@ -70,7 +74,6 @@
       const cacheKey = 'upcoming_assessments_data';
       const cached = cache.get<{ assessments: any[]; subjects: any[]; filters: Record<string, boolean> }>(cacheKey);
       if (cached && Array.isArray(cached.assessments)) {
-        // Map cached payload to our widget shape
         upcomingAssessments = cached.assessments
           .filter((a: any) => new Date(a.due) >= new Date())
           .map((a: any) => {
@@ -93,7 +96,6 @@
         return;
       }
 
-      // No cache: fetch live, similar to UpcomingAssessments.svelte
       const studentId = 69;
       const [assessmentsRes, classesRes] = await Promise.all([
         seqtaFetch('/seqta/student/assessment/list/upcoming?', {
@@ -108,7 +110,6 @@
         }),
       ]);
 
-      // Load colours
       const prefsRes = await seqtaFetch('/seqta/student/load/prefs?', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -146,7 +147,6 @@
 
       upcomingAssessments = filtered;
 
-      // Cache the raw payload in the same structure used elsewhere for 1 hour (ms)
       cache.set(
         'upcoming_assessments_data',
         {
@@ -323,12 +323,6 @@
       </div>
       <div class="flex items-center gap-3">
         <button
-          class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
-          on:click={addTodo}
-          aria-label="Add new task">
-          New Task
-        </button>
-        <button
           class="px-4 py-2 rounded-lg border border-slate-300 text-slate-900 dark:text-white dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
           on:click={() => { /* timer */ }}
           aria-label="Open Study Timer">
@@ -336,114 +330,129 @@
         </button>
       </div>
     </div>
-  </div>
 
-  <!-- Controls -->
-  <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-    <div class="flex flex-wrap gap-2">
-      <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='all'}>All</button>
-      <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='today'}>Today</button>
-      <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='week'}>This Week</button>
-      <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='completed'}>Completed</button>
-    </div>
-    <div class="flex items-center gap-3">
-      <div class="relative">
-        <input
-          class="pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring"
-          placeholder="Search tasks..."
-          bind:value={query}
-        />
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
-      </div>
-      <select class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={sortBy}>
-        <option value="due">Sort: Due Date</option>
-        <option value="priority">Sort: Priority</option>
-        <option value="updated">Sort: Updated</option>
-      </select>
+    <!-- Tabs -->
+    <div class="mt-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700">
+      <button class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-none focus:ring-2 accent-ring {activeTab==='tasks' ? 'accent-bg text-white' : 'bg-transparent text-slate-700 dark:text-slate-300'}" on:click={() => activeTab='tasks'} aria-selected={activeTab==='tasks'}>Tasks</button>
+      <button class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-none focus:ring-2 accent-ring {activeTab==='notes' ? 'accent-bg text-white' : 'bg-transparent text-slate-700 dark:text-slate-300'}" on:click={() => activeTab='notes'} aria-selected={activeTab==='notes'}>Notes</button>
     </div>
   </div>
 
-  <!-- Main Grid: Tasks | Notes | Upcoming Assessments -->
+  <!-- Main Grid: Left (Tab Content) | Right (Upcoming Assessments) -->
   <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
-    <!-- Tasks Column -->
+    <!-- Left Column: Tabbed content -->
     <div class="xl:col-span-2 space-y-6">
-      <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" transition:fade>
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Tasks</h2>
-          <span class="text-sm text-slate-500 dark:text-slate-400">{filteredSortedTodos.length} tasks</span>
-        </div>
+      {#if activeTab === 'tasks'}
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" transition:fade>
+          <!-- Tasks Controls moved here -->
+          <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div class="flex flex-wrap gap-2">
+              <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='all'}>All</button>
+              <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='today'}>Today</button>
+              <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='week'}>This Week</button>
+              <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='completed'}>Completed</button>
+            </div>
+            <div class="flex items-center gap-3">
+              <button
+                class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+                on:click={addTodo}
+                aria-label="Add new task">
+                New Task
+              </button>
+              <div class="relative">
+                <input
+                  class="pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring"
+                  placeholder="Search tasks..."
+                  bind:value={query}
+                />
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
+              </div>
+              <select class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={sortBy}>
+                <option value="due">Sort: Due Date</option>
+                <option value="priority">Sort: Priority</option>
+                <option value="updated">Sort: Updated</option>
+              </select>
+            </div>
+          </div>
 
-        <div class="space-y-4">
-          {#if filteredSortedTodos.length === 0}
-            <div class="text-center py-10 text-slate-500 dark:text-slate-400">No tasks match your filters.</div>
-          {/if}
+          <!-- Tasks List -->
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Tasks</h2>
+            <span class="text-sm text-slate-500 dark:text-slate-400">{filteredSortedTodos.length} tasks</span>
+          </div>
 
-          {#each filteredSortedTodos as todo (todo.id)}
-            <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 transition-all duration-200 hover:scale-[1.02]">
-              <div class="flex items-start gap-3">
-                <input type="checkbox" bind:checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <input class="flex-1 bg-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400 text-base font-medium" placeholder="Task title" bind:value={todo.title} on:blur={() => { updateField(todo.id, 'title', todo.title); blurSave(); }} />
-                    <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
-                  </div>
-                  <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} on:blur={() => { updateField(todo.id, 'related_subject', todo.related_subject ?? ''); blurSave(); }} />
-                    <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} on:blur={() => { updateField(todo.id, 'related_assessment', todo.related_assessment ?? ''); blurSave(); }} />
-                    <div class="flex gap-3">
-                      <input type="date" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_date} on:blur={() => { updateField(todo.id, 'due_date', todo.due_date ?? ''); blurSave(); }} />
-                      <input type="time" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_time} on:blur={() => { updateField(todo.id, 'due_time', todo.due_time ?? ''); blurSave(); }} />
-                    </div>
-                    <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:blur={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); blurSave(); }} />
+          <div class="space-y-4">
+            {#if filteredSortedTodos.length === 0}
+              <div class="text-center py-10 text-slate-500 dark:text-slate-400">No tasks match your filters.</div>
+            {/if}
+
+            {#each filteredSortedTodos as todo (todo.id)}
+              <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 transition-all duration-200 hover:scale-[1.02]">
+                <div class="flex items-start gap-3">
+                  <input type="checkbox" bind:checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
+                  <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
-                      {#each todo.tags ?? [] as tag}
-                        <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{tag}</span>
-                      {/each}
+                      <input class="flex-1 bg-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400 text-base font-medium" placeholder="Task title" bind:value={todo.title} on:blur={() => { updateField(todo.id, 'title', todo.title); blurSave(); }} />
+                      <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
                     </div>
-                    <div class="md:col-span-2 flex items-center justify-between">
-                      <button class="px-3 py-1.5 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>Add subtask</button>
+                    <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} on:blur={() => { updateField(todo.id, 'related_subject', todo.related_subject ?? ''); blurSave(); }} />
+                      <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} on:blur={() => { updateField(todo.id, 'related_assessment', todo.related_assessment ?? ''); blurSave(); }} />
+                      <div class="flex gap-3">
+                        <input type="date" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_date} on:blur={() => { updateField(todo.id, 'due_date', todo.due_date ?? ''); blurSave(); }} />
+                        <input type="time" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_time} on:blur={() => { updateField(todo.id, 'due_time', todo.due_time ?? ''); blurSave(); }} />
+                      </div>
+                      <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:blur={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); blurSave(); }} />
                       <div class="flex items-center gap-2">
-                        <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => expanded[todo.id] = !expanded[todo.id]} aria-expanded={expanded[todo.id] ?? false}>{expanded[todo.id] ? 'Hide details' : 'Show details'}</button>
-                        <button class="px-3 py-1.5 text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Delete</button>
+                        {#each todo.tags ?? [] as tag}
+                          <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{tag}</span>
+                        {/each}
+                      </div>
+                      <div class="md:col-span-2 flex items-center justify-between">
+                        <button class="px-3 py-1.5 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>Add subtask</button>
+                        <div class="flex items-center gap-2">
+                          <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => expanded[todo.id] = !expanded[todo.id]} aria-expanded={expanded[todo.id] ?? false}>{expanded[todo.id] ? 'Hide details' : 'Show details'}</button>
+                          <button class="px-3 py-1.5 text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Delete</button>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {#if expanded[todo.id]}
-                    <div class="mt-3">
-                      <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Description" bind:value={todo.description} on:blur={() => { updateField(todo.id, 'description', todo.description ?? ''); blurSave(); }}></textarea>
-                      <div class="mt-3 space-y-2">
-                        <h3 class="text-sm font-medium text-slate-900 dark:text-white">Subtasks</h3>
-                        {#if (todo.subtasks ?? []).length === 0}
-                          <div class="text-sm text-slate-500 dark:text-slate-400">No subtasks yet.</div>
-                        {:else}
-                          <div class="space-y-2">
-                            {#each todo.subtasks ?? [] as sub (sub.id)}
-                              <div class="flex items-center gap-3">
-                                <input type="checkbox" bind:checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle subtask" />
-                                <input class="flex-1 bg-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); blurSave(); }} />
-                              </div>
-                            {/each}
-                          </div>
-                        {/if}
+                    {#if expanded[todo.id]}
+                      <div class="mt-3">
+                        <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Description" bind:value={todo.description} on:blur={() => { updateField(todo.id, 'description', todo.description ?? ''); blurSave(); }}></textarea>
+                        <div class="mt-3 space-y-2">
+                          <h3 class="text-sm font-medium text-slate-900 dark:text-white">Subtasks</h3>
+                          {#if (todo.subtasks ?? []).length === 0}
+                            <div class="text-sm text-slate-500 dark:text-slate-400">No subtasks yet.</div>
+                          {:else}
+                            <div class="space-y-2">
+                              {#each todo.subtasks ?? [] as sub (sub.id)}
+                                <div class="flex items-center gap-3">
+                                  <input type="checkbox" bind:checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle subtask" />
+                                  <input class="flex-1 bg-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); blurSave(); }} />
+                                </div>
+                              {/each}
+                            </div>
+                          {/if}
+                        </div>
                       </div>
-                    </div>
-                  {/if}
+                    {/if}
+                  </div>
                 </div>
               </div>
-            </div>
-          {/each}
+            {/each}
+          </div>
         </div>
-      </div>
-
-      <!-- Notes Placeholder -->
-      <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" transition:fade>
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
-          <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Create Note</button>
+      {:else}
+        <!-- Notes Tab Content -->
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" transition:fade>
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
+            <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Create Note</button>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">Notes are coming soon. You’ll be able to capture ideas and study summaries next.</p>
         </div>
-        <p class="text-slate-600 dark:text-slate-300">Notes are coming soon. You’ll be able to capture ideas and study summaries next.</p>
-      </div>
+      {/if}
     </div>
 
     <!-- Right Column: Upcoming Assessments Widget -->
