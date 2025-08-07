@@ -693,14 +693,21 @@
         {:else}
           <div class="space-y-3">
             {#each upcomingAssessments as a (a.id)}
-              <div class="flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]">
-                <span class="mt-1 inline-block w-2 h-2 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
+              <div class="relative flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]">
+                <!-- Left accent bar -->
+                <span class="absolute left-0 top-0 h-full w-1 rounded-l-lg" style="background-color: {a.colour || subjectColours[a.subject?.split(' — ')[0] || ''] || '#8e8e8e'}"></span>
+                <span class="mt-1 ml-1 inline-block w-2 h-2 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center justify-between gap-2">
                     <div class="truncate text-slate-900 dark:text-white font-medium">{a.title}</div>
                     <div class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}</div>
                   </div>
-                  <div class="mt-1 text-sm text-slate-600 dark:text-slate-300 truncate">{a.subject}</div>
+                  <div class="mt-1 flex items-center gap-2">
+                    <!-- Subject tinted chip -->
+                    {#if a.subject}
+                      <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(a.subject.split(' — ')[0] || a.subject)}>{a.subject}</span>
+                    {/if}
+                  </div>
                 </div>
                 <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Open</button>
               </div>
