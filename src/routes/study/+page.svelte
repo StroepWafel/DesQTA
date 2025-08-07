@@ -3,6 +3,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
+  import { Icon, Calendar, Clock, MagnifyingGlass } from 'svelte-hero-icons';
 
   interface Subtask {
     id: string;
@@ -510,7 +511,9 @@
               <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={addTodo} aria-label="Add new task">New Task</button>
               <div class="relative">
                 <input class="pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Search tasks..." bind:value={query} />
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
+                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  <Icon src={MagnifyingGlass} class="w-5 h-5" />
+                </span>
               </div>
               <select class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={sortBy}>
                 <option value="due">Sort: Due Date</option>
@@ -560,10 +563,14 @@
                         {#if todo.due_date || todo.due_time}
                           <span class="inline-flex items-center gap-3 text-slate-600 dark:text-slate-300">
                             {#if todo.due_date}
-                              <span class="inline-flex items-center gap-1"><span aria-hidden="true">📅</span>{formatDueDate(todo.due_date)}</span>
+                              <span class="inline-flex items-center gap-1">
+                                <Icon src={Calendar} class="w-4 h-4" />{formatDueDate(todo.due_date)}
+                              </span>
                             {/if}
                             {#if todo.due_time}
-                              <span class="inline-flex items-center gap-1"><span aria-hidden="true">⏰</span>{formatDueTime(todo.due_time)}</span>
+                              <span class="inline-flex items-center gap-1">
+                                <Icon src={Clock} class="w-4 h-4" />{formatDueTime(todo.due_time)}
+                              </span>
                             {/if}
                           </span>
                         {/if}
@@ -651,10 +658,10 @@
                         {#if todo.due_date || todo.due_time}
                           <div class="text-sm text-slate-600 dark:text-slate-300 inline-flex items-center gap-3">
                             {#if todo.due_date}
-                              <span class="inline-flex items-center gap-1"><span aria-hidden="true">📅</span>{formatDueDate(todo.due_date)}</span>
+                              <span class="inline-flex items-center gap-1"><Icon src={Calendar} class="w-4 h-4" />{formatDueDate(todo.due_date)}</span>
                             {/if}
                             {#if todo.due_time}
-                              <span class="inline-flex items-center gap-1"><span aria-hidden="true">⏰</span>{formatDueTime(todo.due_time)}</span>
+                              <span class="inline-flex items-center gap-1"><Icon src={Clock} class="w-4 h-4" />{formatDueTime(todo.due_time)}</span>
                             {/if}
                           </div>
                         {/if}
