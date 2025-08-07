@@ -417,6 +417,23 @@
 
   function priorityOrder(p?: string | null) { return p === 'high' ? 0 : p === 'medium' ? 1 : 2; }
 
+  // Formatting helpers for due date/time
+  function formatDueDate(dateStr?: string | null): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+  }
+  function formatDueTime(timeStr?: string | null): string {
+    if (!timeStr) return '';
+    // Build a date using today's date with provided time for formatting
+    const today = new Date();
+    const [hh, mm] = timeStr.split(':');
+    if (hh === undefined || mm === undefined) return '';
+    today.setHours(Number(hh), Number(mm), 0, 0);
+    return today.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
   $: filteredSortedTodos = todos
     .filter(t => {
       if (query) {
@@ -540,8 +557,15 @@
                             <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(getSubjectCodeFromLabel(todo.related_subject) || null)}>{todo.related_assessment}</span>
                           {/key}
                         {/if}
-                        {#if todo.due_date}
-                          <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{todo.due_date}{todo.due_time ? ` ${todo.due_time}` : ''}</span>
+                        {#if todo.due_date || todo.due_time}
+                          <span class="inline-flex items-center gap-3 text-slate-600 dark:text-slate-300">
+                            {#if todo.due_date}
+                              <span class="inline-flex items-center gap-1"><span aria-hidden="true">📅</span>{formatDueDate(todo.due_date)}</span>
+                            {/if}
+                            {#if todo.due_time}
+                              <span class="inline-flex items-center gap-1"><span aria-hidden="true">⏰</span>{formatDueTime(todo.due_time)}</span>
+                            {/if}
+                          </span>
                         {/if}
                         {#if (todo.tags ?? []).length}
                           <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{(todo.tags ?? []).join(', ')}</span>
@@ -623,6 +647,17 @@
                           <input type="date" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_date} />
                           <input type="time" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_time} />
                         </div>
+                        <!-- Live preview for due date/time -->
+                        {#if todo.due_date || todo.due_time}
+                          <div class="text-sm text-slate-600 dark:text-slate-300 inline-flex items-center gap-3">
+                            {#if todo.due_date}
+                              <span class="inline-flex items-center gap-1"><span aria-hidden="true">📅</span>{formatDueDate(todo.due_date)}</span>
+                            {/if}
+                            {#if todo.due_time}
+                              <span class="inline-flex items-center gap-1"><span aria-hidden="true">⏰</span>{formatDueTime(todo.due_time)}</span>
+                            {/if}
+                          </div>
+                        {/if}
                         <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:input={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); }} />
                         <div class="flex items-center gap-2">
                           {#each todo.tags ?? [] as tag}
