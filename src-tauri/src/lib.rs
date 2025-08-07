@@ -19,6 +19,8 @@ mod logger;
 mod theme_manager;
 #[path = "utils/news.rs"]
 mod news;
+#[path = "utils/todolist.rs"]
+mod todolist;
 mod global_search;
 
 
@@ -288,7 +290,9 @@ pub fn run() {
             theme_manager::import_theme_from_file,
             theme_manager::get_themes_directory_path,
             theme_manager::export_theme_to_file,
-            news::get_news_australia
+            news::get_news_australia,
+            todolist::load_todos,
+            todolist::save_todos
         ])
         .setup(|app| {
             // Initialize logger first

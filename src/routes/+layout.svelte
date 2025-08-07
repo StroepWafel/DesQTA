@@ -66,6 +66,7 @@
     { label: 'Reports', icon: ChartBar, path: '/reports' },
     { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
     { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
+    { label: 'Study', icon: AcademicCap, path: '/study' },
   ]);
   let menuLoading = $state(true);
 
@@ -469,6 +470,7 @@
         { label: 'Reports', icon: ChartBar, path: '/reports' },
         { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
         { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
+        { label: 'Study', icon: AcademicCap, path: '/study' },
       ];
       menu = newMenu;
     } catch (e) {
