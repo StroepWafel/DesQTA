@@ -446,7 +446,8 @@
       if (filter === 'completed') return t.completed;
       if (filter === 'today') return !t.completed && isToday(t.due_date ?? undefined);
       if (filter === 'week') return !t.completed && isThisWeek(t.due_date ?? undefined);
-      return true;
+      // For 'all' filter, only show non-completed tasks
+      return !t.completed;
     })
     .sort((a, b) => {
       if (sortBy === 'due') {
