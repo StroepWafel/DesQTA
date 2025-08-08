@@ -235,25 +235,55 @@ export class EditorCore {
     if (!selection || selection.rangeCount === 0) return;
 
     const range = selection.getRangeAt(0);
-    range.deleteContents();
     
-    // Split text by newlines and create appropriate elements
+    // Delete existing selection if any
+    if (!range.collapsed) {
+      range.deleteContents();
+    }
+    
+    // Handle multi-line text insertion
     const lines = text.split('\n');
     
-    for (let i = 0; i < lines.length; i++) {
-      if (i > 0) {
-        // Insert paragraph break for new lines
-        const br = document.createElement('br');
-        range.insertNode(br);
-        range.setStartAfter(br);
-        range.setEndAfter(br);
-      }
+    if (lines.length === 1) {
+      // Single line - simple text insertion
+      const textNode = document.createTextNode(text);
+      range.insertNode(textNode);
+      range.setStartAfter(textNode);
+      range.setEndAfter(textNode);
+    } else {
+      // Multi-line - create paragraphs for each line
+      const currentBlock = this.getBlockElement(range.startContainer);
       
-      if (lines[i]) {
-        const textNode = document.createTextNode(lines[i]);
-        range.insertNode(textNode);
-        range.setStartAfter(textNode);
-        range.setEndAfter(textNode);
+      for (let i = 0; i < lines.length; i++) {
+        if (i === 0) {
+          // First line goes in current position
+          if (lines[i]) {
+            const textNode = document.createTextNode(lines[i]);
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+            range.setEndAfter(textNode);
+          }
+        } else {
+          // Subsequent lines create new paragraphs
+          const newParagraph = document.createElement('p');
+          newParagraph.textContent = lines[i] || '';
+          if (!lines[i]) {
+            newParagraph.innerHTML = '<br>';
+          }
+          
+          // Insert after current block
+          const insertPoint = currentBlock?.parentNode;
+          if (insertPoint) {
+            insertPoint.insertBefore(newParagraph, currentBlock.nextSibling);
+            
+            // Move cursor to end of new paragraph
+            const newRange = document.createRange();
+            newRange.setStart(newParagraph, newParagraph.childNodes.length);
+            newRange.setEnd(newParagraph, newParagraph.childNodes.length);
+            range.setStart(newRange.startContainer, newRange.startOffset);
+            range.setEnd(newRange.endContainer, newRange.endOffset);
+          }
+        }
       }
     }
     
@@ -441,9 +471,14 @@ export class EditorCore {
   }
 
   private applyFormat(format: FormatType, range: Range) {
-    const selectedText = range.toString();
+    // Clone the range to avoid modifying the original
+    const workingRange = range.cloneRange();
+    
+    // Extract the contents
+    const contents = workingRange.extractContents();
+    
+    // Create the formatting element
     let element: HTMLElement;
-
     switch (format) {
       case 'bold':
         element = document.createElement('strong');
@@ -464,9 +499,21 @@ export class EditorCore {
         return;
     }
 
-    element.textContent = selectedText;
-    range.deleteContents();
-    range.insertNode(element);
+    // Move the extracted contents into the formatting element
+    element.appendChild(contents);
+    
+    // Insert the formatted element back into the range
+    workingRange.insertNode(element);
+    
+    // Update the selection to encompass the new element
+    const newRange = document.createRange();
+    newRange.selectNodeContents(element);
+    
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
   }
 
   private removeFormat(format: FormatType, range: Range) {
