@@ -6,6 +6,8 @@
   import { Icon, Calendar, Clock, MagnifyingGlass } from 'svelte-hero-icons';
   import { fly, fade, scale, slide } from 'svelte/transition';
   import { quintOut, cubicOut } from 'svelte/easing';
+  import NotesEditor from '$lib/components/notes/NotesEditor.svelte';
+  import type { EditorDocument } from '$lib/components/notes/types/editor';
 
   interface Subtask {
     id: string;
@@ -647,6 +649,17 @@
     return studyTips[randomIndex];
   }
 
+  // Notes editor handlers
+  function handleNoteChange(event: CustomEvent<{ content: EditorDocument }>) {
+    console.log('Note content changed:', event.detail.content);
+    // TODO: Implement auto-save functionality
+  }
+
+  function handleNoteSave(event: CustomEvent<{ content: EditorDocument }>) {
+    console.log('Note save requested:', event.detail.content);
+    // TODO: Implement note saving to backend
+  }
+
   onMount(async () => {
     currentStudyTip = getRandomStudyTip();
     await Promise.all([
@@ -928,7 +941,15 @@
             <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
             <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Create Note</button>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">Notes are coming soon. You’ll be able to capture ideas and study summaries next.</p>
+          <!-- Notes Editor -->
+          <div class="mt-4">
+            <NotesEditor 
+              placeholder="Start writing your study notes..."
+              autofocus={false}
+              on:change={handleNoteChange}
+              on:save={handleNoteSave}
+            />
+          </div>
         </div>
       {/if}
     </div>
