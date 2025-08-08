@@ -137,9 +137,9 @@
   });
 </script>
 
-<div class="notes-list h-full flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700">
+<div class="notes-list h-full flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 min-h-0">
   <!-- Header -->
-  <div class="p-4 border-b border-slate-200 dark:border-slate-700">
+  <div class="flex-shrink-0 p-4 border-b border-slate-200 dark:border-slate-700">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
       <button
@@ -178,7 +178,7 @@
   </div>
 
   <!-- Notes List -->
-  <div class="flex-1 overflow-y-auto">
+  <div class="flex-1 min-h-0 overflow-y-auto">
     {#if loading}
       <div class="flex items-center justify-center p-8">
         <div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-700 border-t-transparent animate-spin"></div>
@@ -276,7 +276,7 @@
   </div>
 
   <!-- Footer Stats -->
-  <div class="p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+  <div class="flex-shrink-0 p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
     <div class="text-xs text-slate-500 dark:text-slate-400 text-center">
       {filteredNotes.length} of {notes.length} notes
       {#if notes.length > 0}

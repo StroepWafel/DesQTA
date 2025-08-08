@@ -149,7 +149,7 @@
   }
 </script>
 
-<div class="notes-container h-full flex bg-white dark:bg-slate-800">
+<div class="notes-container h-full flex bg-white dark:bg-slate-800 min-h-0">
   <!-- Left Sidebar: Notes List -->
   <div class="w-80 flex-shrink-0">
     <NotesList
@@ -162,7 +162,7 @@
   </div>
 
   <!-- Right Side: Editor or Empty State -->
-  <div class="flex-1 flex flex-col">
+  <div class="flex-1 flex flex-col min-h-0">
     {#if loading}
       <div class="flex-1 flex items-center justify-center">
         <div class="text-center">
@@ -203,7 +203,7 @@
         </div>
 
         <!-- Editor -->
-        <div class="flex-1 overflow-hidden">
+        <div class="flex-1 min-h-0">
           <NotesEditor
             content={selectedNote.content}
             placeholder="Start writing your note..."
@@ -241,6 +241,5 @@
 <style>
   .notes-container {
     height: 100%;
-    min-height: 500px;
   }
 </style> 

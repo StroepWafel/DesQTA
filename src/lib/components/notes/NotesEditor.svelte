@@ -102,11 +102,11 @@
 </script>
 
 <div 
-  class="notes-editor bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-md transition-all duration-200 {isFocused ? 'accent-ring' : ''}"
+  class="notes-editor h-full flex flex-col bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-md transition-all duration-200 {isFocused ? 'accent-ring' : ''}"
   bind:this={editorContainer}
 >
   <!-- Editor Toolbar -->
-  <div class="border-b border-slate-200 dark:border-slate-700">
+  <div class="flex-shrink-0 border-b border-slate-200 dark:border-slate-700">
     <EditorToolbar 
       bind:editor={editorCore}
       {readonly}
@@ -115,9 +115,9 @@
   </div>
 
   <!-- Main Editor Content -->
-  <div class="relative">
+  <div class="flex-1 relative min-h-0">
     <div
-      class="editor-content min-h-[300px] p-4 prose prose-slate dark:prose-invert max-w-none focus:outline-none"
+      class="editor-content h-full p-4 prose prose-slate dark:prose-invert max-w-none focus:outline-none overflow-y-auto"
       contenteditable={!readonly}
       bind:this={contentElement}
       data-placeholder={placeholder}
@@ -129,7 +129,7 @@
   </div>
 
   <!-- Editor Status Bar -->
-  <div class="border-t border-slate-200 dark:border-slate-700">
+  <div class="flex-shrink-0 border-t border-slate-200 dark:border-slate-700">
     <EditorStatusBar 
       {wordCount}
       {characterCount}

@@ -687,9 +687,9 @@
   }
 </style>
 
-<div class="container px-4 sm:px-6 py-4 sm:py-7 mx-auto" in:fade={{ duration: 400, easing: quintOut }}>
+<div class="h-full flex flex-col" in:fade={{ duration: 400, easing: quintOut }}>
   <!-- Header -->
-  <div class="mb-6" in:fly={{ y: -30, duration: 500, easing: quintOut }}>
+  <div class="flex-shrink-0 px-4 sm:px-6 py-4 sm:py-6" in:fly={{ y: -30, duration: 500, easing: quintOut }}>
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Study</h1>
@@ -712,14 +712,17 @@
     </div>
   </div>
 
-  <!-- Main Grid: Left (Tab Content) | Right (Upcoming Assessments) -->
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-    <!-- Left Column: Tabbed content -->
-    <div class="lg:col-span-2 space-y-6">
-      {#if activeTab === 'tasks'}
-        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" 
-             in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
-             out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
+  <!-- Main Content Area -->
+  <div class="flex-1 min-h-0 px-4 sm:px-6 pb-4 sm:pb-6">
+
+    {#if activeTab === 'tasks'}
+      <!-- Tasks Tab: Main Grid with Sidebar -->
+      <div class="h-full grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Left Column: Tasks content -->
+        <div class="lg:col-span-2 flex flex-col min-h-0">
+          <div class="flex-1 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md overflow-y-auto" 
+               in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
+               out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
           <!-- Tasks Controls -->
           <div class="mb-4 flex flex-col gap-3">
             <!-- Filter buttons -->
@@ -921,74 +924,74 @@
             {/each}
           </div>
         </div>
-      {:else}
-        <!-- Notes Tab Content -->
-        <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md overflow-hidden"
-             style="height: 600px;"
-             in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
-             out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
-          <NotesContainer />
-        </div>
-      {/if}
-    </div>
+      </div>
 
-    <!-- Right Column: Upcoming Assessments Widget -->
-    <div class="space-y-6" in:fly={{ x: 50, duration: 500, delay: 200, easing: quintOut }}>
-      <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">Upcoming Assessments</h2>
-          <span class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{upcomingAssessments.length}</span>
-        </div>
-        {#if loadingAssessments}
-          <div class="flex items-center justify-center py-6">
-            <div class="w-10 h-10 rounded-full border-4 border-slate-300 dark:border-slate-700 border-t-transparent animate-spin"></div>
+              <!-- Right Column: Upcoming Assessments Widget -->
+        <div class="flex flex-col space-y-6 min-h-0" in:fly={{ x: 50, duration: 500, delay: 200, easing: quintOut }}>
+          <div class="flex-1 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md overflow-y-auto">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">Upcoming Assessments</h2>
+            <span class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{upcomingAssessments.length}</span>
           </div>
-        {:else}
-          <div class="space-y-3">
-            {#each upcomingAssessments as a (a.id)}
-              <div class="relative flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]"
-                   in:fly={{ x: 30, duration: 400, delay: upcomingAssessments.indexOf(a) * 100, easing: quintOut }}>
-                <!-- Left accent bar -->
-                <span class="absolute left-0 top-0 h-full w-1 rounded-l-lg" style="background-color: {a.colour || subjectColours[a.subject?.split(' — ')[0] || ''] || '#8e8e8e'}"></span>
-                <span class="mt-1 ml-1 inline-block w-2 h-2 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="truncate text-slate-900 dark:text-white font-medium">{a.title}</div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}</div>
+          {#if loadingAssessments}
+            <div class="flex items-center justify-center py-6">
+              <div class="w-10 h-10 rounded-full border-4 border-slate-300 dark:border-slate-700 border-t-transparent animate-spin"></div>
+            </div>
+          {:else}
+            <div class="space-y-3">
+              {#each upcomingAssessments as a (a.id)}
+                <div class="relative flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]"
+                     in:fly={{ x: 30, duration: 400, delay: upcomingAssessments.indexOf(a) * 100, easing: quintOut }}>
+                  <!-- Left accent bar -->
+                  <span class="absolute left-0 top-0 h-full w-1 rounded-l-lg" style="background-color: {a.colour || subjectColours[a.subject?.split(' — ')[0] || ''] || '#8e8e8e'}"></span>
+                  <span class="mt-1 ml-1 inline-block w-2 h-2 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="truncate text-slate-900 dark:text-white font-medium">{a.title}</div>
+                      <div class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}</div>
+                    </div>
+                    <div class="mt-1 flex items-center gap-2">
+                      <!-- Subject tinted chip -->
+                      {#if a.subject}
+                        <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(a.subject.split(' — ')[0] || a.subject)}>{a.subject}</span>
+                      {/if}
+                    </div>
                   </div>
-                  <div class="mt-1 flex items-center gap-2">
-                    <!-- Subject tinted chip -->
-                    {#if a.subject}
-                      <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(a.subject.split(' — ')[0] || a.subject)}>{a.subject}</span>
-                    {/if}
-                  </div>
+                  <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Open</button>
                 </div>
-                <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Open</button>
-              </div>
-            {/each}
-            {#if upcomingAssessments.length === 0}
-              <div class="text-center py-6 text-slate-500 dark:text-slate-400">No upcoming assessments.</div>
-            {/if}
-          </div>
-        {/if}
-      </div>
-
-      <!-- Focus Tips / Placeholder Widget -->
-      <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md"
-           in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Study Tip</h2>
-          <button 
-            class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
-            on:click={() => currentStudyTip = getRandomStudyTip()}
-            aria-label="Get new study tip">
-            New Tip
-          </button>
+              {/each}
+              {#if upcomingAssessments.length === 0}
+                <div class="text-center py-6 text-slate-500 dark:text-slate-400">No upcoming assessments.</div>
+              {/if}
+            </div>
+          {/if}
         </div>
-        <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
-          {currentStudyTip}
-        </p>
+
+                  <!-- Focus Tips / Placeholder Widget -->
+          <div class="flex-shrink-0 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md"
+               in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Study Tip</h2>
+            <button 
+              class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+              on:click={() => currentStudyTip = getRandomStudyTip()}
+              aria-label="Get new study tip">
+              New Tip
+            </button>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+            {currentStudyTip}
+          </p>
+        </div>
       </div>
     </div>
+      {:else}
+      <!-- Notes Tab: Full Width Layout -->
+      <div class="h-full flex flex-col min-h-0"
+           in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
+           out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
+        <NotesContainer />
+      </div>
+    {/if}
   </div>
 </div> 
