@@ -1,0 +1,228 @@
+// Core editor types
+export interface EditorDocument {
+  version: string;
+  nodes: EditorNode[];
+  metadata: DocumentMetadata;
+}
+
+export interface EditorNode {
+  type: EditorNodeType;
+  attributes?: Record<string, any>;
+  children?: EditorNode[];
+  text?: string;
+  id?: string;
+}
+
+export type EditorNodeType = 
+  | 'text' 
+  | 'paragraph' 
+  | 'heading' 
+  | 'list' 
+  | 'list-item'
+  | 'blockquote' 
+  | 'codeblock' 
+  | 'seqta-mention' 
+  | 'seqta-embed'
+  | 'link'
+  | 'image'
+  | 'table'
+  | 'table-row'
+  | 'table-cell'
+  | 'break';
+
+export interface DocumentMetadata {
+  word_count: number;
+  character_count: number;
+  seqta_references: SeqtaReference[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+// SEQTA Integration types
+export interface SeqtaReference {
+  type: SeqtaReferenceType;
+  id: string;
+  display_name: string;
+  cached_data?: any;
+  last_synced?: string;
+}
+
+export type SeqtaReferenceType = 
+  | 'subject' 
+  | 'assessment' 
+  | 'teacher' 
+  | 'class' 
+  | 'assignment' 
+  | 'portal';
+
+// Editor configuration
+export interface EditorOptions {
+  placeholder?: string;
+  readonly?: boolean;
+  onChange?: (content: EditorDocument) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
+  onSelectionChange?: (selection: EditorSelection) => void;
+}
+
+// Selection and range types
+export interface EditorSelection {
+  anchorNode: Node | null;
+  anchorOffset: number;
+  focusNode: Node | null;
+  focusOffset: number;
+  isCollapsed: boolean;
+  rangeCount: number;
+}
+
+export interface EditorRange {
+  startContainer: Node;
+  startOffset: number;
+  endContainer: Node;
+  endOffset: number;
+  collapsed: boolean;
+}
+
+// Formatting types
+export type FormatType = 
+  | 'bold' 
+  | 'italic' 
+  | 'underline' 
+  | 'strikethrough'
+  | 'code'
+  | 'highlight'
+  | 'subscript'
+  | 'superscript';
+
+export type BlockType = 
+  | 'paragraph' 
+  | 'heading-1' 
+  | 'heading-2' 
+  | 'heading-3'
+  | 'heading-4'
+  | 'heading-5'
+  | 'heading-6'
+  | 'blockquote'
+  | 'code-block'
+  | 'ordered-list'
+  | 'unordered-list';
+
+// Command types
+export interface EditorCommand {
+  name: string;
+  execute: (editor: any, value?: any) => boolean;
+  canExecute?: (editor: any) => boolean;
+  isActive?: (editor: any) => boolean;
+}
+
+// Plugin types
+export interface EditorPlugin {
+  name: string;
+  initialize: (editor: any) => void;
+  handleKeyPress?: (event: KeyboardEvent) => boolean;
+  handleInput?: (event: InputEvent) => boolean;
+  handlePaste?: (event: ClipboardEvent) => boolean;
+  destroy?: () => void;
+}
+
+// History types
+export interface EditorHistoryEntry {
+  content: EditorDocument;
+  selection?: EditorSelection;
+  timestamp: number;
+}
+
+export interface EditorHistory {
+  entries: EditorHistoryEntry[];
+  currentIndex: number;
+  maxEntries: number;
+}
+
+// Event types
+export interface EditorChangeEvent {
+  content: EditorDocument;
+  source: 'user' | 'api' | 'history';
+}
+
+export interface EditorSelectionChangeEvent {
+  selection: EditorSelection;
+  range: EditorRange | null;
+}
+
+// Toolbar types
+export interface ToolbarButton {
+  name: string;
+  label: string;
+  icon?: string;
+  command: string;
+  value?: any;
+  type: 'button' | 'dropdown' | 'color-picker';
+  group?: string;
+  shortcut?: string;
+}
+
+export interface ToolbarGroup {
+  name: string;
+  buttons: ToolbarButton[];
+}
+
+// Export/Import types
+export type ExportFormat = 'markdown' | 'html' | 'pdf' | 'json';
+export type ImportFormat = 'markdown' | 'html' | 'json';
+
+// Note management types
+export interface Note {
+  id: string;
+  title: string;
+  content: EditorDocument;
+  folder_path: string[];
+  tags: string[];
+  seqta_references: SeqtaReference[];
+  created_at: string;
+  updated_at: string;
+  last_accessed: string;
+  metadata: NoteMetadata;
+}
+
+export interface NoteMetadata {
+  word_count: number;
+  character_count: number;
+  reading_time: number; // in minutes
+  last_auto_save?: string;
+  version: number;
+}
+
+export interface NoteFolder {
+  id: string;
+  name: string;
+  parent_id?: string;
+  color?: string;
+  icon?: string;
+  auto_generated: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Search types
+export interface SearchFilters {
+  folders?: string[];
+  tags?: string[];
+  date_range?: {
+    start: string;
+    end: string;
+  };
+  seqta_references?: SeqtaReferenceType[];
+}
+
+export interface SearchResult {
+  note: Note;
+  matches: SearchMatch[];
+  score: number;
+}
+
+export interface SearchMatch {
+  type: 'title' | 'content' | 'tag' | 'seqta_reference';
+  text: string;
+  position: number;
+  length: number;
+} 
