@@ -4,7 +4,7 @@
   import EditorToolbar from './EditorToolbar.svelte';
   import EditorStatusBar from './EditorStatusBar.svelte';
   import ImageControlModal from './ImageControlModal.svelte';
-  import type { EditorDocument, EditorNode } from './types/editor';
+  
 
   // Props
   export let content: string = '<p><br></p>';

@@ -15,6 +15,7 @@
   let error: string | null = null;
   let isSaving = false;
   let sidebarCollapsed = false;
+  let titleUpdateTimeout: number | null = null;
 
   // Handle note selection from sidebar
   async function handleNoteSelect(event: CustomEvent<{ note: Note }>) {
@@ -89,7 +90,7 @@
       }
     };
 
-    // Schedule auto-save
+    // Schedule auto-save, but avoid list refresh on every keystroke
     NotesService.scheduleAutoSave(selectedNote.id, content);
   }
 
@@ -150,7 +151,11 @@
   $: if (selectedNote && selectedNote.content) {
     const extractedTitle = extractTitleFromContent(selectedNote.content);
     if (extractedTitle !== 'Untitled Note' && extractedTitle !== selectedNote.title) {
-      updateNoteTitle(extractedTitle);
+      // Debounce title updates to avoid frequent saves while typing
+      if (titleUpdateTimeout) clearTimeout(titleUpdateTimeout);
+      titleUpdateTimeout = setTimeout(() => {
+        updateNoteTitle(extractedTitle);
+      }, 600);
     }
   }
 

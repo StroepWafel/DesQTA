@@ -1,7 +1,4 @@
 import type { 
-  EditorDocument, 
-  EditorNode, 
-  EditorNodeType,
   EditorOptions, 
   EditorSelection,
   EditorRange,
@@ -2608,212 +2605,25 @@ export class EditorCore {
     }
   }
 
-  private parseHTMLToNodes(element: HTMLElement): EditorNode[] {
-    // Enhanced parser that preserves formatting
-    const nodes: EditorNode[] = [];
-    
-    for (const child of Array.from(element.childNodes)) {
-      if (child.nodeType === Node.ELEMENT_NODE) {
-        const element = child as HTMLElement;
-        const node = this.parseElementToNode(element);
-        
-        // Preserve inner HTML for formatting
-        if (node.type === 'paragraph' || node.type === 'heading' || node.type === 'list-item') {
-          node.html = element.innerHTML;
-        }
-        
-        nodes.push(node);
-      } else if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
-        nodes.push({
-          type: 'text',
-          text: child.textContent
-        });
-      }
-    }
-    
-    return nodes;
+  private parseHTMLToNodes(element: HTMLElement): any[] {
+    return [];
   }
 
-  private parseElementToNode(element: HTMLElement): EditorNode {
-    const tagName = element.tagName.toLowerCase();
-    let type: any = 'paragraph';
-    
-    switch (tagName) {
-      case 'p':
-        type = 'paragraph';
-        break;
-      case 'h1':
-      case 'h2':
-      case 'h3':
-      case 'h4':
-      case 'h5':
-      case 'h6':
-        type = 'heading';
-        break;
-      case 'blockquote':
-        type = 'blockquote';
-        break;
-      case 'pre':
-        // Check if this pre contains a code element
-        if (element.querySelector('code')) {
-          type = 'code-block';
-        } else {
-          type = 'paragraph';
-        }
-        break;
-      case 'code':
-        // Standalone code elements are inline, not blocks
-        type = 'text';
-        break;
-      case 'ul':
-        type = 'bullet-list';
-        break;
-      case 'ol':
-        type = 'numbered-list';
-        break;
-      case 'li':
-        type = 'list-item';
-        break;
-      case 'img':
-        type = 'image';
-        break;
-      case 'a':
-        type = 'link';
-        break;
-      case 'span':
-        // Check if it's a SEQTA mention
-        if (element.classList.contains('seqta-mention')) {
-          type = 'seqta-mention';
-        } else {
-          type = 'text';
-        }
-        break;
-    }
-    
-    // Handle list items specially
-    if (tagName === 'ul' || tagName === 'ol') {
-      const listItems = Array.from(element.children).map(li => ({
-        type: 'list-item' as EditorNodeType,
-        text: li.textContent || '',
-        children: []
-      }));
-      
-      return {
-        type: type as EditorNodeType,
-        children: listItems,
-        text: ''
-      };
-    }
-    
-    // Handle images specially
-    if (tagName === 'img') {
-      return {
-        type: 'image' as EditorNodeType,
-        attributes: {
-          src: element.getAttribute('src') || '',
-          alt: element.getAttribute('alt') || ''
-        },
-        text: '',
-        children: []
-      };
-    }
-    
-    // Handle links specially
-    if (tagName === 'a') {
-      return {
-        type: 'link' as EditorNodeType,
-        attributes: {
-          href: element.getAttribute('href') || '',
-          target: element.getAttribute('target') || '_blank',
-          rel: element.getAttribute('rel') || 'noopener noreferrer'
-        },
-        text: element.textContent || '',
-        children: []
-      };
-    }
-    
-    // Handle SEQTA mentions specially
-    if (tagName === 'span' && element.classList.contains('seqta-mention')) {
-      return {
-        type: 'seqta-mention' as EditorNodeType,
-        attributes: {
-          mentionId: element.dataset.mentionId || '',
-          mentionType: element.dataset.mentionType || '',
-          mentionData: element.dataset.mentionData || '{}'
-        },
-        text: element.textContent || '',
-        children: []
-      };
-    }
-    
-    return {
-      type: type as EditorNodeType,
-      attributes: tagName === 'h1' ? { level: 1 } :
-                 tagName === 'h2' ? { level: 2 } :
-                 tagName === 'h3' ? { level: 3 } :
-                 tagName === 'h4' ? { level: 4 } :
-                 tagName === 'h5' ? { level: 5 } :
-                 tagName === 'h6' ? { level: 6 } : {},
-      text: element.textContent || '',
-      children: []
-    };
+  private parseElementToNode(element: HTMLElement): any {
+    return { type: 'paragraph', text: element.textContent || '', children: [] };
   }
 
-  private renderNodesToHTML(nodes: EditorNode[]): string {
-    // Enhanced renderer that preserves formatting
-    return nodes.map(node => {
-      switch (node.type) {
-        case 'paragraph':
-          // Use preserved HTML if available, otherwise fall back to text
-          return `<p>${node.html || node.text || '<br>'}</p>`;
-        case 'heading':
-          const level = node.attributes?.level || 1;
-          return `<h${level}>${node.html || node.text || ''}</h${level}>`;
-        case 'blockquote':
-          return `<blockquote>${node.html || node.text || ''}</blockquote>`;
-        case 'codeblock':
-          return `<pre><code>${node.text || ''}</code></pre>`;
-        case 'code-block':
-          return `<pre><code>${node.text || ''}</code></pre>`;
-        case 'bullet-list':
-          const ulItems = node.children?.map(child => 
-            `<li>${child.html || child.text || ''}</li>`
-          ).join('') || '';
-          return `<ul>${ulItems}</ul>`;
-        case 'numbered-list':
-          const olItems = node.children?.map(child => 
-            `<li>${child.html || child.text || ''}</li>`
-          ).join('') || '';
-          return `<ol>${olItems}</ol>`;
-        case 'image':
-          const src = node.attributes?.src || '';
-          const alt = node.attributes?.alt || '';
-          return `<div class="editor-image-container" style="margin: 1rem 0; text-align: center;"><img src="${src}" alt="${alt}" style="max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); cursor: pointer;" /></div>`;
-        case 'link':
-          const href = node.attributes?.href || '';
-          const target = node.attributes?.target || '_blank';
-          const rel = node.attributes?.rel || 'noopener noreferrer';
-          return `<a href="${href}" target="${target}" rel="${rel}" style="color: var(--accent-color, #3b82f6); text-decoration: underline; cursor: pointer;">${node.text || href}</a>`;
-        case 'seqta-mention':
-          const mentionId = node.attributes?.mentionId || '';
-          const mentionType = node.attributes?.mentionType || '';
-          const mentionData = node.attributes?.mentionData || '{}';
-          const icon = this.getMentionIcon(mentionType);
-          return `<span class="seqta-mention" data-mention-id="${mentionId}" data-mention-type="${mentionType}" data-mention-data="${mentionData}" style="display: inline-block; background: var(--accent-color, #3b82f6); color: white; padding: 0.125rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; margin: 0 0.125rem; cursor: pointer;" contenteditable="false">${icon} ${node.text}</span>`;
-        default:
-          return `<p>${node.text || '<br>'}</p>`;
-      }
-    }).join('');
+  private renderNodesToHTML(nodes: any[]): string {
+    return this.element.innerHTML;
   }
 
-  private calculateMetadata(nodes: EditorNode[]) {
-    const text = nodes.map(node => node.text || '').join(' ');
-    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-    
+  private calculateMetadata(nodes: any[]) {
+    const text = this.element.textContent || '';
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0);
     return {
       word_count: words.length,
       character_count: text.length,
-      seqta_references: [] // TODO: Extract SEQTA references
+      seqta_references: []
     };
   }
 

@@ -1,46 +1,5 @@
 // Core editor types
-export interface EditorDocument {
-  version: string;
-  nodes: EditorNode[];
-  metadata: DocumentMetadata;
-}
-
-export interface EditorNode {
-  type: EditorNodeType;
-  attributes?: Record<string, any>;
-  children?: EditorNode[];
-  text?: string;
-  html?: string; // For preserving formatted content
-  id?: string;
-}
-
-export type EditorNodeType = 
-  | 'text' 
-  | 'paragraph' 
-  | 'heading' 
-  | 'list' 
-  | 'bullet-list'
-  | 'numbered-list'
-  | 'list-item'
-  | 'blockquote' 
-  | 'codeblock' 
-  | 'code-block'
-  | 'seqta-mention' 
-  | 'seqta-embed'
-  | 'link'
-  | 'image'
-  | 'table'
-  | 'table-row'
-  | 'table-cell'
-  | 'break';
-
-export interface DocumentMetadata {
-  word_count: number;
-  character_count: number;
-  seqta_references: SeqtaReference[];
-  created_at?: string;
-  updated_at?: string;
-}
+// Removed EditorDocument and node-based types since we store pure HTML
 
 // SEQTA Integration types
 export interface SeqtaReference {
@@ -131,25 +90,7 @@ export interface EditorPlugin {
   destroy?: () => void;
 }
 
-// History types
-export interface EditorHistoryEntry {
-  content: EditorDocument;
-  selection?: EditorSelection;
-  timestamp: number;
-}
-
-export interface EditorHistory {
-  entries: EditorHistoryEntry[];
-  currentIndex: number;
-  maxEntries: number;
-}
-
 // Event types
-export interface EditorChangeEvent {
-  content: EditorDocument;
-  source: 'user' | 'api' | 'history';
-}
-
 export interface EditorSelectionChangeEvent {
   selection: EditorSelection;
   range: EditorRange | null;
@@ -209,15 +150,15 @@ export interface NoteFolder {
   updated_at: string;
 }
 
-// Search types
+// Search types (deduplicated to match backend)
 export interface SearchFilters {
-  folders?: string[];
+  folder_ids?: string[];
   tags?: string[];
-  date_range?: {
-    start: string;
-    end: string;
-  };
-  seqta_references?: SeqtaReferenceType[];
+  date_from?: string;
+  date_to?: string;
+  word_count_min?: number;
+  word_count_max?: number;
+  has_seqta_references?: boolean;
 }
 
 export interface SearchResult {
@@ -230,14 +171,4 @@ export interface SearchMatch {
   field: string; // "title", "content", "tags", "seqta_references"
   snippet: string;
   position: number;
-}
-
-export interface SearchFilters {
-  folder_ids?: string[];
-  tags?: string[];
-  date_from?: string;
-  date_to?: string;
-  word_count_min?: number;
-  word_count_max?: number;
-  has_seqta_references?: boolean;
 } 
