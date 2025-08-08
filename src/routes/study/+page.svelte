@@ -6,9 +6,7 @@
   import { Icon, Calendar, Clock, MagnifyingGlass } from 'svelte-hero-icons';
   import { fly, fade, scale, slide } from 'svelte/transition';
   import { quintOut, cubicOut } from 'svelte/easing';
-  import NotesEditor from '$lib/components/notes/NotesEditor.svelte';
-  import { NotesService } from '$lib/services/notesService';
-  import type { EditorDocument, Note } from '$lib/components/notes/types/editor';
+  import NotesContainer from '$lib/components/notes/NotesContainer.svelte';
 
   interface Subtask {
     id: string;
@@ -650,81 +648,13 @@
     return studyTips[randomIndex];
   }
 
-  // Notes state
-  let currentNote: Note | null = null;
-  let notesLoading = false;
-  let notesError: string | null = null;
-
-  // Notes editor handlers
-  function handleNoteChange(event: CustomEvent<{ content: EditorDocument }>) {
-    const content = event.detail.content;
-    
-    if (currentNote) {
-      // Schedule auto-save with debouncing
-      NotesService.scheduleAutoSave(currentNote.id, content);
-    }
-  }
-
-  async function handleNoteSave(event: CustomEvent<{ content: EditorDocument }>) {
-    if (!currentNote) return;
-
-    try {
-      await NotesService.updateNoteContent(currentNote.id, event.detail.content);
-      console.log('Note saved successfully');
-    } catch (error) {
-      console.error('Failed to save note:', error);
-      notesError = error instanceof Error ? error.message : 'Failed to save note';
-    }
-  }
-
-  async function createNewNote() {
-    try {
-      notesLoading = true;
-      notesError = null;
-      
-      const newNote = await NotesService.createNote('New Study Note');
-      currentNote = newNote;
-      console.log('Created new note:', newNote.id);
-    } catch (error) {
-      console.error('Failed to create note:', error);
-      notesError = error instanceof Error ? error.message : 'Failed to create note';
-    } finally {
-      notesLoading = false;
-    }
-  }
-
-  async function loadDefaultNote() {
-    try {
-      notesLoading = true;
-      
-      // Try to load existing notes
-      const notes = await NotesService.loadNotes();
-      
-      if (notes.length > 0) {
-        // Load the most recently updated note
-        const sortedNotes = notes.sort((a, b) => 
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-        );
-        currentNote = sortedNotes[0];
-      } else {
-        // Create a default note if none exist
-        currentNote = await NotesService.createNote('My First Study Note');
-      }
-    } catch (error) {
-      console.error('Failed to load notes:', error);
-      notesError = error instanceof Error ? error.message : 'Failed to load notes';
-    } finally {
-      notesLoading = false;
-    }
-  }
 
   onMount(async () => {
     currentStudyTip = getRandomStudyTip();
     await Promise.all([
       loadTodos(),
       loadUpcomingAssessments(),
-      loadSubjectsAndColours().then(loadAllAssessments),
-      loadDefaultNote()
+      loadSubjectsAndColours().then(loadAllAssessments)
     ]);
   });
 </script>
@@ -993,56 +923,11 @@
         </div>
       {:else}
         <!-- Notes Tab Content -->
-        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md"
+        <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md overflow-hidden"
+             style="height: 600px;"
              in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
              out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
-              {#if currentNote}
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{currentNote.title}</p>
-              {/if}
-            </div>
-            <div class="flex items-center gap-2">
-              {#if notesError}
-                <span class="text-xs text-red-500 dark:text-red-400">{notesError}</span>
-              {/if}
-              <button 
-                class="px-3 py-1.5 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
-                on:click={createNewNote}
-                disabled={notesLoading}
-              >
-                {notesLoading ? 'Creating...' : 'New Note'}
-              </button>
-            </div>
-          </div>
-          <!-- Notes Editor -->
-          <div class="mt-4">
-            {#if notesLoading}
-              <div class="flex items-center justify-center p-8">
-                <div class="w-8 h-8 rounded-full border-4 border-slate-300 dark:border-slate-700 border-t-transparent animate-spin"></div>
-                <span class="ml-3 text-slate-600 dark:text-slate-300">Loading notes...</span>
-              </div>
-            {:else if currentNote}
-              <NotesEditor 
-                content={currentNote.content}
-                placeholder="Start writing your study notes..."
-                autofocus={false}
-                on:change={handleNoteChange}
-                on:save={handleNoteSave}
-              />
-            {:else}
-              <div class="flex flex-col items-center justify-center p-8">
-                <p class="text-slate-600 dark:text-slate-300 mb-4">No notes found. Create your first note to get started!</p>
-                <button 
-                  class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
-                  on:click={createNewNote}
-                >
-                  Create First Note
-                </button>
-              </div>
-            {/if}
-          </div>
+          <NotesContainer />
         </div>
       {/if}
     </div>
