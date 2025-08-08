@@ -13,6 +13,9 @@ export class EditorCore {
   private options: EditorOptions;
   private isInitialized = false;
   private currentSelection: EditorSelection | null = null;
+  private history: string[] = [];
+  private historyIndex = -1;
+  private maxHistorySize = 100;
 
   constructor(element: HTMLElement, options: EditorOptions = {}) {
     this.element = element;
@@ -35,6 +38,9 @@ export class EditorCore {
     if (this.element.innerHTML.trim() === '') {
       this.element.innerHTML = '<p><br></p>';
     }
+
+    // Save initial state to history
+    this.saveToHistory();
 
     this.isInitialized = true;
   }
@@ -195,10 +201,10 @@ export class EditorCore {
       case 'z':
         if (event.shiftKey) {
           event.preventDefault();
-          // TODO: Implement redo
+          this.redo();
         } else {
           event.preventDefault();
-          // TODO: Implement undo
+          this.undo();
         }
         break;
     }
@@ -403,10 +409,25 @@ export class EditorCore {
 
   // Private helper methods
   private triggerChange() {
+    // Save to history (debounced to avoid too many history entries)
+    this.debouncedSaveToHistory();
+    
     if (this.options.onChange) {
       const content = this.getContent();
       this.options.onChange(content);
     }
+  }
+
+  private debouncedSaveToHistory = this.debounce(() => {
+    this.saveToHistory();
+  }, 500);
+
+  private debounce(func: Function, wait: number) {
+    let timeout: number;
+    return (...args: any[]) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
   }
 
   private updateCurrentSelection() {
@@ -726,5 +747,45 @@ export class EditorCore {
       character_count: text.length,
       seqta_references: [] // TODO: Extract SEQTA references
     };
+  }
+
+  // History management methods
+  private saveToHistory() {
+    const currentContent = this.element.innerHTML;
+    
+    // Remove future history if we're not at the end
+    if (this.historyIndex < this.history.length - 1) {
+      this.history = this.history.slice(0, this.historyIndex + 1);
+    }
+    
+    // Add new state
+    this.history.push(currentContent);
+    this.historyIndex = this.history.length - 1;
+    
+    // Limit history size
+    if (this.history.length > this.maxHistorySize) {
+      this.history = this.history.slice(-this.maxHistorySize);
+      this.historyIndex = this.history.length - 1;
+    }
+  }
+
+  public undo(): boolean {
+    if (this.historyIndex > 0) {
+      this.historyIndex--;
+      this.element.innerHTML = this.history[this.historyIndex];
+      this.triggerChange();
+      return true;
+    }
+    return false;
+  }
+
+  public redo(): boolean {
+    if (this.historyIndex < this.history.length - 1) {
+      this.historyIndex++;
+      this.element.innerHTML = this.history[this.historyIndex];
+      this.triggerChange();
+      return true;
+    }
+    return false;
   }
 } 
