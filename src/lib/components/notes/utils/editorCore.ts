@@ -108,6 +108,13 @@ export class EditorCore {
       return;
     }
 
+    // Handle Tab key in tables
+    if (event.key === 'Tab' && this.isInTable()) {
+      event.preventDefault();
+      this.navigateTable(event.shiftKey ? 'previous' : 'next');
+      return;
+    }
+
     // Handle Backspace
     if (event.key === 'Backspace') {
       this.handleBackspaceKey(event);
@@ -383,6 +390,8 @@ export class EditorCore {
         return this.toggleList('ul');
       case 'numbered-list':
         return this.toggleList('ol');
+      case 'insert-table':
+        return this.insertTable(2, 2); // Default 2x2 table
       default:
         return false;
     }
@@ -550,6 +559,159 @@ export class EditorCore {
     
     // Restore selection in list item
     this.restoreSelectionInElement(listItem);
+  }
+
+  public insertTable(rows: number, cols: number): boolean {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return false;
+
+    const range = selection.getRangeAt(0);
+    const currentElement = this.getBlockElement(range.startContainer);
+    
+    if (!currentElement) return false;
+
+    // Create table structure
+    const table = document.createElement('table');
+    table.className = 'editor-table';
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.border = '1px solid #e2e8f0';
+    table.style.marginTop = '1rem';
+    table.style.marginBottom = '1rem';
+
+    const tbody = document.createElement('tbody');
+    
+    for (let i = 0; i < rows; i++) {
+      const row = document.createElement('tr');
+      
+      for (let j = 0; j < cols; j++) {
+        const cell = document.createElement(i === 0 ? 'th' : 'td');
+        cell.style.border = '1px solid #e2e8f0';
+        cell.style.padding = '0.5rem';
+        cell.style.textAlign = 'left';
+        cell.contentEditable = 'true';
+        cell.innerHTML = i === 0 ? `Header ${j + 1}` : '<br>';
+        
+        row.appendChild(cell);
+      }
+      
+      tbody.appendChild(row);
+    }
+    
+    table.appendChild(tbody);
+
+    // Insert table after current element
+    currentElement.parentNode?.insertBefore(table, currentElement.nextSibling);
+
+    // Create a new paragraph after the table
+    const paragraph = document.createElement('p');
+    paragraph.innerHTML = '<br>';
+    table.parentNode?.insertBefore(paragraph, table.nextSibling);
+
+    // Focus the first cell
+    const firstCell = table.querySelector('th, td');
+    if (firstCell) {
+      this.restoreSelectionInElement(firstCell as HTMLElement);
+    }
+
+    this.triggerChange();
+    return true;
+  }
+
+  private isInTable(): boolean {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return false;
+
+    const range = selection.getRangeAt(0);
+    let node = range.startContainer;
+
+    while (node && node !== this.element) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        if (element.tagName === 'TD' || element.tagName === 'TH') {
+          return true;
+        }
+      }
+      const parentNode = node.parentNode;
+      if (!parentNode) break;
+      node = parentNode;
+    }
+
+    return false;
+  }
+
+  private navigateTable(direction: 'next' | 'previous') {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    let currentCell = range.startContainer;
+
+    // Find the current table cell
+    while (currentCell && currentCell !== this.element) {
+      if (currentCell.nodeType === Node.ELEMENT_NODE) {
+        const element = currentCell as HTMLElement;
+        if (element.tagName === 'TD' || element.tagName === 'TH') {
+          break;
+        }
+      }
+      const parentNode = currentCell.parentNode;
+      if (!parentNode) return;
+      currentCell = parentNode;
+    }
+
+    if (!currentCell || currentCell === this.element) return;
+
+    const cell = currentCell as HTMLElement;
+    const table = cell.closest('table');
+    if (!table) return;
+
+    // Get all cells in the table
+    const cells = Array.from(table.querySelectorAll('td, th'));
+    const currentIndex = cells.indexOf(cell);
+
+    let nextIndex: number;
+    if (direction === 'next') {
+      nextIndex = currentIndex + 1;
+      if (nextIndex >= cells.length) {
+        // Add new row if we're at the end
+        this.addTableRow(table);
+        nextIndex = currentIndex + 1;
+      }
+    } else {
+      nextIndex = currentIndex - 1;
+      if (nextIndex < 0) {
+        nextIndex = 0;
+      }
+    }
+
+    const nextCell = cells[nextIndex] as HTMLElement;
+    if (nextCell) {
+      this.restoreSelectionInElement(nextCell);
+    }
+  }
+
+  private addTableRow(table: HTMLElement) {
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+
+    const lastRow = tbody.querySelector('tr:last-child');
+    if (!lastRow) return;
+
+    const newRow = document.createElement('tr');
+    const cellCount = lastRow.children.length;
+
+    for (let i = 0; i < cellCount; i++) {
+      const cell = document.createElement('td');
+      cell.style.border = '1px solid #e2e8f0';
+      cell.style.padding = '0.5rem';
+      cell.style.textAlign = 'left';
+      cell.contentEditable = 'true';
+      cell.innerHTML = '<br>';
+      newRow.appendChild(cell);
+    }
+
+    tbody.appendChild(newRow);
   }
 
   public getActiveFormats(): Set<string> {
