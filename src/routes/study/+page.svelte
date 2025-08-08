@@ -419,6 +419,19 @@
 
   function priorityOrder(p?: string | null) { return p === 'high' ? 0 : p === 'medium' ? 1 : 2; }
 
+  function getPriorityStyles(priority?: string | null): string {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700';
+      case 'low':
+        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-700';
+    }
+  }
+
   // Formatting helpers for due date/time
   function formatDueDate(dateStr?: string | null): string {
     if (!dateStr) return '';
@@ -550,7 +563,7 @@
                       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div class="truncate text-slate-900 dark:text-white font-medium pr-2">{todo.title || 'Untitled task'}</div>
                         <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                          <span class="text-xs px-1.5 py-0.5 sm:px-2 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
+                          <span class="text-xs px-1.5 py-0.5 sm:px-2 rounded-full border {getPriorityStyles(todo.priority)}">{todo.priority ?? 'medium'}</span>
                           <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => editMode[todo.id]=true}>Edit</button>
                           <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Del</button>
                         </div>
@@ -601,7 +614,14 @@
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2">
                         <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-base font-medium" placeholder="Task title" bind:value={todo.title} />
-                        <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
+                        <div class="flex flex-col gap-1">
+                          <select class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={todo.priority} on:change={() => updateField(todo.id, 'priority', todo.priority)}>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                          </select>
+                          <span class="text-xs px-2 py-0.5 rounded-full border {getPriorityStyles(todo.priority)} text-center">{todo.priority ?? 'medium'}</span>
+                        </div>
                       </div>
                       <div class="mt-2 grid grid-cols-1 gap-2">
                         <div class="relative">
