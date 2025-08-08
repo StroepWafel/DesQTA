@@ -262,21 +262,21 @@
   });
 </script>
 
-<div class="flex w-full h-full overflow-y-hidden">
+<div class="flex w-full h-full overflow-y-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
   <!-- Mobile Toggle Buttons -->
   {#if isMobile}
     <div class="fixed top-4 left-4 z-50 flex gap-2">
       <button
-        onclick={() => showSubjectSidebar = !showSubjectSidebar}
-        class="p-2 rounded-lg bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-lg"
+        onclick={() => (showSubjectSidebar = !showSubjectSidebar)}
+        class="px-3 py-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-md"
         aria-label="Toggle subjects sidebar"
       >
         📚
       </button>
       {#if selectedSubject}
         <button
-          onclick={() => showScheduleSidebar = !showScheduleSidebar}
-          class="p-2 rounded-lg bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-lg"
+          onclick={() => (showScheduleSidebar = !showScheduleSidebar)}
+          class="px-3 py-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-md"
           aria-label="Toggle schedule sidebar"
         >
           📅
@@ -286,7 +286,8 @@
   {/if}
 
   <!-- Subject Selection Sidebar -->
-      {#if !isMobile || showSubjectSidebar}
+  {#if !isMobile || showSubjectSidebar}
+    <div class="h-full border-r border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm transition-all duration-200">
       <SubjectSidebar
         bind:search
         {loading}
@@ -297,47 +298,54 @@
         {expandedFolders}
         on:selectSubject={handleSelectSubject}
         on:toggleFolder={handleToggleFolder}
-        on:close={() => showSubjectSidebar = false} />
-    {/if}
+        on:close={() => (showSubjectSidebar = false)}
+      />
+    </div>
+  {/if}
 
   <!-- Course Content Area -->
   <div class="flex flex-1 h-full">
     {#if selectedSubject}
       {#if loadingCourse}
-        <div class="flex justify-center items-center w-full">
-          <div class="text-lg text-slate-600 dark:text-slate-400">Loading course content...</div>
+        <div class="flex justify-center items-center w-full p-6">
+          <div class="text-lg text-gray-600 dark:text-gray-300">Loading course content...</div>
         </div>
       {:else if courseError}
-        <div class="flex justify-center items-center w-full">
-          <div class="text-lg text-red-500 dark:text-red-400">
-            Error loading course: {courseError}
-          </div>
+        <div class="flex justify-center items-center w-full p-6">
+          <div class="text-lg text-red-600 dark:text-red-400">Error loading course: {courseError}</div>
         </div>
       {:else if coursePayload}
         <!-- Schedule Navigation -->
         {#if !isMobile || showScheduleSidebar}
-          <ScheduleSidebar
-            schedule={coursePayload.d}
-            {selectedLesson}
-            {showingOverview}
-            {coursePayload}
-            onSelectLesson={handleSelectLesson}
-            onSelectOverview={handleSelectOverview}
-            onClose={() => showScheduleSidebar = false} />
+          <div class="h-full border-r border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm transition-colors duration-200">
+            <ScheduleSidebar
+              schedule={coursePayload.d}
+              {selectedLesson}
+              {showingOverview}
+              {coursePayload}
+              onSelectLesson={handleSelectLesson}
+              onSelectOverview={handleSelectOverview}
+              onClose={() => (showScheduleSidebar = false)}
+            />
+          </div>
         {/if}
 
         <!-- Main Content -->
-        <CourseContent {coursePayload} {parsedDocument} {selectedLessonContent} {showingOverview} />
+        <div class="flex-1 overflow-y-auto">
+          <div class="p-4 md:p-6 lg:p-8">
+            <div class="course-content bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md transition-colors duration-200">
+              <CourseContent {coursePayload} {parsedDocument} {selectedLessonContent} {showingOverview} />
+            </div>
+          </div>
+        </div>
       {:else}
-        <div class="flex justify-center items-center w-full">
-          <div class="text-lg text-slate-600 dark:text-slate-400">No course content available</div>
+        <div class="flex justify-center items-center w-full p-6">
+          <div class="text-lg text-gray-600 dark:text-gray-300">No course content available</div>
         </div>
       {/if}
     {:else}
-      <div class="flex justify-center items-center w-full">
-        <div class="text-lg text-slate-600 dark:text-slate-400">
-          Select a subject to view course content
-        </div>
+      <div class="flex justify-center items-center w-full p-6">
+        <div class="text-lg text-gray-600 dark:text-gray-300">Select a subject to view course content</div>
       </div>
     {/if}
   </div>
@@ -348,34 +356,34 @@
     @apply w-full h-full;
   }
 
-  /* Style the course content to match the screenshot */
+  /* Headings styled with accent background and white text in dark mode */
   :global(.course-content h1) {
-    @apply text-3xl font-bold text-white bg-blue-500 p-6 rounded-t-xl m-4 mb-0;
+    @apply text-3xl font-bold text-white bg-accent-bg p-6 rounded-t-xl m-4 mb-0 transition-colors duration-200;
   }
 
   :global(.course-content h2) {
-    @apply text-xl font-bold text-white bg-blue-500 p-4 rounded-xl m-4 mb-2;
+    @apply text-xl font-semibold text-white bg-accent-bg p-4 rounded-xl m-4 mb-2 transition-colors duration-200;
   }
 
   :global(.course-content p) {
-    @apply text-slate-300 px-4 py-2;
+    @apply text-gray-700 dark:text-gray-200 px-4 py-2 leading-relaxed transition-colors duration-200;
   }
 
   :global(.course-content .section) {
-    @apply m-4 bg-slate-800/50 rounded-xl overflow-hidden;
+    @apply m-4 bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md transition-colors duration-200;
   }
 
   :global(.course-content a) {
-    @apply text-blue-400 hover:text-blue-300 transition-colors;
+    @apply text-accent-bg hover:text-accent-ring transition-colors duration-200;
   }
 
   :global(.course-content img) {
-    @apply max-w-full h-auto rounded-lg;
+    @apply max-w-full h-auto rounded-lg shadow-md;
   }
 
   /* File/document styling */
   :global(.course-content .file-item) {
-    @apply bg-slate-700/50 rounded-lg p-4 m-2 hover:bg-slate-600/50 transition-colors cursor-pointer;
+    @apply bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-4 m-2 hover:scale-[1.02] hover:border-accent-ring transition-all duration-200 cursor-pointer;
   }
 
   :global(.course-content .file-grid) {

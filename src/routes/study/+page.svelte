@@ -393,6 +393,7 @@
 
   function updateField<T extends keyof TodoItem>(todoId: string, field: T, value: TodoItem[T]) {
     todos = todos.map(t => (t.id === todoId ? { ...t, [field]: value, updated_at: new Date().toISOString() } as TodoItem : t));
+    saveTodos();
   }
 
   function blurSave() { saveTodos(); }
@@ -539,7 +540,7 @@
                 {#if !editMode[todo.id]}
                   <!-- Condensed View -->
                   <div class="flex items-start gap-3">
-                    <input type="checkbox" bind:checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
+                    <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center justify-between gap-2">
                         <div class="truncate text-slate-900 dark:text-white font-medium">{todo.title || 'Untitled task'}</div>
@@ -591,7 +592,7 @@
                 {:else}
                   <!-- Edit Mode -->
                   <div class="flex items-start gap-3">
-                    <input type="checkbox" bind:checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
+                    <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2">
                         <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-base font-medium" placeholder="Task title" bind:value={todo.title} />
@@ -690,7 +691,7 @@
                             <div class="space-y-2">
                               {#each todo.subtasks ?? [] as sub (sub.id)}
                                 <div class="flex items-center gap-3">
-                                  <input type="checkbox" bind:checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle subtask" />
+                                  <input type="checkbox" checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle subtask" />
                                   <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); }} placeholder="Subtask title" />
                                 </div>
                               {/each}
