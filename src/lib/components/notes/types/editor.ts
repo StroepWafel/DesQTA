@@ -23,6 +23,7 @@ export type EditorNodeType =
   | 'list-item'
   | 'blockquote' 
   | 'codeblock' 
+  | 'code-block'
   | 'seqta-mention' 
   | 'seqta-embed'
   | 'link'

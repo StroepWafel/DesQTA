@@ -84,10 +84,15 @@ export class EditorCore {
       return;
     }
 
+    // Check if we're in a code block
+    const selection = window.getSelection();
+    const isInCodeBlock = selection && selection.rangeCount > 0 && 
+      this.getCurrentBlockType() === 'code-block';
+
     // Handle Enter key
     if (event.key === 'Enter') {
-      if (event.shiftKey) {
-        // Shift+Enter: Insert line break
+      if (event.shiftKey || isInCodeBlock) {
+        // Shift+Enter or code block: Insert line break
         this.insertLineBreak();
         event.preventDefault();
       } else {
@@ -96,13 +101,24 @@ export class EditorCore {
       }
     }
 
+    // Handle Tab key in code blocks
+    if (event.key === 'Tab' && isInCodeBlock) {
+      event.preventDefault();
+      this.insertText('  '); // Insert 2 spaces for indentation
+      return;
+    }
+
     // Handle Backspace
     if (event.key === 'Backspace') {
       this.handleBackspaceKey(event);
     }
 
-    // Handle keyboard shortcuts
+    // Handle keyboard shortcuts (disabled in code blocks for some)
     if (event.ctrlKey || event.metaKey) {
+      // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+Z in code blocks
+      if (isInCodeBlock && !['a', 'c', 'v', 'z'].includes(event.key.toLowerCase())) {
+        return; // Don't handle other shortcuts in code blocks
+      }
       this.handleShortcut(event);
     }
   }
@@ -361,6 +377,8 @@ export class EditorCore {
         return this.setBlockType('paragraph');
       case 'blockquote':
         return this.setBlockType('blockquote');
+      case 'code-block':
+        return this.setBlockType('code-block');
       case 'bullet-list':
         return this.toggleList('ul');
       case 'numbered-list':
@@ -431,16 +449,31 @@ export class EditorCore {
       case 'blockquote':
         newElement = document.createElement('blockquote');
         break;
+      case 'code-block':
+        newElement = document.createElement('pre');
+        const codeElement = document.createElement('code');
+        codeElement.innerHTML = currentElement.innerHTML;
+        newElement.appendChild(codeElement);
+        break;
       default:
         return false;
     }
 
     // Copy content and replace element
-    newElement.innerHTML = currentElement.innerHTML;
-    currentElement.parentNode?.replaceChild(newElement, currentElement);
-
-    // Restore selection
-    this.restoreSelectionInElement(newElement);
+    if (blockType === 'code-block') {
+      // Code blocks already have their content set above
+      currentElement.parentNode?.replaceChild(newElement, currentElement);
+      // Restore selection in the code element
+      const codeElement = newElement.querySelector('code');
+      if (codeElement) {
+        this.restoreSelectionInElement(codeElement);
+      }
+    } else {
+      newElement.innerHTML = currentElement.innerHTML;
+      currentElement.parentNode?.replaceChild(newElement, currentElement);
+      // Restore selection
+      this.restoreSelectionInElement(newElement);
+    }
     
     this.triggerChange();
     return true;
@@ -574,7 +607,12 @@ export class EditorCore {
       case 'h5': return 'heading-5';
       case 'h6': return 'heading-6';
       case 'blockquote': return 'blockquote';
-      case 'pre': return 'codeblock';
+      case 'pre': return 'code-block';
+      case 'code': 
+        // Check if this code element is inside a pre (code block)
+        const preParent = currentElement.closest('pre');
+        if (preParent) return 'code-block';
+        return 'paragraph';
       default: return 'paragraph';
     }
   }
@@ -893,8 +931,16 @@ export class EditorCore {
         type = 'blockquote';
         break;
       case 'pre':
+        // Check if this pre contains a code element
+        if (element.querySelector('code')) {
+          type = 'code-block';
+        } else {
+          type = 'paragraph';
+        }
+        break;
       case 'code':
-        type = 'codeblock';
+        // Standalone code elements are inline, not blocks
+        type = 'text';
         break;
       case 'ul':
         type = 'bullet-list';
@@ -947,6 +993,8 @@ export class EditorCore {
         case 'blockquote':
           return `<blockquote>${node.text || ''}</blockquote>`;
         case 'codeblock':
+          return `<pre><code>${node.text || ''}</code></pre>`;
+        case 'code-block':
           return `<pre><code>${node.text || ''}</code></pre>`;
         case 'bullet-list':
           const ulItems = node.children?.map(child => `<li>${child.text || ''}</li>`).join('') || '';

@@ -15,7 +15,8 @@
     ChatBubbleLeftRight,
     Link,
     Photo,
-    ArrowDownTray
+    ArrowDownTray,
+    CommandLine
   } from 'svelte-hero-icons';
   import type { EditorCore } from './utils/editorCore';
 
@@ -91,6 +92,12 @@
     if (!editor || readonly) return;
     editor.executeCommand('blockquote');
     currentBlockType = 'blockquote';
+  }
+
+  function setCodeBlock() {
+    if (!editor || readonly) return;
+    editor.executeCommand('code-block');
+    currentBlockType = 'code-block';
   }
 
   // List commands
@@ -244,6 +251,17 @@
         aria-label="Convert to blockquote"
       >
         <Icon src={ChatBubbleLeftRight} class="w-4 h-4" />
+      </button>
+
+      <button
+        type="button"
+        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'code-block' ? 'accent-bg text-white' : ''}"
+        on:click={setCodeBlock}
+        disabled={readonly}
+        title="Code block"
+        aria-label="Convert to code block"
+      >
+        <Icon src={CommandLine} class="w-4 h-4" />
       </button>
     </div>
 
