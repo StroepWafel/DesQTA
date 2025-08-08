@@ -120,6 +120,14 @@ export class EditorCore {
       this.handleBackspaceKey(event);
     }
 
+    // Handle @ key for mentions
+    if (event.key === '@' && !isInCodeBlock) {
+      // Let the character be inserted first, then handle mention
+      setTimeout(() => {
+        this.handleMentionTrigger();
+      }, 0);
+    }
+
     // Handle keyboard shortcuts (disabled in code blocks for some)
     if (event.ctrlKey || event.metaKey) {
       // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+Z in code blocks
@@ -162,6 +170,10 @@ export class EditorCore {
     if (this.options.onBlur) {
       this.options.onBlur();
     }
+    // Clean up mention dropdown when editor loses focus
+    setTimeout(() => {
+      this.removeMentionDropdown();
+    }, 200); // Small delay to allow for mention selection
   }
 
   private handleSelectionChange() {
@@ -975,6 +987,349 @@ export class EditorCore {
      }
    }
 
+   private handleMentionTrigger() {
+     const selection = window.getSelection();
+     if (!selection || selection.rangeCount === 0) return;
+
+     const range = selection.getRangeAt(0);
+     const textNode = range.startContainer;
+     
+     if (textNode.nodeType !== Node.TEXT_NODE) return;
+     
+     const text = textNode.textContent || '';
+     const cursorPos = range.startOffset;
+     
+     // Find the @ symbol before cursor
+     const beforeCursor = text.substring(0, cursorPos);
+     const atIndex = beforeCursor.lastIndexOf('@');
+     
+     if (atIndex === -1) return;
+     
+     // Get the query after @
+     const query = beforeCursor.substring(atIndex + 1);
+     
+     // Only trigger if @ is at word boundary or start
+     if (atIndex > 0 && /\w/.test(beforeCursor[atIndex - 1])) return;
+     
+     this.showMentionAutocomplete(textNode, atIndex, query);
+   }
+
+   private showMentionAutocomplete(textNode: Node, atIndex: number, query: string) {
+     // Create or update autocomplete dropdown
+     this.createMentionDropdown(textNode, atIndex, query);
+   }
+
+   private createMentionDropdown(textNode: Node, atIndex: number, query: string) {
+     // Remove existing dropdown
+     this.removeMentionDropdown();
+
+     const dropdown = document.createElement('div');
+     dropdown.className = 'mention-autocomplete';
+     dropdown.style.cssText = `
+       position: absolute;
+       z-index: 1000;
+       background: white;
+       border: 1px solid #e2e8f0;
+       border-radius: 0.5rem;
+       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+       max-height: 200px;
+       overflow-y: auto;
+       min-width: 250px;
+     `;
+
+     // Get mention suggestions
+     const suggestions = this.getMentionSuggestions(query);
+     
+     suggestions.forEach((suggestion, index) => {
+       const item = document.createElement('div');
+       item.className = 'mention-item';
+       item.style.cssText = `
+         padding: 0.75rem;
+         cursor: pointer;
+         border-bottom: 1px solid #f1f5f9;
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+       `;
+       
+       if (index === 0) {
+         item.classList.add('selected');
+         item.style.backgroundColor = '#f8fafc';
+       }
+
+       // Add icon based on type
+       const icon = this.getMentionIcon(suggestion.type);
+       item.innerHTML = `
+         <span style="font-size: 1.2em;">${icon}</span>
+         <div>
+           <div style="font-weight: 500; color: #1e293b;">${suggestion.title}</div>
+           <div style="font-size: 0.875rem; color: #64748b;">${suggestion.subtitle}</div>
+         </div>
+       `;
+
+       item.addEventListener('click', () => {
+         this.insertMention(textNode, atIndex, suggestion);
+       });
+
+       dropdown.appendChild(item);
+     });
+
+     // Position dropdown
+     this.positionMentionDropdown(dropdown, textNode, atIndex);
+     
+     // Store reference for cleanup
+     this.currentMentionDropdown = dropdown;
+     
+     // Add to DOM
+     document.body.appendChild(dropdown);
+
+     // Handle keyboard navigation
+     this.setupMentionKeyboardHandling(dropdown, textNode, atIndex);
+   }
+
+   private getMentionSuggestions(query: string) {
+     // This will be populated with real SEQTA data
+     const mockSuggestions = [
+       {
+         id: 'assignment-1',
+         type: 'assignment',
+         title: 'Mathematics Assignment 3',
+         subtitle: 'Due: Tomorrow, 11:59 PM',
+         data: { subject: 'Mathematics', dueDate: '2024-01-15T23:59:00Z' }
+       },
+       {
+         id: 'class-1',
+         type: 'class',
+         title: 'Year 10 Mathematics',
+         subtitle: 'Next: Today, 2:00 PM',
+         data: { year: 10, subject: 'Mathematics', nextClass: '2024-01-14T14:00:00Z' }
+       },
+       {
+         id: 'subject-1',
+         type: 'subject',
+         title: 'English Literature',
+         subtitle: '4 assignments pending',
+         data: { code: 'ENG10', assignments: 4 }
+       },
+       {
+         id: 'assessment-1',
+         type: 'assessment',
+         title: 'Chemistry Test',
+         subtitle: 'Scheduled: Next Friday',
+         data: { subject: 'Chemistry', date: '2024-01-19T09:00:00Z' }
+       },
+       {
+         id: 'timetable-1',
+         type: 'timetable',
+         title: 'Today\'s Schedule',
+         subtitle: '6 classes scheduled',
+         data: { date: '2024-01-14', classCount: 6 }
+       }
+     ];
+
+     // Filter by query
+     if (!query) return mockSuggestions.slice(0, 5);
+     
+     return mockSuggestions.filter(s => 
+       s.title.toLowerCase().includes(query.toLowerCase()) ||
+       s.subtitle.toLowerCase().includes(query.toLowerCase())
+     ).slice(0, 5);
+   }
+
+   private getMentionIcon(type: string): string {
+     const icons = {
+       assignment: '📝',
+       class: '🎓',
+       subject: '📚',
+       assessment: '📊',
+       timetable: '📅',
+       default: '🔗'
+     };
+     return icons[type as keyof typeof icons] || icons.default;
+   }
+
+   private positionMentionDropdown(dropdown: HTMLElement, textNode: Node, atIndex: number) {
+     // Create a temporary range to get cursor position
+     const range = document.createRange();
+     range.setStart(textNode, atIndex);
+     range.setEnd(textNode, atIndex + 1);
+     
+     const rect = range.getBoundingClientRect();
+     const editorRect = this.element.getBoundingClientRect();
+     
+     // Position below cursor
+     dropdown.style.left = `${rect.left}px`;
+     dropdown.style.top = `${rect.bottom + 5}px`;
+     
+     // Adjust if dropdown would go off-screen
+     const dropdownRect = dropdown.getBoundingClientRect();
+     if (dropdownRect.right > window.innerWidth) {
+       dropdown.style.left = `${window.innerWidth - dropdownRect.width - 10}px`;
+     }
+     if (dropdownRect.bottom > window.innerHeight) {
+       dropdown.style.top = `${rect.top - dropdownRect.height - 5}px`;
+     }
+   }
+
+   private setupMentionKeyboardHandling(dropdown: HTMLElement, textNode: Node, atIndex: number) {
+     const items = dropdown.querySelectorAll('.mention-item');
+     let selectedIndex = 0;
+
+     const keyHandler = (e: KeyboardEvent) => {
+       switch (e.key) {
+         case 'ArrowDown':
+           e.preventDefault();
+           selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+           this.updateMentionSelection(items, selectedIndex);
+           break;
+         case 'ArrowUp':
+           e.preventDefault();
+           selectedIndex = Math.max(selectedIndex - 1, 0);
+           this.updateMentionSelection(items, selectedIndex);
+           break;
+         case 'Enter':
+         case 'Tab':
+           e.preventDefault();
+           const selectedItem = items[selectedIndex] as HTMLElement;
+           if (selectedItem) selectedItem.click();
+           break;
+         case 'Escape':
+           e.preventDefault();
+           this.removeMentionDropdown();
+           break;
+       }
+     };
+
+     document.addEventListener('keydown', keyHandler);
+     
+     // Store handler for cleanup
+     this.currentMentionKeyHandler = keyHandler;
+   }
+
+   private updateMentionSelection(items: NodeListOf<Element>, selectedIndex: number) {
+     items.forEach((item, index) => {
+       const htmlItem = item as HTMLElement;
+       if (index === selectedIndex) {
+         htmlItem.classList.add('selected');
+         htmlItem.style.backgroundColor = '#f8fafc';
+       } else {
+         htmlItem.classList.remove('selected');
+         htmlItem.style.backgroundColor = '';
+       }
+     });
+   }
+
+   private insertMention(textNode: Node, atIndex: number, suggestion: any) {
+     // Remove the @ and query text
+     const text = textNode.textContent || '';
+     const afterAt = text.substring(atIndex);
+     const spaceIndex = afterAt.indexOf(' ');
+     const endIndex = spaceIndex === -1 ? text.length : atIndex + spaceIndex;
+     
+     // Create mention element
+     const mention = document.createElement('span');
+     mention.className = 'seqta-mention';
+     mention.contentEditable = 'false';
+     mention.dataset.mentionId = suggestion.id;
+     mention.dataset.mentionType = suggestion.type;
+     mention.dataset.mentionData = JSON.stringify(suggestion.data);
+     
+     mention.style.cssText = `
+       display: inline-block;
+       background: var(--accent-color, #3b82f6);
+       color: white;
+       padding: 0.125rem 0.5rem;
+       border-radius: 0.375rem;
+       font-size: 0.875rem;
+       font-weight: 500;
+       margin: 0 0.125rem;
+       cursor: pointer;
+     `;
+     
+     mention.innerHTML = `${this.getMentionIcon(suggestion.type)} ${suggestion.title}`;
+     
+     // Add click handler for editing/viewing
+     mention.onclick = () => {
+       this.handleMentionClick(mention, suggestion);
+     };
+
+     // Replace text with mention
+     const range = document.createRange();
+     range.setStart(textNode, atIndex);
+     range.setEnd(textNode, endIndex);
+     range.deleteContents();
+     range.insertNode(mention);
+     
+     // Add space after mention
+     const space = document.createTextNode(' ');
+     range.setStartAfter(mention);
+     range.insertNode(space);
+     range.setStartAfter(space);
+     range.collapse(true);
+     
+     // Update selection
+     const selection = window.getSelection();
+     if (selection) {
+       selection.removeAllRanges();
+       selection.addRange(range);
+     }
+
+     this.removeMentionDropdown();
+     this.triggerChange();
+   }
+
+   private handleMentionClick(mention: HTMLElement, suggestion: any) {
+     // Show mention details or update data
+     const actions = ['View Details', 'Update Data', 'Remove Mention'];
+     const action = prompt(`${suggestion.title}\n\n1. ${actions[0]}\n2. ${actions[1]}\n3. ${actions[2]}\n\nEnter number (1-3):`);
+     
+     switch (action) {
+       case '1':
+         this.showMentionDetails(suggestion);
+         break;
+       case '2':
+         this.updateMentionData(mention, suggestion);
+         break;
+       case '3':
+         if (confirm('Remove this mention?')) {
+           mention.parentNode?.removeChild(mention);
+           this.triggerChange();
+         }
+         break;
+     }
+   }
+
+   private showMentionDetails(suggestion: any) {
+     alert(`${suggestion.title}\n\nType: ${suggestion.type}\nDetails: ${suggestion.subtitle}\n\nData: ${JSON.stringify(suggestion.data, null, 2)}`);
+   }
+
+   private updateMentionData(mention: HTMLElement, suggestion: any) {
+     // This would fetch fresh data from SEQTA
+     console.log('Updating mention data for:', suggestion.id);
+     // For now, just show that it would update
+     mention.style.opacity = '0.7';
+     setTimeout(() => {
+       mention.style.opacity = '1';
+       mention.title = 'Updated: ' + new Date().toLocaleTimeString();
+     }, 1000);
+   }
+
+   private removeMentionDropdown() {
+     if (this.currentMentionDropdown) {
+       document.body.removeChild(this.currentMentionDropdown);
+       this.currentMentionDropdown = null;
+     }
+     
+     if (this.currentMentionKeyHandler) {
+       document.removeEventListener('keydown', this.currentMentionKeyHandler);
+       this.currentMentionKeyHandler = null;
+     }
+   }
+
+   // Add properties to track mention state
+   private currentMentionDropdown: HTMLElement | null = null;
+   private currentMentionKeyHandler: ((e: KeyboardEvent) => void) | null = null;
+
   public getActiveFormats(): Set<string> {
     const activeFormats = new Set<string>();
     
@@ -1450,6 +1805,14 @@ export class EditorCore {
       case 'a':
         type = 'link';
         break;
+      case 'span':
+        // Check if it's a SEQTA mention
+        if (element.classList.contains('seqta-mention')) {
+          type = 'seqta-mention';
+        } else {
+          type = 'text';
+        }
+        break;
     }
     
     // Handle list items specially
@@ -1488,6 +1851,20 @@ export class EditorCore {
           href: element.getAttribute('href') || '',
           target: element.getAttribute('target') || '_blank',
           rel: element.getAttribute('rel') || 'noopener noreferrer'
+        },
+        text: element.textContent || '',
+        children: []
+      };
+    }
+    
+    // Handle SEQTA mentions specially
+    if (tagName === 'span' && element.classList.contains('seqta-mention')) {
+      return {
+        type: 'seqta-mention' as EditorNodeType,
+        attributes: {
+          mentionId: element.dataset.mentionId || '',
+          mentionType: element.dataset.mentionType || '',
+          mentionData: element.dataset.mentionData || '{}'
         },
         text: element.textContent || '',
         children: []
@@ -1537,6 +1914,12 @@ export class EditorCore {
           const target = node.attributes?.target || '_blank';
           const rel = node.attributes?.rel || 'noopener noreferrer';
           return `<a href="${href}" target="${target}" rel="${rel}" style="color: var(--accent-color, #3b82f6); text-decoration: underline; cursor: pointer;">${node.text || href}</a>`;
+        case 'seqta-mention':
+          const mentionId = node.attributes?.mentionId || '';
+          const mentionType = node.attributes?.mentionType || '';
+          const mentionData = node.attributes?.mentionData || '{}';
+          const icon = this.getMentionIcon(mentionType);
+          return `<span class="seqta-mention" data-mention-id="${mentionId}" data-mention-type="${mentionType}" data-mention-data="${mentionData}" style="display: inline-block; background: var(--accent-color, #3b82f6); color: white; padding: 0.125rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; margin: 0 0.125rem; cursor: pointer;" contenteditable="false">${icon} ${node.text}</span>`;
         default:
           return `<p>${node.text || '<br>'}</p>`;
       }
