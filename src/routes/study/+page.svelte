@@ -470,17 +470,17 @@
   });
 </script>
 
-<div class="container px-6 py-7 mx-auto">
+<div class="container px-4 sm:px-6 py-4 sm:py-7 mx-auto">
   <!-- Header -->
   <div class="mb-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Study</h1>
-        <p class="mt-1 text-slate-600 dark:text-slate-300">Plan, track, and focus on your upcoming work.</p>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Study</h1>
+        <p class="mt-1 text-sm sm:text-base text-slate-600 dark:text-slate-300">Plan, track, and focus on your upcoming work.</p>
       </div>
       <div class="flex items-center gap-3">
         <button
-          class="px-4 py-2 rounded-lg border border-slate-300 text-slate-900 dark:text-white dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-slate-300 text-slate-900 dark:text-white dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring text-sm sm:text-base"
           on:click={() => { /* timer */ }}
           aria-label="Open Study Timer">
           Open Timer
@@ -496,32 +496,36 @@
   </div>
 
   <!-- Main Grid: Left (Tab Content) | Right (Upcoming Assessments) -->
-  <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <!-- Left Column: Tabbed content -->
-    <div class="xl:col-span-2 space-y-6">
+    <div class="lg:col-span-2 space-y-6">
       {#if activeTab === 'tasks'}
         <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
           <!-- Tasks Controls -->
-          <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div class="flex flex-wrap gap-2">
-              <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='all'}>All</button>
-              <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='today'}>Today</button>
-              <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='week'}>This Week</button>
-              <button class="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='completed'}>Completed</button>
+          <div class="mb-4 flex flex-col gap-3">
+            <!-- Filter buttons -->
+            <div class="flex flex-wrap gap-2 justify-center sm:justify-start">
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='all'}>All</button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='today'}>Today</button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='week'}>This Week</button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='completed'}>Completed</button>
             </div>
-            <div class="flex items-center gap-3">
-              <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={addTodo} aria-label="Add new task">New Task</button>
-              <div class="relative">
-                <input class="pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Search tasks..." bind:value={query} />
-                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <Icon src={MagnifyingGlass} class="w-5 h-5" />
-                </span>
+            <!-- Controls row -->
+            <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+              <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring text-sm sm:text-base" on:click={addTodo} aria-label="Add new task">+ New Task</button>
+              <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <div class="relative flex-1 sm:flex-initial">
+                  <input class="w-full pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-sm" placeholder="Search tasks..." bind:value={query} />
+                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                    <Icon src={MagnifyingGlass} class="w-4 h-4" />
+                  </span>
+                </div>
+                <select class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={sortBy}>
+                  <option value="due">Due Date</option>
+                  <option value="priority">Priority</option>
+                  <option value="updated">Updated</option>
+                </select>
               </div>
-              <select class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={sortBy}>
-                <option value="due">Sort: Due Date</option>
-                <option value="priority">Sort: Priority</option>
-                <option value="updated">Sort: Updated</option>
-              </select>
             </div>
           </div>
 
@@ -543,12 +547,12 @@
                   <div class="flex items-start gap-3">
                     <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
                     <div class="flex-1 min-w-0">
-                      <div class="flex items-center justify-between gap-2">
-                        <div class="truncate text-slate-900 dark:text-white font-medium">{todo.title || 'Untitled task'}</div>
-                        <div class="flex items-center gap-2">
-                          <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
-                          <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => editMode[todo.id]=true}>Edit</button>
-                          <button class="px-2 py-1 text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Delete</button>
+                      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div class="truncate text-slate-900 dark:text-white font-medium pr-2">{todo.title || 'Untitled task'}</div>
+                        <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                          <span class="text-xs px-1.5 py-0.5 sm:px-2 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
+                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => editMode[todo.id]=true}>Edit</button>
+                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Del</button>
                         </div>
                       </div>
                       <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
@@ -584,9 +588,9 @@
                       {#if (todo.subtasks ?? []).length}
                         <div class="mt-2 text-xs text-slate-500 dark:text-slate-400">{(todo.subtasks ?? []).filter(s=>s.completed).length}/{todo.subtasks?.length} subtasks done</div>
                       {/if}
-                      <div class="mt-3 flex items-center gap-2">
-                        <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>Mark all subtasks done</button>
-                        <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => duplicateTodo(todo.id)}>Duplicate</button>
+                      <div class="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <button class="px-2 py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>✓ All subtasks</button>
+                        <button class="px-2 py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => duplicateTodo(todo.id)}>Duplicate</button>
                       </div>
                     </div>
                   </div>
@@ -599,7 +603,7 @@
                         <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-base font-medium" placeholder="Task title" bind:value={todo.title} />
                         <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 {todo.priority==='high' ? 'accent-bg text-white border-transparent' : ''}">{todo.priority ?? 'medium'}</span>
                       </div>
-                      <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div class="mt-2 grid grid-cols-1 gap-2">
                         <div class="relative">
                           <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} on:input={(e) => { subjectQuery[todo.id] = (e.target as HTMLInputElement).value; showSubjectDropdown[todo.id] = true; }} on:focus={() => showSubjectDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showSubjectDropdown[todo.id]=false, 150)} />
                           {#if getSubjectCodeFromLabel(todo.related_subject)}
@@ -652,9 +656,9 @@
                             </div>
                           {/if}
                         </div>
-                        <div class="flex gap-3">
-                          <input type="date" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_date} />
-                          <input type="time" class="px-3 py-2 flex-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" bind:value={todo.due_time} />
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input type="date" class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={todo.due_date} />
+                          <input type="time" class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={todo.due_time} />
                         </div>
                         <!-- Live preview for due date/time -->
                         {#if todo.due_date || todo.due_time}
@@ -667,10 +671,10 @@
                             {/if}
                           </div>
                         {/if}
-                        <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:input={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); }} />
-                        <div class="flex items-center gap-2">
+                        <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:input={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); }} />
+                        <div class="flex flex-wrap items-center gap-1">
                           {#each todo.tags ?? [] as tag}
-                            <span class="text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{tag}</span>
+                            <span class="text-xs px-1.5 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{tag}</span>
                           {/each}
                         </div>
                       </div>
@@ -679,11 +683,11 @@
                       <div class="mt-3">
                         <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Description" bind:value={todo.description}></textarea>
                         <div class="mt-3 space-y-2">
-                          <div class="flex items-center justify-between">
+                          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                             <h3 class="text-sm font-medium text-slate-900 dark:text-white">Subtasks</h3>
-                            <div class="flex items-center gap-2">
-                              <button class="px-3 py-1.5 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>Add subtask</button>
-                              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>Mark all done</button>
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>+ Add</button>
+                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>✓ All</button>
                             </div>
                           </div>
                           {#if (todo.subtasks ?? []).length === 0}
@@ -691,9 +695,9 @@
                           {:else}
                             <div class="space-y-2">
                               {#each todo.subtasks ?? [] as sub (sub.id)}
-                                <div class="flex items-center gap-3">
-                                  <input type="checkbox" checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle subtask" />
-                                  <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); }} placeholder="Subtask title" />
+                                <div class="flex items-center gap-2">
+                                  <input type="checkbox" checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 flex-shrink-0 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle subtask" />
+                                  <input class="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); }} placeholder="Subtask title" />
                                 </div>
                               {/each}
                             </div>
@@ -701,8 +705,8 @@
                         </div>
                       </div>
 
-                      <div class="mt-4 flex items-center justify-end gap-2">
-                        <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => { editMode[todo.id] = false; saveTodos(); }}>Save Task</button>
+                      <div class="mt-4 flex items-center justify-center sm:justify-end gap-2">
+                        <button class="px-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring w-full sm:w-auto" on:click={() => { editMode[todo.id] = false; saveTodos(); }}>Save Task</button>
                       </div>
                     </div>
                   </div>
@@ -727,8 +731,8 @@
     <div class="space-y-6">
       <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Upcoming Assessments</h2>
-          <span class="text-sm text-slate-500 dark:text-slate-400">{upcomingAssessments.length}</span>
+          <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">Upcoming Assessments</h2>
+          <span class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{upcomingAssessments.length}</span>
         </div>
         {#if loadingAssessments}
           <div class="flex items-center justify-center py-6">
@@ -737,23 +741,25 @@
         {:else}
           <div class="space-y-3">
             {#each upcomingAssessments as a (a.id)}
-              <div class="relative flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]">
+              <div class="relative flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]">
                 <!-- Left accent bar -->
                 <span class="absolute left-0 top-0 h-full w-1 rounded-l-lg" style="background-color: {a.colour || subjectColours[a.subject?.split(' — ')[0] || ''] || '#8e8e8e'}"></span>
-                <span class="mt-1 ml-1 inline-block w-2 h-2 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="truncate text-slate-900 dark:text-white font-medium">{a.title}</div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}</div>
-                  </div>
-                  <div class="mt-1 flex items-center gap-2">
-                    <!-- Subject tinted chip -->
-                    {#if a.subject}
-                      <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(a.subject.split(' — ')[0] || a.subject)}>{a.subject}</span>
-                    {/if}
+                <div class="flex items-start gap-2 flex-1">
+                  <span class="mt-1 ml-1 inline-block w-2 h-2 flex-shrink-0 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                      <div class="truncate text-slate-900 dark:text-white font-medium text-sm">{a.title}</div>
+                      <div class="text-xs text-slate-500 dark:text-slate-400">{a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}</div>
+                    </div>
+                    <div class="mt-1 flex items-center gap-2">
+                      <!-- Subject tinted chip -->
+                      {#if a.subject}
+                        <span class="px-1.5 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(a.subject.split(' — ')[0] || a.subject)}>{a.subject}</span>
+                      {/if}
+                    </div>
                   </div>
                 </div>
-                <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Open</button>
+                <button class="px-2 py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring self-start sm:self-center">Open</button>
               </div>
             {/each}
             {#if upcomingAssessments.length === 0}
