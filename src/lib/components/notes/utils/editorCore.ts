@@ -395,6 +395,8 @@ export class EditorCore {
         return this.insertTable(2, 2); // Default 2x2 table
       case 'insert-image':
         return this.insertImage();
+      case 'insert-link':
+        return this.insertLink();
       default:
         return false;
     }
@@ -839,10 +841,139 @@ export class EditorCore {
             container.parentNode.removeChild(container);
             this.triggerChange();
           }
-        }, 100);
-        break;
-    }
-  }
+                 }, 100);
+         break;
+     }
+   }
+
+   public insertLink(): boolean {
+     const selection = window.getSelection();
+     if (!selection || selection.rangeCount === 0) return false;
+
+     const range = selection.getRangeAt(0);
+     const selectedText = range.toString().trim();
+     
+     // Check if we're already in a link
+     const existingLink = this.findParentLink(range.startContainer);
+     
+     if (existingLink) {
+       // Edit existing link
+       this.editLink(existingLink);
+     } else {
+       // Create new link
+       this.createLink(selectedText, range);
+     }
+     
+     return true;
+   }
+
+   private findParentLink(node: Node): HTMLAnchorElement | null {
+     let current = node;
+     
+     while (current && current !== this.element) {
+       if (current.nodeType === Node.ELEMENT_NODE) {
+         const element = current as HTMLElement;
+         if (element.tagName === 'A') {
+           return element as HTMLAnchorElement;
+         }
+       }
+       const parentNode = current.parentNode;
+       if (!parentNode) break;
+       current = parentNode;
+     }
+     
+     return null;
+   }
+
+   private createLink(selectedText: string, range: Range) {
+     // Prompt for URL
+     const url = prompt('Enter the URL:', selectedText.startsWith('http') ? selectedText : 'https://');
+     if (!url) return;
+
+     // Prompt for link text if no text is selected
+     let linkText = selectedText;
+     if (!linkText) {
+       linkText = prompt('Enter the link text:', url) || url;
+     }
+
+     // Validate URL
+     if (!this.isValidUrl(url)) {
+       alert('Please enter a valid URL');
+       return;
+     }
+
+     // Create link element
+     const link = document.createElement('a');
+     link.href = url;
+     link.textContent = linkText;
+     link.style.color = 'var(--accent-color, #3b82f6)';
+     link.style.textDecoration = 'underline';
+     link.style.cursor = 'pointer';
+     link.target = '_blank';
+     link.rel = 'noopener noreferrer';
+     
+     // Add click handler for link editing
+     link.onclick = (e) => {
+       e.preventDefault();
+       this.editLink(link);
+     };
+
+     if (range.collapsed) {
+       // No selection, insert link at cursor
+       range.insertNode(link);
+       range.setStartAfter(link);
+       range.setEndAfter(link);
+     } else {
+       // Replace selection with link
+       range.deleteContents();
+       range.insertNode(link);
+       range.setStartAfter(link);
+       range.setEndAfter(link);
+     }
+
+     // Update selection
+     const newSelection = window.getSelection();
+     if (newSelection) {
+       newSelection.removeAllRanges();
+       newSelection.addRange(range);
+     }
+
+     this.triggerChange();
+   }
+
+   private editLink(link: HTMLAnchorElement) {
+     const currentUrl = link.href;
+     const currentText = link.textContent || '';
+     
+     const newUrl = prompt('Edit URL:', currentUrl);
+     if (newUrl === null) return; // User cancelled
+     
+     const newText = prompt('Edit link text:', currentText);
+     if (newText === null) return; // User cancelled
+
+     if (newUrl && this.isValidUrl(newUrl)) {
+       link.href = newUrl;
+       link.textContent = newText || newUrl;
+       this.triggerChange();
+     } else if (newUrl) {
+       alert('Please enter a valid URL');
+     }
+   }
+
+   private isValidUrl(url: string): boolean {
+     try {
+       new URL(url);
+       return true;
+     } catch {
+       // Try with https:// prefix
+       try {
+         new URL('https://' + url);
+         return true;
+       } catch {
+         return false;
+       }
+     }
+   }
 
   public getActiveFormats(): Set<string> {
     const activeFormats = new Set<string>();
@@ -1316,6 +1447,9 @@ export class EditorCore {
       case 'img':
         type = 'image';
         break;
+      case 'a':
+        type = 'link';
+        break;
     }
     
     // Handle list items specially
@@ -1342,6 +1476,20 @@ export class EditorCore {
           alt: element.getAttribute('alt') || ''
         },
         text: '',
+        children: []
+      };
+    }
+    
+    // Handle links specially
+    if (tagName === 'a') {
+      return {
+        type: 'link' as EditorNodeType,
+        attributes: {
+          href: element.getAttribute('href') || '',
+          target: element.getAttribute('target') || '_blank',
+          rel: element.getAttribute('rel') || 'noopener noreferrer'
+        },
+        text: element.textContent || '',
         children: []
       };
     }
@@ -1384,6 +1532,11 @@ export class EditorCore {
           const src = node.attributes?.src || '';
           const alt = node.attributes?.alt || '';
           return `<div class="editor-image-container" style="margin: 1rem 0; text-align: center;"><img src="${src}" alt="${alt}" style="max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); cursor: pointer;" /></div>`;
+        case 'link':
+          const href = node.attributes?.href || '';
+          const target = node.attributes?.target || '_blank';
+          const rel = node.attributes?.rel || 'noopener noreferrer';
+          return `<a href="${href}" target="${target}" rel="${rel}" style="color: var(--accent-color, #3b82f6); text-decoration: underline; cursor: pointer;">${node.text || href}</a>`;
         default:
           return `<p>${node.text || '<br>'}</p>`;
       }

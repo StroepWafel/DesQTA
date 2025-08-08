@@ -123,7 +123,8 @@
   // Media commands
   function insertLink() {
     if (!editor || readonly) return;
-    // TODO: Implement link insertion
+    editor.executeCommand('insert-link');
+    updateToolbarState();
   }
 
   function insertImage() {
