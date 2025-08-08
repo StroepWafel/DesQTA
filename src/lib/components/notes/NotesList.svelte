@@ -255,7 +255,7 @@
       <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
       <div class="flex items-center space-x-2">
         <button
-          class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 accent-ring hover:shadow-sm"
           on:click={() => showSearchModal = true}
           title="Search notes"
           aria-label="Search notes"
@@ -263,7 +263,7 @@
           <Icon src={MagnifyingGlass} class="w-4 h-4" />
         </button>
         <button
-          class="p-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          class="p-2 rounded-lg accent-bg text-white transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 accent-ring hover:shadow-md"
           on:click={createNewNote}
           title="Create new note"
           aria-label="Create new note"
@@ -278,7 +278,7 @@
       <input
         type="text"
         placeholder="Search notes..."
-        class="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring"
+        class="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring transition-all duration-300 ease-out focus:scale-[1.01] focus:shadow-sm"
         bind:value={searchQuery}
       />
       <Icon src={MagnifyingGlass} class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -327,7 +327,7 @@
       <div class="space-y-1">
         <!-- All Notes -->
         <button
-          class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-200 {selectedFolder === 'all' ? 'accent-bg text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}"
+          class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.01] {selectedFolder === 'all' ? 'bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700/50 shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-transparent'}"
           on:click={() => selectedFolder = 'all'}
         >
           <Icon src={FolderOpen} class="w-4 h-4 mr-2 opacity-60" />
@@ -336,8 +336,11 @@
         </button>
 
                  <!-- Individual Folders -->
-         {#each folders as folder (folder.id)}
-           <div class="folder-menu-container relative">
+         {#each folders as folder, index (folder.id)}
+           <div 
+             class="folder-menu-container relative"
+             in:fly={{ y: 10, duration: 200, delay: index * 20, easing: quintOut }}
+           >
              {#if editingFolder?.id === folder.id}
                <!-- Editing Mode -->
                <input
@@ -355,7 +358,7 @@
                <!-- Normal Mode -->
                <div class="group">
                  <button
-                   class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-200 {selectedFolder === folder.id ? 'accent-bg text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}"
+                   class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.01] {selectedFolder === folder.id ? 'bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700/50 shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-transparent'}"
                    on:click={() => selectedFolder = folder.id}
                  >
                    <span class="text-lg mr-2">{folder.icon || '📁'}</span>
@@ -450,16 +453,16 @@
         {#each filteredNotes as note (note.id)}
           <div class="note-menu-container relative">
             <div
-              class="note-item p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-700 group {selectedNoteId === note.id ? 'accent-bg text-white' : 'text-slate-900 dark:text-white'}"
+              class="note-item p-3 rounded-lg cursor-pointer transition-all duration-300 ease-out hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-[1.01] hover:shadow-sm group {selectedNoteId === note.id ? 'bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-700/50 shadow-sm' : 'text-slate-900 dark:text-white border border-transparent'}"
               on:click={() => selectNote(note)}
               on:keydown={(e) => e.key === 'Enter' && selectNote(note)}
               role="button"
               tabindex="0"
-              in:fly={{ y: 20, duration: 300, easing: quintOut }}
+              in:fly={{ y: 20, duration: 300, delay: 30, easing: quintOut }}
             >
               <!-- Note Header -->
               <div class="flex items-start justify-between mb-2">
-                <h3 class="font-medium text-sm line-clamp-1 flex-1 pr-2">
+                <h3 class="font-medium text-sm line-clamp-1 flex-1 pr-2 {selectedNoteId === note.id ? 'text-accent-700 dark:text-accent-300' : 'text-slate-900 dark:text-white'}">
                   {note.title || 'Untitled Note'}
                 </h3>
                 <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -474,12 +477,12 @@
               </div>
 
             <!-- Note Preview -->
-            <p class="text-xs {selectedNoteId === note.id ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'} line-clamp-2 mb-2">
+            <p class="text-xs {selectedNoteId === note.id ? 'text-accent-600 dark:text-accent-400' : 'text-slate-500 dark:text-slate-400'} line-clamp-2 mb-2">
               {getPreviewText(note)}
             </p>
 
             <!-- Note Meta -->
-            <div class="flex items-center justify-between text-xs {selectedNoteId === note.id ? 'text-white/60' : 'text-slate-400 dark:text-slate-500'}">
+            <div class="flex items-center justify-between text-xs {selectedNoteId === note.id ? 'text-accent-500 dark:text-accent-500' : 'text-slate-400 dark:text-slate-500'}">
               <div class="flex items-center space-x-2">
                 {#if note.folder_path.length > 0 && note.folder_path[0] !== 'default'}
                   <span class="inline-flex items-center">
