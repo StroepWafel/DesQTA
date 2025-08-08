@@ -394,6 +394,39 @@ export class EditorCore {
     return true;
   }
 
+  public getActiveFormats(): Set<string> {
+    const activeFormats = new Set<string>();
+    
+    if (document.queryCommandState('bold')) activeFormats.add('bold');
+    if (document.queryCommandState('italic')) activeFormats.add('italic');
+    if (document.queryCommandState('underline')) activeFormats.add('underline');
+    if (document.queryCommandState('strikeThrough')) activeFormats.add('strikethrough');
+    
+    return activeFormats;
+  }
+
+  public getCurrentBlockType(): string {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return 'paragraph';
+
+    const range = selection.getRangeAt(0);
+    const currentElement = this.getBlockElement(range.startContainer);
+    
+    if (!currentElement) return 'paragraph';
+
+    switch (currentElement.tagName.toLowerCase()) {
+      case 'h1': return 'heading-1';
+      case 'h2': return 'heading-2';
+      case 'h3': return 'heading-3';
+      case 'h4': return 'heading-4';
+      case 'h5': return 'heading-5';
+      case 'h6': return 'heading-6';
+      case 'blockquote': return 'blockquote';
+      case 'pre': return 'codeblock';
+      default: return 'paragraph';
+    }
+  }
+
   public destroy() {
     // Remove event listeners
     this.element.removeEventListener('input', this.handleInput.bind(this));
