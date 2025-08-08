@@ -271,6 +271,29 @@
     showPreviewModal = false;
     selectedPreview = null;
   }
+
+  function normalizeSeqtaUrlInput(inputValue: string): string {
+    let value = (inputValue ?? '').trim();
+
+    // If multiple protocols were prepended (e.g., "https://https://..." or "https://http://..."),
+    // collapse to the last protocol the user entered
+    const multiProto = value.match(/^(?:https?:\/\/)*(https?:\/\/)(.*)$/i);
+    if (multiProto) {
+      return multiProto[1] + multiProto[2];
+    }
+
+    // If user is in the middle of typing a protocol, avoid auto-prepending
+    if (/^https?:?$/i.test(value) || /^https?:\/?$/i.test(value) || /^https?:\/\/?>?$/i.test(value) || /^http/i.test(value)) {
+      return value;
+    }
+
+    // If no protocol provided, default to https://
+    if (value && !/^https?:\/\//i.test(value)) {
+      value = 'https://' + value;
+    }
+
+    return value;
+  }
 </script>
 
 <div class="flex flex-col h-full relative {isMobile ? 'overflow-y-auto' : 'overflow-hidden'} bg-slate-100 dark:bg-slate-950">
@@ -662,12 +685,12 @@
                           type="text"
                           bind:value={seqtaUrl}
                           oninput={(e) => {
-                            let url = (e.target as HTMLInputElement).value;
-                            // Add https:// if no protocol is specified
-                            if (url && !url.match(/^https?:\/\//)) {
-                              url = 'https://' + url;
+                            const el = e.target as HTMLInputElement;
+                            const normalized = normalizeSeqtaUrlInput(el.value);
+                            if (el.value !== normalized) {
+                              el.value = normalized;
                             }
-                            onUrlChange(url);
+                            onUrlChange(normalized);
                           }}
                           placeholder="school.seqta.com.au"
                           class="w-full py-4 px-6 bg-white/10 dark:bg-slate-800/10 backdrop-blur-xl border border-white/20 dark:border-slate-700/20 rounded-2xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-slate-800/20"
