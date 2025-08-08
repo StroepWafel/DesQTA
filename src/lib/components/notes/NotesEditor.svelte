@@ -3,6 +3,7 @@
   import { EditorCore } from './utils/editorCore';
   import EditorToolbar from './EditorToolbar.svelte';
   import EditorStatusBar from './EditorStatusBar.svelte';
+  import ImageControlModal from './ImageControlModal.svelte';
   import type { EditorDocument, EditorNode } from './types/editor';
 
   // Props
@@ -30,6 +31,10 @@
   let wordCount = 0;
   let characterCount = 0;
   let lastNoteId: string | undefined = undefined;
+  
+  // Image control modal state
+  let showImageModal = false;
+  let currentImageData: { element: HTMLElement; img: HTMLImageElement } | null = null;
 
   onMount(() => {
     // Initialize the editor core
@@ -39,6 +44,7 @@
       onChange: handleContentChange,
       onFocus: handleFocus,
       onBlur: handleBlur,
+      onImageClick: showImageControlModal,
     });
 
     // Load initial content
@@ -113,6 +119,46 @@
   export function executeCommand(command: string, value?: any) {
     editorCore?.executeCommand(command, value);
   }
+
+  // Image modal handlers
+  function showImageControlModal(element: HTMLElement, img: HTMLImageElement) {
+    currentImageData = { element, img };
+    showImageModal = true;
+  }
+
+  function handleCopyAlt() {
+    if (currentImageData?.img) {
+      navigator.clipboard.writeText(currentImageData.img.alt || 'Image');
+    }
+  }
+
+  function handleRemoveImage() {
+    if (currentImageData?.element) {
+      currentImageData.element.parentNode?.removeChild(currentImageData.element);
+      editorCore?.triggerChange();
+    }
+    currentImageData = null;
+  }
+
+  function handleReplaceImage() {
+    if (currentImageData?.element && editorCore) {
+      // Trigger new image selection
+      editorCore.insertImage();
+      // Remove old image after new one is selected
+      setTimeout(() => {
+        if (currentImageData?.element?.parentNode) {
+          currentImageData.element.parentNode.removeChild(currentImageData.element);
+          editorCore?.triggerChange();
+        }
+      }, 100);
+    }
+    currentImageData = null;
+  }
+
+  function closeImageModal() {
+    showImageModal = false;
+    currentImageData = null;
+  }
 </script>
 
 <div 
@@ -151,6 +197,17 @@
     />
   </div>
 </div>
+
+<!-- Image Control Modal -->
+<ImageControlModal
+  bind:isOpen={showImageModal}
+  imageAlt={currentImageData?.img?.alt || ''}
+  imageSrc={currentImageData?.img?.src || ''}
+  on:copyAlt={handleCopyAlt}
+  on:removeImage={handleRemoveImage}
+  on:replaceImage={handleReplaceImage}
+  on:close={closeImageModal}
+/>
 
 <style>
   .notes-editor {
@@ -230,5 +287,34 @@
   .editor-content :global(h5:first-child),
   .editor-content :global(h6:first-child) {
     margin-top: 0;
+  }
+
+  /* Resizable image styles */
+  .editor-content :global(.editor-image-container) {
+    user-select: none;
+  }
+
+  .editor-content :global(.resizable-image-wrapper) {
+    transition: all 0.2s ease;
+  }
+
+  .editor-content :global(.resizable-image-wrapper:hover) {
+    transform: scale(1.01);
+  }
+
+  .editor-content :global(.resize-handle) {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.9));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .editor-content :global(.resize-handle:hover) {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 1), rgba(37, 99, 235, 1));
+    transform: scale(1.1);
+  }
+
+  .editor-content :global(.resize-handle:active) {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 1), rgba(29, 78, 216, 1));
+    transform: scale(0.95);
   }
 </style> 

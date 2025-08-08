@@ -331,6 +331,7 @@ export class EditorCore {
     const html = this.renderNodesToHTML(content.nodes);
     this.element.innerHTML = html;
     this.reinitializeMentions();
+    this.makeExistingImagesResizable();
     this.triggerChange();
   }
 
@@ -811,28 +812,47 @@ export class EditorCore {
     
     if (!currentElement) return;
 
-    // Create image container
+    // Create image container with resizable wrapper
     const imageContainer = document.createElement('div');
     imageContainer.className = 'editor-image-container';
     imageContainer.style.margin = '1rem 0';
     imageContainer.style.textAlign = 'center';
+    imageContainer.style.position = 'relative';
+    imageContainer.style.display = 'inline-block';
+    imageContainer.style.maxWidth = '100%';
+    
+    // Create resizable wrapper
+    const resizableWrapper = document.createElement('div');
+    resizableWrapper.className = 'resizable-image-wrapper';
+    resizableWrapper.style.position = 'relative';
+    resizableWrapper.style.display = 'inline-block';
+    resizableWrapper.style.width = 'auto';
+    resizableWrapper.style.minWidth = '100px';
+    resizableWrapper.style.maxWidth = '100%';
     
     // Create image element
     const img = document.createElement('img');
     img.src = src;
     img.alt = alt;
-    img.style.maxWidth = '100%';
+    img.style.width = '100%';
     img.style.height = 'auto';
     img.style.borderRadius = '0.5rem';
     img.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
     img.style.cursor = 'pointer';
+    img.style.display = 'block';
+    img.style.transition = 'box-shadow 0.2s ease';
     
-    // Add click handler for image actions (future: edit, delete, etc.)
-    img.onclick = () => {
+    // Add click handler for image actions
+    img.onclick = (e) => {
+      e.stopPropagation();
       this.handleImageClick(imageContainer, img);
     };
 
-    imageContainer.appendChild(img);
+    // Create resize handles
+    this.createResizeHandles(resizableWrapper, img);
+
+    resizableWrapper.appendChild(img);
+    imageContainer.appendChild(resizableWrapper);
 
     // Insert after current element
     currentElement.parentNode?.insertBefore(imageContainer, currentElement.nextSibling);
@@ -848,35 +868,169 @@ export class EditorCore {
     this.triggerChange();
   }
 
-  private handleImageClick(container: HTMLElement, img: HTMLImageElement) {
-    // Simple implementation: show image actions
-    // In a production app, you might show a context menu or modal
-    const actions = ['Copy Alt Text', 'Remove Image', 'Replace Image'];
-    const action = prompt(`Image Actions:\n1. ${actions[0]}\n2. ${actions[1]}\n3. ${actions[2]}\n\nEnter number (1-3):`);
+  private createResizeHandles(wrapper: HTMLElement, img: HTMLImageElement) {
+    // Create resize handle (bottom-right corner)
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = 'resize-handle';
+    resizeHandle.style.position = 'absolute';
+    resizeHandle.style.bottom = '4px';
+    resizeHandle.style.right = '4px';
+    resizeHandle.style.width = '12px';
+    resizeHandle.style.height = '12px';
+    resizeHandle.style.backgroundColor = 'rgba(59, 130, 246, 0.8)'; // Blue
+    resizeHandle.style.borderRadius = '2px';
+    resizeHandle.style.cursor = 'nw-resize';
+    resizeHandle.style.opacity = '0';
+    resizeHandle.style.transition = 'opacity 0.2s ease';
+    resizeHandle.style.zIndex = '10';
     
-    switch (action) {
-      case '1':
-        navigator.clipboard.writeText(img.alt || 'Image');
-        break;
-      case '2':
-        if (confirm('Remove this image?')) {
-          container.parentNode?.removeChild(container);
-          this.triggerChange();
-        }
-        break;
-      case '3':
-        // Trigger new image selection
-        this.insertImage();
-        // Remove old image after new one is selected
-        setTimeout(() => {
-          if (container.parentNode) {
-            container.parentNode.removeChild(container);
+    // Show/hide handles on hover
+    wrapper.addEventListener('mouseenter', () => {
+      resizeHandle.style.opacity = '1';
+      img.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(59, 130, 246, 0.3)';
+    });
+    
+    wrapper.addEventListener('mouseleave', () => {
+      resizeHandle.style.opacity = '0';
+      img.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+    });
+
+    // Resize functionality
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    let originalWidth = 0;
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = wrapper.offsetWidth;
+      originalWidth = img.naturalWidth || startWidth;
+      
+      document.addEventListener('mousemove', handleResize);
+      document.addEventListener('mouseup', stopResize);
+      document.body.style.cursor = 'nw-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    const handleResize = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      const deltaX = e.clientX - startX;
+      let newWidth = startWidth + deltaX;
+      
+      // Apply constraints
+      const minWidth = 100;
+      const maxWidth = Math.min(originalWidth, this.element.offsetWidth - 40); // Leave some margin
+      
+      newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
+      
+      wrapper.style.width = `${newWidth}px`;
+      
+      // Update wrapper to maintain aspect ratio
+      wrapper.style.height = 'auto';
+    };
+
+    const stopResize = () => {
+      if (!isResizing) return;
+      isResizing = false;
+      
+      document.removeEventListener('mousemove', handleResize);
+      document.removeEventListener('mouseup', stopResize);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      
+      // Trigger change to save the new size
+      this.triggerChange();
+    };
+
+    wrapper.appendChild(resizeHandle);
+  }
+
+  private makeExistingImagesResizable() {
+    // Find all existing images that aren't already wrapped
+    const images = this.element.querySelectorAll('img:not(.resizable-image-wrapper img)');
+    
+    images.forEach((img) => {
+      const htmlImg = img as HTMLImageElement;
+      const parent = img.parentElement;
+      
+      if (!parent) return;
+      
+      // Skip if already wrapped
+      if (parent.classList.contains('resizable-image-wrapper')) return;
+      
+      // Create resizable wrapper
+      const resizableWrapper = document.createElement('div');
+      resizableWrapper.className = 'resizable-image-wrapper';
+      resizableWrapper.style.position = 'relative';
+      resizableWrapper.style.display = 'inline-block';
+      resizableWrapper.style.width = 'auto';
+      resizableWrapper.style.minWidth = '100px';
+      resizableWrapper.style.maxWidth = '100%';
+      
+      // Update image styles
+      htmlImg.style.width = '100%';
+      htmlImg.style.height = 'auto';
+      htmlImg.style.display = 'block';
+      htmlImg.style.transition = 'box-shadow 0.2s ease';
+      
+      // Wrap the image
+      parent.insertBefore(resizableWrapper, img);
+      resizableWrapper.appendChild(img);
+      
+      // Add click handler if not present
+      if (!htmlImg.onclick) {
+        htmlImg.onclick = (e) => {
+          e.stopPropagation();
+          // Find the image container (should be parent of resizable wrapper)
+          const container = resizableWrapper.parentElement;
+          if (container) {
+            this.handleImageClick(container, htmlImg);
+          }
+        };
+      }
+      
+      // Create resize handles
+      this.createResizeHandles(resizableWrapper, htmlImg);
+    });
+  }
+
+  private handleImageClick(container: HTMLElement, img: HTMLImageElement) {
+    // Use custom modal instead of browser prompts
+    if (this.options.onImageClick) {
+      this.options.onImageClick(container, img);
+    } else {
+      // Fallback to browser prompts if no custom handler provided
+      const actions = ['Copy Alt Text', 'Remove Image', 'Replace Image'];
+      const action = prompt(`Image Actions:\n1. ${actions[0]}\n2. ${actions[1]}\n3. ${actions[2]}\n\nEnter number (1-3):`);
+      
+      switch (action) {
+        case '1':
+          navigator.clipboard.writeText(img.alt || 'Image');
+          break;
+        case '2':
+          if (confirm('Remove this image?')) {
+            container.parentNode?.removeChild(container);
             this.triggerChange();
           }
-                 }, 100);
-         break;
-     }
-   }
+          break;
+        case '3':
+          // Trigger new image selection
+          this.insertImage();
+          // Remove old image after new one is selected
+          setTimeout(() => {
+            if (container.parentNode) {
+              container.parentNode.removeChild(container);
+              this.triggerChange();
+            }
+          }, 100);
+          break;
+      }
+    }
+  }
 
    public insertLink(): boolean {
      const selection = window.getSelection();
@@ -2038,7 +2192,7 @@ export class EditorCore {
   }
 
   // Private helper methods
-  private triggerChange() {
+  public triggerChange() {
     // Save to history (debounced to avoid too many history entries)
     this.debouncedSaveToHistory();
     

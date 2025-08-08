@@ -66,6 +66,7 @@ export interface EditorOptions {
   onFocus?: () => void;
   onBlur?: () => void;
   onSelectionChange?: (selection: EditorSelection) => void;
+  onImageClick?: (element: HTMLElement, img: HTMLImageElement) => void;
 }
 
 // Selection and range types
