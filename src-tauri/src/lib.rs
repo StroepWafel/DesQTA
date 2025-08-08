@@ -300,6 +300,7 @@ pub fn run() {
             notes::delete_note,
             notes::get_note,
             notes::search_notes,
+            notes::search_notes_advanced,
             notes::load_folders,
             notes::create_folder,
             notes::delete_folder,

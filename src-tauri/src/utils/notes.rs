@@ -235,6 +235,31 @@ pub fn get_note(app: AppHandle, note_id: String) -> Result<Option<Note>, String>
     Ok(database.notes.into_iter().find(|note| note.id == note_id))
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchResult {
+    pub note: Note,
+    pub score: f32,
+    pub matches: Vec<SearchMatch>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchMatch {
+    pub field: String, // "title", "content", "tags", "seqta_references"
+    pub snippet: String,
+    pub position: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchFilters {
+    pub folder_ids: Option<Vec<String>>,
+    pub tags: Option<Vec<String>>,
+    pub date_from: Option<String>,
+    pub date_to: Option<String>,
+    pub word_count_min: Option<u32>,
+    pub word_count_max: Option<u32>,
+    pub has_seqta_references: Option<bool>,
+}
+
 #[tauri::command]
 pub fn search_notes(app: AppHandle, query: String) -> Result<Vec<Note>, String> {
     let database = load_notes_database(&app)?;
@@ -253,6 +278,194 @@ pub fn search_notes(app: AppHandle, query: String) -> Result<Vec<Note>, String> 
         .collect();
     
     Ok(matching_notes)
+}
+
+#[tauri::command]
+pub fn search_notes_advanced(
+    app: AppHandle, 
+    query: String, 
+    filters: Option<SearchFilters>
+) -> Result<Vec<SearchResult>, String> {
+    let database = load_notes_database(&app)?;
+    let query_lower = query.trim().to_lowercase();
+    
+    if query_lower.is_empty() {
+        return Ok(vec![]);
+    }
+    
+    let search_terms: Vec<&str> = query_lower.split_whitespace().collect();
+    let mut results: Vec<SearchResult> = Vec::new();
+    
+    for note in database.notes {
+        // Apply folder filter
+        if let Some(ref f) = filters {
+            if let Some(ref folder_ids) = f.folder_ids {
+                if !folder_ids.iter().any(|fid| note.folder_path.contains(fid)) {
+                    continue;
+                }
+            }
+            
+            // Apply tag filter
+            if let Some(ref filter_tags) = f.tags {
+                if !filter_tags.iter().any(|tag| note.tags.contains(tag)) {
+                    continue;
+                }
+            }
+            
+            // Apply date filters
+            if let Some(ref date_from) = f.date_from {
+                if note.created_at < *date_from {
+                    continue;
+                }
+            }
+            
+            if let Some(ref date_to) = f.date_to {
+                if note.created_at > *date_to {
+                    continue;
+                }
+            }
+            
+            // Apply word count filters
+            if let Some(min_words) = f.word_count_min {
+                if note.metadata.word_count < min_words {
+                    continue;
+                }
+            }
+            
+            if let Some(max_words) = f.word_count_max {
+                if note.metadata.word_count > max_words {
+                    continue;
+                }
+            }
+            
+            // Apply SEQTA references filter
+            if let Some(has_seqta) = f.has_seqta_references {
+                let note_has_seqta = !note.seqta_references.is_empty();
+                if has_seqta != note_has_seqta {
+                    continue;
+                }
+            }
+        }
+        
+        let mut score = 0.0f32;
+        let mut matches = Vec::new();
+        
+        // Search in title (highest weight)
+        let title_lower = note.title.to_lowercase();
+        for term in &search_terms {
+            if title_lower.contains(term) {
+                score += 10.0;
+                if let Some(pos) = title_lower.find(term) {
+                    matches.push(SearchMatch {
+                        field: "title".to_string(),
+                        snippet: highlight_match(&note.title, term, pos),
+                        position: pos,
+                    });
+                }
+            }
+        }
+        
+        // Search in tags (high weight)
+        for tag in &note.tags {
+            let tag_lower = tag.to_lowercase();
+            for term in &search_terms {
+                if tag_lower.contains(term) {
+                    score += 5.0;
+                    matches.push(SearchMatch {
+                        field: "tags".to_string(),
+                        snippet: tag.clone(),
+                        position: 0,
+                    });
+                }
+            }
+        }
+        
+        // Search in content (medium weight)
+        for node in &note.content.nodes {
+            if let Some(text) = &node.text {
+                let text_lower = text.to_lowercase();
+                for term in &search_terms {
+                    if text_lower.contains(term) {
+                        score += 2.0;
+                        if let Some(pos) = text_lower.find(term) {
+                            matches.push(SearchMatch {
+                                field: "content".to_string(),
+                                snippet: create_snippet(text, term, pos),
+                                position: pos,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Search in SEQTA references (low weight)
+        for seqta_ref in &note.seqta_references {
+            let display_name_lower = seqta_ref.display_name.to_lowercase();
+            for term in &search_terms {
+                if display_name_lower.contains(term) {
+                    score += 1.0;
+                    matches.push(SearchMatch {
+                        field: "seqta_references".to_string(),
+                        snippet: seqta_ref.display_name.clone(),
+                        position: 0,
+                    });
+                }
+            }
+        }
+        
+        // Boost score for exact matches
+        if title_lower == query_lower {
+            score += 20.0;
+        }
+        
+        // Boost score for matches at the beginning
+        if title_lower.starts_with(&query_lower) {
+            score += 5.0;
+        }
+        
+        // Only include notes with matches
+        if score > 0.0 {
+            results.push(SearchResult {
+                note,
+                score,
+                matches,
+            });
+        }
+    }
+    
+    // Sort by score (descending) and then by update date (descending)
+    results.sort_by(|a, b| {
+        b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| b.note.updated_at.cmp(&a.note.updated_at))
+    });
+    
+    Ok(results)
+}
+
+fn highlight_match(text: &str, term: &str, position: usize) -> String {
+    let start = position.saturating_sub(20);
+    let end = (position + term.len() + 20).min(text.len());
+    let snippet = &text[start..end];
+    
+    if start > 0 {
+        format!("...{}", snippet)
+    } else if end < text.len() {
+        format!("{}...", snippet)
+    } else {
+        snippet.to_string()
+    }
+}
+
+fn create_snippet(text: &str, term: &str, position: usize) -> String {
+    let start = position.saturating_sub(50);
+    let end = (position + term.len() + 50).min(text.len());
+    let snippet = &text[start..end];
+    
+    let prefix = if start > 0 { "..." } else { "" };
+    let suffix = if end < text.len() { "..." } else { "" };
+    
+    format!("{}{}{}", prefix, snippet, suffix)
 }
 
 // Folder management

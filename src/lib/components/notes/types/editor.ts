@@ -219,13 +219,22 @@ export interface SearchFilters {
 
 export interface SearchResult {
   note: Note;
-  matches: SearchMatch[];
   score: number;
+  matches: SearchMatch[];
 }
 
 export interface SearchMatch {
-  type: 'title' | 'content' | 'tag' | 'seqta_reference';
-  text: string;
+  field: string; // "title", "content", "tags", "seqta_references"
+  snippet: string;
   position: number;
-  length: number;
+}
+
+export interface SearchFilters {
+  folder_ids?: string[];
+  tags?: string[];
+  date_from?: string;
+  date_to?: string;
+  word_count_min?: number;
+  word_count_max?: number;
+  has_seqta_references?: boolean;
 } 

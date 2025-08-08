@@ -4,6 +4,7 @@
   import { fly, scale, slide } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
   import { NotesService } from '../../services/notesService';
+  import NotesSearch from './NotesSearch.svelte';
   import type { Note, NoteFolder } from './types/editor';
 
   // Events
@@ -32,6 +33,7 @@
   let folderMenuOpen: string | null = null;
   let noteMenuOpen: string | null = null;
   let showMoveNoteModal: Note | null = null;
+  let showSearchModal = false;
 
   // Reactive filtered notes
   $: filteredNotes = notes
@@ -222,6 +224,12 @@
     noteMenuOpen = noteMenuOpen === noteId ? null : noteId;
   }
 
+  function handleSearchNoteSelect(event: CustomEvent<{ note: Note }>) {
+    const note = event.detail.note;
+    dispatch('selectNote', { note });
+    showSearchModal = false;
+  }
+
   function handleClickOutside(event: MouseEvent) {
     const target = event.target as Element;
     if (!target.closest('.folder-menu-container') && !target.closest('.note-menu-container')) {
@@ -245,14 +253,24 @@
   <div class="flex-shrink-0 p-4 border-b border-slate-200 dark:border-slate-700">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
-      <button
-        class="p-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
-        on:click={createNewNote}
-        title="Create new note"
-        aria-label="Create new note"
-      >
-        <Icon src={Plus} class="w-4 h-4" />
-      </button>
+      <div class="flex items-center space-x-2">
+        <button
+          class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          on:click={() => showSearchModal = true}
+          title="Search notes"
+          aria-label="Search notes"
+        >
+          <Icon src={MagnifyingGlass} class="w-4 h-4" />
+        </button>
+        <button
+          class="p-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          on:click={createNewNote}
+          title="Create new note"
+          aria-label="Create new note"
+        >
+          <Icon src={Plus} class="w-4 h-4" />
+        </button>
+      </div>
     </div>
 
     <!-- Search -->
@@ -581,6 +599,14 @@
     </div>
   </div>
 {/if}
+
+<!-- Search Modal -->
+<NotesSearch
+  bind:isOpen={showSearchModal}
+  {folders}
+  on:selectNote={handleSearchNoteSelect}
+  on:close={() => showSearchModal = false}
+/>
 
 <style>
   .note-item:hover .opacity-0 {

@@ -4,7 +4,9 @@ import type {
   NoteFolder, 
   EditorDocument,
   NoteMetadata,
-  SeqtaReference 
+  SeqtaReference,
+  SearchResult,
+  SearchFilters
 } from '../components/notes/types/editor';
 
 export class NotesService {
@@ -143,6 +145,18 @@ export class NotesService {
     } catch (error) {
       console.error('Failed to search notes:', error);
       throw new Error(`Failed to search notes: ${error}`);
+    }
+  }
+
+  /**
+   * Advanced search with filters and scoring
+   */
+  static async searchNotesAdvanced(query: string, filters?: SearchFilters): Promise<SearchResult[]> {
+    try {
+      return await invoke<SearchResult[]>('search_notes_advanced', { query, filters });
+    } catch (error) {
+      console.error('Failed to perform advanced search:', error);
+      throw new Error(`Failed to perform advanced search: ${error}`);
     }
   }
 
