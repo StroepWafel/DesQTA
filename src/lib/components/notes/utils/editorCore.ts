@@ -117,8 +117,14 @@ export class EditorCore {
     }
 
     // Handle Backspace
-    if (event.key === 'Backspace') {
+    if (event.key === 'Backspace' || event.key === 'Delete') {
       this.handleBackspaceKey(event);
+      // Also check for mention search after deletion
+      if (!isInCodeBlock) {
+        setTimeout(() => {
+          this.checkForMentionSearch();
+        }, 0);
+      }
     }
 
     // Handle @ key for mentions
@@ -126,6 +132,14 @@ export class EditorCore {
       // Let the character be inserted first, then handle mention
       setTimeout(() => {
         this.handleMentionTrigger();
+      }, 0);
+    }
+    
+    // Handle typing after @ for real-time search
+    if (!isInCodeBlock && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      // Check if we're typing after an @ symbol
+      setTimeout(() => {
+        this.checkForMentionSearch();
       }, 0);
     }
 
@@ -1015,6 +1029,123 @@ export class EditorCore {
      this.showMentionAutocomplete(textNode, atIndex, query);
    }
 
+   private checkForMentionSearch() {
+     const selection = window.getSelection();
+     if (!selection || selection.rangeCount === 0) return;
+
+     const range = selection.getRangeAt(0);
+     const textNode = range.startContainer;
+     
+     if (textNode.nodeType !== Node.TEXT_NODE) return;
+     
+     const text = textNode.textContent || '';
+     const cursorPos = range.startOffset;
+     
+     // Find the @ symbol before cursor
+     const beforeCursor = text.substring(0, cursorPos);
+     const atIndex = beforeCursor.lastIndexOf('@');
+     
+     // Check if we're currently in a mention context
+     if (atIndex === -1) {
+       // No @ found, close any open dropdown
+       this.removeMentionDropdown();
+       return;
+     }
+     
+     // Get the query after @
+     const query = beforeCursor.substring(atIndex + 1);
+     
+     // Check if @ is at word boundary or start
+     if (atIndex > 0 && /\w/.test(beforeCursor[atIndex - 1])) {
+       this.removeMentionDropdown();
+       return;
+     }
+     
+     // Check if query contains spaces or newlines (end of mention)
+     if (query.includes(' ') || query.includes('\n')) {
+       this.removeMentionDropdown();
+       return;
+     }
+     
+     // Check if cursor is too far from @ (more than 50 characters)
+     if (query.length > 50) {
+       this.removeMentionDropdown();
+       return;
+     }
+     
+     // Debounce the search to avoid too many API calls
+     if (this.mentionSearchTimeout) {
+       clearTimeout(this.mentionSearchTimeout);
+     }
+     
+     this.mentionSearchTimeout = window.setTimeout(() => {
+       // If we already have a dropdown open, update it with new query
+       if (this.currentMentionDropdown) {
+         this.updateMentionDropdown(textNode, atIndex, query);
+       } else {
+         // Show new dropdown if query is reasonable
+         this.showMentionAutocomplete(textNode, atIndex, query);
+       }
+     }, 200); // 200ms debounce
+   }
+
+   private async updateMentionDropdown(textNode: Node, atIndex: number, query: string) {
+     if (!this.currentMentionDropdown) return;
+     
+     // Clear current dropdown content
+     this.currentMentionDropdown.innerHTML = '';
+     
+     // Remove existing event listeners to prevent memory leaks
+     if (this.currentMentionKeyHandler) {
+       document.removeEventListener('keydown', this.currentMentionKeyHandler);
+       this.currentMentionKeyHandler = null;
+     }
+     
+     // Get new suggestions
+     const suggestions = await this.getMentionSuggestions(query);
+     
+     // Debug logging
+     console.log('Updated mention suggestions for query "' + query + '":', suggestions);
+     
+     if (suggestions.length === 0) {
+       // Show "no results" message
+       const noResults = document.createElement('div');
+       noResults.className = 'p-3 text-center text-slate-500 dark:text-slate-400';
+       noResults.textContent = query ? `No results for "${query}"` : 'No SEQTA elements found';
+       this.currentMentionDropdown!.appendChild(noResults);
+       return;
+     }
+     
+     // Add new suggestions
+     suggestions.forEach((suggestion, index) => {
+       const item = document.createElement('div');
+       item.className = 'mention-item p-3 cursor-pointer border-b border-slate-100 dark:border-slate-700 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors';
+       
+       if (index === 0) {
+         item.classList.add('selected', 'bg-slate-50', 'dark:bg-slate-700');
+       }
+
+       // Add icon based on type
+       const icon = this.getMentionIcon(suggestion.type);
+       item.innerHTML = `
+         <span class="text-lg">${icon}</span>
+         <div class="flex-1">
+           <div class="font-medium text-slate-900 dark:text-slate-100">${suggestion.title}</div>
+           <div class="text-sm text-slate-600 dark:text-slate-400">${suggestion.subtitle}</div>
+         </div>
+       `;
+
+       item.addEventListener('click', () => {
+         this.insertMention(textNode, atIndex, suggestion);
+       });
+
+       this.currentMentionDropdown!.appendChild(item);
+     });
+
+     // Update keyboard navigation
+     this.setupMentionKeyboardHandling(this.currentMentionDropdown, textNode, atIndex);
+   }
+
        private async showMentionAutocomplete(textNode: Node, atIndex: number, query: string) {
       // Create or update autocomplete dropdown
       await this.createMentionDropdown(textNode, atIndex, query);
@@ -1343,11 +1474,17 @@ export class EditorCore {
        document.removeEventListener('keydown', this.currentMentionKeyHandler);
        this.currentMentionKeyHandler = null;
      }
+     
+     if (this.mentionSearchTimeout) {
+       clearTimeout(this.mentionSearchTimeout);
+       this.mentionSearchTimeout = null;
+     }
    }
 
    // Add properties to track mention state
    private currentMentionDropdown: HTMLElement | null = null;
    private currentMentionKeyHandler: ((e: KeyboardEvent) => void) | null = null;
+   private mentionSearchTimeout: number | null = null;
 
   public getActiveFormats(): Set<string> {
     const activeFormats = new Set<string>();

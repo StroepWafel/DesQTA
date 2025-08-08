@@ -92,27 +92,44 @@ export class SeqtaMentionsService {
       ];
 
       // Filter by query if provided
-      const filteredItems = query 
+      const filteredItems = query.trim()
         ? allItems.filter(item => 
             item.title.toLowerCase().includes(query.toLowerCase()) ||
-            item.subtitle.toLowerCase().includes(query.toLowerCase())
+            item.subtitle.toLowerCase().includes(query.toLowerCase()) ||
+            item.type.toLowerCase().includes(query.toLowerCase())
           )
         : allItems;
 
       // Sort by relevance and limit results
       const sortedItems = filteredItems
         .sort((a, b) => {
-          // Prioritize exact matches
-          const aExact = a.title.toLowerCase() === query.toLowerCase();
-          const bExact = b.title.toLowerCase() === query.toLowerCase();
-          if (aExact && !bExact) return -1;
-          if (!aExact && bExact) return 1;
+          if (query.trim()) {
+            const queryLower = query.toLowerCase();
+            
+            // Prioritize exact matches
+            const aExact = a.title.toLowerCase() === queryLower;
+            const bExact = b.title.toLowerCase() === queryLower;
+            if (aExact && !bExact) return -1;
+            if (!aExact && bExact) return 1;
+            
+            // Then prioritize matches at the beginning of title
+            const aStartsWithTitle = a.title.toLowerCase().startsWith(queryLower);
+            const bStartsWithTitle = b.title.toLowerCase().startsWith(queryLower);
+            if (aStartsWithTitle && !bStartsWithTitle) return -1;
+            if (!aStartsWithTitle && bStartsWithTitle) return 1;
+            
+            // Then prioritize matches at the beginning of words in title
+            const aWordStart = new RegExp(`\\b${queryLower}`, 'i').test(a.title);
+            const bWordStart = new RegExp(`\\b${queryLower}`, 'i').test(b.title);
+            if (aWordStart && !bWordStart) return -1;
+            if (!aWordStart && bWordStart) return 1;
+          }
           
-          // Then by type priority
+          // Finally by type priority
           const typePriority = { assignment: 1, assessment: 2, class: 3, subject: 4, timetable: 5, notice: 6 };
           return typePriority[a.type] - typePriority[b.type];
         })
-        .slice(0, 8); // Limit to 8 results
+        .slice(0, 6); // Limit to 6 results for better UX
 
       // Cache the results
       this.cache.set(cacheKey, { data: sortedItems, timestamp: Date.now() });
