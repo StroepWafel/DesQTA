@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fly } from 'svelte/transition';
-  import { quintOut } from 'svelte/easing';
+  import { fly, slide } from 'svelte/transition';
+  import { quintOut, cubicInOut } from 'svelte/easing';
+  import { Icon, ChevronLeft, ChevronRight } from 'svelte-hero-icons';
   import NotesList from './NotesList.svelte';
   import NotesEditor from './NotesEditor.svelte';
   import { NotesService } from '../../services/notesService';
@@ -13,6 +14,7 @@
   let loading = false;
   let error: string | null = null;
   let isSaving = false;
+  let sidebarCollapsed = false;
 
   // Handle note selection from sidebar
   async function handleNoteSelect(event: CustomEvent<{ note: Note }>) {
@@ -147,18 +149,61 @@
       updateNoteTitle(extractedTitle);
     }
   }
+
+  function toggleSidebar() {
+    sidebarCollapsed = !sidebarCollapsed;
+    // Save preference to localStorage
+    localStorage.setItem('notes-sidebar-collapsed', JSON.stringify(sidebarCollapsed));
+  }
+
+  onMount(async () => {
+    // Restore sidebar state from localStorage
+    const savedState = localStorage.getItem('notes-sidebar-collapsed');
+    if (savedState) {
+      try {
+        sidebarCollapsed = JSON.parse(savedState);
+      } catch (e) {
+        sidebarCollapsed = false;
+      }
+    }
+  });
 </script>
 
-<div class="notes-container h-full flex bg-white dark:bg-slate-800 min-h-0">
+<div class="notes-container h-full flex bg-white dark:bg-slate-800 min-h-0 relative">
   <!-- Left Sidebar: Notes List -->
-  <div class="w-80 flex-shrink-0">
-    <NotesList
-      bind:this={notesList}
-      selectedNoteId={selectedNote?.id}
-      on:selectNote={handleNoteSelect}
-      on:createNote={handleCreateNote}
-      on:deleteNote={handleNoteDelete}
-    />
+  <div 
+    class="flex-shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-700 relative"
+    style="width: {sidebarCollapsed ? '0px' : '320px'}"
+  >
+    <div class="w-80 h-full overflow-hidden">
+      {#if !sidebarCollapsed}
+        <div 
+          class="h-full"
+          in:slide={{ axis: 'x', duration: 300, easing: cubicInOut }}
+          out:slide={{ axis: 'x', duration: 300, easing: cubicInOut }}
+        >
+          <NotesList
+            bind:this={notesList}
+            selectedNoteId={selectedNote?.id}
+            on:selectNote={handleNoteSelect}
+            on:createNote={handleCreateNote}
+            on:deleteNote={handleNoteDelete}
+          />
+        </div>
+      {/if}
+    </div>
+    
+    <!-- Sidebar Toggle Button -->
+    <button
+      class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-r-md shadow-sm flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 z-10"
+      on:click={toggleSidebar}
+      title="{sidebarCollapsed ? 'Expand' : 'Collapse'} sidebar"
+    >
+      <Icon 
+        src={sidebarCollapsed ? ChevronRight : ChevronLeft} 
+        class="w-4 h-4 transition-transform duration-200" 
+      />
+    </button>
   </div>
 
   <!-- Right Side: Editor or Empty State -->
