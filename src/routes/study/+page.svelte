@@ -4,6 +4,8 @@
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { Icon, Calendar, Clock, MagnifyingGlass } from 'svelte-hero-icons';
+  import { fly, fade, scale, slide } from 'svelte/transition';
+  import { quintOut, cubicOut } from 'svelte/easing';
 
   interface Subtask {
     id: string;
@@ -71,6 +73,10 @@
   let sortBy: SortKey = 'due';
   let query = '';
   let editMode: Record<string, boolean> = {};
+  
+  // Animation state
+  let deletingTasks: Set<string> = new Set();
+  let completingTasks: Set<string> = new Set();
 
   // Tabs
   type TabKey = 'tasks' | 'notes';
@@ -322,11 +328,35 @@
   }
 
   function removeTodo(id: string) {
-    todos = todos.filter(t => t.id !== id);
-    saveTodos();
+    // Add to deleting set for animation
+    deletingTasks.add(id);
+    deletingTasks = deletingTasks;
+    
+    // Delay actual removal to allow animation to play
+    setTimeout(() => {
+      todos = todos.filter(t => t.id !== id);
+      deletingTasks.delete(id);
+      deletingTasks = deletingTasks;
+      saveTodos();
+    }, 300);
   }
 
   function toggleTodo(id: string) {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+    
+    // If completing the task, add animation
+    if (!todo.completed) {
+      completingTasks.add(id);
+      completingTasks = completingTasks;
+      
+      // Brief delay for completion animation
+      setTimeout(() => {
+        completingTasks.delete(id);
+        completingTasks = completingTasks;
+      }, 500);
+    }
+    
     todos = todos.map(t => {
       if (t.id === id) {
         const updated = { ...t, completed: !t.completed, updated_at: new Date().toISOString() } as TodoItem;
@@ -483,9 +513,37 @@
   });
 </script>
 
-<div class="container px-4 sm:px-6 py-4 sm:py-7 mx-auto">
+<style>
+  /* Custom animation for task completion */
+  @keyframes completionPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); background-color: rgb(34 197 94 / 0.2); }
+    100% { transform: scale(1); }
+  }
+  
+  .completion-animation {
+    animation: completionPulse 0.5s ease-out;
+  }
+  
+  /* Smooth transitions for priority colors */
+  .priority-indicator {
+    transition: all 0.3s ease-in-out;
+  }
+  
+  /* Enhanced hover effects */
+  .enhanced-hover {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .enhanced-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+</style>
+
+<div class="container px-4 sm:px-6 py-4 sm:py-7 mx-auto" in:fade={{ duration: 400, easing: quintOut }}>
   <!-- Header -->
-  <div class="mb-6">
+  <div class="mb-6" in:fly={{ y: -30, duration: 500, easing: quintOut }}>
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Study</h1>
@@ -513,15 +571,17 @@
     <!-- Left Column: Tabbed content -->
     <div class="lg:col-span-2 space-y-6">
       {#if activeTab === 'tasks'}
-        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" 
+             in:fly={{ y: 20, duration: 300, easing: quintOut }} 
+             out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
           <!-- Tasks Controls -->
           <div class="mb-4 flex flex-col gap-3">
             <!-- Filter buttons -->
             <div class="flex flex-wrap gap-2 justify-center sm:justify-start">
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='all'}>All</button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='today'}>Today</button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='week'}>This Week</button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='completed'}>Completed</button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='all'} in:scale={{ duration: 300, delay: 100, easing: quintOut }}>All</button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='today'} in:scale={{ duration: 300, delay: 150, easing: quintOut }}>Today</button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='week'} in:scale={{ duration: 300, delay: 200, easing: quintOut }}>This Week</button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='completed'} in:scale={{ duration: 300, delay: 250, easing: quintOut }}>Completed</button>
             </div>
             <!-- Controls row -->
             <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
@@ -554,7 +614,9 @@
             {/if}
 
             {#each filteredSortedTodos as todo (todo.id)}
-              <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 transition-all duration-200 hover:scale-[1.02]">
+              <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 enhanced-hover {completingTasks.has(todo.id) ? 'completion-animation' : ''} {deletingTasks.has(todo.id) ? 'opacity-50 scale-95' : ''}"
+                   in:fly={{ y: 30, duration: 400, delay: filteredSortedTodos.indexOf(todo) * 50, easing: quintOut }}
+                   out:fly={{ y: 30, duration: 300, easing: cubicOut }}>
                 {#if !editMode[todo.id]}
                   <!-- Condensed View -->
                   <div class="flex items-start gap-3">
@@ -563,7 +625,7 @@
                       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div class="truncate text-slate-900 dark:text-white font-medium pr-2">{todo.title || 'Untitled task'}</div>
                         <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                          <span class="text-xs px-1.5 py-0.5 sm:px-2 rounded-full border {getPriorityStyles(todo.priority)}">{todo.priority ?? 'medium'}</span>
+                          <span class="text-xs px-1.5 py-0.5 sm:px-2 rounded-full border priority-indicator {getPriorityStyles(todo.priority)}">{todo.priority ?? 'medium'}</span>
                           <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => editMode[todo.id]=true}>Edit</button>
                           <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Del</button>
                         </div>
@@ -620,7 +682,7 @@
                             <option value="medium">Medium</option>
                             <option value="high">High</option>
                           </select>
-                          <span class="text-xs px-2 py-0.5 rounded-full border {getPriorityStyles(todo.priority)} text-center">{todo.priority ?? 'medium'}</span>
+                          <span class="text-xs px-2 py-0.5 rounded-full border priority-indicator {getPriorityStyles(todo.priority)} text-center">{todo.priority ?? 'medium'}</span>
                         </div>
                       </div>
                       <div class="mt-2 grid grid-cols-1 gap-2">
@@ -737,7 +799,9 @@
         </div>
       {:else}
         <!-- Notes Tab Content -->
-        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md"
+             in:fly={{ y: 20, duration: 300, easing: quintOut }} 
+             out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
           <div class="flex items-center justify-between mb-2">
             <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
             <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Create Note</button>
@@ -748,7 +812,7 @@
     </div>
 
     <!-- Right Column: Upcoming Assessments Widget -->
-    <div class="space-y-6">
+    <div class="space-y-6" in:fly={{ x: 50, duration: 500, delay: 200, easing: quintOut }}>
       <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">Upcoming Assessments</h2>
@@ -761,7 +825,8 @@
         {:else}
           <div class="space-y-3">
             {#each upcomingAssessments as a (a.id)}
-              <div class="relative flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]">
+              <div class="relative flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]"
+                   in:fly={{ x: 30, duration: 400, delay: upcomingAssessments.indexOf(a) * 100, easing: quintOut }}>
                 <!-- Left accent bar -->
                 <span class="absolute left-0 top-0 h-full w-1 rounded-l-lg" style="background-color: {a.colour || subjectColours[a.subject?.split(' — ')[0] || ''] || '#8e8e8e'}"></span>
                 <span class="mt-1 ml-1 inline-block w-2 h-2 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
@@ -788,7 +853,8 @@
       </div>
 
       <!-- Focus Tips / Placeholder Widget -->
-      <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
+      <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md"
+           in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
         <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Focus Tips</h2>
         <ul class="list-disc list-inside text-slate-600 dark:text-slate-300 space-y-1">
           <li>Break tasks into 25-minute focus sessions.</li>
