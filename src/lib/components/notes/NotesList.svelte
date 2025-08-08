@@ -317,48 +317,50 @@
           <span class="text-xs opacity-60">{notes.length}</span>
         </button>
 
-        <!-- Individual Folders -->
-        {#each folders as folder (folder.id)}
-          <div class="folder-menu-container relative">
-            <div class="flex items-center group">
-              {#if editingFolder?.id === folder.id}
-                <!-- Editing Mode -->
-                <input
-                  type="text"
-                  value={folder.name}
-                  class="flex-1 px-2 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
-                  on:keydown={(e) => {
-                    if (e.key === 'Enter') renameFolder(folder, e.currentTarget.value);
-                    if (e.key === 'Escape') editingFolder = null;
-                  }}
-                  on:blur={(e) => renameFolder(folder, e.currentTarget.value)}
-                  autofocus
-                />
-              {:else}
-                <!-- Normal Mode -->
-                <button
-                  class="flex-1 flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-200 {selectedFolder === folder.id ? 'accent-bg text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}"
-                  on:click={() => selectedFolder = folder.id}
-                >
-                  <span class="text-lg mr-2">{folder.icon || '📁'}</span>
-                  <span class="flex-1 text-left truncate">{folder.name}</span>
-                  <span class="text-xs opacity-60">
-                    {notes.filter(note => note.folder_path.includes(folder.id)).length}
-                  </span>
-                </button>
-
-                <!-- Folder Menu Button -->
-                {#if folder.id !== 'default'}
-                  <button
-                    class="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-200"
-                    on:click={() => toggleFolderMenu(folder.id)}
-                    title="Folder options"
-                  >
-                    <Icon src={EllipsisVertical} class="w-3 h-3" />
-                  </button>
-                {/if}
-              {/if}
-            </div>
+                 <!-- Individual Folders -->
+         {#each folders as folder (folder.id)}
+           <div class="folder-menu-container relative">
+             {#if editingFolder?.id === folder.id}
+               <!-- Editing Mode -->
+               <input
+                 type="text"
+                 value={folder.name}
+                 class="w-full px-2 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                 on:keydown={(e) => {
+                   if (e.key === 'Enter') renameFolder(folder, e.currentTarget.value);
+                   if (e.key === 'Escape') editingFolder = null;
+                 }}
+                 on:blur={(e) => renameFolder(folder, e.currentTarget.value)}
+                 autofocus
+               />
+             {:else}
+               <!-- Normal Mode -->
+               <div class="group">
+                 <button
+                   class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-200 {selectedFolder === folder.id ? 'accent-bg text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}"
+                   on:click={() => selectedFolder = folder.id}
+                 >
+                   <span class="text-lg mr-2">{folder.icon || '📁'}</span>
+                   <span class="flex-1 text-left truncate">{folder.name}</span>
+                   <span class="text-xs opacity-60 mr-2">
+                     {notes.filter(note => note.folder_path.includes(folder.id)).length}
+                   </span>
+                   
+                   <!-- Folder Menu Button (inside the button) -->
+                   {#if folder.id !== 'default'}
+                     <span
+                       class="opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-slate-100/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white transition-all duration-200 hover:scale-110"
+                       on:click|stopPropagation={() => toggleFolderMenu(folder.id)}
+                       role="button"
+                       tabindex="-1"
+                       title="Folder options"
+                     >
+                       <Icon src={EllipsisVertical} class="w-4 h-4" />
+                     </span>
+                   {/if}
+                 </button>
+               </div>
+             {/if}
 
             <!-- Folder Menu Dropdown -->
             {#if folderMenuOpen === folder.id && folder.id !== 'default'}
@@ -444,11 +446,11 @@
                 </h3>
                 <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <button
-                    class="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    class="p-2 rounded-md bg-slate-100/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white transition-all duration-200 hover:scale-110"
                     on:click={(e) => { e.stopPropagation(); toggleNoteMenu(note.id); }}
                     title="Note options"
                   >
-                    <Icon src={EllipsisVertical} class="w-3 h-3" />
+                    <Icon src={EllipsisVertical} class="w-4 h-4" />
                   </button>
                 </div>
               </div>
