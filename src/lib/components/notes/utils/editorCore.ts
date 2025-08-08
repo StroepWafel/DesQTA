@@ -1429,43 +1429,229 @@ export class EditorCore {
      }
    }
 
-   private async handlePersistedMentionClick(mention: HTMLElement, mentionId: string, mentionType: string, mentionData: string) {
-     try {
-       // Parse the stored mention data
-       const data = JSON.parse(mentionData);
-       
-       // Create a suggestion-like object for compatibility
-       const suggestion = {
-         id: mentionId,
-         type: mentionType,
-         title: mention.textContent?.replace(/^[📝📊🎓📚📅📢]\s*/, '') || 'Unknown',
-         subtitle: this.formatMentionSubtitle(mentionType, data),
-         data: data,
-         lastUpdated: new Date().toISOString()
-       };
-       
-       // Show mention details or update data
-       const actions = ['View Details', 'Update Data', 'Remove Mention'];
-       const action = prompt(`${suggestion.title}\n\n1. ${actions[0]}\n2. ${actions[1]}\n3. ${actions[2]}\n\nEnter number (1-3):`);
-       
-       switch (action) {
-         case '1':
-           this.showMentionDetails(suggestion);
-           break;
-         case '2':
-           // Update the mention with fresh data
-           await this.refreshMentionData(mention, mentionId, mentionType);
-           break;
-         case '3':
-           if (confirm('Remove this mention?')) {
-             mention.parentNode?.removeChild(mention);
-             this.triggerChange();
-           }
-           break;
+   private async handlePersistedMentionClick(mention: HTMLElement, suggestion: SeqtaMentionItem) {
+     // Show mention modal instead of browser dialog
+     this.showMentionModal(mention, suggestion);
+   }
+
+      private showMentionModal(mention: HTMLElement, suggestion: SeqtaMentionItem) {
+     // Remove any existing modal
+     this.removeMentionModal();
+
+     // Create modal backdrop with proper Tailwind classes
+     const backdrop = document.createElement('div');
+     backdrop.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
+
+     // Create modal content following project patterns
+     const modal = document.createElement('div');
+     modal.className = 'relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden';
+
+     // Create modal header
+     const header = document.createElement('div');
+     header.className = 'flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800';
+
+     const headerContent = document.createElement('div');
+     headerContent.className = 'flex items-center gap-3';
+
+     const icon = document.createElement('span');
+     icon.className = 'text-2xl';
+     icon.textContent = this.getMentionIcon(suggestion.type);
+
+     const titleContainer = document.createElement('div');
+     
+     const title = document.createElement('h2');
+     title.className = 'text-xl font-semibold text-slate-900 dark:text-white';
+     title.textContent = suggestion.title;
+
+     const subtitle = document.createElement('p');
+     subtitle.className = 'text-sm text-slate-600 dark:text-slate-400 mt-1';
+     subtitle.textContent = suggestion.subtitle;
+
+     titleContainer.appendChild(title);
+     titleContainer.appendChild(subtitle);
+
+     const closeBtn = document.createElement('button');
+     closeBtn.className = 'p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700';
+     closeBtn.innerHTML = `
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg>
+     `;
+     closeBtn.onclick = () => this.removeMentionModal();
+
+     headerContent.appendChild(icon);
+     headerContent.appendChild(titleContainer);
+     header.appendChild(headerContent);
+     header.appendChild(closeBtn);
+
+     // Create modal body
+     const body = document.createElement('div');
+     body.className = 'p-6';
+
+     const detailsLabel = document.createElement('h3');
+     detailsLabel.className = 'text-sm font-medium text-slate-900 dark:text-white mb-3';
+     detailsLabel.textContent = 'SEQTA Data';
+
+     const details = document.createElement('pre');
+     details.className = 'bg-slate-100 dark:bg-slate-800 rounded-lg p-4 text-sm font-mono text-slate-800 dark:text-slate-200 overflow-x-auto max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700';
+     details.textContent = JSON.stringify(suggestion.data, null, 2);
+
+     body.appendChild(detailsLabel);
+     body.appendChild(details);
+
+     // Create modal footer with proper button styling
+     const footer = document.createElement('div');
+     footer.className = 'flex gap-3 p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 justify-end';
+
+     const closeButton = this.createThemedButton('Close', 'secondary', () => {
+       this.removeMentionModal();
+     });
+
+     const updateButton = this.createThemedButton('Update Data', 'primary', async () => {
+       this.removeMentionModal();
+       await this.refreshMentionData(mention, suggestion.id, suggestion.type);
+     });
+
+     const removeButton = this.createThemedButton('Remove', 'danger', () => {
+       this.removeMentionModal();
+       this.showConfirmModal('Remove Mention', 'Are you sure you want to remove this mention?', () => {
+         mention.parentNode?.removeChild(mention);
+         this.triggerChange();
+       });
+     });
+
+     footer.appendChild(closeButton);
+     footer.appendChild(updateButton);
+     footer.appendChild(removeButton);
+
+     // Assemble modal
+     modal.appendChild(header);
+     modal.appendChild(body);
+     modal.appendChild(footer);
+     backdrop.appendChild(modal);
+
+     // Add to document
+     document.body.appendChild(backdrop);
+
+     // Store reference for cleanup
+     this.currentMentionModal = backdrop;
+
+     // Handle backdrop click to close
+     backdrop.addEventListener('click', (e) => {
+       if (e.target === backdrop) {
+         this.removeMentionModal();
        }
-     } catch (error) {
-       console.error('Error handling persisted mention click:', error);
-       alert('Error loading mention data');
+     });
+
+     // Handle escape key
+     const escapeHandler = (e: KeyboardEvent) => {
+       if (e.key === 'Escape') {
+         this.removeMentionModal();
+         document.removeEventListener('keydown', escapeHandler);
+       }
+     };
+     document.addEventListener('keydown', escapeHandler);
+
+     // Add modal animation
+     modal.style.transform = 'scale(0.9)';
+     modal.style.opacity = '0';
+     modal.style.transition = 'all 0.2s ease-out';
+     
+     requestAnimationFrame(() => {
+       modal.style.transform = 'scale(1)';
+       modal.style.opacity = '1';
+     });
+   }
+
+   private createThemedButton(text: string, variant: 'primary' | 'secondary' | 'danger', onClick: () => void): HTMLButtonElement {
+     const button = document.createElement('button');
+     button.textContent = text;
+     button.onclick = onClick;
+
+     // Apply button styling based on variant following user guidelines
+     switch (variant) {
+       case 'primary':
+         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 accent-bg text-white hover:accent-bg-hover focus:accent-ring';
+         break;
+       case 'secondary':
+         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600';
+         break;
+       case 'danger':
+         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-red-500 text-white hover:bg-red-600 focus:ring-red-500';
+         break;
+     }
+
+     return button;
+   }
+
+   private showConfirmModal(title: string, message: string, onConfirm: () => void) {
+     // Create confirmation modal with proper Tailwind classes
+     const backdrop = document.createElement('div');
+     backdrop.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
+
+     const modal = document.createElement('div');
+     modal.className = 'relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden';
+
+     const header = document.createElement('div');
+     header.className = 'p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800';
+     
+     const headerTitle = document.createElement('h2');
+     headerTitle.className = 'text-lg font-semibold text-slate-900 dark:text-white';
+     headerTitle.textContent = title;
+     header.appendChild(headerTitle);
+
+     const body = document.createElement('div');
+     body.className = 'p-6';
+     
+     const bodyText = document.createElement('p');
+     bodyText.className = 'text-slate-600 dark:text-slate-400';
+     bodyText.textContent = message;
+     body.appendChild(bodyText);
+
+     const footer = document.createElement('div');
+     footer.className = 'flex gap-3 p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 justify-end';
+
+     const cancelBtn = this.createThemedButton('Cancel', 'secondary', () => {
+       document.body.removeChild(backdrop);
+     });
+
+     const confirmBtn = this.createThemedButton('Confirm', 'danger', () => {
+       document.body.removeChild(backdrop);
+       onConfirm();
+     });
+
+     footer.appendChild(cancelBtn);
+     footer.appendChild(confirmBtn);
+
+     modal.appendChild(header);
+     modal.appendChild(body);
+     modal.appendChild(footer);
+     backdrop.appendChild(modal);
+
+     document.body.appendChild(backdrop);
+
+     // Handle backdrop click to close
+     backdrop.addEventListener('click', (e) => {
+       if (e.target === backdrop) {
+         document.body.removeChild(backdrop);
+       }
+     });
+
+     // Add modal animation
+     modal.style.transform = 'scale(0.9)';
+     modal.style.opacity = '0';
+     modal.style.transition = 'all 0.2s ease-out';
+     
+     requestAnimationFrame(() => {
+       modal.style.transform = 'scale(1)';
+       modal.style.opacity = '1';
+     });
+   }
+
+   private removeMentionModal() {
+     if (this.currentMentionModal) {
+       document.body.removeChild(this.currentMentionModal);
+       this.currentMentionModal = null;
      }
    }
 
@@ -1494,27 +1680,92 @@ export class EditorCore {
        if (updatedData) {
          // Update the mention's data attributes
          mention.dataset.mentionData = JSON.stringify(updatedData.data);
+         mention.dataset.mentionId = updatedData.id;
+         mention.dataset.mentionType = updatedData.type;
          
-         // Update the display text if needed
-         const icon = this.getMentionIcon(mentionType);
+         // Update the display text
+         const icon = this.getMentionIcon(updatedData.type);
          mention.innerHTML = `${icon} ${updatedData.title}`;
          
-         // Update subtitle in tooltip or data attribute
-         mention.title = this.formatMentionSubtitle(mentionType, updatedData.data);
+         // Update the mention registry
+         this.mentionRegistry.set(updatedData.id, updatedData);
+         
+         // Update tooltip
+         mention.title = this.formatMentionSubtitle(updatedData.type, updatedData.data);
          
          this.triggerChange();
-         alert('Mention data updated successfully!');
+         
+         // Show success notification instead of alert
+         this.showNotification('Mention updated successfully!', 'success');
        } else {
-         alert('Could not refresh mention data');
+         this.showNotification('Could not refresh mention data', 'error');
        }
      } catch (error) {
        console.error('Error refreshing mention data:', error);
-       alert('Error refreshing mention data');
+       this.showNotification('Error refreshing mention data', 'error');
      }
    }
 
+   private showNotification(message: string, type: 'success' | 'error' | 'info' = 'info') {
+     const notification = document.createElement('div');
+     
+     // Apply proper Tailwind classes based on type
+     const baseClasses = 'fixed top-4 right-4 p-4 rounded-lg shadow-xl z-50 font-medium text-sm max-w-sm transform transition-all duration-300 ease-out';
+     const typeClasses = {
+       success: 'bg-green-500 text-white',
+       error: 'bg-red-500 text-white', 
+       info: 'bg-blue-500 text-white'
+     };
+     
+     notification.className = `${baseClasses} ${typeClasses[type]}`;
+     notification.textContent = message;
+     
+     // Add icon based on type
+     const icon = document.createElement('span');
+     icon.className = 'inline-block mr-2';
+     switch (type) {
+       case 'success':
+         icon.innerHTML = '✓';
+         break;
+       case 'error':
+         icon.innerHTML = '✗';
+         break;
+       case 'info':
+         icon.innerHTML = 'ℹ';
+         break;
+     }
+     
+     notification.insertBefore(icon, notification.firstChild);
+     
+     // Initial animation state
+     notification.style.transform = 'translateX(100%)';
+     notification.style.opacity = '0';
+     
+     document.body.appendChild(notification);
+     
+     // Trigger enter animation
+     requestAnimationFrame(() => {
+       notification.style.transform = 'translateX(0)';
+       notification.style.opacity = '1';
+     });
+     
+     // Auto remove after 3 seconds
+     setTimeout(() => {
+       notification.style.transform = 'translateX(100%)';
+       notification.style.opacity = '0';
+       
+       setTimeout(() => {
+         if (notification.parentNode) {
+           document.body.removeChild(notification);
+         }
+       }, 300);
+     }, 3000);
+   }
+
    private showMentionDetails(suggestion: any) {
-     alert(`${suggestion.title}\n\nType: ${suggestion.type}\nDetails: ${suggestion.subtitle}\n\nData: ${JSON.stringify(suggestion.data, null, 2)}`);
+     // This method is now replaced by the modal system
+     // Kept for compatibility with existing handleMentionClick calls
+     console.log('Mention details:', suggestion);
    }
 
        private async updateMentionData(mention: HTMLElement, suggestion: any) {
@@ -1645,7 +1896,8 @@ export class EditorCore {
      mention.addEventListener('click', (e) => {
        e.preventDefault();
        e.stopPropagation();
-       this.handlePersistedMentionClick(mention, suggestion.id, suggestion.type, JSON.stringify(suggestion.data));
+       // Pass the suggestion object directly to avoid JSON encoding issues
+       this.handlePersistedMentionClick(mention, suggestion);
      });
      
      // Add hover effects
@@ -1670,11 +1922,21 @@ export class EditorCore {
        const mentionType = mention.getAttribute('data-mention-type') || '';
        const title = mention.textContent?.replace(/^[📝📊🎓📚📅📢]\s*/, '') || 'Unknown';
        
-       // Encode special characters in title
-       const encodedTitle = title.replace(/[\[\]:]/g, (match: string) => {
-         const replacements: { [key: string]: string } = { '[': '&#91;', ']': '&#93;', ':': '&#58;' };
-         return replacements[match] || match;
-       });
+       // Safely encode special characters and remove problematic characters
+       const safeTitleEncode = (str: string): string => {
+         return str
+           .replace(/[\[\]:]/g, (match: string) => {
+             const replacements: { [key: string]: string } = { '[': '&#91;', ']': '&#93;', ':': '&#58;' };
+             return replacements[match] || match;
+           })
+           // Remove or replace problematic Unicode characters
+           .replace(/[\u{D800}-\u{DFFF}]/gu, '') // Remove lone surrogates
+           .replace(/[\u{FDD0}-\u{FDEF}]/gu, '') // Remove non-characters
+           .replace(/[\u{FFFE}\u{FFFF}]/gu, '') // Remove other non-characters
+           .trim();
+       };
+       
+       const encodedTitle = safeTitleEncode(title);
        
        // Create text mention format
        const mentionText = `@[${mentionType}:${mentionId}:${encodedTitle}]`;
@@ -1695,6 +1957,7 @@ export class EditorCore {
    private currentMentionKeyHandler: ((e: KeyboardEvent) => void) | null = null;
    private mentionSearchTimeout: number | null = null;
    private mentionRegistry: Map<string, SeqtaMentionItem> = new Map();
+   private currentMentionModal: HTMLElement | null = null;
 
   public getActiveFormats(): Set<string> {
     const activeFormats = new Set<string>();
