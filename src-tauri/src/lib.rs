@@ -94,21 +94,6 @@ fn is_autostart_enabled(window: Window) -> Result<bool, String> {
     }
 }
 
-#[cfg(desktop)]
-fn run_on_tray<T: FnOnce() -> ()>(f: T) {
-    #[cfg(target_os = "macos")]
-    {
-        use cocoa::appkit::NSApp;
-        use cocoa::base::id;
-        use objc::{msg_send, sel, sel_impl};
-        unsafe {
-            let app: id = msg_send![NSApp(), sharedApplication];
-            let _: () = msg_send![app, setActivationPolicy: 1];
-        }
-    }
-    f();
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
@@ -342,27 +327,25 @@ pub fn run() {
                 )?;
 
                 // Setup tray icon
-                run_on_tray(|| {
-                    TrayIconBuilder::new()
-                        .icon(app.default_window_icon().unwrap().clone())
-                        .menu(&menu)
-                        .on_menu_event(move |app, event| match event.id.as_ref() {
-                            "open" => {
-                                if let Some(window) = app.webview_windows().get("main") {
-                                    let _ = window.show();
-                                    let _ = window.set_focus();
-                                }
+                TrayIconBuilder::new()
+                    .icon(app.default_window_icon().unwrap().clone())
+                    .menu(&menu)
+                    .on_menu_event(move |app, event| match event.id.as_ref() {
+                        "open" => {
+                            if let Some(window) = app.webview_windows().get("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
                             }
-                            "quit" => {
-                                app.exit(0);
-                            }
-                            _ => {
-                                println!("Menu event not handled: {:?}", event.id);
-                            }
-                        })
-                        .build(app)
-                        .expect("Error while setting up tray menu");
-                });
+                        }
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        _ => {
+                            println!("Menu event not handled: {:?}", event.id);
+                        }
+                    })
+                    .build(app)
+                    .expect("Error while setting up tray menu");
             }
 
             Ok(())
@@ -372,10 +355,8 @@ pub fn run() {
             {
                 if let WindowEvent::CloseRequested { api, .. } = event {
                     // Hide window instead of closing when user clicks X
-                    run_on_tray(|| {
-                        window.hide().unwrap();
-                        api.prevent_close();
-                    });
+                    window.hide().unwrap();
+                    api.prevent_close();
                 }
             }
         })
