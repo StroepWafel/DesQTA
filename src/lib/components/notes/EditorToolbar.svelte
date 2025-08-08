@@ -120,7 +120,7 @@
     updateToolbarState();
   }
 
-  // Media commands (placeholder for now)
+  // Media commands
   function insertLink() {
     if (!editor || readonly) return;
     // TODO: Implement link insertion
@@ -128,7 +128,8 @@
 
   function insertImage() {
     if (!editor || readonly) return;
-    // TODO: Implement image insertion
+    editor.executeCommand('insert-image');
+    updateToolbarState();
   }
 
   function handleSave() {

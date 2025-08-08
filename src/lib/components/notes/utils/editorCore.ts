@@ -393,6 +393,8 @@ export class EditorCore {
         return this.toggleList('ol');
       case 'insert-table':
         return this.insertTable(2, 2); // Default 2x2 table
+      case 'insert-image':
+        return this.insertImage();
       default:
         return false;
     }
@@ -713,6 +715,133 @@ export class EditorCore {
     }
 
     tbody.appendChild(newRow);
+  }
+
+  public insertImage(): boolean {
+    // Create a file input to select image
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) {
+        this.handleImageFile(file);
+      }
+      // Clean up
+      document.body.removeChild(input);
+    };
+    
+    // Trigger file selection
+    document.body.appendChild(input);
+    input.click();
+    
+    return true;
+  }
+
+  private handleImageFile(file: File) {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      console.error('Selected file is not an image');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      console.error('Image file is too large (max 5MB)');
+      return;
+    }
+
+    // Create FileReader to convert to base64
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (dataUrl) {
+        this.insertImageElement(dataUrl, file.name);
+      }
+    };
+    reader.onerror = () => {
+      console.error('Error reading image file');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  private insertImageElement(src: string, alt: string = '') {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const currentElement = this.getBlockElement(range.startContainer);
+    
+    if (!currentElement) return;
+
+    // Create image container
+    const imageContainer = document.createElement('div');
+    imageContainer.className = 'editor-image-container';
+    imageContainer.style.margin = '1rem 0';
+    imageContainer.style.textAlign = 'center';
+    
+    // Create image element
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = alt;
+    img.style.maxWidth = '100%';
+    img.style.height = 'auto';
+    img.style.borderRadius = '0.5rem';
+    img.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+    img.style.cursor = 'pointer';
+    
+    // Add click handler for image actions (future: edit, delete, etc.)
+    img.onclick = () => {
+      this.handleImageClick(imageContainer, img);
+    };
+
+    imageContainer.appendChild(img);
+
+    // Insert after current element
+    currentElement.parentNode?.insertBefore(imageContainer, currentElement.nextSibling);
+
+    // Create a new paragraph after the image
+    const paragraph = document.createElement('p');
+    paragraph.innerHTML = '<br>';
+    imageContainer.parentNode?.insertBefore(paragraph, imageContainer.nextSibling);
+
+    // Focus the new paragraph
+    this.restoreSelectionInElement(paragraph);
+
+    this.triggerChange();
+  }
+
+  private handleImageClick(container: HTMLElement, img: HTMLImageElement) {
+    // Simple implementation: show image actions
+    // In a production app, you might show a context menu or modal
+    const actions = ['Copy Alt Text', 'Remove Image', 'Replace Image'];
+    const action = prompt(`Image Actions:\n1. ${actions[0]}\n2. ${actions[1]}\n3. ${actions[2]}\n\nEnter number (1-3):`);
+    
+    switch (action) {
+      case '1':
+        navigator.clipboard.writeText(img.alt || 'Image');
+        break;
+      case '2':
+        if (confirm('Remove this image?')) {
+          container.parentNode?.removeChild(container);
+          this.triggerChange();
+        }
+        break;
+      case '3':
+        // Trigger new image selection
+        this.insertImage();
+        // Remove old image after new one is selected
+        setTimeout(() => {
+          if (container.parentNode) {
+            container.parentNode.removeChild(container);
+            this.triggerChange();
+          }
+        }, 100);
+        break;
+    }
   }
 
   public getActiveFormats(): Set<string> {
@@ -1184,6 +1313,9 @@ export class EditorCore {
       case 'li':
         type = 'list-item';
         break;
+      case 'img':
+        type = 'image';
+        break;
     }
     
     // Handle list items specially
@@ -1201,8 +1333,21 @@ export class EditorCore {
       };
     }
     
+    // Handle images specially
+    if (tagName === 'img') {
+      return {
+        type: 'image' as EditorNodeType,
+        attributes: {
+          src: element.getAttribute('src') || '',
+          alt: element.getAttribute('alt') || ''
+        },
+        text: '',
+        children: []
+      };
+    }
+    
     return {
-      type,
+      type: type as EditorNodeType,
       attributes: tagName === 'h1' ? { level: 1 } :
                  tagName === 'h2' ? { level: 2 } :
                  tagName === 'h3' ? { level: 3 } :
@@ -1235,6 +1380,10 @@ export class EditorCore {
         case 'numbered-list':
           const olItems = node.children?.map(child => `<li>${child.text || ''}</li>`).join('') || '';
           return `<ol>${olItems}</ol>`;
+        case 'image':
+          const src = node.attributes?.src || '';
+          const alt = node.attributes?.alt || '';
+          return `<div class="editor-image-container" style="margin: 1rem 0; text-align: center;"><img src="${src}" alt="${alt}" style="max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); cursor: pointer;" /></div>`;
         default:
           return `<p>${node.text || '<br>'}</p>`;
       }
