@@ -307,7 +307,12 @@ pub fn run() {
             notes::move_note_to_folder,
             notes::get_notes_stats,
             notes::backup_notes,
-            notes::restore_notes_from_backup
+            notes::restore_notes_from_backup,
+            notes::save_image_from_base64,
+            notes::get_image_path,
+            notes::get_image_as_base64,
+            notes::delete_note_images,
+            notes::cleanup_unused_images
         ])
         .setup(|app| {
             // Initialize logger first

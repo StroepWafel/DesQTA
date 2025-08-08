@@ -45,6 +45,7 @@
       onFocus: handleFocus,
       onBlur: handleBlur,
       onImageClick: showImageControlModal,
+      noteId: noteId,
     });
 
     // Load initial content

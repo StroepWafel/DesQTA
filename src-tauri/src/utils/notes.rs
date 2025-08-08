@@ -3,6 +3,7 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use tauri::{AppHandle};
+use base64::{Engine as _, engine::general_purpose};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EditorNode {
@@ -602,4 +603,196 @@ pub fn restore_notes_from_backup(app: AppHandle, backup_path: String) -> Result<
     
     save_notes_database(&app, &database)?;
     Ok(())
+}
+
+// Image handling functions
+
+fn get_notes_images_dir(_app: &AppHandle) -> Result<PathBuf, String> {
+    #[cfg(target_os = "android")]
+    {
+        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("note_contents");
+        if !dir.exists() {
+            fs::create_dir_all(&dir)
+                .map_err(|e| format!("Failed to create note_contents directory: {}", e))?;
+        }
+        Ok(dir)
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        let mut dir = dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).map_err(|e| format!("Failed to create data dir: {}", e))?;
+        }
+        dir.push("note_contents");
+        if !dir.exists() {
+            fs::create_dir_all(&dir)
+                .map_err(|e| format!("Failed to create note_contents directory: {}", e))?;
+        }
+        Ok(dir)
+    }
+}
+
+#[tauri::command]
+pub fn save_image_from_base64(
+    app: AppHandle, 
+    note_id: String, 
+    image_data: String, 
+    filename: String
+) -> Result<String, String> {
+    // Remove data URL prefix if present
+    let base64_data = if image_data.starts_with("data:") {
+        image_data.split(',').nth(1).unwrap_or(&image_data)
+    } else {
+        &image_data
+    };
+    
+    // Decode base64
+    let image_bytes = general_purpose::STANDARD
+        .decode(base64_data)
+        .map_err(|e| format!("Failed to decode base64 image: {}", e))?;
+    
+    // Get images directory
+    let images_dir = get_notes_images_dir(&app)?;
+    
+    // Create note-specific directory
+    let note_images_dir = images_dir.join(&note_id);
+    if !note_images_dir.exists() {
+        fs::create_dir_all(&note_images_dir)
+            .map_err(|e| format!("Failed to create note images directory: {}", e))?;
+    }
+    
+    // Generate unique filename
+    let timestamp = chrono::Utc::now().timestamp_millis();
+    let file_extension = filename.split('.').last().unwrap_or("png");
+    let unique_filename = format!("{}_{}.{}", timestamp, filename.replace(".", "_"), file_extension);
+    
+    let image_path = note_images_dir.join(&unique_filename);
+    
+    // Write image to file
+    let mut file = File::create(&image_path)
+        .map_err(|e| format!("Failed to create image file: {}", e))?;
+    file.write_all(&image_bytes)
+        .map_err(|e| format!("Failed to write image data: {}", e))?;
+    
+    // Return relative path for storage in note content
+    let relative_path = format!("note_contents/{}/{}", note_id, unique_filename);
+    Ok(relative_path)
+}
+
+#[tauri::command]
+pub fn get_image_path(app: AppHandle, relative_path: String) -> Result<String, String> {
+    // Get the base notes directory (same as notes.json location but without the filename)
+    #[cfg(target_os = "android")]
+    let base_dir = PathBuf::from("/data/data/com.desqta.app/files");
+    
+    #[cfg(not(target_os = "android"))]
+    let base_dir = {
+        let mut dir = dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
+        dir.push("DesQTA");
+        dir
+    };
+    
+    let full_path = base_dir.join(&relative_path);
+    
+    if !full_path.exists() {
+        return Err(format!("Image file does not exist: {}", relative_path));
+    }
+    
+    full_path.to_str()
+        .ok_or("Failed to convert path to string".to_string())
+        .map(|s| s.to_string())
+}
+
+#[tauri::command]
+pub fn get_image_as_base64(app: AppHandle, relative_path: String) -> Result<String, String> {
+    // Get the base notes directory
+    #[cfg(target_os = "android")]
+    let base_dir = PathBuf::from("/data/data/com.desqta.app/files");
+    
+    #[cfg(not(target_os = "android"))]
+    let base_dir = {
+        let mut dir = dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
+        dir.push("DesQTA");
+        dir
+    };
+    
+    let full_path = base_dir.join(&relative_path);
+    
+    if !full_path.exists() {
+        return Err(format!("Image file does not exist: {}", relative_path));
+    }
+    
+    // Read the file
+    let image_bytes = fs::read(&full_path)
+        .map_err(|e| format!("Failed to read image file: {}", e))?;
+    
+    // Encode as base64
+    let base64_data = general_purpose::STANDARD.encode(&image_bytes);
+    
+    // Determine MIME type from extension
+    let extension = full_path.extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("png")
+        .to_lowercase();
+    
+    let mime_type = match extension.as_str() {
+        "jpg" | "jpeg" => "image/jpeg",
+        "png" => "image/png",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        _ => "image/png",
+    };
+    
+    // Return as data URL
+    Ok(format!("data:{};base64,{}", mime_type, base64_data))
+}
+
+#[tauri::command]
+pub fn delete_note_images(app: AppHandle, note_id: String) -> Result<(), String> {
+    let images_dir = get_notes_images_dir(&app)?;
+    let note_images_dir = images_dir.join(&note_id);
+    
+    if note_images_dir.exists() {
+        fs::remove_dir_all(&note_images_dir)
+            .map_err(|e| format!("Failed to delete note images: {}", e))?;
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
+pub fn cleanup_unused_images(app: AppHandle) -> Result<u32, String> {
+    let database = load_notes_database(&app)?;
+    let images_dir = get_notes_images_dir(&app)?;
+    
+    if !images_dir.exists() {
+        return Ok(0);
+    }
+    
+    let mut deleted_count = 0;
+    
+    // Get all note IDs that still exist
+    let existing_note_ids: std::collections::HashSet<String> = 
+        database.notes.iter().map(|n| n.id.clone()).collect();
+    
+    // Iterate through image directories
+    if let Ok(entries) = fs::read_dir(&images_dir) {
+        for entry in entries.flatten() {
+            if let Some(dir_name) = entry.file_name().to_str() {
+                // If this directory doesn't correspond to an existing note, delete it
+                if !existing_note_ids.contains(dir_name) {
+                    if let Err(e) = fs::remove_dir_all(entry.path()) {
+                        eprintln!("Failed to delete unused image directory {}: {}", dir_name, e);
+                    } else {
+                        deleted_count += 1;
+                    }
+                }
+            }
+        }
+    }
+    
+    Ok(deleted_count)
 } 

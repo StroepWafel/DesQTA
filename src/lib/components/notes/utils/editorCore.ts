@@ -775,35 +775,69 @@ export class EditorCore {
     return true;
   }
 
-  private handleImageFile(file: File) {
+  private async handleImageFile(file: File) {
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      console.error('Selected file is not an image');
+      this.showNotification('Selected file is not an image', 'error');
       return;
     }
 
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      console.error('Image file is too large (max 5MB)');
+      this.showNotification('Image file is too large (max 5MB)', 'error');
       return;
     }
 
-    // Create FileReader to convert to base64
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      if (dataUrl) {
-        this.insertImageElement(dataUrl, file.name);
-      }
-    };
-    reader.onerror = () => {
-      console.error('Error reading image file');
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Show loading state
+      this.showNotification('Saving image...', 'info');
+      
+      // Create FileReader to convert to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const dataUrl = e.target?.result as string;
+        if (dataUrl) {
+          try {
+            // Get current note ID from options or generate one
+            const noteId = this.getCurrentNoteId();
+            if (!noteId) {
+              this.showNotification('Unable to determine note ID for image storage', 'error');
+              return;
+            }
+            
+            // Save image to filesystem and get relative path
+            const { invoke } = await import('@tauri-apps/api/core');
+            const relativePath = await invoke<string>('save_image_from_base64', {
+              noteId,
+              imageData: dataUrl,
+              filename: file.name
+            });
+            
+            // Insert image element with file path instead of base64
+            this.insertImageElement(relativePath, file.name, true);
+            this.showNotification('Image saved successfully', 'success');
+            
+          } catch (error) {
+            console.error('Failed to save image:', error);
+            this.showNotification('Failed to save image', 'error');
+            // Fallback to base64 storage
+            this.insertImageElement(dataUrl, file.name, false);
+          }
+        }
+      };
+      reader.onerror = () => {
+        this.showNotification('Error reading image file', 'error');
+      };
+      reader.readAsDataURL(file);
+      
+    } catch (error) {
+      console.error('Error processing image file:', error);
+      this.showNotification('Error processing image file', 'error');
+    }
   }
 
-  private insertImageElement(src: string, alt: string = '') {
+  private insertImageElement(src: string, alt: string = '', isFilePath: boolean = false) {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
 
@@ -832,7 +866,19 @@ export class EditorCore {
     
     // Create image element
     const img = document.createElement('img');
-    img.src = src;
+    
+    // Handle file path vs base64 data
+    if (isFilePath) {
+      // Store relative path in data attribute and show loading placeholder
+      img.dataset.imagePath = src;
+      // Show loading placeholder immediately
+      img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDIwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjUwIiByPSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOUNBM0FGIiBzdHJva2Utd2lkdGg9IjIiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjAgMTAwIDUwOzM2MCAxMDAgNTAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9jaXJjbGU+PHRleHQgeD0iMTAwIiB5PSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzZCNzI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIj5Mb2FkaW5nLi4uPC90ZXh0Pjwvc3ZnPg==';
+      // Load actual image asynchronously
+      this.loadImageFromPath(img, src);
+    } else {
+      img.src = src;
+    }
+    
     img.alt = alt;
     img.style.width = '100%';
     img.style.height = 'auto';
@@ -866,6 +912,45 @@ export class EditorCore {
     this.restoreSelectionInElement(paragraph);
 
     this.triggerChange();
+  }
+
+  private getCurrentNoteId(): string | null {
+    return this.options.noteId || null;
+  }
+
+  private async loadImageFromPath(img: HTMLImageElement, relativePath: string) {
+    try {
+      console.log('Loading image from path:', relativePath);
+      
+      const { invoke } = await import('@tauri-apps/api/core');
+      
+      // Get the image as base64 data URL
+      const dataUrl = await invoke<string>('get_image_as_base64', { relativePath });
+      console.log('Got image as data URL (length):', dataUrl.length);
+      
+      // Set the image source
+      img.src = dataUrl;
+      
+      // Add error handler for the image element itself
+      img.onerror = () => {
+        console.error('Image failed to load from data URL');
+        this.showImageError(img);
+      };
+      
+      img.onload = () => {
+        console.log('Image loaded successfully');
+      };
+      
+    } catch (error) {
+      console.error('Failed to load image from path:', relativePath, error);
+      this.showImageError(img);
+    }
+  }
+
+  private showImageError(img: HTMLImageElement) {
+    // Show error placeholder
+    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDIwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRkVGMkYyIiBzdHJva2U9IiNGRUNCQ0IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iNSw1Ii8+PHBhdGggZD0iTTcwIDM1TDg1IDUwTDEwMCAzNUwxMTUgNTBMMTMwIDM1VjY1SDcwVjM1WiIgZmlsbD0iI0ZFQ0JDQiIvPjxjaXJjbGUgY3g9Ijg1IiBjeT0iNDUiIHI9IjMiIGZpbGw9IiNEQzI2MjYiLz48dGV4dCB4PSIxMDAiIHk9IjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjREM0NDQ0IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4K';
+    img.alt = 'Image not found';
   }
 
   private createResizeHandles(wrapper: HTMLElement, img: HTMLImageElement) {
@@ -961,6 +1046,11 @@ export class EditorCore {
       
       // Skip if already wrapped
       if (parent.classList.contains('resizable-image-wrapper')) return;
+      
+      // Check if this image has a file path that needs loading
+      if (htmlImg.dataset.imagePath && !htmlImg.src.startsWith('data:') && !htmlImg.src.startsWith('http') && !htmlImg.src.startsWith('file:')) {
+        this.loadImageFromPath(htmlImg, htmlImg.dataset.imagePath);
+      }
       
       // Create resizable wrapper
       const resizableWrapper = document.createElement('div');

@@ -161,6 +161,54 @@ export class NotesService {
   }
 
   /**
+   * Save image from base64 data to filesystem
+   */
+  static async saveImageFromBase64(noteId: string, imageData: string, filename: string): Promise<string> {
+    try {
+      return await invoke<string>('save_image_from_base64', { noteId, imageData, filename });
+    } catch (error) {
+      console.error('Failed to save image:', error);
+      throw new Error(`Failed to save image: ${error}`);
+    }
+  }
+
+  /**
+   * Get full path for image file
+   */
+  static async getImagePath(relativePath: string): Promise<string> {
+    try {
+      return await invoke<string>('get_image_path', { relativePath });
+    } catch (error) {
+      console.error('Failed to get image path:', error);
+      throw new Error(`Failed to get image path: ${error}`);
+    }
+  }
+
+  /**
+   * Delete all images for a note
+   */
+  static async deleteNoteImages(noteId: string): Promise<void> {
+    try {
+      await invoke('delete_note_images', { noteId });
+    } catch (error) {
+      console.error('Failed to delete note images:', error);
+      throw new Error(`Failed to delete note images: ${error}`);
+    }
+  }
+
+  /**
+   * Clean up unused images
+   */
+  static async cleanupUnusedImages(): Promise<number> {
+    try {
+      return await invoke<number>('cleanup_unused_images');
+    } catch (error) {
+      console.error('Failed to cleanup unused images:', error);
+      throw new Error(`Failed to cleanup unused images: ${error}`);
+    }
+  }
+
+  /**
    * Load all folders
    */
   static async loadFolders(): Promise<NoteFolder[]> {
