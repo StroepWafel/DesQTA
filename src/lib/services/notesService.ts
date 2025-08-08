@@ -2,7 +2,6 @@ import { invoke } from '@tauri-apps/api/core';
 import type { 
   Note, 
   NoteFolder, 
-  EditorDocument,
   NoteMetadata,
   SeqtaReference,
   SearchResult,
@@ -44,21 +43,7 @@ export class NotesService {
     const note: Note = {
       id: noteId,
       title,
-      content: {
-        version: '1.0',
-        nodes: [
-          {
-            type: 'paragraph',
-            text: '',
-            children: []
-          }
-        ],
-        metadata: {
-          word_count: 0,
-          character_count: 0,
-          seqta_references: []
-        }
-      },
+      content: '<p><br></p>', // Simple HTML content
       folder_path: [folderId],
       tags: [],
       seqta_references: [],
@@ -80,7 +65,7 @@ export class NotesService {
   /**
    * Update an existing note's content
    */
-  static async updateNoteContent(noteId: string, content: EditorDocument): Promise<void> {
+  static async updateNoteContent(noteId: string, content: string): Promise<void> {
     try {
       // First get the existing note
       const existingNote = await this.getNote(noteId);
@@ -90,6 +75,11 @@ export class NotesService {
 
       // Update the content and metadata
       const now = new Date().toISOString();
+      
+      // Calculate word count from HTML content
+      const textContent = content.replace(/<[^>]*>/g, '').trim();
+      const wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
+      
       const updatedNote: Note = {
         ...existingNote,
         content,
@@ -97,12 +87,11 @@ export class NotesService {
         last_accessed: now,
         metadata: {
           ...existingNote.metadata,
-          word_count: content.metadata.word_count,
-          character_count: content.metadata.character_count,
-          reading_time: Math.ceil(content.metadata.word_count / 200), // 200 words per minute
+          word_count: wordCount,
+          character_count: textContent.length,
+          reading_time: Math.ceil(wordCount / 200), // 200 words per minute
           version: existingNote.metadata.version + 1
-        },
-        seqta_references: content.metadata.seqta_references
+        }
       };
 
       await this.saveNote(updatedNote);
@@ -312,7 +301,7 @@ export class NotesService {
    */
   private static autoSaveTimeouts: Map<string, number> = new Map();
 
-  static scheduleAutoSave(noteId: string, content: EditorDocument, delay: number = 2000): void {
+  static scheduleAutoSave(noteId: string, content: string, delay: number = 2000): void {
     // Clear existing timeout for this note
     const existingTimeout = this.autoSaveTimeouts.get(noteId);
     if (existingTimeout) {

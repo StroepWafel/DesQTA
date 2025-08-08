@@ -312,23 +312,14 @@ export class EditorCore {
     this.element.blur();
   }
 
-  public getContent(): EditorDocument {
-    // First convert visual mentions back to text format for saving
-    const contentClone = this.element.cloneNode(true) as HTMLElement;
-    this.convertVisualMentionsToText(contentClone);
-    
-    const nodes = this.parseHTMLToNodes(contentClone);
-    const metadata = this.calculateMetadata(nodes);
-    
-    return {
-      version: '1.0',
-      nodes,
-      metadata
-    };
+  public getContent(): string {
+    // Convert HTML formatting to custom tags for saving
+    return this.convertHTMLToCustomTags(this.element.innerHTML);
   }
 
-  public setContent(content: EditorDocument) {
-    const html = this.renderNodesToHTML(content.nodes);
+  public setContent(content: string) {
+    // Convert custom tags to HTML and set content
+    const html = this.convertCustomTagsToHTML(content);
     this.element.innerHTML = html;
     this.reinitializeMentions();
     this.makeExistingImagesResizable();
@@ -430,6 +421,8 @@ export class EditorCore {
         return this.insertImage();
       case 'insert-link':
         return this.insertLink();
+      case 'font-size':
+        return this.setFontSize(value);
       default:
         return false;
     }
@@ -439,21 +432,21 @@ export class EditorCore {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return false;
 
-    const range = selection.getRangeAt(0);
-    
-    if (range.collapsed) {
-      // No selection, toggle format for future typing
-      // This is a simplified implementation
-      return false;
-    }
+    // Use document.execCommand for reliable formatting
+    const commandMap: { [key in FormatType]?: string } = {
+      'bold': 'bold',
+      'italic': 'italic', 
+      'underline': 'underline',
+      'strikethrough': 'strikeThrough'
+    };
 
-    // Apply or remove formatting
-    const isActive = this.isFormatActive(format);
-    
-    if (isActive) {
-      this.removeFormat(format, range);
-    } else {
-      this.applyFormat(format, range);
+    const command = commandMap[format];
+    if (command) {
+      // Use browser's built-in formatting
+      document.execCommand(command, false);
+    } else if (format === 'code') {
+      // Handle code formatting manually since there's no execCommand for it
+      this.toggleCodeFormat();
     }
 
     this.triggerChange();
@@ -2283,6 +2276,9 @@ export class EditorCore {
 
   // Private helper methods
   public triggerChange() {
+    // Clean up any orphaned format markers
+    this.cleanupFormatMarkers();
+    
     // Save to history (debounced to avoid too many history entries)
     this.debouncedSaveToHistory();
     
@@ -2613,14 +2609,20 @@ export class EditorCore {
   }
 
   private parseHTMLToNodes(element: HTMLElement): EditorNode[] {
-    // This is a simplified parser
-    // In a full implementation, you'd recursively parse all child nodes
+    // Enhanced parser that preserves formatting
     const nodes: EditorNode[] = [];
     
     for (const child of Array.from(element.childNodes)) {
       if (child.nodeType === Node.ELEMENT_NODE) {
         const element = child as HTMLElement;
-        nodes.push(this.parseElementToNode(element));
+        const node = this.parseElementToNode(element);
+        
+        // Preserve inner HTML for formatting
+        if (node.type === 'paragraph' || node.type === 'heading' || node.type === 'list-item') {
+          node.html = element.innerHTML;
+        }
+        
+        nodes.push(node);
       } else if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
         nodes.push({
           type: 'text',
@@ -2758,25 +2760,30 @@ export class EditorCore {
   }
 
   private renderNodesToHTML(nodes: EditorNode[]): string {
-    // This is a simplified renderer
+    // Enhanced renderer that preserves formatting
     return nodes.map(node => {
       switch (node.type) {
         case 'paragraph':
-          return `<p>${node.text || '<br>'}</p>`;
+          // Use preserved HTML if available, otherwise fall back to text
+          return `<p>${node.html || node.text || '<br>'}</p>`;
         case 'heading':
           const level = node.attributes?.level || 1;
-          return `<h${level}>${node.text || ''}</h${level}>`;
+          return `<h${level}>${node.html || node.text || ''}</h${level}>`;
         case 'blockquote':
-          return `<blockquote>${node.text || ''}</blockquote>`;
+          return `<blockquote>${node.html || node.text || ''}</blockquote>`;
         case 'codeblock':
           return `<pre><code>${node.text || ''}</code></pre>`;
         case 'code-block':
           return `<pre><code>${node.text || ''}</code></pre>`;
         case 'bullet-list':
-          const ulItems = node.children?.map(child => `<li>${child.text || ''}</li>`).join('') || '';
+          const ulItems = node.children?.map(child => 
+            `<li>${child.html || child.text || ''}</li>`
+          ).join('') || '';
           return `<ul>${ulItems}</ul>`;
         case 'numbered-list':
-          const olItems = node.children?.map(child => `<li>${child.text || ''}</li>`).join('') || '';
+          const olItems = node.children?.map(child => 
+            `<li>${child.html || child.text || ''}</li>`
+          ).join('') || '';
           return `<ol>${olItems}</ol>`;
         case 'image':
           const src = node.attributes?.src || '';
@@ -2935,5 +2942,611 @@ export class EditorCore {
     
     selection.removeAllRanges();
     selection.addRange(range);
+  }
+
+  // New tag-based formatting system
+  private insertFormatToggle(format: FormatType) {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const tagName = this.getFormatTagName(format);
+    
+    // Check if we're already inside this format
+    if (this.isInsideFormatTag(format, range.startContainer)) {
+      // Insert closing tag
+      const closingTag = document.createTextNode(`</${tagName}>`);
+      range.insertNode(closingTag);
+      // Move cursor after the tag
+      range.setStartAfter(closingTag);
+      range.collapse(true);
+    } else {
+      // Insert opening tag
+      const openingTag = document.createTextNode(`<${tagName}>`);
+      range.insertNode(openingTag);
+      // Move cursor after the tag
+      range.setStartAfter(openingTag);
+      range.collapse(true);
+    }
+    
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  private isTagFormatActive(format: FormatType, range: Range): boolean {
+    const tagName = this.getFormatTagName(format);
+    const openTag = `<${tagName}>`;
+    const closeTag = `</${tagName}>`;
+    
+    // Get the full text content of the editor
+    const fullText = this.element.textContent || '';
+    
+    // Find the position of our selection in the full text
+    const rangeText = range.toString();
+    const startOffset = this.getTextOffsetInElement(range.startContainer, range.startOffset);
+    const endOffset = startOffset + rangeText.length;
+    
+    // Look for tags around the selection
+    const beforeText = fullText.substring(0, startOffset);
+    const afterText = fullText.substring(endOffset);
+    
+    // Find the last opening tag before selection
+    const lastOpenIndex = beforeText.lastIndexOf(openTag);
+    // Find the first closing tag after selection  
+    const firstCloseIndex = afterText.indexOf(closeTag);
+    
+    // Check if we have a matching pair around our selection
+    if (lastOpenIndex !== -1 && firstCloseIndex !== -1) {
+      // Make sure there's no closing tag between the open tag and our selection
+      const betweenOpenAndSelection = beforeText.substring(lastOpenIndex + openTag.length);
+      const hasCloseInBetween = betweenOpenAndSelection.includes(closeTag);
+      
+      return !hasCloseInBetween;
+    }
+    
+    return false;
+  }
+
+  private applyTagFormat(format: FormatType, range: Range) {
+    const tagName = this.getFormatTagName(format);
+    const openTag = `<${tagName}>`;
+    const closeTag = `</${tagName}>`;
+    
+    // Get the selected text
+    const selectedText = range.toString();
+    
+    // Create the formatted text with tags
+    const formattedText = `${openTag}${selectedText}${closeTag}`;
+    
+    // Replace the selection with the tagged text
+    range.deleteContents();
+    const textNode = document.createTextNode(formattedText);
+    range.insertNode(textNode);
+    
+    // Update selection to encompass the content between tags
+    const newRange = document.createRange();
+    newRange.setStart(textNode, openTag.length);
+    newRange.setEnd(textNode, openTag.length + selectedText.length);
+    
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
+  }
+
+  private removeTagFormat(format: FormatType, range: Range) {
+    const tagName = this.getFormatTagName(format);
+    const openTag = `<${tagName}>`;
+    const closeTag = `</${tagName}>`;
+    
+    const fullText = this.element.textContent || '';
+    const startOffset = this.getTextOffsetInElement(range.startContainer, range.startOffset);
+    const endOffset = startOffset + range.toString().length;
+    
+    const beforeText = fullText.substring(0, startOffset);
+    const afterText = fullText.substring(endOffset);
+    
+    // Find the tags to remove
+    const lastOpenIndex = beforeText.lastIndexOf(openTag);
+    const firstCloseIndex = afterText.indexOf(closeTag);
+    
+    if (lastOpenIndex !== -1 && firstCloseIndex !== -1) {
+      const globalCloseIndex = endOffset + firstCloseIndex;
+      
+      // Remove the tags by reconstructing the text
+      const newText = fullText.substring(0, lastOpenIndex) + 
+                     fullText.substring(lastOpenIndex + openTag.length, globalCloseIndex) + 
+                     fullText.substring(globalCloseIndex + closeTag.length);
+      
+      // Replace the entire editor content
+      this.element.textContent = newText;
+      
+      // Restore selection (adjusted for removed tags)
+      const newStartOffset = lastOpenIndex;
+      const newEndOffset = lastOpenIndex + (endOffset - startOffset);
+      
+      this.setSelectionByOffset(newStartOffset, newEndOffset);
+    }
+  }
+
+  private isInsideFormatTag(format: FormatType, node: Node): boolean {
+    const tagName = this.getFormatTagName(format);
+    const openTag = `<${tagName}>`;
+    const closeTag = `</${tagName}>`;
+    
+    const fullText = this.element.textContent || '';
+    const currentOffset = this.getTextOffsetInElement(node, 0);
+    const beforeText = fullText.substring(0, currentOffset);
+    
+    // Count opening and closing tags before this position
+    const openMatches = beforeText.match(new RegExp(`<${tagName}>`, 'g'));
+    const closeMatches = beforeText.match(new RegExp(`</${tagName}>`, 'g'));
+    
+    const openCount = openMatches ? openMatches.length : 0;
+    const closeCount = closeMatches ? closeMatches.length : 0;
+    
+    return openCount > closeCount;
+  }
+
+  private getFormatTagName(format: FormatType): string {
+    switch (format) {
+      case 'bold': return 'bold';
+      case 'italic': return 'italic';
+      case 'underline': return 'underline';
+      case 'strikethrough': return 'strikethrough';
+      case 'code': return 'code';
+      default: return format;
+    }
+  }
+
+  private getTextOffsetInElement(node: Node, offset: number): number {
+    let textOffset = 0;
+    const walker = document.createTreeWalker(
+      this.element,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+    
+    let currentNode;
+    while ((currentNode = walker.nextNode())) {
+      if (currentNode === node) {
+        return textOffset + offset;
+      }
+      textOffset += currentNode.textContent?.length || 0;
+    }
+    
+    return textOffset;
+  }
+
+  private setSelectionByOffset(startOffset: number, endOffset: number) {
+    let currentOffset = 0;
+    const walker = document.createTreeWalker(
+      this.element,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+    
+    let startNode: Node | null = null;
+    let startNodeOffset = 0;
+    let endNode: Node | null = null;
+    let endNodeOffset = 0;
+    
+    let currentNode;
+    while ((currentNode = walker.nextNode())) {
+      const nodeLength = currentNode.textContent?.length || 0;
+      
+      if (!startNode && currentOffset + nodeLength >= startOffset) {
+        startNode = currentNode;
+        startNodeOffset = startOffset - currentOffset;
+      }
+      
+      if (!endNode && currentOffset + nodeLength >= endOffset) {
+        endNode = currentNode;
+        endNodeOffset = endOffset - currentOffset;
+        break;
+      }
+      
+      currentOffset += nodeLength;
+    }
+    
+    if (startNode && endNode) {
+      const range = document.createRange();
+      range.setStart(startNode, startNodeOffset);
+      range.setEnd(endNode, endNodeOffset);
+      
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+  }
+
+  public setFontSize(size: string): boolean {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return false;
+
+    const range = selection.getRangeAt(0);
+    
+    if (range.collapsed) {
+      // For collapsed selection, create a span and focus inside it
+      const span = document.createElement('span');
+      span.style.fontSize = size;
+      span.textContent = '\u200B'; // Zero-width space
+      range.insertNode(span);
+      
+      // Position cursor inside the span
+      const newRange = document.createRange();
+      newRange.setStart(span, 1);
+      newRange.collapse(true);
+      
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+      return true;
+    }
+
+    // Apply font size to selected text using HTML
+    this.applyFontSizeToSelection(size, range);
+    this.triggerChange();
+    return true;
+  }
+
+  private insertFontSizeToggle(size: string) {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    
+    // Check if we're already inside a font size tag
+    if (this.isInsideFontSizeTag(range.startContainer)) {
+      // Insert closing tag
+      const closingTag = document.createTextNode(`</fontsize>`);
+      range.insertNode(closingTag);
+      range.setStartAfter(closingTag);
+      range.collapse(true);
+    } else {
+      // Insert opening tag with size
+      const openingTag = document.createTextNode(`<fontsize="${size}">`);
+      range.insertNode(openingTag);
+      range.setStartAfter(openingTag);
+      range.collapse(true);
+    }
+    
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  private applyFontSizeToSelection(size: string, range: Range) {
+    // Get the selected text
+    const selectedText = range.toString();
+    
+    // Create a span element with the font size
+    const span = document.createElement('span');
+    span.style.fontSize = size;
+    span.textContent = selectedText;
+    
+    // Replace the selection with the styled span
+    range.deleteContents();
+    range.insertNode(span);
+    
+    // Update selection to encompass the new span
+    const newRange = document.createRange();
+    newRange.selectNodeContents(span);
+    
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
+  }
+
+  private isInsideFontSizeTag(node: Node): boolean {
+    const fullText = this.element.textContent || '';
+    const currentOffset = this.getTextOffsetInElement(node, 0);
+    const beforeText = fullText.substring(0, currentOffset);
+    
+    // Count opening and closing font size tags before this position
+    const openMatches = beforeText.match(/<fontsize="[^"]*">/g);
+    const closeMatches = beforeText.match(/<\/fontsize>/g);
+    
+    const openCount = openMatches ? openMatches.length : 0;
+    const closeCount = closeMatches ? closeMatches.length : 0;
+    
+    return openCount > closeCount;
+  }
+
+  // Improved formatting methods
+  private applyFormatReliably(format: FormatType, range: Range) {
+    // Save the selection
+    const selectedText = range.toString();
+    
+    if (!selectedText) {
+      // For collapsed selection, just use execCommand
+      const commandMap: { [key in FormatType]?: string } = {
+        'bold': 'bold',
+        'italic': 'italic',
+        'underline': 'underline',
+        'strikethrough': 'strikeThrough'
+      };
+      
+      const command = commandMap[format];
+      if (command) {
+        document.execCommand(command);
+      } else if (format === 'code') {
+        // Custom handling for code
+        this.applyFormat(format, range);
+      }
+      return;
+    }
+
+    // For selections with text, use the existing reliable method
+    this.applyFormat(format, range);
+  }
+
+  private cleanupFormattingInRange(range: Range, excludeFormat: FormatType) {
+    // This method would clean up formatting while preserving other formats
+    // For now, we'll just restore the selection
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+
+  // Cursor-based formatting methods
+  private insertFormattingEndMarker(format: FormatType, range: Range) {
+    // Create an invisible marker to "close" the formatting
+    const marker = document.createElement('span');
+    marker.className = 'format-end-marker';
+    marker.setAttribute('data-format', format);
+    marker.textContent = '\u200B'; // Zero-width space
+    
+    // Insert the marker at cursor position
+    range.insertNode(marker);
+    
+    // Position cursor after the marker
+    const newRange = document.createRange();
+    newRange.setStartAfter(marker);
+    newRange.collapse(true);
+    
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
+    
+    // Remove any parent formatting elements by breaking out of them
+    this.breakOutOfFormattingContext(format, marker);
+  }
+
+  private insertFormattingStartMarker(format: FormatType, range: Range) {
+    // Create a formatting element to start formatting
+    let element: HTMLElement;
+    
+    switch (format) {
+      case 'bold':
+        element = document.createElement('strong');
+        break;
+      case 'italic':
+        element = document.createElement('em');
+        break;
+      case 'underline':
+        element = document.createElement('u');
+        break;
+      case 'strikethrough':
+        element = document.createElement('s');
+        break;
+      case 'code':
+        element = document.createElement('code');
+        break;
+      default:
+        return;
+    }
+    
+    // Add a zero-width space to make the element "active"
+    element.textContent = '\u200B';
+    
+    // Insert the element at cursor position
+    range.insertNode(element);
+    
+    // Position cursor inside the element
+    const newRange = document.createRange();
+    newRange.setStart(element, 1);
+    newRange.collapse(true);
+    
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
+  }
+
+  private removeFormatFromSelection(format: FormatType, range: Range) {
+    // Find all format elements within the selection and unwrap them
+    const walker = document.createTreeWalker(
+      range.commonAncestorContainer,
+      NodeFilter.SHOW_ELEMENT,
+      {
+        acceptNode: (node) => {
+          const element = node as HTMLElement;
+          if (this.isFormatElement(element, format) && range.intersectsNode(element)) {
+            return NodeFilter.FILTER_ACCEPT;
+          }
+          return NodeFilter.FILTER_SKIP;
+        }
+      }
+    );
+
+    const elementsToRemove: HTMLElement[] = [];
+    let node: Node | null;
+    
+    while ((node = walker.nextNode())) {
+      elementsToRemove.push(node as HTMLElement);
+    }
+
+    // Remove formatting by unwrapping elements
+    elementsToRemove.forEach(element => {
+      this.unwrapElement(element);
+    });
+  }
+
+  private breakOutOfFormattingContext(format: FormatType, marker: Node) {
+    // Find the parent formatting element and split it
+    let parent = marker.parentNode;
+    while (parent && parent !== this.element) {
+      if (parent.nodeType === Node.ELEMENT_NODE) {
+        const element = parent as HTMLElement;
+        if (this.isFormatElement(element, format)) {
+          // Split the formatting element at the marker position
+          this.splitFormattingElement(element, marker);
+          break;
+        }
+      }
+      parent = parent.parentNode;
+    }
+  }
+
+  private splitFormattingElement(element: HTMLElement, splitPoint: Node) {
+    // Create a new element of the same type for content after split point
+    const newElement = element.cloneNode(false) as HTMLElement;
+    
+    // Move all nodes after the split point to the new element
+    let currentNode = splitPoint.nextSibling;
+    while (currentNode) {
+      const nextNode = currentNode.nextSibling;
+      newElement.appendChild(currentNode);
+      currentNode = nextNode;
+    }
+    
+    // Insert the new element after the original
+    if (element.parentNode) {
+      element.parentNode.insertBefore(newElement, element.nextSibling);
+    }
+    
+    // Remove the split point (marker) from the original element
+    if (splitPoint.parentNode === element) {
+      element.removeChild(splitPoint);
+    }
+    
+    // If the original element is now empty, remove it
+    if (!element.textContent || element.textContent === '\u200B') {
+      if (element.parentNode) {
+        element.parentNode.removeChild(element);
+      }
+    }
+  }
+
+  // Method to process content and render formatting tags as HTML
+  public processContentForDisplay(): void {
+    const rawContent = this.element.textContent || '';
+    const processedHTML = this.convertTagsToHTML(rawContent);
+    this.element.innerHTML = processedHTML;
+  }
+
+  private convertTagsToHTML(text: string): string {
+    let html = text;
+    
+    // Process formatting tags
+    html = html.replace(/<bold>(.*?)<\/bold>/g, '<strong>$1</strong>');
+    html = html.replace(/<italic>(.*?)<\/italic>/g, '<em>$1</em>');
+    html = html.replace(/<underline>(.*?)<\/underline>/g, '<u>$1</u>');
+    html = html.replace(/<strikethrough>(.*?)<\/strikethrough>/g, '<s>$1</s>');
+    html = html.replace(/<code>(.*?)<\/code>/g, '<code>$1</code>');
+    
+    // Process font size tags
+    html = html.replace(/<fontsize="([^"]*)">(.*?)<\/fontsize>/g, '<span style="font-size: $1">$2</span>');
+    
+    // Convert line breaks to <br> tags
+    html = html.replace(/\n/g, '<br>');
+    
+    return html;
+  }
+
+  // Method to get raw content with tags for saving
+  public getRawContent(): string {
+    return this.element.textContent || '';
+  }
+
+  // Method to convert content from raw tags to HTML when loading
+  public loadContentFromRaw(rawContent: string): void {
+    if (rawContent.includes('<bold>') || rawContent.includes('<italic>') || rawContent.includes('<fontsize=')) {
+      const processedHTML = this.convertTagsToHTML(rawContent);
+      this.element.innerHTML = processedHTML;
+    } else {
+      this.element.textContent = rawContent;
+    }
+    
+    this.makeExistingImagesResizable();
+    this.triggerChange();
+  }
+
+  // Cleanup method for format markers
+  private cleanupFormatMarkers() {
+    const markers = this.element.querySelectorAll('.format-end-marker');
+    markers.forEach(marker => {
+      // Check if marker is still needed (has content after it in the same context)
+      const nextSibling = marker.nextSibling;
+      if (!nextSibling || (nextSibling.nodeType === Node.TEXT_NODE && !nextSibling.textContent?.trim())) {
+        // Remove orphaned markers
+        marker.remove();
+      }
+    });
+
+    // Also clean up empty formatting elements with only zero-width spaces
+    const formatElements = this.element.querySelectorAll('strong, em, u, s, code');
+    formatElements.forEach(element => {
+      if (element.textContent === '\u200B' && !element.nextSibling) {
+        // Remove empty formatting elements at the end
+        element.remove();
+      }
+    });
+  }
+
+  private toggleCodeFormat(): void {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const isActive = this.isFormatActive('code');
+
+    if (isActive) {
+      // Remove code formatting
+      this.removeFormat('code', range);
+    } else {
+      // Apply code formatting
+      this.applyFormat('code', range);
+    }
+  }
+
+  // Convert HTML tags to custom tags for saving
+  private convertHTMLToCustomTags(html: string): string {
+    let result = html;
+    
+    // Convert HTML formatting tags to custom tags
+    result = result.replace(/<strong>(.*?)<\/strong>/g, '<bold>$1</bold>');
+    result = result.replace(/<b>(.*?)<\/b>/g, '<bold>$1</bold>');
+    result = result.replace(/<em>(.*?)<\/em>/g, '<italic>$1</italic>');
+    result = result.replace(/<i>(.*?)<\/i>/g, '<italic>$1</italic>');
+    result = result.replace(/<u>(.*?)<\/u>/g, '<underline>$1</underline>');
+    result = result.replace(/<s>(.*?)<\/s>/g, '<strikethrough>$1</strikethrough>');
+    result = result.replace(/<code>(.*?)<\/code>/g, '<code>$1</code>');
+    result = result.replace(/<span style="font-size:\s*([^"]*)">(.*?)<\/span>/g, '<fontsize="$1">$2</fontsize>');
+    
+    return result;
+  }
+
+  // Convert custom tags back to HTML for display
+  private convertCustomTagsToHTML(content: string): string {
+    let result = content;
+    
+    // Convert custom tags back to HTML
+    result = result.replace(/<bold>(.*?)<\/bold>/g, '<strong>$1</strong>');
+    result = result.replace(/<italic>(.*?)<\/italic>/g, '<em>$1</em>');
+    result = result.replace(/<underline>(.*?)<\/underline>/g, '<u>$1</u>');
+    result = result.replace(/<strikethrough>(.*?)<\/strikethrough>/g, '<s>$1</s>');
+    result = result.replace(/<fontsize="([^"]*)">(.*?)<\/fontsize>/g, '<span style="font-size: $1">$2</span>');
+    
+    return result;
   }
 } 

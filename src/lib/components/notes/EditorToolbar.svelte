@@ -33,6 +33,7 @@
   // Toolbar state
   let activeFormats = new Set<string>();
   let currentBlockType = 'paragraph';
+  let currentFontSize = '';
 
   // Update active states when selection changes
   function updateToolbarState() {
@@ -137,6 +138,16 @@
     dispatch('save');
   }
 
+  function handleFontSizeChange(event: Event) {
+    if (!editor || readonly) return;
+    const target = event.target as HTMLSelectElement;
+    const size = target.value;
+    if (size) {
+      editor.executeCommand('font-size', size);
+      updateToolbarState();
+    }
+  }
+
   // Listen for selection changes to update toolbar state
   $: if (editor) {
     // This will be called when the editor instance changes
@@ -214,6 +225,31 @@
       >
         <Icon src={CodeBracket} class="w-5 h-5" />
       </button>
+    </div>
+
+    <!-- Font size group -->
+    <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
+      <select
+        class="px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        on:change={handleFontSizeChange}
+        disabled={readonly}
+        title="Font size"
+        aria-label="Select font size"
+        bind:value={currentFontSize}
+      >
+        <option value="">Size</option>
+        <option value="10px">10px</option>
+        <option value="12px">12px</option>
+        <option value="14px">14px</option>
+        <option value="16px">16px</option>
+        <option value="18px">18px</option>
+        <option value="20px">20px</option>
+        <option value="24px">24px</option>
+        <option value="28px">28px</option>
+        <option value="32px">32px</option>
+        <option value="36px">36px</option>
+        <option value="48px">48px</option>
+      </select>
     </div>
 
     <!-- Block formatting group -->

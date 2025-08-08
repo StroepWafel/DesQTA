@@ -10,6 +10,7 @@ export interface EditorNode {
   attributes?: Record<string, any>;
   children?: EditorNode[];
   text?: string;
+  html?: string; // For preserving formatted content
   id?: string;
 }
 
@@ -62,7 +63,7 @@ export type SeqtaReferenceType =
 export interface EditorOptions {
   placeholder?: string;
   readonly?: boolean;
-  onChange?: (content: EditorDocument) => void;
+  onChange?: (content: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
   onSelectionChange?: (selection: EditorSelection) => void;
@@ -179,7 +180,7 @@ export type ImportFormat = 'markdown' | 'html' | 'json';
 export interface Note {
   id: string;
   title: string;
-  content: EditorDocument;
+  content: string; // Raw HTML content with custom tags
   folder_path: string[];
   tags: string[];
   seqta_references: SeqtaReference[];

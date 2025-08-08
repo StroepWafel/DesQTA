@@ -47,9 +47,8 @@
         const query = searchQuery.toLowerCase();
         const matchesTitle = note.title.toLowerCase().includes(query);
         const matchesTags = note.tags.some(tag => tag.toLowerCase().includes(query));
-        const matchesContent = note.content.nodes.some(node => 
-          node.text?.toLowerCase().includes(query)
-        );
+        const textContent = note.content.replace(/<[^>]*>/g, '').toLowerCase();
+        const matchesContent = textContent.includes(query);
         if (!matchesTitle && !matchesTags && !matchesContent) return false;
       }
 
@@ -133,12 +132,10 @@
 
   // Get preview text from note content
   function getPreviewText(note: Note): string {
-    const textNodes = note.content.nodes
-      .filter(node => node.text && node.text.trim())
-      .map(node => node.text)
-      .join(' ');
+    // Extract text content from HTML, removing all tags
+    const textContent = note.content.replace(/<[^>]*>/g, '').trim();
     
-    return textNodes.length > 100 ? textNodes.substring(0, 100) + '...' : textNodes;
+    return textContent.length > 100 ? textContent.substring(0, 100) + '...' : textContent;
   }
 
   // Get folder name by ID

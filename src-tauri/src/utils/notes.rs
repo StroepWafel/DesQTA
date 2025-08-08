@@ -63,7 +63,7 @@ pub struct NoteMetadata {
 pub struct Note {
     pub id: String,
     pub title: String,
-    pub content: EditorDocument,
+    pub content: String, // Raw HTML content with custom tags
     pub folder_path: Vec<String>,
     pub tags: Vec<String>,
     pub seqta_references: Vec<SeqtaReference>,
@@ -164,6 +164,170 @@ fn ensure_parent_dir(path: &PathBuf) -> Result<(), String> {
     Ok(())
 }
 
+// Migration structures for old format
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct OldEditorNode {
+    #[serde(rename = "type")]
+    pub node_type: String,
+    #[serde(default)]
+    pub attributes: Option<serde_json::Value>,
+    #[serde(default)]
+    pub children: Option<Vec<OldEditorNode>>,
+    #[serde(default)]
+    pub text: Option<String>,
+    #[serde(default)]
+    pub html: Option<String>,
+    #[serde(default)]
+    pub id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct OldEditorDocument {
+    pub version: String,
+    pub nodes: Vec<OldEditorNode>,
+    pub metadata: DocumentMetadata,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct OldNote {
+    pub id: String,
+    pub title: String,
+    pub content: OldEditorDocument,
+    pub folder_path: Vec<String>,
+    pub tags: Vec<String>,
+    pub seqta_references: Vec<SeqtaReference>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub last_accessed: String,
+    pub metadata: NoteMetadata,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct OldNotesDatabase {
+    pub notes: Vec<OldNote>,
+    pub folders: Vec<NoteFolder>,
+    pub settings: NotesSettings,
+    pub version: String,
+}
+
+fn migrate_from_old_format(json_content: &str) -> Result<NotesDatabase, String> {
+    let old_database: OldNotesDatabase = serde_json::from_str(json_content)
+        .map_err(|e| format!("Failed to parse old format JSON: {}", e))?;
+    
+    let migrated_notes: Vec<Note> = old_database.notes.into_iter().map(|old_note| {
+        // Convert old EditorDocument to simple HTML string
+        let html_content = convert_old_nodes_to_html(&old_note.content.nodes);
+        
+        Note {
+            id: old_note.id,
+            title: old_note.title,
+            content: html_content,
+            folder_path: old_note.folder_path,
+            tags: old_note.tags,
+            seqta_references: old_note.seqta_references,
+            created_at: old_note.created_at,
+            updated_at: old_note.updated_at,
+            last_accessed: old_note.last_accessed,
+            metadata: old_note.metadata,
+        }
+    }).collect();
+    
+    Ok(NotesDatabase {
+        notes: migrated_notes,
+        folders: old_database.folders,
+        settings: old_database.settings,
+        version: "2.0".to_string(), // Bump version to indicate migration
+    })
+}
+
+fn convert_old_nodes_to_html(nodes: &[OldEditorNode]) -> String {
+    let mut html = String::new();
+    
+    for node in nodes {
+        match node.node_type.as_str() {
+            "paragraph" => {
+                if let Some(html_content) = &node.html {
+                    html.push_str(&format!("<p>{}</p>", html_content));
+                } else if let Some(text) = &node.text {
+                    html.push_str(&format!("<p>{}</p>", text));
+                } else {
+                    html.push_str("<p><br></p>");
+                }
+            },
+            "heading" => {
+                let level = node.attributes.as_ref()
+                    .and_then(|attr| attr.get("level"))
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(1);
+                
+                let content = node.html.as_ref()
+                    .or(node.text.as_ref())
+                    .map(|s| s.as_str())
+                    .unwrap_or("");
+                    
+                html.push_str(&format!("<h{}>{}</h{}>", level, content, level));
+            },
+            "blockquote" => {
+                let content = node.html.as_ref()
+                    .or(node.text.as_ref())
+                    .map(|s| s.as_str())
+                    .unwrap_or("");
+                html.push_str(&format!("<blockquote>{}</blockquote>", content));
+            },
+            "code-block" | "codeblock" => {
+                let content = node.text.as_ref().map(|s| s.as_str()).unwrap_or("");
+                html.push_str(&format!("<pre><code>{}</code></pre>", content));
+            },
+            "bullet-list" => {
+                if let Some(children) = &node.children {
+                    html.push_str("<ul>");
+                    for child in children {
+                        let content = child.html.as_ref()
+                            .or(child.text.as_ref())
+                            .map(|s| s.as_str())
+                            .unwrap_or("");
+                        html.push_str(&format!("<li>{}</li>", content));
+                    }
+                    html.push_str("</ul>");
+                }
+            },
+            "numbered-list" => {
+                if let Some(children) = &node.children {
+                    html.push_str("<ol>");
+                    for child in children {
+                        let content = child.html.as_ref()
+                            .or(child.text.as_ref())
+                            .map(|s| s.as_str())
+                            .unwrap_or("");
+                        html.push_str(&format!("<li>{}</li>", content));
+                    }
+                    html.push_str("</ol>");
+                }
+            },
+            "text" => {
+                if let Some(text) = &node.text {
+                    html.push_str(text);
+                }
+            },
+            _ => {
+                // For unknown node types, try to extract any text content
+                if let Some(html_content) = &node.html {
+                    html.push_str(html_content);
+                } else if let Some(text) = &node.text {
+                    html.push_str(&format!("<p>{}</p>", text));
+                }
+            }
+        }
+    }
+    
+    // If no content was generated, provide default
+    if html.is_empty() {
+        html = "<p><br></p>".to_string();
+    }
+    
+    html
+}
+
 fn load_notes_database(app: &AppHandle) -> Result<NotesDatabase, String> {
     let path = notes_file_path(app)?;
     if !path.exists() {
@@ -179,10 +343,21 @@ fn load_notes_database(app: &AppHandle) -> Result<NotesDatabase, String> {
         return Ok(NotesDatabase::default());
     }
     
-    let database: NotesDatabase = serde_json::from_str(&contents)
-        .map_err(|e| format!("Failed to parse notes JSON: {}", e))?;
-    
-    Ok(database)
+    // Try to parse as new format first
+    match serde_json::from_str::<NotesDatabase>(&contents) {
+        Ok(database) => Ok(database),
+        Err(_) => {
+            // If that fails, try to migrate from old format
+            println!("Attempting to migrate notes from old format...");
+            let migrated_database = migrate_from_old_format(&contents)?;
+            
+            // Save the migrated database immediately
+            save_notes_database(app, &migrated_database)?;
+            println!("Successfully migrated notes to new format!");
+            
+            Ok(migrated_database)
+        }
+    }
 }
 
 fn save_notes_database(app: &AppHandle, database: &NotesDatabase) -> Result<(), String> {
@@ -271,10 +446,8 @@ pub fn search_notes(app: AppHandle, query: String) -> Result<Vec<Note>, String> 
         .filter(|note| {
             note.title.to_lowercase().contains(&query_lower) ||
             note.tags.iter().any(|tag| tag.to_lowercase().contains(&query_lower)) ||
-            // Search in content text (simplified)
-            note.content.nodes.iter().any(|node| {
-                node.text.as_ref().map_or(false, |text| text.to_lowercase().contains(&query_lower))
-            })
+            // Search in content text (HTML content)
+            note.content.to_lowercase().contains(&query_lower)
         })
         .collect();
     
@@ -382,20 +555,17 @@ pub fn search_notes_advanced(
         }
         
         // Search in content (medium weight)
-        for node in &note.content.nodes {
-            if let Some(text) = &node.text {
-                let text_lower = text.to_lowercase();
-                for term in &search_terms {
-                    if text_lower.contains(term) {
-                        score += 2.0;
-                        if let Some(pos) = text_lower.find(term) {
-                            matches.push(SearchMatch {
-                                field: "content".to_string(),
-                                snippet: create_snippet(text, term, pos),
-                                position: pos,
-                            });
-                        }
-                    }
+        let content_text = strip_html_tags(&note.content);
+        let content_lower = content_text.to_lowercase();
+        for term in &search_terms {
+            if content_lower.contains(term) {
+                score += 2.0;
+                if let Some(pos) = content_lower.find(term) {
+                    matches.push(SearchMatch {
+                        field: "content".to_string(),
+                        snippet: create_snippet(&content_text, term, pos),
+                        position: pos,
+                    });
                 }
             }
         }
@@ -467,6 +637,23 @@ fn create_snippet(text: &str, term: &str, position: usize) -> String {
     let suffix = if end < text.len() { "..." } else { "" };
     
     format!("{}{}{}", prefix, snippet, suffix)
+}
+
+fn strip_html_tags(html: &str) -> String {
+    // Simple HTML tag removal
+    let mut result = String::new();
+    let mut in_tag = false;
+    
+    for ch in html.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => result.push(ch),
+            _ => {} // Skip characters inside tags
+        }
+    }
+    
+    result
 }
 
 // Folder management

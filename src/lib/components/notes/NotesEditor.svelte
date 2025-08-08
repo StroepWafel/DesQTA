@@ -7,7 +7,7 @@
   import type { EditorDocument, EditorNode } from './types/editor';
 
   // Props
-  export let content: EditorDocument = { version: '1.0', nodes: [], metadata: { word_count: 0, character_count: 0, seqta_references: [] } };
+  export let content: string = '<p><br></p>';
   export let placeholder: string = 'Start writing your note...';
   export let readonly: boolean = false;
   export let autofocus: boolean = false;
@@ -15,8 +15,8 @@
 
   // Event dispatcher
   const dispatch = createEventDispatcher<{
-    change: { content: EditorDocument };
-    save: { content: EditorDocument };
+    change: { content: string };
+    save: { content: string };
     focus: void;
     blur: void;
   }>();
@@ -49,10 +49,12 @@
     });
 
     // Load initial content
-    if (content && content.nodes.length > 0) {
+    if (content && content.trim().length > 0) {
       editorCore.setContent(content);
-      wordCount = content.metadata.word_count;
-      characterCount = content.metadata.character_count;
+      // Calculate word count from content
+      const textContent = content.replace(/<[^>]*>/g, '').trim();
+      wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
+      characterCount = textContent.length;
       lastNoteId = noteId;
     }
 
@@ -70,15 +72,19 @@
   $: if (editorCore && content && noteId !== lastNoteId) {
     // Update editor content when switching to a different note
     editorCore.setContent(content);
-    wordCount = content.metadata.word_count;
-    characterCount = content.metadata.character_count;
+    // Calculate word count from content
+    const textContent = content.replace(/<[^>]*>/g, '').trim();
+    wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
+    characterCount = textContent.length;
     lastNoteId = noteId;
   }
 
-  function handleContentChange(newContent: EditorDocument) {
+  function handleContentChange(newContent: string) {
     content = newContent;
-    wordCount = newContent.metadata.word_count;
-    characterCount = newContent.metadata.character_count;
+    // Calculate word count from content
+    const textContent = newContent.replace(/<[^>]*>/g, '').trim();
+    wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
+    characterCount = textContent.length;
     dispatch('change', { content: newContent });
   }
 
@@ -105,11 +111,11 @@
     editorCore?.blur();
   }
 
-  export function getContent(): EditorDocument {
+  export function getContent(): string {
     return editorCore?.getContent() || content;
   }
 
-  export function setContent(newContent: EditorDocument) {
+  export function setContent(newContent: string) {
     editorCore?.setContent(newContent);
   }
 
@@ -317,5 +323,21 @@
   .editor-content :global(.resize-handle:active) {
     background: linear-gradient(135deg, rgba(37, 99, 235, 1), rgba(29, 78, 216, 1));
     transform: scale(0.95);
+  }
+
+  /* Enhanced formatting styles */
+  .editor-content :global(span[style*="font-size"]) {
+    /* Custom font size styling */
+    display: inline;
+  }
+
+  /* Format markers - invisible but functional */
+  .editor-content :global(.format-end-marker) {
+    display: inline;
+    font-size: 0;
+    line-height: 0;
+    color: transparent;
+    user-select: none;
+    pointer-events: none;
   }
 </style> 

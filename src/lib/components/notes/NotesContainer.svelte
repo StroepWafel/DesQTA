@@ -6,7 +6,7 @@
   import NotesList from './NotesList.svelte';
   import NotesEditor from './NotesEditor.svelte';
   import { NotesService } from '../../services/notesService';
-  import type { Note, EditorDocument } from './types/editor';
+  import type { Note } from './types/editor';
 
   // State
   let selectedNote: Note | null = null;
@@ -66,10 +66,14 @@
   }
 
   // Handle content changes with auto-save
-  function handleContentChange(event: CustomEvent<{ content: EditorDocument }>) {
+  function handleContentChange(event: CustomEvent<{ content: string }>) {
     if (!selectedNote) return;
 
     const content = event.detail.content;
+    
+    // Calculate word count from HTML content
+    const textContent = content.replace(/<[^>]*>/g, '').trim();
+    const wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
     
     // Update local note data immediately for UI responsiveness
     selectedNote = {
@@ -78,9 +82,9 @@
       updated_at: new Date().toISOString(),
       metadata: {
         ...selectedNote.metadata,
-        word_count: content.metadata.word_count,
-        character_count: content.metadata.character_count,
-        reading_time: Math.ceil(content.metadata.word_count / 200),
+        word_count: wordCount,
+        character_count: textContent.length,
+        reading_time: Math.ceil(wordCount / 200),
         version: selectedNote.metadata.version + 1
       }
     };
@@ -90,7 +94,7 @@
   }
 
   // Handle manual save
-  async function handleSave(event: CustomEvent<{ content: EditorDocument }>) {
+  async function handleSave(event: CustomEvent<{ content: string }>) {
     if (!selectedNote) return;
 
     try {
@@ -130,16 +134,16 @@
   }
 
   // Auto-extract title from content
-  function extractTitleFromContent(content: EditorDocument): string {
-    // Find the first non-empty text node
-    for (const node of content.nodes) {
-      if (node.text && node.text.trim()) {
-        // Take first line or first 50 characters
-        const firstLine = node.text.split('\n')[0].trim();
-        return firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
-      }
+  function extractTitleFromContent(content: string): string {
+    // Extract text from HTML content
+    const textContent = content.replace(/<[^>]*>/g, '').trim();
+    if (!textContent) {
+      return 'Untitled Note';
     }
-    return 'Untitled Note';
+    
+    // Take first line or first 50 characters
+    const firstLine = textContent.split('\n')[0].trim();
+    return firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
   }
 
   // Watch for content changes to auto-update title
