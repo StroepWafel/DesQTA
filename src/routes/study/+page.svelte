@@ -832,12 +832,6 @@
                       <div class="mt-2 grid grid-cols-1 gap-2">
                         <div class="relative">
                           <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} on:input={(e) => { subjectQuery[todo.id] = (e.target as HTMLInputElement).value; showSubjectDropdown[todo.id] = true; }} on:focus={() => showSubjectDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showSubjectDropdown[todo.id]=false, 150)} />
-                          {#if getSubjectCodeFromLabel(todo.related_subject)}
-                            <div class="mt-1 inline-flex items-center gap-2">
-                              <span class="inline-block w-2 h-2 rounded-full" style="background-color: {subjectColours[getSubjectCodeFromLabel(todo.related_subject) || ''] || '#8e8e8e'}"></span>
-                              <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(getSubjectCodeFromLabel(todo.related_subject))}>{todo.related_subject}</span>
-                            </div>
-                          {/if}
                           {#if showSubjectDropdown[todo.id]}
                             <div class="absolute z-20 mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md max-h-56 overflow-auto">
                               {#each subjects.filter(s => (subjectQuery[todo.id] ?? todo.related_subject ?? '').toLowerCase().split(' ').every(q => s.title.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))) as s}
@@ -851,17 +845,6 @@
                         </div>
                         <div class="relative">
                           <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} on:input={(e) => { assessmentQuery[todo.id] = (e.target as HTMLInputElement).value; showAssessmentDropdown[todo.id] = true; }} on:focus={() => showAssessmentDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showAssessmentDropdown[todo.id]=false, 150)} />
-                          {#if todo.related_assessment}
-                            <div class="mt-1 inline-flex items-center gap-2">
-                              {#if getSubjectCodeFromLabel(todo.related_subject)}
-                                <span class="inline-block w-2 h-2 rounded-full" style="background-color: {subjectColours[getSubjectCodeFromLabel(todo.related_subject) || ''] || '#8e8e8e'}"></span>
-                                <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(getSubjectCodeFromLabel(todo.related_subject))}>{todo.related_assessment}</span>
-                              {:else}
-                                <span class="inline-block w-2 h-2 rounded-full" style="background-color: #8e8e8e"></span>
-                                <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(null)}>{todo.related_assessment}</span>
-                              {/if}
-                            </div>
-                          {/if}
                           {#if showAssessmentDropdown[todo.id]}
                             <div class="absolute z-20 mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md max-h-64 overflow-auto">
                               {#each assessmentsAll.filter(a => {
@@ -898,11 +881,6 @@
                           </div>
                         {/if}
                         <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:input={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); }} />
-                        <div class="flex flex-wrap items-center gap-1">
-                          {#each todo.tags ?? [] as tag}
-                            <span class="text-xs px-1.5 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{tag}</span>
-                          {/each}
-                        </div>
                       </div>
 
                       <!-- Description and Subtasks -->
