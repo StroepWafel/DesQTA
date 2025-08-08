@@ -207,6 +207,10 @@ export class EditorCore {
           this.undo();
         }
         break;
+      case 'a':
+        event.preventDefault();
+        this.selectAll();
+        break;
     }
   }
 
@@ -486,7 +490,14 @@ export class EditorCore {
 
   private updateCurrentSelection() {
     const selection = window.getSelection();
-    if (!selection) {
+    if (!selection || selection.rangeCount === 0) {
+      this.currentSelection = null;
+      return;
+    }
+
+    // Only update if the selection is within our editor
+    const range = selection.getRangeAt(0);
+    if (!this.element.contains(range.commonAncestorContainer)) {
       this.currentSelection = null;
       return;
     }
@@ -841,5 +852,92 @@ export class EditorCore {
       return true;
     }
     return false;
+  }
+
+  // Selection management methods
+  public saveSelection(): EditorSelection | null {
+    this.updateCurrentSelection();
+    return this.currentSelection;
+  }
+
+  public restoreSelection(selection: EditorSelection | null) {
+    if (!selection) return false;
+
+    const windowSelection = window.getSelection();
+    if (!windowSelection) return false;
+
+    try {
+      windowSelection.removeAllRanges();
+      
+      const range = document.createRange();
+      
+      // Validate that the nodes are still in the document
+      if (selection.anchorNode && 
+          selection.focusNode && 
+          this.element.contains(selection.anchorNode) &&
+          this.element.contains(selection.focusNode)) {
+        
+        range.setStart(selection.anchorNode, selection.anchorOffset);
+        range.setEnd(selection.focusNode, selection.focusOffset);
+        
+        windowSelection.addRange(range);
+        return true;
+      }
+    } catch (error) {
+      // Selection restoration failed, which can happen if DOM changed
+      console.warn('Failed to restore selection:', error);
+    }
+    
+    return false;
+  }
+
+  public selectAll() {
+    const range = document.createRange();
+    range.selectNodeContents(this.element);
+    
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+
+  public collapseToEnd() {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      selection.collapseToEnd();
+    }
+  }
+
+  public collapseToStart() {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      selection.collapseToStart();
+    }
+  }
+
+  public getSelectedText(): string {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return '';
+    
+    return selection.toString();
+  }
+
+  public replaceSelection(text: string) {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    
+    const textNode = document.createTextNode(text);
+    range.insertNode(textNode);
+    
+    // Move cursor to end of inserted text
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    
+    selection.removeAllRanges();
+    selection.addRange(range);
   }
 } 
