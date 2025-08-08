@@ -320,6 +320,8 @@ export class EditorCore {
         return this.setBlockType(command as BlockType);
       case 'paragraph':
         return this.setBlockType('paragraph');
+      case 'blockquote':
+        return this.setBlockType('blockquote');
       default:
         return false;
     }
@@ -382,6 +384,9 @@ export class EditorCore {
         break;
       case 'heading-6':
         newElement = document.createElement('h6');
+        break;
+      case 'blockquote':
+        newElement = document.createElement('blockquote');
         break;
       default:
         return false;
