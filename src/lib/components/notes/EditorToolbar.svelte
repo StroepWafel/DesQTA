@@ -36,17 +36,11 @@
   function updateToolbarState() {
     if (!editor) return;
 
-    // Update active formats based on current selection
-    activeFormats.clear();
+    // Update active formats using editor's method
+    activeFormats = editor.getActiveFormats();
     
-    // Check document command states
-    if (document.queryCommandState('bold')) activeFormats.add('bold');
-    if (document.queryCommandState('italic')) activeFormats.add('italic');
-    if (document.queryCommandState('underline')) activeFormats.add('underline');
-    if (document.queryCommandState('strikeThrough')) activeFormats.add('strikethrough');
-
-    // Update reactive statement
-    activeFormats = activeFormats;
+    // Update current block type
+    currentBlockType = editor.getCurrentBlockType();
   }
 
   // Format commands
@@ -129,6 +123,17 @@
   $: if (editor) {
     // This will be called when the editor instance changes
     updateToolbarState();
+    
+    // Listen for selection changes
+    const handleSelectionChange = () => {
+      // Small delay to ensure DOM is updated
+      setTimeout(updateToolbarState, 10);
+    };
+    
+    document.addEventListener('selectionchange', handleSelectionChange);
+    
+    // Cleanup function would go here in a real implementation
+    // For now, we'll rely on component lifecycle
   }
 </script>
 

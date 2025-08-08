@@ -402,6 +402,27 @@ export class EditorCore {
     if (document.queryCommandState('underline')) activeFormats.add('underline');
     if (document.queryCommandState('strikeThrough')) activeFormats.add('strikethrough');
     
+    // Check for code formatting manually since queryCommandState doesn't handle it
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      let node = range.startContainer;
+      
+      // Walk up the DOM tree to find code elements
+      while (node && node !== this.element) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as HTMLElement;
+          if (element.tagName === 'CODE') {
+            activeFormats.add('code');
+            break;
+          }
+        }
+        const parentNode = node.parentNode;
+        if (!parentNode) break;
+        node = parentNode;
+      }
+    }
+    
     return activeFormats;
   }
 
