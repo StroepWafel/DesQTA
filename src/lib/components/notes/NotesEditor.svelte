@@ -173,25 +173,25 @@
     display: none;
   }
 
-  /* Custom prose styling for dark mode */
-  .editor-content.prose-invert {
+  /* Custom prose styling for dark mode - using :global() to match Tailwind's dark: classes */
+  :global(.dark) .editor-content {
     color: rgb(241 245 249); /* slate-100 */
   }
 
-  .editor-content.prose-invert strong {
+  :global(.dark) .editor-content :global(strong) {
     color: rgb(241 245 249);
   }
 
-  .editor-content.prose-invert em {
+  :global(.dark) .editor-content :global(em) {
     color: rgb(241 245 249);
   }
 
-  .editor-content.prose-invert h1,
-  .editor-content.prose-invert h2,
-  .editor-content.prose-invert h3,
-  .editor-content.prose-invert h4,
-  .editor-content.prose-invert h5,
-  .editor-content.prose-invert h6 {
+  :global(.dark) .editor-content :global(h1),
+  :global(.dark) .editor-content :global(h2),
+  :global(.dark) .editor-content :global(h3),
+  :global(.dark) .editor-content :global(h4),
+  :global(.dark) .editor-content :global(h5),
+  :global(.dark) .editor-content :global(h6) {
     color: rgb(241 245 249);
   }
 
@@ -200,35 +200,35 @@
     box-shadow: 0 0 0 2px var(--accent-color-value);
   }
 
-  /* Ensure proper spacing and styling */
-  .editor-content p {
+  /* Ensure proper spacing and styling for dynamic content */
+  .editor-content :global(p) {
     margin: 0.75rem 0;
   }
 
-  .editor-content p:first-child {
+  .editor-content :global(p:first-child) {
     margin-top: 0;
   }
 
-  .editor-content p:last-child {
+  .editor-content :global(p:last-child) {
     margin-bottom: 0;
   }
 
-  .editor-content h1,
-  .editor-content h2,
-  .editor-content h3,
-  .editor-content h4,
-  .editor-content h5,
-  .editor-content h6 {
+  .editor-content :global(h1),
+  .editor-content :global(h2),
+  .editor-content :global(h3),
+  .editor-content :global(h4),
+  .editor-content :global(h5),
+  .editor-content :global(h6) {
     margin: 1.5rem 0 0.75rem 0;
     font-weight: 600;
   }
 
-  .editor-content h1:first-child,
-  .editor-content h2:first-child,
-  .editor-content h3:first-child,
-  .editor-content h4:first-child,
-  .editor-content h5:first-child,
-  .editor-content h6:first-child {
+  .editor-content :global(h1:first-child),
+  .editor-content :global(h2:first-child),
+  .editor-content :global(h3:first-child),
+  .editor-content :global(h4:first-child),
+  .editor-content :global(h5:first-child),
+  .editor-content :global(h6:first-child) {
     margin-top: 0;
   }
 </style> 

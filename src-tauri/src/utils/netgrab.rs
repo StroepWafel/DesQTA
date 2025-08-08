@@ -348,7 +348,7 @@ fn get_file_size_limit_from_config() -> Option<u64> {
     use dirs_next;
     
     // Get the config file path
-    let mut config_path = if cfg!(target_os = "android") {
+    let config_path = if cfg!(target_os = "android") {
         let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
         dir.push("DesQTA");
         dir.push("seqtaConfig.json");

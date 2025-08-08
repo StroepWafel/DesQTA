@@ -34,6 +34,10 @@
   let noteMenuOpen: string | null = null;
   let showMoveNoteModal: Note | null = null;
   let showSearchModal = false;
+  
+  // References for programmatic focus (instead of autofocus)
+  let createFolderInput: HTMLInputElement | null = null;
+  let editFolderInput: HTMLInputElement | null = null;
 
   // Reactive filtered notes
   $: filteredNotes = notes
@@ -155,6 +159,27 @@
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to create folder';
     }
+  }
+
+  function startCreateFolder() {
+    showCreateFolder = true;
+    // Focus the input after it's rendered
+    setTimeout(() => {
+      if (createFolderInput) {
+        createFolderInput.focus();
+      }
+    }, 0);
+  }
+
+  function startEditFolder(folder: NoteFolder) {
+    editingFolder = folder;
+    // Focus the input after it's rendered
+    setTimeout(() => {
+      if (editFolderInput) {
+        editFolderInput.focus();
+        editFolderInput.select();
+      }
+    }, 0);
   }
 
   async function deleteFolder(folderId: string) {
@@ -290,7 +315,7 @@
         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Folders</h3>
         <button
           class="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200"
-          on:click={() => showCreateFolder = !showCreateFolder}
+          on:click={() => showCreateFolder ? (showCreateFolder = false) : startCreateFolder()}
           title="Create new folder"
         >
           <Icon src={FolderPlus} class="w-4 h-4" />
@@ -306,11 +331,11 @@
               placeholder="Folder name"
               class="flex-1 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
               bind:value={newFolderName}
+              bind:this={createFolderInput}
               on:keydown={(e) => {
                 if (e.key === 'Enter') createFolder();
                 if (e.key === 'Escape') { showCreateFolder = false; newFolderName = ''; }
               }}
-              autofocus
             />
             <button
               class="px-2 py-1 text-xs rounded accent-bg text-white hover:opacity-90 transition-opacity"
@@ -352,7 +377,7 @@
                    if (e.key === 'Escape') editingFolder = null;
                  }}
                  on:blur={(e) => renameFolder(folder, e.currentTarget.value)}
-                 autofocus
+                 bind:this={editFolderInput}
                />
              {:else}
                <!-- Normal Mode -->
@@ -372,8 +397,14 @@
                      <span
                        class="opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-slate-100/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white transition-all duration-200 hover:scale-110"
                        on:click|stopPropagation={() => toggleFolderMenu(folder.id)}
+                       on:keydown|stopPropagation={(e) => {
+                         if (e.key === 'Enter' || e.key === ' ') {
+                           e.preventDefault();
+                           toggleFolderMenu(folder.id);
+                         }
+                       }}
                        role="button"
-                       tabindex="-1"
+                       tabindex="0"
                        title="Folder options"
                      >
                        <Icon src={EllipsisVertical} class="w-4 h-4" />
@@ -391,7 +422,7 @@
               >
                 <button
                   class="w-full flex items-center px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  on:click={() => { editingFolder = folder; folderMenuOpen = null; }}
+                  on:click={() => { startEditFolder(folder); folderMenuOpen = null; }}
                 >
                   <Icon src={PencilSquare} class="w-4 h-4 mr-2" />
                   Rename
@@ -619,6 +650,7 @@
   .line-clamp-1 {
     display: -webkit-box;
     -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -626,6 +658,7 @@
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

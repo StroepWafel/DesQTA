@@ -706,9 +706,27 @@
     </div>
 
     <!-- Tabs -->
-    <div class="mt-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700">
-      <button class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-none focus:ring-2 accent-ring {activeTab==='tasks' ? 'accent-bg text-white' : 'bg-transparent text-slate-700 dark:text-slate-300'}" on:click={() => activeTab='tasks'} aria-selected={activeTab==='tasks'}>Tasks</button>
-      <button class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-none focus:ring-2 accent-ring {activeTab==='notes' ? 'accent-bg text-white' : 'bg-transparent text-slate-700 dark:text-slate-300'}" on:click={() => activeTab='notes'} aria-selected={activeTab==='notes'}>Notes</button>
+    <div class="mt-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="Study sections">
+      <button 
+        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-none focus:ring-2 accent-ring {activeTab==='tasks' ? 'accent-bg text-white' : 'bg-transparent text-slate-700 dark:text-slate-300'}" 
+        on:click={() => activeTab='tasks'} 
+        role="tab" 
+        aria-selected={activeTab==='tasks'} 
+        aria-controls="tasks-panel"
+        id="tasks-tab"
+      >
+        Tasks
+      </button>
+      <button 
+        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-none focus:ring-2 accent-ring {activeTab==='notes' ? 'accent-bg text-white' : 'bg-transparent text-slate-700 dark:text-slate-300'}" 
+        on:click={() => activeTab='notes'} 
+        role="tab" 
+        aria-selected={activeTab==='notes'} 
+        aria-controls="notes-panel"
+        id="notes-tab"
+      >
+        Notes
+      </button>
     </div>
   </div>
 
@@ -717,7 +735,12 @@
 
     {#if activeTab === 'tasks'}
       <!-- Tasks Tab: Main Grid with Sidebar -->
-      <div class="h-full grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div 
+        class="h-full grid grid-cols-1 gap-6 lg:grid-cols-3"
+        role="tabpanel"
+        id="tasks-panel"
+        aria-labelledby="tasks-tab"
+      >
         <!-- Left Column: Tasks content -->
         <div class="lg:col-span-2 flex flex-col min-h-0">
           <div class="flex-1 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md overflow-y-auto" 
@@ -987,9 +1010,14 @@
     </div>
       {:else}
       <!-- Notes Tab: Full Width Layout -->
-      <div class="h-full flex flex-col min-h-0"
-           in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
-           out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
+      <div 
+        class="h-full flex flex-col min-h-0"
+        role="tabpanel"
+        id="notes-panel"
+        aria-labelledby="notes-tab"
+        in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
+        out:fly={{ y: -20, duration: 200, easing: cubicOut }}
+      >
         <NotesContainer />
       </div>
     {/if}
