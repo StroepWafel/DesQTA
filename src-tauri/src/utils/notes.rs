@@ -5,19 +5,6 @@ use std::path::PathBuf;
 use tauri::{AppHandle};
 use base64::{Engine as _, engine::general_purpose};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EditorNode {
-    #[serde(rename = "type")]
-    pub node_type: String,
-    #[serde(default)]
-    pub attributes: Option<serde_json::Value>,
-    #[serde(default)]
-    pub children: Option<Vec<EditorNode>>,
-    #[serde(default)]
-    pub text: Option<String>,
-    #[serde(default)]
-    pub id: Option<String>,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SeqtaReference {
@@ -31,23 +18,6 @@ pub struct SeqtaReference {
     pub last_synced: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DocumentMetadata {
-    pub word_count: u32,
-    pub character_count: u32,
-    pub seqta_references: Vec<SeqtaReference>,
-    #[serde(default)]
-    pub created_at: Option<String>,
-    #[serde(default)]
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EditorDocument {
-    pub version: String,
-    pub nodes: Vec<EditorNode>,
-    pub metadata: DocumentMetadata,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NoteMetadata {
@@ -102,6 +72,12 @@ pub struct NotesDatabase {
     pub folders: Vec<NoteFolder>,
     pub settings: NotesSettings,
     pub version: String,
+}
+
+impl NotesDatabase {
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
 
 impl Default for NotesDatabase {
@@ -164,170 +140,7 @@ fn ensure_parent_dir(path: &PathBuf) -> Result<(), String> {
     Ok(())
 }
 
-// Migration structures for old format
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct OldEditorNode {
-    #[serde(rename = "type")]
-    pub node_type: String,
-    #[serde(default)]
-    pub attributes: Option<serde_json::Value>,
-    #[serde(default)]
-    pub children: Option<Vec<OldEditorNode>>,
-    #[serde(default)]
-    pub text: Option<String>,
-    #[serde(default)]
-    pub html: Option<String>,
-    #[serde(default)]
-    pub id: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct OldEditorDocument {
-    pub version: String,
-    pub nodes: Vec<OldEditorNode>,
-    pub metadata: DocumentMetadata,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct OldNote {
-    pub id: String,
-    pub title: String,
-    pub content: OldEditorDocument,
-    pub folder_path: Vec<String>,
-    pub tags: Vec<String>,
-    pub seqta_references: Vec<SeqtaReference>,
-    pub created_at: String,
-    pub updated_at: String,
-    pub last_accessed: String,
-    pub metadata: NoteMetadata,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct OldNotesDatabase {
-    pub notes: Vec<OldNote>,
-    pub folders: Vec<NoteFolder>,
-    pub settings: NotesSettings,
-    pub version: String,
-}
-
-fn migrate_from_old_format(json_content: &str) -> Result<NotesDatabase, String> {
-    let old_database: OldNotesDatabase = serde_json::from_str(json_content)
-        .map_err(|e| format!("Failed to parse old format JSON: {}", e))?;
-    
-    let migrated_notes: Vec<Note> = old_database.notes.into_iter().map(|old_note| {
-        // Convert old EditorDocument to simple HTML string
-        let html_content = convert_old_nodes_to_html(&old_note.content.nodes);
-        
-        Note {
-            id: old_note.id,
-            title: old_note.title,
-            content: html_content,
-            folder_path: old_note.folder_path,
-            tags: old_note.tags,
-            seqta_references: old_note.seqta_references,
-            created_at: old_note.created_at,
-            updated_at: old_note.updated_at,
-            last_accessed: old_note.last_accessed,
-            metadata: old_note.metadata,
-        }
-    }).collect();
-    
-    Ok(NotesDatabase {
-        notes: migrated_notes,
-        folders: old_database.folders,
-        settings: old_database.settings,
-        version: "2.0".to_string(), // Bump version to indicate migration
-    })
-}
-
-fn convert_old_nodes_to_html(nodes: &[OldEditorNode]) -> String {
-    let mut html = String::new();
-    
-    for node in nodes {
-        match node.node_type.as_str() {
-            "paragraph" => {
-                if let Some(html_content) = &node.html {
-                    html.push_str(&format!("<p>{}</p>", html_content));
-                } else if let Some(text) = &node.text {
-                    html.push_str(&format!("<p>{}</p>", text));
-                } else {
-                    html.push_str("<p><br></p>");
-                }
-            },
-            "heading" => {
-                let level = node.attributes.as_ref()
-                    .and_then(|attr| attr.get("level"))
-                    .and_then(|v| v.as_u64())
-                    .unwrap_or(1);
-                
-                let content = node.html.as_ref()
-                    .or(node.text.as_ref())
-                    .map(|s| s.as_str())
-                    .unwrap_or("");
-                    
-                html.push_str(&format!("<h{}>{}</h{}>", level, content, level));
-            },
-            "blockquote" => {
-                let content = node.html.as_ref()
-                    .or(node.text.as_ref())
-                    .map(|s| s.as_str())
-                    .unwrap_or("");
-                html.push_str(&format!("<blockquote>{}</blockquote>", content));
-            },
-            "code-block" | "codeblock" => {
-                let content = node.text.as_ref().map(|s| s.as_str()).unwrap_or("");
-                html.push_str(&format!("<pre><code>{}</code></pre>", content));
-            },
-            "bullet-list" => {
-                if let Some(children) = &node.children {
-                    html.push_str("<ul>");
-                    for child in children {
-                        let content = child.html.as_ref()
-                            .or(child.text.as_ref())
-                            .map(|s| s.as_str())
-                            .unwrap_or("");
-                        html.push_str(&format!("<li>{}</li>", content));
-                    }
-                    html.push_str("</ul>");
-                }
-            },
-            "numbered-list" => {
-                if let Some(children) = &node.children {
-                    html.push_str("<ol>");
-                    for child in children {
-                        let content = child.html.as_ref()
-                            .or(child.text.as_ref())
-                            .map(|s| s.as_str())
-                            .unwrap_or("");
-                        html.push_str(&format!("<li>{}</li>", content));
-                    }
-                    html.push_str("</ol>");
-                }
-            },
-            "text" => {
-                if let Some(text) = &node.text {
-                    html.push_str(text);
-                }
-            },
-            _ => {
-                // For unknown node types, try to extract any text content
-                if let Some(html_content) = &node.html {
-                    html.push_str(html_content);
-                } else if let Some(text) = &node.text {
-                    html.push_str(&format!("<p>{}</p>", text));
-                }
-            }
-        }
-    }
-    
-    // If no content was generated, provide default
-    if html.is_empty() {
-        html = "<p><br></p>".to_string();
-    }
-    
-    html
-}
-
+// Removed legacy migration structures and conversion functions
 fn load_notes_database(app: &AppHandle) -> Result<NotesDatabase, String> {
     let path = notes_file_path(app)?;
     if !path.exists() {
@@ -343,21 +156,10 @@ fn load_notes_database(app: &AppHandle) -> Result<NotesDatabase, String> {
         return Ok(NotesDatabase::default());
     }
     
-    // Try to parse as new format first
-    match serde_json::from_str::<NotesDatabase>(&contents) {
-        Ok(database) => Ok(database),
-        Err(_) => {
-            // If that fails, try to migrate from old format
-            println!("Attempting to migrate notes from old format...");
-            let migrated_database = migrate_from_old_format(&contents)?;
-            
-            // Save the migrated database immediately
-            save_notes_database(app, &migrated_database)?;
-            println!("Successfully migrated notes to new format!");
-            
-            Ok(migrated_database)
-        }
-    }
+    // Parse as current format only
+    let database: NotesDatabase = serde_json::from_str(&contents)
+        .map_err(|e| format!("Failed to parse notes database (current format): {}", e))?;
+    Ok(database)
 }
 
 fn save_notes_database(app: &AppHandle, database: &NotesDatabase) -> Result<(), String> {
