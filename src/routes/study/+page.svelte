@@ -504,7 +504,87 @@
       return bu - au;
     });
 
+  // Study tips array
+  const studyTips = [
+    "Break tasks into 25-minute focus sessions.",
+    "Start with high-priority items due soon.",
+    "Keep your task titles clear and specific.",
+    "Use the Pomodoro Technique: 25 minutes work, 5 minutes break.",
+    "Create a dedicated study space free from distractions.",
+    "Review your notes within 24 hours of taking them.",
+    "Use active recall instead of just re-reading.",
+    "Teach someone else what you've learned.",
+    "Take regular breaks to maintain concentration.",
+    "Use flashcards for memorizing key concepts.",
+    "Study in different locations to improve retention.",
+    "Practice spaced repetition for long-term memory.",
+    "Set specific, achievable daily study goals.",
+    "Use mind maps to visualize complex topics.",
+    "Study the most challenging subjects when you're most alert.",
+    "Create a consistent study schedule and stick to it.",
+    "Use background music or white noise if it helps you focus.",
+    "Eliminate your phone and social media during study time.",
+    "Take handwritten notes to improve comprehension.",
+    "Use the Feynman Technique: explain concepts in simple terms.",
+    "Form study groups with motivated classmates.",
+    "Practice past exams and sample questions.",
+    "Use mnemonics to remember lists and sequences.",
+    "Get enough sleep - it's crucial for memory consolidation.",
+    "Exercise regularly to boost brain function.",
+    "Stay hydrated and eat brain-healthy foods.",
+    "Use different colors for organizing notes and concepts.",
+    "Create acronyms to remember key information.",
+    "Study before bed to enhance memory retention.",
+    "Use the SQ3R method: Survey, Question, Read, Recite, Review.",
+    "Break large projects into smaller, manageable chunks.",
+    "Use timers to stay focused and track progress.",
+    "Create visual aids like charts and diagrams.",
+    "Practice explaining concepts out loud.",
+    "Use the 80/20 rule: focus on the most important 20%.",
+    "Take practice tests under exam conditions.",
+    "Review mistakes and understand why they happened.",
+    "Use spaced learning: study a little bit every day.",
+    "Create connections between new and existing knowledge.",
+    "Use the Cornell Note-taking system.",
+    "Study in natural light when possible.",
+    "Keep a study journal to track your progress.",
+    "Use online resources and educational videos.",
+    "Form study partnerships for accountability.",
+    "Create rhymes or songs to remember information.",
+    "Use the method of loci (memory palace technique).",
+    "Take breaks every 45-90 minutes.",
+    "Study similar subjects at different times to avoid confusion.",
+    "Use highlighters strategically, not excessively.",
+    "Create your own practice questions.",
+    "Study in short, frequent sessions rather than long cramming.",
+    "Use positive self-talk and visualization.",
+    "Reward yourself for reaching study milestones.",
+    "Keep your study area clean and organized.",
+    "Use apps and tools to block distracting websites.",
+    "Study with purpose - know why you're learning something.",
+    "Create summary sheets for quick review.",
+    "Use different study methods for different types of content.",
+    "Practice retrieval: test yourself without looking at notes.",
+    "Study in groups for discussion-based subjects.",
+    "Use analogies to understand complex concepts.",
+    "Take care of your physical health to support mental performance.",
+    "Use the rubber duck debugging method for problem-solving.",
+    "Create a pre-study routine to get in the zone.",
+    "Use background apps that simulate library or café sounds.",
+    "Study the hardest material when your energy is highest.",
+    "Use the two-minute rule: if it takes less than 2 minutes, do it now."
+  ];
+
+  // Random study tip selection
+  let currentStudyTip = '';
+  
+  function getRandomStudyTip() {
+    const randomIndex = Math.floor(Math.random() * studyTips.length);
+    return studyTips[randomIndex];
+  }
+
   onMount(async () => {
+    currentStudyTip = getRandomStudyTip();
     await Promise.all([
       loadTodos(),
       loadUpcomingAssessments(),
@@ -855,12 +935,18 @@
       <!-- Focus Tips / Placeholder Widget -->
       <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md"
            in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Focus Tips</h2>
-        <ul class="list-disc list-inside text-slate-600 dark:text-slate-300 space-y-1">
-          <li>Break tasks into 25-minute focus sessions.</li>
-          <li>Start with high-priority items due soon.</li>
-          <li>Keep your task titles clear and specific.</li>
-        </ul>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Study Tip</h2>
+          <button 
+            class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+            on:click={() => currentStudyTip = getRandomStudyTip()}
+            aria-label="Get new study tip">
+            New Tip
+          </button>
+        </div>
+        <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+          {currentStudyTip}
+        </p>
       </div>
     </div>
   </div>
