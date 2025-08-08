@@ -8,6 +8,7 @@ import type {
   FormatType,
   BlockType 
 } from '../types/editor';
+import { SeqtaMentionsService, type SeqtaMentionItem } from '../../../services/seqtaMentionsService';
 
 export class EditorCore {
   private element: HTMLElement;
@@ -1014,58 +1015,55 @@ export class EditorCore {
      this.showMentionAutocomplete(textNode, atIndex, query);
    }
 
-   private showMentionAutocomplete(textNode: Node, atIndex: number, query: string) {
-     // Create or update autocomplete dropdown
-     this.createMentionDropdown(textNode, atIndex, query);
-   }
+       private async showMentionAutocomplete(textNode: Node, atIndex: number, query: string) {
+      // Create or update autocomplete dropdown
+      await this.createMentionDropdown(textNode, atIndex, query);
+    }
 
-   private createMentionDropdown(textNode: Node, atIndex: number, query: string) {
-     // Remove existing dropdown
-     this.removeMentionDropdown();
+    private async createMentionDropdown(textNode: Node, atIndex: number, query: string) {
+      // Remove existing dropdown
+      this.removeMentionDropdown();
 
-     const dropdown = document.createElement('div');
-     dropdown.className = 'mention-autocomplete';
-     dropdown.style.cssText = `
-       position: absolute;
-       z-index: 1000;
-       background: white;
-       border: 1px solid #e2e8f0;
-       border-radius: 0.5rem;
-       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-       max-height: 200px;
-       overflow-y: auto;
-       min-width: 250px;
-     `;
+      const dropdown = document.createElement('div');
+      dropdown.className = 'mention-autocomplete';
+      // Use Tailwind-style classes for better theme integration
+      dropdown.className = 'mention-autocomplete fixed z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto min-w-[250px]';
+      dropdown.style.cssText = `
+        position: absolute;
+        z-index: 1000;
+      `;
 
-     // Get mention suggestions
-     const suggestions = this.getMentionSuggestions(query);
-     
-     suggestions.forEach((suggestion, index) => {
-       const item = document.createElement('div');
-       item.className = 'mention-item';
-       item.style.cssText = `
-         padding: 0.75rem;
-         cursor: pointer;
-         border-bottom: 1px solid #f1f5f9;
-         display: flex;
-         align-items: center;
-         gap: 0.5rem;
-       `;
-       
-       if (index === 0) {
-         item.classList.add('selected');
-         item.style.backgroundColor = '#f8fafc';
-       }
+      // Get mention suggestions
+      const suggestions = await this.getMentionSuggestions(query);
+      
+      // Debug logging
+      console.log('Mention suggestions:', suggestions);
+      
+      if (suggestions.length === 0) {
+        // Show "no results" message
+        const noResults = document.createElement('div');
+        noResults.className = 'p-3 text-center text-slate-500 dark:text-slate-400';
+        noResults.textContent = 'No SEQTA elements found';
+        dropdown.appendChild(noResults);
+      }
+      
+      suggestions.forEach((suggestion, index) => {
+               const item = document.createElement('div');
+        item.className = 'mention-item p-3 cursor-pointer border-b border-slate-100 dark:border-slate-700 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors';
+        
+        if (index === 0) {
+          item.classList.add('selected', 'bg-slate-50', 'dark:bg-slate-700');
+        }
 
-       // Add icon based on type
-       const icon = this.getMentionIcon(suggestion.type);
-       item.innerHTML = `
-         <span style="font-size: 1.2em;">${icon}</span>
-         <div>
-           <div style="font-weight: 500; color: #1e293b;">${suggestion.title}</div>
-           <div style="font-size: 0.875rem; color: #64748b;">${suggestion.subtitle}</div>
-         </div>
-       `;
+               // Add icon based on type
+        const icon = this.getMentionIcon(suggestion.type);
+        item.innerHTML = `
+          <span class="text-lg">${icon}</span>
+          <div class="flex-1">
+            <div class="font-medium text-slate-900 dark:text-slate-100">${suggestion.title}</div>
+            <div class="text-sm text-slate-600 dark:text-slate-400">${suggestion.subtitle}</div>
+          </div>
+        `;
 
        item.addEventListener('click', () => {
          this.insertMention(textNode, atIndex, suggestion);
@@ -1087,54 +1085,63 @@ export class EditorCore {
      this.setupMentionKeyboardHandling(dropdown, textNode, atIndex);
    }
 
-   private getMentionSuggestions(query: string) {
-     // This will be populated with real SEQTA data
-     const mockSuggestions = [
-       {
-         id: 'assignment-1',
-         type: 'assignment',
-         title: 'Mathematics Assignment 3',
-         subtitle: 'Due: Tomorrow, 11:59 PM',
-         data: { subject: 'Mathematics', dueDate: '2024-01-15T23:59:00Z' }
-       },
-       {
-         id: 'class-1',
-         type: 'class',
-         title: 'Year 10 Mathematics',
-         subtitle: 'Next: Today, 2:00 PM',
-         data: { year: 10, subject: 'Mathematics', nextClass: '2024-01-14T14:00:00Z' }
-       },
-       {
-         id: 'subject-1',
-         type: 'subject',
-         title: 'English Literature',
-         subtitle: '4 assignments pending',
-         data: { code: 'ENG10', assignments: 4 }
-       },
-       {
-         id: 'assessment-1',
-         type: 'assessment',
-         title: 'Chemistry Test',
-         subtitle: 'Scheduled: Next Friday',
-         data: { subject: 'Chemistry', date: '2024-01-19T09:00:00Z' }
-       },
-       {
-         id: 'timetable-1',
-         type: 'timetable',
-         title: 'Today\'s Schedule',
-         subtitle: '6 classes scheduled',
-         data: { date: '2024-01-14', classCount: 6 }
-       }
-     ];
+       private async getMentionSuggestions(query: string): Promise<SeqtaMentionItem[]> {
+      try {
+        return await SeqtaMentionsService.searchMentions(query);
+      } catch (error) {
+        console.error('Error fetching mention suggestions:', error);
+        // Fallback to mock data
+        return this.getMockMentionSuggestions(query);
+      }
+    }
 
-     // Filter by query
-     if (!query) return mockSuggestions.slice(0, 5);
-     
-     return mockSuggestions.filter(s => 
-       s.title.toLowerCase().includes(query.toLowerCase()) ||
-       s.subtitle.toLowerCase().includes(query.toLowerCase())
-     ).slice(0, 5);
-   }
+    private getMockMentionSuggestions(query: string): SeqtaMentionItem[] {
+      const mockSuggestions: SeqtaMentionItem[] = [
+        {
+          id: 'assignment-1',
+          type: 'assignment',
+          title: 'Mathematics Assignment 3',
+          subtitle: 'Mathematics • Due: Tomorrow, 11:59 PM',
+          data: { subject: 'Mathematics', dueDate: '2024-01-15T23:59:00Z' }
+        },
+        {
+          id: 'class-1',
+          type: 'class',
+          title: 'Year 10 Mathematics',
+          subtitle: 'Mr. Smith • Room 204',
+          data: { year: 10, subject: 'Mathematics', nextClass: '2024-01-14T14:00:00Z' }
+        },
+        {
+          id: 'subject-1',
+          type: 'subject',
+          title: 'English Literature',
+          subtitle: 'ENG10 • Ms. Johnson • 4 assignments',
+          data: { code: 'ENG10', assignments: 4 }
+        },
+        {
+          id: 'assessment-1',
+          type: 'assessment',
+          title: 'Chemistry Test',
+          subtitle: 'Chemistry • Next Friday • Test',
+          data: { subject: 'Chemistry', date: '2024-01-19T09:00:00Z' }
+        },
+        {
+          id: 'timetable-1',
+          type: 'timetable',
+          title: 'Schedule for Today',
+          subtitle: '6 classes scheduled',
+          data: { date: '2024-01-14', classCount: 6 }
+        }
+      ];
+
+      // Filter by query
+      if (!query) return mockSuggestions.slice(0, 5);
+      
+      return mockSuggestions.filter(s => 
+        s.title.toLowerCase().includes(query.toLowerCase()) ||
+        s.subtitle.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 5);
+    }
 
    private getMentionIcon(type: string): string {
      const icons = {
@@ -1206,18 +1213,16 @@ export class EditorCore {
      this.currentMentionKeyHandler = keyHandler;
    }
 
-   private updateMentionSelection(items: NodeListOf<Element>, selectedIndex: number) {
-     items.forEach((item, index) => {
-       const htmlItem = item as HTMLElement;
-       if (index === selectedIndex) {
-         htmlItem.classList.add('selected');
-         htmlItem.style.backgroundColor = '#f8fafc';
-       } else {
-         htmlItem.classList.remove('selected');
-         htmlItem.style.backgroundColor = '';
-       }
-     });
-   }
+       private updateMentionSelection(items: NodeListOf<Element>, selectedIndex: number) {
+      items.forEach((item, index) => {
+        const htmlItem = item as HTMLElement;
+        if (index === selectedIndex) {
+          htmlItem.classList.add('selected', 'bg-slate-50', 'dark:bg-slate-700');
+        } else {
+          htmlItem.classList.remove('selected', 'bg-slate-50', 'dark:bg-slate-700');
+        }
+      });
+    }
 
    private insertMention(textNode: Node, atIndex: number, suggestion: any) {
      // Remove the @ and query text
@@ -1303,16 +1308,30 @@ export class EditorCore {
      alert(`${suggestion.title}\n\nType: ${suggestion.type}\nDetails: ${suggestion.subtitle}\n\nData: ${JSON.stringify(suggestion.data, null, 2)}`);
    }
 
-   private updateMentionData(mention: HTMLElement, suggestion: any) {
-     // This would fetch fresh data from SEQTA
-     console.log('Updating mention data for:', suggestion.id);
-     // For now, just show that it would update
-     mention.style.opacity = '0.7';
-     setTimeout(() => {
-       mention.style.opacity = '1';
-       mention.title = 'Updated: ' + new Date().toLocaleTimeString();
-     }, 1000);
-   }
+       private async updateMentionData(mention: HTMLElement, suggestion: any) {
+      try {
+        mention.style.opacity = '0.7';
+        
+        const updatedData = await SeqtaMentionsService.updateMentionData(
+          suggestion.id || mention.dataset.mentionId,
+          suggestion.type || mention.dataset.mentionType
+        );
+        
+        if (updatedData) {
+          // Update the mention display
+          mention.innerHTML = `${this.getMentionIcon(updatedData.type)} ${updatedData.title}`;
+          mention.dataset.mentionData = JSON.stringify(updatedData.data);
+          mention.title = `Updated: ${new Date().toLocaleTimeString()}`;
+          this.triggerChange();
+        }
+        
+        mention.style.opacity = '1';
+      } catch (error) {
+        console.error('Failed to update mention data:', error);
+        mention.style.opacity = '1';
+        mention.title = 'Update failed';
+      }
+    }
 
    private removeMentionDropdown() {
      if (this.currentMentionDropdown) {
