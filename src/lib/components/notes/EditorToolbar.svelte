@@ -93,15 +93,17 @@
     currentBlockType = 'blockquote';
   }
 
-  // List commands (placeholder for now)
+  // List commands
   function toggleBulletList() {
     if (!editor || readonly) return;
-    // TODO: Implement bullet list
+    editor.executeCommand('bullet-list');
+    updateToolbarState();
   }
 
   function toggleNumberList() {
     if (!editor || readonly) return;
-    // TODO: Implement number list
+    editor.executeCommand('numbered-list');
+    updateToolbarState();
   }
 
   // Media commands (placeholder for now)
@@ -249,7 +251,7 @@
     <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'bullet-list' ? 'accent-bg text-white' : ''}"
         on:click={toggleBulletList}
         disabled={readonly}
         title="Bullet list"
@@ -260,7 +262,7 @@
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'numbered-list' ? 'accent-bg text-white' : ''}"
         on:click={toggleNumberList}
         disabled={readonly}
         title="Numbered list"

@@ -18,6 +18,8 @@ export type EditorNodeType =
   | 'paragraph' 
   | 'heading' 
   | 'list' 
+  | 'bullet-list'
+  | 'numbered-list'
   | 'list-item'
   | 'blockquote' 
   | 'codeblock' 

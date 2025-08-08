@@ -1,6 +1,7 @@
 import type { 
   EditorDocument, 
   EditorNode, 
+  EditorNodeType,
   EditorOptions, 
   EditorSelection,
   EditorRange,
@@ -158,12 +159,50 @@ export class EditorCore {
     const range = selection.getRangeAt(0);
     const currentElement = this.getBlockElement(range.startContainer);
 
+    if (!currentElement) return;
+
+    // Check if we're in a list item
+    if (currentElement.tagName === 'LI') {
+      event.preventDefault();
+      this.handleListEnter(currentElement, range);
+      return;
+    }
+
     // If we're in a heading, create a new paragraph
-    if (currentElement && this.isHeading(currentElement)) {
+    if (this.isHeading(currentElement)) {
       event.preventDefault();
       this.insertParagraphAfter(currentElement);
     }
     // Otherwise, let the browser handle it naturally
+  }
+
+  private handleListEnter(listItem: HTMLElement, range: Range) {
+    // If the list item is empty, exit the list
+    if (!listItem.textContent?.trim()) {
+      const list = listItem.parentElement;
+      if (list && (list.tagName === 'UL' || list.tagName === 'OL')) {
+        // Remove empty list item
+        list.removeChild(listItem);
+        
+        // Create a new paragraph after the list
+        const paragraph = document.createElement('p');
+        paragraph.innerHTML = '<br>';
+        list.parentNode?.insertBefore(paragraph, list.nextSibling);
+        
+        // Move cursor to new paragraph
+        this.restoreSelectionInElement(paragraph);
+      }
+    } else {
+      // Create a new list item
+      const newListItem = document.createElement('li');
+      newListItem.innerHTML = '<br>';
+      
+      // Insert after current list item
+      listItem.parentNode?.insertBefore(newListItem, listItem.nextSibling);
+      
+      // Move cursor to new list item
+      this.restoreSelectionInElement(newListItem);
+    }
   }
 
   private handleBackspaceKey(event: KeyboardEvent) {
@@ -322,6 +361,10 @@ export class EditorCore {
         return this.setBlockType('paragraph');
       case 'blockquote':
         return this.setBlockType('blockquote');
+      case 'bullet-list':
+        return this.toggleList('ul');
+      case 'numbered-list':
+        return this.toggleList('ol');
       default:
         return false;
     }
@@ -403,6 +446,79 @@ export class EditorCore {
     return true;
   }
 
+  public toggleList(listType: 'ul' | 'ol'): boolean {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return false;
+
+    const range = selection.getRangeAt(0);
+    const currentElement = this.getBlockElement(range.startContainer);
+    
+    if (!currentElement) return false;
+
+    // Check if we're already in a list
+    const existingList = this.findParentList(currentElement);
+    
+    if (existingList) {
+      // If we're in a list, convert back to paragraphs
+      this.convertListToParagraphs(existingList);
+    } else {
+      // Convert current paragraph(s) to list
+      this.convertToList(currentElement, listType);
+    }
+    
+    this.triggerChange();
+    return true;
+  }
+
+  private findParentList(element: HTMLElement): HTMLElement | null {
+    let current = element;
+    
+    while (current && current !== this.element) {
+      if (current.tagName === 'UL' || current.tagName === 'OL') {
+        return current;
+      }
+      if (current.tagName === 'LI' && current.parentElement) {
+        const parent = current.parentElement;
+        if (parent.tagName === 'UL' || parent.tagName === 'OL') {
+          return parent;
+        }
+      }
+      const parentElement = current.parentElement;
+      if (!parentElement) break;
+      current = parentElement;
+    }
+    
+    return null;
+  }
+
+  private convertListToParagraphs(listElement: HTMLElement) {
+    const listItems = Array.from(listElement.querySelectorAll('li'));
+    
+    listItems.forEach(li => {
+      const paragraph = document.createElement('p');
+      paragraph.innerHTML = li.innerHTML || '<br>';
+      listElement.parentNode?.insertBefore(paragraph, listElement);
+    });
+    
+    // Remove the list
+    listElement.parentNode?.removeChild(listElement);
+  }
+
+  private convertToList(element: HTMLElement, listType: 'ul' | 'ol') {
+    const list = document.createElement(listType);
+    const listItem = document.createElement('li');
+    
+    // Move content to list item
+    listItem.innerHTML = element.innerHTML || '<br>';
+    list.appendChild(listItem);
+    
+    // Replace element with list
+    element.parentNode?.replaceChild(list, element);
+    
+    // Restore selection in list item
+    this.restoreSelectionInElement(listItem);
+  }
+
   public getActiveFormats(): Set<string> {
     const activeFormats = new Set<string>();
     
@@ -443,6 +559,12 @@ export class EditorCore {
     const currentElement = this.getBlockElement(range.startContainer);
     
     if (!currentElement) return 'paragraph';
+
+    // Check if we're in a list first
+    const parentList = this.findParentList(currentElement);
+    if (parentList) {
+      return parentList.tagName.toLowerCase() === 'ul' ? 'bullet-list' : 'numbered-list';
+    }
 
     switch (currentElement.tagName.toLowerCase()) {
       case 'h1': return 'heading-1';
@@ -534,7 +656,7 @@ export class EditorCore {
   }
 
   private isBlockElement(element: HTMLElement): boolean {
-    const blockTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'BLOCKQUOTE', 'PRE'];
+    const blockTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'BLOCKQUOTE', 'PRE', 'LI'];
     return blockTags.includes(element.tagName);
   }
 
@@ -774,6 +896,30 @@ export class EditorCore {
       case 'code':
         type = 'codeblock';
         break;
+      case 'ul':
+        type = 'bullet-list';
+        break;
+      case 'ol':
+        type = 'numbered-list';
+        break;
+      case 'li':
+        type = 'list-item';
+        break;
+    }
+    
+    // Handle list items specially
+    if (tagName === 'ul' || tagName === 'ol') {
+      const listItems = Array.from(element.children).map(li => ({
+        type: 'list-item' as EditorNodeType,
+        text: li.textContent || '',
+        children: []
+      }));
+      
+      return {
+        type: type as EditorNodeType,
+        children: listItems,
+        text: ''
+      };
     }
     
     return {
@@ -802,6 +948,12 @@ export class EditorCore {
           return `<blockquote>${node.text || ''}</blockquote>`;
         case 'codeblock':
           return `<pre><code>${node.text || ''}</code></pre>`;
+        case 'bullet-list':
+          const ulItems = node.children?.map(child => `<li>${child.text || ''}</li>`).join('') || '';
+          return `<ul>${ulItems}</ul>`;
+        case 'numbered-list':
+          const olItems = node.children?.map(child => `<li>${child.text || ''}</li>`).join('') || '';
+          return `<ol>${olItems}</ol>`;
         default:
           return `<p>${node.text || '<br>'}</p>`;
       }
