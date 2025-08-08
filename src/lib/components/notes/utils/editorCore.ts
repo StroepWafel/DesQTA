@@ -470,10 +470,65 @@ export class EditorCore {
   }
 
   private removeFormat(format: FormatType, range: Range) {
-    // This is a simplified implementation
-    // In a full implementation, you'd need to handle partial selections
-    // and nested formatting more carefully
-    document.execCommand(format, false);
+    // Get all nodes within the range
+    const walker = document.createTreeWalker(
+      range.commonAncestorContainer,
+      NodeFilter.SHOW_ELEMENT,
+      {
+        acceptNode: (node) => {
+          const element = node as HTMLElement;
+          if (this.isFormatElement(element, format)) {
+            return NodeFilter.FILTER_ACCEPT;
+          }
+          return NodeFilter.FILTER_SKIP;
+        }
+      }
+    );
+
+    const elementsToRemove: HTMLElement[] = [];
+    let node: Node | null;
+    
+    while ((node = walker.nextNode())) {
+      const element = node as HTMLElement;
+      if (range.intersectsNode(element)) {
+        elementsToRemove.push(element);
+      }
+    }
+
+    // Remove formatting by unwrapping elements
+    elementsToRemove.forEach(element => {
+      this.unwrapElement(element);
+    });
+  }
+
+  private isFormatElement(element: HTMLElement, format: FormatType): boolean {
+    switch (format) {
+      case 'bold':
+        return element.tagName === 'STRONG' || element.tagName === 'B';
+      case 'italic':
+        return element.tagName === 'EM' || element.tagName === 'I';
+      case 'underline':
+        return element.tagName === 'U';
+      case 'strikethrough':
+        return element.tagName === 'S' || element.tagName === 'STRIKE';
+      case 'code':
+        return element.tagName === 'CODE';
+      default:
+        return false;
+    }
+  }
+
+  private unwrapElement(element: HTMLElement) {
+    const parent = element.parentNode;
+    if (!parent) return;
+
+    // Move all children to parent
+    while (element.firstChild) {
+      parent.insertBefore(element.firstChild, element);
+    }
+    
+    // Remove the empty element
+    parent.removeChild(element);
   }
 
   private insertLineBreak() {
