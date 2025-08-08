@@ -21,6 +21,8 @@ mod theme_manager;
 mod news;
 #[path = "utils/todolist.rs"]
 mod todolist;
+#[path = "utils/notes.rs"]
+mod notes;
 mod global_search;
 
 
@@ -292,7 +294,19 @@ pub fn run() {
             theme_manager::export_theme_to_file,
             news::get_news_australia,
             todolist::load_todos,
-            todolist::save_todos
+            todolist::save_todos,
+            notes::load_notes,
+            notes::save_note,
+            notes::delete_note,
+            notes::get_note,
+            notes::search_notes,
+            notes::load_folders,
+            notes::create_folder,
+            notes::delete_folder,
+            notes::move_note_to_folder,
+            notes::get_notes_stats,
+            notes::backup_notes,
+            notes::restore_notes_from_backup
         ])
         .setup(|app| {
             // Initialize logger first
