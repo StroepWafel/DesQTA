@@ -206,6 +206,7 @@
         <div class="flex-1 min-h-0">
           <NotesEditor
             content={selectedNote.content}
+            noteId={selectedNote.id}
             placeholder="Start writing your note..."
             autofocus={true}
             on:change={handleContentChange}

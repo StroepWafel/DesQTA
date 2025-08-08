@@ -10,6 +10,7 @@
   export let placeholder: string = 'Start writing your note...';
   export let readonly: boolean = false;
   export let autofocus: boolean = false;
+  export let noteId: string | undefined = undefined; // Add noteId to track note changes
 
   // Event dispatcher
   const dispatch = createEventDispatcher<{
@@ -28,6 +29,7 @@
   let isFocused = false;
   let wordCount = 0;
   let characterCount = 0;
+  let lastNoteId: string | undefined = undefined;
 
   onMount(() => {
     // Initialize the editor core
@@ -42,6 +44,9 @@
     // Load initial content
     if (content && content.nodes.length > 0) {
       editorCore.setContent(content);
+      wordCount = content.metadata.word_count;
+      characterCount = content.metadata.character_count;
+      lastNoteId = noteId;
     }
 
     // Auto focus if requested
@@ -53,6 +58,15 @@
       editorCore?.destroy();
     };
   });
+
+  // React to content changes from parent component (when switching notes)
+  $: if (editorCore && content && noteId !== lastNoteId) {
+    // Update editor content when switching to a different note
+    editorCore.setContent(content);
+    wordCount = content.metadata.word_count;
+    characterCount = content.metadata.character_count;
+    lastNoteId = noteId;
+  }
 
   function handleContentChange(newContent: EditorDocument) {
     content = newContent;
