@@ -741,25 +741,23 @@
         {:else}
           <div class="space-y-3">
             {#each upcomingAssessments as a (a.id)}
-              <div class="relative flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]">
+              <div class="relative flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]">
                 <!-- Left accent bar -->
                 <span class="absolute left-0 top-0 h-full w-1 rounded-l-lg" style="background-color: {a.colour || subjectColours[a.subject?.split(' — ')[0] || ''] || '#8e8e8e'}"></span>
-                <div class="flex items-start gap-2 flex-1">
-                  <span class="mt-1 ml-1 inline-block w-2 h-2 flex-shrink-0 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                      <div class="truncate text-slate-900 dark:text-white font-medium text-sm">{a.title}</div>
-                      <div class="text-xs text-slate-500 dark:text-slate-400">{a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}</div>
-                    </div>
-                    <div class="mt-1 flex items-center gap-2">
-                      <!-- Subject tinted chip -->
-                      {#if a.subject}
-                        <span class="px-1.5 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(a.subject.split(' — ')[0] || a.subject)}>{a.subject}</span>
-                      {/if}
-                    </div>
+                <span class="mt-1 ml-1 inline-block w-2 h-2 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="truncate text-slate-900 dark:text-white font-medium">{a.title}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}</div>
+                  </div>
+                  <div class="mt-1 flex items-center gap-2">
+                    <!-- Subject tinted chip -->
+                    {#if a.subject}
+                      <span class="px-2 py-0.5 rounded-lg border text-xs" style={chipStylesForCode(a.subject.split(' — ')[0] || a.subject)}>{a.subject}</span>
+                    {/if}
                   </div>
                 </div>
-                <button class="px-2 py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring self-start sm:self-center">Open</button>
+                <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Open</button>
               </div>
             {/each}
             {#if upcomingAssessments.length === 0}
