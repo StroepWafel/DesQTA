@@ -14,7 +14,7 @@
 
   import '../app.css';
   import { accentColor, loadAccentColor, theme, loadTheme, loadCurrentTheme } from '../lib/stores/theme';
-  import { Icon, Home, Newspaper, ClipboardDocumentList, BookOpen, ChatBubbleLeftRight, DocumentText, AcademicCap, ChartBar, Cog6Tooth, CalendarDays, User, GlobeAlt, Swatch, XMark } from 'svelte-hero-icons';
+  import { Icon, Home, Newspaper, ClipboardDocumentList, BookOpen, ChatBubbleLeftRight, DocumentText, AcademicCap, ChartBar, Cog6Tooth, CalendarDays, User, GlobeAlt, Swatch, XMark, PencilSquare } from 'svelte-hero-icons';
 
   import { writable } from 'svelte/store';
   import { seqtaFetch } from '../utils/netUtil';
@@ -58,15 +58,15 @@
     { label: 'Courses', icon: BookOpen, path: '/courses' },
     { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
     { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
+    { label: 'Study', icon: PencilSquare, path: '/study' },
     { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
     { label: 'Portals', icon: GlobeAlt, path: '/portals' },
     { label: 'Notices', icon: DocumentText, path: '/notices' },
     { label: 'News', icon: Newspaper, path: '/news' },
     { label: 'Directory', icon: User, path: '/directory' },
     { label: 'Reports', icon: ChartBar, path: '/reports' },
-    { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
     { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
-    { label: 'Study', icon: AcademicCap, path: '/study' },
+    { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
   ]);
   let menuLoading = $state(true);
 
@@ -461,6 +461,7 @@
         { label: 'Courses', icon: BookOpen, path: '/courses' },
         { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
         { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
+        { label: 'Study', icon: PencilSquare, path: '/study' },
         // Always show DM (Messages) page
         { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
         { label: 'Portals', icon: GlobeAlt, path: '/portals' },
@@ -468,9 +469,8 @@
         { label: 'News', icon: Newspaper, path: '/news' },
         { label: 'Directory', icon: User, path: '/directory' },
         { label: 'Reports', icon: ChartBar, path: '/reports' },
-        { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
         { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
-        { label: 'Study', icon: AcademicCap, path: '/study' },
+        { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
       ];
       menu = newMenu;
     } catch (e) {
