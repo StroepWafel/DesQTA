@@ -310,8 +310,12 @@ export class EditorCore {
   }
 
   public getContent(): string {
-    // Convert HTML formatting to custom tags for saving
-    return this.convertHTMLToCustomTags(this.element.innerHTML);
+    // Clone content to avoid mutating the live editor DOM
+    const clone = this.element.cloneNode(true) as HTMLElement;
+    // Convert visual mentions to structured text embeds in the clone
+    this.convertVisualMentionsToText(clone);
+    // Convert HTML formatting to custom tags for saving (non-mention formatting)
+    return this.convertHTMLToCustomTags(clone.innerHTML);
   }
 
   public setContent(content: string) {
@@ -1343,8 +1347,8 @@ export class EditorCore {
      // Get new suggestions
      const suggestions = await this.getMentionSuggestions(query);
      
-     // Debug logging
-     console.log('Updated mention suggestions for query "' + query + '":', suggestions);
+           // Debug logging
+      // console.log('Updated mention suggestions for query "' + query + '":', suggestions);
      
      if (suggestions.length === 0) {
        // Show "no results" message
@@ -1407,7 +1411,7 @@ export class EditorCore {
       const suggestions = await this.getMentionSuggestions(query);
       
       // Debug logging
-      console.log('Mention suggestions:', suggestions);
+      // console.log('Mention suggestions:', suggestions);
       
       if (suggestions.length === 0) {
         // Show "no results" message
@@ -1514,14 +1518,15 @@ export class EditorCore {
     }
 
    private getMentionIcon(type: string): string {
-     const icons = {
-       assignment: '📝',
-       class: '🎓',
-       subject: '📚',
-       assessment: '📊',
-       timetable: '📅',
-       default: '🔗'
-     };
+      const icons = {
+        assignment: '📝',
+        class: '🎓',
+        subject: '📚',
+        assessment: '📊',
+        timetable: '📅',
+        notice: '📢',
+        default: '🔗'
+      };
      return icons[type as keyof typeof icons] || icons.default;
    }
 
@@ -1601,25 +1606,63 @@ export class EditorCore {
      const spaceIndex = afterAt.indexOf(' ');
      const endIndex = spaceIndex === -1 ? text.length : atIndex + spaceIndex;
      
-     // Create mention text with special format: @[type:id:title]
-     // Encode any special characters in the title to avoid conflicts
-     const encodedTitle = suggestion.title.replace(/[\[\]:]/g, (match: string) => {
-       const replacements: { [key: string]: string } = { '[': '&#91;', ']': '&#93;', ':': '&#58;' };
-       return replacements[match] || match;
-     });
-     const mentionText = `@[${suggestion.type}:${suggestion.id}:${encodedTitle}]`;
-     
-     // Store the full suggestion data in a global mention registry
-     this.storeMentionData(suggestion.id, suggestion);
-     
-     // Replace the @ and query with the mention text
-     const range = document.createRange();
-     range.setStart(textNode, atIndex);
-     range.setEnd(textNode, endIndex);
-     range.deleteContents();
-     
-     const mentionTextNode = document.createTextNode(mentionText + ' ');
-     range.insertNode(mentionTextNode);
+           // Build structured embed token @[[base64url(JSON)]] for robust saving
+      const safe = (s: string) => {
+        // remove unpaired surrogate halves
+        return s.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, '').replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
+      };
+      const toBase64Url = (obj: any) => {
+        const json = JSON.stringify(obj);
+        const utf8 = new TextEncoder().encode(json);
+        let binary = '';
+        utf8.forEach((b) => (binary += String.fromCharCode(b)));
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/,'');
+      };
+      const extractLookup = (s: any) => {
+        const d = s?.data || {};
+        switch (s.type) {
+          case 'class':
+            return { programme: d.programme, metaclass: d.metaclass, code: d.code };
+          case 'assignment':
+          case 'assessment':
+            return { id: d.id ?? s.id, subject: d.subject ?? d.code };
+          case 'subject':
+            return { programme: d.programme, metaclass: d.metaclass, code: d.code };
+          default:
+            return {};
+        }
+      };
+      const pruneSnapshot = (s: any) => {
+        const d = s?.data || {};
+        const base: any = {};
+        ['id','title','subject','code','due','dueDate','teacher','programme','metaclass','lessons','room'].forEach(k=>{
+          if (d[k] !== undefined) base[k] = d[k];
+        });
+        return JSON.parse(safe(JSON.stringify(base)));
+      };
+      const embed = {
+        v: 1,
+        type: suggestion.type,
+        id: suggestion.id,
+        title: safe(suggestion.title || ''),
+        subtitle: this.formatMentionSubtitle(suggestion.type, suggestion.data || {}),
+        lookup: extractLookup(suggestion),
+        snapshot: pruneSnapshot(suggestion),
+        ts: new Date().toISOString()
+      };
+      const mentionText = `@[[${toBase64Url(embed)}]]`;
+
+      // Store the full suggestion data in a global mention registry
+      this.storeMentionData(suggestion.id, suggestion);
+      
+      // Replace the @ and query with the mention text
+      const range = document.createRange();
+      range.setStart(textNode, atIndex);
+      range.setEnd(textNode, endIndex);
+      range.deleteContents();
+      
+      const mentionTextNode = document.createTextNode(mentionText + ' ');
+      range.insertNode(mentionTextNode);
      
      // Position cursor after the mention
      range.setStartAfter(mentionTextNode);
@@ -1663,10 +1706,19 @@ export class EditorCore {
      }
    }
 
-   private async handlePersistedMentionClick(mention: HTMLElement, suggestion: SeqtaMentionItem) {
-     // Show mention modal instead of browser dialog
-     this.showMentionModal(mention, suggestion);
-   }
+     private async handlePersistedMentionClick(mention: HTMLElement, suggestion: SeqtaMentionItem) {
+      // If we don't have enriched data (e.g., after reload), fetch it first
+      const lacksData = !suggestion?.data || Object.keys(suggestion.data).length === 0 ||
+                        (suggestion.type === 'class' && !suggestion.data.code) ||
+                        (suggestion.type === 'assessment' && !suggestion.data.due && !suggestion.data.dueDate);
+      if (lacksData) {
+        // Try to pass along embed meta if present in legacy text nearby (not needed for visual)
+        await this.refreshMentionData(mention, suggestion.id, suggestion.type);
+        const updated = this.mentionRegistry.get(suggestion.id) || suggestion;
+        suggestion = updated;
+      }
+      this.showMentionModal(mention, suggestion);
+    }
 
       private showMentionModal(mention: HTMLElement, suggestion: SeqtaMentionItem) {
      // Remove any existing modal
@@ -1723,15 +1775,56 @@ export class EditorCore {
      body.className = 'p-6';
 
      const detailsLabel = document.createElement('h3');
-     detailsLabel.className = 'text-sm font-medium text-slate-900 dark:text-white mb-3';
-     detailsLabel.textContent = 'SEQTA Data';
+      detailsLabel.className = 'text-sm font-medium text-slate-900 dark:text-white mb-3';
+      detailsLabel.textContent = 'Details';
 
-     const details = document.createElement('pre');
-     details.className = 'bg-slate-100 dark:bg-slate-800 rounded-lg p-4 text-sm font-mono text-slate-800 dark:text-slate-200 overflow-x-auto max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700';
-     details.textContent = JSON.stringify(suggestion.data, null, 2);
+      // Build rich details by type
+      const buildDetails = (): HTMLElement => {
+        const container = document.createElement('div');
+        container.className = 'space-y-2 text-sm text-slate-700 dark:text-slate-300';
+        if (suggestion.type === 'assessment' || suggestion.type === 'assignment') {
+          const due = suggestion.data?.due || suggestion.data?.dueDate;
+          const d = due ? new Date(due) : null;
+          const row = document.createElement('div');
+          row.innerHTML = `<div><span class="font-medium">Subject:</span> ${suggestion.data?.subject || suggestion.data?.code || '—'}</div>
+                           <div><span class="font-medium">Due:</span> ${d ? d.toLocaleDateString() : '—'} ${d && due?.includes('T') ? d.toTimeString().substring(0,5) : ''}</div>`;
+          container.appendChild(row);
+        } else if (suggestion.type === 'class') {
+          const info = document.createElement('div');
+          info.innerHTML = `<div><span class="font-medium">Code:</span> ${suggestion.data?.code || '—'}</div>
+                            <div><span class="font-medium">Teacher:</span> ${suggestion.data?.teacher || '—'}</div>`;
+          container.appendChild(info);
+          const lessons: any[] = suggestion.data?.lessons || [];
+          if (lessons.length) {
+            const header = document.createElement('div');
+            header.className = 'mt-2 font-medium';
+            header.textContent = 'Upcoming Lessons (next 14 days)';
+            container.appendChild(header);
+            const list = document.createElement('ul');
+            list.className = 'list-disc pl-5 space-y-1';
+            lessons.slice(0, 10).forEach(l => {
+              const li = document.createElement('li');
+              li.textContent = `${l.date} ${l.from}-${l.until} • ${l.room}`;
+              list.appendChild(li);
+            });
+            container.appendChild(list);
+          }
+        } else if (suggestion.type === 'subject') {
+          const info = document.createElement('div');
+          info.innerHTML = `<div><span class="font-medium">Code:</span> ${suggestion.data?.code || '—'}</div>
+                            <div><span class="font-medium">Teacher:</span> ${suggestion.data?.teacher || '—'}</div>`;
+          container.appendChild(info);
+        } else {
+          const pre = document.createElement('pre');
+          pre.className = 'bg-slate-100 dark:bg-slate-800 rounded-lg p-4 text-sm font-mono text-slate-800 dark:text-slate-200 overflow-x-auto max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700';
+          pre.textContent = JSON.stringify(suggestion.data, null, 2);
+          container.appendChild(pre);
+        }
+        return container;
+      };
 
-     body.appendChild(detailsLabel);
-     body.appendChild(details);
+      body.appendChild(detailsLabel);
+      body.appendChild(buildDetails());
 
      // Create modal footer with proper button styling
      const footer = document.createElement('div');
@@ -1890,48 +1983,67 @@ export class EditorCore {
    }
 
    private formatMentionSubtitle(mentionType: string, data: any): string {
-     switch (mentionType) {
-       case 'assignment':
-         return `${data.subject || 'Unknown Subject'} • Due: ${data.dueDate ? new Date(data.dueDate).toLocaleDateString() : 'Unknown'}`;
-       case 'assessment':
-         return `${data.subject || 'Unknown Subject'} • ${data.type || 'Assessment'}`;
-       case 'class':
-         return `${data.subject || 'Unknown Subject'} • ${data.teacher || 'Unknown Teacher'}`;
-       case 'subject':
-         return `${data.code || 'Unknown Code'} • ${data.teacher || 'Unknown Teacher'}`;
-       case 'timetable':
-         return `${data.subject || 'Unknown Subject'} • ${data.time || 'Unknown Time'}`;
-       default:
-         return 'SEQTA Element';
-     }
-   }
+      switch (mentionType) {
+        case 'assignment':
+        case 'assessment':
+          if (data?.due || data?.dueDate) {
+            const d = new Date(data.due || data.dueDate);
+            const date = d.toLocaleDateString();
+            const time = d.toISOString().includes('T') ? (d.toTimeString().substring(0,5)) : '';
+            return `${data.subject || data.code || 'Unknown'} • Due: ${date}${time ? ' ' + time : ''}`;
+          }
+          return `${data.subject || data.code || 'Unknown'} • Assessment`;
+        case 'class':
+          return `${data.code || data.subject || 'Unknown'} • ${data.teacher || 'Unknown Teacher'}`;
+        case 'subject':
+          return `${data.code || 'Unknown Code'} • ${data.teacher || 'Unknown Teacher'}`;
+        case 'timetable':
+          return `${data.subject || 'Unknown Subject'} • ${data.time || 'Unknown Time'}`;
+        default:
+          return 'SEQTA Element';
+      }
+    }
 
-   private async refreshMentionData(mention: HTMLElement, mentionId: string, mentionType: string) {
-     try {
-       // Get fresh data from SEQTA
-       const updatedData = await SeqtaMentionsService.updateMentionData(mentionId, mentionType);
-       
-       if (updatedData) {
-         // Update the mention's data attributes
-         mention.dataset.mentionData = JSON.stringify(updatedData.data);
-         mention.dataset.mentionId = updatedData.id;
-         mention.dataset.mentionType = updatedData.type;
-         
-         // Update the display text
-         const icon = this.getMentionIcon(updatedData.type);
-         mention.innerHTML = `${icon} ${updatedData.title}`;
-         
-         // Update the mention registry
-         this.mentionRegistry.set(updatedData.id, updatedData);
-         
-         // Update tooltip
-         mention.title = this.formatMentionSubtitle(updatedData.type, updatedData.data);
-         
-         this.triggerChange();
-         
-         // Show success notification instead of alert
-         this.showNotification('Mention updated successfully!', 'success');
-       } else {
+       private async refreshMentionData(mention: HTMLElement, mentionId: string, mentionType: string) {
+      try {
+        // Parse embed meta if present
+        let meta: any = undefined;
+        const b64 = mention.dataset.mentionMeta;
+        if (b64) {
+          try {
+            const pad = b64.length % 4 === 2 ? '==' : b64.length % 4 === 3 ? '=' : '';
+            const b64std = b64.replace(/-/g, '+').replace(/_/g, '/') + pad;
+            const bin = atob(b64std);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            meta = JSON.parse(new TextDecoder().decode(bytes));
+          } catch {}
+        }
+        // Get fresh data from SEQTA
+        const updatedData = await SeqtaMentionsService.updateMentionData(mentionId, mentionType, meta);
+        
+        if (updatedData) {
+          // Update the mention's data attributes
+          mention.dataset.mentionData = JSON.stringify(updatedData.data);
+          mention.dataset.mentionId = updatedData.id;
+          mention.dataset.mentionType = updatedData.type;
+          
+          // Update the display text
+          const icon = this.getMentionIcon(updatedData.type);
+          mention.innerHTML = `${icon} ${updatedData.title}`;
+          
+          // Update the mention registry
+          // Persist the enriched suggestion
+           this.mentionRegistry.set(updatedData.id, updatedData);
+          
+          // Update tooltip
+          mention.title = this.formatMentionSubtitle(updatedData.type, updatedData.data);
+          
+          this.triggerChange();
+          
+          // Show success notification instead of alert
+          // this.showNotification('Mention updated successfully!', 'success');
+        } else {
          this.showNotification('Could not refresh mention data', 'error');
        }
      } catch (error) {
@@ -2013,7 +2125,7 @@ export class EditorCore {
         
         if (updatedData) {
           // Update the mention display
-          mention.innerHTML = `${this.getMentionIcon(updatedData.type)} ${updatedData.title}`;
+          const tag = document.createElement('span'); tag.className = 'ml-2 text-xs px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'; tag.textContent = this.formatMentionSubtitle(updatedData.type, updatedData.data); mention.innerHTML = `${this.getMentionIcon(updatedData.type)} ${updatedData.title}`; mention.appendChild(tag);
           mention.dataset.mentionData = JSON.stringify(updatedData.data);
           mention.title = `Updated: ${new Date().toLocaleTimeString()}`;
           this.triggerChange();
@@ -2045,7 +2157,9 @@ export class EditorCore {
    }
 
    private storeMentionData(id: string, suggestion: SeqtaMentionItem) {
-     this.mentionRegistry.set(id, suggestion);
+     // Sanitize key to avoid invalid characters
+    const safeId = id.replace(/[\n\r\t]/g, '');
+    this.mentionRegistry.set(safeId, suggestion);
    }
 
    private convertTextMentionsToVisual() {
@@ -2063,34 +2177,75 @@ export class EditorCore {
 
      // Process text nodes for mention patterns
      textNodes.forEach(textNode => {
-       const text = textNode.textContent || '';
-       const mentionRegex = /@\[([^:]+):([^:]+):([^\]]+)\]/g;
-       let match;
-       const replacements: { start: number, end: number, element: HTMLElement }[] = [];
+             const text = textNode.textContent || '';
+      // Support both legacy @[type:id:title] and new @[[base64url(JSON)]]
+      const mentionRegex = /@\[\[([A-Za-z0-9_\-=]+)\]\]|@\[([^:]+):([^:]+):([^\]]+)\]/g;
+      let match;
+      const replacements: { start: number, end: number, element: HTMLElement }[] = [];
 
-       while ((match = mentionRegex.exec(text)) !== null) {
-         const [fullMatch, type, id, encodedTitle] = match;
-         const title = encodedTitle.replace(/&#91;/g, '[').replace(/&#93;/g, ']').replace(/&#58;/g, ':');
-         
-         // Get suggestion data from registry or create minimal data
-         const suggestion = this.mentionRegistry.get(id) || {
-           id,
-           type: type as any,
-           title,
-           subtitle: `${type} mention`,
-           data: {},
-           lastUpdated: new Date().toISOString()
-         };
+               while ((match = mentionRegex.exec(text)) !== null) {
+          const [fullMatch, b64, legacyType, legacyId, legacyTitle] = match as unknown as [string, string, string, string, string];
 
-         // Create visual mention element
-         const mention = this.createVisualMention(suggestion);
-         
-         replacements.push({
-           start: match.index!,
-           end: match.index! + fullMatch.length,
-           element: mention
-         });
-       }
+          let suggestion: SeqtaMentionItem | null = null;
+          if (b64) {
+            // New structured embed path
+            const fromBase64Url = (s: string) => {
+              const pad = s.length % 4 === 2 ? '==' : s.length % 4 === 3 ? '=' : '';
+              const b64std = s.replace(/-/g, '+').replace(/_/g, '/') + pad;
+              const bin = atob(b64std);
+              const bytes = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+              return JSON.parse(new TextDecoder().decode(bytes));
+            };
+            try {
+              const embed = fromBase64Url(b64);
+              const id = embed.id || embed.lookup?.id || crypto.randomUUID();
+              const type = embed.type as SeqtaMentionItem['type'];
+              const title = embed.title || 'SEQTA Item';
+              const data = embed.snapshot || {};
+              suggestion = {
+                id,
+                type,
+                title,
+                subtitle: embed.subtitle || `${type} mention` ,
+                data,
+                lastUpdated: embed.ts || new Date().toISOString()
+              };
+              this.storeMentionData(id, suggestion);
+            } catch (e) {
+              console.warn('Failed to decode mention embed, skipping:', e);
+              continue;
+            }
+          } else {
+            // Legacy @[type:id:title]
+            const type = legacyType;
+            const id = legacyId;
+            const title = legacyTitle.replace(/&#91;/g, '[').replace(/&#93;/g, ']').replace(/&#58;/g, ':');
+            suggestion = this.mentionRegistry.get(id) || {
+              id,
+              type: type as any,
+              title,
+              subtitle: `${type} mention`,
+              data: { code: type === 'class' ? id.split(':').pop() : undefined },
+              lastUpdated: new Date().toISOString()
+            } as SeqtaMentionItem;
+          }
+
+          if (!suggestion) continue;
+
+                    // Create visual mention element
+          const mention = this.createVisualMention(suggestion);
+          // Attach embed meta if available
+          if (b64) {
+            (mention as HTMLElement).dataset.mentionMeta = b64;
+          }
+          
+          replacements.push({
+            start: match.index!,
+            end: match.index! + fullMatch.length,
+            element: mention
+          });
+        }
 
        // Apply replacements in reverse order to maintain indices
        replacements.reverse().forEach(replacement => {
@@ -2148,38 +2303,51 @@ export class EditorCore {
      return mention;
    }
 
-   private convertVisualMentionsToText(element: HTMLElement) {
-     const mentions = element.querySelectorAll('span.seqta-mention');
-     
-     mentions.forEach(mention => {
-       const mentionId = mention.getAttribute('data-mention-id') || '';
-       const mentionType = mention.getAttribute('data-mention-type') || '';
-       const title = mention.textContent?.replace(/^[📝📊🎓📚📅📢]\s*/, '') || 'Unknown';
-       
-       // Safely encode special characters and remove problematic characters
-       const safeTitleEncode = (str: string): string => {
-         return str
-           .replace(/[\[\]:]/g, (match: string) => {
-             const replacements: { [key: string]: string } = { '[': '&#91;', ']': '&#93;', ':': '&#58;' };
-             return replacements[match] || match;
-           })
-           // Remove or replace problematic Unicode characters
-           .replace(/[\u{D800}-\u{DFFF}]/gu, '') // Remove lone surrogates
-           .replace(/[\u{FDD0}-\u{FDEF}]/gu, '') // Remove non-characters
-           .replace(/[\u{FFFE}\u{FFFF}]/gu, '') // Remove other non-characters
-           .trim();
-       };
-       
-       const encodedTitle = safeTitleEncode(title);
-       
-       // Create text mention format
-       const mentionText = `@[${mentionType}:${mentionId}:${encodedTitle}]`;
-       const textNode = document.createTextNode(mentionText);
-       
-       // Replace the visual mention with text
-       mention.parentNode?.replaceChild(textNode, mention);
-     });
-   }
+     private convertVisualMentionsToText(element: HTMLElement) {
+      const mentions = element.querySelectorAll('span.seqta-mention');
+      
+      mentions.forEach(mention => {
+        const mentionId = mention.getAttribute('data-mention-id') || '';
+        const mentionType = mention.getAttribute('data-mention-type') || '';
+        const item = this.mentionRegistry.get(mentionId.replace(/[\n\r\t]/g, ''));
+        const data = item?.data || {};
+        const subtitle = this.formatMentionSubtitle(item?.type || mentionType, data);
+        // Build new structured embed
+        const toBase64Url = (obj: any) => {
+          const json = JSON.stringify(obj);
+          const utf8 = new TextEncoder().encode(json);
+          let binary = '';
+          utf8.forEach((b) => (binary += String.fromCharCode(b)));
+          return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/,'');
+        };
+        const embed = {
+          v: 1,
+          type: item?.type || mentionType,
+          id: mentionId,
+          title: item?.title || '',
+          subtitle,
+          lookup: (() => {
+            switch (item?.type || mentionType) {
+              case 'class': return { programme: data.programme, metaclass: data.metaclass, code: data.code };
+              case 'assignment':
+              case 'assessment': return { id: data.id || mentionId, subject: data.subject || data.code };
+              case 'subject': return { programme: data.programme, metaclass: data.metaclass, code: data.code };
+              default: return {};
+            }
+          })(),
+          snapshot: (() => {
+            const base: any = {};
+            ['id','title','subject','code','due','dueDate','teacher','programme','metaclass','lessons','room']
+              .forEach(k=>{ if (data[k] !== undefined) base[k] = data[k]; });
+            return base;
+          })(),
+          ts: new Date().toISOString()
+        };
+        const mentionText = `@[[${toBase64Url(embed)}]]`;
+        const textNode = document.createTextNode(mentionText);
+        mention.parentNode?.replaceChild(textNode, mention);
+      });
+    }
 
    private reinitializeMentions() {
      // Convert any text-based mentions to visual mentions

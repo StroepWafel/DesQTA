@@ -144,19 +144,24 @@ export class SeqtaMentionsService {
   /**
    * Get updated data for a specific mention
    */
-  static async updateMentionData(mentionId: string, mentionType: string): Promise<SeqtaMentionItem | null> {
+  static async updateMentionData(mentionId: string, mentionType: string, meta?: any): Promise<SeqtaMentionItem | null> {
+    // Normalize id for classes (program and metaclass) if save/load removed prefix
+    if (mentionType === 'class') {
+      mentionId = mentionId.replace(/^class:/, '');
+    }
     try {
       switch (mentionType) {
         case 'assignment':
-          return await this.fetchAssignmentById(mentionId);
-        case 'class':
-          return await this.fetchClassById(mentionId);
-        case 'subject':
-          return await this.fetchSubjectById(mentionId);
         case 'assessment':
-          return await this.fetchAssessmentById(mentionId);
-        case 'timetable':
-          return await this.fetchTimetableById(mentionId);
+          return await this.fetchAssignmentById((meta?.lookup?.id || mentionId).toString().replace('assessment-', ''));
+        case 'class':
+          // Prefer precise programme-metaclass from meta.lookup
+          const classId = meta?.lookup?.programme && meta?.lookup?.metaclass
+            ? `${meta.lookup.programme}-${meta.lookup.metaclass}`
+            : mentionId;
+          return await this.fetchClassById(classId);
+        case 'subject':
+          return await this.fetchSubjectById(meta?.lookup?.code || mentionId);
         default:
           return null;
       }
@@ -231,6 +236,7 @@ export class SeqtaMentionsService {
             id: `${cls.programme}-${cls.metaclass}`,
             name: cls.title,
             subject: cls.code,
+            code: cls.code,
             year: cls.year || 10,
             teacher: cls.teacher || 'Teacher TBA',
             programme: cls.programme,
@@ -374,55 +380,123 @@ export class SeqtaMentionsService {
   // Individual fetch methods for updates - simplified for now
   private static async fetchAssignmentById(id: string): Promise<SeqtaMentionItem | null> {
     try {
-      // For now, return updated mock data - in production this would fetch specific assignment
-      const mockData = this.getMockData('').find(item => item.id === id || item.type === 'assignment');
-      if (mockData) {
+      const studentId = 69;
+      // Check upcoming first
+      const upcomingRes = await seqtaFetch('/seqta/student/assessment/list/upcoming?', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: { student: studentId }
+      });
+      const upcoming = JSON.parse(upcomingRes).payload as any[];
+      const found = upcoming.find((a: any) => a.id?.toString() === id || `assessment-${a.id}` === id);
+      if (found) {
         return {
-          ...mockData,
+          id: `assessment-${found.id}`,
+          type: 'assessment',
+          title: found.title || 'Assessment',
+          subtitle: `${found.subject || found.code} • ${this.formatDate(found.due)}`,
+          data: {
+            id: found.id,
+            title: found.title,
+            subject: found.subject || found.code,
+            code: found.code,
+            due: found.due,
+            dueDate: found.due,
+            status: new Date(found.due) > new Date() ? 'pending' : 'overdue',
+          },
           lastUpdated: new Date().toISOString()
         };
       }
       return null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
 
   private static async fetchClassById(id: string): Promise<SeqtaMentionItem | null> {
     try {
-      // For now, return updated mock data
-      const mockData = this.getMockData('').find(item => item.id === id || item.type === 'class');
-      if (mockData) {
-        return {
-          ...mockData,
-          lastUpdated: new Date().toISOString()
-        };
-      }
-      return null;
-    } catch (error) {
+      // id format: programme-metaclass
+      const classesRes = await seqtaFetch('/seqta/student/load/subjects?', {
+        method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: {}
+      });
+      const folders = JSON.parse(classesRes).payload as any[];
+      const all = folders.flatMap((f: any) => f.subjects);
+      const match = all.find((s: any) => `${s.programme}-${s.metaclass}` === id);
+      if (!match) return null;
+      const code = match.code;
+      const teacher = match.teacher || 'Teacher TBA';
+
+      // Pull next 14 days of timetable entries for this code
+      const start = new Date();
+      const end = new Date();
+      end.setDate(start.getDate() + 14);
+      const from = start.toISOString().split('T')[0];
+      const until = end.toISOString().split('T')[0];
+      const ttRes = await seqtaFetch('/seqta/student/load/timetable?', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: { from, until, student: 69 }
+      });
+      const timetable = JSON.parse(ttRes).payload;
+      const items = (timetable.items || []).filter((l: any) => (l.code || l.subject || '').toLowerCase() === code.toLowerCase());
+      const lessons = items.map((l: any) => ({
+        date: (l.from || '').split('T')[0],
+        from: (l.from || '').substring(11, 16),
+        until: (l.until || '').substring(11, 16),
+        room: l.room || 'TBA',
+        teacher: l.teacher || teacher,
+      }));
+
+      return {
+        id,
+        type: 'class',
+        title: match.title || code,
+        subtitle: `${code} • ${teacher}`,
+        data: {
+          id,
+          name: match.title,
+          code,
+          teacher,
+          programme: match.programme,
+          metaclass: match.metaclass,
+          lessons
+        },
+        lastUpdated: new Date().toISOString()
+      };
+    } catch {
       return null;
     }
   }
 
   private static async fetchSubjectById(id: string): Promise<SeqtaMentionItem | null> {
     try {
-      // For now, return updated mock data
-      const mockData = this.getMockData('').find(item => item.id === id || item.type === 'subject');
-      if (mockData) {
-        return {
-          ...mockData,
-          lastUpdated: new Date().toISOString()
-        };
-      }
-      return null;
-    } catch (error) {
+      // id pattern may be subject-<programme>-<metaclass> or plain code; try both
+      const classesRes = await seqtaFetch('/seqta/student/load/subjects?', {
+        method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: {}
+      });
+      const folders = JSON.parse(classesRes).payload as any[];
+      const all = folders.flatMap((f: any) => f.subjects);
+      const match = all.find((s: any) => `subject-${s.programme}-${s.metaclass}` === id || s.code === id);
+      if (!match) return null;
+      return {
+        id: `subject-${match.programme}-${match.metaclass}`,
+        type: 'subject',
+        title: match.title || match.code,
+        subtitle: `${match.code} • ${match.teacher || 'Teacher TBA'}`,
+        data: {
+          code: match.code,
+          teacher: match.teacher || 'Teacher TBA',
+          programme: match.programme,
+          metaclass: match.metaclass
+        },
+        lastUpdated: new Date().toISOString()
+      };
+    } catch {
       return null;
     }
   }
 
   private static async fetchAssessmentById(id: string): Promise<SeqtaMentionItem | null> {
     try {
-      // For now, return updated mock data
+      // For now, return updated mock data - in production this would fetch specific assignment
       const mockData = this.getMockData('').find(item => item.id === id || item.type === 'assessment');
       if (mockData) {
         return {
