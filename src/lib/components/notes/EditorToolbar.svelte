@@ -16,7 +16,8 @@
     Link,
     Photo,
     ArrowDownTray,
-    CommandLine
+    CommandLine,
+    TableCells
   } from 'svelte-hero-icons';
   import type { EditorCore } from './utils/editorCore';
 
@@ -100,6 +101,12 @@
     currentBlockType = 'code-block';
   }
 
+  function insertTable() {
+    if (!editor || readonly) return;
+    editor.executeCommand('insert-table');
+    updateToolbarState();
+  }
+
   // List commands
   function toggleBulletList() {
     if (!editor || readonly) return;
@@ -153,57 +160,57 @@
     <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('bold') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('bold') ? 'accent-bg text-white' : ''}"
         on:click={toggleBold}
         disabled={readonly}
         title="Bold (Ctrl+B)"
         aria-label="Toggle bold formatting"
       >
-        <Icon src={Bold} class="w-4 h-4" />
+        <Icon src={Bold} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('italic') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('italic') ? 'accent-bg text-white' : ''}"
         on:click={toggleItalic}
         disabled={readonly}
         title="Italic (Ctrl+I)"
         aria-label="Toggle italic formatting"
       >
-        <Icon src={Italic} class="w-4 h-4" />
+        <Icon src={Italic} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('underline') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('underline') ? 'accent-bg text-white' : ''}"
         on:click={toggleUnderline}
         disabled={readonly}
         title="Underline (Ctrl+U)"
         aria-label="Toggle underline formatting"
       >
-        <Icon src={Underline} class="w-4 h-4" />
+        <Icon src={Underline} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('strikethrough') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('strikethrough') ? 'accent-bg text-white' : ''}"
         on:click={toggleStrikethrough}
         disabled={readonly}
         title="Strikethrough"
         aria-label="Toggle strikethrough formatting"
       >
-        <Icon src={Strikethrough} class="w-4 h-4" />
+        <Icon src={Strikethrough} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('code') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('code') ? 'accent-bg text-white' : ''}"
         on:click={toggleCode}
         disabled={readonly}
         title="Inline code"
         aria-label="Toggle inline code formatting"
       >
-        <Icon src={CodeBracket} class="w-4 h-4" />
+        <Icon src={CodeBracket} class="w-5 h-5" />
       </button>
     </div>
 
@@ -211,57 +218,57 @@
     <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-1' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-1' ? 'accent-bg text-white' : ''}"
         on:click={() => setHeading(1)}
         disabled={readonly}
         title="Heading 1"
         aria-label="Convert to heading 1"
       >
-        <Icon src={H1} class="w-4 h-4" />
+        <Icon src={H1} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-2' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-2' ? 'accent-bg text-white' : ''}"
         on:click={() => setHeading(2)}
         disabled={readonly}
         title="Heading 2"
         aria-label="Convert to heading 2"
       >
-        <Icon src={H2} class="w-4 h-4" />
+        <Icon src={H2} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-3' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-3' ? 'accent-bg text-white' : ''}"
         on:click={() => setHeading(3)}
         disabled={readonly}
         title="Heading 3"
         aria-label="Convert to heading 3"
       >
-        <Icon src={H3} class="w-4 h-4" />
+        <Icon src={H3} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'blockquote' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'blockquote' ? 'accent-bg text-white' : ''}"
         on:click={setBlockquote}
         disabled={readonly}
         title="Blockquote"
         aria-label="Convert to blockquote"
       >
-        <Icon src={ChatBubbleLeftRight} class="w-4 h-4" />
+        <Icon src={ChatBubbleLeftRight} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'code-block' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'code-block' ? 'accent-bg text-white' : ''}"
         on:click={setCodeBlock}
         disabled={readonly}
         title="Code block"
         aria-label="Convert to code block"
       >
-        <Icon src={CommandLine} class="w-4 h-4" />
+        <Icon src={CommandLine} class="w-5 h-5" />
       </button>
     </div>
 
@@ -269,24 +276,38 @@
     <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'bullet-list' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'bullet-list' ? 'accent-bg text-white' : ''}"
         on:click={toggleBulletList}
         disabled={readonly}
         title="Bullet list"
         aria-label="Toggle bullet list"
       >
-        <Icon src={ListBullet} class="w-4 h-4" />
+        <Icon src={ListBullet} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'numbered-list' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'numbered-list' ? 'accent-bg text-white' : ''}"
         on:click={toggleNumberList}
         disabled={readonly}
         title="Numbered list"
         aria-label="Toggle numbered list"
       >
-        <Icon src={NumberedList} class="w-4 h-4" />
+        <Icon src={NumberedList} class="w-5 h-5" />
+      </button>
+    </div>
+
+    <!-- Table group -->
+    <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
+      <button
+        type="button"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        on:click={insertTable}
+        disabled={readonly}
+        title="Insert table"
+        aria-label="Insert table"
+      >
+        <Icon src={TableCells} class="w-5 h-5" />
       </button>
     </div>
 
@@ -294,42 +315,40 @@
     <div class="flex items-center space-x-1">
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
         on:click={insertLink}
         disabled={readonly}
         title="Insert link"
         aria-label="Insert link"
       >
-        <Icon src={Link} class="w-4 h-4" />
+        <Icon src={Link} class="w-5 h-5" />
       </button>
 
       <button
         type="button"
-        class="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
         on:click={insertImage}
         disabled={readonly}
         title="Insert image"
         aria-label="Insert image"
       >
-        <Icon src={Photo} class="w-4 h-4" />
+        <Icon src={Photo} class="w-5 h-5" />
       </button>
     </div>
   </div>
 
-  <!-- Right side: Actions -->
-  <div class="flex items-center space-x-2">
+  <!-- Right side: Save button -->
+  <div>
     <button
       type="button"
-      class="px-3 py-1.5 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+      class="px-4 py-2 accent-bg text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       on:click={handleSave}
       disabled={readonly}
       title="Save note (Ctrl+S)"
       aria-label="Save note"
     >
-      <div class="flex items-center space-x-1">
-        <Icon src={ArrowDownTray} class="w-4 h-4" />
-        <span>Save</span>
-      </div>
+      <Icon src={ArrowDownTray} class="w-5 h-5 inline mr-2" />
+      Save
     </button>
   </div>
 </div>

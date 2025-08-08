@@ -372,6 +372,7 @@ export class EditorCore {
       case 'italic':
       case 'underline':
       case 'strikethrough':
+      case 'code':
         return this.toggleFormat(command as FormatType);
       case 'heading-1':
       case 'heading-2':
@@ -868,19 +869,44 @@ export class EditorCore {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return false;
 
-    // Simple check using queryCommandState
-    switch (format) {
-      case 'bold':
-        return document.queryCommandState('bold');
-      case 'italic':
-        return document.queryCommandState('italic');
-      case 'underline':
-        return document.queryCommandState('underline');
-      case 'strikethrough':
-        return document.queryCommandState('strikeThrough');
-      default:
-        return false;
+    const range = selection.getRangeAt(0);
+    
+    // Check if the selection contains or is within a format element
+    let node = range.startContainer;
+    
+    // If we have a selection, check all nodes within it
+    if (!range.collapsed) {
+      const walker = document.createTreeWalker(
+        range.commonAncestorContainer,
+        NodeFilter.SHOW_ELEMENT,
+        {
+          acceptNode: (node) => {
+            const element = node as HTMLElement;
+            if (this.isFormatElement(element, format) && range.intersectsNode(element)) {
+              return NodeFilter.FILTER_ACCEPT;
+            }
+            return NodeFilter.FILTER_SKIP;
+          }
+        }
+      );
+      
+      return walker.nextNode() !== null;
     }
+    
+    // For collapsed selection, check parent elements
+    while (node && node !== this.element) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        if (this.isFormatElement(element, format)) {
+          return true;
+        }
+      }
+      const parentNode = node.parentNode;
+      if (!parentNode) break;
+      node = parentNode;
+    }
+    
+    return false;
   }
 
   private applyFormat(format: FormatType, range: Range) {
@@ -930,7 +956,28 @@ export class EditorCore {
   }
 
   private removeFormat(format: FormatType, range: Range) {
-    // Get all nodes within the range
+    // Save the original range
+    const originalRange = range.cloneRange();
+    
+    if (range.collapsed) {
+      // For collapsed selection, find and unwrap the closest format element
+      let node = range.startContainer;
+      while (node && node !== this.element) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as HTMLElement;
+          if (this.isFormatElement(element, format)) {
+            this.unwrapElement(element);
+            break;
+          }
+        }
+        const parentNode = node.parentNode;
+        if (!parentNode) break;
+        node = parentNode;
+      }
+      return;
+    }
+
+    // For non-collapsed selection, find all format elements that intersect
     const walker = document.createTreeWalker(
       range.commonAncestorContainer,
       NodeFilter.SHOW_ELEMENT,
@@ -945,20 +992,44 @@ export class EditorCore {
       }
     );
 
-    const elementsToRemove: HTMLElement[] = [];
+    const elementsToProcess: HTMLElement[] = [];
     let node: Node | null;
     
     while ((node = walker.nextNode())) {
       const element = node as HTMLElement;
       if (range.intersectsNode(element)) {
-        elementsToRemove.push(element);
+        elementsToProcess.push(element);
       }
     }
 
-    // Remove formatting by unwrapping elements
-    elementsToRemove.forEach(element => {
-      this.unwrapElement(element);
+    // Process elements from innermost to outermost to avoid DOM disruption
+    elementsToProcess.sort((a, b) => {
+      if (a.contains(b)) return 1;
+      if (b.contains(a)) return -1;
+      return 0;
     });
+
+    // Remove formatting by unwrapping elements
+    elementsToProcess.forEach(element => {
+      // Check if the element is fully within the selection
+      const elementRange = document.createRange();
+      elementRange.selectNodeContents(element);
+      
+      if (originalRange.compareBoundaryPoints(Range.START_TO_START, elementRange) <= 0 &&
+          originalRange.compareBoundaryPoints(Range.END_TO_END, elementRange) >= 0) {
+        // Fully selected - unwrap completely
+        this.unwrapElement(element);
+      } else {
+        // Partially selected - need to split the element
+        this.splitAndUnwrapElement(element, originalRange);
+      }
+    });
+  }
+
+  private splitAndUnwrapElement(element: HTMLElement, range: Range) {
+    // This is a complex operation - for now, just unwrap the whole element
+    // In a production app, you'd want to split the element at the range boundaries
+    this.unwrapElement(element);
   }
 
   private isFormatElement(element: HTMLElement, format: FormatType): boolean {
