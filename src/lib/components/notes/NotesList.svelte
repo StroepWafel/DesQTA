@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { Icon, MagnifyingGlass, Plus, FolderOpen, Calendar, Clock, Tag } from 'svelte-hero-icons';
-  import { fly, scale } from 'svelte/transition';
+  import { Icon, MagnifyingGlass, Plus, FolderOpen, Calendar, Clock, Tag, FolderPlus, Trash, PencilSquare, EllipsisVertical, XMark } from 'svelte-hero-icons';
+  import { fly, scale, slide } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
   import { NotesService } from '../../services/notesService';
   import type { Note, NoteFolder } from './types/editor';
@@ -23,6 +23,15 @@
   let error: string | null = null;
   let searchQuery = '';
   let selectedFolder = 'all';
+  
+  // Folder management state
+  let showFolderManagement = false;
+  let showCreateFolder = false;
+  let newFolderName = '';
+  let editingFolder: NoteFolder | null = null;
+  let folderMenuOpen: string | null = null;
+  let noteMenuOpen: string | null = null;
+  let showMoveNoteModal: Note | null = null;
 
   // Reactive filtered notes
   $: filteredNotes = notes
@@ -132,8 +141,102 @@
     return folder ? folder.name : 'Unknown Folder';
   }
 
+  // Folder management functions
+  async function createFolder() {
+    if (!newFolderName.trim()) return;
+    
+    try {
+      await NotesService.createFolder(newFolderName.trim());
+      await loadNotes(); // Refresh to get updated folders
+      newFolderName = '';
+      showCreateFolder = false;
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to create folder';
+    }
+  }
+
+  async function deleteFolder(folderId: string) {
+    if (folderId === 'default') {
+      error = 'Cannot delete the default folder';
+      return;
+    }
+
+    if (confirm('Are you sure you want to delete this folder? Notes in this folder will be moved to the default folder.')) {
+      try {
+        await NotesService.deleteFolder(folderId);
+        await loadNotes(); // Refresh to get updated folders
+        if (selectedFolder === folderId) {
+          selectedFolder = 'all';
+        }
+        folderMenuOpen = null;
+      } catch (e) {
+        error = e instanceof Error ? e.message : 'Failed to delete folder';
+      }
+    }
+  }
+
+  async function renameFolder(folder: NoteFolder, newName: string) {
+    if (!newName.trim() || newName === folder.name) {
+      editingFolder = null;
+      return;
+    }
+
+    try {
+      // Note: We'd need to add a rename_folder command to the backend
+      // For now, we'll create a new folder and move notes
+      const newFolderId = await NotesService.createFolder(newName.trim());
+      
+      // Move all notes from old folder to new folder
+      const folderNotes = notes.filter(note => note.folder_path.includes(folder.id));
+      await Promise.all(
+        folderNotes.map(note => NotesService.moveNoteToFolder(note.id, newFolderId))
+      );
+      
+      // Delete old folder
+      await NotesService.deleteFolder(folder.id);
+      await loadNotes(); // Refresh
+      
+      editingFolder = null;
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to rename folder';
+      editingFolder = null;
+    }
+  }
+
+  function toggleFolderMenu(folderId: string) {
+    folderMenuOpen = folderMenuOpen === folderId ? null : folderId;
+  }
+
+  async function moveNoteToFolder(note: Note, folderId: string) {
+    try {
+      await NotesService.moveNoteToFolder(note.id, folderId);
+      await loadNotes(); // Refresh to see changes
+      showMoveNoteModal = null;
+      noteMenuOpen = null;
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to move note';
+    }
+  }
+
+  function toggleNoteMenu(noteId: string) {
+    noteMenuOpen = noteMenuOpen === noteId ? null : noteId;
+  }
+
+  function handleClickOutside(event: MouseEvent) {
+    const target = event.target as Element;
+    if (!target.closest('.folder-menu-container') && !target.closest('.note-menu-container')) {
+      folderMenuOpen = null;
+      noteMenuOpen = null;
+    }
+  }
+
   onMount(() => {
     loadNotes();
+    document.addEventListener('click', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
   });
 </script>
 
@@ -163,17 +266,125 @@
       <Icon src={MagnifyingGlass} class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
     </div>
 
-    <!-- Folder Filter -->
-    <div class="mt-3">
-      <select
-        class="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring"
-        bind:value={selectedFolder}
-      >
-        <option value="all">All Notes</option>
-        {#each folders as folder}
-          <option value={folder.id}>{folder.name}</option>
+    <!-- Folders Section -->
+    <div class="mt-4">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Folders</h3>
+        <button
+          class="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200"
+          on:click={() => showCreateFolder = !showCreateFolder}
+          title="Create new folder"
+        >
+          <Icon src={FolderPlus} class="w-4 h-4" />
+        </button>
+      </div>
+
+      <!-- Create Folder Input -->
+      {#if showCreateFolder}
+        <div class="mb-2" transition:slide={{ duration: 200 }}>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              placeholder="Folder name"
+              class="flex-1 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+              bind:value={newFolderName}
+              on:keydown={(e) => {
+                if (e.key === 'Enter') createFolder();
+                if (e.key === 'Escape') { showCreateFolder = false; newFolderName = ''; }
+              }}
+              autofocus
+            />
+            <button
+              class="px-2 py-1 text-xs rounded accent-bg text-white hover:opacity-90 transition-opacity"
+              on:click={createFolder}
+              disabled={!newFolderName.trim()}
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      {/if}
+
+      <!-- Folders List -->
+      <div class="space-y-1">
+        <!-- All Notes -->
+        <button
+          class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-200 {selectedFolder === 'all' ? 'accent-bg text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}"
+          on:click={() => selectedFolder = 'all'}
+        >
+          <Icon src={FolderOpen} class="w-4 h-4 mr-2 opacity-60" />
+          <span class="flex-1 text-left">All Notes</span>
+          <span class="text-xs opacity-60">{notes.length}</span>
+        </button>
+
+        <!-- Individual Folders -->
+        {#each folders as folder (folder.id)}
+          <div class="folder-menu-container relative">
+            <div class="flex items-center group">
+              {#if editingFolder?.id === folder.id}
+                <!-- Editing Mode -->
+                <input
+                  type="text"
+                  value={folder.name}
+                  class="flex-1 px-2 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                  on:keydown={(e) => {
+                    if (e.key === 'Enter') renameFolder(folder, e.currentTarget.value);
+                    if (e.key === 'Escape') editingFolder = null;
+                  }}
+                  on:blur={(e) => renameFolder(folder, e.currentTarget.value)}
+                  autofocus
+                />
+              {:else}
+                <!-- Normal Mode -->
+                <button
+                  class="flex-1 flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-200 {selectedFolder === folder.id ? 'accent-bg text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}"
+                  on:click={() => selectedFolder = folder.id}
+                >
+                  <span class="text-lg mr-2">{folder.icon || '📁'}</span>
+                  <span class="flex-1 text-left truncate">{folder.name}</span>
+                  <span class="text-xs opacity-60">
+                    {notes.filter(note => note.folder_path.includes(folder.id)).length}
+                  </span>
+                </button>
+
+                <!-- Folder Menu Button -->
+                {#if folder.id !== 'default'}
+                  <button
+                    class="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-200"
+                    on:click={() => toggleFolderMenu(folder.id)}
+                    title="Folder options"
+                  >
+                    <Icon src={EllipsisVertical} class="w-3 h-3" />
+                  </button>
+                {/if}
+              {/if}
+            </div>
+
+            <!-- Folder Menu Dropdown -->
+            {#if folderMenuOpen === folder.id && folder.id !== 'default'}
+              <div
+                class="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-10"
+                transition:scale={{ duration: 150, start: 0.95 }}
+              >
+                <button
+                  class="w-full flex items-center px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  on:click={() => { editingFolder = folder; folderMenuOpen = null; }}
+                >
+                  <Icon src={PencilSquare} class="w-4 h-4 mr-2" />
+                  Rename
+                </button>
+                <button
+                  class="w-full flex items-center px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  on:click={() => deleteFolder(folder.id)}
+                >
+                  <Icon src={Trash} class="w-4 h-4 mr-2" />
+                  Delete
+                </button>
+              </div>
+            {/if}
+          </div>
         {/each}
-      </select>
+      </div>
     </div>
   </div>
 
@@ -217,28 +428,30 @@
     {:else}
       <div class="space-y-1 p-2">
         {#each filteredNotes as note (note.id)}
-          <div
-            class="note-item p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-700 {selectedNoteId === note.id ? 'accent-bg text-white' : 'text-slate-900 dark:text-white'}"
-            on:click={() => selectNote(note)}
-            on:keydown={(e) => e.key === 'Enter' && selectNote(note)}
-            role="button"
-            tabindex="0"
-            in:fly={{ y: 20, duration: 300, easing: quintOut }}
-          >
-            <!-- Note Header -->
-            <div class="flex items-start justify-between mb-2">
-              <h3 class="font-medium text-sm line-clamp-1 flex-1 pr-2">
-                {note.title || 'Untitled Note'}
-              </h3>
-              <button
-                class="opacity-0 group-hover:opacity-100 p-1 rounded text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-all duration-200"
-                on:click={(e) => deleteNote(note.id, e)}
-                title="Delete note"
-                aria-label="Delete note"
-              >
-                ×
-              </button>
-            </div>
+          <div class="note-menu-container relative">
+            <div
+              class="note-item p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-700 group {selectedNoteId === note.id ? 'accent-bg text-white' : 'text-slate-900 dark:text-white'}"
+              on:click={() => selectNote(note)}
+              on:keydown={(e) => e.key === 'Enter' && selectNote(note)}
+              role="button"
+              tabindex="0"
+              in:fly={{ y: 20, duration: 300, easing: quintOut }}
+            >
+              <!-- Note Header -->
+              <div class="flex items-start justify-between mb-2">
+                <h3 class="font-medium text-sm line-clamp-1 flex-1 pr-2">
+                  {note.title || 'Untitled Note'}
+                </h3>
+                <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <button
+                    class="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    on:click={(e) => { e.stopPropagation(); toggleNoteMenu(note.id); }}
+                    title="Note options"
+                  >
+                    <Icon src={EllipsisVertical} class="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
 
             <!-- Note Preview -->
             <p class="text-xs {selectedNoteId === note.id ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'} line-clamp-2 mb-2">
@@ -270,6 +483,30 @@
               </div>
             </div>
           </div>
+
+          <!-- Note Menu Dropdown -->
+          {#if noteMenuOpen === note.id}
+            <div
+              class="absolute right-0 top-0 mt-8 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-10"
+              transition:scale={{ duration: 150, start: 0.95 }}
+            >
+              <button
+                class="w-full flex items-center px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                on:click={() => { showMoveNoteModal = note; noteMenuOpen = null; }}
+              >
+                <Icon src={FolderOpen} class="w-4 h-4 mr-2" />
+                Move to folder
+              </button>
+              <button
+                class="w-full flex items-center px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                on:click={() => { deleteNote(note.id, new Event('click')); noteMenuOpen = null; }}
+              >
+                <Icon src={Trash} class="w-4 h-4 mr-2" />
+                Delete note
+              </button>
+            </div>
+          {/if}
+        </div>
         {/each}
       </div>
     {/if}
@@ -285,6 +522,63 @@
     </div>
   </div>
 </div>
+
+<!-- Move Note Modal -->
+{#if showMoveNoteModal}
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+    transition:fly={{ y: 50, duration: 200 }}
+  >
+    <div
+      class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md"
+      transition:scale={{ duration: 200, start: 0.95 }}
+    >
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Move Note</h3>
+        <button
+          class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+          on:click={() => showMoveNoteModal = null}
+        >
+          <Icon src={XMark} class="w-5 h-5" />
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6">
+        <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+          Move "{showMoveNoteModal.title || 'Untitled Note'}" to:
+        </p>
+        
+        <div class="space-y-2">
+          {#each folders as folder (folder.id)}
+            <button
+              class="w-full flex items-center px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 {showMoveNoteModal.folder_path.includes(folder.id) ? 'accent-bg text-white border-transparent' : ''}"
+                             on:click={() => showMoveNoteModal && moveNoteToFolder(showMoveNoteModal, folder.id)}
+              disabled={showMoveNoteModal.folder_path.includes(folder.id)}
+            >
+              <span class="text-lg mr-3">{folder.icon || '📁'}</span>
+              <span class="flex-1 text-left">{folder.name}</span>
+              {#if showMoveNoteModal.folder_path.includes(folder.id)}
+                <span class="text-xs opacity-60">Current</span>
+              {/if}
+            </button>
+          {/each}
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end p-6 border-t border-slate-200 dark:border-slate-700">
+        <button
+          class="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200"
+          on:click={() => showMoveNoteModal = null}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
   .note-item:hover .opacity-0 {
