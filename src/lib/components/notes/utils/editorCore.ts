@@ -313,7 +313,11 @@ export class EditorCore {
   }
 
   public getContent(): EditorDocument {
-    const nodes = this.parseHTMLToNodes(this.element);
+    // First convert visual mentions back to text format for saving
+    const contentClone = this.element.cloneNode(true) as HTMLElement;
+    this.convertVisualMentionsToText(contentClone);
+    
+    const nodes = this.parseHTMLToNodes(contentClone);
     const metadata = this.calculateMetadata(nodes);
     
     return {
@@ -326,6 +330,7 @@ export class EditorCore {
   public setContent(content: EditorDocument) {
     const html = this.renderNodesToHTML(content.nodes);
     this.element.innerHTML = html;
+    this.reinitializeMentions();
     this.triggerChange();
   }
 
@@ -1362,45 +1367,28 @@ export class EditorCore {
      const spaceIndex = afterAt.indexOf(' ');
      const endIndex = spaceIndex === -1 ? text.length : atIndex + spaceIndex;
      
-     // Create mention element
-     const mention = document.createElement('span');
-     mention.className = 'seqta-mention';
-     mention.contentEditable = 'false';
-     mention.dataset.mentionId = suggestion.id;
-     mention.dataset.mentionType = suggestion.type;
-     mention.dataset.mentionData = JSON.stringify(suggestion.data);
+     // Create mention text with special format: @[type:id:title]
+     // Encode any special characters in the title to avoid conflicts
+     const encodedTitle = suggestion.title.replace(/[\[\]:]/g, (match: string) => {
+       const replacements: { [key: string]: string } = { '[': '&#91;', ']': '&#93;', ':': '&#58;' };
+       return replacements[match] || match;
+     });
+     const mentionText = `@[${suggestion.type}:${suggestion.id}:${encodedTitle}]`;
      
-     mention.style.cssText = `
-       display: inline-block;
-       background: var(--accent-color, #3b82f6);
-       color: white;
-       padding: 0.125rem 0.5rem;
-       border-radius: 0.375rem;
-       font-size: 0.875rem;
-       font-weight: 500;
-       margin: 0 0.125rem;
-       cursor: pointer;
-     `;
+     // Store the full suggestion data in a global mention registry
+     this.storeMentionData(suggestion.id, suggestion);
      
-     mention.innerHTML = `${this.getMentionIcon(suggestion.type)} ${suggestion.title}`;
-     
-     // Add click handler for editing/viewing
-     mention.onclick = () => {
-       this.handleMentionClick(mention, suggestion);
-     };
-
-     // Replace text with mention
+     // Replace the @ and query with the mention text
      const range = document.createRange();
      range.setStart(textNode, atIndex);
      range.setEnd(textNode, endIndex);
      range.deleteContents();
-     range.insertNode(mention);
      
-     // Add space after mention
-     const space = document.createTextNode(' ');
-     range.setStartAfter(mention);
-     range.insertNode(space);
-     range.setStartAfter(space);
+     const mentionTextNode = document.createTextNode(mentionText + ' ');
+     range.insertNode(mentionTextNode);
+     
+     // Position cursor after the mention
+     range.setStartAfter(mentionTextNode);
      range.collapse(true);
      
      // Update selection
@@ -1411,6 +1399,12 @@ export class EditorCore {
      }
 
      this.removeMentionDropdown();
+     
+     // Convert the text mention to visual mention immediately
+     setTimeout(() => {
+       this.convertTextMentionsToVisual();
+     }, 0);
+     
      this.triggerChange();
    }
 
@@ -1432,6 +1426,90 @@ export class EditorCore {
            this.triggerChange();
          }
          break;
+     }
+   }
+
+   private async handlePersistedMentionClick(mention: HTMLElement, mentionId: string, mentionType: string, mentionData: string) {
+     try {
+       // Parse the stored mention data
+       const data = JSON.parse(mentionData);
+       
+       // Create a suggestion-like object for compatibility
+       const suggestion = {
+         id: mentionId,
+         type: mentionType,
+         title: mention.textContent?.replace(/^[📝📊🎓📚📅📢]\s*/, '') || 'Unknown',
+         subtitle: this.formatMentionSubtitle(mentionType, data),
+         data: data,
+         lastUpdated: new Date().toISOString()
+       };
+       
+       // Show mention details or update data
+       const actions = ['View Details', 'Update Data', 'Remove Mention'];
+       const action = prompt(`${suggestion.title}\n\n1. ${actions[0]}\n2. ${actions[1]}\n3. ${actions[2]}\n\nEnter number (1-3):`);
+       
+       switch (action) {
+         case '1':
+           this.showMentionDetails(suggestion);
+           break;
+         case '2':
+           // Update the mention with fresh data
+           await this.refreshMentionData(mention, mentionId, mentionType);
+           break;
+         case '3':
+           if (confirm('Remove this mention?')) {
+             mention.parentNode?.removeChild(mention);
+             this.triggerChange();
+           }
+           break;
+       }
+     } catch (error) {
+       console.error('Error handling persisted mention click:', error);
+       alert('Error loading mention data');
+     }
+   }
+
+   private formatMentionSubtitle(mentionType: string, data: any): string {
+     switch (mentionType) {
+       case 'assignment':
+         return `${data.subject || 'Unknown Subject'} • Due: ${data.dueDate ? new Date(data.dueDate).toLocaleDateString() : 'Unknown'}`;
+       case 'assessment':
+         return `${data.subject || 'Unknown Subject'} • ${data.type || 'Assessment'}`;
+       case 'class':
+         return `${data.subject || 'Unknown Subject'} • ${data.teacher || 'Unknown Teacher'}`;
+       case 'subject':
+         return `${data.code || 'Unknown Code'} • ${data.teacher || 'Unknown Teacher'}`;
+       case 'timetable':
+         return `${data.subject || 'Unknown Subject'} • ${data.time || 'Unknown Time'}`;
+       default:
+         return 'SEQTA Element';
+     }
+   }
+
+   private async refreshMentionData(mention: HTMLElement, mentionId: string, mentionType: string) {
+     try {
+       // Get fresh data from SEQTA
+       const updatedData = await SeqtaMentionsService.updateMentionData(mentionId, mentionType);
+       
+       if (updatedData) {
+         // Update the mention's data attributes
+         mention.dataset.mentionData = JSON.stringify(updatedData.data);
+         
+         // Update the display text if needed
+         const icon = this.getMentionIcon(mentionType);
+         mention.innerHTML = `${icon} ${updatedData.title}`;
+         
+         // Update subtitle in tooltip or data attribute
+         mention.title = this.formatMentionSubtitle(mentionType, updatedData.data);
+         
+         this.triggerChange();
+         alert('Mention data updated successfully!');
+       } else {
+         alert('Could not refresh mention data');
+       }
+     } catch (error) {
+       console.error('Error refreshing mention data:', error);
+       alert('Error refreshing mention data');
      }
    }
 
@@ -1481,10 +1559,142 @@ export class EditorCore {
      }
    }
 
+   private storeMentionData(id: string, suggestion: SeqtaMentionItem) {
+     this.mentionRegistry.set(id, suggestion);
+   }
+
+   private convertTextMentionsToVisual() {
+     const walker = document.createTreeWalker(
+       this.element,
+       NodeFilter.SHOW_TEXT,
+       null
+     );
+
+     const textNodes: Text[] = [];
+     let node: Node | null;
+     while (node = walker.nextNode()) {
+       textNodes.push(node as Text);
+     }
+
+     // Process text nodes for mention patterns
+     textNodes.forEach(textNode => {
+       const text = textNode.textContent || '';
+       const mentionRegex = /@\[([^:]+):([^:]+):([^\]]+)\]/g;
+       let match;
+       const replacements: { start: number, end: number, element: HTMLElement }[] = [];
+
+       while ((match = mentionRegex.exec(text)) !== null) {
+         const [fullMatch, type, id, encodedTitle] = match;
+         const title = encodedTitle.replace(/&#91;/g, '[').replace(/&#93;/g, ']').replace(/&#58;/g, ':');
+         
+         // Get suggestion data from registry or create minimal data
+         const suggestion = this.mentionRegistry.get(id) || {
+           id,
+           type: type as any,
+           title,
+           subtitle: `${type} mention`,
+           data: {},
+           lastUpdated: new Date().toISOString()
+         };
+
+         // Create visual mention element
+         const mention = this.createVisualMention(suggestion);
+         
+         replacements.push({
+           start: match.index!,
+           end: match.index! + fullMatch.length,
+           element: mention
+         });
+       }
+
+       // Apply replacements in reverse order to maintain indices
+       replacements.reverse().forEach(replacement => {
+         const range = document.createRange();
+         range.setStart(textNode, replacement.start);
+         range.setEnd(textNode, replacement.end);
+         range.deleteContents();
+         range.insertNode(replacement.element);
+       });
+     });
+   }
+
+   private createVisualMention(suggestion: SeqtaMentionItem): HTMLElement {
+     const mention = document.createElement('span');
+     mention.className = 'seqta-mention';
+     mention.contentEditable = 'false';
+     mention.dataset.mentionId = suggestion.id;
+     mention.dataset.mentionType = suggestion.type;
+     mention.dataset.mentionData = JSON.stringify(suggestion.data);
+     
+     mention.style.cssText = `
+       display: inline-block;
+       background: var(--accent-color, #3b82f6);
+       color: white;
+       padding: 0.125rem 0.5rem;
+       border-radius: 0.375rem;
+       font-size: 0.875rem;
+       font-weight: 500;
+       margin: 0 0.125rem;
+       cursor: pointer;
+       transition: all 0.2s;
+     `;
+     
+     mention.innerHTML = `${this.getMentionIcon(suggestion.type)} ${suggestion.title}`;
+     
+     // Add click handler
+     mention.addEventListener('click', (e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       this.handlePersistedMentionClick(mention, suggestion.id, suggestion.type, JSON.stringify(suggestion.data));
+     });
+     
+     // Add hover effects
+     mention.addEventListener('mouseenter', () => {
+       mention.style.opacity = '0.8';
+       mention.style.transform = 'scale(1.02)';
+     });
+     
+     mention.addEventListener('mouseleave', () => {
+       mention.style.opacity = '1';
+       mention.style.transform = 'scale(1)';
+     });
+     
+     return mention;
+   }
+
+   private convertVisualMentionsToText(element: HTMLElement) {
+     const mentions = element.querySelectorAll('span.seqta-mention');
+     
+     mentions.forEach(mention => {
+       const mentionId = mention.getAttribute('data-mention-id') || '';
+       const mentionType = mention.getAttribute('data-mention-type') || '';
+       const title = mention.textContent?.replace(/^[📝📊🎓📚📅📢]\s*/, '') || 'Unknown';
+       
+       // Encode special characters in title
+       const encodedTitle = title.replace(/[\[\]:]/g, (match: string) => {
+         const replacements: { [key: string]: string } = { '[': '&#91;', ']': '&#93;', ':': '&#58;' };
+         return replacements[match] || match;
+       });
+       
+       // Create text mention format
+       const mentionText = `@[${mentionType}:${mentionId}:${encodedTitle}]`;
+       const textNode = document.createTextNode(mentionText);
+       
+       // Replace the visual mention with text
+       mention.parentNode?.replaceChild(textNode, mention);
+     });
+   }
+
+   private reinitializeMentions() {
+     // Convert any text-based mentions to visual mentions
+     this.convertTextMentionsToVisual();
+   }
+
    // Add properties to track mention state
    private currentMentionDropdown: HTMLElement | null = null;
    private currentMentionKeyHandler: ((e: KeyboardEvent) => void) | null = null;
    private mentionSearchTimeout: number | null = null;
+   private mentionRegistry: Map<string, SeqtaMentionItem> = new Map();
 
   public getActiveFormats(): Set<string> {
     const activeFormats = new Set<string>();
