@@ -572,7 +572,7 @@
     <div class="lg:col-span-2 space-y-6">
       {#if activeTab === 'tasks'}
         <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" 
-             in:fly={{ y: 20, duration: 300, easing: quintOut }} 
+             in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
              out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
           <!-- Tasks Controls -->
           <div class="mb-4 flex flex-col gap-3">
@@ -800,7 +800,7 @@
       {:else}
         <!-- Notes Tab Content -->
         <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md"
-             in:fly={{ y: 20, duration: 300, easing: quintOut }} 
+             in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
              out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
           <div class="flex items-center justify-between mb-2">
             <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
