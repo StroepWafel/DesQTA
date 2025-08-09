@@ -151,14 +151,14 @@
       <h1 class="text-3xl font-bold">Theme Store</h1>
     </div>
     <div class="flex items-center gap-4">
-      <button
+      <div class="text-sm text-slate-600 dark:text-slate-400">Current theme: {capitalizeName(currentThemeName)}</div>
+        <button
         class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         onclick={() => themeBuilderSidebarOpen.set(true)}
       >
         <Icon src={Swatch} class="w-5 h-5" />
         Open Theme Builder
       </button>
-      <div class="text-sm text-slate-600 dark:text-slate-400">Current theme: {capitalizeName(currentThemeName)}</div>
     </div>
   </div>
 
