@@ -889,6 +889,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               </div>
             </div>
           </div>
+          
           <!-- Layout Settings -->
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Layout</h3>
