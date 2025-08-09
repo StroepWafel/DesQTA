@@ -11,7 +11,18 @@
     updateTheme,
   } from '../../lib/stores/theme';
   import { Icon } from 'svelte-hero-icons';
-  import { Plus, ArrowPath, Trash, Rss, Sun, Moon, ComputerDesktop, CloudArrowUp, Cog, Squares2x2 } from 'svelte-hero-icons';
+  import {
+    Plus,
+    ArrowPath,
+    Trash,
+    Rss,
+    Sun,
+    Moon,
+    ComputerDesktop,
+    CloudArrowUp,
+    Cog,
+    Squares2x2,
+  } from 'svelte-hero-icons';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
   import { logger } from '../../utils/logger';
@@ -121,7 +132,11 @@ The Company reserves the right to terminate your access to the Service at any ti
   function validateCloudUrl(url: string): string | null {
     if (!url) return 'URL cannot be empty';
     if (!/^https?:\/\//i.test(url)) return 'URL must start with http:// or https://';
-    try { new URL(url); } catch { return 'Invalid URL format'; }
+    try {
+      new URL(url);
+    } catch {
+      return 'Invalid URL format';
+    }
     return null;
   }
 
@@ -134,7 +149,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       cloudBaseUrlChanged = true;
       notify({
         title: 'Cloud Provider',
-        body: 'Cloud provider URL updated. Some actions may require re-authentication.'
+        body: 'Cloud provider URL updated. Some actions may require re-authentication.',
       });
     } catch (e: any) {
       cloudBaseUrlError = e?.message || 'Failed to save Cloud URL';
@@ -233,17 +248,17 @@ The Company reserves the right to terminate your access to the Service at any ti
   // Helper function to get full profile picture URL
   function getFullPfpUrl(pfpUrl: string | null | undefined): string | null {
     if (!pfpUrl) return null;
-    
+
     // If it's already a full URL, return as is
     if (pfpUrl.startsWith('http://') || pfpUrl.startsWith('https://')) {
       return pfpUrl;
     }
-    
+
     // If it's a relative path, prepend the base domain
     if (pfpUrl.startsWith('/api/files/public/')) {
       return `https://accounts.betterseqta.adenmgb.com${pfpUrl}`;
     }
-    
+
     // Fallback to DiceBear if it's not a recognized format
     return pfpUrl;
   }
@@ -359,7 +374,11 @@ The Company reserves the right to terminate your access to the Service at any ti
   }
 
   function openTroubleshootingModal() {
-    logger.info('settings', 'openTroubleshootingModal', 'Opening troubleshooting modal from settings page');
+    logger.info(
+      'settings',
+      'openTroubleshootingModal',
+      'Opening troubleshooting modal from settings page',
+    );
     showTroubleshootingModal = true;
   }
 
@@ -394,7 +413,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     lessonSummaryAnalyserEnabled = cloudSettings.lesson_summary_analyser_enabled ?? true;
     autoCollapseSidebar = cloudSettings.auto_collapse_sidebar ?? false;
     autoExpandSidebarHover = cloudSettings.auto_expand_sidebar_hover ?? false;
-        globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
+    globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
     showDevSettings = cloudSettings.homepage_edit_mode ?? false;
@@ -441,18 +460,13 @@ The Company reserves the right to terminate your access to the Service at any ti
     <div class="flex flex-col gap-2 items-start w-full sm:flex-row sm:items-center sm:w-auto">
       <div class="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
         <button
-          class="px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:outline-none focus:ring-2 accent-ring active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
-          onclick={goToHomepageAndEditLayout}>
-          <Icon src={Squares2x2} class="w-4 h-4" />
-          Edit Homescreen Layout
-        </button>
-        <button
           class="px-6 py-2 w-full text-white bg-gradient-to-r from-green-600 to-green-500 rounded-lg shadow-lg transition-all duration-200 sm:w-auto hover:from-green-700 hover:to-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 playful"
           onclick={saveSettings}
           disabled={saving}>
           {#if saving}
             <div class="flex gap-2 justify-center items-center">
-              <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
+              <div
+                class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
               </div>
               <span>Saving...</span>
             </div>
@@ -462,8 +476,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         </button>
       </div>
       {#if saveSuccess}
-        <span class="text-sm text-green-400 animate-fade-in sm:text-base"
-          >Saved!</span>
+        <span class="text-sm text-green-400 animate-fade-in sm:text-base">Saved!</span>
       {/if}
       {#if saveError}
         <span class="text-sm text-red-400 animate-fade-in sm:text-base">{saveError}</span>
@@ -486,7 +499,9 @@ The Company reserves the right to terminate your access to the Service at any ti
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up relative">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/30 dark:border-slate-800/30">
-          <h2 class="text-base font-semibold sm:text-lg text-slate-500 dark:text-slate-400">Cloud Sync</h2>
+          <h2 class="text-base font-semibold sm:text-lg text-slate-500 dark:text-slate-400">
+            Cloud Sync
+          </h2>
           <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
             Sync your settings across devices with BetterSEQTA Plus account cloud syncing
           </p>
@@ -495,108 +510,146 @@ The Company reserves the right to terminate your access to the Service at any ti
           {#if cloudUserLoading}
             <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
               <div class="flex items-center gap-3">
-                <div class="w-6 h-6 rounded-full border-2 animate-spin border-slate-400/30 border-t-slate-400"></div>
-                <span class="text-sm text-slate-500 dark:text-slate-400">Loading account status...</span>
+                <div
+                  class="w-6 h-6 rounded-full border-2 animate-spin border-slate-400/30 border-t-slate-400">
+                </div>
+                <span class="text-sm text-slate-500 dark:text-slate-400"
+                  >Loading account status...</span>
               </div>
             </div>
           {:else}
             {#if !acceptedCloudEula}
               <!-- EULA gate overlay -->
-              <div class="absolute inset-0 z-10 flex flex-col justify-center items-center p-6 bg-black/40 backdrop-blur-sm rounded-xl">
-                <div class="max-w-xl w-full p-5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-300/50 dark:border-slate-800/50 shadow-lg text-slate-800 dark:text-white">
-                  <h3 class="text-base sm:text-lg font-semibold mb-2">Accept BetterSEQTA Cloud EULA</h3>
-                  <p class="text-sm opacity-80 mb-4">You must read and accept the Cloud Sync EULA before using cloud features.</p>
+              <div
+                class="absolute inset-0 z-10 flex flex-col justify-center items-center p-6 bg-black/40 backdrop-blur-sm rounded-xl">
+                <div
+                  class="max-w-xl w-full p-5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-300/50 dark:border-slate-800/50 shadow-lg text-slate-800 dark:text-white">
+                  <h3 class="text-base sm:text-lg font-semibold mb-2">
+                    Accept BetterSEQTA Cloud EULA
+                  </h3>
+                  <p class="text-sm opacity-80 mb-4">
+                    You must read and accept the Cloud Sync EULA before using cloud features.
+                  </p>
                   <div class="flex gap-2">
-                    <button class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" onclick={() => showEulaModal = true}>Read & Accept</button>
+                    <button
+                      class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+                      onclick={() => (showEulaModal = true)}>Read & Accept</button>
                   </div>
                 </div>
               </div>
             {/if}
 
             {#if cloudUser && cloudToken}
-            <!-- Logged in state -->
-            <div class="p-4 rounded-lg bg-green-100/60 dark:bg-green-900/30 animate-fade-in border border-green-200 dark:border-green-800">
-              <div class="flex items-start gap-4">
-                {#if cloudUser.pfpUrl}
-                  <img src={getFullPfpUrl(cloudUser.pfpUrl) || `https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`} alt={cloudUser.displayName || cloudUser.username} class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
-                {:else}
-                  <img src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`} alt={cloudUser.displayName || cloudUser.username} class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
-                {/if}
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span class="text-sm font-semibold text-green-800 dark:text-green-200">Logged in to BetterSEQTA Plus</span>
+              <!-- Logged in state -->
+              <div
+                class="p-4 rounded-lg bg-green-100/60 dark:bg-green-900/30 animate-fade-in border border-green-200 dark:border-green-800">
+                <div class="flex items-start gap-4">
+                  {#if cloudUser.pfpUrl}
+                    <img
+                      src={getFullPfpUrl(cloudUser.pfpUrl) ||
+                        `https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
+                      alt={cloudUser.displayName || cloudUser.username}
+                      class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
+                  {:else}
+                    <img
+                      src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
+                      alt={cloudUser.displayName || cloudUser.username}
+                      class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
+                  {/if}
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span class="text-sm font-semibold text-green-800 dark:text-green-200"
+                        >Logged in to BetterSEQTA Plus</span>
+                    </div>
+                    <div class="text-sm text-green-700 dark:text-green-300 mb-1">
+                      <strong>{cloudUser.displayName || cloudUser.username}</strong>
+                    </div>
+                    <div class="text-xs text-green-600 dark:text-green-400 mb-3">
+                      @{cloudUser.username}
+                    </div>
                   </div>
-                  <div class="text-sm text-green-700 dark:text-green-300 mb-1">
-                    <strong>{cloudUser.displayName || cloudUser.username}</strong>
-                  </div>
-                  <div class="text-xs text-green-600 dark:text-green-400 mb-3">@{cloudUser.username}</div>
                 </div>
-              </div>
-              <div class="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
-                <h4 class="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">Settings Synchronization</h4>
-                <p class="text-xs text-green-700 dark:text-green-300 mb-4">
-                  Upload your current settings to the cloud or download settings from another device. 
-                  This includes all your shortcuts, feeds, theme preferences, and other customizations.
-                </p>
-                <div class="flex flex-col gap-3 sm:flex-row">
-                  <button
-                    class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                    onclick={openCloudSyncModal}
-                    disabled={!acceptedCloudEula}
-                  >
-                    <Icon src={CloudArrowUp} class="w-5 h-5" />
-                    Sync Settings
-                  </button>
-                </div>
-              </div>
-            </div>
-          {:else}
-            <!-- Not logged in state -->
-          <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
-            <div class="mb-3 p-3 rounded bg-yellow-100/60 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800">
-              <div class="flex items-center gap-2">
-                <input id="accept-eula-loggedout" type="checkbox" class="w-4 h-4 accent-blue-600" bind:checked={acceptedCloudEula} />
-                <label for="accept-eula-loggedout" class="text-sm">I have read and accept the Cloud Sync Terms (EULA)</label>
-              </div>
-            </div>
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
-                  <span class="text-sm font-semibold text-slate-600 dark:text-slate-300">Not logged in to BetterSEQTA Plus</span>
-                </div>
-              <div>
-                <h3 class="text-sm font-semibold sm:text-base mb-2 text-slate-500 dark:text-slate-400">Settings Synchronization</h3>
-                <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
-                  Upload your current settings to the cloud or download settings from another device. 
-                  This includes all your shortcuts, feeds, theme preferences, and other customizations.
-                </p>
-                  <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
-                    <a href="https://accounts.betterseqta.org" target="_blank" rel="noopener noreferrer"
-                      class="text-blue-600 dark:text-blue-500 hover:underline">
-                      Create a free BetterSEQTA Plus account
-                    </a> to get started with cloud syncing.
+                <div class="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
+                  <h4 class="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">
+                    Settings Synchronization
+                  </h4>
+                  <p class="text-xs text-green-700 dark:text-green-300 mb-4">
+                    Upload your current settings to the cloud or download settings from another
+                    device. This includes all your shortcuts, feeds, theme preferences, and other
+                    customizations.
                   </p>
-                <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
-                  <strong>Cloud API URL:</strong> {CLOUD_API_URL}
-                </p>
-              </div>
-              <div class="flex flex-col gap-3 sm:flex-row">
-                <button
-                    class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                  onclick={openCloudSyncModal}
-                  disabled={!acceptedCloudEula}
-                >
-                  <Icon src={CloudArrowUp} class="w-5 h-5" />
-                    Login & Sync Settings
-                </button>
-                <div class="text-xs text-slate-500 dark:text-slate-500 sm:self-center">
-                  Requires BetterSEQTA Plus account
+                  <div class="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      onclick={openCloudSyncModal}
+                      disabled={!acceptedCloudEula}>
+                      <Icon src={CloudArrowUp} class="w-5 h-5" />
+                      Sync Settings
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-          {/if}
+            {:else}
+              <!-- Not logged in state -->
+              <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
+                <div
+                  class="mb-3 p-3 rounded bg-yellow-100/60 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800">
+                  <div class="flex items-center gap-2">
+                    <input
+                      id="accept-eula-loggedout"
+                      type="checkbox"
+                      class="w-4 h-4 accent-blue-600"
+                      bind:checked={acceptedCloudEula} />
+                    <label for="accept-eula-loggedout" class="text-sm"
+                      >I have read and accept the Cloud Sync Terms (EULA)</label>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+                    <span class="text-sm font-semibold text-slate-600 dark:text-slate-300"
+                      >Not logged in to BetterSEQTA Plus</span>
+                  </div>
+                  <div>
+                    <h3
+                      class="text-sm font-semibold sm:text-base mb-2 text-slate-500 dark:text-slate-400">
+                      Settings Synchronization
+                    </h3>
+                    <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                      Upload your current settings to the cloud or download settings from another
+                      device. This includes all your shortcuts, feeds, theme preferences, and other
+                      customizations.
+                    </p>
+                    <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                      <a
+                        href="https://accounts.betterseqta.org"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-blue-600 dark:text-blue-500 hover:underline">
+                        Create a free BetterSEQTA Plus account
+                      </a> to get started with cloud syncing.
+                    </p>
+                    <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                      <strong>Cloud API URL:</strong>
+                      {CLOUD_API_URL}
+                    </p>
+                  </div>
+                  <div class="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      onclick={openCloudSyncModal}
+                      disabled={!acceptedCloudEula}>
+                      <Icon src={CloudArrowUp} class="w-5 h-5" />
+                      Login & Sync Settings
+                    </button>
+                    <div class="text-xs text-slate-500 dark:text-slate-500 sm:self-center">
+                      Requires BetterSEQTA Plus account
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {/if}
           {/if}
         </div>
       </section>
@@ -620,67 +673,67 @@ The Company reserves the right to terminate your access to the Service at any ti
             <div
               class="p-4 space-y-4 rounded-lg bg-slate-100/80 dark:bg-slate-800/50 animate-fade-in">
               <!-- Always visible -->
-<div class="flex gap-4 items-center">
-  <input
-    id="weather-enabled"
-    type="checkbox"
-    class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-    bind:checked={weatherEnabled} />
-  <label
-    for="weather-enabled"
-    class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
-    >Show Weather Widget</label>
-</div>
+              <div class="flex gap-4 items-center">
+                <input
+                  id="weather-enabled"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={weatherEnabled} />
+                <label
+                  for="weather-enabled"
+                  class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+                  >Show Weather Widget</label>
+              </div>
 
-<!-- Show this ONLY if weatherEnabled is true -->
-{#if weatherEnabled}
-  <div class="flex gap-4 items-center">
-    <input
-      id="force-use-location"
-      type="checkbox"
-      class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-      bind:checked={forceUseLocation} />
-    <label
-      for="force-use-location"
-      class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
-      >Only use Fallback Location for Weather</label>
-  </div>
+              <!-- Show this ONLY if weatherEnabled is true -->
+              {#if weatherEnabled}
+                <div class="flex gap-4 items-center">
+                  <input
+                    id="force-use-location"
+                    type="checkbox"
+                    class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                    bind:checked={forceUseLocation} />
+                  <label
+                    for="force-use-location"
+                    class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+                    >Only use Fallback Location for Weather</label>
+                </div>
 
-  <!-- Show fallback inputs ONLY if forceUseLocation is true -->
-  {#if forceUseLocation}
-    <div class="flex flex-col gap-2 items-start pl-1">
-      <label
-        for="weather-city"
-        class="text-xs text-slate-600 sm:text-sm dark:text-slate-400"
-        >Fallback City:</label>
-      <input
-        id="weather-city"
-        class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="Perth"
-        bind:value={weatherCity} />
-    </div>
+                <!-- Show fallback inputs ONLY if forceUseLocation is true -->
+                {#if forceUseLocation}
+                  <div class="flex flex-col gap-2 items-start pl-1">
+                    <label
+                      for="weather-city"
+                      class="text-xs text-slate-600 sm:text-sm dark:text-slate-400"
+                      >Fallback City:</label>
+                    <input
+                      id="weather-city"
+                      class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Perth"
+                      bind:value={weatherCity} />
+                  </div>
 
-    <div class="flex flex-col gap-2 items-start pl-1">
-      <label
-        for="weather-country"
-        class="text-xs text-slate-600 sm:text-sm dark:text-slate-400"
-        >Fallback Country Code</label>
-      <span class="text-xs">
-        Visit <a
-          href="https://countrycode.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-blue-400 hover:underline">countrycode.org</a> to find your country code.
-      </span>
-      <input
-        id="weather-country"
-        class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="AU"
-        bind:value={weatherCountry} />
-    </div>
-  {/if}
-{/if}
-
+                  <div class="flex flex-col gap-2 items-start pl-1">
+                    <label
+                      for="weather-country"
+                      class="text-xs text-slate-600 sm:text-sm dark:text-slate-400"
+                      >Fallback Country Code</label>
+                    <span class="text-xs">
+                      Visit <a
+                        href="https://countrycode.org"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-blue-400 hover:underline">countrycode.org</a> to find your country
+                      code.
+                    </span>
+                    <input
+                      id="weather-country"
+                      class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="AU"
+                      bind:value={weatherCountry} />
+                  </div>
+                {/if}
+              {/if}
             </div>
           </div>
         </div>
@@ -699,7 +752,8 @@ The Company reserves the right to terminate your access to the Service at any ti
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Dashboard Quick Actions</h3>
             <p class="mb-4 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
-              Add shortcuts to frequently used features that will appear as quick action buttons on your dashboard.
+              Add shortcuts to frequently used features that will appear as quick action buttons on
+              your dashboard.
             </p>
             <div class="space-y-3 sm:space-y-4">
               {#each shortcuts as shortcut, idx}
@@ -776,11 +830,11 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <label for="accent-color" class="text-sm text-slate-800 dark:text-slate-200"
                   >Accent Color</label>
                 <div class="flex gap-2 items-center">
-                   <input
-                      type="color"
-                      id="accent-color"
-                      bind:value={$accentColor}
-                      class="w-11 h-12 bg-transparent rounded-xl cursor-pointer focus:outline-none" />
+                  <input
+                    type="color"
+                    id="accent-color"
+                    bind:value={$accentColor}
+                    class="w-11 h-12 bg-transparent rounded-xl cursor-pointer focus:outline-none" />
                   <input
                     type="text"
                     bind:value={$accentColor}
@@ -854,7 +908,8 @@ The Company reserves the right to terminate your access to the Service at any ti
                   >Auto-collapse sidebar when navigating</label>
               </div>
               <p class="text-xs text-slate-600 dark:text-slate-400">
-                When enabled, the sidebar will automatically collapse when you click on a page link, giving you more space for content.
+                When enabled, the sidebar will automatically collapse when you click on a page link,
+                giving you more space for content.
               </p>
               <div class="flex gap-4 items-center mb-4 mt-4">
                 <input
@@ -868,7 +923,8 @@ The Company reserves the right to terminate your access to the Service at any ti
                   >Auto-expand sidebar on hover</label>
               </div>
               <p class="text-xs text-slate-600 dark:text-slate-400">
-                When enabled and the sidebar is collapsed, hovering near the left edge will temporarily expand the sidebar for easy navigation.
+                When enabled and the sidebar is collapsed, hovering near the left edge will
+                temporarily expand the sidebar for easy navigation.
               </p>
               <div class="flex gap-4 items-center mb-4 mt-4">
                 <input
@@ -882,7 +938,8 @@ The Company reserves the right to terminate your access to the Service at any ti
                   >Enable global search</label>
               </div>
               <p class="text-xs text-slate-600 dark:text-slate-400">
-                When enabled, you can use Ctrl+K to open a global search that searches across all your content, courses, and assessments.
+                When enabled, you can use Ctrl+K to open a global search that searches across all
+                your content, courses, and assessments.
               </p>
             </div>
           </div>
@@ -952,7 +1009,8 @@ The Company reserves the right to terminate your access to the Service at any ti
           <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
             <h2 class="text-base font-semibold sm:text-lg">Cloud Provider (Dev)</h2>
             <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
-              Configure the BetterSeqta Cloud provider URL. Changing this may require re-authentication.
+              Configure the BetterSeqta Cloud provider URL. Changing this may require
+              re-authentication.
             </p>
           </div>
           <div class="p-4 space-y-4 sm:p-6">
@@ -962,27 +1020,29 @@ The Company reserves the right to terminate your access to the Service at any ti
                 class="w-full px-3 py-2 rounded-lg border border-slate-300/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-white focus:outline-none focus:ring-2 accent-ring transition-colors duration-200"
                 placeholder="https://accounts.example.com"
                 bind:value={cloudBaseUrl}
-                oninput={() => { cloudBaseUrlError = null; cloudBaseUrlChanged = false; }}
-              />
+                oninput={() => {
+                  cloudBaseUrlError = null;
+                  cloudBaseUrlChanged = false;
+                }} />
               {#if cloudBaseUrlError}
                 <p class="text-xs text-red-500">{cloudBaseUrlError}</p>
               {/if}
               {#if cloudBaseUrlChanged}
-                <p class="text-xs text-yellow-500">Cloud URL updated. You may need to re-login for the new provider.</p>
+                <p class="text-xs text-yellow-500">
+                  Cloud URL updated. You may need to re-login for the new provider.
+                </p>
               {/if}
             </div>
             <div class="flex gap-3">
               <button
                 class="px-4 py-2 text-white rounded-lg shadow transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
                 disabled={cloudBaseUrlSaving}
-                onclick={saveCloudBaseUrl}
-              >
+                onclick={saveCloudBaseUrl}>
                 {cloudBaseUrlSaving ? 'Saving...' : 'Save URL'}
               </button>
               <button
                 class="px-4 py-2 rounded-lg border border-slate-300/70 dark:border-slate-700/70 text-slate-800 dark:text-white bg-slate-100/60 dark:bg-slate-800/40 hover:bg-slate-200/60 dark:hover:bg-slate-700/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
-                onclick={resetCloudBaseUrlToDefault}
-              >
+                onclick={resetCloudBaseUrlToDefault}>
                 Reset to Default
               </button>
             </div>
@@ -1064,91 +1124,81 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- AI Features -->
       <section
-  class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up"
->
-  <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
-    <h2 class="text-base font-semibold sm:text-lg">AI Features</h2>
-    <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
-      Enable AI-powered features by providing your free Gemini API key.
-    </p>
-  </div>
-  <div class="p-4 space-y-4 sm:p-6">
-    <div class="flex gap-3 items-center">
-      <input
-        id="ai-integrations-enabled"
-        type="checkbox"
-        class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-        bind:checked={aiIntegrationsEnabled}
-      />
-      <label
-        for="ai-integrations-enabled"
-        class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
-      >
-        Enable AI Features
-      </label>
-    </div>
-    {#if aiIntegrationsEnabled}
-      <div class="pl-6 mt-3 space-y-3 sm:space-y-4">
-        <div class="flex gap-3 items-center">
-          <input
-            id="grade-analyser-enabled"
-            type="checkbox"
-            class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-            bind:checked={gradeAnalyserEnabled}
-          />
-          <label
-            for="grade-analyser-enabled"
-            class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
-          >
-            Grade Analyser
-          </label>
-        </div>
-        <div class="flex gap-3 items-center">
-          <input
-            id="lesson-summary-analyser-enabled"
-            type="checkbox"
-            class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-            bind:checked={lessonSummaryAnalyserEnabled}
-          />
-          <label
-            for="lesson-summary-analyser-enabled"
-            class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
-          >
-            Lesson Summary Analyser
-          </label>
-        </div>
-        <div class="mt-6">
-          <label
-            for="gemini-api-key"
-            class="text-sm font-medium text-slate-800 dark:text-slate-200 block mb-1"
-          >
-            Gemini API Key
-          </label>
-          <input
-            id="gemini-api-key"
-            type="text"
-            class="w-full px-3 py-2 rounded border border-slate-300/50 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Paste your Gemini API key here"
-            bind:value={geminiApiKey}
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
-            Get your API key from
-            <a
-              href="https://aistudio.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Google AI Studio
-            </a>
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+          <h2 class="text-base font-semibold sm:text-lg">AI Features</h2>
+          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            Enable AI-powered features by providing your free Gemini API key.
           </p>
         </div>
-      </div>
-    {/if}
-  </div>
-</section>
+        <div class="p-4 space-y-4 sm:p-6">
+          <div class="flex gap-3 items-center">
+            <input
+              id="ai-integrations-enabled"
+              type="checkbox"
+              class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+              bind:checked={aiIntegrationsEnabled} />
+            <label
+              for="ai-integrations-enabled"
+              class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200">
+              Enable AI Features
+            </label>
+          </div>
+          {#if aiIntegrationsEnabled}
+            <div class="pl-6 mt-3 space-y-3 sm:space-y-4">
+              <div class="flex gap-3 items-center">
+                <input
+                  id="grade-analyser-enabled"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={gradeAnalyserEnabled} />
+                <label
+                  for="grade-analyser-enabled"
+                  class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200">
+                  Grade Analyser
+                </label>
+              </div>
+              <div class="flex gap-3 items-center">
+                <input
+                  id="lesson-summary-analyser-enabled"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={lessonSummaryAnalyserEnabled} />
+                <label
+                  for="lesson-summary-analyser-enabled"
+                  class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200">
+                  Lesson Summary Analyser
+                </label>
+              </div>
+              <div class="mt-6">
+                <label
+                  for="gemini-api-key"
+                  class="text-sm font-medium text-slate-800 dark:text-slate-200 block mb-1">
+                  Gemini API Key
+                </label>
+                <input
+                  id="gemini-api-key"
+                  type="text"
+                  class="w-full px-3 py-2 rounded border border-slate-300/50 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Paste your Gemini API key here"
+                  bind:value={geminiApiKey}
+                  autocomplete="off"
+                  spellcheck="false" />
+                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  Get your API key from
+                  <a
+                    href="https://aistudio.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-blue-600 dark:text-blue-400 hover:underline">
+                    Google AI Studio
+                  </a>
+                </p>
+              </div>
+            </div>
+          {/if}
+        </div>
+      </section>
 
       <!-- Plugins Section -->
       <section
@@ -1170,23 +1220,6 @@ The Company reserves the right to terminate your access to the Service at any ti
               Open Plugin Store
             </a>
           </div>
-        </div>
-      </section>
-
-      <!-- Troubleshooting button moved to bottom -->
-      <section class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="p-4 sm:p-6 flex items-center justify-between">
-          <div>
-            <h2 class="text-base font-semibold sm:text-lg">Troubleshooting</h2>
-            <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">Open the troubleshooting tools and diagnostics.</p>
-          </div>
-          <button
-            class="px-4 py-2 text-white bg-blue-500 rounded-lg shadow transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
-            onclick={openTroubleshootingModal}
-          >
-            <Icon src={Cog} class="w-4 h-4" />
-            Open
-          </button>
         </div>
       </section>
 
@@ -1213,9 +1246,29 @@ The Company reserves the right to terminate your access to the Service at any ti
         </div>
       </section>
 
+      <!-- Troubleshooting button -->
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="p-4 sm:p-6 flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-semibold sm:text-lg">Troubleshooting</h2>
+            <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+              Open the troubleshooting tools and diagnostics.
+            </p>
+          </div>
+          <button
+            class="px-4 py-2 text-white bg-blue-500 rounded-lg shadow transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
+            onclick={openTroubleshootingModal}>
+            <Icon src={Cog} class="w-4 h-4" />
+            Open
+          </button>
+        </div>
+      </section>
+
       <!-- Dev Settings Section -->
       {#if showDevSettings}
-        <section class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-400 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <section
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-400 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
           <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
             <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
             <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -1228,12 +1281,10 @@ The Company reserves the right to terminate your access to the Service at any ti
                 id="dev-sensitive-info-hider"
                 type="checkbox"
                 class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                bind:checked={devSensitiveInfoHider}
-              />
+                bind:checked={devSensitiveInfoHider} />
               <label
                 for="dev-sensitive-info-hider"
-                class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
-              >
+                class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200">
                 Sensitive Info Hider (API responses replaced with random mock data)
               </label>
             </div>
@@ -1249,37 +1300,43 @@ The Company reserves the right to terminate your access to the Service at any ti
   bind:show={showCloudSyncModal}
   onSettingsUpload={handleSettingsUpload}
   onSettingsDownload={handleSettingsDownload}
-  on:close={closeCloudSyncModal}
-/>
+  on:close={closeCloudSyncModal} />
 
 <!-- Troubleshooting Modal -->
-<TroubleshootingModal 
-  open={showTroubleshootingModal} 
-  onclose={closeTroubleshootingModal} 
-/>
+<TroubleshootingModal open={showTroubleshootingModal} onclose={closeTroubleshootingModal} />
 
 {#if showEulaModal}
   <div class="fixed inset-0 z-50 flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick={() => showEulaModal = false}></div>
-    <div class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 animate-fade-in">
+    <div
+      class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+      onclick={() => (showEulaModal = false)}>
+    </div>
+    <div
+      class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 animate-fade-in">
       <h3 class="text-lg font-semibold mb-3">BetterSEQTA Cloud EULA</h3>
-      <div class="overflow-auto p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 text-sm text-slate-800 dark:text-slate-200" style="max-height: 50vh;">
+      <div
+        class="overflow-auto p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 text-sm text-slate-800 dark:text-slate-200"
+        style="max-height: 50vh;">
         <pre class="whitespace-pre-wrap font-sans">{CLOUD_EULA_TEXT}</pre>
       </div>
       <div class="mt-4 flex justify-end gap-2">
-        <button class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-400" onclick={() => showEulaModal = false}>Decline</button>
-        <button class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" onclick={async () => {
-          try {
-            // Load and save settings with EULA accepted
-            const current = await invoke<any>('get_settings');
-            const updated = { ...current, accepted_cloud_eula: true };
-            await invoke('save_settings', { newSettings: updated });
-            acceptedCloudEula = true;
-            showEulaModal = false;
-          } catch (e) {
-            console.error('Failed to save EULA acceptance', e);
-          }
-        }}>Accept</button>
+        <button
+          class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-400"
+          onclick={() => (showEulaModal = false)}>Decline</button>
+        <button
+          class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          onclick={async () => {
+            try {
+              // Load and save settings with EULA accepted
+              const current = await invoke<any>('get_settings');
+              const updated = { ...current, accepted_cloud_eula: true };
+              await invoke('save_settings', { newSettings: updated });
+              acceptedCloudEula = true;
+              showEulaModal = false;
+            } catch (e) {
+              console.error('Failed to save EULA acceptance', e);
+            }
+          }}>Accept</button>
       </div>
     </div>
   </div>
