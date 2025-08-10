@@ -2053,8 +2053,8 @@ export class EditorCore {
           mention.dataset.mentionType = updatedData.type;
           
           // Update the display text
-          const icon = this.getMentionIcon(updatedData.type);
-          mention.innerHTML = `${icon} ${updatedData.title}`;
+          // Re-render content with inline info
+          this.applyMentionContent(mention, updatedData);
           
           // Update the mention registry
           // Persist the enriched suggestion
@@ -2149,7 +2149,7 @@ export class EditorCore {
         
         if (updatedData) {
           // Update the mention display
-          const tag = document.createElement('span'); tag.className = 'ml-2 text-xs px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'; tag.textContent = this.formatMentionSubtitle(updatedData.type, updatedData.data); mention.innerHTML = `${this.getMentionIcon(updatedData.type)} ${updatedData.title}`; mention.appendChild(tag);
+          this.applyMentionContent(mention, updatedData);
           mention.dataset.mentionData = JSON.stringify(updatedData.data);
           mention.title = `Updated: ${new Date().toLocaleTimeString()}`;
           this.triggerChange();
@@ -2282,8 +2282,54 @@ export class EditorCore {
      });
    }
 
-   private createVisualMention(suggestion: SeqtaMentionItem): HTMLElement {
-     const mention = document.createElement('span');
+     private applyMentionContent(target: HTMLElement, suggestion: SeqtaMentionItem) {
+    // Clear and rebuild content with inline info
+    target.innerHTML = '';
+    const iconSpan = document.createElement('span');
+    iconSpan.textContent = `${this.getMentionIcon(suggestion.type)} `;
+    target.appendChild(iconSpan);
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = suggestion.title || '';
+    target.appendChild(titleSpan);
+    const info = this.getInlineInfoForMention(suggestion);
+    if (info) {
+      const infoSpan = document.createElement('span');
+      infoSpan.textContent = info;
+      infoSpan.className = 'ml-2 px-1.5 py-0.5 rounded bg-white/20 text-white/90 text-xs align-middle';
+      infoSpan.style.marginLeft = '0.375rem';
+      infoSpan.style.padding = '0.125rem 0.375rem';
+      infoSpan.style.borderRadius = '0.25rem';
+      infoSpan.style.background = 'rgba(255,255,255,0.2)';
+      infoSpan.style.fontSize = '0.75rem';
+      target.appendChild(infoSpan);
+    }
+  }
+
+  private getInlineInfoForMention(s: SeqtaMentionItem): string | null {
+    try {
+      const data: any = s.data || {};
+      if (s.type === 'assessment' || s.type === 'assignment') {
+        const due = data.due || data.dueDate;
+        if (!due) return null;
+        const d = new Date(due);
+        if (isNaN(d.getTime())) return null;
+        const date = d.toLocaleDateString();
+        const time = (typeof due === 'string' && due.includes('T')) ? d.toTimeString().substring(0,5) : '';
+        return `Due: ${date}${time ? ' ' + time : ''}`;
+      }
+      if (s.type === 'class' || s.type === 'subject') {
+        const teacher = data.teacher;
+        if (teacher && typeof teacher === 'string') return teacher;
+        return null;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private createVisualMention(suggestion: SeqtaMentionItem): HTMLElement {
+    const mention = document.createElement('span');
      mention.className = 'seqta-mention';
      mention.contentEditable = 'false';
      mention.dataset.mentionId = suggestion.id;
@@ -2303,7 +2349,8 @@ export class EditorCore {
        transition: all 0.2s;
      `;
      
-     mention.innerHTML = `${this.getMentionIcon(suggestion.type)} ${suggestion.title}`;
+           // Render content with inline info (due date, teacher, etc.)
+      this.applyMentionContent(mention, suggestion);
      
      // Add click handler
      mention.addEventListener('click', (e) => {
