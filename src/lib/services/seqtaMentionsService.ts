@@ -60,6 +60,44 @@ export interface SeqtaTimetable {
 export class SeqtaMentionsService {
   private static cache = new Map<string, { data: SeqtaMentionItem[], timestamp: number }>();
   private static readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private static teacherCache = new Map<string, string>(); // key: programme-metaclass or code
+
+  private static async getTeacherFromTimetable(programme: number | string | undefined, metaclass: number | string | undefined, code: string | undefined): Promise<string | null> {
+    try {
+      const key = `${programme ?? ''}-${metaclass ?? ''}-${code ?? ''}`;
+      const cached = this.teacherCache.get(key);
+      if (cached) return cached;
+
+      const studentId = 69; // TODO: dynamic in production
+      const steps = 6; // go back in ~2-month intervals up to ~1 year
+      for (let i = 0; i < steps; i++) {
+        const dt = new Date();
+        dt.setMonth(dt.getMonth() - i * 2);
+        const dayStr = dt.toISOString().split('T')[0];
+        const res = await seqtaFetch('/seqta/student/load/timetable?', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: { from: dayStr, until: dayStr, student: studentId }
+        });
+        const payload = typeof res === 'string' ? JSON.parse(res).payload : (res as any).payload;
+        const items: any[] = payload?.items || [];
+        const match = items.find((l: any) => {
+          const metaOk = metaclass != null && Number(l.metaID) === Number(metaclass);
+          const progOk = programme != null && Number(l.programmeID) === Number(programme);
+          const codeOk = code && (l.code || '').toString().toLowerCase() === code.toString().toLowerCase();
+          return (metaOk && progOk) || codeOk;
+        });
+        if (match) {
+          const teacher = match.staff || match.teacher || null;
+          if (teacher) {
+            this.teacherCache.set(key, teacher);
+            return teacher;
+          }
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
 
   /**
    * Search for SEQTA elements that can be mentioned
@@ -221,29 +259,36 @@ export class SeqtaMentionsService {
       const classesData = JSON.parse(res).payload;
       const allSubjects = classesData.flatMap((folder: any) => folder.subjects);
       
-      return allSubjects
-        .filter((subject: any) => !query || 
+      const filtered = allSubjects
+        .filter((subject: any) => !query ||
           subject.title?.toLowerCase().includes(query.toLowerCase()) ||
           subject.code?.toLowerCase().includes(query.toLowerCase())
         )
-        .slice(0, 5) // Limit results
-        .map((cls: any) => ({
+        .slice(0, 5);
+
+      const enriched = await Promise.all(filtered.map(async (cls: any) => {
+        const fallbackTeacher = cls.teacher || 'Teacher TBA';
+        const teacher = await this.getTeacherFromTimetable(cls.programme, cls.metaclass, cls.code) || fallbackTeacher;
+        return {
           id: `${cls.programme}-${cls.metaclass}`,
           type: 'class' as const,
           title: cls.title || cls.code,
-          subtitle: `${cls.code} • ${cls.teacher || 'Teacher TBA'}`,
+          subtitle: `${cls.code} • ${teacher}`,
           data: {
             id: `${cls.programme}-${cls.metaclass}`,
             name: cls.title,
             subject: cls.code,
             code: cls.code,
             year: cls.year || 10,
-            teacher: cls.teacher || 'Teacher TBA',
+            teacher,
             programme: cls.programme,
             metaclass: cls.metaclass
           },
           lastUpdated: new Date().toISOString()
-        }));
+        } as SeqtaMentionItem;
+      }));
+
+      return enriched;
     } catch (error) {
       console.warn('Failed to fetch classes, using mock data');
       return [];
@@ -424,7 +469,8 @@ export class SeqtaMentionsService {
       const match = all.find((s: any) => `${s.programme}-${s.metaclass}` === id);
       if (!match) return null;
       const code = match.code;
-      const teacher = match.teacher || 'Teacher TBA';
+      const teacherResolved = await this.getTeacherFromTimetable(match.programme, match.metaclass, code);
+      const teacher = teacherResolved || match.teacher || 'Teacher TBA';
 
       // Pull next 14 days of timetable entries for this code
       const start = new Date();
@@ -436,13 +482,18 @@ export class SeqtaMentionsService {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: { from, until, student: 69 }
       });
       const timetable = JSON.parse(ttRes).payload;
-      const items = (timetable.items || []).filter((l: any) => (l.code || l.subject || '').toLowerCase() === code.toLowerCase());
+      const items = (timetable.items || []).filter((l: any) => {
+        const metaOk = Number(l.metaID) === Number(match.metaclass);
+        const progOk = Number(l.programmeID) === Number(match.programme);
+        const codeOk = (l.code || l.subject || '').toLowerCase() === code.toLowerCase();
+        return (metaOk && progOk) || codeOk;
+      });
       const lessons = items.map((l: any) => ({
-        date: (l.from || '').split('T')[0],
-        from: (l.from || '').substring(11, 16),
-        until: (l.until || '').substring(11, 16),
+        date: l.date || (l.from || '').split('T')[0],
+        from: (l.from || '').substring(0, 5) || (l.from || '').substring(11, 16),
+        until: (l.until || '').substring(0, 5) || (l.until || '').substring(11, 16),
         room: l.room || 'TBA',
-        teacher: l.teacher || teacher,
+        teacher: l.staff || l.teacher || teacher,
       }));
 
       return {
@@ -476,14 +527,16 @@ export class SeqtaMentionsService {
       const all = folders.flatMap((f: any) => f.subjects);
       const match = all.find((s: any) => `subject-${s.programme}-${s.metaclass}` === id || s.code === id);
       if (!match) return null;
+      const teacherResolved = await this.getTeacherFromTimetable(match.programme, match.metaclass, match.code);
+      const teacher = teacherResolved || match.teacher || 'Teacher TBA';
       return {
         id: `subject-${match.programme}-${match.metaclass}`,
         type: 'subject',
         title: match.title || match.code,
-        subtitle: `${match.code} • ${match.teacher || 'Teacher TBA'}`,
+        subtitle: `${match.code} • ${teacher}`,
         data: {
           code: match.code,
-          teacher: match.teacher || 'Teacher TBA',
+          teacher,
           programme: match.programme,
           metaclass: match.metaclass
         },
