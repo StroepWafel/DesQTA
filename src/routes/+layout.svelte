@@ -93,7 +93,8 @@
       
       if (sessionExists) {
         logger.debug('layout', 'checkSession', 'Loading user info');
-        loadUserInfo();
+        await loadUserInfo();
+        await loadSeqtaConfigAndMenu();
       }
       
       logger.logFunctionExit('layout', 'checkSession', { sessionExists });
@@ -205,6 +206,7 @@
         clearInterval(timer);
         needsSetup.set(false);
         await loadUserInfo();
+        await loadSeqtaConfigAndMenu();
       }
     }, 1000);
 
@@ -421,6 +423,12 @@
 
   async function loadSeqtaConfigAndMenu() {
     try {
+      const sessionExists = await authService.checkSession();
+      if (!sessionExists) {
+        logger.debug('layout', 'loadSeqtaConfigAndMenu', 'Skipping SEQTA config fetch: not authenticated');
+        return;
+      }
+
       let config = await invoke('load_seqta_config');
       let needsFetch = false;
       let latestConfig = null;
@@ -481,7 +489,8 @@
   }
 
   onMount(() => {
-    loadSeqtaConfigAndMenu();
+    // Defer SEQTA config/menu loading until after authentication.
+    // It will be triggered from checkSession/startLogin when a session exists.
   });
 </script>
 
