@@ -857,6 +857,8 @@ export class EditorCore {
     resizableWrapper.style.width = 'auto';
     resizableWrapper.style.minWidth = '100px';
     resizableWrapper.style.maxWidth = '100%';
+    resizableWrapper.style.boxSizing = 'border-box';
+    resizableWrapper.style.overflow = 'hidden';
     
     // Create image element
     const img = document.createElement('img');
@@ -1030,7 +1032,7 @@ export class EditorCore {
 
   private makeExistingImagesResizable() {
     // Find all existing images that aren't already wrapped
-    const images = this.element.querySelectorAll('img:not(.resizable-image-wrapper img)');
+    const images = this.element.querySelectorAll('img');
     
     images.forEach((img) => {
       const htmlImg = img as HTMLImageElement;
@@ -1038,15 +1040,36 @@ export class EditorCore {
       
       if (!parent) return;
       
-      // Skip if already wrapped
-      if (parent.classList.contains('resizable-image-wrapper')) return;
-      
-      // Check if this image has a file path that needs loading
-      if (htmlImg.dataset.imagePath && !htmlImg.src.startsWith('data:') && !htmlImg.src.startsWith('http') && !htmlImg.src.startsWith('file:')) {
-        this.loadImageFromPath(htmlImg, htmlImg.dataset.imagePath);
-      }
-      
-      // Create resizable wrapper
+      let resizableWrapper: HTMLElement;
+      if (parent.classList.contains('resizable-image-wrapper')) {
+        // Already wrapped: ensure resize handle and listeners exist
+        resizableWrapper = parent as HTMLElement;
+        const existingHandle = resizableWrapper.querySelector('.resize-handle') as HTMLElement | null;
+        if (existingHandle) {
+          existingHandle.remove();
+        }
+        // Ensure image styles and click handler are set
+        htmlImg.style.width = '100%';
+        htmlImg.style.height = 'auto';
+        htmlImg.style.display = 'block';
+        htmlImg.style.transition = 'box-shadow 0.2s ease';
+        if (!htmlImg.onclick) {
+          htmlImg.onclick = (e) => {
+            e.stopPropagation();
+            const container = resizableWrapper.parentElement;
+            if (container) {
+              this.handleImageClick(container, htmlImg);
+            }
+          };
+        }
+        this.createResizeHandles(resizableWrapper, htmlImg);
+      } else {
+        // Check if this image has a file path that needs loading
+        if (htmlImg.dataset.imagePath && !htmlImg.src.startsWith('data:') && !htmlImg.src.startsWith('http') && !htmlImg.src.startsWith('file:')) {
+          this.loadImageFromPath(htmlImg, htmlImg.dataset.imagePath);
+        }
+        
+        // Create resizable wrapper
       const resizableWrapper = document.createElement('div');
       resizableWrapper.className = 'resizable-image-wrapper';
       resizableWrapper.style.position = 'relative';
@@ -1077,9 +1100,10 @@ export class EditorCore {
         };
       }
       
-      // Create resize handles
+            // Create resize handles
       this.createResizeHandles(resizableWrapper, htmlImg);
-    });
+      }
+     });
   }
 
   private handleImageClick(container: HTMLElement, img: HTMLImageElement) {
