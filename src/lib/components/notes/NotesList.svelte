@@ -101,14 +101,12 @@
   async function deleteNote(noteId: string, event: Event) {
     event.stopPropagation();
     
-    if (confirm('Are you sure you want to delete this note?')) {
-      try {
-        await NotesService.deleteNote(noteId);
-        await loadNotes(); // Refresh the list
-        dispatch('deleteNote', { noteId });
-      } catch (e) {
-        error = e instanceof Error ? e.message : 'Failed to delete note';
-      }
+    try {
+      await NotesService.deleteNote(noteId);
+      await loadNotes(); // Refresh the list
+      dispatch('deleteNote', { noteId });
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to delete note';
     }
   }
 
