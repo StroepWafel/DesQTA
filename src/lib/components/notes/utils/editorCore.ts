@@ -89,6 +89,12 @@ export class EditorCore {
 
     // Handle Enter key
     if (event.key === 'Enter') {
+      // If a stale mention key handler is attached without an open dropdown, detach it
+      if (!this.currentMentionDropdown && this.currentMentionKeyHandler) {
+        document.removeEventListener('keydown', this.currentMentionKeyHandler);
+        this.currentMentionKeyHandler = null;
+      }
+
       if (event.shiftKey || isInCodeBlock) {
         // Shift+Enter or code block: Insert line break
         this.insertLineBreak();
@@ -203,7 +209,21 @@ export class EditorCore {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
 
-    const range = selection.getRangeAt(0);
+    // Clone range to avoid mutations causing stale containers
+    let range = selection.getRangeAt(0).cloneRange();
+
+    // If startContainer is a text node without a parent (detached), move caret to a safe place
+    if (range.startContainer.nodeType === Node.TEXT_NODE && !range.startContainer.parentNode) {
+      this.element.focus();
+      range = document.createRange();
+      if (this.element.lastChild) {
+        range.setStartAfter(this.element.lastChild);
+      } else {
+        range.setStart(this.element, 0);
+      }
+      range.collapse(true);
+    }
+
     const currentElement = this.getBlockElement(range.startContainer);
 
     if (!currentElement) return;
@@ -1356,62 +1376,70 @@ export class EditorCore {
      }, 200); // 200ms debounce
    }
 
-   private async updateMentionDropdown(textNode: Node, atIndex: number, query: string) {
-     if (!this.currentMentionDropdown) return;
-     
-     // Clear current dropdown content
-     this.currentMentionDropdown.innerHTML = '';
-     
-     // Remove existing event listeners to prevent memory leaks
-     if (this.currentMentionKeyHandler) {
-       document.removeEventListener('keydown', this.currentMentionKeyHandler);
-       this.currentMentionKeyHandler = null;
-     }
-     
-     // Get new suggestions
-     const suggestions = await this.getMentionSuggestions(query);
-     
-           // Debug logging
-      // console.log('Updated mention suggestions for query "' + query + '":', suggestions);
-     
-     if (suggestions.length === 0) {
-       // Show "no results" message
-       const noResults = document.createElement('div');
-       noResults.className = 'p-3 text-center text-slate-500 dark:text-slate-400';
-       noResults.textContent = query ? `No results for "${query}"` : 'No SEQTA elements found';
-       this.currentMentionDropdown!.appendChild(noResults);
-       return;
-     }
-     
-     // Add new suggestions
-     suggestions.forEach((suggestion, index) => {
-       const item = document.createElement('div');
-       item.className = 'mention-item p-3 cursor-pointer border-b border-slate-100 dark:border-slate-700 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors';
-       
-       if (index === 0) {
-         item.classList.add('selected', 'bg-slate-50', 'dark:bg-slate-700');
-       }
+     private async updateMentionDropdown(textNode: Node, atIndex: number, query: string) {
+    if (!this.currentMentionDropdown) return;
+    
+    // Store reference to current dropdown to check if it's still valid after async operation
+    const dropdownRef = this.currentMentionDropdown;
+    
+    // Clear current dropdown content
+    this.currentMentionDropdown.innerHTML = '';
+    
+    // Remove existing event listeners to prevent memory leaks
+    if (this.currentMentionKeyHandler) {
+      document.removeEventListener('keydown', this.currentMentionKeyHandler);
+      this.currentMentionKeyHandler = null;
+    }
+    
+    // Get new suggestions
+    const suggestions = await this.getMentionSuggestions(query);
+    
+    // Check if dropdown is still the same after async operation
+    if (!this.currentMentionDropdown || this.currentMentionDropdown !== dropdownRef) {
+      return; // Dropdown was removed or replaced during async operation
+    }
+    
+          // Debug logging
+     // console.log('Updated mention suggestions for query "' + query + '":', suggestions);
+    
+    if (suggestions.length === 0) {
+      // Show "no results" message
+      const noResults = document.createElement('div');
+      noResults.className = 'p-3 text-center text-slate-500 dark:text-slate-400';
+      noResults.textContent = query ? `No results for "${query}"` : 'No SEQTA elements found';
+      this.currentMentionDropdown!.appendChild(noResults);
+      return;
+    }
+    
+    // Add new suggestions
+    suggestions.forEach((suggestion, index) => {
+      const item = document.createElement('div');
+      item.className = 'mention-item p-3 cursor-pointer border-b border-slate-100 dark:border-slate-700 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors';
+      
+      if (index === 0) {
+        item.classList.add('selected', 'bg-slate-50', 'dark:bg-slate-700');
+      }
 
-       // Add icon based on type
-       const icon = this.getMentionIcon(suggestion.type);
-       item.innerHTML = `
-         <span class="text-lg">${icon}</span>
-         <div class="flex-1">
-           <div class="font-medium text-slate-900 dark:text-slate-100">${suggestion.title}</div>
-           <div class="text-sm text-slate-600 dark:text-slate-400">${suggestion.subtitle}</div>
-         </div>
-       `;
+      // Add icon based on type
+      const icon = this.getMentionIcon(suggestion.type);
+      item.innerHTML = `
+        <span class="text-lg">${icon}</span>
+        <div class="flex-1">
+          <div class="font-medium text-slate-900 dark:text-slate-100">${suggestion.title}</div>
+          <div class="text-sm text-slate-600 dark:text-slate-400">${suggestion.subtitle}</div>
+        </div>
+      `;
 
-       item.addEventListener('click', () => {
-         this.insertMention(textNode, atIndex, suggestion);
-       });
+      item.addEventListener('click', () => {
+        this.insertMention(textNode, atIndex, suggestion);
+      });
 
-       this.currentMentionDropdown!.appendChild(item);
-     });
+      this.currentMentionDropdown!.appendChild(item);
+    });
 
-     // Update keyboard navigation
-     this.setupMentionKeyboardHandling(this.currentMentionDropdown, textNode, atIndex);
-   }
+    // Update keyboard navigation
+    this.setupMentionKeyboardHandling(this.currentMentionDropdown, textNode, atIndex);
+  }
 
        private async showMentionAutocomplete(textNode: Node, atIndex: number, query: string) {
       // Create or update autocomplete dropdown
@@ -1431,8 +1459,16 @@ export class EditorCore {
         z-index: 1000;
       `;
 
+      // Store reference for cleanup before async operation
+      this.currentMentionDropdown = dropdown;
+
       // Get mention suggestions
       const suggestions = await this.getMentionSuggestions(query);
+      
+      // Check if dropdown is still valid after async operation
+      if (this.currentMentionDropdown !== dropdown) {
+        return; // Dropdown was removed or replaced during async operation
+      }
       
       // Debug logging
       // console.log('Mention suggestions:', suggestions);
@@ -1472,9 +1508,6 @@ export class EditorCore {
 
      // Position dropdown
      this.positionMentionDropdown(dropdown, textNode, atIndex);
-     
-     // Store reference for cleanup
-     this.currentMentionDropdown = dropdown;
      
      // Add to DOM
      document.body.appendChild(dropdown);
@@ -1679,14 +1712,25 @@ export class EditorCore {
       // Store the full suggestion data in a global mention registry
       this.storeMentionData(suggestion.id, suggestion);
       
-      // Replace the @ and query with the mention text
-      const range = document.createRange();
+          // Replace the @ and query with the mention text
+    const range = document.createRange();
+    // Guard against detached text nodes
+    const parentForText = textNode.parentNode;
+    if (!parentForText) {
+      // Fallback: append at end of current block
+      const block = this.getBlockElement(this.element) || this.element;
+      const safeTextNode = document.createTextNode('');
+      block.appendChild(safeTextNode);
+      range.setStart(safeTextNode, 0);
+      range.setEnd(safeTextNode, 0);
+    } else {
       range.setStart(textNode, atIndex);
       range.setEnd(textNode, endIndex);
       range.deleteContents();
-      
-      const mentionTextNode = document.createTextNode(mentionText + ' ');
-      range.insertNode(mentionTextNode);
+    }
+    
+    const mentionTextNode = document.createTextNode(mentionText + ' ');
+    range.insertNode(mentionTextNode);
      
      // Position cursor after the mention
      range.setStartAfter(mentionTextNode);
@@ -2786,8 +2830,30 @@ export class EditorCore {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
 
-    const range = selection.getRangeAt(0);
+    let range = selection.getRangeAt(0).cloneRange();
+
+    // Guard: if start container has no parent (stale), relocate caret to a safe position in editor
+    const startContainer = range.startContainer;
+    if (!startContainer || (startContainer.nodeType === Node.TEXT_NODE && !startContainer.parentNode)) {
+      this.element.focus();
+      range = document.createRange();
+      if (this.element.lastChild) {
+        range.setStartAfter(this.element.lastChild);
+      } else {
+        range.setStart(this.element, 0);
+      }
+      range.collapse(true);
+    }
+
     const br = document.createElement('br');
+    // Ensure we insert into a node with a parent
+    if (range.startContainer.nodeType === Node.TEXT_NODE && range.startContainer.parentNode) {
+      // ok
+    } else if (range.startContainer.nodeType !== Node.TEXT_NODE && !(range.startContainer as Node).parentNode) {
+      // Move to editor root if still detached
+      range.setStart(this.element, 0);
+    }
+
     range.insertNode(br);
     range.setStartAfter(br);
     range.setEndAfter(br);
