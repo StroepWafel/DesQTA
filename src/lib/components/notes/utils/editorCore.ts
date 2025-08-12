@@ -1862,20 +1862,190 @@ export class EditorCore {
           info.innerHTML = `<div><span class="font-medium">Code:</span> ${suggestion.data?.code || '—'}</div>
                             <div><span class="font-medium">Teacher:</span> ${suggestion.data?.teacher || '—'}</div>`;
           container.appendChild(info);
+
           const lessons: any[] = suggestion.data?.lessons || [];
-          if (lessons.length) {
+
+          // Weekly schedule defaults to known lessons; may be updated asynchronously below if empty
+          let weeklyLessons = lessons;
+          let needsAsync = !weeklyLessons || weeklyLessons.length === 0;
+
             const header = document.createElement('div');
-            header.className = 'mt-2 font-medium';
-            header.textContent = 'Upcoming Lessons (next 14 days)';
+           header.className = 'mt-3 font-medium';
+           header.textContent = 'Weekly Schedule (Mon–Fri)';
             container.appendChild(header);
-            const list = document.createElement('ul');
-            list.className = 'list-disc pl-5 space-y-1';
-            lessons.slice(0, 10).forEach(l => {
-              const li = document.createElement('li');
-              li.textContent = `${l.date} ${l.from}-${l.until} • ${l.room}`;
-              list.appendChild(li);
-            });
-            container.appendChild(list);
+
+           const daysOrder = ['Mon','Tue','Wed','Thu','Fri'];
+           const dayIndexMap: Record<string, number> = { 'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4 };
+           const bucket: Record<string, Array<{ date: string; from: string; until: string; room?: string }>> = {
+             Mon: [], Tue: [], Wed: [], Thu: [], Fri: []
+           };
+
+           // Group lessons by weekday label
+           for (const l of weeklyLessons) {
+             const dateStr: string = l.date || (l.from || '').split('T')[0] || '';
+             const date = dateStr ? new Date(dateStr) : null;
+             const day = date ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()] : null;
+             if (!day) continue;
+             if (day in bucket) {
+               const key = day as keyof typeof bucket;
+               bucket[key].push({ date: dateStr, from: (l.from || '').substring(0,5), until: (l.until || '').substring(0,5), room: l.room });
+             }
+           }
+
+           // Dedupe time slots per day (by from-until-room)
+           const deduped: Record<string, Array<{ label: string; room?: string }>> = {};
+           for (const day of Object.keys(bucket)) {
+             const seen = new Set<string>();
+             deduped[day] = [];
+             for (const item of bucket[day]) {
+               const sig = `${item.from}-${item.until}-${item.room || ''}`;
+               if (seen.has(sig)) continue;
+               seen.add(sig);
+               deduped[day].push({ label: `${item.from}–${item.until}`, room: item.room });
+             }
+           }
+
+           const grid = document.createElement('div');
+           grid.className = 'mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3';
+
+           // Build uniform-height day cards
+           const ordered = daysOrder
+             .map(d => ({ d, idx: dayIndexMap[d] }))
+             .sort((a,b) => a.idx - b.idx);
+
+           for (const { d } of ordered) {
+             const card = document.createElement('div');
+             card.className = 'rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-3 h-32 flex flex-col';
+
+             const title = document.createElement('div');
+             title.className = 'text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-wide';
+             title.textContent = d;
+             card.appendChild(title);
+
+             const list = document.createElement('div');
+             list.className = 'mt-2 flex-1 overflow-hidden';
+
+             const items = deduped[d] || [];
+             if (items.length === 0) {
+               const empty = document.createElement('div');
+               empty.className = 'h-full flex items-center justify-start text-slate-400 dark:text-slate-500 text-xs';
+               empty.textContent = '—';
+               list.appendChild(empty);
+             } else {
+               // Render each time slot as a compact row with consistent height
+               for (const it of items) {
+                 const row = document.createElement('div');
+                 row.className = 'flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 mb-1 last:mb-0';
+
+                 const time = document.createElement('span');
+                 time.className = 'inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700';
+                 time.textContent = it.label;
+                 row.appendChild(time);
+
+                 if (it.room) {
+                   const room = document.createElement('span');
+                   room.className = 'ml-2 text-[11px] text-slate-500 dark:text-slate-400 truncate';
+                   room.textContent = it.room;
+                   row.appendChild(room);
+                 }
+
+                 list.appendChild(row);
+               }
+             }
+
+             card.appendChild(list);
+             grid.appendChild(card);
+           }
+
+           container.appendChild(grid);
+
+           // If we need to compute weekly data from historical timetable, do it asynchronously and re-render this block
+           if (needsAsync) {
+             (async () => {
+               try {
+                 const { SeqtaMentionsService } = await import('../../../services/seqtaMentionsService');
+                 const computed = await SeqtaMentionsService.getWeeklyScheduleForClass(
+                   suggestion.data?.programme,
+                   suggestion.data?.metaclass,
+                   suggestion.data?.code
+                 );
+                 if (computed && computed.length) {
+                   // Remove old grid and rebuild with computed data
+                   try {
+                     grid.remove();
+                   } catch {}
+
+                   // Rebuild buckets with computed
+                   const bucket2: Record<string, Array<{ date: string; from: string; until: string; room?: string }>> = {
+                     Mon: [], Tue: [], Wed: [], Thu: [], Fri: []
+                   };
+                   for (const l of computed) {
+                     const dateStr: string = l.date || (l.from || '').split('T')[0] || '';
+                     const date = dateStr ? new Date(dateStr) : null;
+                     const day = date ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()] : null;
+                     if (!day || !(day in bucket2)) continue;
+                     const key = day as keyof typeof bucket2;
+                     bucket2[key].push({ date: dateStr, from: (l.from || '').substring(0,5), until: (l.until || '').substring(0,5), room: l.room });
+                   }
+                   // Dedup
+                   const deduped2: Record<string, Array<{ label: string; room?: string }>> = {};
+                   for (const day of Object.keys(bucket2)) {
+                     const seen = new Set<string>();
+                     deduped2[day] = [];
+                     for (const item of bucket2[day]) {
+                       const sig = `${item.from}-${item.until}-${item.room || ''}`;
+                       if (seen.has(sig)) continue;
+                       seen.add(sig);
+                       deduped2[day].push({ label: `${item.from}–${item.until}`, room: item.room });
+                     }
+                   }
+
+                   const grid2 = document.createElement('div');
+                   grid2.className = 'mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3';
+                   const ordered2 = daysOrder
+                     .map(d => ({ d, idx: dayIndexMap[d] }))
+                     .sort((a,b) => a.idx - b.idx);
+                   for (const { d } of ordered2) {
+                     const card = document.createElement('div');
+                     card.className = 'rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-3 h-32 flex flex-col';
+                     const title = document.createElement('div');
+                     title.className = 'text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-wide';
+                     title.textContent = d;
+                     card.appendChild(title);
+                     const list = document.createElement('div');
+                     list.className = 'mt-2 flex-1 overflow-hidden';
+                     const items = deduped2[d] || [];
+                     if (items.length === 0) {
+                       const empty = document.createElement('div');
+                       empty.className = 'h-full flex items-center justify-start text-slate-400 dark:text-slate-500 text-xs';
+                       empty.textContent = '—';
+                       list.appendChild(empty);
+                     } else {
+                       for (const it of items) {
+                         const row = document.createElement('div');
+                         row.className = 'flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 mb-1 last:mb-0';
+                         const time = document.createElement('span');
+                         time.className = 'inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700';
+                         time.textContent = it.label;
+                         row.appendChild(time);
+                         if (it.room) {
+                           const room = document.createElement('span');
+                           room.className = 'ml-2 text-[11px] text-slate-500 dark:text-slate-400 truncate';
+                           room.textContent = it.room;
+                           row.appendChild(room);
+                         }
+                         list.appendChild(row);
+                       }
+                     }
+                     card.appendChild(list);
+                     grid2.appendChild(card);
+                   }
+                   container.appendChild(grid2);
+                 }
+               } catch (err) {
+                 console.warn('Async weekly schedule refresh failed:', err);
+               }
+             })();
           }
         } else if (suggestion.type === 'subject') {
           const info = document.createElement('div');

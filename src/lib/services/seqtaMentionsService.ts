@@ -100,6 +100,77 @@ export class SeqtaMentionsService {
   }
 
   /**
+   * Compute a weekly (Mon–Fri) schedule for a class by scanning historical timetables
+   * in 2-month intervals and deduping time slots by day. Returns an array of lesson
+   * entries with date/from/until/room similar to fetchClassById output, suitable for
+   * grouping by weekday in the UI.
+   */
+  static async getWeeklyScheduleForClass(
+    programme: number | string | undefined,
+    metaclass: number | string | undefined,
+    code: string | undefined
+  ): Promise<Array<{ date: string; from: string; until: string; room?: string }>> {
+    try {
+      const studentId = 69; // TODO: dynamic in production
+      const steps = 6; // go back by ~2 months up to ~1 year
+      const collected: Array<{ date: string; from: string; until: string; room?: string }> = [];
+
+      for (let i = 0; i < steps; i++) {
+        const anchor = new Date();
+        anchor.setMonth(anchor.getMonth() - i * 2);
+
+        // Find Monday of the anchor week
+        const day = anchor.getDay(); // 0=Sun..6=Sat
+        const monday = new Date(anchor);
+        const deltaToMonday = (day === 0 ? -6 : 1 - day); // shift to Monday
+        monday.setDate(anchor.getDate() + deltaToMonday);
+        const friday = new Date(monday);
+        friday.setDate(monday.getDate() + 4);
+
+        const from = monday.toISOString().split('T')[0];
+        const until = friday.toISOString().split('T')[0];
+
+        const res = await seqtaFetch('/seqta/student/load/timetable?', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: { from, until, student: studentId }
+        });
+        const payload = typeof res === 'string' ? JSON.parse(res).payload : (res as any).payload;
+        const items: any[] = payload?.items || [];
+        const matches = items.filter((l: any) => {
+          const metaOk = metaclass != null && Number(l.metaID) === Number(metaclass);
+          const progOk = programme != null && Number(l.programmeID) === Number(programme);
+          const codeOk = code && (l.code || l.subject || '').toString().toLowerCase() === code.toString().toLowerCase();
+          return (metaOk && progOk) || codeOk;
+        });
+
+        for (const m of matches) {
+          const date = (m.date || (m.from || '').split('T')[0]) as string;
+          const fromT = (m.from || '').substring(0, 5) || (m.from || '').substring(11, 16);
+          const untilT = (m.until || '').substring(0, 5) || (m.until || '').substring(11, 16);
+          collected.push({ date, from: fromT, until: untilT, room: m.room || m.location || undefined });
+        }
+      }
+
+      // Deduplicate by weekday and time range
+      const seen = new Set<string>();
+      const deduped: Array<{ date: string; from: string; until: string; room?: string }> = [];
+      for (const entry of collected) {
+        const d = new Date(entry.date);
+        const weekday = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+        if (weekday === 'Sat' || weekday === 'Sun') continue; // ignore weekends
+        const sig = `${weekday}-${entry.from}-${entry.until}-${entry.room || ''}`;
+        if (seen.has(sig)) continue;
+        seen.add(sig);
+        deduped.push(entry);
+      }
+
+      return deduped;
+    } catch (e) {
+      console.warn('getWeeklyScheduleForClass failed:', e);
+      return [];
+    }
+  }
+
+  /**
    * Search for SEQTA elements that can be mentioned
    */
   static async searchMentions(query: string = ''): Promise<SeqtaMentionItem[]> {
