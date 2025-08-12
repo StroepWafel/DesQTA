@@ -3,6 +3,8 @@ import { logger } from '../../utils/logger';
 import { page } from '$app/stores';
 import { get } from 'svelte/store';
 import { writable, derived } from 'svelte/store';
+import { seqtaFetch } from '../../utils/netUtil';
+import { authService } from './authService';
 
 export interface ErrorInfo {
   id: string;
@@ -1014,17 +1016,51 @@ class ErrorService {
 
   private async getNetworkStatus(): Promise<NetworkStatus> {
     const startTime = performance.now();
+
     try {
-      await fetch('/api/health', { method: 'HEAD' });
+      // Use authenticated heartbeat to validate connectivity and session
+      await seqtaFetch('/seqta/student/heartbeat', { method: 'POST' });
+
+      // Probe a lightweight authed endpoint to verify session validity
+      let isAuthenticated = true;
+      try {
+        const profileRaw = await seqtaFetch('/seqta/student/load/profile', { method: 'POST' });
+        try {
+          const profile = typeof profileRaw === 'string' ? JSON.parse(profileRaw) : profileRaw;
+          if (profile?.status === 401 || profile?.status === '401' || profile?.error?.toString()?.toLowerCase()?.includes('unauthorized')) {
+            isAuthenticated = false;
+          }
+        } catch {
+          // If response is not JSON, assume authenticated if heartbeat succeeded
+        }
+      } catch {
+        // If profile probe fails, treat as unauthenticated
+        isAuthenticated = false;
+      }
+
+      if (!isAuthenticated) {
+        logger.warn('errorService', 'getNetworkStatus', 'Session appears expired. Triggering logout.');
+        try { await authService.logout(); } catch {}
+      }
+
       const endTime = performance.now();
       return {
         isOnline: true,
         connectionType: (navigator as any).connection?.effectiveType || 'unknown',
         latency: endTime - startTime,
-        bandwidth: 0, // Would need to implement bandwidth testing
+        bandwidth: 0,
         lastCheck: new Date().toISOString()
       };
     } catch {
+      // Heartbeat failed: treat as offline and attempt logout if a session exists
+      try {
+        const hasSession = await authService.checkSession();
+        if (hasSession) {
+          logger.warn('errorService', 'getNetworkStatus', 'Heartbeat failed with existing session. Triggering logout.');
+          try { await authService.logout(); } catch {}
+        }
+      } catch {}
+
       return {
         isOnline: false,
         connectionType: 'unknown',
