@@ -1905,15 +1905,21 @@ export class EditorCore {
              }
            }
 
-           const grid = document.createElement('div');
-           grid.className = 'mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3';
-
-           // Build uniform-height day cards
-           const ordered = daysOrder
-             .map(d => ({ d, idx: dayIndexMap[d] }))
-             .sort((a,b) => a.idx - b.idx);
-
-           for (const { d } of ordered) {
+                      const grid = document.createElement('div');
+           const daysWithItems = daysOrder.filter((d) => (deduped[d] || []).length > 0);
+           const colsClass = daysWithItems.length <= 1
+             ? 'grid-cols-1'
+             : daysWithItems.length === 2
+               ? 'grid-cols-1 sm:grid-cols-2'
+               : daysWithItems.length === 3
+                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                 : daysWithItems.length === 4
+                   ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                   : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-5';
+           grid.className = `mt-2 grid ${colsClass} gap-3`;
+ 
+            // Build day cards only for days with items
+            for (const d of daysWithItems) {
              const card = document.createElement('div');
              card.className = 'rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-3 h-32 flex flex-col';
 
@@ -1925,33 +1931,25 @@ export class EditorCore {
              const list = document.createElement('div');
              list.className = 'mt-2 flex-1 overflow-hidden';
 
-             const items = deduped[d] || [];
-             if (items.length === 0) {
-               const empty = document.createElement('div');
-               empty.className = 'h-full flex items-center justify-start text-slate-400 dark:text-slate-500 text-xs';
-               empty.textContent = '—';
-               list.appendChild(empty);
-             } else {
-               // Render each time slot as a compact row with consistent height
-               for (const it of items) {
-                 const row = document.createElement('div');
-                 row.className = 'flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 mb-1 last:mb-0';
+                           const items = (deduped[d] || []).slice().sort((a,b)=>a.label.localeCompare(b.label));
+              for (const it of items) {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 mb-1 last:mb-0';
 
-                 const time = document.createElement('span');
-                 time.className = 'inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700';
-                 time.textContent = it.label;
-                 row.appendChild(time);
+                const time = document.createElement('span');
+                time.className = 'inline-flex items-center px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-700';
+                time.textContent = it.label;
+                row.appendChild(time);
 
-                 if (it.room) {
-                   const room = document.createElement('span');
-                   room.className = 'ml-2 text-[11px] text-slate-500 dark:text-slate-400 truncate';
-                   room.textContent = it.room;
-                   row.appendChild(room);
-                 }
+                if (it.room) {
+                  const room = document.createElement('span');
+                  room.className = 'ml-2 text-[11px] text-slate-500 dark:text-slate-400 truncate';
+                  room.textContent = it.room;
+                  row.appendChild(room);
+                }
 
-                 list.appendChild(row);
-               }
-             }
+                list.appendChild(row);
+              }
 
              card.appendChild(list);
              grid.appendChild(card);
@@ -2000,12 +1998,19 @@ export class EditorCore {
                      }
                    }
 
-                   const grid2 = document.createElement('div');
-                   grid2.className = 'mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3';
-                   const ordered2 = daysOrder
-                     .map(d => ({ d, idx: dayIndexMap[d] }))
-                     .sort((a,b) => a.idx - b.idx);
-                   for (const { d } of ordered2) {
+                  const daysWithItems2 = daysOrder.filter((d) => (deduped2[d] || []).length > 0);
+                  const colsClass2 = daysWithItems2.length <= 1
+                    ? 'grid-cols-1'
+                    : daysWithItems2.length === 2
+                      ? 'grid-cols-1 sm:grid-cols-2'
+                      : daysWithItems2.length === 3
+                        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                        : daysWithItems2.length === 4
+                          ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-5';
+                  const grid2 = document.createElement('div');
+                  grid2.className = `mt-2 grid ${colsClass2} gap-3`;
+                  for (const d of daysWithItems2) {
                      const card = document.createElement('div');
                      card.className = 'rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-3 h-32 flex flex-col';
                      const title = document.createElement('div');
@@ -2014,29 +2019,22 @@ export class EditorCore {
                      card.appendChild(title);
                      const list = document.createElement('div');
                      list.className = 'mt-2 flex-1 overflow-hidden';
-                     const items = deduped2[d] || [];
-                     if (items.length === 0) {
-                       const empty = document.createElement('div');
-                       empty.className = 'h-full flex items-center justify-start text-slate-400 dark:text-slate-500 text-xs';
-                       empty.textContent = '—';
-                       list.appendChild(empty);
-                     } else {
-                       for (const it of items) {
-                         const row = document.createElement('div');
-                         row.className = 'flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 mb-1 last:mb-0';
-                         const time = document.createElement('span');
-                         time.className = 'inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700';
-                         time.textContent = it.label;
-                         row.appendChild(time);
-                         if (it.room) {
-                           const room = document.createElement('span');
-                           room.className = 'ml-2 text-[11px] text-slate-500 dark:text-slate-400 truncate';
-                           room.textContent = it.room;
-                           row.appendChild(room);
-                         }
-                         list.appendChild(row);
-                       }
-                     }
+                                           const items = (deduped2[d] || []).slice().sort((a,b)=>a.label.localeCompare(b.label));
+                      for (const it of items) {
+                        const row = document.createElement('div');
+                        row.className = 'flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 mb-1 last:mb-0';
+                        const time = document.createElement('span');
+                        time.className = 'inline-flex items-center px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-700';
+                        time.textContent = it.label;
+                        row.appendChild(time);
+                        if (it.room) {
+                          const room = document.createElement('span');
+                          room.className = 'ml-2 text-[11px] text-slate-500 dark:text-slate-400 truncate';
+                          room.textContent = it.room;
+                          row.appendChild(room);
+                        }
+                        list.appendChild(row);
+                      }
                      card.appendChild(list);
                      grid2.appendChild(card);
                    }
