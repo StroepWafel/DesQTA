@@ -123,6 +123,8 @@ export async function warmUpCommonData(): Promise<void> {
 		prefetchTimetableWeek(),
 		prefetchUpcomingAssessments(),
 		prefetchAssessmentsOverview(),
+		prefetchNoticesLabels(),
+		prefetchTodayNotices(),
 	]);
 }
 
@@ -218,6 +220,55 @@ async function prefetchAssessmentsOverview(): Promise<void> {
 	} catch {
 		// ignore warmup errors
 	}
+}
+
+// Notices warm-up
+async function prefetchNoticesLabels(): Promise<void> {
+    try {
+        if (cache.get('notices_labels')) return;
+        const res = await seqtaFetch('/seqta/student/load/notices?', {
+            method: 'POST',
+            body: { mode: 'labels' },
+        });
+        const data = typeof res === 'string' ? JSON.parse(res) : res;
+        if (Array.isArray(data?.payload)) {
+            const labels = data.payload.map((l: any) => ({ id: l.id, title: l.title, color: l.colour }));
+            cache.set('notices_labels', labels, 60); // 60 min TTL
+        }
+    } catch {
+        // ignore warmup errors
+    }
+}
+
+async function prefetchTodayNotices(): Promise<void> {
+    try {
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = (today.getMonth() + 1).toString().padStart(2, '0');
+        const d = today.getDate().toString().padStart(2, '0');
+        const dateStr = `${y}-${m}-${d}`;
+        const key = `notices_${dateStr}`;
+        if (cache.get(key)) return;
+        const res = await seqtaFetch('/seqta/student/load/notices?', {
+            method: 'POST',
+            body: { date: dateStr },
+        });
+        const data = typeof res === 'string' ? JSON.parse(res) : res;
+        if (Array.isArray(data?.payload)) {
+            const notices = data.payload.map((n: any, i: number) => ({
+                id: i + 1,
+                title: n.title,
+                subtitle: n.label_title,
+                author: n.staff,
+                color: n.colour,
+                labelId: n.label,
+                content: n.contents,
+            }));
+            cache.set(key, notices, 30); // 30 min TTL
+        }
+    } catch {
+        // ignore warmup errors
+    }
 }
 
 
