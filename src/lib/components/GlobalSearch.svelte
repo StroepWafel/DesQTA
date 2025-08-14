@@ -374,16 +374,11 @@ async function handleSelect(item: SearchItem) {
 
 async function toggleSetting(settingKey: string, inverted: boolean = false) {
   try {
-    // Get current settings
-    const settings = await invoke<any>('get_settings');
-    
-    // Toggle the setting
-    const currentValue = settings[settingKey];
+    // Read only the key we need, then patch it
+    const subset = await invoke<any>('get_settings_subset', { keys: [settingKey] });
+    const currentValue = subset ? subset[settingKey] : undefined;
     const newValue = inverted ? !currentValue : !currentValue;
-    settings[settingKey] = newValue;
-    
-    // Save updated settings
-    await invoke('save_settings', { newSettings: settings });
+    await invoke('save_settings_merge', { patch: { [settingKey]: newValue } });
     
     console.log(`${settingKey} toggled to:`, newValue);
   } catch (e) {

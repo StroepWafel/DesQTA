@@ -28,8 +28,8 @@ export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promis
   // Fetch the dev_sensitive_info_hider value from settings
   let useMock = false;
   try {
-    const settings = await invoke<{ dev_sensitive_info_hider?: boolean }>('get_settings');
-    useMock = settings.dev_sensitive_info_hider ?? false;
+    const subset = await invoke<any>('get_settings_subset', { keys: ['dev_sensitive_info_hider'] });
+    useMock = subset?.dev_sensitive_info_hider ?? false;
   } catch (e) {
     useMock = false;
   }

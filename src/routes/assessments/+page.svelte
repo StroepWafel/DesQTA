@@ -276,9 +276,9 @@
 
   onMount(async () => {
     try {
-      const settings = await invoke<any>('get_settings');
-      aiIntegrationsEnabled = settings.ai_integrations_enabled ?? false;
-      gradeAnalyserEnabled = settings.grade_analyser_enabled ?? true;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['ai_integrations_enabled','grade_analyser_enabled'] });
+      aiIntegrationsEnabled = subset?.ai_integrations_enabled ?? false;
+      gradeAnalyserEnabled = subset?.grade_analyser_enabled ?? true;
     } catch (e) {
       aiIntegrationsEnabled = false;
       gradeAnalyserEnabled = true;

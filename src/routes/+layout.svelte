@@ -130,8 +130,8 @@
   // Function to reload enhanced animations setting
   async function reloadEnhancedAnimationsSetting() {
     try {
-      const settings = await invoke<{ enhanced_animations?: boolean }>('get_settings');
-      enhancedAnimations = settings.enhanced_animations ?? true;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['enhanced_animations'] });
+      enhancedAnimations = subset?.enhanced_animations ?? true;
       logger.debug('layout', 'reloadEnhancedAnimationsSetting', `Enhanced animations setting reloaded: ${enhancedAnimations}`, { enhancedAnimations });
     } catch (e) {
       logger.error('layout', 'reloadEnhancedAnimationsSetting', `Failed to reload enhanced animations setting: ${e}`, { error: e });
@@ -141,8 +141,8 @@
   // Function to reload auto collapse sidebar setting
   async function reloadAutoCollapseSidebarSetting() {
     try {
-      const settings = await invoke<{ auto_collapse_sidebar?: boolean }>('get_settings');
-      autoCollapseSidebar = settings.auto_collapse_sidebar ?? false;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['auto_collapse_sidebar'] });
+      autoCollapseSidebar = subset?.auto_collapse_sidebar ?? false;
       console.log('Auto collapse sidebar setting reloaded:', autoCollapseSidebar);
     } catch (e) {
       console.error('Failed to reload auto collapse sidebar setting:', e);
@@ -152,8 +152,8 @@
   // Function to reload auto expand sidebar hover setting
   async function reloadAutoExpandSidebarHoverSetting() {
     try {
-      const settings = await invoke<{ auto_expand_sidebar_hover?: boolean }>('get_settings');
-      autoExpandSidebarHover = settings.auto_expand_sidebar_hover ?? false;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['auto_expand_sidebar_hover'] });
+      autoExpandSidebarHover = subset?.auto_expand_sidebar_hover ?? false;
       console.log('Auto expand sidebar hover setting reloaded:', autoExpandSidebarHover);
     } catch (e) {
       console.error('Failed to reload auto expand sidebar hover setting:', e);
@@ -229,11 +229,9 @@
 
   async function loadSettingsForUserPicture() {
     try {
-      const settings = await invoke<{
-        disable_school_picture?: boolean;
-      }>('get_settings');
-      console.log('Loaded settings for user picture:', settings);
-      disableSchoolPicture = settings.disable_school_picture ?? false;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['disable_school_picture'] });
+      console.log('Loaded settings for user picture:', subset);
+      disableSchoolPicture = subset?.disable_school_picture ?? false;
       console.log('disableSchoolPicture set to:', disableSchoolPicture);
     } catch (e) {
       console.error('Failed to load settings for user picture:', e);
