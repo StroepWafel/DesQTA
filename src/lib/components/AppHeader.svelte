@@ -187,8 +187,8 @@
     logger.debug('AppHeader', 'loadGlobalSearchSetting', 'Loading global search setting');
     
     try {
-      const settings = await invoke<{ global_search_enabled?: boolean }>('get_settings');
-      globalSearchEnabled = settings.global_search_enabled ?? true;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['global_search_enabled'] });
+      globalSearchEnabled = subset?.global_search_enabled ?? true;
       logger.info('AppHeader', 'loadGlobalSearchSetting', `Global search enabled: ${globalSearchEnabled}`);
     } catch (error) {
       logger.error('AppHeader', 'loadGlobalSearchSetting', `Failed to load global search setting: ${error}`, { error });

@@ -136,8 +136,8 @@ export const authService = {
       // Check if sensitive content hider mode is enabled
       let devSensitiveInfoHider = false;
       try {
-        const settings = await invoke<{ dev_sensitive_info_hider?: boolean }>('get_settings');
-        devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
+        const subset = await invoke<any>('get_settings_subset', { keys: ['dev_sensitive_info_hider'] });
+        devSensitiveInfoHider = subset?.dev_sensitive_info_hider ?? false;
       } catch (e) {
         devSensitiveInfoHider = false;
       }

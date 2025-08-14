@@ -21,11 +21,9 @@
       { name: 'Starred', icon: Star, id: 'starred' },
       { name: 'Trash', icon: Trash, id: 'trash' },
     ];
-    const feeds = await invoke<{
-      feeds: Feed[];
-    }>('get_settings');
-    console.log(feeds.feeds);
-    for (let item of feeds.feeds) {
+    const subset = await invoke<any>('get_settings_subset', { keys: ['feeds'] });
+    console.log(subset?.feeds);
+    for (let item of (subset?.feeds || [])) {
       console.log(item.url);
       let title = await getRSS(item.url);
       folders.push({

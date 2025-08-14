@@ -297,8 +297,8 @@
 
   async function loadEnhancedAnimationsSetting() {
     try {
-      const settings = await invoke<{ enhanced_animations?: boolean }>('get_settings');
-      enhancedAnimations = settings.enhanced_animations ?? true;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['enhanced_animations'] });
+      enhancedAnimations = subset?.enhanced_animations ?? true;
       logger.info('layout', 'loadEnhancedAnimationsSetting', 'Enhanced animations setting loaded', { enhancedAnimations });
     } catch (e) {
       logger.error('layout', 'loadEnhancedAnimationsSetting', 'Failed to load enhanced animations setting', { error: e });

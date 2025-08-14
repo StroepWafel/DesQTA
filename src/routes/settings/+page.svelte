@@ -165,29 +165,9 @@ The Company reserves the right to terminate your access to the Service at any ti
   async function loadSettings() {
     loading = true;
     try {
-      const settings = await invoke<{
-        shortcuts: Shortcut[];
-        feeds: any[];
-        weather_enabled: boolean;
-        weather_city: string;
-        weather_country: string;
-        reminders_enabled: boolean;
-        force_use_location: boolean;
-        accent_color: string;
-        theme: 'light' | 'dark';
-        disable_school_picture?: boolean;
-        enhanced_animations?: boolean;
-        gemini_api_key?: string;
-        ai_integrations_enabled?: boolean;
-        grade_analyser_enabled?: boolean;
-        lesson_summary_analyser_enabled?: boolean;
-        auto_collapse_sidebar?: boolean;
-        auto_expand_sidebar_hover?: boolean;
-        global_search_enabled?: boolean;
-        dev_sensitive_info_hider?: boolean;
-        accepted_cloud_eula?: boolean;
-        homepage_edit_mode?: boolean;
-      }>('get_settings');
+      const settings = await invoke<any>('get_settings_subset', { keys: [
+        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula','homepage_edit_mode'
+      ]});
       shortcuts = settings.shortcuts || [];
       feeds = settings.feeds || [];
       weatherEnabled = settings.weather_enabled ?? false;
@@ -279,10 +259,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       enhancedAnimations,
     });
     try {
-      // Load current settings to preserve fields like widget_layout
-      const currentSettings = await invoke<any>('get_settings');
-      const newSettings = {
-        ...currentSettings,
+      const patch = {
         shortcuts,
         feeds,
         weather_enabled: weatherEnabled,
@@ -305,7 +282,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         accepted_cloud_eula: acceptedCloudEula,
         homepage_edit_mode: showDevSettings,
       };
-      await invoke('save_settings', { newSettings });
+      await invoke('save_settings_merge', { patch });
       saveSuccess = true;
       setTimeout(() => location.reload(), 1500);
     } catch (e) {
@@ -443,9 +420,7 @@ The Company reserves the right to terminate your access to the Service at any ti
   // Navigate to homepage and trigger edit layout mode there
   async function goToHomepageAndEditLayout() {
     try {
-      const current = await invoke<any>('get_settings');
-      const updated = { ...current, homepage_edit_mode: true };
-      await invoke('save_settings', { newSettings: updated });
+      await invoke('save_settings_merge', { patch: { homepage_edit_mode: true } });
     } catch (e) {
       console.error('Failed to set homepage edit mode flag', e);
     }
@@ -1328,10 +1303,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
           onclick={async () => {
             try {
-              // Load and save settings with EULA accepted
-              const current = await invoke<any>('get_settings');
-              const updated = { ...current, accepted_cloud_eula: true };
-              await invoke('save_settings', { newSettings: updated });
+              await invoke('save_settings_merge', { patch: { accepted_cloud_eula: true } });
               acceptedCloudEula = true;
               showEulaModal = false;
             } catch (e) {
