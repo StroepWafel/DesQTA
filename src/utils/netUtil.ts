@@ -24,15 +24,42 @@ export function getRandomDicebearAvatar(): string {
 // Moved mock implementation to a separate module for clarity and reuse
 import { mockApiResponse } from './mockApi';
 
-export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promise<any> {
-  // Fetch the dev_sensitive_info_hider value from settings
-  let useMock = false;
-  try {
-    const subset = await invoke<any>('get_settings_subset', { keys: ['dev_sensitive_info_hider'] });
-    useMock = subset?.dev_sensitive_info_hider ?? false;
-  } catch (e) {
-    useMock = false;
+// Cache the dev_sensitive_info_hider flag to avoid spamming settings on every request
+let devInfoHiderCache: { value: boolean; timestamp: number } | null = null;
+let devInfoHiderInFlight: Promise<boolean> | null = null;
+const DEV_INFO_HIDER_TTL_MS = 60_000; // 60s TTL; adjust if needed
+
+async function getDevSensitiveInfoHider(): Promise<boolean> {
+  const now = Date.now();
+  if (devInfoHiderCache && now - devInfoHiderCache.timestamp < DEV_INFO_HIDER_TTL_MS) {
+    return devInfoHiderCache.value;
   }
+  if (devInfoHiderInFlight) {
+    return devInfoHiderInFlight;
+  }
+  devInfoHiderInFlight = (async () => {
+    try {
+      const subset = await invoke<any>('get_settings_subset', { keys: ['dev_sensitive_info_hider'] });
+      const value = subset?.dev_sensitive_info_hider ?? false;
+      devInfoHiderCache = { value, timestamp: Date.now() };
+      return value;
+    } catch {
+      devInfoHiderCache = { value: false, timestamp: Date.now() };
+      return false;
+    } finally {
+      devInfoHiderInFlight = null;
+    }
+  })();
+  return devInfoHiderInFlight;
+}
+
+export function invalidateDevSensitiveInfoHiderCache(): void {
+  devInfoHiderCache = null;
+}
+
+export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promise<any> {
+  // Read once with memoization to prevent dozens of calls on startup
+  const useMock = await getDevSensitiveInfoHider();
   
   if (useMock) {
     return mockApiResponse(input);

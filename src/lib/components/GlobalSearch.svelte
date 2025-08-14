@@ -379,6 +379,11 @@ async function toggleSetting(settingKey: string, inverted: boolean = false) {
     const currentValue = subset ? subset[settingKey] : undefined;
     const newValue = inverted ? !currentValue : !currentValue;
     await invoke('save_settings_merge', { patch: { [settingKey]: newValue } });
+    if (settingKey === 'dev_sensitive_info_hider') {
+      // If toggled, invalidate netUtil cache so the new value is respected
+      const mod = await import('../../utils/netUtil');
+      mod.invalidateDevSensitiveInfoHiderCache?.();
+    }
     
     console.log(`${settingKey} toggled to:`, newValue);
   } catch (e) {
