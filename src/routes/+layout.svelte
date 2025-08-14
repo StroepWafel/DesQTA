@@ -14,6 +14,7 @@
 
   import '../app.css';
   import { accentColor, loadAccentColor, theme, loadTheme, loadCurrentTheme } from '../lib/stores/theme';
+  import { warmUpCommonData } from '../lib/services/warmupService';
   import { Icon, Home, Newspaper, ClipboardDocumentList, BookOpen, ChatBubbleLeftRight, DocumentText, AcademicCap, ChartBar, Cog6Tooth, CalendarDays, User, GlobeAlt, Swatch, XMark, PencilSquare } from 'svelte-hero-icons';
 
   import { writable } from 'svelte/store';
@@ -331,6 +332,9 @@
       reloadAutoCollapseSidebarSetting(),
       reloadAutoExpandSidebarHoverSetting()
     ]);
+    // Background warm-up irrespective of navigation intent
+    // Fires after we've attempted session load; it will no-op if unauthenticated endpoints fail
+    warmUpCommonData().catch(() => {});
     if (weatherEnabled) {
       if (forceUseLocation) fetchWeather();
       else fetchWeatherWithIP();
