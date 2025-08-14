@@ -151,6 +151,12 @@ DesQTA: Deep-Dive, Current State, Constraints, and Ideas
 - Background warm-up: Implemented via `src/lib/services/warmupService.ts` and wired in `src/routes/+layout.svelte` to run on app load. Primes caches for timetable and assessments (keys: `lesson_colours`, `timetable_*`, `upcoming_assessments_data`, `assessments_overview_data`).
 
 - <u>Settings invoke batching</u>: Implemented backend composite commands and frontend migration
+- <u>Offline-first foundations</u>:
+  - Service Worker: `static/sw.js` (cache-first for static assets/app shell) and registration in `src/routes/+layout.svelte`
+  - IndexedDB: `src/lib/services/idb.ts` (stores: `cache`, `syncQueue`)
+  - Settings Sync Queue: `src/lib/services/settingsSync.ts` with auto-flush on `online` and explicit flush in header
+  - Message Drafts Queue: queue compose drafts offline and flush when back online (`src/routes/direqt-messages/components/ComposeModal.svelte`, `src/lib/services/syncService.ts`)
+
   - Backend: `get_settings_subset(keys: Vec<String>)`, `save_settings_merge(patch: serde_json::Value)` registered in `src-tauri/src/lib.rs`
   - Frontend: replaced reads/writes across stores, services, and pages to use subset/merge
     - Files: `src/lib/stores/theme.ts`, `src/routes/+page.svelte`, `src/lib/services/themeService.ts`, `src/routes/+layout.svelte`, `src/routes/settings/+page.svelte`, `src/routes/direqt-messages/components/Sidebar.svelte`, `src/routes/directory/+page.svelte`, `src/routes/courses/components/CourseContent.svelte`, `src/lib/components/AppHeader.svelte`, `src/lib/components/UserDropdown.svelte`, `src/lib/services/geminiService.ts`, `src/lib/services/authService.ts`, `src/lib/services/weatherService.ts`

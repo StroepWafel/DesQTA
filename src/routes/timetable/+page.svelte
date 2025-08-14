@@ -3,6 +3,7 @@
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { saveAs } from 'file-saver';
+  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import jsPDF from 'jspdf';
   import autoTable from 'jspdf-autotable';
   import * as pdfjsLib from 'pdfjs-dist';
@@ -72,7 +73,7 @@
 
     try {
       const cacheKey = `timetable_${from}_${until}`;
-      const cachedLessons = cache.get<any[]>(cacheKey);
+      const cachedLessons = cache.get<any[]>(cacheKey) || await getWithIdbFallback<any[]>(cacheKey, cacheKey, () => cache.get<any[]>(cacheKey));
       if (cachedLessons) {
         lessons = cachedLessons;
         loadingLessons = false;
@@ -96,6 +97,8 @@
       });
 
       cache.set(cacheKey, lessons, 30);
+      console.info('[IDB] timetable cached (mem+idb)', { key: cacheKey, count: lessons.length });
+      await setIdb(cacheKey, lessons);
     } catch (e) {
       error = 'Failed to load timetable. Please try again.';
       console.error('Error loading timetable:', e);

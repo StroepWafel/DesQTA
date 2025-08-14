@@ -112,6 +112,12 @@
 
   let unlisten: (() => void) | undefined;
   onMount(async () => {
+    // Register service worker for offline static assets
+    if ('serviceWorker' in navigator) {
+      try {
+        await navigator.serviceWorker.register('/sw.js');
+      } catch {}
+    }
     logger.debug('layout', 'onMount', 'Setting up reload listener');
     unlisten = await listen<string>('reload', () => {
       logger.info('layout', 'reload_listener', 'Received reload event');

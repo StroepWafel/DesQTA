@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
+  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
 
   interface Notice {
     id: number;
@@ -34,7 +35,7 @@
 
   async function fetchLabels() {
     try {
-      const cached = cache.get<Label[]>('notices_labels');
+      const cached = cache.get<Label[]>('notices_labels') || await getWithIdbFallback<Label[]>('notices_labels', 'notices_labels', () => cache.get('notices_labels'));
       if (cached) {
         labels = cached;
         return;
@@ -51,6 +52,8 @@
           color: l.colour,
         }));
         cache.set('notices_labels', labels, 60); // 60 min TTL
+        console.info('[IDB] notices_labels cached (mem+idb)', { count: labels.length });
+        await setIdb('notices_labels', labels);
       } else {
         labels = [];
       }
@@ -64,7 +67,7 @@
     error = null;
     try {
       const key = `notices_${formatDate(selectedDate)}`;
-      const cached = cache.get<Notice[]>(key);
+      const cached = cache.get<Notice[]>(key) || await getWithIdbFallback<Notice[]>(key, key, () => cache.get<Notice[]>(key));
       if (cached) {
         notices = cached;
         loading = false;
@@ -86,6 +89,8 @@
           content: n.contents,
         }));
         cache.set(key, notices, 30); // 30 min TTL
+        console.info('[IDB] notices cached (mem+idb)', { key, count: notices.length });
+        await setIdb(key, notices);
       } else {
         notices = [];
       }

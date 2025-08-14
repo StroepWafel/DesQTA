@@ -27,6 +27,7 @@
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
   import { logger } from '../../utils/logger';
   import { goto } from '$app/navigation';
+  import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
 
   interface Shortcut {
     name: string;
@@ -282,7 +283,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         accepted_cloud_eula: acceptedCloudEula,
         homepage_edit_mode: showDevSettings,
       };
-      await invoke('save_settings_merge', { patch });
+      await saveSettingsWithQueue(patch);
+      await flushSettingsQueue();
       saveSuccess = true;
       setTimeout(() => location.reload(), 1500);
     } catch (e) {

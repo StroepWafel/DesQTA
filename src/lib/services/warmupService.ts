@@ -1,5 +1,6 @@
 import { cache } from '../../utils/cache';
 import { seqtaFetch } from '../../utils/netUtil';
+import { logger } from '../../utils/logger';
 
 // Centralized background warm-up of frequently used SEQTA endpoints.
 // This primes the in-memory cache so pages can render instantly.
@@ -34,6 +35,7 @@ async function prefetchLessonColours(): Promise<any[]> {
 		const colours = JSON.parse(res).payload;
 		// Align with assessments page which uses 10 minutes for lesson_colours
 		cache.set('lesson_colours', colours, 10);
+		logger.info('warmup', 'prefetchLessonColours', 'Cached lesson_colours (mem)', { ttlMin: 10, count: colours?.length });
 		return colours;
 	} catch {
 		return [];
@@ -64,6 +66,7 @@ async function prefetchTimetableWeek(): Promise<void> {
 			return lesson;
 		});
 		cache.set(cacheKey, lessons, 30);
+		logger.info('warmup', 'prefetchTimetableWeek', 'Cached timetable week (mem)', { key: cacheKey, ttlMin: 30, count: lessons?.length });
 	} catch {
 		// ignore warmup errors
 	}
@@ -111,6 +114,7 @@ async function prefetchUpcomingAssessments(): Promise<void> {
 			{ assessments: upcomingAssessments, subjects: activeSubjects, filters: subjectFilters },
 			60,
 		);
+		logger.info('warmup', 'prefetchUpcomingAssessments', 'Cached upcoming assessments (mem)', { ttlMin: 60, assessments: upcomingAssessments?.length });
 	} catch {
 		// ignore warmup errors
 	}
@@ -217,6 +221,7 @@ async function prefetchAssessmentsOverview(): Promise<void> {
 			},
 			10,
 		);
+		logger.info('warmup', 'prefetchAssessmentsOverview', 'Cached assessments_overview_data (mem)', { ttlMin: 10, assessments: upcomingAssessments?.length, subjects: activeSubjects?.length });
 	} catch {
 		// ignore warmup errors
 	}
@@ -234,6 +239,7 @@ async function prefetchNoticesLabels(): Promise<void> {
         if (Array.isArray(data?.payload)) {
             const labels = data.payload.map((l: any) => ({ id: l.id, title: l.title, color: l.colour }));
             cache.set('notices_labels', labels, 60); // 60 min TTL
+            logger.info('warmup', 'prefetchNoticesLabels', 'Cached notices_labels (mem)', { ttlMin: 60, count: labels?.length });
         }
     } catch {
         // ignore warmup errors
@@ -265,6 +271,7 @@ async function prefetchTodayNotices(): Promise<void> {
                 content: n.contents,
             }));
             cache.set(key, notices, 30); // 30 min TTL
+            logger.info('warmup', 'prefetchTodayNotices', 'Cached notices (today) (mem)', { key, ttlMin: 30, count: notices?.length });
         }
     } catch {
         // ignore warmup errors

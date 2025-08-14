@@ -5,6 +5,7 @@
   import { onMount } from 'svelte';
   import { seqtaFetch } from '../../../utils/netUtil';
   import Modal from '$lib/components/Modal.svelte';
+  import { queueAdd } from '$lib/services/idb';
 
   type Student = {
     campus: string;
@@ -161,8 +162,19 @@
         errorMessage = 'Failed to send message. Please try again.';
       }
     } catch (err) {
-      console.error('Error sending message:', err);
-      errorMessage = 'An error occurred while sending the message.';
+      // Offline or failed: queue draft for later sync
+      await queueAdd({
+        type: 'message_draft',
+        payload: {
+          subject: composeSubject,
+          contents: composeBody,
+          recipients: selectedRecipients,
+          blind: useBCC,
+          files: [],
+        }
+      });
+      closeModal();
+      errorMessage = '';
     } finally {
       isSubmitting = false;
     }

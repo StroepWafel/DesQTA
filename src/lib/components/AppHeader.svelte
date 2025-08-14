@@ -20,6 +20,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
+  import { flushAll } from '../services/syncService';
 
   interface Props {
     sidebarOpen: boolean;
@@ -312,6 +313,8 @@
   onMount(() => {
     loadGlobalSearchSetting();
     fetchNotifications();
+    // Attempt to flush any queued offline changes on header mount
+    flushAll().catch(() => {});
     
     // Check for mobile on mount and resize
     const checkMobile = async () => {
