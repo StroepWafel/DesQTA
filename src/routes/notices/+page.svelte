@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { seqtaFetch } from '../../utils/netUtil';
+  import { cache } from '../../utils/cache';
 
   interface Notice {
     id: number;
@@ -33,6 +34,11 @@
 
   async function fetchLabels() {
     try {
+      const cached = cache.get<Label[]>('notices_labels');
+      if (cached) {
+        labels = cached;
+        return;
+      }
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { mode: 'labels' },
@@ -44,6 +50,7 @@
           title: l.title,
           color: l.colour,
         }));
+        cache.set('notices_labels', labels, 60); // 60 min TTL
       } else {
         labels = [];
       }
@@ -56,6 +63,13 @@
     loading = true;
     error = null;
     try {
+      const key = `notices_${formatDate(selectedDate)}`;
+      const cached = cache.get<Notice[]>(key);
+      if (cached) {
+        notices = cached;
+        loading = false;
+        return;
+      }
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { date: formatDate(selectedDate) },
@@ -71,6 +85,7 @@
           labelId: n.label,
           content: n.contents,
         }));
+        cache.set(key, notices, 30); // 30 min TTL
       } else {
         notices = [];
       }
