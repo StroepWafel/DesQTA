@@ -184,13 +184,7 @@ class ThemeService {
 
   private async saveThemePreference(themeName: string): Promise<void> {
     try {
-      const settings = await invoke<any>('get_settings');
-      await invoke('save_settings', {
-        newSettings: {
-          ...settings,
-          current_theme: themeName,
-        },
-      });
+      await invoke('save_settings_merge', { patch: { current_theme: themeName } });
     } catch (error) {
       console.error('Failed to save theme preference:', error);
     }

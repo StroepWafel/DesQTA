@@ -334,18 +334,18 @@
 
   async function loadHomepageShortcuts() {
     try {
-      const settings = await invoke<{ shortcuts: Shortcut[] }>('get_settings');
-      if (settings.shortcuts && settings.shortcuts.length > 0) {
-        homepageShortcuts = settings.shortcuts;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['shortcuts'] });
+      if (subset?.shortcuts && subset.shortcuts.length > 0) {
+        homepageShortcuts = subset.shortcuts as Shortcut[];
       }
     } catch (e) {}
   }
 
   async function loadWidgetLayouts() {
     try {
-      const settings = await invoke<{ widget_layout: WidgetLayout[] }>('get_settings');
-      if (settings.widget_layout && settings.widget_layout.length > 0) {
-        widgetLayouts = settings.widget_layout;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['widget_layout'] });
+      if (subset?.widget_layout && subset.widget_layout.length > 0) {
+        widgetLayouts = subset.widget_layout as WidgetLayout[];
       } else {
         // Use default layout
         widgetLayouts = widgets.map((widget, index) => ({
@@ -364,12 +364,7 @@
 
   async function saveWidgetLayouts() {
     try {
-      const currentSettings = await invoke<any>('get_settings');
-      const newSettings = {
-        ...currentSettings,
-        widget_layout: widgetLayouts,
-      };
-      await invoke('save_settings', { newSettings });
+      await invoke('save_settings_merge', { patch: { widget_layout: widgetLayouts } });
     } catch (e) {
       console.error('Failed to save widget layouts:', e);
     }
@@ -560,11 +555,10 @@
     // If settings contains a transient flag set by Settings page, enable edit mode and clear it
     (async () => {
       try {
-        const settings = await invoke<any>('get_settings');
-        if (settings && settings.homepage_edit_mode) {
+        const subset = await invoke<any>('get_settings_subset', { keys: ['homepage_edit_mode'] });
+        if (subset && subset.homepage_edit_mode) {
           isEditMode = true;
-          const updated = { ...settings, homepage_edit_mode: false };
-          await invoke('save_settings', { newSettings: updated });
+          await invoke('save_settings_merge', { patch: { homepage_edit_mode: false } });
         }
       } catch (e) {
         console.error('Failed to check homepage_edit_mode flag', e);

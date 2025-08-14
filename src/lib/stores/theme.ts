@@ -51,8 +51,8 @@ function applyTheme(themeValue: 'light' | 'dark' | 'system') {
 // Function to load the accent color from settings
 export async function loadAccentColor() {
   try {
-    const settings = await invoke<{ accent_color: string }>('get_settings');
-    accentColor.set(settings.accent_color || '#3b82f6');
+    const subset = await invoke<any>('get_settings_subset', { keys: ['accent_color'] });
+    accentColor.set(subset?.accent_color || '#3b82f6');
   } catch (e) {
     console.error('Failed to load accent color:', e);
   }
@@ -61,8 +61,8 @@ export async function loadAccentColor() {
 // Function to load the theme from settings
 export async function loadTheme() {
   try {
-    const settings = await invoke<{ theme: 'light' | 'dark' | 'system' }>('get_settings');
-    const loadedTheme = settings.theme || 'system';
+    const subset = await invoke<any>('get_settings_subset', { keys: ['theme'] });
+    const loadedTheme = subset?.theme || 'system';
     theme.set(loadedTheme);
     applyTheme(loadedTheme);
 
@@ -93,13 +93,7 @@ export async function loadTheme() {
 // Function to update the accent color
 export async function updateAccentColor(color: string) {
   try {
-    const settings = await invoke<any>('get_settings');
-    await invoke('save_settings', {
-      newSettings: {
-        ...settings,
-        accent_color: color,
-      },
-    });
+    await invoke('save_settings_merge', { patch: { accent_color: color } });
     accentColor.set(color);
     logger.debug('themeStore', 'updateAccentColor', 'Accent color updated successfully', { color });
   } catch (e) {
@@ -110,13 +104,7 @@ export async function updateAccentColor(color: string) {
 // Function to update the theme
 export async function updateTheme(newTheme: 'light' | 'dark' | 'system') {
   try {
-    const settings = await invoke<any>('get_settings');
-    await invoke('save_settings', {
-      newSettings: {
-        ...settings,
-        theme: newTheme,
-      },
-    });
+    await invoke('save_settings_merge', { patch: { theme: newTheme } });
     theme.set(newTheme);
     applyTheme(newTheme);
 
@@ -152,8 +140,8 @@ export async function loadAndApplyTheme(themeName: string) {
     const manifest = await themeService.getThemeManifest(themeName);
     themeManifest.set(manifest);
 
-    // Batch settings fetch once
-    let settings = await invoke<any>('get_settings');
+    // Only fetch what we need
+    let subset = await invoke<any>('get_settings_subset', { keys: ['current_theme','accent_color','theme'] });
 
     if (themeName === 'default') {
       // Reset accent color and theme to defaults, then save once
@@ -161,14 +149,7 @@ export async function loadAndApplyTheme(themeName: string) {
       const defaultTheme: 'light' | 'dark' | 'system' = 'dark';
       accentColor.set(defaultAccent);
       theme.set(defaultTheme);
-      await invoke('save_settings', {
-        newSettings: {
-          ...settings,
-          current_theme: 'default',
-          accent_color: defaultAccent,
-          theme: defaultTheme,
-        },
-      });
+      await invoke('save_settings_merge', { patch: { current_theme: 'default', accent_color: defaultAccent, theme: defaultTheme } });
       applyTheme(defaultTheme);
       return;
     }
@@ -179,15 +160,7 @@ export async function loadAndApplyTheme(themeName: string) {
       const nextTheme = manifest.settings.defaultTheme;
       accentColor.set(nextAccent);
       theme.set(nextTheme);
-
-      await invoke('save_settings', {
-        newSettings: {
-          ...settings,
-          current_theme: themeName,
-          accent_color: nextAccent,
-          theme: nextTheme,
-        },
-      });
+      await invoke('save_settings_merge', { patch: { current_theme: themeName, accent_color: nextAccent, theme: nextTheme } });
 
       // Apply theme visually after stores updated and settings persisted
       applyTheme(nextTheme);
@@ -209,8 +182,8 @@ export function applyCustomCSS(css: string) {
 // Load current theme from settings
 export async function loadCurrentTheme() {
   try {
-    const settings = await invoke<any>('get_settings');
-    const savedThemeName: string = settings.current_theme || settings.theme || 'default';
+    const subset = await invoke<any>('get_settings_subset', { keys: ['current_theme','theme'] });
+    const savedThemeName: string = subset?.current_theme || subset?.theme || 'default';
     currentTheme.set(savedThemeName);
 
     // Load the theme pack
@@ -252,13 +225,7 @@ export async function resetToDefault() {
     currentTheme.set('default');
     themeManifest.set(null);
     // Save current_theme to settings
-    const settings = await invoke<any>('get_settings');
-    await invoke('save_settings', {
-      newSettings: {
-        ...settings,
-        current_theme: 'default',
-      },
-    });
+    await invoke('save_settings_merge', { patch: { current_theme: 'default' } });
   } catch (error) {
     console.error('Failed to reset to default theme:', error);
   }
