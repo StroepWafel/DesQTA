@@ -469,6 +469,37 @@ pub fn save_settings_from_json(json: String) -> Result<(), String> {
     settings.save().map_err(|e| e.to_string())
 }
 
+/// Return a subset of settings keys to reduce round-trips from the frontend.
+#[tauri::command]
+pub fn get_settings_subset(keys: Vec<String>) -> Result<serde_json::Value, String> {
+    let settings = Settings::load();
+    let full = serde_json::to_value(settings).map_err(|e| e.to_string())?;
+    let mut result = serde_json::Map::new();
+    for k in keys {
+        if let Some(v) = full.get(&k) {
+            result.insert(k, v.clone());
+        }
+    }
+    Ok(serde_json::Value::Object(result))
+}
+
+/// Merge partial settings into current settings and save (coalesces get+save into one call).
+#[tauri::command]
+pub fn save_settings_merge(patch: serde_json::Value) -> Result<(), String> {
+    let current = Settings::load();
+    let mut current_val = serde_json::to_value(current).map_err(|e| e.to_string())?;
+
+    // Shallow merge top-level keys from patch into current
+    if let (Some(obj_curr), Some(obj_patch)) = (current_val.as_object_mut(), patch.as_object()) {
+        for (k, v) in obj_patch.iter() {
+            obj_curr.insert(k.clone(), v.clone());
+        }
+    }
+
+    let merged: Settings = serde_json::from_value(current_val).map_err(|e| e.to_string())?;
+    merged.save().map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn save_cloud_token(token: String) -> Result<CloudUser, String> {
     let base_url = get_base_api_url();
