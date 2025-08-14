@@ -70,8 +70,8 @@ DesQTA: Deep-Dive, Current State, Constraints, and Ideas
    - Single AdvancedCache with size tracking and LRU, shared across services; metrics hooks for hit/miss
 2) Virtualized rendering
    - Add virtualization for large message lists and assessment lists to reduce DOM cost
-3) Background warm-up
-   - After login, parallel prefetch: upcoming assessments, timetable of today, notices/news, weather; hydrate caches
+3) ~~Background warm-up~~
+   - ~~After login, parallel prefetch: upcoming assessments, timetable of today, notices/news, weather; hydrate caches~~
 4) Robust error UX
    - Normalize error boundary placement per route; add retry/backoff and user-friendly explanations
 5) Security polish
@@ -145,5 +145,9 @@ DesQTA: Deep-Dive, Current State, Constraints, and Ideas
 - Virtualize message and assessment lists; lazy-load message bodies on demand with cache TTL 24h
 - Build “Diagnostics” panel (logs export, settings export, environment info, cache clear)
 - Add E2E smoke test (login mock, open pages, send command) for CI sanity
+
+
+## Completed
+- Background warm-up: Implemented via `src/lib/services/warmupService.ts` and wired in `src/routes/+layout.svelte` to run on app load. Primes caches for timetable and assessments (keys: `lesson_colours`, `timetable_*`, `upcoming_assessments_data`, `assessments_overview_data`).
 
 
