@@ -13,6 +13,8 @@
     TermSchedule,
     WeeklyLessonContent,
   } from './types';
+  import { cache } from '../../utils/cache';
+  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
 
   let folders: Folder[] = $state([]);
   let activeSubjects: Subject[] = $state([]);
@@ -40,6 +42,17 @@
     loading = true;
     error = null;
     try {
+      const cacheKey = 'courses_subjects_folders';
+      const cached = cache.get<Folder[]>(cacheKey) || await getWithIdbFallback<Folder[]>(cacheKey, cacheKey, () => cache.get<Folder[]>(cacheKey));
+      if (cached) {
+        folders = cached;
+        const activeFolder = folders.find((f: Folder) => f.active === 1);
+        activeSubjects = activeFolder ? activeFolder.subjects : [];
+        otherFolders = folders.filter((f: Folder) => f.active !== 1);
+        loading = false;
+        return;
+      }
+
       const res = await seqtaFetch('/seqta/student/load/subjects?', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -50,6 +63,10 @@
       const activeFolder = folders.find((f: Folder) => f.active === 1);
       activeSubjects = activeFolder ? activeFolder.subjects : [];
       otherFolders = folders.filter((f: Folder) => f.active !== 1);
+
+      cache.set(cacheKey, folders, 60);
+      console.info('[IDB] courses folders cached (mem+idb)', { count: folders.length });
+      await setIdb(cacheKey, folders);
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     } finally {
@@ -66,6 +83,17 @@
     selectedLessonContent = null;
 
     try {
+      const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
+      const cached = cache.get<CoursePayload>(cacheKey) || await getWithIdbFallback<CoursePayload>(cacheKey, cacheKey, () => cache.get<CoursePayload>(cacheKey));
+      if (cached) {
+        coursePayload = cached;
+        if (coursePayload?.document) {
+          try { parsedDocument = JSON.parse(coursePayload.document); } catch {}
+        }
+        loadingCourse = false;
+        return;
+      }
+
       const res = await seqtaFetch('/seqta/student/load/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -85,6 +113,10 @@
           console.error('Failed to parse document JSON:', e);
         }
       }
+
+      cache.set(cacheKey, coursePayload, 60);
+      console.info('[IDB] course payload cached (mem+idb)', { key: cacheKey });
+      await setIdb(cacheKey, coursePayload);
     } catch (e) {
       courseError = e instanceof Error ? e.message : String(e);
     } finally {
