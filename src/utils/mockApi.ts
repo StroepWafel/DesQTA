@@ -302,9 +302,97 @@ export function mockApiResponse(url: string): any {
     if (url.includes('/people')) {
       return JSON.stringify({ payload: [ { id: 1, firstname: 'Alice', surname: 'Smith', xx_display: 'Alice Smith', year: '10', sub_school: 'Middle', house: 'Red', house_colour: '#ff0000', campus: 'Main', rollgroup: '10A' }, { id: 2, firstname: 'Bob', surname: 'Jones', xx_display: 'Bob Jones', year: '11', sub_school: 'Senior', house: 'Blue', house_colour: '#0000ff', campus: 'North', rollgroup: '11B' }, { id: 3, firstname: 'Charlie', surname: 'Brown', xx_display: 'Charlie Brown', year: '12', sub_school: 'Senior', house: 'Green', campus: 'Main', rollgroup: '12C', house_colour: '#00ff00' } ] });
     }
-    const months = Array.from({ length: 12 }, (_, m) => new Date(Date.UTC(2025, m, 15)));
-    const threads = months.map((d, i) => ({ id: 1000 + i, subject: 'Thread ' + (i + 1), lastMessageAt: d.toISOString(), participants: ['Alex Taylor', 'Staff ' + (i + 1)], preview: 'This is a preview for thread ' + (i + 1) }));
-    return JSON.stringify({ payload: sortByDateDesc(threads, x => x.lastMessageAt) });
+    
+    // Generate 1000 mock messages
+    const messageCount = 1000;
+    const subjects = [
+      'Welcome to DesQTA',
+      'Assignment Reminder',
+      'Important Notice',
+      'Class Schedule Update',
+      'Exam Information',
+      'Project Guidelines',
+      'Parent Meeting',
+      'Field Trip Permission',
+      'Library Resources',
+      'Course Materials',
+      'Homework Help',
+      'Study Group',
+      'Academic Progress',
+      'Event Invitation',
+      'System Maintenance',
+      'New Resources Available',
+      'Grade Update',
+      'Attendance Notice',
+      'Calendar Change',
+      'Support Request'
+    ];
+    
+    const senders = [
+      'Mr. Johnson',
+      'Ms. Smith',
+      'Dr. Williams',
+      'Mrs. Brown',
+      'Prof. Davis',
+      'Mr. Wilson',
+      'Ms. Taylor',
+      'Dr. Anderson',
+      'Mrs. Martin',
+      'Mr. Thompson',
+      'Ms. Garcia',
+      'Dr. Rodriguez',
+      'Mrs. Lewis',
+      'Mr. Walker',
+      'Ms. Hall',
+      'School Admin',
+      'IT Support',
+      'Library Staff',
+      'Counselor',
+      'Principal'
+    ];
+    
+    const participants = [
+      'Student Portal',
+      'Class Group',
+      'Study Team',
+      'Project Team',
+      'All Students',
+      'Year 10 Students',
+      'Year 11 Students',
+      'Year 12 Students'
+    ];
+    
+    const messages = Array.from({ length: messageCount }, (_, i) => {
+      const baseDate = new Date('2025-12-31T12:00:00Z');
+      const randomDaysBack = Math.floor(Math.random() * 365); // Random date within the past year
+      const randomHoursOffset = Math.floor(Math.random() * 24);
+      const randomMinutesOffset = Math.floor(Math.random() * 60);
+      
+      const messageDate = new Date(baseDate);
+      messageDate.setDate(messageDate.getDate() - randomDaysBack);
+      messageDate.setHours(randomHoursOffset, randomMinutesOffset);
+      
+      const subject = subjects[i % subjects.length] + (i > subjects.length ? ` ${Math.floor(i / subjects.length) + 1}` : '');
+      const sender = senders[i % senders.length];
+      const participant = participants[i % participants.length];
+      
+      return {
+        id: 1000 + i,
+        subject: subject,
+        sender: sender,
+        date: messageDate.toISOString(),
+        participants: [{ name: participant }],
+        attachments: Math.random() > 0.8, // 20% chance of attachment
+        read: Math.random() > 0.3, // 70% chance of being read
+        starred: Math.random() > 0.9, // 10% chance of being starred
+        lastMessageAt: messageDate.toISOString()
+      };
+    });
+    
+    // Sort by date descending (newest first)
+    const sortedMessages = messages.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    return JSON.stringify({ payload: { messages: sortedMessages } });
   }
 
   // MESSAGING - SAVE/SEND
