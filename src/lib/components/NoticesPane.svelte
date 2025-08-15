@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { seqtaFetch } from '../../utils/netUtil';
+  import { cache } from '../../utils/cache';
+  import { getWithIdbFallback, setIdb } from '../services/idbCache';
   import { Icon, ArrowTopRightOnSquare } from 'svelte-hero-icons';
   import VirtualList from './VirtualList.svelte';
   import VirtualNoticeItem from './VirtualNoticeItem.svelte';
@@ -20,22 +22,116 @@
   }
 
   async function fetchHomepageLabels() {
-    const response = await seqtaFetch('/seqta/student/load/notices?', {
-      method: 'POST',
-      body: { mode: 'labels' },
-    });
-    const data = typeof response === 'string' ? JSON.parse(response) : response;
-    homepageLabels = Array.isArray(data?.payload) ? data.payload : [];
+    try {
+      // Check memory cache first
+      const memCached = cache.get<any[]>('notices_labels');
+      if (memCached) {
+        homepageLabels = memCached;
+        return;
+      }
+      
+      // Check IndexedDB fallback
+      const idbCached = await getWithIdbFallback<any[]>('notices_labels', 'notices_labels', () => null);
+      if (idbCached) {
+        homepageLabels = idbCached;
+        // Restore to memory cache with remaining TTL estimation
+        cache.set('notices_labels', idbCached, 60);
+        return;
+      }
+      
+      // Fetch from API
+      const response = await seqtaFetch('/seqta/student/load/notices?', {
+        method: 'POST',
+        body: { mode: 'labels' },
+      });
+      const data = typeof response === 'string' ? JSON.parse(response) : response;
+      if (Array.isArray(data?.payload)) {
+        const labels = data.payload.map((l: any) => ({
+          id: l.id,
+          title: l.title,
+          colour: l.colour,
+        }));
+        homepageLabels = labels;
+        cache.set('notices_labels', labels, 60); // 60 min TTL
+        await setIdb('notices_labels', labels);
+      } else {
+        homepageLabels = [];
+      }
+    } catch (e) {
+      homepageLabels = [];
+    }
   }
 
   async function fetchHomepageNotices() {
     loadingHomepageNotices = true;
-    const response = await seqtaFetch('/seqta/student/load/notices?', {
-      method: 'POST',
-      body: { date: formatDate(new Date()) },
-    });
-    const data = typeof response === 'string' ? JSON.parse(response) : response;
-    homepageNotices = Array.isArray(data?.payload) ? data.payload.slice(0, 100) : []; // Increased for testing virtualization
+    try {
+      const today = new Date();
+      const dateStr = formatDate(today);
+      const key = `notices_${dateStr}`;
+      
+      // Cache should now work properly with compatibility layer
+      
+      // Check memory cache first
+      const memCached = cache.get<any[]>(key);
+      if (memCached) {
+        // Fix data structure for compatibility with VirtualNoticeItem (in case old cached data)
+        const fixedNotices = memCached.map(notice => ({
+          ...notice,
+          contents: notice.contents || notice.content, // Ensure contents field exists
+          staff: notice.staff || notice.author,         // Ensure staff field exists  
+          label: notice.label || notice.labelId         // Ensure label field exists
+        }));
+        homepageNotices = fixedNotices.slice(0, 100); // Limit for homepage
+        loadingHomepageNotices = false;
+        return;
+      }
+      
+      // Check IndexedDB fallback
+      const idbCached = await getWithIdbFallback<any[]>(key, key, () => null);
+      if (idbCached) {
+        // Fix data structure for compatibility with VirtualNoticeItem
+        const fixedNotices = idbCached.map(notice => ({
+          ...notice,
+          contents: notice.contents || notice.content, // Ensure contents field exists
+          staff: notice.staff || notice.author,         // Ensure staff field exists  
+          label: notice.label || notice.labelId         // Ensure label field exists
+        }));
+        homepageNotices = fixedNotices.slice(0, 100); // Limit for homepage
+        // Restore to memory cache with remaining TTL estimation
+        cache.set(key, fixedNotices, 30);
+        loadingHomepageNotices = false;
+        return;
+      }
+      
+      // Fetch from API
+      const response = await seqtaFetch('/seqta/student/load/notices?', {
+        method: 'POST',
+        body: { date: dateStr },
+      });
+      const data = typeof response === 'string' ? JSON.parse(response) : response;
+      
+      if (Array.isArray(data?.payload)) {
+        const notices = data.payload.map((n: any, i: number) => ({
+          id: n.id || (i + 1),
+          title: n.title,
+          subtitle: n.label_title,
+          author: n.staff,
+          color: n.colour,
+          labelId: n.label,
+          content: n.contents,
+          label: n.label, // Keep original structure for homepage
+          staff: n.staff,
+          contents: n.contents // This is what VirtualNoticeItem expects
+        }));
+        homepageNotices = notices.slice(0, 100); // Limit for homepage
+        cache.set(key, notices, 30); // 30 min TTL
+        await setIdb(key, notices);
+      } else {
+        homepageNotices = [];
+      }
+    } catch (e) {
+      homepageNotices = [];
+    }
     loadingHomepageNotices = false;
   }
 
