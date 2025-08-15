@@ -68,8 +68,8 @@ DesQTA: Deep-Dive, Current State, Constraints, and Ideas
 ## Short-Term Ideas (Low Effort, High Impact)
 1) Consolidate caching utilities
    - Single AdvancedCache with size tracking and LRU, shared across services; metrics hooks for hit/miss
-2) Virtualized rendering
-   - Add virtualization for large message lists and assessment lists to reduce DOM cost
+2) ~~Virtualized rendering~~
+   - ~~Add virtualization for large message lists and assessment lists to reduce DOM cost~~
 3) ~~Background warm-up~~
    - ~~After login, parallel prefetch: upcoming assessments, timetable of today, notices/news, weather; hydrate caches~~
 4) Robust error UX
