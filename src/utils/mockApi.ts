@@ -419,12 +419,122 @@ export function mockApiResponse(url: string): any {
   // NOTICES
   if (url.includes('/seqta/student/load/notices')) {
     if (typeof arguments[1] === 'object' && (arguments as any)[1]?.body?.mode === 'labels') {
-      return JSON.stringify({ payload: [ { id: 1, title: 'General', colour: '#910048' }, { id: 2, title: 'Urgent', colour: '#ff0000' } ] });
+      return JSON.stringify({ payload: [ 
+        { id: 1, title: 'General', colour: '#910048' }, 
+        { id: 2, title: 'Urgent', colour: '#ff0000' },
+        { id: 3, title: 'Academic', colour: '#2563eb' },
+        { id: 4, title: 'Events', colour: '#059669' },
+        { id: 5, title: 'Sports', colour: '#dc2626' },
+        { id: 6, title: 'Administrative', colour: '#7c3aed' }
+      ] });
     }
-    const dates = genDates2025(10);
-    let notices = dates.map((d, i) => ({ id: i + 1, title: 'Notice ' + (i + 1), label_title: i % 3 === 0 ? 'Urgent' : 'General', staff: i % 2 ? 'Vice Principal' : 'Principal', colour: i % 3 === 0 ? '#ff0000' : '#910048', label: i % 3 === 0 ? 2 : 1, contents: `This is notice ${i + 1} for ${d}.`, date: d }));
-    notices = sortByDateDesc(notices, x => x.date);
-    return JSON.stringify({ payload: notices });
+    
+    // Generate 500 mock notices
+    const noticeCount = 500;
+    const noticeTitles = [
+      'Welcome Back to School',
+      'Parent-Teacher Conference Schedule',
+      'School Sports Day Event',
+      'Library Hours Extended',
+      'New Course Registration Open',
+      'Exam Schedule Released',
+      'Student Council Elections',
+      'Science Fair Announcement',
+      'Art Exhibition Opening',
+      'Drama Club Auditions',
+      'Field Trip Permission Required',
+      'Uniform Policy Update',
+      'Cafeteria Menu Changes',
+      'Technology Lab Maintenance',
+      'Music Concert Tickets Available',
+      'Career Fair Next Week',
+      'Scholarship Opportunities',
+      'Health & Safety Guidelines',
+      'Lost & Found Items',
+      'Transportation Schedule Change',
+      'Academic Excellence Awards',
+      'Club Meeting Schedule',
+      'PTA Meeting Announcement',
+      'School Closure Notice',
+      'Emergency Contact Update',
+      'Fundraising Event Details',
+      'Workshop Registration',
+      'Guest Speaker Visit',
+      'Academic Support Available',
+      'Student Survey Request'
+    ];
+    
+    const staffMembers = [
+      'Principal Johnson',
+      'Vice Principal Smith',
+      'Academic Director Brown',
+      'Student Services Wilson',
+      'Ms. Anderson',
+      'Mr. Thompson',
+      'Dr. Martinez',
+      'Mrs. Davis',
+      'Coach Roberts',
+      'Librarian Lee',
+      'IT Administrator',
+      'School Secretary',
+      'Counselor Taylor',
+      'Nurse Williams',
+      'Facilities Manager'
+    ];
+    
+    const labels = [
+      { id: 1, title: 'General', colour: '#910048' },
+      { id: 2, title: 'Urgent', colour: '#ff0000' },
+      { id: 3, title: 'Academic', colour: '#2563eb' },
+      { id: 4, title: 'Events', colour: '#059669' },
+      { id: 5, title: 'Sports', colour: '#dc2626' },
+      { id: 6, title: 'Administrative', colour: '#7c3aed' }
+    ];
+    
+    const noticeContents = [
+      'Please read this important information carefully and take appropriate action.',
+      'We are pleased to announce this exciting opportunity for all students.',
+      'Your participation is highly encouraged. Please see details below.',
+      'This notice contains important updates to school policies and procedures.',
+      'Registration is now open. Limited spaces available - first come, first served.',
+      'All students and parents are invited to attend this important event.',
+      'Please ensure you have all required documentation before the deadline.',
+      'Contact the main office if you have any questions or concerns.',
+      'This is a mandatory requirement for all students in affected programs.',
+      'We appreciate your cooperation and understanding in this matter.'
+    ];
+    
+    const notices = Array.from({ length: noticeCount }, (_, i) => {
+      const baseDate = new Date('2025-12-31T12:00:00Z');
+      const randomDaysBack = Math.floor(Math.random() * 180); // Random date within the past 6 months
+      const randomHoursOffset = Math.floor(Math.random() * 24);
+      const randomMinutesOffset = Math.floor(Math.random() * 60);
+      
+      const noticeDate = new Date(baseDate);
+      noticeDate.setDate(noticeDate.getDate() - randomDaysBack);
+      noticeDate.setHours(randomHoursOffset, randomMinutesOffset);
+      
+      const label = labels[i % labels.length];
+      const title = noticeTitles[i % noticeTitles.length] + (i >= noticeTitles.length ? ` ${Math.floor(i / noticeTitles.length) + 1}` : '');
+      const staff = staffMembers[i % staffMembers.length];
+      const content = noticeContents[i % noticeContents.length];
+      
+      return {
+        id: i + 1,
+        title: title,
+        label_title: label.title,
+        staff: staff,
+        colour: label.colour,
+        label: label.id,
+        contents: `<p>${content}</p><p>Notice ID: ${i + 1} | Date: ${noticeDate.toLocaleDateString()}</p>`,
+        date: toISODate(noticeDate)
+      };
+    });
+    
+    // Sort by date descending (newest first)
+    const sortedNotices = notices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    return JSON.stringify({ payload: sortedNotices });
   }
 
   // REPORTS

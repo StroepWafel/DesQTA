@@ -2,10 +2,15 @@
   import { onMount } from 'svelte';
   import { seqtaFetch } from '../../utils/netUtil';
   import { Icon, ArrowTopRightOnSquare } from 'svelte-hero-icons';
+  import VirtualList from './VirtualList.svelte';
+  import VirtualNoticeItem from './VirtualNoticeItem.svelte';
 
   let homepageNotices = $state<any[]>([]);
   let homepageLabels = $state<any[]>([]);
   let loadingHomepageNotices = $state(true);
+  
+  // Notice item height for virtual scrolling
+  const NOTICE_ITEM_HEIGHT = 120;
 
   function formatDate(date: Date): string {
     const y = date.getFullYear();
@@ -30,7 +35,7 @@
       body: { date: formatDate(new Date()) },
     });
     const data = typeof response === 'string' ? JSON.parse(response) : response;
-    homepageNotices = Array.isArray(data?.payload) ? data.payload.slice(0, 50) : [];
+    homepageNotices = Array.isArray(data?.payload) ? data.payload.slice(0, 100) : []; // Increased for testing virtualization
     loadingHomepageNotices = false;
   }
 
@@ -72,7 +77,18 @@
       <div class="py-10 text-center text-slate-600 dark:text-slate-400">
         No notices available.
       </div>
+    {:else if homepageNotices.length > 15}
+      <!-- Use virtual scrolling for large lists -->
+      <VirtualList
+        items={homepageNotices}
+        itemHeight={NOTICE_ITEM_HEIGHT}
+        containerHeight={280}
+        keyFunction={(item) => item.id}
+        let:item>
+        <VirtualNoticeItem {item} index={0} {homepageLabels} />
+      </VirtualList>
     {:else}
+      <!-- Use regular rendering for smaller lists -->
       {#each homepageNotices as notice}
         <div
           class="p-4 mb-4 rounded-xl border transition-all duration-300 last:mb-0 bg-slate-100/60 dark:bg-slate-800/60 hover:bg-slate-200/80 dark:hover:bg-slate-800/80 border-slate-300/50 dark:border-slate-700/50 hover:border-slate-400/50 dark:hover:border-slate-600/50">
