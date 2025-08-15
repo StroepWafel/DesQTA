@@ -6,7 +6,7 @@
   import { Icon, Calendar, Clock, MagnifyingGlass } from 'svelte-hero-icons';
   import { fly, fade, scale, slide } from 'svelte/transition';
   import { quintOut, cubicOut } from 'svelte/easing';
-  import { studyTips } from './studyTips.ts';
+  import { studyTips } from './studytips.ts';
   import NotesContainer from '$lib/components/notes/NotesContainer.svelte';
 
   interface Subtask {
