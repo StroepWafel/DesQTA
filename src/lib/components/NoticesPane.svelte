@@ -4,15 +4,26 @@
   import { cache } from '../../utils/cache';
   import { getWithIdbFallback, setIdb } from '../services/idbCache';
   import { Icon, ArrowTopRightOnSquare } from 'svelte-hero-icons';
-  import VirtualList from './VirtualList.svelte';
-  import VirtualNoticeItem from './VirtualNoticeItem.svelte';
 
-  let homepageNotices = $state<any[]>([]);
-  let homepageLabels = $state<any[]>([]);
-  let loadingHomepageNotices = $state(true);
-  
-  // Notice item height for virtual scrolling
-  const NOTICE_ITEM_HEIGHT = 120;
+  interface Notice {
+    id: number;
+    title: string;
+    subtitle: string;
+    author: string;
+    color: string;
+    labelId: number;
+    content: string;
+  }
+
+  interface Label {
+    id: number;
+    title: string;
+    color: string;
+  }
+
+  let notices: Notice[] = $state([]);
+  let labels: Label[] = $state([]);
+  let loading = $state(true);
 
   function formatDate(date: Date): string {
     const y = date.getFullYear();
@@ -21,137 +32,113 @@
     return `${y}-${m}-${d}`;
   }
 
-  async function fetchHomepageLabels() {
+  async function fetchLabels() {
     try {
-      // Check memory cache first
-      const memCached = cache.get<any[]>('notices_labels');
+      const memCached = cache.get<Label[]>('notices_labels');
       if (memCached) {
-        homepageLabels = memCached;
+        labels = memCached;
         return;
       }
       
-      // Check IndexedDB fallback
-      const idbCached = await getWithIdbFallback<any[]>('notices_labels', 'notices_labels', () => null);
+      const idbCached = await getWithIdbFallback<Label[]>('notices_labels', 'notices_labels', () => null);
       if (idbCached) {
-        homepageLabels = idbCached;
-        // Restore to memory cache with remaining TTL estimation
+        labels = idbCached;
         cache.set('notices_labels', idbCached, 60);
         return;
       }
       
-      // Fetch from API
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { mode: 'labels' },
       });
       const data = typeof response === 'string' ? JSON.parse(response) : response;
       if (Array.isArray(data?.payload)) {
-        const labels = data.payload.map((l: any) => ({
+        labels = data.payload.map((l: any) => ({
           id: l.id,
           title: l.title,
-          colour: l.colour,
+          color: l.colour,
         }));
-        homepageLabels = labels;
-        cache.set('notices_labels', labels, 60); // 60 min TTL
+        cache.set('notices_labels', labels, 60);
         await setIdb('notices_labels', labels);
-      } else {
-        homepageLabels = [];
       }
     } catch (e) {
-      homepageLabels = [];
+      labels = [];
     }
   }
 
-  async function fetchHomepageNotices() {
-    loadingHomepageNotices = true;
+  async function fetchNotices() {
     try {
       const today = new Date();
-      const dateStr = formatDate(today);
-      const key = `notices_${dateStr}`;
+      const key = `notices_${formatDate(today)}`;
       
-      // Cache should now work properly with compatibility layer
-      
-      // Check memory cache first
-      const memCached = cache.get<any[]>(key);
+      const memCached = cache.get<Notice[]>(key);
       if (memCached) {
-        // Fix data structure for compatibility with VirtualNoticeItem (in case old cached data)
-        const fixedNotices = memCached.map(notice => ({
-          ...notice,
-          contents: notice.contents || notice.content, // Ensure contents field exists
-          staff: notice.staff || notice.author,         // Ensure staff field exists  
-          label: notice.label || notice.labelId         // Ensure label field exists
-        }));
-        homepageNotices = fixedNotices.slice(0, 100); // Limit for homepage
-        loadingHomepageNotices = false;
+        notices = memCached.slice(0, 10); // Show only first 10 notices in widget
         return;
       }
       
-      // Check IndexedDB fallback
-      const idbCached = await getWithIdbFallback<any[]>(key, key, () => null);
+      const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
       if (idbCached) {
-        // Fix data structure for compatibility with VirtualNoticeItem
-        const fixedNotices = idbCached.map(notice => ({
-          ...notice,
-          contents: notice.contents || notice.content, // Ensure contents field exists
-          staff: notice.staff || notice.author,         // Ensure staff field exists  
-          label: notice.label || notice.labelId         // Ensure label field exists
-        }));
-        homepageNotices = fixedNotices.slice(0, 100); // Limit for homepage
-        // Restore to memory cache with remaining TTL estimation
-        cache.set(key, fixedNotices, 30);
-        loadingHomepageNotices = false;
+        notices = idbCached.slice(0, 10);
+        cache.set(key, idbCached, 30);
         return;
       }
       
-      // Fetch from API
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
-        body: { date: dateStr },
+        body: { date: formatDate(today) },
       });
       const data = typeof response === 'string' ? JSON.parse(response) : response;
-      
       if (Array.isArray(data?.payload)) {
-        const notices = data.payload.map((n: any, i: number) => ({
-          id: n.id || (i + 1),
+        const fetchedNotices = data.payload.map((n: any, i: number) => ({
+          id: i + 1,
           title: n.title,
           subtitle: n.label_title,
           author: n.staff,
           color: n.colour,
           labelId: n.label,
           content: n.contents,
-          label: n.label, // Keep original structure for homepage
-          staff: n.staff,
-          contents: n.contents // This is what VirtualNoticeItem expects
         }));
-        homepageNotices = notices.slice(0, 100); // Limit for homepage
-        cache.set(key, notices, 30); // 30 min TTL
-        await setIdb(key, notices);
-      } else {
-        homepageNotices = [];
+        notices = fetchedNotices.slice(0, 10);
+        cache.set(key, fetchedNotices, 30);
+        await setIdb(key, fetchedNotices);
       }
     } catch (e) {
-      homepageNotices = [];
+      notices = [];
     }
-    loadingHomepageNotices = false;
   }
 
-  function getHomepageLabelColor(labelId: number): string {
-    return homepageLabels.find((l) => l.id === labelId)?.colour || '#910048';
+  function getLabelColor(labelId: number): string {
+    return labels.find((l) => l.id === labelId)?.color || '#910048';
   }
 
-  function getHomepageLabelTitle(labelId: number): string {
-    return homepageLabels.find((l) => l.id === labelId)?.title || '';
+  function getLabelTitle(labelId: number): string {
+    return labels.find((l) => l.id === labelId)?.title || '';
+  }
+
+  function isColorDark(hex: string): boolean {
+    hex = hex.replace('#', '');
+    if (hex.length === 3)
+      hex = hex
+        .split('')
+        .map((x) => x + x)
+        .join('');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.5;
   }
 
   onMount(async () => {
-    await Promise.all([fetchHomepageLabels(), fetchHomepageNotices()]);
+    loading = true;
+    await Promise.all([fetchLabels(), fetchNotices()]);
+    loading = false;
   });
 </script>
 
-<div
-  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-sm bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-  <div
-    class="flex justify-between items-center px-4 py-3 bg-gradient-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-sm bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+  <div class="flex justify-between items-center px-4 py-3 bg-gradient-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
     <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Notices</h3>
     <a
       href="/notices"
@@ -160,52 +147,56 @@
       <Icon src={ArrowTopRightOnSquare} class="inline ml-1 w-4 h-4" />
     </a>
   </div>
-  <div
-    class="overflow-y-auto px-6 py-4 max-h-80 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-slate-800/10">
-    {#if loadingHomepageNotices}
-      <div class="py-10 text-center">
-        <div
-          class="mx-auto w-12 h-12 rounded-full border-4 animate-spin border-indigo-500/30 border-t-indigo-500">
-        </div>
-        <p class="mt-4 text-slate-600 dark:text-slate-400">Loading notices...</p>
+  
+  <div class="overflow-y-auto px-4 py-4 max-h-80 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-slate-800/10">
+    {#if loading}
+      <div class="p-8 text-center text-[var(--text-muted)]">
+        <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent-500/30 border-t-accent-500 mx-auto"></div>
+        <p class="mt-4 text-sm">Loading notices...</p>
       </div>
-    {:else if homepageNotices.length === 0}
-      <div class="py-10 text-center text-slate-600 dark:text-slate-400">
-        No notices available.
+    {:else if notices.length === 0}
+      <div class="p-8 text-center text-[var(--text-muted)]">
+        <p class="text-sm">No notices available today.</p>
       </div>
-    {:else if homepageNotices.length > 15}
-      <!-- Use virtual scrolling for large lists -->
-      <VirtualList
-        items={homepageNotices}
-        itemHeight={NOTICE_ITEM_HEIGHT}
-        containerHeight={280}
-        keyFunction={(item) => item.id}
-        let:item>
-        <VirtualNoticeItem {item} index={0} {homepageLabels} />
-      </VirtualList>
     {:else}
-      <!-- Use regular rendering for smaller lists -->
-      {#each homepageNotices as notice}
-        <div
-          class="p-4 mb-4 rounded-xl border transition-all duration-300 last:mb-0 bg-slate-100/60 dark:bg-slate-800/60 hover:bg-slate-200/80 dark:hover:bg-slate-800/80 border-slate-300/50 dark:border-slate-700/50 hover:border-slate-400/50 dark:hover:border-slate-600/50">
-          <div class="flex gap-2 items-center mb-2">
-            <span
-              class="px-2.5 py-1 text-xs font-medium rounded-full animate-gradient"
-              style="background: linear-gradient(135deg, {getHomepageLabelColor(
-                notice.label,
-              )}, {getHomepageLabelColor(notice.label)}dd); color: white;">
-              {getHomepageLabelTitle(notice.label)}
-            </span>
-            <span class="text-xs text-slate-600 dark:text-slate-400">{notice.staff}</span>
+      <div class="space-y-3">
+        {#each notices as notice}
+          <div class="rounded-lg shadow-sm bg-white/10 text-[var(--text)] border-l-4 p-3 transition-all duration-200 hover:shadow-md hover:bg-white/20"
+               style="border-left-color: {getLabelColor(notice.labelId)};">
+            <div class="flex items-start gap-2 mb-2">
+              <span
+                class="px-2 py-1 text-xs font-medium rounded-full text-white shrink-0"
+                style="background-color: {getLabelColor(notice.labelId)};"
+                class:text-black={!isColorDark(getLabelColor(notice.labelId))}>
+                {getLabelTitle(notice.labelId)}
+              </span>
+              <span class="text-xs text-[var(--text-muted)] uppercase tracking-wide shrink-0">
+                {notice.author}
+              </span>
+            </div>
+            <h4 class="font-semibold text-sm mb-1 line-clamp-1">{notice.title}</h4>
+            <div class="text-xs text-[var(--text-muted)] line-clamp-2">
+              {@html notice.content}
+            </div>
           </div>
-          <div class="mb-2 text-base font-bold text-slate-900 dark:text-white">
-            {notice.title}
-          </div>
-          <div class="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">
-            {@html notice.contents}
-          </div>
-        </div>
-      {/each}
+        {/each}
+      </div>
     {/if}
   </div>
-</div> 
+</div>
+
+<style>
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style> 

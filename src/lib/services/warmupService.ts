@@ -36,7 +36,8 @@ async function prefetchLessonColours(): Promise<any[]> {
 		const colours = JSON.parse(res).payload;
 		// Align with assessments page which uses 10 minutes for lesson_colours
 		cache.set('lesson_colours', colours, 10);
-		logger.info('warmup', 'prefetchLessonColours', 'Cached lesson_colours (mem)', { ttlMin: 10, count: colours?.length });
+		await setIdb('lesson_colours', colours);
+		logger.info('warmup', 'prefetchLessonColours', 'Cached lesson_colours (mem+idb)', { ttlMin: 10, count: colours?.length });
 		return colours;
 	} catch {
 		return [];
@@ -67,7 +68,8 @@ async function prefetchTimetableWeek(): Promise<void> {
 			return lesson;
 		});
 		cache.set(cacheKey, lessons, 30);
-		logger.info('warmup', 'prefetchTimetableWeek', 'Cached timetable week (mem)', { key: cacheKey, ttlMin: 30, count: lessons?.length });
+		await setIdb(cacheKey, lessons);
+		logger.info('warmup', 'prefetchTimetableWeek', 'Cached timetable week (mem+idb)', { key: cacheKey, ttlMin: 30, count: lessons?.length });
 	} catch {
 		// ignore warmup errors
 	}
@@ -110,12 +112,10 @@ async function prefetchUpcomingAssessments(): Promise<void> {
 			})
 			.sort((a: any, b: any) => (a.due < b.due ? -1 : 1));
 
-		cache.set(
-			'upcoming_assessments_data',
-			{ assessments: upcomingAssessments, subjects: activeSubjects, filters: subjectFilters },
-			60,
-		);
-		logger.info('warmup', 'prefetchUpcomingAssessments', 'Cached upcoming assessments (mem)', { ttlMin: 60, assessments: upcomingAssessments?.length });
+		const upcomingData = { assessments: upcomingAssessments, subjects: activeSubjects, filters: subjectFilters };
+		cache.set('upcoming_assessments_data', upcomingData, 60);
+		await setIdb('upcoming_assessments_data', upcomingData);
+		logger.info('warmup', 'prefetchUpcomingAssessments', 'Cached upcoming assessments (mem+idb)', { ttlMin: 60, assessments: upcomingAssessments?.length });
 	} catch {
 		// ignore warmup errors
 	}
@@ -211,18 +211,16 @@ async function prefetchAssessmentsOverview(): Promise<void> {
 		const years = Array.from(yearsSet).sort((a, b) => b - a);
 
 		// 9) Store cache object exactly as page expects (10 minute TTL)
-		cache.set(
-			'assessments_overview_data',
-			{
-				assessments: upcomingAssessments,
-				subjects: activeSubjects,
-				allSubjects: allSubjects,
-				filters: subjectFilters,
-				years: years,
-			},
-			10,
-		);
-		logger.info('warmup', 'prefetchAssessmentsOverview', 'Cached assessments_overview_data (mem)', { ttlMin: 10, assessments: upcomingAssessments?.length, subjects: activeSubjects?.length });
+		const overviewData = {
+			assessments: upcomingAssessments,
+			subjects: activeSubjects,
+			allSubjects: allSubjects,
+			filters: subjectFilters,
+			years: years,
+		};
+		cache.set('assessments_overview_data', overviewData, 10);
+		await setIdb('assessments_overview_data', overviewData);
+		logger.info('warmup', 'prefetchAssessmentsOverview', 'Cached assessments_overview_data (mem+idb)', { ttlMin: 10, assessments: upcomingAssessments?.length, subjects: activeSubjects?.length });
 	} catch {
 		// ignore warmup errors
 	}
