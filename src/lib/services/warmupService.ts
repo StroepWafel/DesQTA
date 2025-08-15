@@ -1,6 +1,7 @@
 import { cache } from '../../utils/cache';
 import { seqtaFetch } from '../../utils/netUtil';
 import { logger } from '../../utils/logger';
+import { setIdb } from './idbCache';
 
 // Centralized background warm-up of frequently used SEQTA endpoints.
 // This primes the in-memory cache so pages can render instantly.
@@ -239,7 +240,8 @@ async function prefetchNoticesLabels(): Promise<void> {
         if (Array.isArray(data?.payload)) {
             const labels = data.payload.map((l: any) => ({ id: l.id, title: l.title, color: l.colour }));
             cache.set('notices_labels', labels, 60); // 60 min TTL
-            logger.info('warmup', 'prefetchNoticesLabels', 'Cached notices_labels (mem)', { ttlMin: 60, count: labels?.length });
+            await setIdb('notices_labels', labels);
+            logger.info('warmup', 'prefetchNoticesLabels', 'Cached notices_labels (mem+idb)', { ttlMin: 60, count: labels?.length });
         }
     } catch {
         // ignore warmup errors
@@ -271,7 +273,8 @@ async function prefetchTodayNotices(): Promise<void> {
                 content: n.contents,
             }));
             cache.set(key, notices, 30); // 30 min TTL
-            logger.info('warmup', 'prefetchTodayNotices', 'Cached notices (today) (mem)', { key, ttlMin: 30, count: notices?.length });
+            await setIdb(key, notices);
+            logger.info('warmup', 'prefetchTodayNotices', 'Cached notices (today) (mem+idb)', { key, ttlMin: 30, count: notices?.length });
         }
     } catch {
         // ignore warmup errors

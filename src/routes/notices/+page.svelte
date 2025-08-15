@@ -35,11 +35,23 @@
 
   async function fetchLabels() {
     try {
-      const cached = cache.get<Label[]>('notices_labels') || await getWithIdbFallback<Label[]>('notices_labels', 'notices_labels', () => cache.get('notices_labels'));
-      if (cached) {
-        labels = cached;
+      const memCached = cache.get<Label[]>('notices_labels');
+      if (memCached) {
+        console.info('[CACHE] notices_labels hit (memory)', { count: memCached.length });
+        labels = memCached;
         return;
       }
+      
+      const idbCached = await getWithIdbFallback<Label[]>('notices_labels', 'notices_labels', () => null);
+      if (idbCached) {
+        console.info('[CACHE] notices_labels hit (IndexedDB fallback)', { count: idbCached.length });
+        labels = idbCached;
+        // Restore to memory cache with remaining TTL estimation
+        cache.set('notices_labels', idbCached, 60);
+        return;
+      }
+      
+      console.info('[CACHE] notices_labels miss - fetching from API');
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { mode: 'labels' },
@@ -52,12 +64,13 @@
           color: l.colour,
         }));
         cache.set('notices_labels', labels, 60); // 60 min TTL
-        console.info('[IDB] notices_labels cached (mem+idb)', { count: labels.length });
         await setIdb('notices_labels', labels);
+        console.info('[CACHE] notices_labels stored (mem+idb)', { count: labels.length });
       } else {
         labels = [];
       }
     } catch (e) {
+      console.error('[CACHE] notices_labels fetch failed', e);
       labels = [];
     }
   }
@@ -67,12 +80,26 @@
     error = null;
     try {
       const key = `notices_${formatDate(selectedDate)}`;
-      const cached = cache.get<Notice[]>(key) || await getWithIdbFallback<Notice[]>(key, key, () => cache.get<Notice[]>(key));
-      if (cached) {
-        notices = cached;
+      
+      const memCached = cache.get<Notice[]>(key);
+      if (memCached) {
+        console.info('[CACHE] notices hit (memory)', { key, count: memCached.length });
+        notices = memCached;
         loading = false;
         return;
       }
+      
+      const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
+      if (idbCached) {
+        console.info('[CACHE] notices hit (IndexedDB fallback)', { key, count: idbCached.length });
+        notices = idbCached;
+        // Restore to memory cache with remaining TTL estimation
+        cache.set(key, idbCached, 30);
+        loading = false;
+        return;
+      }
+      
+      console.info('[CACHE] notices miss - fetching from API', { key, date: formatDate(selectedDate) });
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { date: formatDate(selectedDate) },
@@ -89,12 +116,13 @@
           content: n.contents,
         }));
         cache.set(key, notices, 30); // 30 min TTL
-        console.info('[IDB] notices cached (mem+idb)', { key, count: notices.length });
         await setIdb(key, notices);
+        console.info('[CACHE] notices stored (mem+idb)', { key, count: notices.length });
       } else {
         notices = [];
       }
     } catch (e) {
+      console.error('[CACHE] notices fetch failed', { key: `notices_${formatDate(selectedDate)}`, error: e });
       error = 'Failed to load notices.';
       notices = [];
     } finally {
