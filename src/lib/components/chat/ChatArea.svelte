@@ -3,6 +3,8 @@
   import { ChatBubbleLeftRight } from 'svelte-hero-icons';
   import ChatMessage from './ChatMessage.svelte';
   import ChatInput from './ChatInput.svelte';
+  import VirtualList from '$lib/components/VirtualList.svelte';
+  import VirtualChatMessage from '$lib/components/VirtualChatMessage.svelte';
   import type { Friend, Group, Message } from './types.js';
   import { getFullPfpUrl } from './types.js';
 
@@ -55,6 +57,9 @@
   // Internal DOM references
   let messageInput: HTMLInputElement | null = null;
   let chatEnd = $state<HTMLDivElement | null>(null);
+  
+  // Chat message height for virtual scrolling (estimated)
+  const CHAT_MESSAGE_HEIGHT = 80;
 
   // Auto-scroll to bottom when new messages are added
   $effect(() => {
@@ -102,14 +107,31 @@
           </div>
         {/if}
         
-        {#each messages as msg}
-          <ChatMessage 
-            message={msg}
-            isOwnMessage={msg.senderId === (cloudUser?.id ?? -1)}
-            showSenderName={!!selectedGroup && !!msg.sender}
-            onReply={onReply}
-          />
-        {/each}
+        {#if messages.length > 50}
+          <VirtualList
+            items={messages}
+            itemHeight={CHAT_MESSAGE_HEIGHT}
+            containerHeight={400}
+            keyFunction={(item) => item.id}
+            let:item>
+            <VirtualChatMessage
+              {item}
+              index={0}
+              isOwnMessage={item.senderId === (cloudUser?.id ?? -1)}
+              showSenderName={!!selectedGroup && !!item.sender}
+              {onReply}
+            />
+          </VirtualList>
+        {:else}
+          {#each messages as msg}
+            <ChatMessage 
+              message={msg}
+              isOwnMessage={msg.senderId === (cloudUser?.id ?? -1)}
+              showSenderName={!!selectedGroup && !!msg.sender}
+              onReply={onReply}
+            />
+          {/each}
+        {/if}
         
         <div bind:this={chatEnd}></div>
       {/if}
