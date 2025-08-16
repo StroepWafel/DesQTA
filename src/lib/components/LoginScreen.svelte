@@ -692,6 +692,12 @@
                             }
                             onUrlChange(normalized);
                           }}
+                           onkeydown={(e) => {
+                            if (e.key === 'Enter' && seqtaUrl.trim()) {
+                             jwtExpiredError = false;
+                           onStartLogin();
+                            }
+                          }}
                           placeholder="school.seqta.com.au"
                           class="w-full py-4 px-6 bg-white/10 dark:bg-slate-800/10 backdrop-blur-xl border border-white/20 dark:border-slate-700/20 rounded-2xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-slate-800/20"
                         />
