@@ -58,6 +58,9 @@ export function invalidateDevSensitiveInfoHiderCache(): void {
 }
 
 export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promise<any> {
+  // TEMPORARY: Return "test" instead of making real API calls
+  return "test";
+  
   // Read once with memoization to prevent dozens of calls on startup
   const useMock = await getDevSensitiveInfoHider();
   
