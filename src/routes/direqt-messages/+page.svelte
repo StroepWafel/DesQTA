@@ -107,8 +107,6 @@
         }));
         messages = [...sentMsgs, ...outboxMsgs].sort((a, b) => b.date.localeCompare(a.date));
       } else if (folderLabel.includes('rss-')) {
-        // TEMPORARILY DISABLED - RSS feed fetching
-        /*
         let rssfeeddata: any = [];
         console.log();
         let rss = await getRSS(folderLabel.replace('rss-', ''));
@@ -142,8 +140,6 @@
           .sort((a: any, b: any) => b.date.localeCompare(a.date));
         // console.log(rssfeeddata)
         messages = rssfeeddata;
-        */
-        messages = []; // Return empty array while RSS is disabled
       } else {
         const response = await seqtaFetch('/seqta/student/load/message?', {
           method: 'POST',

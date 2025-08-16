@@ -45,8 +45,6 @@
     uk: ['http://feeds.bbci.co.uk/news/rss.xml', 'https://www.theguardian.com/uk/rss'],
   };
 
-  // TEMPORARILY DISABLED - Australian news fetching
-  /*
   async function fetchAustraliaNews(): Promise<NewsItem[]> {
     try {
       const date = new Date();
@@ -73,13 +71,7 @@
       return [];
     }
   }
-  */
-  async function fetchAustraliaNews(): Promise<NewsItem[]> {
-    return []; // Return empty array while disabled
-  }
 
-  // TEMPORARILY DISABLED - RSS feed fetching
-  /*
   async function fetchFromRSS(feeds: string[]): Promise<NewsItem[]> {
     const results = await Promise.all(
       feeds.map(async (feedUrl) => {
@@ -100,13 +92,7 @@
     );
     return results.flat();
   }
-  */
-  async function fetchFromRSS(feeds: string[]): Promise<NewsItem[]> {
-    return []; // Return empty array while disabled
-  }
 
-  // TEMPORARILY DISABLED - Main news fetching function
-  /*
   async function fetchNews() {
     loading = true;
     error = '';
@@ -129,12 +115,6 @@
     } finally {
       loading = false;
     }
-  }
-  */
-  async function fetchNews() {
-    loading = false;
-    error = 'News fetching is temporarily disabled';
-    items = [];
   }
 
   function timeAgo(iso?: string) {
