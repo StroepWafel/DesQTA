@@ -95,7 +95,7 @@
       if (sessionExists) {
         logger.debug('layout', 'checkSession', 'Loading user info');
         await loadUserInfo();
-        await loadSeqtaConfigAndMenu();
+        //await loadSeqtaConfigAndMenu();
       }
       
       logger.logFunctionExit('layout', 'checkSession', { sessionExists });
@@ -213,7 +213,7 @@
         clearInterval(timer);
         needsSetup.set(false);
         await loadUserInfo();
-        await loadSeqtaConfigAndMenu();
+        //await loadSeqtaConfigAndMenu();
       }
     }, 1000);
 
