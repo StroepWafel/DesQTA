@@ -618,10 +618,14 @@
               {/if}
 
                             <!-- Content Container with Height Animation -->
-              <div class="transition-all duration-500 ease-in-out overflow-hidden" style="height: {isMobile || loginMethod === 'qr' ? '400px' : '200px'};">
+                      <div
+                        class="transition-all duration-500 ease-in-out overflow-hidden"
+                        style="height: {isMobile || loginMethod === 'qr' ? '350px' : '200px'};"
+                      >
+
                 <!-- QR Code Method -->
                 {#if isMobile || loginMethod === 'qr'}
-                  <div class="space-y-6 px-2">
+                  <div class="space-y-4 px-2">
                     <div class="text-center space-y-2">
                       <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Quick Login</h2>
                       <p class="text-slate-600 dark:text-slate-400">Scan your SEQTA QR code to sign in instantly</p>
@@ -638,7 +642,7 @@
                       />
                       <label
                         for="qr-upload"
-                        class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-indigo-300/60 dark:border-indigo-600/60 rounded-2xl cursor-pointer bg-white/5 dark:bg-slate-800/5 backdrop-blur-xl hover:bg-white/15 dark:hover:bg-slate-800/15 transition-all duration-300 group hover:border-indigo-400/80 dark:hover:border-indigo-500/80 hover:scale-[1.02]"
+                        class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-indigo-300/60 dark:border-indigo-600/60 rounded-2xl cursor-pointer bg-white/5 dark:bg-slate-800/5 backdrop-blur-xl hover:bg-white/15 dark:hover:bg-slate-800/15 transition-all duration-300 group hover:border-indigo-400/80 dark:hover:border-indigo-500/80 hover:scale-[1.02]"
                       >
                         <div class="flex flex-col items-center space-y-4">
                           <div class="p-4 bg-white/15 dark:bg-slate-800/20 backdrop-blur-xl rounded-full group-hover:scale-110 transition-transform duration-200 border border-white/20 dark:border-slate-700/20">
