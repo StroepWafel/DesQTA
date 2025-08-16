@@ -23,6 +23,8 @@
     ];
     const subset = await invoke<any>('get_settings_subset', { keys: ['feeds'] });
     console.log(subset?.feeds);
+    // TEMPORARILY DISABLED - RSS feed fetching for sidebar
+    /*
     for (let item of (subset?.feeds || [])) {
       console.log(item.url);
       let title = await getRSS(item.url);
@@ -32,6 +34,7 @@
         id: `rss-${item.url}`,
       });
     }
+    */
     return folders;
   }
   const rssFeeds = a();

@@ -57,6 +57,8 @@
     netherlands: ['https://www.dutchnews.nl/feed/', 'https://www.nrc.nl/rss/'],
   };
 
+  // TEMPORARILY DISABLED - Australian news fetching
+  /*
   const fetchAustraliaNews = async (from: string, domains: string) => {
     try {
       const response = await invoke<any>('get_news_australia', { from, domains });
@@ -66,8 +68,11 @@
       throw error;
     }
   };
+  */
 
   const fetchNews = async (source: string) => {
+    // TEMPORARILY DISABLED - News fetching has been commented out
+    /*
     try {
       // Check cache first
       const cacheKey = `news_${source}`;
@@ -128,6 +133,12 @@
     } finally {
       loading = false;
     }
+    */
+    
+    // Return dummy data while news fetching is disabled
+    news = [];
+    loading = false;
+    error = 'News fetching is temporarily disabled';
   };
 
   const handleSourceChange = async (source: string) => {
