@@ -64,7 +64,10 @@ export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promis
     '/seqta/student/load/profile',
     '/seqta/student/photo/get',
     '/seqta/student/heartbeat',
-    '/seqta/student/load/settings'
+    '/seqta/student/load/settings',
+    '/seqta/student/load/prefs',
+    '/seqta/student/load/timetable',
+    '/seqta/student/dashlet/summary/homework'
   ];
   
   const isAuthCall = authEndpoints.some(endpoint => input.includes(endpoint));
