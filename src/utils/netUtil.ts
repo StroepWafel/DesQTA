@@ -58,21 +58,6 @@ export function invalidateDevSensitiveInfoHiderCache(): void {
 }
 
 export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promise<any> {
-  // TEMPORARY: Allow auth calls through, return "test" for others
-  const authEndpoints = [
-    '/seqta/student/login',
-    '/seqta/student/load/profile',
-    '/seqta/student/photo/get',
-    '/seqta/student/heartbeat',
-    '/seqta/student/load/settings'
-  ];
-  
-  const isAuthCall = authEndpoints.some(endpoint => input.includes(endpoint));
-  
-  if (!isAuthCall) {
-    return "test";
-  }
-  
   // Read once with memoization to prevent dozens of calls on startup
   const useMock = await getDevSensitiveInfoHider();
   
