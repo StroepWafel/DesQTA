@@ -18,7 +18,7 @@ body:
 
   - type: input
     attributes:
-      label: Extension version
+      label: Application version
       description: What version of the program are you using?
       placeholder: (eg v1.6.2)
     validations:
@@ -34,6 +34,7 @@ body:
         - Ubuntu
         - Arch
         - Other Linux-based OS
+        - Other Non Linux-based OS
     validations:
       required: true
 
