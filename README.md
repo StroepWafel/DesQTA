@@ -39,7 +39,7 @@
   - Ensures a responsive and modern UI across different devices.
 
 ## Weekly Builds
-Nightly builds are available under the releases tab, tagged with nightly-release.   
+Weekly builds are available via GitHub Actions. You can download the latest build artifacts from the workflow page linked below.
 [Quick access link](https://github.com/BetterSEQTA/DesQTA/actions/workflows/nightlybuild.yml)
 
 ## Full Releases
