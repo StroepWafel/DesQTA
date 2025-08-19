@@ -8,6 +8,7 @@
   import { theme } from '$lib/stores/theme';
   import { tick } from 'svelte';
   import { fly, fade, scale } from 'svelte/transition';
+  import { Input, Button } from '$lib/components/ui';
 
   // Remove jsQR import and add html5-qrcode import
   import { Html5Qrcode } from 'html5-qrcode';

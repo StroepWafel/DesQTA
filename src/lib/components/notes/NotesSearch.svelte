@@ -5,6 +5,7 @@
   import { quintOut } from 'svelte/easing';
   import { NotesService } from '../../services/notesService';
   import type { Note, SearchResult, SearchFilters, NoteFolder } from './types/editor';
+  import { SearchInput, Button } from '$lib/components/ui';
 
   // Events
   const dispatch = createEventDispatcher<{
@@ -211,23 +212,15 @@
     >
       <!-- Search Header -->
       <div class="flex items-center p-6 border-b border-slate-200 dark:border-slate-700">
-        <div class="flex-1 relative">
-          <Icon src={MagnifyingGlass} class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search your notes..."
-            class="w-full pl-10 pr-4 py-3 text-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring"
+        <div class="flex-1">
+          <SearchInput
             bind:value={searchQuery}
-            autofocus
+            placeholder="Search your notes..."
+            clearable={true}
+            debounce={300}
+            class="text-lg"
+            onSearch={() => {}}
           />
-          {#if searchQuery}
-            <button
-              class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              on:click={clearSearch}
-            >
-              <Icon src={XMark} class="w-4 h-4" />
-            </button>
-          {/if}
         </div>
         
         <div class="flex items-center space-x-2 ml-4">

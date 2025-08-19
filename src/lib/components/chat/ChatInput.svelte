@@ -4,6 +4,7 @@
   import type { Message } from './types.js';
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
+  import { Input, Button } from '$lib/components/ui';
 
   let { 
     newMessage, 
@@ -140,13 +141,12 @@
 </div>
 
 <form class="flex gap-2 mt-auto" on:submit|preventDefault={onSendMessage}>
-  <input 
-    bind:this={messageInput}
-    type="text" 
-    class="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/80 text-slate-900 dark:text-white focus:outline-none focus:ring-2 ring-accent-500 transition-colors duration-200" 
-    placeholder="Type a message..." 
-    bind:value={newMessage} 
-    disabled={sending} 
+  <Input
+    bind:value={newMessage}
+    placeholder="Type a message..."
+    disabled={sending}
+    class="flex-1"
+    inputClass="bg-white/60 dark:bg-slate-900/80"
   />
   
   <input 

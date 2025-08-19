@@ -2,6 +2,7 @@
 import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 import { goto } from '$app/navigation';
 import { writable, derived } from 'svelte/store';
+import { Button } from '$lib/components/ui';
 import { 
   Icon, 
   Squares2x2, 
@@ -754,8 +755,10 @@ onDestroy(() => {
 
 <!-- Header search trigger -->
 <div class="flex-1 flex justify-center" data-tauri-drag-region>
-  <button
-    type="button"
+  <Button
+    variant="ghost"
+    onclick={openModal}
+    ariaLabel="Open global search (Ctrl+K)"
     class="group relative max-w-72 w-full px-5 py-2 rounded-xl bg-white/20 dark:bg-gray-800/40 border border-accent text-accent font-semibold shadow-md backdrop-blur-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 flex items-center justify-between
     
     /* Responsive sizing */
@@ -767,8 +770,6 @@ onDestroy(() => {
     max-[640px]:max-w-48 max-[640px]:px-3
     max-[500px]:max-w-36 max-[500px]:px-2
     max-[400px]:max-w-12 max-[400px]:px-0 max-[400px]:justify-center"
-    onclick={openModal}
-    aria-label="Open global search (Ctrl+K)"
   >
     <div class="flex items-center gap-3 min-w-0
     /* Hide text content on very small screens */
@@ -787,7 +788,7 @@ onDestroy(() => {
       <kbd class="px-1.5 py-0.5 rounded bg-white/20 dark:bg-gray-700/50">⌘</kbd>
       <kbd class="px-1.5 py-0.5 rounded bg-white/20 dark:bg-gray-700/50">K</kbd>
     </div>
-  </button>
+  </Button>
 </div>
 
 {#if $showModal}

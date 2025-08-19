@@ -12,6 +12,7 @@
   import ShortcutsWidget from '$lib/components/ShortcutsWidget.svelte';
   import RecentNews from '$lib/components/RecentNews.svelte';
   import MessagesPreview from '$lib/components/MessagesPreview.svelte';
+  import { Button } from '$lib/components/ui';
   import { Icon } from 'svelte-hero-icons';
   import { 
     ArrowsPointingOut, 
@@ -582,26 +583,15 @@
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
     {#if isEditMode}
       <div class="flex flex-wrap gap-2">
-        <button
-          onclick={() => addWidget()}
-          class="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base rounded-lg bg-accent text-white hover:accent-bg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-        >
+        <Button variant="primary" onclick={() => addWidget()}>
           + Add Widget
-        </button>
-        <button
-          onclick={compactLayout}
-          class="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          <Icon src={Squares2x2} class="w-4 h-4" />
+        </Button>
+        <Button variant="info" icon={Squares2x2} onclick={compactLayout}>
           Compact
-        </button>
-        <button
-          onclick={resetLayout}
-          class="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base rounded-lg bg-slate-500 text-white hover:bg-slate-600 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-        >
-          <Icon src={ArrowPath} class="w-4 h-4" />
+        </Button>
+        <Button variant="secondary" icon={ArrowPath} onclick={resetLayout}>
           Reset Layout
-        </button>
+        </Button>
       </div>
     {/if}
   </div>
