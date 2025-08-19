@@ -6,8 +6,9 @@
   import { Icon, Calendar, Clock, MagnifyingGlass } from 'svelte-hero-icons';
   import { fly, fade, scale, slide } from 'svelte/transition';
   import { quintOut, cubicOut } from 'svelte/easing';
-  import { studyTips } from './studytips.ts';
+  import { studyTips } from './studytips';
   import NotesContainer from '$lib/components/notes/NotesContainer.svelte';
+  import { Button, Input, Badge } from '$lib/components/ui';
 
   interface Subtask {
     id: string;
@@ -702,8 +703,8 @@
                         <div class="mt-2 text-xs text-slate-500 dark:text-slate-400">{(todo.subtasks ?? []).filter(s=>s.completed).length}/{todo.subtasks?.length} subtasks done</div>
                       {/if}
                       <div class="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <button class="px-2 py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>✓ All subtasks</button>
-                        <button class="px-2 py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => duplicateTodo(todo.id)}>Duplicate</button>
+                        <Button variant="ghost" size="xs" onclick={() => markAllSubtasksDone(todo.id)}>✓ All subtasks</Button>
+                        <Button variant="ghost" size="xs" onclick={() => duplicateTodo(todo.id)}>Duplicate</Button>
                       </div>
                     </div>
                   </div>

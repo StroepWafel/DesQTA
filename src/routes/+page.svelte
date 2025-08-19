@@ -729,9 +729,10 @@
     <h2 class="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white mb-4">Add Widget</h2>
     <div class="grid grid-cols-1 gap-3">
       {#each getAvailableWidgets() as widget}
-        <button
+        <Button
+          variant="ghost"
           onclick={() => selectWidget(widget.id)}
-          class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+          class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 justify-start h-auto"
         >
           <span class="text-xl sm:text-2xl">{widget.icon}</span>
           <div class="text-left">
@@ -741,7 +742,7 @@
               {widget.defaultHeight === 1 ? 'Normal height' : 'Double height'}
             </div>
           </div>
-        </button>
+        </Button>
       {/each}
     </div>
   </div>

@@ -665,14 +665,16 @@
                     </div>
 
                                       <!-- Live scan button -->
-                  <button
-                    type="button"
-                    class="w-full py-3 px-6 bg-gradient-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-slate-700 dark:text-slate-800 font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 ease-out transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2"
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    fullWidth={true}
+                    icon={Camera}
                     onclick={startLiveScan}
+                    class="py-3 px-6 bg-gradient-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-slate-700 dark:text-slate-800 font-semibold rounded-2xl shadow-lg hover:shadow-xl"
                   >
-                      <Icon src={Camera} class="w-5 h-5 inline mr-3 transition-transform duration-300 group-hover:rotate-12" />
-                      Scan with Camera
-                    </button>
+                    Scan with Camera
+                  </Button>
               </div>
             {/if}
             
@@ -686,7 +688,7 @@
 
                     <div class="space-y-4">
                       <div class="relative px-4">
-                        <input
+                        <Input
                           type="text"
                           bind:value={seqtaUrl}
                           oninput={(e) => {
@@ -697,14 +699,14 @@
                             }
                             onUrlChange(normalized);
                           }}
-                           onkeydown={(e) => {
+                          onkeydown={(e) => {
                             if (e.key === 'Enter' && seqtaUrl.trim()) {
                              jwtExpiredError = false;
                            onStartLogin();
                             }
                           }}
                           placeholder="school.seqta.com.au"
-                          class="w-full py-4 px-6 bg-white/10 dark:bg-slate-800/10 backdrop-blur-xl border border-white/20 dark:border-slate-700/20 rounded-2xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-slate-800/20"
+                          inputClass="w-full py-4 px-6 bg-white/10 dark:bg-slate-800/10 backdrop-blur-xl border border-white/20 dark:border-slate-700/20 rounded-2xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-slate-800/20"
                         />
                       </div>
                     </div>
@@ -763,17 +765,19 @@
             {/if}
 
                                           <!-- Sign In Button -->
-              <button
-                id="signin-button"
-                class="w-full py-4 px-6 bg-gradient-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-slate-300 disabled:to-slate-400 text-slate-700 dark:text-slate-800 disabled:text-slate-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-500 ease-out transform hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2 group"
-            onclick={() => {
-              jwtExpiredError = false;
-              onStartLogin();
-            }}
-                  disabled={jwtExpiredError || (!isMobile && loginMethod === 'url' && !seqtaUrl.trim()) || ((isMobile || loginMethod === 'qr') && !qrSuccess)}
-                >
-                  <span class="transition-transform duration-300 group-hover:translate-x-1">Sign In to DesQTA</span>
-          </button>
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth={true}
+                onclick={() => {
+                  jwtExpiredError = false;
+                  onStartLogin();
+                }}
+                disabled={jwtExpiredError || (!isMobile && loginMethod === 'url' && !seqtaUrl.trim()) || ((isMobile || loginMethod === 'qr') && !qrSuccess)}
+                class="py-4 px-6 bg-gradient-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-slate-300 disabled:to-slate-400 text-slate-700 dark:text-slate-800 disabled:text-slate-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none"
+              >
+                Sign In to DesQTA
+              </Button>
 
               <!-- Help Link -->
           <div class="text-center">

@@ -13,6 +13,7 @@
     BuildingOffice,
     CalendarDays,
   } from 'svelte-hero-icons';
+  import { Button } from '$lib/components/ui';
 
   const studentId = 69; //! literally changes nothing but was used in the original seqta code.
 
@@ -253,20 +254,24 @@
 
             {#if lesson.programmeID !== 0}
               <div class="flex gap-3">
-                <button
-                  class="flex justify-center items-center w-9 h-9 rounded-lg border transition-all duration-300 text-slate-700 bg-slate-200/70 dark:bg-slate-800/70 hover:accent-bg-hover dark:text-slate-300 hover:text-white border-slate-300/50 dark:border-slate-700/50 hover:accent-border"
-                  aria-label="View Assessment"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={DocumentText}
+                  ariaLabel="View Assessment"
                   onclick={() =>
-                    (location.href = `/assessments?code=${lesson.code}&date=${lesson.date}`)}>
-                  <Icon src={DocumentText} class="w-5 h-5" />
-                </button>
-                <button
-                  class="flex justify-center items-center w-9 h-9 rounded-lg border transition-all duration-300 text-slate-700 bg-slate-200/70 dark:bg-slate-800/70 hover:accent-bg-hover dark:text-slate-300 hover:text-white border-slate-300/50 dark:border-slate-700/50 hover:accent-border"
-                  aria-label="View Course"
+                    (location.href = `/assessments?code=${lesson.code}&date=${lesson.date}`)}
+                  class="w-9 h-9 p-0 bg-slate-200/70 dark:bg-slate-800/70 hover:bg-accent-500 hover:text-white border border-slate-300/50 dark:border-slate-700/50"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={BookOpen}
+                  ariaLabel="View Course"
                   onclick={() =>
-                    (location.href = `/courses?code=${lesson.code}&date=${lesson.date}`)}>
-                  <Icon src={BookOpen} class="w-5 h-5" />
-                </button>
+                    (location.href = `/courses?code=${lesson.code}&date=${lesson.date}`)}
+                  class="w-9 h-9 p-0 bg-slate-200/70 dark:bg-slate-800/70 hover:bg-accent-500 hover:text-white border border-slate-300/50 dark:border-slate-700/50"
+                />
               </div>
             {/if}
           </div>

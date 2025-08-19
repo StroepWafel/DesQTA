@@ -2,6 +2,7 @@
   import AssessmentCard from './AssessmentCard.svelte';
   import VirtualList from './VirtualList.svelte';
   import VirtualAssessmentCard from './VirtualAssessmentCard.svelte';
+  import { Card, Badge, Button } from '$lib/components/ui';
 
   interface Assessment {
     id: number;
@@ -126,7 +127,7 @@
                 <p class="text-sm text-slate-600 dark:text-slate-400">
                   {subject.code}
                   {#if activeSubjects && activeSubjects.some((as: any) => as.code === subject.code)}
-                    <span class="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded">Active</span>
+                    <Badge variant="success" size="xs" class="ml-2">Active</Badge>
                   {/if}
                 </p>
               </div>

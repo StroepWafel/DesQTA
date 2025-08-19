@@ -6,6 +6,7 @@
   import { NotesService } from '../../services/notesService';
   import NotesSearch from './NotesSearch.svelte';
   import type { Note, NoteFolder } from './types/editor';
+  import { Button } from '$lib/components/ui';
 
   // Events
   const dispatch = createEventDispatcher<{
@@ -618,12 +619,13 @@
 
       <!-- Modal Footer -->
       <div class="flex justify-end p-6 border-t border-slate-200 dark:border-slate-700">
-        <button
-          class="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200"
-          on:click={() => showMoveNoteModal = null}
+        <Button
+          variant="ghost"
+          size="sm"
+          onclick={() => showMoveNoteModal = null}
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   </div>
