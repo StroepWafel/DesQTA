@@ -22,7 +22,6 @@
     Beaker
   } from 'svelte-hero-icons';
   import { logger } from '../../utils/logger';
-  import { errorService } from '../services/errorService';
   import { seqtaFetch } from '../../utils/netUtil';
 
   let { open, onclose, errorReport } = $props<{
@@ -58,7 +57,8 @@
   });
 
   // Error statistics
-  let errorStats = $derived(errorService.errorStats);
+  // Simplified error stats since we're not using the complex error service
+  let errorStats = $derived({ total: 0, resolved: 0, critical: 0, byCategory: {}, bySeverity: {} });
 
   // Auto-load logs when System Logs tab is opened
   $effect(() => {
@@ -86,7 +86,7 @@
       systemInfo,
       errorReport,
       errorStats: errorStats,
-      recentErrors: errorService.getErrorQueue().slice(-10),
+      recentErrors: [], // No centralized error queue in new system
       performance: {
         memoryUsage: systemInfo.memoryInfo?.used || 0,
         loadTime: performance.now(),
@@ -116,7 +116,7 @@
   }
 
   function clearErrorLogs() {
-    errorService.clearErrorQueue();
+    // No error queue to clear in new system
     logger.info('troubleshootingModal', 'clearErrorLogs', 'Error logs cleared');
   }
 
@@ -142,9 +142,9 @@
         timestamp: new Date().toISOString(),
         systemInfo,
         errorReport,
-        errorStats: $errorStats,
+        errorStats: errorStats,
         systemLogs: logs,
-        recentErrors: errorService.getErrorQueue().slice(-50)
+        recentErrors: [] // No centralized error queue in new system
       };
 
       const logText = JSON.stringify(logReport, null, 2);
@@ -212,7 +212,14 @@
   <div class="fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
       <!-- Background overlay -->
-      <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick={closeModal}></div>
+      <div 
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
+        onclick={closeModal}
+        role="button"
+        tabindex="0"
+        onkeydown={(e) => e.key === 'Escape' && closeModal()}
+        aria-label="Close modal"
+      ></div>
 
       <!-- Modal panel -->
       <div class="relative bg-white dark:bg-slate-900 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all w-full max-w-6xl max-h-[90vh]">
@@ -339,15 +346,15 @@
                   <div class="space-y-2">
                     <div class="flex items-center justify-between">
                       <span class="text-sm text-slate-600 dark:text-slate-400">Total Errors:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{$errorStats.total}</span>
+                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{errorStats.total}</span>
                     </div>
                     <div class="flex items-center justify-between">
                       <span class="text-sm text-slate-600 dark:text-slate-400">Resolved:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{$errorStats.resolved}</span>
+                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{errorStats.resolved}</span>
                     </div>
                     <div class="flex items-center justify-between">
                       <span class="text-sm text-slate-600 dark:text-slate-400">Critical:</span>
-                      <span class="text-sm font-medium text-red-500">{$errorStats.critical}</span>
+                      <span class="text-sm font-medium text-red-500">{errorStats.critical}</span>
                     </div>
                   </div>
                 </div>
@@ -387,36 +394,14 @@
         </div>
 
               <div class="space-y-3 max-h-64 overflow-y-auto">
-                {#each errorService.getErrorQueue().slice(-20).reverse() as error}
-                  <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                    <div class="flex items-start justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                        <span class="text-sm font-medium text-slate-900 dark:text-white">{error.message}</span>
-                        <span class="text-xs px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                          {error.category}
-                        </span>
-                        <span class="text-xs px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                          {error.severity}
-                        </span>
-                      </div>
-                      <span class="text-xs text-slate-500 dark:text-slate-400">
-                        {new Date(error.timestamp).toLocaleString()}
-                      </span>
-                    </div>
-                    {#if error.context?.component}
-                      <div class="text-xs text-slate-600 dark:text-slate-400">
-                        Component: {error.context.component}
-                        {#if error.context.function} | Function: {error.context.function}{/if}
-                        {#if error.context.operation} | Operation: {error.context.operation}{/if}
-                      </div>
-                    {/if}
-                    {#if error.resolved}
-                      <div class="text-xs text-green-600 dark:text-green-400 mt-1">
-                        ✓ Resolved
-                      </div>
-                    {/if}
+                <!-- Error history not available in new boundary-based system -->
+                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                  <div class="text-center text-slate-600 dark:text-slate-400">
+                    <Icon src={InformationCircle} size="24" class="mx-auto mb-2" />
+                    <p class="text-sm">Error history is no longer centrally tracked.</p>
+                    <p class="text-xs mt-1">Errors are now handled at the component level using Error Boundaries.</p>
                   </div>
-                {/each}
+                </div>
               </div>
             </div>
           {/if}

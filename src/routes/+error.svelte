@@ -24,7 +24,7 @@
   import { accentColor } from '../lib/stores/theme';
   import TroubleshootingModal from '../lib/components/TroubleshootingModal.svelte';
   import { logger } from '../utils/logger';
-  import { errorService, ErrorCategory, ErrorSeverity } from '../lib/services/errorService';
+  import { ErrorCategory, ErrorSeverity } from '../lib/services/errorService';
 
   let { error, status } = $props<{
     error: Error & { status?: number; message?: string };
