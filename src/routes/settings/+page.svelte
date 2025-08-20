@@ -28,6 +28,7 @@
   import { logger } from '../../utils/logger';
   import { goto } from '$app/navigation';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
+  import { CacheManager } from '../../utils/cacheManager';
 
   interface Shortcut {
     name: string;
@@ -57,6 +58,7 @@
   let showCloudSyncModal = false;
   let showTroubleshootingModal = false;
   let aiIntegrationsEnabled = false;
+  let clearingCache = false;
   let gradeAnalyserEnabled = true;
   let lessonSummaryAnalyserEnabled = true;
   let autoCollapseSidebar = false;
@@ -427,6 +429,17 @@ The Company reserves the right to terminate your access to the Service at any ti
       console.error('Failed to set homepage edit mode flag', e);
     }
     goto('/');
+  }
+
+  // Clear browser cache to fix routing issues
+  async function clearCache() {
+    clearingCache = true;
+    try {
+      await CacheManager.clearCachesAndRefresh();
+    } catch (error) {
+      console.error('Failed to clear cache:', error);
+      clearingCache = false;
+    }
   }
 </script>
 
@@ -1215,11 +1228,28 @@ The Company reserves the right to terminate your access to the Service at any ti
             <p class="mb-4 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
               Explore a collection of beautiful themes to customize your DesQTA experience.
             </p>
-            <a
-              href="/settings/theme-store"
+            <button
+              type="button"
+              onclick={() => {
+                console.log('Navigating to theme store...');
+                console.log('Current URL:', window.location.href);
+                
+                // Try multiple navigation methods
+                try {
+                  goto('/settings/theme-store');
+                } catch (e) {
+                  console.warn('goto failed, trying window.location:', e);
+                  window.location.href = '/settings/theme-store';
+                }
+                
+                setTimeout(() => {
+                  console.log('After navigation URL:', window.location.href);
+                  console.log('Page pathname:', window.location.pathname);
+                }, 100);
+              }}
               class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
               Open Theme Store
-            </a>
+            </button>
           </div>
         </div>
       </section>
@@ -1239,6 +1269,27 @@ The Company reserves the right to terminate your access to the Service at any ti
             onclick={openTroubleshootingModal}>
             <Icon src={Cog} class="w-4 h-4" />
             Open
+          </button>
+        </div>
+      </section>
+
+      <!-- Cache Management -->
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-red-700/50 animate-fade-in-up">
+        <div class="p-4 sm:p-6 flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-semibold sm:text-lg">Cache Management</h2>
+            <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+              Clear browser cache to fix navigation issues.
+            </p>
+          </div>
+          <button
+            type="button"
+            onclick={clearCache}
+            disabled={clearingCache}
+            class="px-4 py-2 text-white bg-red-500 rounded-lg shadow transition-all duration-200 hover:bg-red-600 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            <Icon src={Trash} class="w-4 h-4" />
+            {clearingCache ? 'Clearing...' : 'Clear Cache'}
           </button>
         </div>
       </section>

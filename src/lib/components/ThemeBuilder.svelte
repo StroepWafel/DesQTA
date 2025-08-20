@@ -3,62 +3,45 @@
   import { fly, fade, scale } from 'svelte/transition';
   import { Icon, Eye, Trash, DocumentDuplicate, ArrowPathRoundedSquare, Cog6Tooth, Swatch, DocumentText, Bolt, RectangleStack, Sparkles, XMark, ArrowUpTray, ArrowDownTray, BookmarkSquare } from 'svelte-hero-icons';
   import { invoke } from '@tauri-apps/api/core';
-  import { save } from '@tauri-apps/plugin-dialog';
+  import { save, open } from '@tauri-apps/plugin-dialog';
   import { loadAndApplyTheme, currentTheme } from '$lib/stores/theme';
+  import { themeService, type ThemeManifest } from '$lib/services/themeService';
   
-  interface ThemeManifest {
-    name: string;
-    displayName: string;
-    description: string;
-    version: string;
-    author: string;
-    category: string;
-    tags: string[];
-    preview: {
-      thumbnail: string;
-      screenshots: string[];
+  // Extended theme manifest for theme builder with additional properties
+  interface ExtendedThemeManifest extends ThemeManifest {
+    displayName?: string;
+    tags?: string[];
+    settings: ThemeManifest['settings'] & {
+      allowUserCustomization?: boolean;
+      autoSwitchTime?: { light: string; dark: string } | null;
     };
-    settings: {
-      defaultTheme: 'light' | 'dark' | 'system';
-      defaultAccentColor: string;
-      allowUserCustomization: boolean;
-      autoSwitchTime: { light: string; dark: string } | null;
+    fonts: ThemeManifest['fonts'] & {
+      display?: string;
     };
-    customProperties: Record<string, string>;
-    features: {
-      glassmorphism: boolean;
-      gradients: boolean;
-      animations: boolean;
-      customFonts: boolean;
-      darkMode: boolean;
-      colorSchemes: boolean;
-      accessibility: boolean;
-      responsive: boolean;
+    animations: ThemeManifest['animations'] & {
+      scale?: string;
+      fadeIn?: string;
+      slideIn?: string;
     };
-    fonts: {
-      primary: string;
-      secondary: string;
-      monospace: string;
-      display: string;
+    features: ThemeManifest['features'] & {
+      animations?: boolean;
+      customFonts?: boolean;
+      darkMode?: boolean;
+      colorSchemes?: boolean;
+      accessibility?: boolean;
+      responsive?: boolean;
     };
-    animations: {
-      duration: string;
-      easing: string;
-      scale: string;
-      fadeIn: string;
-      slideIn: string;
-    };
-    colorSchemes: {
+    colorSchemes?: {
       light: Record<string, string>;
       dark: Record<string, string>;
     };
-    accessibility: {
+    accessibility?: {
       highContrast: boolean;
       reducedMotion: boolean;
       focusIndicators: boolean;
       screenReaderOptimized: boolean;
     };
-    responsive: {
+    responsive?: {
       breakpoints: Record<string, string>;
       fluidTypography: boolean;
       adaptiveSpacing: boolean;
@@ -79,16 +62,24 @@
   let isImporting = $state(false);
   let isSaving = $state(false);
   let showAdvancedOptions = $state(false);
+  let availableThemes = $state<string[]>([]);
+  let showLoadThemeModal = $state(false);
+  let loadingThemes = $state(false);
 
   // Theme configuration
-  let themeConfig = $state<ThemeManifest>({
+  let themeConfig = $state<ExtendedThemeManifest>({
     name: '',
     displayName: '',
     description: '',
     version: '1.0.0',
     author: '',
+    license: 'MIT',
     category: 'custom',
     tags: [],
+    compatibility: {
+      minVersion: '1.0.0',
+      maxVersion: '2.0.0'
+    },
     preview: {
       thumbnail: '',
       screenshots: []
@@ -96,6 +87,9 @@
     settings: {
       defaultTheme: 'system',
       defaultAccentColor: '#3b82f6',
+      supportsLightMode: true,
+      supportsDarkMode: true,
+      supportsSystemMode: true,
       allowUserCustomization: true,
       autoSwitchTime: null
     },
@@ -113,8 +107,10 @@
       '--info-color': '#06b6d4'
     },
     features: {
+      customScrollbars: false,
       glassmorphism: false,
       gradients: false,
+      shadows: true,
       animations: true,
       customFonts: false,
       darkMode: true,
@@ -131,6 +127,7 @@
     animations: {
       duration: '200ms',
       easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      enableEnhanced: true,
       scale: '1.05',
       fadeIn: 'opacity 200ms ease-in-out',
       slideIn: 'transform 200ms ease-in-out'
@@ -386,6 +383,7 @@
     };
     
     const colors = schemes[scheme];
+    themeConfig.settings.defaultAccentColor = colors.accent;
     themeConfig.customProperties['--accent-color'] = colors.accent;
     themeConfig.customProperties['--accent-hover'] = colors.hover;
   }
@@ -395,24 +393,56 @@
     
     // Apply theme properties to document root
     const root = document.documentElement;
+    
+    // Apply all custom properties
     Object.entries(themeConfig.customProperties).forEach(([property, value]) => {
       root.style.setProperty(property, value);
     });
     
-    // Apply font properties
-    if (themeConfig.features.customFonts) {
-      root.style.setProperty('--font-primary', themeConfig.fonts.primary);
-      root.style.setProperty('--font-secondary', themeConfig.fonts.secondary);
-      root.style.setProperty('--font-monospace', themeConfig.fonts.monospace);
-      root.style.setProperty('--font-display', themeConfig.fonts.display);
+    // Apply accent color specifically for TailwindCSS integration
+    if (themeConfig.settings.defaultAccentColor) {
+      root.style.setProperty('--accent-color-value', themeConfig.settings.defaultAccentColor);
     }
     
-    // Apply animation properties
-    if (themeConfig.features.animations) {
-      root.style.setProperty('--animation-duration', themeConfig.animations.duration);
-      root.style.setProperty('--animation-easing', themeConfig.animations.easing);
-      root.style.setProperty('--animation-scale', themeConfig.animations.scale);
+    // Apply font properties (always apply, not just when customFonts is enabled)
+    root.style.setProperty('--font-primary', themeConfig.fonts.primary);
+    root.style.setProperty('--font-secondary', themeConfig.fonts.secondary);
+    root.style.setProperty('--font-monospace', themeConfig.fonts.monospace);
+    root.style.setProperty('--font-display', themeConfig.fonts.display || themeConfig.fonts.primary);
+    
+    // Apply font family to body for immediate visual feedback
+    if (themeConfig.fonts.primary) {
+      root.style.setProperty('font-family', themeConfig.fonts.primary);
     }
+    
+    // Apply animation properties (always apply, not just when animations is enabled)
+    root.style.setProperty('--animation-duration', themeConfig.animations.duration);
+    root.style.setProperty('--animation-easing', themeConfig.animations.easing);
+    root.style.setProperty('--animation-scale', themeConfig.animations.scale || '1.05');
+    
+    // Apply fade and slide animations
+    root.style.setProperty('--fade-in-animation', themeConfig.animations.fadeIn || 'opacity 200ms ease-in-out');
+    root.style.setProperty('--slide-in-animation', themeConfig.animations.slideIn || 'transform 200ms ease-in-out');
+    
+    // Apply common theme-based classes
+    if (themeConfig.features.glassmorphism) {
+      root.style.setProperty('--glassmorphism-blur', 'blur(10px)');
+      root.style.setProperty('--glassmorphism-bg', 'rgba(255, 255, 255, 0.1)');
+    }
+    
+    // Apply responsive breakpoints
+    if (themeConfig.responsive?.breakpoints) {
+      Object.entries(themeConfig.responsive.breakpoints).forEach(([key, value]) => {
+        root.style.setProperty(`--breakpoint-${key}`, value);
+      });
+    }
+    
+    console.log('Applied theme preview:', {
+      customProperties: themeConfig.customProperties,
+      fonts: themeConfig.fonts,
+      animations: themeConfig.animations,
+      accent: themeConfig.settings.defaultAccentColor
+    });
   }
 
   function togglePreview() {
@@ -465,11 +495,29 @@
   async function importTheme() {
     isImporting = true;
     try {
-      // This would open a file picker and import theme
-      // Implementation depends on Tauri file system APIs
-      console.log('Import theme functionality');
+      // Open file picker to select theme file
+      const filePath = await open({
+        filters: [{
+          name: 'Theme Files',
+          extensions: ['json', 'theme.json']
+        }],
+        multiple: false
+      });
+      
+      if (filePath) {
+        // Import the theme using Tauri command
+        const themeName = await invoke<string>('import_theme_from_file', { 
+          filePath: filePath 
+        });
+        
+        console.log('Theme imported successfully:', themeName);
+        
+        // Load the imported theme into the builder
+        await loadThemeIntoBuilder(themeName);
+      }
     } catch (error) {
       console.error('Failed to import theme:', error);
+      alert('Failed to import theme: ' + error);
     } finally {
       isImporting = false;
     }
@@ -482,14 +530,49 @@
     try {
       updateThemeConfig();
       
+      // Convert extended manifest back to basic manifest for saving
+      const basicManifest: ThemeManifest = {
+        name: themeConfig.name,
+        version: themeConfig.version,
+        description: themeConfig.description,
+        author: themeConfig.author,
+        license: themeConfig.license,
+        category: themeConfig.category,
+        compatibility: themeConfig.compatibility,
+        preview: themeConfig.preview,
+        settings: {
+          defaultAccentColor: themeConfig.settings.defaultAccentColor,
+          defaultTheme: themeConfig.settings.defaultTheme,
+          supportsLightMode: themeConfig.settings.supportsLightMode,
+          supportsDarkMode: themeConfig.settings.supportsDarkMode,
+          supportsSystemMode: themeConfig.settings.supportsSystemMode
+        },
+        customProperties: themeConfig.customProperties,
+        fonts: {
+          primary: themeConfig.fonts.primary,
+          secondary: themeConfig.fonts.secondary,
+          monospace: themeConfig.fonts.monospace
+        },
+        animations: {
+          duration: themeConfig.animations.duration,
+          easing: themeConfig.animations.easing,
+          enableEnhanced: themeConfig.animations.enableEnhanced
+        },
+        features: {
+          customScrollbars: themeConfig.features.customScrollbars,
+          glassmorphism: themeConfig.features.glassmorphism,
+          gradients: themeConfig.features.gradients,
+          shadows: themeConfig.features.shadows
+        }
+      };
+      
       // Save theme to app data directory
       await invoke('save_custom_theme', {
-        themeName: themeConfig.name,
-        themeData: themeConfig
+        themeName: basicManifest.name,
+        themeData: basicManifest
       });
       
       console.log('Theme saved successfully');
-      // closeBuilder(); // This function is removed, so no need to call it here
     } catch (error) {
       console.error('Failed to save theme:', error);
     } finally {
@@ -502,6 +585,111 @@
     themeDisplayName = `${themeDisplayName} (Copy)`;
   }
 
+  async function loadAvailableThemes() {
+    loadingThemes = true;
+    try {
+      availableThemes = await themeService.getAvailableThemes();
+      // Filter out built-in themes, only show custom themes
+      availableThemes = availableThemes.filter(theme => 
+        !['default', 'sunset', 'light', 'mint', 'grape', 'midnight', 'bubblegum', 'solarized', 'glass', 'aero'].includes(theme)
+      );
+    } catch (error) {
+      console.error('Failed to load available themes:', error);
+    } finally {
+      loadingThemes = false;
+    }
+  }
+
+  async function loadThemeIntoBuilder(themeNameToLoad: string) {
+    try {
+      const manifest = await themeService.getThemeManifest(themeNameToLoad);
+      if (!manifest) {
+        throw new Error('Theme manifest not found');
+      }
+
+      // Convert the basic manifest to extended manifest with defaults
+      const extendedManifest: ExtendedThemeManifest = {
+        ...manifest,
+        displayName: manifest.name,
+        tags: [],
+        settings: {
+          ...manifest.settings,
+          allowUserCustomization: true,
+          autoSwitchTime: null
+        },
+        fonts: {
+          ...manifest.fonts,
+          display: manifest.fonts.primary
+        },
+        animations: {
+          ...manifest.animations,
+          scale: '1.05',
+          fadeIn: 'opacity 200ms ease-in-out',
+          slideIn: 'transform 200ms ease-in-out'
+        },
+        features: {
+          ...manifest.features,
+          animations: true,
+          customFonts: true,
+          darkMode: true,
+          colorSchemes: true,
+          accessibility: true,
+          responsive: true
+        },
+        colorSchemes: {
+          light: {},
+          dark: {}
+        },
+        accessibility: {
+          highContrast: false,
+          reducedMotion: false,
+          focusIndicators: true,
+          screenReaderOptimized: true
+        },
+        responsive: {
+          breakpoints: {
+            sm: '640px',
+            md: '768px',
+            lg: '1024px',
+            xl: '1280px',
+            '2xl': '1536px'
+          },
+          fluidTypography: true,
+          adaptiveSpacing: true
+        }
+      };
+
+      // Populate the theme builder with the loaded theme data
+      themeConfig = extendedManifest;
+      
+      // Update the basic info state
+      themeName = extendedManifest.name;
+      themeDisplayName = extendedManifest.displayName || extendedManifest.name;
+      themeDescription = extendedManifest.description;
+      themeAuthor = extendedManifest.author;
+      themeCategory = extendedManifest.category || 'custom';
+      themeTags = extendedManifest.tags || [];
+
+      // Close the load modal
+      showLoadThemeModal = false;
+
+      // Apply the theme preview
+      if (previewMode) {
+        applyPreview();
+      }
+
+      console.log('Theme loaded into builder:', extendedManifest.name);
+    } catch (error) {
+      console.error('Failed to load theme into builder:', error);
+      alert('Failed to load theme: ' + error);
+    }
+  }
+
+  function openLoadThemeModal() {
+    loadAvailableThemes();
+    showLoadThemeModal = true;
+  }
+
   onMount(() => {
     previewMode = true;
   });
@@ -510,9 +698,49 @@
     location.reload();
   });
 
-  // Reactive updates
+  // Reactive updates - watch for changes in theme properties
   $effect(() => {
     if (previewMode) {
+      applyPreview();
+    }
+  });
+
+  // Watch for changes in custom properties (colors)
+  $effect(() => {
+    if (previewMode) {
+      const props = JSON.stringify(themeConfig.customProperties);
+      applyPreview();
+    }
+  });
+
+  // Watch for changes in fonts
+  $effect(() => {
+    if (previewMode) {
+      const fonts = JSON.stringify(themeConfig.fonts);
+      applyPreview();
+    }
+  });
+
+  // Watch for changes in animations
+  $effect(() => {
+    if (previewMode) {
+      const animations = JSON.stringify(themeConfig.animations);
+      applyPreview();
+    }
+  });
+
+  // Watch for changes in settings (accent color)
+  $effect(() => {
+    if (previewMode) {
+      const settings = JSON.stringify(themeConfig.settings);
+      applyPreview();
+    }
+  });
+
+  // Watch for changes in features
+  $effect(() => {
+    if (previewMode) {
+      const features = JSON.stringify(themeConfig.features);
       applyPreview();
     }
   });
@@ -530,8 +758,62 @@
         <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Theme Builder</h2>
         <p class="text-sm text-slate-600 dark:text-slate-400">Create and customize your perfect theme</p>
       </div>
+      <!-- Action buttons -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          onclick={openLoadThemeModal}
+          class="flex items-center gap-2 px-3 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+        >
+          <Icon src={DocumentDuplicate} class="w-4 h-4" />
+          Load
+        </button>
+        <button
+          type="button"
+          onclick={importTheme}
+          disabled={isImporting}
+          class="flex items-center gap-2 px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors disabled:opacity-50"
+        >
+          <Icon src={ArrowUpTray} class="w-4 h-4" />
+          {isImporting ? 'Importing...' : 'Import'}
+        </button>
+        <button
+          type="button"
+          onclick={exportTheme}
+          disabled={isExporting || !canExportOrSave()}
+          class="flex items-center gap-2 px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors disabled:opacity-50"
+        >
+          <Icon src={ArrowDownTray} class="w-4 h-4" />
+          {isExporting ? 'Exporting...' : 'Export'}
+        </button>
+      </div>
     </div>
     <slot name="close" />
+  </div>
+
+  <!-- Live Preview Panel -->
+  <div class="p-4 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+    <div class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Live Preview</div>
+    <div class="space-y-2">
+      <!-- Sample UI elements to show theme changes -->
+      <div class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="font-medium" style="font-family: var(--font-primary, inherit)">Sample Component</h4>
+          <button class="px-3 py-1 text-sm rounded-lg text-white" style="background-color: var(--accent-color-value, #3b82f6)">
+            Button
+          </button>
+        </div>
+        <p class="text-sm text-slate-600 dark:text-slate-400" style="font-family: var(--font-secondary, inherit)">
+          This preview updates as you customize your theme.
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <div class="w-8 h-8 rounded-lg border-2 border-slate-300 dark:border-slate-600" style="background-color: var(--background-color, #ffffff)"></div>
+        <div class="w-8 h-8 rounded-lg border-2 border-slate-300 dark:border-slate-600" style="background-color: var(--surface-color, #f8fafc)"></div>
+        <div class="w-8 h-8 rounded-lg border-2 border-slate-300 dark:border-slate-600" style="background-color: var(--accent-color-value, #3b82f6)"></div>
+        <div class="w-8 h-8 rounded-lg border-2 border-slate-300 dark:border-slate-600" style="background-color: var(--text-color, #1e293b)"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Scrollable Content -->
@@ -664,6 +946,30 @@
     <!-- Colors Section -->
     <section>
       <h3 class="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Colors & Background</h3>
+          
+          <!-- Accent Color -->
+          <div class="mb-6">
+            <h4 class="text-md font-medium text-slate-800 dark:text-slate-200 mb-3">Accent Color</h4>
+            <div class="flex items-center gap-3">
+              <input
+                type="color"
+                id="accent-color"
+                bind:value={themeConfig.settings.defaultAccentColor}
+                class="w-12 h-12 rounded-lg border-2 border-slate-300 dark:border-slate-600 cursor-pointer"
+              />
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300" for="accent-color">
+                  Primary Accent Color
+                </label>
+                <input
+                  type="text"
+                  id="accent-color-text"
+                  bind:value={themeConfig.settings.defaultAccentColor}
+                  class="w-full text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
           
           <!-- Primary Colors -->
           <div class="mb-6">
@@ -905,4 +1211,58 @@
       {/if}
     </div>
   </div>
-</div> 
+</div>
+
+<!-- Load Theme Modal -->
+{#if showLoadThemeModal}
+  <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" transition:fade>
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md" transition:scale>
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Load Existing Theme</h3>
+          <button
+            type="button"
+            onclick={() => showLoadThemeModal = false}
+            class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+          >
+            <Icon src={XMark} class="w-5 h-5" />
+          </button>
+        </div>
+        
+        {#if loadingThemes}
+          <div class="flex items-center justify-center py-8">
+            <div class="w-6 h-6 rounded-full border-2 animate-spin border-slate-300 border-t-slate-600"></div>
+          </div>
+        {:else if availableThemes.length === 0}
+          <div class="text-center py-8">
+            <div class="text-slate-500 dark:text-slate-400 mb-2">No custom themes found</div>
+            <div class="text-sm text-slate-400 dark:text-slate-500">Create a theme or import one to get started</div>
+          </div>
+        {:else}
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            {#each availableThemes as theme}
+              <button
+                type="button"
+                onclick={() => loadThemeIntoBuilder(theme)}
+                class="w-full p-3 text-left rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                <div class="font-medium text-slate-900 dark:text-white">{theme}</div>
+                <div class="text-sm text-slate-500 dark:text-slate-400">Custom theme</div>
+              </button>
+            {/each}
+          </div>
+        {/if}
+        
+        <div class="flex justify-end gap-2 mt-6">
+          <button
+            type="button"
+            onclick={() => showLoadThemeModal = false}
+            class="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if} 

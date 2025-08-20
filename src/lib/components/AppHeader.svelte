@@ -16,7 +16,7 @@
   import { derived, writable } from 'svelte/store';
   import { fade, scale } from 'svelte/transition';
   import PagesMenu from './PagesMenu.svelte';
-  import GlobalSearch from './GlobalSearch.svelte';
+  import GlobalSearch from './search/GlobalSearchOptimized.svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
