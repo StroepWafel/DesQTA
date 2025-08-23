@@ -54,7 +54,7 @@
     <h2 class="font-semibold text-lg text-slate-900 dark:text-white">Conversations</h2>
     <button 
       class="px-3 py-1 rounded-lg bg-orange-500 text-white text-xs hover:bg-orange-600 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 ring-orange-500" 
-      on:click={onCreateGroup}
+      onclick={onCreateGroup}
     >
       + New Group
     </button>
@@ -73,7 +73,7 @@
           {#each groups as group}
             <button 
               class="flex items-center gap-3 w-full px-3 py-3 rounded-lg transition-all duration-200 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02] focus:outline-none focus:ring-2 ring-accent-500 {selectedGroup?.id === group.id ? 'bg-accent-500/20 text-accent-500' : 'text-slate-900 dark:text-white'}" 
-              on:click={() => onSelectGroup(group)}
+              onclick={() => onSelectGroup(group)}
             >
               {#if group.iconUrl}
                 <img src={getFullPfpUrl(group.iconUrl) || `https://api.dicebear.com/7.x/initials/svg?seed=${group.name}`} alt={group.name} class="w-10 h-10 rounded-full object-cover" />
@@ -106,7 +106,7 @@
           {#each friends as friend}
             <button 
               class="flex items-center gap-3 w-full px-3 py-3 rounded-lg transition-all duration-200 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02] focus:outline-none focus:ring-2 ring-accent-500 {selectedFriend?.id === friend.id ? 'bg-accent-500/20 text-accent-500' : 'text-slate-900 dark:text-white'}" 
-              on:click={() => onSelectFriend(friend)}
+              onclick={() => onSelectFriend(friend)}
             >
               {#if friend.pfpUrl}
                 <img src={getFullPfpUrl(friend.pfpUrl) || `https://api.dicebear.com/7.x/thumbs/svg?seed=${friend.id}`} alt={friend.displayName || friend.username} class="w-10 h-10 rounded-full object-cover" />

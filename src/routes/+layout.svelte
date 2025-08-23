@@ -431,14 +431,15 @@
       {#if $themeBuilderSidebarOpen}
         <aside class="fixed top-0 right-0 h-full w-96 z-50 bg-white dark:bg-slate-900 shadow-xl border-l border-slate-200 dark:border-slate-700 flex flex-col transition-transform duration-200">
           <ThemeBuilder>
-            <button 
-              slot="close" 
-              class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors ml-auto" 
-              onclick={() => themeBuilderSidebarOpen.set(false)} 
-              aria-label="Close Theme Builder"
-            >
-              <Icon src={XMark} class="w-6 h-6" />
-            </button>
+            {#snippet close()}
+              <button 
+                class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors ml-auto" 
+                onclick={() => themeBuilderSidebarOpen.set(false)} 
+                aria-label="Close Theme Builder"
+              >
+                <Icon src={XMark} class="w-6 h-6" />
+              </button>
+            {/snippet}
           </ThemeBuilder>
         </aside>
       {/if}

@@ -28,8 +28,8 @@
     aria-modal="true"
     aria-labelledby="modal-title"
     tabindex="-1"
-    on:click={onClose}
-    on:keydown={(e) => e.key === 'Escape' && onClose()}
+    onclick={onClose}
+    onkeydown={(e) => e.key === 'Escape' && onClose()}
   >
     <div 
       class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md mx-4" 
@@ -38,15 +38,15 @@
       <div 
         class="p-6" 
         role="presentation"
-        on:click|stopPropagation
-        on:keydown|stopPropagation
+        onclick={(e) => e.stopPropagation()}
+        onkeydown={(e) => e.stopPropagation()}
       >
         <div class="flex items-center justify-between mb-6">
           <h3 id="modal-title" class="text-xl font-semibold text-slate-900 dark:text-white">Create New Group</h3>
           <button 
             type="button"
             class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" 
-            on:click={onClose}
+            onclick={onClose}
             aria-label="Close modal"
           >
             <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@
           </button>
         </div>
         
-        <form on:submit|preventDefault={onCreateGroup} class="space-y-4">
+        <form onsubmit={(e) => { e.preventDefault(); onCreateGroup(); }} class="space-y-4">
           <div>
             <label for="group-name" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Group Name</label>
             <input 
@@ -100,7 +100,7 @@
             <button 
               type="button"
               class="flex-1 px-4 py-3 rounded-lg bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-300 dark:hover:bg-slate-500 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 ring-slate-400" 
-              on:click={onClose}
+              onclick={onClose}
             >
               Cancel
             </button>

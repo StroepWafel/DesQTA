@@ -699,7 +699,7 @@
                             }
                             onUrlChange(normalized);
                           }}
-                          onkeydown={(e) => {
+                          onkeydown={(e: KeyboardEvent) => {
                             if (e.key === 'Enter' && seqtaUrl.trim()) {
                              jwtExpiredError = false;
                            onStartLogin();

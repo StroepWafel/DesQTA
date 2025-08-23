@@ -84,14 +84,15 @@
           items={filteredMessages}
           itemHeight={MESSAGE_ITEM_HEIGHT}
           containerHeight={600}
-          keyFunction={(item) => item.id}
-          let:item>
-          <VirtualMessageItem 
-            {item}
-            index={0}
-            {selectedMessage}
-            {openMessage}
-          />
+          keyFunction={(item) => item.id}>
+          {#snippet children({ item, index })}
+            <VirtualMessageItem 
+              {item}
+              {index}
+              {selectedMessage}
+              {openMessage}
+            />
+          {/snippet}
         </VirtualList>
       </div>
     {/if}

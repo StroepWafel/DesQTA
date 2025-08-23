@@ -128,7 +128,7 @@
 
   onMount(fetchNews);
 
-  let scroller: HTMLDivElement | null = null;
+  let scroller: HTMLDivElement | null = $state(null);
   const scrollAmount = 360; // px per click for wider tiles
 
   function scrollLeft() {
@@ -215,6 +215,7 @@
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

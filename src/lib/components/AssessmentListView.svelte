@@ -105,9 +105,10 @@
               items={assessments.filter((a) => a.code === subject.code)}
               itemHeight={ASSESSMENT_CARD_HEIGHT}
               containerHeight={600}
-              keyFunction={(item) => item.id}
-              let:item>
-              <VirtualAssessmentCard {item} index={0} />
+              keyFunction={(item) => item.id}>
+              {#snippet children({ item, index })}
+                <VirtualAssessmentCard {item} {index} />
+              {/snippet}
             </VirtualList>
           {:else}
             {#each assessments.filter((a) => a.code === subject.code) as assessment}
@@ -136,7 +137,7 @@
     }
   }
 
-  .highlight-subject {
+  :global(.highlight-subject) {
     animation: highlight 1.5s ease-out;
   }
 </style> 

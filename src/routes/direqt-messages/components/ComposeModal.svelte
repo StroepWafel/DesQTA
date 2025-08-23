@@ -436,7 +436,4 @@
       opacity: 1;
     }
   }
-  .animate-fade-in {
-    animation: fade-in 0.2s ease-out;
-  }
 </style>

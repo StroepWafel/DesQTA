@@ -6,6 +6,13 @@
   import { save, open } from '@tauri-apps/plugin-dialog';
   import { loadAndApplyTheme, currentTheme } from '$lib/stores/theme';
   import { themeService, type ThemeManifest } from '$lib/services/themeService';
+  import type { Snippet } from 'svelte';
+
+  interface Props {
+    close?: Snippet;
+  }
+
+  let { close }: Props = $props();
   
   // Extended theme manifest for theme builder with additional properties
   interface ExtendedThemeManifest extends ThemeManifest {
@@ -788,7 +795,7 @@
         </button>
       </div>
     </div>
-    <slot name="close" />
+    {@render close?.()}
   </div>
 
   <!-- Live Preview Panel -->

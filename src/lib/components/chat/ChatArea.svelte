@@ -99,7 +99,7 @@
           <div class="flex justify-center mb-4">
             <button 
               class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 ring-accent-500 disabled:opacity-50" 
-              on:click={onLoadOlderMessages}
+              onclick={onLoadOlderMessages}
               disabled={loadingOlderMessages}
             >
               {loadingOlderMessages ? 'Loading...' : 'Load older messages'}
@@ -112,15 +112,16 @@
             items={messages}
             itemHeight={CHAT_MESSAGE_HEIGHT}
             containerHeight={400}
-            keyFunction={(item) => item.id}
-            let:item>
-            <VirtualChatMessage
-              {item}
-              index={0}
-              isOwnMessage={item.senderId === (cloudUser?.id ?? -1)}
-              showSenderName={!!selectedGroup && !!item.sender}
-              {onReply}
-            />
+            keyFunction={(item) => item.id}>
+            {#snippet children({ item, index })}
+              <VirtualChatMessage
+                {item}
+                {index}
+                isOwnMessage={item.senderId === (cloudUser?.id ?? -1)}
+                showSenderName={!!selectedGroup && !!item.sender}
+                {onReply}
+              />
+            {/snippet}
           </VirtualList>
         {:else}
           {#each messages as msg}

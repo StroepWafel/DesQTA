@@ -200,15 +200,18 @@
   <div
     class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/50 backdrop-blur-sm"
     transition:fly={{ y: -50, duration: 200 }}
-    on:click={() => dispatch('close')}
-    on:keydown={(e) => e.key === 'Escape' && dispatch('close')}
+    onclick={() => dispatch('close')}
+    onkeydown={(e) => e.key === 'Escape' && dispatch('close')}
     role="dialog"
     aria-modal="true"
+    tabindex="0"
   >
     <div
       class="w-full max-w-4xl mt-16 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
       transition:scale={{ duration: 200, start: 0.95 }}
-      on:click|stopPropagation
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      role="presentation"
     >
       <!-- Search Header -->
       <div class="flex items-center p-6 border-b border-slate-200 dark:border-slate-700">
@@ -217,16 +220,16 @@
             bind:value={searchQuery}
             placeholder="Search your notes..."
             clearable={true}
-            debounce={300}
+            debounceMs={300}
             class="text-lg"
             onSearch={() => {}}
           />
-        </div>
+        </div>  
         
         <div class="flex items-center space-x-2 ml-4">
           <button
             class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 {showFilters ? 'accent-bg text-white' : ''}"
-            on:click={() => showFilters = !showFilters}
+            onclick={() => showFilters = !showFilters}
             title="Search filters"
           >
             <Icon src={AdjustmentsHorizontal} class="w-5 h-5" />
@@ -234,7 +237,7 @@
           
           <button
             class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
-            on:click={() => dispatch('close')}
+            onclick={() => dispatch('close')}
             title="Close search"
           >
             <Icon src={XMark} class="w-5 h-5" />
@@ -247,8 +250,8 @@
         <div class="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800" transition:slide={{ duration: 200 }}>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Folders Filter -->
-            <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Folders</label>
+            <fieldset>
+              <legend class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Folders</legend>
               <div class="space-y-1 max-h-32 overflow-y-auto">
                 {#each folders as folder}
                   <label class="flex items-center">
@@ -264,11 +267,11 @@
                   </label>
                 {/each}
               </div>
-            </div>
+            </fieldset>
 
             <!-- Tags Filter -->
-            <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tags</label>
+            <fieldset>
+              <legend class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tags</legend>
               <div class="space-y-1 max-h-32 overflow-y-auto">
                 {#each availableTags as tag}
                   <label class="flex items-center">
@@ -284,50 +287,55 @@
                   </label>
                 {/each}
               </div>
-            </div>
+            </fieldset>
 
             <!-- Date Range Filter -->
-            <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Date Range</label>
+            <fieldset>
+              <legend class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Date Range</legend>
               <div class="space-y-2">
                 <input
                   type="date"
                   bind:value={dateFrom}
                   class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
                   placeholder="From date"
+                  aria-label="From date"
                 />
                 <input
                   type="date"
                   bind:value={dateTo}
                   class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
                   placeholder="To date"
+                  aria-label="To date"
                 />
               </div>
-            </div>
+            </fieldset>
 
             <!-- Word Count Filter -->
-            <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Word Count</label>
+            <fieldset>
+              <legend class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Word Count</legend>
               <div class="space-y-2">
                 <input
                   type="number"
                   bind:value={wordCountMin}
                   placeholder="Min words"
+                  aria-label="Minimum word count"
                   class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
                 />
                 <input
                   type="number"
                   bind:value={wordCountMax}
                   placeholder="Max words"
+                  aria-label="Maximum word count"
                   class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
                 />
               </div>
-            </div>
+            </fieldset>
 
             <!-- SEQTA References Filter -->
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">SEQTA References</label>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="seqta-references-filter">SEQTA References</label>
               <select
+                id="seqta-references-filter"
                 bind:value={hasSeqtaReferences}
                 class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
               >
@@ -341,7 +349,7 @@
             <div class="flex items-end">
               <button
                 class="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
-                on:click={clearFilters}
+                onclick={clearFilters}
               >
                 Clear Filters
               </button>
@@ -371,7 +379,7 @@
                   {#each recentSearches as recent}
                     <button
                       class="px-2 py-1 text-xs rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                      on:click={() => useRecentSearch(recent)}
+                      onclick={() => useRecentSearch(recent)}
                     >
                       {recent}
                     </button>
@@ -385,8 +393,8 @@
             {#each searchResults as result (result.note.id)}
               <div
                 class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-all duration-200 hover:scale-[1.01]"
-                on:click={() => selectNote(result.note)}
-                on:keydown={(e) => e.key === 'Enter' && selectNote(result.note)}
+                onclick={() => selectNote(result.note)}
+                onkeydown={(e) => e.key === 'Enter' && selectNote(result.note)}
                 role="button"
                 tabindex="0"
                 in:fly={{ y: 20, duration: 200, delay: 50 }}
@@ -467,13 +475,13 @@
                 <div class="flex items-center justify-between p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                   <button
                     class="flex-1 text-left text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
-                    on:click={() => useRecentSearch(recent)}
+                    onclick={() => useRecentSearch(recent)}
                   >
                     {recent}
                   </button>
                   <button
                     class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                    on:click={() => removeRecentSearch(recent)}
+                    onclick={() => removeRecentSearch(recent)}
                     title="Remove from recent searches"
                   >
                     <Icon src={XMark} class="w-3 h-3" />

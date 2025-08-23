@@ -140,9 +140,10 @@
                 items={assessments.filter((a) => a.code === subject.code)}
                 itemHeight={ASSESSMENT_CARD_HEIGHT}
                 containerHeight={400}
-                keyFunction={(item) => item.id}
-                let:item>
-                <VirtualAssessmentCard {item} index={0} />
+                keyFunction={(item) => item.id}>
+                {#snippet children({ item, index })}
+                  <VirtualAssessmentCard {item} {index} />
+                {/snippet}
               </VirtualList>
             {:else}
               {#each assessments.filter((a) => a.code === subject.code) as assessment}
@@ -170,9 +171,10 @@
                 items={monthAssessments}
                 itemHeight={ASSESSMENT_CARD_HEIGHT}
                 containerHeight={400}
-                keyFunction={(item) => item.id}
-                let:item>
-                <VirtualAssessmentCard {item} index={0} showSubject={true} />
+                keyFunction={(item) => item.id}>
+                {#snippet children({ item, index })}
+                  <VirtualAssessmentCard {item} {index} showSubject={true} />
+                {/snippet}
               </VirtualList>
             {:else}
               {#each monthAssessments as assessment}
@@ -202,9 +204,10 @@
                 items={statusAssessments}
                 itemHeight={ASSESSMENT_CARD_HEIGHT}
                 containerHeight={400}
-                keyFunction={(item) => item.id}
-                let:item>
-                <VirtualAssessmentCard {item} index={0} showSubject={true} />
+                keyFunction={(item) => item.id}>
+                {#snippet children({ item, index })}
+                  <VirtualAssessmentCard {item} {index} showSubject={true} />
+                {/snippet}
               </VirtualList>
             {:else}
               {#each statusAssessments as assessment}

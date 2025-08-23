@@ -28,6 +28,7 @@
     pattern?: string;
     onchange?: (e: Event) => void;
     oninput?: (e: Event) => void;
+    onkeydown?: (e: KeyboardEvent) => void;
     onfocus?: (e: FocusEvent) => void;
     onblur?: (e: FocusEvent) => void;
     rightAction?: Snippet;
@@ -59,6 +60,7 @@
     pattern,
     onchange,
     oninput,
+    onkeydown,
     onfocus,
     onblur,
     rightAction
@@ -143,6 +145,7 @@
       class={inputClasses}
       onchange={onchange}
       oninput={oninput}
+      onkeydown={onkeydown}
       onfocus={onfocus}
       onblur={onblur}
     />

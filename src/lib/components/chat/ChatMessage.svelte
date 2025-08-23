@@ -53,7 +53,11 @@
   <div class="max-w-[70%] px-4 py-2 rounded-2xl shadow-md
     {isOwnMessage
       ? 'bg-accent-500 text-white border border-accent-600 dark:border-accent-400 drop-shadow-lg'
-      : 'bg-white/30 dark:bg-slate-800/60 text-slate-900 dark:text-white'}" on:click={handleLinkClick}>
+      : 'bg-white/30 dark:bg-slate-800/60 text-slate-900 dark:text-white'}" 
+    onclick={handleLinkClick} 
+    role="button" 
+    tabindex="0" 
+    onkeydown={(e) => e.key === 'Enter' && handleLinkClick(new MouseEvent('click'))}>
     
     {#if showSenderName && message.sender}
       <div class="text-xs font-semibold mb-1 text-accent-500">{message.sender.displayName || message.sender.username}</div>
@@ -94,7 +98,7 @@
     
     <button 
       class="mt-1 text-xs text-accent-500 hover:underline" 
-      on:click={() => onReply(message)}
+      onclick={() => onReply(message)}
     >
       Reply
     </button>

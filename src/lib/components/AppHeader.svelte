@@ -353,7 +353,11 @@
   });
 
   // Sort notifications by timestamp descending (latest first)
-  let sortedNotifications = $derived([...notifications].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+  let sortedNotifications = $state<Notification[]>([]);
+  
+  $effect(() => {
+    sortedNotifications = [...notifications].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  });
 </script>
 
 <header class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-[999999]" data-tauri-drag-region style="background: var(--background-color);">
@@ -424,7 +428,7 @@
               {#each notifications as notification (notification.notificationID)}
                 <button type="button"
                   class="p-3 w-full text-left rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
-                  role="button"
+
                   aria-label={getNotificationTitle(notification)}
                   onclick={() => handleNotificationClick(notification)}
                   onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleNotificationClick(notification); } }}>
@@ -524,7 +528,7 @@
             {#each sortedNotifications as notification (notification.notificationID)}
               <button type="button"
                 class="p-3 w-full text-left rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
-                role="button"
+
                 aria-label={getNotificationTitle(notification)}
                 onclick={() => handleNotificationClick(notification)}
                 onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleNotificationClick(notification); } }}>

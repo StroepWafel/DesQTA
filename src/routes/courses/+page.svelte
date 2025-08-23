@@ -113,7 +113,6 @@
           console.error('Failed to parse document JSON:', e);
         }
       }
-
       cache.set(cacheKey, coursePayload, 60);
       console.info('[IDB] course payload cached (mem+idb)', { key: cacheKey });
       await setIdb(cacheKey, coursePayload);
@@ -385,49 +384,138 @@
 
 <style>
   :global(.course-content) {
-    @apply w-full h-full;
+    width: 100%;
+    height: 100%;
   }
 
   /* Headings styled with accent background and white text in dark mode */
   :global(.course-content h1) {
-    @apply text-3xl font-bold text-white bg-accent-bg p-6 rounded-t-xl m-4 mb-0 transition-colors duration-200;
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+    font-weight: 700;
+    color: white;
+    background-color: var(--accent-color);
+    padding: 1.5rem;
+    border-radius: 0.75rem 0.75rem 0 0;
+    margin: 1rem;
+    margin-bottom: 0;
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-duration: 200ms;
   }
 
   :global(.course-content h2) {
-    @apply text-xl font-semibold text-white bg-accent-bg p-4 rounded-xl m-4 mb-2 transition-colors duration-200;
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+    color: white;
+    background-color: var(--accent-color);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin: 1rem;
+    margin-bottom: 0.5rem;
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-duration: 200ms;
   }
 
   :global(.course-content p) {
-    @apply text-gray-700 dark:text-gray-200 px-4 py-2 leading-relaxed transition-colors duration-200;
+    color: rgb(55 65 81);
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    line-height: 1.625;
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-duration: 200ms;
+  }
+
+  :global(html.dark .course-content p) {
+    color: rgb(229 231 235);
   }
 
   :global(.course-content .section) {
-    @apply m-4 bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md transition-colors duration-200;
+    margin: 1rem;
+    background-color: rgb(255 255 255);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border-width: 1px;
+    border-color: rgb(229 231 235);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-duration: 200ms;
+  }
+
+  :global(html.dark .course-content .section) {
+    background-color: rgb(31 41 55);
+    border-color: rgb(55 65 81);
   }
 
   :global(.course-content a) {
-    @apply text-accent-bg hover:text-accent-ring transition-colors duration-200;
+    color: var(--accent-color);
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-duration: 200ms;
+  }
+
+  :global(.course-content a:hover) {
+    color: var(--accent-color-hover);
   }
 
   :global(.course-content img) {
-    @apply max-w-full h-auto rounded-lg shadow-md;
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
 
   /* File/document styling */
   :global(.course-content .file-item) {
-    @apply bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-4 m-2 hover:scale-[1.02] hover:border-accent-ring transition-all duration-200 cursor-pointer;
+    background-color: rgb(249 250 251);
+    border-width: 1px;
+    border-color: rgb(229 231 235);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 0.5rem;
+    cursor: pointer;
+    transition-property: all;
+    transition-duration: 200ms;
+  }
+
+  :global(.course-content .file-item:hover) {
+    transform: scale(1.02);
+    border-color: var(--accent-color);
+  }
+
+  :global(html.dark .course-content .file-item) {
+    background-color: rgb(55 65 81 / 0.5);
+    border-color: rgb(75 85 99);
   }
 
   :global(.course-content .file-grid) {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    :global(.course-content .file-grid) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    :global(.course-content .file-grid) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
   /* Make embedded content responsive */
   :global(.course-content iframe) {
-    @apply w-full rounded-lg;
+    width: 100%;
+    border-radius: 0.5rem;
   }
 
   :global(.course-content video) {
-    @apply w-full rounded-lg;
+    width: 100%;
+    border-radius: 0.5rem;
   }
 </style>

@@ -38,23 +38,26 @@
   }
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 {#if isOpen}
   <!-- Modal Backdrop -->
   <div
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
     transition:fly={{ y: -50, duration: 200 }}
-    on:click={() => dispatch('close')}
-    on:keydown={(e) => e.key === 'Escape' && dispatch('close')}
+    onclick={() => dispatch('close')}
+    onkeydown={(e) => e.key === 'Escape' && dispatch('close')}
     role="dialog"
     aria-modal="true"
     aria-labelledby="image-modal-title"
+    tabindex="0"
   >
     <div
       class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
       transition:scale={{ duration: 200, start: 0.95 }}
-      on:click|stopPropagation
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      role="presentation"
     >
       <!-- Modal Header -->
       <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
@@ -63,7 +66,7 @@
         </h2>
         <button
           class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
-          on:click={() => dispatch('close')}
+          onclick={() => dispatch('close')}
           title="Close"
         >
           <Icon src={XMark} class="w-5 h-5" />
@@ -96,7 +99,7 @@
         <!-- Copy Alt Text -->
         <button
           class="w-full flex items-center px-4 py-3 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-[1.01] focus:outline-none focus:ring-2 accent-ring"
-          on:click={handleCopyAlt}
+          onclick={handleCopyAlt}
         >
           <Icon src={DocumentDuplicate} class="w-5 h-5 mr-3 text-slate-400" />
           <div>
@@ -110,7 +113,7 @@
         <!-- Replace Image -->
         <button
           class="w-full flex items-center px-4 py-3 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-[1.01] focus:outline-none focus:ring-2 accent-ring"
-          on:click={handleReplaceImage}
+          onclick={handleReplaceImage}
         >
           <Icon src={ArrowPath} class="w-5 h-5 mr-3 text-slate-400" />
           <div>
@@ -124,7 +127,7 @@
         <!-- Remove Image -->
         <button
           class="w-full flex items-center px-4 py-3 text-left rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-red-500"
-          on:click={handleRemoveImage}
+          onclick={handleRemoveImage}
         >
           <Icon src={Trash} class="w-5 h-5 mr-3" />
           <div>
@@ -141,7 +144,7 @@
         <div class="flex justify-end">
           <button
             class="px-4 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
-            on:click={() => dispatch('close')}
+            onclick={() => dispatch('close')}
           >
             Cancel
           </button>

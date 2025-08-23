@@ -750,22 +750,25 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <div
                   class="flex flex-col gap-2 items-start p-3 rounded-lg transition-all duration-200 sm:flex-row sm:items-center bg-slate-100/80 dark:bg-slate-800/50 hover:shadow-lg hover:bg-slate-200/80 dark:hover:bg-slate-700/50 animate-fade-in">
                   <div class="flex flex-col gap-1 w-full sm:w-32">
-                    <label class="text-xs text-slate-600 dark:text-slate-400">Name</label>
+                    <label for="shortcut-name-{idx}" class="text-xs text-slate-600 dark:text-slate-400">Name</label>
                     <input
+                      id="shortcut-name-{idx}"
                       class="px-2 py-1.5 w-full bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 text-sm"
                       placeholder="Dashboard"
                       bind:value={shortcut.name} />
                   </div>
                   <div class="flex flex-col gap-1 w-full sm:w-16">
-                    <label class="text-xs text-slate-600 dark:text-slate-400">Icon</label>
+                    <label for="shortcut-icon-{idx}" class="text-xs text-slate-600 dark:text-slate-400">Icon</label>
                     <input
+                      id="shortcut-icon-{idx}"
                       class="px-2 py-1.5 w-full bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 text-sm text-center"
                       placeholder="🏠"
                       bind:value={shortcut.icon} />
                   </div>
                   <div class="flex flex-col gap-1 w-full sm:flex-1">
-                    <label class="text-xs text-slate-600 dark:text-slate-400">URL</label>
+                    <label for="shortcut-url-{idx}" class="text-xs text-slate-600 dark:text-slate-400">URL</label>
                     <input
+                      id="shortcut-url-{idx}"
                       class="px-2 py-1.5 w-full bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 text-sm"
                       placeholder="/dashboard"
                       bind:value={shortcut.url} />
@@ -1006,8 +1009,9 @@ The Company reserves the right to terminate your access to the Service at any ti
           </div>
           <div class="p-4 space-y-4 sm:p-6">
             <div class="space-y-2">
-              <label class="text-sm font-medium text-slate-800 dark:text-slate-200">Base URL</label>
+              <label for="cloud-base-url" class="text-sm font-medium text-slate-800 dark:text-slate-200">Base URL</label>
               <input
+                id="cloud-base-url"
                 class="w-full px-3 py-2 rounded-lg border border-slate-300/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-white focus:outline-none focus:ring-2 accent-ring transition-colors duration-200"
                 placeholder="https://accounts.example.com"
                 bind:value={cloudBaseUrl}
@@ -1338,7 +1342,10 @@ The Company reserves the right to terminate your access to the Service at any ti
   <div class="fixed inset-0 z-50 flex items-center justify-center">
     <div
       class="absolute inset-0 bg-black/50 backdrop-blur-sm"
-      onclick={() => (showEulaModal = false)}>
+      role="button"
+      tabindex="0"
+      onclick={() => (showEulaModal = false)}
+      onkeydown={(e) => e.key === 'Escape' && (showEulaModal = false)}>
     </div>
     <div
       class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 animate-fade-in">

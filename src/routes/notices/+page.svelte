@@ -222,9 +222,9 @@
           itemHeight={rowHeight}
           containerHeight={800}
           keyFunction={(row, index) => `row-${index}`}
-          class="w-full"
-          let:item={row}>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          class="w-full">
+          {#snippet children({ item: row, index })}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {#each row as notice}
               <div
                 class="rounded-xl shadow-lg bg-white/10 text-[var(--text)] border-t-8 flex flex-col h-96"
@@ -244,7 +244,8 @@
                 </div>
               </div>
             {/each}
-          </div>
+            </div>
+          {/snippet}
         </VirtualList>
       {/if}
     </div>

@@ -17,7 +17,7 @@
 
   const studentId = 69; //! literally changes nothing but was used in the original seqta code.
 
-  let currentSelectedDate: Date = new Date();
+  let currentSelectedDate: Date = $state(new Date());
 
   let lessons = $state<any[]>([]);
   let lessonColours = $state<any[]>([]);

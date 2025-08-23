@@ -24,7 +24,7 @@
   import { accentColor } from '../lib/stores/theme';
   import TroubleshootingModal from '../lib/components/TroubleshootingModal.svelte';
   import { logger } from '../utils/logger';
-  import { ErrorCategory, ErrorSeverity } from '../lib/services/errorService';
+  import { ErrorCategory, ErrorSeverity, errorService } from '../lib/services/errorService';
 
   let { error, status } = $props<{
     error: Error & { status?: number; message?: string };
@@ -45,9 +45,9 @@
   let errorStatus = $derived(status || error?.status || 500);
   let isNetworkError = $derived(errorCategory === ErrorCategory.NETWORK || errorMessage.includes('fetch') || errorMessage.includes('network'));
   let isAuthError = $derived(errorCategory === ErrorCategory.AUTHENTICATION || errorStatus === 401 || errorStatus === 403);
-  let isNotFoundError = $derived(errorCategory === ErrorCategory.RESOURCE || errorStatus === 404);
-  let isServerError = $derived(errorStatus >= 500 || errorCategory === ErrorCategory.EXTERNAL_SERVICE);
-  let isPerformanceError = $derived(errorCategory === ErrorCategory.PERFORMANCE);
+  let isNotFoundError = $derived(errorCategory === ErrorCategory.RUNTIME || errorStatus === 404);
+  let isServerError = $derived(errorStatus >= 500 || errorCategory === ErrorCategory.RUNTIME);
+  let isPerformanceError = $derived(errorCategory === ErrorCategory.RUNTIME);
   let isCriticalError = $derived(errorSeverity === ErrorSeverity.CRITICAL);
 
   // Error type classification
@@ -145,7 +145,7 @@
 
   function markErrorResolved() {
     if (errorId !== 'unknown') {
-      errorService.markErrorResolved(errorId);
+      errorService.markErrorResolved();
       logger.info('errorPage', 'markErrorResolved', 'Error marked as resolved', { errorId });
     }
   }
@@ -178,10 +178,9 @@
     switch (category) {
       case ErrorCategory.NETWORK: return Wifi;
       case ErrorCategory.AUTHENTICATION: return ShieldCheck;
-      case ErrorCategory.PERFORMANCE: return ChartBar;
-      case ErrorCategory.RESOURCE: return CircleStack;
-      case ErrorCategory.TIMEOUT: return Clock;
-      case ErrorCategory.DATABASE: return ComputerDesktop;
+      case ErrorCategory.RUNTIME: return ChartBar;
+      case ErrorCategory.VALIDATION: return CircleStack;
+      case ErrorCategory.UI: return Clock;
       default: return ExclamationTriangle;
     }
   }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import type { Snippet } from 'svelte';
 
   type Item = any;
 
@@ -7,10 +8,11 @@
     items: Item[];
     itemHeight: number;
     containerHeight?: number;
-    itemComponent?: any;
+    itemComponent?: Snippet<[{ item: Item; index: number }]>;
     overscan?: number;
     keyFunction?: (item: Item, index: number) => string | number;
     class?: string;
+    children?: Snippet<[{ item: Item; index: number }]>;
   }
 
   let {
@@ -20,7 +22,8 @@
     itemComponent,
     overscan = 5,
     keyFunction = (item: Item, index: number) => index,
-    class: className = ""
+    class: className = "",
+    children
   }: Props = $props();
 
   let scrollTop = $state(0);
@@ -69,9 +72,9 @@
           style="height: {itemHeight}px;"
           class="virtual-item">
           {#if itemComponent}
-            <svelte:component this={itemComponent} {item} index={startIndex + index} />
-          {:else}
-            <slot {item} index={startIndex + index} />
+            {@render itemComponent({ item, index: startIndex + index })}
+          {:else if children}
+            {@render children({ item, index: startIndex + index })}
           {/if}
         </div>
       {/each}
