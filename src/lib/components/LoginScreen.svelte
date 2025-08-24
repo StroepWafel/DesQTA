@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Window } from '@tauri-apps/api/window';
   import { Icon } from 'svelte-hero-icons';
-  import { Minus, Square2Stack, XMark, QrCode, Camera, ArrowUpTray } from 'svelte-hero-icons';
+  import { Minus, Square2Stack, XMark, QrCode, Camera, ArrowUpTray, QuestionMarkCircle } from 'svelte-hero-icons';
   import { authService } from '$lib/services/authService';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
@@ -35,6 +35,7 @@
   let loginMethod = $state<'url' | 'qr'>('qr'); // Default to QR for modern experience
   let showPreviewModal = $state(false);
   let selectedPreview = $state<string | null>(null);
+  let showQrInstructionsModal = $state(false);
   
   // Typewriter animation state
   let currentFeatureIndex = $state(0);
@@ -271,6 +272,14 @@
   function closePreviewModal() {
     showPreviewModal = false;
     selectedPreview = null;
+  }
+
+  function openQrInstructionsModal() {
+    showQrInstructionsModal = true;
+  }
+
+  function closeQrInstructionsModal() {
+    showQrInstructionsModal = false;
   }
 
   function normalizeSeqtaUrlInput(inputValue: string): string {
@@ -621,7 +630,7 @@
                             <!-- Content Container with Height Animation -->
                       <div
                         class="transition-all duration-500 ease-in-out overflow-hidden"
-                        style="height: {isMobile || loginMethod === 'qr' ? '350px' : '200px'};"
+                        style="height: {isMobile || loginMethod === 'qr' ? '420px' : '200px'};"
                       >
 
                 <!-- QR Code Method -->
@@ -674,6 +683,18 @@
                     class="py-3 px-6 bg-gradient-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-slate-700 dark:text-slate-800 font-semibold rounded-2xl shadow-lg hover:shadow-xl"
                   >
                     Scan with Camera
+                  </Button>
+
+                  <!-- How to get QR code button -->
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    fullWidth={true}
+                    icon={QuestionMarkCircle}
+                    onclick={openQrInstructionsModal}
+                    class="py-2 px-4 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-xl hover:bg-white/10 dark:hover:bg-slate-800/10 transition-all duration-200"
+                  >
+                    How do I get a QR code?
                   </Button>
               </div>
             {/if}
@@ -1017,6 +1038,155 @@
               </p>
             </div>
           {/if}
+        </div>
+      </div>
+    </div>
+  {/if}
+  
+  <!-- QR Instructions Modal -->
+  {#if showQrInstructionsModal}
+    <div class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xl bg-black/70" transition:fade={{ duration: 300 }}>
+      <div class="relative w-full max-w-2xl mx-8" transition:fly={{ y: 50, duration: 500 }}>
+        <!-- Close Button -->
+        <button
+          class="absolute -top-12 right-0 p-3 rounded-full bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl hover:bg-white/30 dark:hover:bg-slate-800/40 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 border border-white/30 dark:border-slate-700/30 z-10"
+          onclick={closeQrInstructionsModal}
+          aria-label="Close QR instructions modal"
+        >
+          <Icon src={XMark} class="w-6 h-6 text-white" />
+        </button>
+
+        <!-- Modal Content -->
+        <div class="bg-white/10 dark:bg-slate-900/20 backdrop-blur-2xl rounded-3xl border border-white/20 dark:border-slate-700/20 shadow-2xl p-8 max-h-[80vh] overflow-y-auto">
+          <div class="space-y-6">
+            <div class="text-center space-y-2">
+              <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">How to Get Your QR Code</h2>
+              <p class="text-slate-600 dark:text-slate-300">Follow these steps to get your SEQTA mobile app QR code</p>
+            </div>
+
+            <!-- Steps -->
+            <div class="space-y-6">
+              <!-- Step 1 -->
+              <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
+                <div class="flex items-start space-x-4">
+                  <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Open SEQTA in Your Browser</h3>
+                    <p class="text-slate-600 dark:text-slate-300">
+                      Go to your school's SEQTA URL (e.g., <code class="bg-slate-200/50 dark:bg-slate-700/50 px-2 py-1 rounded text-sm">yourschool.seqta.com.au</code>) and log in with your usual credentials.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 2 -->
+              <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
+                <div class="flex items-start space-x-4">
+                  <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Navigate to Settings</h3>
+                    <p class="text-slate-600 dark:text-slate-300">
+                      Once logged in, look for the <strong>Settings</strong> section. This is usually found on the left sidebar.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 3 -->
+              <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
+                <div class="flex items-start space-x-4">
+                  <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">3</div>
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Click "Connect Mobile App"</h3>
+                    <p class="text-slate-600 dark:text-slate-300">
+                      Find and click the <strong>"Connect Mobile App"</strong> or <strong>"Mobile Device"</strong> option. This will initiate the mobile app connection process.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 4 -->
+              <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
+                <div class="flex items-start space-x-4">
+                  <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">4</div>
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Check Your Email</h3>
+                    <p class="text-slate-600 dark:text-slate-300 mb-3">
+                      SEQTA will send an email to your registered school email address. This email contains the QR code you need for DesQTA.
+                    </p>
+                    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                      <p class="text-sm text-amber-700 dark:text-amber-300">
+                        <strong>Note:</strong> The email might take a few minutes to arrive. Check your spam/junk folder if you don't see it.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 5 -->
+              <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
+                <div class="flex items-start space-x-4">
+                  <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">5</div>
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Screenshot or Save the QR Code</h3>
+                    <p class="text-slate-600 dark:text-slate-300 mb-3">
+                      Open the email and take a screenshot of the QR code, or save the QR code image to your device.
+                    </p>
+                    <div class="space-y-2">
+                      <p class="text-sm text-slate-500 dark:text-slate-400">
+                        <strong>Desktop:</strong> Right-click the QR code → "Save image as..."
+                      </p>
+                      <p class="text-sm text-slate-500 dark:text-slate-400">
+                        <strong>Mobile:</strong> Long press the QR code → "Save to Photos" or take a screenshot
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 6 -->
+              <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
+                <div class="flex items-start space-x-4">
+                  <div class="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">6</div>
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Upload to DesQTA</h3>
+                    <p class="text-slate-600 dark:text-slate-300">
+                      Return to DesQTA and use the "Upload QR Code" button to select and upload your saved QR code image. DesQTA will automatically log you in!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
+              <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">Need More Help?</h3>
+              <p class="text-blue-700 dark:text-blue-300 text-sm mb-3">
+                If you can't find the "Connect Mobile App" option, it might be called something different at your school, such as:
+              </p>
+              <ul class="text-sm text-blue-600 dark:text-blue-300 space-y-1 ml-4">
+                <li>• "Mobile Device Registration"</li>
+                <li>• "App Setup"</li>
+                <li>• "QR Code Setup"</li>
+                <li>• "Connect Device"</li>
+              </ul>
+              <p class="text-sm text-blue-700 dark:text-blue-300 mt-3">
+                Contact your school's IT support if you still can't locate this option.
+              </p>
+            </div>
+
+            <!-- Close Button -->
+            <div class="text-center">
+              <Button
+                variant="primary"
+                size="lg"
+                onclick={closeQrInstructionsModal}
+                class="py-3 px-8 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                Got it, thanks!
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
