@@ -196,7 +196,7 @@ class ThemeService {
     } catch (error) {
       console.error('Failed to get available themes:', error);
       // Fallback to built-in themes
-      return ['default', 'sunset', 'light', 'mint', 'grape', 'midnight', 'bubblegum', 'solarized', 'glass', 'aero'];
+      return ['default', 'sunset', 'light', 'mint', 'grape', 'midnight', 'bubblegum', 'solarized', 'glass', 'aero', 'pink-dream', 'neon-cyber'];
     }
   }
 

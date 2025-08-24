@@ -134,7 +134,7 @@ impl ThemeManager {
         // Add static themes (built-in)
         let static_themes = vec![
             "default", "sunset", "light", "mint", "grape", "midnight", 
-            "bubblegum", "solarized", "glass", "aero"
+            "bubblegum", "solarized", "glass", "aero", "pink-dream", "neon-cyber"
         ];
         themes.extend(static_themes.into_iter().map(String::from));
         
