@@ -1,7 +1,7 @@
 /* Pink Girly Pop Theme - Global Styles */
 
 /* Import cute fonts */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Quicksand:wght@300;400;500;600;700&family=Pacifico&family=Dancing+Script:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Quicksand:wght@300;400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap');
 
 :root {
@@ -13,7 +13,7 @@
   --border-color: #ff69b4;
   --shadow-color: rgba(255, 105, 180, 0.3);
   --font-family-primary: 'Nunito', 'Comic Sans MS', cursive;
-  --font-family-display: 'Pacifico', 'Dancing Script', cursive;
+  --font-family-display: 'Dancing Script', 'Quicksand', cursive;
   --sparkle-gradient: linear-gradient(45deg, #ff69b4, #ffb6c1, #ff1493, #ffc0cb);
 }
 

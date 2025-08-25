@@ -35,7 +35,7 @@
     "primary": "'Nunito', 'Comic Sans MS', cursive",
     "secondary": "'Quicksand', 'Arial Rounded MT Bold', sans-serif",
     "monospace": "'Fira Code', 'Courier New', monospace",
-    "display": "'Pacifico', 'Dancing Script', cursive"
+    "display": "'Dancing Script', 'Quicksand', cursive"
   },
   "animations": {
     "duration": "300ms",
