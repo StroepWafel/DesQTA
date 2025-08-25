@@ -110,19 +110,39 @@ class ThemeService {
   async loadThemeCSS(themeName: string, manifest: ThemeManifest): Promise<void> {
     // Remove existing theme CSS
     this.removeActiveCSS();
-    
-    try {
-      // Load global CSS
-      await this.loadCSSFile(`/themes/${themeName}/styles/global.css`);
-      
-      // Load theme-specific CSS based on current mode
-      const currentMode = this.getCurrentThemeMode();
-      await this.loadCSSFile(`/themes/${themeName}/styles/${currentMode}.css`);
-      
-      // Load component CSS
-      await this.loadCSSFile(`/themes/${themeName}/styles/components.css`);
-    } catch (error) {
-      console.warn('Some theme CSS files could not be loaded:', error);
+
+    // Try backend-provided CSS for appdata/static themes
+    const tryBackendCss = async (file: string) => {
+      try {
+        const css = await invoke<string>('read_theme_css', { themeName, fileName: file });
+        if (css && css.trim().length > 0) {
+          // Inject via style tags to support appdata themes
+          const id = `${themeName}-${file}`.replace(/\./g, '-');
+          const style = document.createElement('style');
+          style.dataset.theme = 'true';
+          style.id = `theme-${id}`;
+          style.textContent = css;
+          document.head.appendChild(style);
+          this.activeCSSLinks.push(style as unknown as HTMLLinkElement);
+          return true;
+        }
+      } catch {}
+      return false;
+    };
+
+    const currentMode = this.getCurrentThemeMode();
+    const files = [
+      'styles/global.css',
+      `styles/${currentMode}.css`,
+      'styles/components.css'
+    ];
+
+    for (const file of files) {
+      const ok = await tryBackendCss(file);
+      if (!ok) {
+        // Fallback to static link href if backend read fails
+        await this.loadCSSFile(`/themes/${themeName}/${file}`);
+      }
     }
   }
 
@@ -195,8 +215,17 @@ class ThemeService {
       return await invoke<string[]>('get_available_themes');
     } catch (error) {
       console.error('Failed to get available themes:', error);
-      // Fallback to built-in themes
-      return ['default', 'sunset', 'light', 'mint', 'grape', 'midnight', 'bubblegum', 'solarized', 'glass', 'aero', 'pink-dream', 'neon-cyber'];
+      // No hard-coded fallback; return empty to reflect actual state
+      return [];
+    }
+  }
+
+  async getCustomThemes(): Promise<string[]> {
+    try {
+      return await invoke<string[]>('get_custom_themes');
+    } catch (error) {
+      console.error('Failed to get custom themes:', error);
+      return [];
     }
   }
 

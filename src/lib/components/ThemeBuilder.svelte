@@ -595,11 +595,8 @@
   async function loadAvailableThemes() {
     loadingThemes = true;
     try {
-      availableThemes = await themeService.getAvailableThemes();
-      // Filter out built-in themes, only show custom themes
-      availableThemes = availableThemes.filter(theme => 
-        !['default', 'sunset', 'light', 'mint', 'grape', 'midnight', 'bubblegum', 'solarized', 'glass', 'aero'].includes(theme)
-      );
+      // Only show custom themes from app data
+      availableThemes = await themeService.getCustomThemes();
     } catch (error) {
       console.error('Failed to load available themes:', error);
     } finally {

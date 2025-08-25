@@ -5,6 +5,7 @@ use tauri::{AppHandle, Manager};
 use anyhow::{Result, anyhow};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemeManifest {
     pub name: String,
     pub display_name: String,
@@ -25,12 +26,14 @@ pub struct ThemeManifest {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemePreview {
     pub thumbnail: String,
     pub screenshots: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemeSettings {
     pub default_theme: String,
     pub default_accent_color: String,
@@ -39,12 +42,14 @@ pub struct ThemeSettings {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct AutoSwitchTime {
     pub light: String,
     pub dark: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemeFeatures {
     pub glassmorphism: bool,
     pub gradients: bool,
@@ -57,6 +62,7 @@ pub struct ThemeFeatures {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemeFonts {
     pub primary: String,
     pub secondary: String,
@@ -65,6 +71,7 @@ pub struct ThemeFonts {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemeAnimations {
     pub duration: String,
     pub easing: String,
@@ -74,12 +81,14 @@ pub struct ThemeAnimations {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemeColorSchemes {
     pub light: std::collections::HashMap<String, String>,
     pub dark: std::collections::HashMap<String, String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemeAccessibility {
     pub high_contrast: bool,
     pub reduced_motion: bool,
@@ -88,6 +97,7 @@ pub struct ThemeAccessibility {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemeResponsive {
     pub breakpoints: std::collections::HashMap<String, String>,
     pub fluid_typography: bool,
@@ -122,38 +132,72 @@ impl ThemeManager {
 
     #[allow(dead_code)]
     pub fn get_static_themes_directory(&self) -> PathBuf {
-        // This would be the path to static/themes in the bundled app
-        // For now, we'll use a placeholder - in reality this would be resolved
-        // relative to the app's resource directory
+        // Packaged: resource_dir/static/themes or resource_dir/themes
+        if let Ok(res_dir) = self.app_handle.path().resource_dir() {
+            let cand = res_dir.join("static").join("themes");
+            if cand.exists() { return cand; }
+            let cand2 = res_dir.join("themes");
+            if cand2.exists() { return cand2; }
+        }
+
+        // Dev: walk up from current_exe to locate project root containing /static/themes
+        if let Ok(mut cur) = std::env::current_exe() {
+            // Start from the directory of the executable
+            if cur.is_file() { if let Some(parent) = cur.parent() { cur = parent.to_path_buf(); } }
+            for _ in 0..8 {
+                let cand = cur.join("static").join("themes");
+                if cand.exists() { return cand; }
+                if let Some(parent) = cur.parent() { cur = parent.to_path_buf(); } else { break; }
+            }
+        }
+
+        // Fallback to workspace-relative path (may not exist depending on CWD)
+        let dev = PathBuf::from("static/themes");
+        if dev.exists() { return dev; }
+
+        // Last resort: return a non-existing path; callers will handle existence
         PathBuf::from("static/themes")
     }
 
     pub fn list_available_themes(&self) -> Result<Vec<String>> {
-        let mut themes = Vec::new();
-        
-        // Add static themes (built-in)
-        let static_themes = vec![
-            "default", "sunset", "light", "mint", "grape", "midnight", 
-            "bubblegum", "solarized", "glass", "aero", "pink-dream", "neon-cyber"
-        ];
-        themes.extend(static_themes.into_iter().map(String::from));
-        
-        // Add custom themes from app data directory
-        if let Ok(themes_dir) = self.get_themes_directory() {
-            if let Ok(entries) = fs::read_dir(&themes_dir) {
+        use std::collections::HashSet;
+        let mut set: HashSet<String> = HashSet::new();
+
+        // Scan static themes
+        let static_dir = self.get_static_themes_directory();
+        if static_dir.exists() {
+            if let Ok(entries) = fs::read_dir(&static_dir) {
                 for entry in entries.flatten() {
-                    if entry.path().is_dir() {
+                    let path = entry.path();
+                    if path.is_dir() {
                         if let Some(name) = entry.file_name().to_str() {
-                            if !themes.contains(&name.to_string()) {
-                                themes.push(name.to_string());
+                            // Include only if a manifest exists
+                            if path.join("theme-manifest.json").exists() || path.join("theme.manifest.json").exists() {
+                                set.insert(name.to_string());
                             }
                         }
                     }
                 }
             }
         }
-        
-        Ok(themes)
+
+        // Scan custom themes from app data directory
+        if let Ok(themes_dir) = self.get_themes_directory() {
+            if let Ok(entries) = fs::read_dir(&themes_dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.is_dir() {
+                        if let Some(name) = entry.file_name().to_str() {
+                            if path.join("theme-manifest.json").exists() || path.join("theme.manifest.json").exists() {
+                                set.insert(name.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(set.into_iter().collect())
     }
 
     pub fn load_theme_manifest(&self, theme_name: &str) -> Result<ThemeManifest> {
@@ -168,10 +212,38 @@ impl ThemeManager {
                 return Ok(manifest);
             }
         }
-        
-        // Fall back to static themes (this would need to be implemented based on how
-        // static files are handled in the Tauri app)
+
+        // Then try static themes directory
+        let static_dir = self.get_static_themes_directory();
+        let static_manifest_path = static_dir.join(theme_name).join("theme-manifest.json");
+        if static_manifest_path.exists() {
+            let content = fs::read_to_string(&static_manifest_path)
+                .map_err(|e| anyhow!("Failed to read static theme manifest: {}", e))?;
+            let manifest: ThemeManifest = serde_json::from_str(&content)
+                .map_err(|e| anyhow!("Failed to parse static theme manifest: {}", e))?;
+            return Ok(manifest);
+        }
+
         Err(anyhow!("Theme '{}' not found", theme_name))
+    }
+
+    pub fn read_theme_css(&self, theme_name: &str, file_name: &str) -> Result<String> {
+        // Prefer custom theme CSS in app data
+        if let Ok(themes_dir) = self.get_themes_directory() {
+            let path = themes_dir.join(theme_name).join("styles").join(file_name);
+            if path.exists() {
+                return fs::read_to_string(&path).map_err(|e| anyhow!("Failed to read custom CSS: {}", e));
+            }
+        }
+
+        // Fallback to static themes CSS
+        let static_dir = self.get_static_themes_directory();
+        let static_path = static_dir.join(theme_name).join("styles").join(file_name);
+        if static_path.exists() {
+            return fs::read_to_string(&static_path).map_err(|e| anyhow!("Failed to read static CSS: {}", e));
+        }
+
+        Err(anyhow!("CSS file '{}' for theme '{}' not found", file_name, theme_name))
     }
 
     pub fn save_custom_theme(&self, theme_name: &str, theme_data: &ThemeManifest) -> Result<()> {
@@ -402,6 +474,33 @@ impl ThemeManager {
 pub async fn get_available_themes(app: AppHandle) -> Result<Vec<String>, String> {
     let theme_manager = ThemeManager::new(app);
     theme_manager.list_available_themes().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_custom_themes(app: AppHandle) -> Result<Vec<String>, String> {
+    let theme_manager = ThemeManager::new(app);
+    let mut result = Vec::new();
+    if let Ok(dir) = theme_manager.get_themes_directory() {
+        if let Ok(entries) = fs::read_dir(&dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    if let Some(name) = entry.file_name().to_str() {
+                        if path.join("theme-manifest.json").exists() || path.join("theme.manifest.json").exists() {
+                            result.push(name.to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn read_theme_css(app: AppHandle, theme_name: String, file_name: String) -> Result<String, String> {
+    let theme_manager = ThemeManager::new(app);
+    theme_manager.read_theme_css(&theme_name, &file_name).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
