@@ -3,57 +3,36 @@
   import { themeService, type ThemeManifest } from '$lib/services/themeService';
   import { loadAndApplyTheme, currentTheme } from '$lib/stores/theme';
   import { get } from 'svelte/store';
-  import ThemeBuilder from '$lib/components/ThemeBuilder.svelte';
   import { themeBuilderSidebarOpen } from '$lib/stores/themeBuilderSidebar';
-  import { Icon, Swatch, Star, Heart, ArrowDownTray, ShoppingCart, Sparkles, Fire, ArrowTrendingUp, Newspaper, PaintBrush, Eye, CheckCircle } from 'svelte-hero-icons';
+  import { Icon, Swatch, ShoppingCart, PaintBrush, Eye, CheckCircle } from 'svelte-hero-icons';
 
   let availableThemes: ThemeManifest[] = [];
   let selectedTheme: ThemeManifest | null = null;
   let loading = true;
   let error: string | null = null;
   let currentThemeName = 'default';
-  let imgErrors: boolean[] = [];
-  let themeOptions: any = {};
-  let showAdvanced = false;
-  let showFeatures = false;
-  let showFonts = false;
-  let showAnimations = false;
-  let showCustom = false;
+  let themeCategories: { id: string; name: string }[] = [];
   
   // Store-like features
   let searchQuery = '';
   let selectedCategory = 'all';
-  let sortBy = 'popular';
-  let viewMode = 'grid'; // grid or list
-  let favoriteThemes: string[] = [];
-  let installedThemes: string[] = [];
+  let rotateInterval: any = null;
+  let currentSlide = 0;
   
-  // Mock data for store features
-  const themeCategories = [
-    { id: 'all', name: 'All Themes', icon: PaintBrush },
-    { id: 'popular', name: 'Popular', icon: Fire },
-    { id: 'new', name: 'New & Trending', icon: ArrowTrendingUp },
-    { id: 'girly', name: 'Pink Dream', icon: Heart },
-    { id: 'neo', name: 'Neo/Cyber', icon: Sparkles },
-    { id: 'anime', name: 'Anime', icon: Star },
-    { id: 'minimal', name: 'Minimal', icon: Newspaper },
-    { id: 'custom', name: 'Custom', icon: Swatch }
+  const slides = [
+    {
+      title: 'Discover your look',
+      description: 'Browse themes crafted for DesQTA — clean, vibrant, and fast.',
+    },
+    {
+      title: 'Make it yours',
+      description: 'Pick a theme that matches your vibe. Switch instantly.',
+    },
+    {
+      title: 'Create and share',
+      description: 'Use Theme Builder to design your own theme in minutes.',
+    }
   ];
-  
-  const mockRatings: {[key: string]: number} = {
-    'glass': 4.9,
-    'pink-dream': 4.9,
-    'aero': 4.8,
-    'neon-cyber': 4.8,
-    'midnight': 4.7,
-    'bubblegum': 4.6,
-    'light': 4.5,
-    'grape': 4.4,
-    'mint': 4.3,
-    'solarized': 4.2,
-    'sunset': 4.1,
-    'default': 4.0
-  };
 
   // Load all themes dynamically from both static and custom directories
   async function loadThemes() {
@@ -75,6 +54,7 @@
       
       const themes = await Promise.all(themePromises);
       availableThemes = themes.filter((t): t is ThemeManifest => t !== null);
+      themeCategories = generateCategories(availableThemes);
       
       console.log(`Loaded ${availableThemes.length} themes:`, availableThemes.map(t => t.name));
     } catch (e) {
@@ -99,7 +79,16 @@
     currentTheme.subscribe((val) => {
       currentThemeName = val;
     });
+
+    rotateInterval = setInterval(() => {
+      currentSlide = (currentSlide + 1) % slides.length;
+    }, 5000);
   });
+
+  // Cleanup rotation timer
+  if (typeof window !== 'undefined') {
+    addEventListener('beforeunload', () => clearInterval(rotateInterval));
+  }
 
   async function handleApplyTheme(themeName: string) {
     await loadAndApplyTheme(themeName);
@@ -108,8 +97,6 @@
 
   function openThemeModal(theme: ThemeManifest) {
     selectedTheme = theme;
-    // Deep copy to avoid mutating the manifest directly
-    themeOptions = JSON.parse(JSON.stringify(theme));
   }
 
   function closeThemeModal() {
@@ -126,23 +113,26 @@
     return `background: ${theme.customProperties.backgroundColor}`;
   }
 
-  function handleOptionChange(section: string, key: string, value: any) {
-    if (section === 'settings') themeOptions.settings[key] = value;
-    if (section === 'customProperties') themeOptions.customProperties[key] = value;
-    if (section === 'features') themeOptions.features[key] = value;
-    if (section === 'fonts') themeOptions.fonts[key] = value;
-    if (section === 'animations') themeOptions.animations[key] = value;
-    // Live apply custom properties
-    themeService.setCustomProperties(themeOptions.customProperties);
-    themeService.setThemeFonts(themeOptions.fonts);
+  function getThemePreviewImage(theme: ThemeManifest): string | null {
+    const thumb = (theme as any)?.preview?.thumbnail as string | undefined;
+    if (!thumb) return null;
+    if (thumb.startsWith('http') || thumb.startsWith('tauri://') || thumb.startsWith('/themes/')) {
+      return thumb;
+    }
+    if (thumb.startsWith('/')) {
+      return thumb;
+    }
+    // Assume relative to the theme directory
+    return `/themes/${getThemeId(theme)}/${thumb}`;
   }
 
-  async function handleApplyThemeWithOptions() {
-    if (!selectedTheme) return;
-    themeService.setCustomProperties(themeOptions.customProperties);
-    themeService.setThemeFonts(themeOptions.fonts);
-    await handleApplyTheme(selectedTheme.name.toLowerCase());
-    selectedTheme = null;
+  function generateCategories(themes: ThemeManifest[]) {
+    const set = new Set<string>();
+    themes.forEach(t => {
+      if (t.category) set.add(t.category);
+    });
+    const cats = Array.from(set).sort().map((c) => ({ id: c, name: capitalizeName(c) }));
+    return [{ id: 'all', name: 'All' }, ...cats, { id: 'custom', name: 'Custom' }];
   }
 
   function capitalizeName(name: string) {
@@ -169,15 +159,6 @@
     await loadThemes();
   }
   
-  // Store-like functions
-  function toggleFavorite(themeName: string) {
-    if (favoriteThemes.includes(themeName)) {
-      favoriteThemes = favoriteThemes.filter(t => t !== themeName);
-    } else {
-      favoriteThemes = [...favoriteThemes, themeName];
-    }
-  }
-  
   function getFilteredThemes() {
     let filtered = availableThemes;
     
@@ -194,51 +175,14 @@
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(theme => {
         if (selectedCategory === 'custom') return theme.category === 'custom';
-        if (selectedCategory === 'popular') return mockRatings[getThemeId(theme)] >= 4.5;
-                                if (selectedCategory === 'new') return ['glass', 'bubblegum', 'grape', 'pink-dream', 'neon-cyber'].includes(getThemeId(theme));
-        if (selectedCategory === 'girly') return getThemeId(theme) === 'pink-dream';
-        if (selectedCategory === 'neo') return getThemeId(theme) === 'neon-cyber';
-        return true;
+        return (theme.category || '').toLowerCase() === selectedCategory.toLowerCase();
       });
     }
     
-    // Sort themes
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'popular':
-          return (mockRatings[getThemeId(b)] || 0) - (mockRatings[getThemeId(a)] || 0);
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'newest':
-          return b.version.localeCompare(a.version);
-        default:
-          return 0;
-      }
-    });
+    // Simple sort by name
+    filtered.sort((a, b) => a.name.localeCompare(b.name));
     
     return filtered;
-  }
-  
-  function getRating(theme: ThemeManifest) {
-    return mockRatings[getThemeId(theme)] || 4.0;
-  }
-  
-  function getDownloadCount(theme: ThemeManifest) {
-    const counts: {[key: string]: string} = {
-      'default': '25.0K',
-      'glass': '15.2K',
-      'aero': '12.8K',
-      'pink-dream': '11.3K',
-      'neon-cyber': '10.7K',
-      'midnight': '9.1K',
-      'bubblegum': '7.3K',
-      'grape': '5.8K',
-      'mint': '4.2K',
-      'sunset': '3.1K',
-      'light': '2.9K',
-      'solarized': '2.4K'
-    };
-    return counts[getThemeId(theme)] || '1.2K';
   }
   
   // Get theme ID (directory name) from theme object
@@ -274,22 +218,24 @@
           <Icon src={ShoppingCart} class="w-8 h-8 text-slate-700 dark:text-slate-300" />
           <h1 class="text-4xl font-bold text-slate-900 dark:text-white">Theme Store</h1>
         </div>
-        <p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl">
-          Discover and customize beautiful themes for your DesQTA experience. From minimalist designs to vibrant anime aesthetics.
-        </p>
-        <div class="flex items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
-          <span class="flex items-center gap-2">
-            <Icon src={ArrowDownTray} class="w-4 h-4" />
-            50K+ Downloads
-          </span>
-          <span class="flex items-center gap-2">
-            <Icon src={Star} class="w-4 h-4 text-yellow-500" />
-            4.8 Average Rating
-          </span>
-          <span class="flex items-center gap-2">
-            <Icon src={PaintBrush} class="w-4 h-4" />
-            {availableThemes.length} Themes Available
-          </span>
+        <div class="relative w-full max-w-3xl">
+          <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md">
+            <div class="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm min-h-[120px] transition-all duration-200">
+              <div class="text-2xl font-bold text-slate-900 dark:text-white">{slides[currentSlide].title}</div>
+              <div class="text-slate-600 dark:text-slate-300 mt-2">{slides[currentSlide].description}</div>
+            </div>
+            <div class="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-900/50">
+              <div class="flex gap-1">
+                {#each slides as _, idx}
+                  <span class="h-1.5 w-8 rounded-full {currentSlide === idx ? 'accent-bg' : 'bg-slate-300 dark:bg-slate-700'} transition-all"></span>
+                {/each}
+              </div>
+              <div class="flex gap-2">
+                <button class="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onclick={() => currentSlide = (currentSlide - 1 + slides.length) % slides.length}>‹</button>
+                <button class="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onclick={() => currentSlide = (currentSlide + 1) % slides.length}>›</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -339,37 +285,10 @@
             class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 {selectedCategory === category.id ? 'accent-bg text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
             onclick={() => selectedCategory = category.id}
           >
-            <Icon src={category.icon} class="w-4 h-4" />
+            <Icon src={PaintBrush} class="w-4 h-4" />
             {category.name}
           </button>
         {/each}
-      </div>
-      
-      <!-- Sort & View Options -->
-      <div class="flex items-center gap-3">
-        <select 
-          bind:value={sortBy}
-          class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 accent-ring"
-        >
-          <option value="popular">Most Popular</option>
-          <option value="name">Name A-Z</option>
-          <option value="newest">Newest First</option>
-        </select>
-        
-        <div class="flex rounded-lg border border-slate-300 dark:border-slate-600 overflow-hidden">
-          <button
-            class="px-3 py-2 text-sm {viewMode === 'grid' ? 'accent-bg text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'} transition-colors"
-            onclick={() => viewMode = 'grid'}
-          >
-            Grid
-          </button>
-          <button
-            class="px-3 py-2 text-sm {viewMode === 'list' ? 'accent-bg text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'} transition-colors"
-            onclick={() => viewMode = 'list'}
-          >
-            List
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -391,15 +310,17 @@
       <p class="text-red-500 dark:text-red-300">{error}</p>
     </div>
   {:else}
-    <!-- Theme Grid/List -->
-    <div class="{viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'space-y-4'}">
+    <!-- Theme Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {#each getFilteredThemes() as theme, i (theme.name)}
         <div class="relative group">
-          {#if viewMode === 'grid'}
-            <!-- Grid Card -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+          <!-- Grid Card -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
               <!-- Theme Preview -->
               <div class="relative h-48 overflow-hidden" style="{getThemePreviewStyle(theme)}">
+                {#if getThemePreviewImage(theme)}
+                  <img src={getThemePreviewImage(theme)} alt={`${theme.name} preview`} class="absolute inset-0 w-full h-full object-cover" />
+                {/if}
                 <div class="absolute inset-0 bg-gradient-to-br from-black/10 to-black/30"></div>
                 <div class="absolute top-3 left-3 flex gap-2">
                   {#if currentThemeName === getThemeId(theme)}
@@ -408,32 +329,6 @@
                       Active
                     </span>
                   {/if}
-                  {#if getRating(theme) >= 4.5}
-                    <span class="px-2 py-1 text-xs font-medium bg-yellow-500 text-white rounded-full flex items-center gap-1">
-                      <Icon src={Fire} class="w-3 h-3" />
-                      Popular
-                    </span>
-                  {/if}
-                </div>
-                <button
-                  class="absolute top-3 right-3 p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
-                  onclick={(e) => { e.stopPropagation(); toggleFavorite(getThemeId(theme)); }}
-                >
-                  <Icon src={Heart} class="w-4 h-4 {favoriteThemes.includes(getThemeId(theme)) ? 'text-red-500 fill-current' : 'text-white'}" />
-                </button>
-                
-                <!-- Preview Mockup -->
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <div class="w-32 h-24 bg-white/90 dark:bg-slate-900/90 rounded-lg shadow-xl border border-white/20 overflow-hidden">
-                    <div class="h-6 flex items-center px-2 text-xs font-medium" style="background: {theme.customProperties.primaryColor}; color: white;">
-                      DesQTA
-                    </div>
-                    <div class="p-2 space-y-1">
-                      <div class="h-2 bg-slate-300 dark:bg-slate-600 rounded w-3/4"></div>
-                      <div class="h-2 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
-                      <div class="h-8 rounded" style="background: {theme.customProperties.primaryColor}20;"></div>
-                    </div>
-                  </div>
                 </div>
               </div>
               
@@ -444,30 +339,12 @@
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">{theme.name}</h3>
                     <p class="text-sm text-slate-600 dark:text-slate-400">by {theme.author}</p>
                   </div>
-                  <div class="flex items-center gap-1 text-sm">
-                    <Icon src={Star} class="w-4 h-4 text-yellow-500 fill-current" />
-                    <span class="font-medium text-slate-700 dark:text-slate-300">{getRating(theme)}</span>
-                  </div>
                 </div>
                 
                 <p class="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">{theme.description}</p>
                 
-                <div class="flex items-center justify-between mb-4">
-                  <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                    <span class="flex items-center gap-1">
-                      <Icon src={ArrowDownTray} class="w-3 h-3" />
-                      {getDownloadCount(theme)}
-                    </span>
-                    <span>v{theme.version}</span>
-                  </div>
-                  <div class="flex gap-1">
-                    {#if theme.features.glassmorphism}
-                      <span class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">Glass</span>
-                    {/if}
-                    {#if theme.features.gradients}
-                      <span class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full">Gradient</span>
-                    {/if}
-                  </div>
+                <div class="flex items-center justify-between mb-4 text-xs text-slate-500 dark:text-slate-400">
+                  <span>v{theme.version}</span>
                 </div>
                 
                 <div class="flex gap-2">
@@ -502,73 +379,6 @@
                 </button>
               {/if}
             </div>
-          {:else}
-            <!-- List View -->
-            <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200 p-6">
-              <div class="flex items-center gap-6">
-                <!-- Theme Preview -->
-                <div class="w-20 h-16 rounded-lg overflow-hidden flex-shrink-0" style="{getThemePreviewStyle(theme)}">
-                  <div class="w-full h-full flex items-center justify-center">
-                    <div class="w-12 h-10 bg-white/90 dark:bg-slate-900/90 rounded shadow-sm border overflow-hidden">
-                      <div class="h-3 text-xs px-1 flex items-center text-white" style="background: {theme.customProperties.primaryColor};">DesQTA</div>
-                      <div class="p-1 space-y-0.5">
-                        <div class="h-1 bg-slate-300 dark:bg-slate-600 rounded w-3/4"></div>
-                        <div class="h-1 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
-                        <div class="h-2 rounded" style="background: {theme.customProperties.primaryColor}40;"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Theme Info -->
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 class="text-lg font-bold text-slate-900 dark:text-white">{theme.name}</h3>
-                      <p class="text-sm text-slate-600 dark:text-slate-400">by {theme.author} • v{theme.version}</p>
-                    </div>
-                    <div class="flex items-center gap-4 text-sm">
-                      <div class="flex items-center gap-1">
-                        <Icon src={Star} class="w-4 h-4 text-yellow-500 fill-current" />
-                        <span class="font-medium">{getRating(theme)}</span>
-                      </div>
-                      <div class="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                        <Icon src={ArrowDownTray} class="w-4 h-4" />
-                        <span>{getDownloadCount(theme)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">{theme.description}</p>
-                  <div class="flex items-center justify-between">
-                    <div class="flex gap-2">
-                      {#if currentThemeName === getThemeId(theme)}
-                        <span class="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">Active</span>
-                      {/if}
-                      {#if theme.features.glassmorphism}
-                        <span class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">Glassmorphism</span>
-                      {/if}
-                    </div>
-                    <div class="flex gap-3">
-                      <button
-                        class="accent-text hover:accent-text-hover font-medium text-sm"
-                        onclick={() => openThemeModal(theme)}
-                      >
-                        Preview
-                      </button>
-                      {#if currentThemeName !== getThemeId(theme)}
-                        <button
-                          class="px-4 py-2 accent-bg hover:accent-bg-hover text-white font-medium rounded-lg transition-colors text-sm"
-                          onclick={() => handleApplyTheme(getThemeId(theme))}
-                        >
-                          Apply
-                        </button>
-                      {/if}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          {/if}
         </div>
       {/each}
     </div>
@@ -630,122 +440,14 @@
             </div>
             <div class="flex-1 overflow-y-auto px-6 pt-6 pb-2">
               <div class="font-semibold text-lg mb-2 text-slate-800 dark:text-white">{selectedTheme.name} Theme</div>
-              <div class="text-sm text-slate-700 dark:text-slate-200 mb-4 text-center">{selectedTheme.description}</div>
-              <!-- Theme Options Section -->
-              <div class="w-full max-w-3xl mx-auto mb-4 p-6 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md">
-                <div class="accent-bg accent-text px-4 py-2 rounded-lg shadow font-medium text-base mb-4 transition-colors duration-200">
-                  Theme Options
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                  <!-- Accent Color -->
-                  <div class="flex items-center gap-2">
-                    <label class="block text-base font-medium flex-1 text-slate-800 dark:text-white" for="accentColor">Accent Color</label>
-                    <div class="flex items-center gap-2">
-                      <input id="accentColor" aria-label="Accent Color" type="color" class="w-10 h-10 border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-accent transition-all" bind:value={themeOptions.settings.defaultAccentColor} oninput={e => handleOptionChange('settings', 'defaultAccentColor', (e.target && (e.target as HTMLInputElement).value) || themeOptions.settings.defaultAccentColor)} />
-                      <span class="w-8 h-8 rounded-lg border border-gray-300" style="background: {themeOptions.settings.defaultAccentColor}"></span>
-                    </div>
-                  </div>
-                  <!-- Default Theme -->
-                  <div>
-                    <label class="block text-base font-medium mb-1 text-slate-800 dark:text-white" for="defaultTheme">Default Theme</label>
-                    <select id="defaultTheme" aria-label="Default Theme" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 shadow px-3 py-2 focus:ring-2 focus:ring-accent transition-all bg-white dark:bg-gray-900 text-base text-slate-800 dark:text-white" bind:value={themeOptions.settings.defaultTheme} onchange={e => handleOptionChange('settings', 'defaultTheme', (e.target && (e.target as HTMLSelectElement).value) || themeOptions.settings.defaultTheme)}>
-                      <option value="light">Light</option>
-                      <option value="dark">Dark</option>
-                      <option value="system">System</option>
-                    </select>
-                  </div>
-                </div>
-                <!-- Advanced Options Accordion -->
-                <div class="mb-2">
-                  <button class="w-full flex items-center justify-between px-4 py-2 rounded-lg bg-slate-200 dark:bg-gray-700 text-slate-800 dark:text-slate-200 font-medium shadow transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-accent" onclick={() => showAdvanced = !showAdvanced} aria-expanded={showAdvanced} aria-controls="advanced-options">
-                    Advanced Options
-                    <svg class="w-5 h-5 ml-2 transition-transform duration-200" style="transform: rotate({showAdvanced ? 90 : 0}deg);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                  </button>
-                  {#if showAdvanced}
-                    <div id="advanced-options" class="mt-4 space-y-4">
-                      <!-- Features Accordion -->
-                      <div>
-                        <button class="w-full flex items-center justify-between px-3 py-2 rounded bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-slate-200 font-medium shadow transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-accent" onclick={() => showFeatures = !showFeatures} aria-expanded={showFeatures} aria-controls="features-options">
-                          Features
-                          <svg class="w-4 h-4 ml-2 transition-transform duration-200" style="transform: rotate({showFeatures ? 90 : 0}deg);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                        </button>
-                        {#if showFeatures}
-                          <div id="features-options" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                            {#each Object.keys(themeOptions.features) as feat}
-                              <div class="flex items-center gap-2">
-                                <input type="checkbox" class="w-4 h-4 text-accent bg-gray-100 border-gray-300 rounded focus:ring-accent dark:focus:ring-accent dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" checked={themeOptions.features[feat]} onchange={e => handleOptionChange('features', feat, (e.target && (e.target as HTMLInputElement).checked) || false)} />
-                                <label class="text-base font-medium text-slate-800 dark:text-white" for={feat}>{feat}</label>
-                              </div>
-                            {/each}
-                          </div>
-                        {/if}
-                      </div>
-                      <!-- Fonts Accordion -->
-                      <div>
-                        <button class="w-full flex items-center justify-between px-3 py-2 rounded bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-slate-200 font-medium shadow transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-accent" onclick={() => showFonts = !showFonts} aria-expanded={showFonts} aria-controls="fonts-options">
-                          Fonts
-                          <svg class="w-4 h-4 ml-2 transition-transform duration-200" style="transform: rotate({showFonts ? 90 : 0}deg);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                        </button>
-                        {#if showFonts}
-                          <div id="fonts-options" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                            {#each Object.keys(themeOptions.fonts) as fontKey}
-                              <div>
-                                <label class="block text-base font-medium mb-1 text-slate-800 dark:text-white" for={fontKey + '-font'}>{fontKey} font</label>
-                                <input type="text" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-accent focus:border-accent bg-white dark:bg-gray-900 text-slate-800 dark:text-white" bind:value={themeOptions.fonts[fontKey]} oninput={e => handleOptionChange('fonts', fontKey, (e.target && (e.target as HTMLInputElement).value) || themeOptions.fonts[fontKey])} />
-                              </div>
-                            {/each}
-                          </div>
-                        {/if}
-                      </div>
-                      <!-- Animations Accordion -->
-                      <div>
-                        <button class="w-full flex items-center justify-between px-3 py-2 rounded bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-slate-200 font-medium shadow transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-accent" onclick={() => showAnimations = !showAnimations} aria-expanded={showAnimations} aria-controls="animations-options">
-                          Animations
-                          <svg class="w-4 h-4 ml-2 transition-transform duration-200" style="transform: rotate({showAnimations ? 90 : 0}deg);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                        </button>
-                        {#if showAnimations}
-                          <div id="animations-options" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                            {#each Object.keys(themeOptions.animations) as animKey}
-                              <div>
-                                <label class="block text-base font-medium mb-1 text-slate-800 dark:text-white" for={animKey + '-anim'}>{animKey}</label>
-                                <input type="text" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-accent focus:border-accent bg-white dark:bg-gray-900 text-slate-800 dark:text-white" bind:value={themeOptions.animations[animKey]} oninput={e => handleOptionChange('animations', animKey, (e.target && (e.target as HTMLInputElement).value) || themeOptions.animations[animKey])} />
-                              </div>
-                            {/each}
-                          </div>
-                        {/if}
-                      </div>
-                      <!-- Custom Properties Accordion -->
-                      <div>
-                        <button class="w-full flex items-center justify-between px-3 py-2 rounded bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-slate-200 font-medium shadow transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-accent" onclick={() => showCustom = !showCustom} aria-expanded={showCustom} aria-controls="custom-options">
-                          Custom Properties
-                          <svg class="w-4 h-4 ml-2 transition-transform duration-200" style="transform: rotate({showCustom ? 90 : 0}deg);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                        </button>
-                        {#if showCustom}
-                          <div id="custom-options" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                            {#each Object.keys(themeOptions.customProperties) as prop}
-                              <div class="flex items-center gap-2">
-                                <label class="block text-base font-medium flex-1 text-slate-800 dark:text-white" for={prop}>{prop}</label>
-                                {#if themeOptions.customProperties[prop]?.startsWith('#') || themeOptions.customProperties[prop]?.startsWith('rgb')}
-                                  <input type="color" class="w-full h-10 px-1 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-accent focus:border-accent bg-white dark:bg-gray-900" bind:value={themeOptions.customProperties[prop]} oninput={e => handleOptionChange('customProperties', prop, (e.target && (e.target as HTMLInputElement).value) || themeOptions.customProperties[prop])} />
-                                  <span class="w-8 h-8 rounded-lg border border-gray-300" style="background: {themeOptions.customProperties[prop]}"></span>
-                                {:else}
-                                  <input type="text" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-accent focus:border-accent bg-white dark:bg-gray-900 text-slate-800 dark:text-white" bind:value={themeOptions.customProperties[prop]} oninput={e => handleOptionChange('customProperties', prop, (e.target && (e.target as HTMLInputElement).value) || themeOptions.customProperties[prop])} />
-                                {/if}
-                              </div>
-                            {/each}
-                          </div>
-                        {/if}
-                      </div>
-                    </div>
-                  {/if}
-                </div>
-              </div>
+              <div class="text-sm text-slate-700 dark:text-slate-200 mb-2 text-center">{selectedTheme.description}</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 text-center">by {selectedTheme.author} • v{selectedTheme.version}</div>
             </div>
             <!-- Sticky action buttons -->
             <div class="flex gap-4 justify-center items-center p-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 z-10">
               <button
                 class="px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent accent-bg hover:accent-bg-hover active:scale-95"
-                onclick={handleApplyThemeWithOptions}
+                onclick={() => selectedTheme && handleApplyTheme(getThemeId(selectedTheme))}
               >
                 Apply Theme
               </button>
