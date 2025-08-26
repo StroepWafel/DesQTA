@@ -180,6 +180,34 @@
     'dark-mode', 'light-mode', 'professional', 'creative', 'retro', 'modern', 'animated'
   ];
 
+  // Font autocomplete options (sample common families)
+  const fontOptions = [
+    { label: 'Inter', value: 'Inter, system-ui, sans-serif' },
+    { label: 'Roboto', value: 'Roboto, system-ui, sans-serif' },
+    { label: 'Poppins', value: 'Poppins, system-ui, sans-serif' },
+    { label: 'Nunito', value: 'Nunito, system-ui, sans-serif' },
+    { label: 'Montserrat', value: 'Montserrat, system-ui, sans-serif' },
+    { label: 'Lato', value: 'Lato, system-ui, sans-serif' },
+    { label: 'Open Sans', value: 'Open Sans, system-ui, sans-serif' },
+    { label: 'Source Sans Pro', value: 'Source Sans Pro, system-ui, sans-serif' },
+    { label: 'Georgia', value: 'Georgia, serif' },
+    { label: 'Merriweather', value: 'Merriweather, serif' },
+    { label: 'JetBrains Mono', value: 'JetBrains Mono, Consolas, monospace' },
+    { label: 'Fira Code', value: 'Fira Code, Consolas, monospace' },
+  ];
+
+  let fontQuery = $state('');
+  let showFontDropdown = $state(false);
+  function filteredFonts() {
+    if (!fontQuery) return fontOptions;
+    return fontOptions.filter(f => f.label.toLowerCase().includes(fontQuery.toLowerCase()));
+  }
+  function selectFont(opt: { label: string; value: string }) {
+    themeConfig.fonts.primary = opt.value;
+    fontQuery = opt.label;
+    showFontDropdown = false;
+  }
+
   function resetBuilder() {
     currentStep = 0;
     themeName = '';
@@ -1061,25 +1089,45 @@
     <!-- Typography Section -->
     <section>
       <h3 class="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Typography</h3>
-          
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {#each Object.entries(themeConfig.fonts) as [fontType, fontValue]}
-              <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for={fontType + 'Font'}>
-                  {fontType.charAt(0).toUpperCase() + fontType.slice(1)} Font
-                </label>
+            <div class="relative">
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="primaryFont">
+                Primary Font
+              </label>
+              <div class="relative">
                 <input
+                  id="primaryFont"
                   type="text"
-                  id={fontType + 'Font'}
-                  bind:value={themeConfig.fonts[fontType as keyof typeof themeConfig.fonts]}
-                  placeholder="Font family name"
+                  placeholder="Search fonts..."
+                  bind:value={fontQuery}
+                  onfocus={() => { showFontDropdown = true; fontQuery = fontQuery || (themeConfig.fonts.primary.split(',')[0] || ''); }}
+                  oninput={() => { showFontDropdown = true; }}
                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  style="font-family: {themeConfig.fonts.primary}"
                 />
-                <div class="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded text-sm" style="font-family: {fontValue}">
-                  The quick brown fox jumps over the lazy dog
-                </div>
+                {#if showFontDropdown}
+                  <div class="absolute z-20 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-56 overflow-auto">
+                    {#each filteredFonts() as opt}
+                      <button
+                        type="button"
+                        class="w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        style="font-family: {opt.value}"
+                        onclick={() => selectFont(opt)}
+                      >
+                        {opt.label}
+                      </button>
+                    {/each}
+                    {#if filteredFonts().length === 0}
+                      <div class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">No matches</div>
+                    {/if}
+                  </div>
+                {/if}
               </div>
-            {/each}
+              <div class="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded text-sm" style="font-family: {themeConfig.fonts.primary}">
+                The quick brown fox jumps over the lazy dog
+              </div>
+            </div>
           </div>
           
           <!-- Font Presets -->
@@ -1090,8 +1138,7 @@
                 type="button"
                 onclick={() => {
                   themeConfig.fonts.primary = 'Inter, system-ui, sans-serif';
-                  themeConfig.fonts.secondary = 'Inter, system-ui, sans-serif';
-                  themeConfig.fonts.display = 'Inter, system-ui, sans-serif';
+                  fontQuery = 'Inter';
                 }}
                 class="p-3 text-left bg-white dark:bg-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors border border-slate-200 dark:border-slate-600"
               >
@@ -1102,8 +1149,7 @@
                 type="button"
                 onclick={() => {
                   themeConfig.fonts.primary = 'Georgia, serif';
-                  themeConfig.fonts.secondary = 'Georgia, serif';
-                  themeConfig.fonts.display = 'Georgia, serif';
+                  fontQuery = 'Georgia';
                 }}
                 class="p-3 text-left bg-white dark:bg-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors border border-slate-200 dark:border-slate-600"
               >
