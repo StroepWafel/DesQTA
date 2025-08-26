@@ -194,10 +194,41 @@
     { label: 'Merriweather', value: 'Merriweather, serif' },
     { label: 'JetBrains Mono', value: 'JetBrains Mono, Consolas, monospace' },
     { label: 'Fira Code', value: 'Fira Code, Consolas, monospace' },
+    { label: 'Manrope', value: 'Manrope, system-ui, sans-serif' },
+    { label: 'Work Sans', value: 'Work Sans, system-ui, sans-serif' },
+    { label: 'DM Sans', value: 'DM Sans, system-ui, sans-serif' },
+    { label: 'Plus Jakarta Sans', value: 'Plus Jakarta Sans, system-ui, sans-serif' },
+    { label: 'SF Pro Text', value: 'SF Pro Text, -apple-system, system-ui, sans-serif' },
+    { label: 'Segoe UI', value: 'Segoe UI, system-ui, sans-serif' },
+    { label: 'Helvetica Neue', value: 'Helvetica Neue, Arial, sans-serif' },
+    { label: 'Avenir', value: 'Avenir, system-ui, sans-serif' },
+    { label: 'IBM Plex Sans', value: 'IBM Plex Sans, system-ui, sans-serif' },
+    { label: 'IBM Plex Mono', value: 'IBM Plex Mono, Consolas, monospace' },
+    { label: 'Space Grotesk', value: 'Space Grotesk, system-ui, sans-serif' },
+    { label: 'Space Mono', value: 'Space Mono, Consolas, monospace' },
+    { label: 'Raleway', value: 'Raleway, system-ui, sans-serif' },
+    { label: 'Oswald', value: 'Oswald, system-ui, sans-serif' },
+    { label: 'Ubuntu', value: 'Ubuntu, system-ui, sans-serif' },
+    { label: 'Cascadia Code', value: 'Cascadia Code, Consolas, monospace' },
+    { label: 'Menlo', value: 'Menlo, Consolas, monospace' },
+    { label: 'Monaco', value: 'Monaco, Consolas, monospace' },
+    { label: 'Consolas', value: 'Consolas, monospace' },
+    { label: 'Courier New', value: 'Courier New, monospace' },
   ];
 
   let fontQuery = $state('');
   let showFontDropdown = $state(false);
+  function coercePrimaryFromQuery(query: string): string {
+    const q = (query || '').trim();
+    if (!q) return themeConfig.fonts.primary;
+    // If user provided a full stack with comma or generic family, accept as-is
+    const lower = q.toLowerCase();
+    if (q.includes(',') || lower.includes('serif') || lower.includes('monospace') || lower.includes('sans-serif')) {
+      return q;
+    }
+    // Otherwise append sensible fallbacks
+    return `${q}, system-ui, sans-serif`;
+  }
   function filteredFonts() {
     if (!fontQuery) return fontOptions;
     return fontOptions.filter(f => f.label.toLowerCase().includes(fontQuery.toLowerCase()));
@@ -1048,7 +1079,7 @@
                   placeholder="Search fonts..."
                   bind:value={fontQuery}
                   onfocus={() => { showFontDropdown = true; fontQuery = fontQuery || (themeConfig.fonts.primary.split(',')[0] || ''); }}
-                  oninput={() => { showFontDropdown = true; }}
+                  oninput={(e) => { showFontDropdown = true; themeConfig.fonts.primary = coercePrimaryFromQuery((e.target as HTMLInputElement).value); }}
                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   style="font-family: {themeConfig.fonts.primary}"
                 />
