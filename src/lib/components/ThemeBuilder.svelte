@@ -540,11 +540,16 @@
       // Convert extended manifest back to basic manifest for saving
       const basicManifest: ThemeManifest = {
         name: themeConfig.name,
+        // Ensure displayName is provided for backend schema
+        // Use provided displayName or fallback to name
+        ...(themeConfig.displayName ? { displayName: themeConfig.displayName } : { displayName: themeConfig.name }),
         version: themeConfig.version,
         description: themeConfig.description,
         author: themeConfig.author,
         license: themeConfig.license,
         category: themeConfig.category,
+        // Provide tags array (can be empty)
+        tags: themeConfig.tags || [],
         compatibility: themeConfig.compatibility,
         preview: themeConfig.preview,
         settings: {
@@ -558,32 +563,60 @@
         fonts: {
           primary: themeConfig.fonts.primary,
           secondary: themeConfig.fonts.secondary,
-          monospace: themeConfig.fonts.monospace
+          monospace: themeConfig.fonts.monospace,
+          display: themeConfig.fonts.display || themeConfig.fonts.primary
         },
         animations: {
           duration: themeConfig.animations.duration,
           easing: themeConfig.animations.easing,
-          enableEnhanced: themeConfig.animations.enableEnhanced
+          enableEnhanced: themeConfig.animations.enableEnhanced,
+          // Provide optional fields to satisfy backend defaults
+          // even if not used by CSS generation directly
+          ...(themeConfig.animations.scale ? { scale: themeConfig.animations.scale } : {}),
+          ...(themeConfig.animations.fadeIn ? { fadeIn: themeConfig.animations.fadeIn } : {}),
+          ...(themeConfig.animations.slideIn ? { slideIn: themeConfig.animations.slideIn } : {}),
         },
         features: {
           customScrollbars: themeConfig.features.customScrollbars,
           glassmorphism: themeConfig.features.glassmorphism,
           gradients: themeConfig.features.gradients,
           shadows: themeConfig.features.shadows
+        },
+        // Provide optional nested objects expected by backend schema
+        colorSchemes: themeConfig.colorSchemes || { light: {}, dark: {} },
+        accessibility: themeConfig.accessibility || {
+          highContrast: false,
+          reducedMotion: false,
+          focusIndicators: true,
+          screenReaderOptimized: true
+        },
+        responsive: themeConfig.responsive || {
+          breakpoints: {
+            sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1536px'
+          },
+          fluidTypography: true,
+          adaptiveSpacing: true
         }
       };
       
-      // Save theme to app data directory
-      await invoke('save_custom_theme', {
-        themeName: basicManifest.name,
-        themeData: basicManifest
-      });
+      // Save theme to app data directory via service (clears cache)
+      await themeService.saveCustomTheme(basicManifest.name, basicManifest as any);
       
       console.log('Theme saved successfully');
     } catch (error) {
       console.error('Failed to save theme:', error);
     } finally {
       isSaving = false;
+    }
+  }
+
+  async function applyThemeFromBuilder() {
+    if (!validateStepsUpTo(steps.length - 1)) return;
+    try {
+      await saveTheme();
+      await loadAndApplyTheme(themeConfig.name);
+    } catch (error) {
+      console.error('Failed to apply theme from builder:', error);
     }
   }
 
@@ -771,24 +804,6 @@
         >
           <Icon src={DocumentDuplicate} class="w-4 h-4" />
           Load
-        </button>
-        <button
-          type="button"
-          onclick={importTheme}
-          disabled={isImporting}
-          class="flex items-center gap-2 px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors disabled:opacity-50"
-        >
-          <Icon src={ArrowUpTray} class="w-4 h-4" />
-          {isImporting ? 'Importing...' : 'Import'}
-        </button>
-        <button
-          type="button"
-          onclick={exportTheme}
-          disabled={isExporting || !canExportOrSave()}
-          class="flex items-center gap-2 px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors disabled:opacity-50"
-        >
-          <Icon src={ArrowDownTray} class="w-4 h-4" />
-          {isExporting ? 'Exporting...' : 'Export'}
         </button>
       </div>
     </div>
@@ -1160,59 +1175,26 @@
 
   <!-- Sticky Footer Actions -->
   <div class="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 sticky bottom-0 z-10">
-    <div class="flex items-center gap-2">
-      <button
-        type="button"
-        onclick={importTheme}
-        disabled={isImporting}
-        class="flex items-center gap-2 px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors disabled:opacity-50"
-      >
-        <Icon src={ArrowUpTray} class="w-4 h-4" />
-        {isImporting ? 'Importing...' : 'Import'}
-      </button>
-      
-      <button
-        type="button"
-        onclick={exportTheme}
-        disabled={isExporting || !canExportOrSave()}
-        class="flex items-center gap-2 px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors disabled:opacity-50"
-      >
-        <Icon src={ArrowDownTray} class="w-4 h-4" />
-        {isExporting ? 'Exporting...' : 'Export'}
-      </button>
-    </div>
+    <div class="flex items-center gap-2"></div>
     
     <div class="flex items-center gap-2">
-      {#if currentStep > 0}
-        <button
-          type="button"
-          onclick={prevStep}
-          class="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
-        >
-          Previous
-        </button>
-      {/if}
-      
-      {#if currentStep < steps.length - 1}
-        <button
-          type="button"
-          onclick={nextStep}
-          disabled={!isCurrentStepValid()}
-          class="px-6 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-300 disabled:text-slate-500 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
-        >
-          Next
-        </button>
-      {:else}
-        <button
-          type="button"
-          onclick={saveTheme}
-          disabled={isSaving || !canExportOrSave()}
-          class="flex items-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 disabled:bg-slate-300 disabled:text-slate-500 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
-        >
-          <Icon src={BookmarkSquare} class="w-4 h-4" />
-          {isSaving ? 'Saving...' : 'Save Theme'}
-        </button>
-      {/if}
+      <button
+        type="button"
+        onclick={saveTheme}
+        disabled={isSaving || !canExportOrSave()}
+        class="flex items-center gap-2 px-6 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors disabled:cursor-not-allowed"
+      >
+        <Icon src={BookmarkSquare} class="w-4 h-4" />
+        {isSaving ? 'Saving...' : 'Save'}
+      </button>
+      <button
+        type="button"
+        onclick={applyThemeFromBuilder}
+        disabled={isSaving || !canExportOrSave()}
+        class="flex items-center gap-2 px-6 py-2 accent-bg hover:accent-bg-hover text-white rounded-lg transition-colors disabled:cursor-not-allowed"
+      >
+        Apply
+      </button>
     </div>
   </div>
 </div>

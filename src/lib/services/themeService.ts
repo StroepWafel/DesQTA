@@ -2,11 +2,13 @@ import { invoke } from '@tauri-apps/api/core';
 
 export interface ThemeManifest {
   name: string;
+  displayName?: string;
   version: string;
   description: string;
   author: string;
   license: string;
   category?: string;
+  tags?: string[];
   compatibility: {
     minVersion: string;
     maxVersion: string;
@@ -21,23 +23,43 @@ export interface ThemeManifest {
     supportsLightMode: boolean;
     supportsDarkMode: boolean;
     supportsSystemMode: boolean;
+    allowUserCustomization?: boolean;
   };
   customProperties: Record<string, string>;
   fonts: {
     primary: string;
     secondary: string;
     monospace: string;
+    display?: string;
   };
   animations: {
     duration: string;
     easing: string;
     enableEnhanced: boolean;
+    scale?: string;
+    fadeIn?: string;
+    slideIn?: string;
   };
   features: {
     customScrollbars: boolean;
     glassmorphism: boolean;
     gradients: boolean;
     shadows: boolean;
+  };
+  colorSchemes?: {
+    light: Record<string, string>;
+    dark: Record<string, string>;
+  };
+  accessibility?: {
+    highContrast: boolean;
+    reducedMotion: boolean;
+    focusIndicators: boolean;
+    screenReaderOptimized: boolean;
+  };
+  responsive?: {
+    breakpoints: Record<string, string>;
+    fluidTypography: boolean;
+    adaptiveSpacing: boolean;
   };
 }
 

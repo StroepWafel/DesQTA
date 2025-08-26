@@ -314,8 +314,8 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {#each getFilteredThemes() as theme, i (theme.name)}
         <div class="relative group">
-          <!-- Grid Card -->
-          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+            <!-- Grid Card -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
               <!-- Theme Preview -->
               <div class="relative h-48 overflow-hidden" style="{getThemePreviewStyle(theme)}">
                 {#if getThemePreviewImage(theme)}
@@ -344,7 +344,7 @@
                 <p class="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">{theme.description}</p>
                 
                 <div class="flex items-center justify-between mb-4 text-xs text-slate-500 dark:text-slate-400">
-                  <span>v{theme.version}</span>
+                    <span>v{theme.version}</span>
                 </div>
                 
                 <div class="flex gap-2">

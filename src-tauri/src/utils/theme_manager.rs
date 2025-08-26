@@ -37,6 +37,7 @@ pub struct ThemePreview {
 pub struct ThemeSettings {
     pub default_theme: String,
     pub default_accent_color: String,
+    #[serde(default)]
     pub allow_user_customization: bool,
     pub auto_switch_time: Option<AutoSwitchTime>,
 }
@@ -48,16 +49,24 @@ pub struct AutoSwitchTime {
     pub dark: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ThemeFeatures {
+    #[serde(default)]
     pub glassmorphism: bool,
+    #[serde(default)]
     pub gradients: bool,
+    #[serde(default)]
     pub animations: bool,
+    #[serde(default)]
     pub custom_fonts: bool,
+    #[serde(default)]
     pub dark_mode: bool,
+    #[serde(default)]
     pub color_schemes: bool,
+    #[serde(default)]
     pub accessibility: bool,
+    #[serde(default)]
     pub responsive: bool,
 }
 
@@ -75,32 +84,44 @@ pub struct ThemeFonts {
 pub struct ThemeAnimations {
     pub duration: String,
     pub easing: String,
+    #[serde(default)]
     pub scale: String,
+    #[serde(default)]
     pub fade_in: String,
+    #[serde(default)]
     pub slide_in: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ThemeColorSchemes {
+    #[serde(default)]
     pub light: std::collections::HashMap<String, String>,
+    #[serde(default)]
     pub dark: std::collections::HashMap<String, String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ThemeAccessibility {
+    #[serde(default)]
     pub high_contrast: bool,
+    #[serde(default)]
     pub reduced_motion: bool,
+    #[serde(default)]
     pub focus_indicators: bool,
+    #[serde(default)]
     pub screen_reader_optimized: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ThemeResponsive {
+    #[serde(default)]
     pub breakpoints: std::collections::HashMap<String, String>,
+    #[serde(default)]
     pub fluid_typography: bool,
+    #[serde(default)]
     pub adaptive_spacing: bool,
 }
 
@@ -114,20 +135,39 @@ impl ThemeManager {
     }
 
     pub fn get_themes_directory(&self) -> Result<PathBuf> {
-        let app_data_dir = self.app_handle
-            .path()
-            .app_data_dir()
-            .map_err(|e| anyhow!("Failed to get app data directory: {}", e))?;
-        
-        let themes_dir = app_data_dir.join("themes");
-        
-        // Create directory if it doesn't exist
-        if !themes_dir.exists() {
-            fs::create_dir_all(&themes_dir)
-                .map_err(|e| anyhow!("Failed to create themes directory: {}", e))?;
+        #[cfg(target_os = "android")]
+        {
+            let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+            dir.push("DesQTA");
+            if !dir.exists() {
+                println!("[ThemeManager] Creating Android data dir: {:?}", dir);
+                fs::create_dir_all(&dir).map_err(|e| anyhow!("Unable to create data dir: {}", e))?;
+            }
+            dir.push("themes");
+            if !dir.exists() {
+                println!("[ThemeManager] Creating Android themes dir: {:?}", dir);
+                fs::create_dir_all(&dir).map_err(|e| anyhow!("Unable to create themes dir: {}", e))?;
+            }
+            println!("[ThemeManager] Using Android themes dir: {:?}", dir);
+            return Ok(dir);
         }
-        
-        Ok(themes_dir)
+
+        #[cfg(not(target_os = "android"))]
+        {
+            let mut base = dirs_next::data_dir().ok_or_else(|| anyhow!("Unable to determine data dir"))?;
+            base.push("DesQTA");
+            if !base.exists() {
+                println!("[ThemeManager] Creating desktop data dir: {:?}", base);
+                fs::create_dir_all(&base).map_err(|e| anyhow!("Unable to create data dir: {}", e))?;
+            }
+            let themes_dir = base.join("themes");
+            if !themes_dir.exists() {
+                println!("[ThemeManager] Creating desktop themes dir: {:?}", themes_dir);
+                fs::create_dir_all(&themes_dir).map_err(|e| anyhow!("Unable to create themes dir: {}", e))?;
+            }
+            println!("[ThemeManager] Using desktop themes dir: {:?}", themes_dir);
+            Ok(themes_dir)
+        }
     }
 
     #[allow(dead_code)]
@@ -135,27 +175,25 @@ impl ThemeManager {
         // Packaged: resource_dir/static/themes or resource_dir/themes
         if let Ok(res_dir) = self.app_handle.path().resource_dir() {
             let cand = res_dir.join("static").join("themes");
-            if cand.exists() { return cand; }
+            if cand.exists() { println!("[ThemeManager] Using static themes dir (res/static/themes): {:?}", cand); return cand; }
             let cand2 = res_dir.join("themes");
-            if cand2.exists() { return cand2; }
+            if cand2.exists() { println!("[ThemeManager] Using static themes dir (res/themes): {:?}", cand2); return cand2; }
         }
 
         // Dev: walk up from current_exe to locate project root containing /static/themes
         if let Ok(mut cur) = std::env::current_exe() {
-            // Start from the directory of the executable
             if cur.is_file() { if let Some(parent) = cur.parent() { cur = parent.to_path_buf(); } }
             for _ in 0..8 {
                 let cand = cur.join("static").join("themes");
-                if cand.exists() { return cand; }
+                if cand.exists() { println!("[ThemeManager] Using dev static themes dir: {:?}", cand); return cand; }
                 if let Some(parent) = cur.parent() { cur = parent.to_path_buf(); } else { break; }
             }
         }
 
-        // Fallback to workspace-relative path (may not exist depending on CWD)
+        // Fallback to workspace-relative path
         let dev = PathBuf::from("static/themes");
-        if dev.exists() { return dev; }
+        if dev.exists() { println!("[ThemeManager] Using workspace static themes dir: {:?}", dev); return dev; }
 
-        // Last resort: return a non-existing path; callers will handle existence
         PathBuf::from("static/themes")
     }
 
@@ -163,16 +201,19 @@ impl ThemeManager {
         use std::collections::HashSet;
         let mut set: HashSet<String> = HashSet::new();
 
+        println!("[ThemeManager] Listing available themes...");
+
         // Scan static themes
         let static_dir = self.get_static_themes_directory();
         if static_dir.exists() {
+            println!("[ThemeManager] Scanning static dir: {:?}", static_dir);
             if let Ok(entries) = fs::read_dir(&static_dir) {
                 for entry in entries.flatten() {
                     let path = entry.path();
                     if path.is_dir() {
                         if let Some(name) = entry.file_name().to_str() {
-                            // Include only if a manifest exists
                             if path.join("theme-manifest.json").exists() || path.join("theme.manifest.json").exists() {
+                                println!("[ThemeManager] Found static theme: {}", name);
                                 set.insert(name.to_string());
                             }
                         }
@@ -183,12 +224,14 @@ impl ThemeManager {
 
         // Scan custom themes from app data directory
         if let Ok(themes_dir) = self.get_themes_directory() {
+            println!("[ThemeManager] Scanning custom dir: {:?}", themes_dir);
             if let Ok(entries) = fs::read_dir(&themes_dir) {
                 for entry in entries.flatten() {
                     let path = entry.path();
                     if path.is_dir() {
                         if let Some(name) = entry.file_name().to_str() {
                             if path.join("theme-manifest.json").exists() || path.join("theme.manifest.json").exists() {
+                                println!("[ThemeManager] Found custom theme: {}", name);
                                 set.insert(name.to_string());
                             }
                         }
@@ -197,7 +240,9 @@ impl ThemeManager {
             }
         }
 
-        Ok(set.into_iter().collect())
+        let list: Vec<String> = set.into_iter().collect();
+        println!("[ThemeManager] Total themes: {}", list.len());
+        Ok(list)
     }
 
     pub fn load_theme_manifest(&self, theme_name: &str) -> Result<ThemeManifest> {
@@ -205,6 +250,7 @@ impl ThemeManager {
         if let Ok(themes_dir) = self.get_themes_directory() {
             let custom_manifest_path = themes_dir.join(theme_name).join("theme-manifest.json");
             if custom_manifest_path.exists() {
+                println!("[ThemeManager] Loading custom manifest: {:?}", custom_manifest_path);
                 let content = fs::read_to_string(&custom_manifest_path)
                     .map_err(|e| anyhow!("Failed to read custom theme manifest: {}", e))?;
                 let manifest: ThemeManifest = serde_json::from_str(&content)
@@ -217,6 +263,7 @@ impl ThemeManager {
         let static_dir = self.get_static_themes_directory();
         let static_manifest_path = static_dir.join(theme_name).join("theme-manifest.json");
         if static_manifest_path.exists() {
+            println!("[ThemeManager] Loading static manifest: {:?}", static_manifest_path);
             let content = fs::read_to_string(&static_manifest_path)
                 .map_err(|e| anyhow!("Failed to read static theme manifest: {}", e))?;
             let manifest: ThemeManifest = serde_json::from_str(&content)
@@ -232,6 +279,7 @@ impl ThemeManager {
         if let Ok(themes_dir) = self.get_themes_directory() {
             let path = themes_dir.join(theme_name).join("styles").join(file_name);
             if path.exists() {
+                println!("[ThemeManager] Reading custom CSS: {:?}", path);
                 return fs::read_to_string(&path).map_err(|e| anyhow!("Failed to read custom CSS: {}", e));
             }
         }
@@ -240,6 +288,7 @@ impl ThemeManager {
         let static_dir = self.get_static_themes_directory();
         let static_path = static_dir.join(theme_name).join("styles").join(file_name);
         if static_path.exists() {
+            println!("[ThemeManager] Reading static CSS: {:?}", static_path);
             return fs::read_to_string(&static_path).map_err(|e| anyhow!("Failed to read static CSS: {}", e));
         }
 
@@ -251,6 +300,7 @@ impl ThemeManager {
         let theme_dir = themes_dir.join(theme_name);
         
         // Create theme directory
+        println!("[ThemeManager] Saving custom theme '{}' to {:?}", theme_name, theme_dir);
         fs::create_dir_all(&theme_dir)
             .map_err(|e| anyhow!("Failed to create theme directory: {}", e))?;
         
@@ -260,6 +310,7 @@ impl ThemeManager {
             .map_err(|e| anyhow!("Failed to serialize theme manifest: {}", e))?;
         fs::write(&manifest_path, manifest_content)
             .map_err(|e| anyhow!("Failed to write theme manifest: {}", e))?;
+        println!("[ThemeManager] Wrote manifest: {:?}", manifest_path);
         
         // Generate CSS files based on theme data
         self.generate_theme_css(&theme_dir, theme_data)?;
