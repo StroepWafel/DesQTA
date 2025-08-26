@@ -373,7 +373,7 @@
               {#if theme.category === 'custom'}
                 <button
                   type="button"
-                  onclick={() => { if (confirm(`Are you sure you want to delete the theme "${theme.name}"?`)) { handleThemeDeleted(theme.name); } }}
+                  onclick={() => handleThemeDeleted(theme.name)}
                   class="absolute top-3 right-12 p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors bg-white/20 backdrop-blur-sm rounded-full"
                   aria-label="Delete custom theme"
                 >
