@@ -134,12 +134,12 @@ class ThemeService {
     this.removeActiveCSS();
 
     // Try backend-provided CSS for appdata/static themes
-    const tryBackendCss = async (file: string) => {
+    const tryBackendCss = async (fileName: string) => {
       try {
-        const css = await invoke<string>('read_theme_css', { themeName, fileName: file });
+        const css = await invoke<string>('read_theme_css', { themeName, fileName });
         if (css && css.trim().length > 0) {
           // Inject via style tags to support appdata themes
-          const id = `${themeName}-${file}`.replace(/\./g, '-');
+          const id = `${themeName}-${fileName}`.replace(/\./g, '-');
           const style = document.createElement('style');
           style.dataset.theme = 'true';
           style.id = `theme-${id}`;
@@ -153,17 +153,13 @@ class ThemeService {
     };
 
     const currentMode = this.getCurrentThemeMode();
-    const files = [
-      'styles/global.css',
-      `styles/${currentMode}.css`,
-      'styles/components.css'
-    ];
+    const fileNames = ['global.css', `${currentMode}.css`, 'components.css'];
 
-    for (const file of files) {
-      const ok = await tryBackendCss(file);
+    for (const fileName of fileNames) {
+      const ok = await tryBackendCss(fileName);
       if (!ok) {
         // Fallback to static link href if backend read fails
-        await this.loadCSSFile(`/themes/${themeName}/${file}`);
+        await this.loadCSSFile(`/themes/${themeName}/styles/${fileName}`);
       }
     }
   }
