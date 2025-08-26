@@ -198,7 +198,8 @@ class ThemeService {
     const root = document.documentElement;
     
     Object.entries(properties).forEach(([key, value]) => {
-      root.style.setProperty(`--${key}`, value);
+      const cssVarName = key.startsWith('--') ? key : `--${key}`;
+      root.style.setProperty(cssVarName, value);
     });
   }
 

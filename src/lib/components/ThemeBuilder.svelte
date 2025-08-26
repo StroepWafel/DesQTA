@@ -253,21 +253,9 @@
     switch (currentStep) {
       case 0: // Basic Info
         if (!themeName.trim()) validationErrors.push('Theme name is required');
-        if (!themeDisplayName.trim()) validationErrors.push('Display name is required');
         if (!themeDescription.trim()) validationErrors.push('Description is required');
-        if (!themeAuthor.trim()) validationErrors.push('Author name is required');
-        if (themeName.includes(' ')) validationErrors.push('Theme name cannot contain spaces');
-        if (!/^[a-z0-9-_]+$/.test(themeName)) validationErrors.push('Theme name can only contain lowercase letters, numbers, hyphens, and underscores');
         break;
-      case 1: // Colors
-        const requiredColors = ['--background-color', '--text-color', '--accent-color'];
-        for (const color of requiredColors) {
-          if (!themeConfig.customProperties[color]) {
-            validationErrors.push(`${color} is required`);
-          } else if (!/^#[0-9a-fA-F]{6}$/.test(themeConfig.customProperties[color])) {
-            validationErrors.push(`${color} must be a valid hex color`);
-          }
-        }
+      case 1: // Colors (no required fields)
         break;
     }
     
@@ -297,21 +285,9 @@
       switch (i) {
         case 0: // Basic Info
           if (!themeName.trim()) tempErrors.push('Theme name is required');
-          if (!themeDisplayName.trim()) tempErrors.push('Display name is required');
           if (!themeDescription.trim()) tempErrors.push('Description is required');
-          if (!themeAuthor.trim()) tempErrors.push('Author name is required');
-          if (themeName.includes(' ')) tempErrors.push('Theme name cannot contain spaces');
-          if (!/^[a-z0-9-_]+$/.test(themeName)) tempErrors.push('Theme name can only contain lowercase letters, numbers, hyphens, and underscores');
           break;
-        case 1: // Colors
-          const requiredColors = ['--background-color', '--text-color', '--accent-color'];
-          for (const color of requiredColors) {
-            if (!themeConfig.customProperties[color]) {
-              tempErrors.push(`${color} is required`);
-            } else if (!/^#[0-9a-fA-F]{6}$/.test(themeConfig.customProperties[color])) {
-              tempErrors.push(`${color} must be a valid hex color`);
-            }
-          }
+        case 1: // Colors (no required fields)
           break;
       }
       
@@ -320,8 +296,11 @@
     return true;
   }
 
-  function canExportOrSave(): boolean {
-    return canGoToStep(steps.length - 1);
+  function canSaveApplyValid(): boolean {
+    // Only require name and description
+    if (!themeName || !themeName.trim()) return false;
+    if (!themeDescription || !themeDescription.trim()) return false;
+    return true;
   }
 
   function isCurrentStepValid(): boolean {
@@ -329,18 +308,9 @@
     switch (currentStep) {
       case 0: // Basic Info
         if (!themeName.trim()) return false;
-        if (!themeDisplayName.trim()) return false;
         if (!themeDescription.trim()) return false;
-        if (!themeAuthor.trim()) return false;
-        if (themeName.includes(' ')) return false;
-        if (!/^[a-z0-9-_]+$/.test(themeName)) return false;
         break;
-      case 1: // Colors
-        const requiredColors = ['--background-color', '--text-color', '--accent-color'];
-        for (const color of requiredColors) {
-          if (!themeConfig.customProperties[color]) return false;
-          if (!/^#[0-9a-fA-F]{6}$/.test(themeConfig.customProperties[color])) return false;
-        }
+      case 1: // Colors (no required fields)
         break;
     }
     return true;
@@ -492,7 +462,7 @@
   }
 
   async function exportTheme() {
-    if (!validateStepsUpTo(steps.length - 1)) return;
+    if (!canSaveApplyValid()) return;
     
     isExporting = true;
     try {
@@ -559,7 +529,7 @@
   }
 
   async function saveTheme() {
-    if (!validateStepsUpTo(steps.length - 1)) return;
+    if (!canSaveApplyValid()) return;
     
     isSaving = true;
     try {
@@ -841,29 +811,7 @@
   </div>
 
   <!-- Live Preview Panel -->
-  <div class="p-4 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-    <div class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Live Preview</div>
-    <div class="space-y-2">
-      <!-- Sample UI elements to show theme changes -->
-      <div class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-        <div class="flex items-center justify-between mb-2">
-          <h4 class="font-medium" style="font-family: var(--font-primary, inherit)">Sample Component</h4>
-          <button class="px-3 py-1 text-sm rounded-lg text-white" style="background-color: var(--accent-color-value, #3b82f6)">
-            Button
-          </button>
-        </div>
-        <p class="text-sm text-slate-600 dark:text-slate-400" style="font-family: var(--font-secondary, inherit)">
-          This preview updates as you customize your theme.
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <div class="w-8 h-8 rounded-lg border-2 border-slate-300 dark:border-slate-600" style="background-color: var(--background-color, #ffffff)"></div>
-        <div class="w-8 h-8 rounded-lg border-2 border-slate-300 dark:border-slate-600" style="background-color: var(--surface-color, #f8fafc)"></div>
-        <div class="w-8 h-8 rounded-lg border-2 border-slate-300 dark:border-slate-600" style="background-color: var(--accent-color-value, #3b82f6)"></div>
-        <div class="w-8 h-8 rounded-lg border-2 border-slate-300 dark:border-slate-600" style="background-color: var(--text-color, #1e293b)"></div>
-      </div>
-    </div>
-  </div>
+  <!-- Live preview removed per request; the app reflects changes directly. -->
 
   <!-- Scrollable Content -->
   <div class="flex-1 overflow-y-auto p-6 space-y-10">
@@ -1024,28 +972,26 @@
           <div class="mb-6">
             <h4 class="text-md font-medium text-slate-800 dark:text-slate-200 mb-3">Primary Colors</h4>
             <div class="grid grid-cols-2 gap-4">
-              {#each Object.entries(themeConfig.customProperties) as [property, value]}
-                {#if property.includes('color')}
-                  <div class="flex items-center gap-3">
+              {#each ['--background-color','--text-color','--accent-color'] as property}
+                <div class="flex items-center gap-3">
+                  <input
+                    type="color"
+                    id={property + '-color'}
+                    bind:value={themeConfig.customProperties[property]}
+                    class="w-12 h-12 rounded-lg border-2 border-slate-300 dark:border-slate-600 cursor-pointer"
+                  />
+                  <div class="flex-1">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300" for={property + '-color'}>
+                      {property.replace('--', '').replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </label>
                     <input
-                      type="color"
-                      id={property + '-color'}
+                      type="text"
+                      id={property + '-text'}
                       bind:value={themeConfig.customProperties[property]}
-                      class="w-12 h-12 rounded-lg border-2 border-slate-300 dark:border-slate-600 cursor-pointer"
+                      class="w-full text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
-                    <div class="flex-1">
-                      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300" for={property + '-color'}>
-                        {property.replace('--', '').replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </label>
-                      <input
-                        type="text"
-                        id={property + '-text'}
-                        bind:value={themeConfig.customProperties[property]}
-                        class="w-full text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                      />
-                    </div>
                   </div>
-                {/if}
+                </div>
               {/each}
             </div>
           </div>
@@ -1229,7 +1175,7 @@
       <button
         type="button"
         onclick={saveTheme}
-        disabled={isSaving || !canExportOrSave()}
+        disabled={isSaving || !canSaveApplyValid()}
         class="flex items-center gap-2 px-6 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors disabled:cursor-not-allowed"
       >
         <Icon src={BookmarkSquare} class="w-4 h-4" />
@@ -1238,7 +1184,7 @@
       <button
         type="button"
         onclick={applyThemeFromBuilder}
-        disabled={isSaving || !canExportOrSave()}
+        disabled={isSaving || !canSaveApplyValid()}
         class="flex items-center gap-2 px-6 py-2 accent-bg hover:accent-bg-hover text-white rounded-lg transition-colors disabled:cursor-not-allowed"
       >
         Apply
