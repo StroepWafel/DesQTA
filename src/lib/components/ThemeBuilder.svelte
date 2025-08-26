@@ -615,6 +615,8 @@
     try {
       await saveTheme();
       await loadAndApplyTheme(themeConfig.name);
+      // Reload to ensure all assets and classes apply consistently
+      location.reload();
     } catch (error) {
       console.error('Failed to apply theme from builder:', error);
     }

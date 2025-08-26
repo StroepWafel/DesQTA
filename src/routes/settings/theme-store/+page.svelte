@@ -93,6 +93,8 @@
   async function handleApplyTheme(themeName: string) {
     await loadAndApplyTheme(themeName);
     selectedTheme = null;
+    // Reload to ensure all assets and classes apply consistently
+    location.reload();
   }
 
   function openThemeModal(theme: ThemeManifest) {
@@ -144,6 +146,8 @@
       await themeService.deleteCustomTheme(themeName);
       // Reload themes to reflect the deletion
       await loadThemes();
+      // Refresh the page to ensure stale styles/manifests are gone
+      location.reload();
       
       // If the deleted theme was the current theme, switch to default
       if (currentThemeName === themeName) {
