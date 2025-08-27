@@ -293,7 +293,7 @@
   });
 </script>
 
-<div class="flex w-full h-full overflow-y-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
+<div class="flex w-full h-full overflow-y-hidden transition-colors duration-200">
   <!-- Mobile Toggle Buttons -->
   {#if isMobile}
     <div class="fixed top-4 left-4 z-50 flex gap-2">
@@ -318,7 +318,7 @@
 
   <!-- Subject Selection Sidebar -->
   {#if !isMobile || showSubjectSidebar}
-    <div class="h-full border-r border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm transition-all duration-200">
+    <div class="h-full border-r border-gray-200 dark:border-gray-700 transition-all duration-200">
       <SubjectSidebar
         bind:search
         {loading}
@@ -348,7 +348,7 @@
       {:else if coursePayload}
         <!-- Schedule Navigation -->
         {#if !isMobile || showScheduleSidebar}
-          <div class="h-full border-r border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm transition-colors duration-200">
+          <div class="h-full border-r border-gray-200 dark:border-gray-700 transition-colors duration-200">
             <ScheduleSidebar
               schedule={coursePayload.d}
               {selectedLesson}
@@ -364,7 +364,7 @@
         <!-- Main Content -->
         <div class="flex-1 overflow-y-auto">
           <div class="p-4 md:p-6 lg:p-8">
-            <div class="course-content bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md transition-colors duration-200">
+            <div class="course-content border border-gray-200 dark:border-gray-700 rounded-lg shadow-md transition-colors duration-200">
               <CourseContent {coursePayload} {parsedDocument} {selectedLessonContent} {showingOverview} />
             </div>
           </div>
@@ -393,12 +393,9 @@
     font-size: 1.875rem;
     line-height: 2.25rem;
     font-weight: 700;
-    color: white;
-    background-color: var(--accent-color);
-    padding: 1.5rem;
-    border-radius: 0.75rem 0.75rem 0 0;
-    margin: 1rem;
-    margin-bottom: 0;
+    color: var(--text-color);
+    padding: 1.5rem 1rem 0.75rem 1rem;
+    margin: 0 1rem 0.25rem 1rem;
     transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
     transition-duration: 200ms;
   }
@@ -407,18 +404,15 @@
     font-size: 1.25rem;
     line-height: 1.75rem;
     font-weight: 600;
-    color: white;
-    background-color: var(--accent-color);
-    padding: 1rem;
-    border-radius: 0.75rem;
-    margin: 1rem;
-    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 1rem 0.5rem 1rem;
     transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
     transition-duration: 200ms;
   }
 
   :global(.course-content p) {
-    color: rgb(55 65 81);
+    color: var(--text-color);
     padding-left: 1rem;
     padding-right: 1rem;
     padding-top: 0.5rem;
@@ -428,26 +422,21 @@
     transition-duration: 200ms;
   }
 
-  :global(html.dark .course-content p) {
-    color: rgb(229 231 235);
-  }
+  /* dark mode inherits text-color via theming */
 
   :global(.course-content .section) {
     margin: 1rem;
-    background-color: rgb(255 255 255);
+    background-color: transparent;
     border-radius: 0.75rem;
     overflow: hidden;
     border-width: 1px;
-    border-color: rgb(229 231 235);
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    border-color: rgb(229 231 235 / 0.3);
+    box-shadow: none;
     transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
     transition-duration: 200ms;
   }
 
-  :global(html.dark .course-content .section) {
-    background-color: rgb(31 41 55);
-    border-color: rgb(55 65 81);
-  }
+  /* dark mode inherits transparent background via theming */
 
   :global(.course-content a) {
     color: var(--accent-color);
@@ -468,9 +457,8 @@
 
   /* File/document styling */
   :global(.course-content .file-item) {
-    background-color: rgb(249 250 251);
     border-width: 1px;
-    border-color: rgb(229 231 235);
+    border-color: rgb(229 231 235 / 0.3);
     border-radius: 0.5rem;
     padding: 1rem;
     margin: 0.5rem;
@@ -484,10 +472,7 @@
     border-color: var(--accent-color);
   }
 
-  :global(html.dark .course-content .file-item) {
-    background-color: rgb(55 65 81 / 0.5);
-    border-color: rgb(75 85 99);
-  }
+  /* dark mode inherits border via theming */
 
   :global(.course-content .file-grid) {
     display: grid;
