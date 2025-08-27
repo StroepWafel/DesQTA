@@ -58,7 +58,17 @@
     tab = tabId;
   }
 
-  onMount(loadAssessmentDetails);
+  onMount(async () => {
+    // Pick tab based on query param, default handled later if missing
+    const url = new URL(window.location.href);
+    const tabParam = url.searchParams.get('tab');
+    if (tabParam === 'details' || tabParam === 'overview' || tabParam === 'submissions') {
+      tab = tabParam;
+    }
+    await loadAssessmentDetails();
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 </script>
 
 <div class="min-h-screen" style="background: var(--background-color);">
