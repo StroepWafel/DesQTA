@@ -159,6 +159,31 @@
     }
   };
 
+  const healthCheck = async () => {
+    try {
+      const response = await seqtaFetch('/seqta/student/heartbeat', {
+        method: 'POST',
+        body: {
+          timestamp: '1970-01-01 00:00:00.0',
+          hash: '#?page=/home'
+        }
+      });
+
+      const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+      if (
+        responseStr.includes('"status":"401"') ||
+        responseStr.includes('"status":401') ||
+        responseStr.toLowerCase().includes('unauthorized')
+      ) {
+        logger.warn('layout', 'healthCheck', 'Heartbeat returned 401, logging out');
+        await handleLogout();
+      }
+    } catch (e) {
+      // Network errors should not auto-logout; log and continue
+      logger.debug('layout', 'healthCheck', 'Heartbeat check failed', { error: e });
+    }
+  };
+
   const startLogin = async () => {
     if (!seqtaUrl) {
       logger.error('layout', 'startLogin', 'No valid SEQTA URL found');
@@ -289,6 +314,9 @@
         logger.error('layout', 'onMount', 'SEQTA session check failed', { error: e });
       }
     }
+    
+    // Run a one-time heartbeat health check on app open
+    await healthCheck();
     isLoading = false;
   });
 
@@ -322,6 +350,8 @@
       document.removeEventListener(event, handler as EventListener)
     );
   });
+
+  
 
   const loadSeqtaConfigAndMenu = async () => {
     try {
