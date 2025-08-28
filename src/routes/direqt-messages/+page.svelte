@@ -39,6 +39,7 @@
   let selectedTab = $state('SEQTA'); // 'SEQTA' or 'BetterSEQTA'
   let seqtaLoadFailed = $state(false);
   let seqtaMessagesEnabled = $state<boolean | null>(null);
+  const showCloudMessaging = false; // hide BetterSEQTA Cloud Messaging UI
 
   onMount(async () => {
     // Always enable both tabs regardless of SEQTA config
@@ -350,7 +351,8 @@
   }
 </script>
 
-<!-- Tab Switcher -->
+<!-- Tab Switcher (hidden when showCloudMessaging is false) -->
+{#if showCloudMessaging}
 <div class="flex gap-2 p-4 border-b border-slate-300/50 dark:border-slate-800/50 bg-white dark:bg-slate-900">
   <button
     class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
@@ -367,6 +369,7 @@
     Cloud Messaging
   </button>
 </div>
+{/if}
 
 <div class="flex h-full">
   <div class="flex w-full h-full max-xl:flex-col">
@@ -374,7 +377,9 @@
       {#if seqtaLoadFailed}
         <div class="flex flex-col items-center justify-center w-full h-full p-8 text-center">
           <div class="text-red-500 dark:text-red-400 text-lg font-semibold mb-4">SEQTA messaging failed to load.</div>
-          <div class="text-slate-500 dark:text-slate-300 mb-4">You can still use Cloud Messaging by switching tabs above.</div>
+          {#if showCloudMessaging}
+            <div class="text-slate-500 dark:text-slate-300 mb-4">You can still use Cloud Messaging by switching tabs above.</div>
+          {/if}
         </div>
       {:else}
         <Sidebar {selectedFolder} {openFolder} {openCompose} />
@@ -395,7 +400,7 @@
             {restoring} />
         </div>
       {/if}
-    {:else if selectedTab === 'BetterSEQTA'}
+    {:else if showCloudMessaging && selectedTab === 'BetterSEQTA'}
       <BetterSeqtaChat />
     {/if}
   </div>
