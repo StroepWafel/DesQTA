@@ -81,6 +81,15 @@
     return colorMap[iconClass] || '#6b7280';
   }
 
+  function escapeHtml(input: string): string {
+    return input
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   async function handlePortalClick(portal: Portal) {
     console.log('Portal clicked:', portal);
     selectedPortal = portal;
@@ -91,10 +100,11 @@
 
     try {
       console.log('Fetching portal content for ID:', portal.uuid);
-      const response = await seqtaFetch('/seqta/student/load/portal', {
+      const response = await seqtaFetch('/seqta/student/load/portals', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'text/html,application/json;q=0.9,*/*;q=0.8'
         },
         body: {
           id: portal.uuid
@@ -102,23 +112,62 @@
       });
 
       console.log('Portal response:', response);
-      
-      // Check if response is the expected JSON format
-      if (typeof response === 'object' && response.status === '200' && response.payload) {
-        portalContent = response.payload;
-        console.log('Portal content loaded:', portalContent);
-      } 
-      // Handle case where response is HTML directly (like your example)
-      else if (typeof response === 'string') {
-        // Create a mock payload structure for HTML responses
+
+      let responseText: string;
+      if (typeof response === 'string') {
+        responseText = response;
+      } else {
+        responseText = JSON.stringify(response);
+      }
+
+      const trimmed = responseText.trim();
+
+      // If the response looks like HTML, render it directly
+      if (trimmed.startsWith('<')) {
         portalContent = {
-          contents: response,
+          contents: responseText,
           is_power_portal: portal.is_power_portal,
           inherit_styles: portal.inherit_styles
         };
-        console.log('Portal HTML content loaded:', portalContent);
+        console.log('Portal HTML content loaded');
       } else {
-        throw new Error('Failed to load portal content');
+        // Try to parse as JSON
+        try {
+          const json = JSON.parse(responseText);
+          if (json && json.status === '200') {
+            let contentsHtml = '';
+            const payload = json.payload;
+
+            if (payload && typeof payload === 'object' && typeof payload.contents === 'string') {
+              contentsHtml = payload.contents;
+            } else if (payload && Array.isArray(payload.links)) {
+              contentsHtml = `<div class="space-y-2">${payload.links
+                .map((l: any) => `<div><a class=\"text-accent-500 underline\" href=\"${l.url}\" target=\"_blank\" rel=\"noreferrer noopener\">${escapeHtml(l.label || l.url)}</a></div>`) 
+                .join('')}</div>`;
+            } else if (typeof payload === 'string' && payload.trim().startsWith('<')) {
+              contentsHtml = payload;
+            } else {
+              contentsHtml = `<pre class=\"text-xs whitespace-pre-wrap\">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>`;
+            }
+
+            portalContent = {
+              contents: contentsHtml,
+              is_power_portal: portal.is_power_portal,
+              inherit_styles: portal.inherit_styles
+            };
+            console.log('Portal JSON content loaded');
+          } else {
+            throw new Error('Unexpected portal response');
+          }
+        } catch (e) {
+          // Not JSON, treat as plain text
+          portalContent = {
+            contents: responseText,
+            is_power_portal: portal.is_power_portal,
+            inherit_styles: portal.inherit_styles
+          };
+          console.log('Portal plain text content loaded');
+        }
       }
     } catch (err) {
       console.error('Error loading portal content:', err);
@@ -254,6 +303,8 @@
 <Modal 
   bind:open={showPortalModal} 
   title={selectedPortal?.label || 'Portal Content'}
+  maxWidth="max-w-7xl"
+  maxHeight="max-h-[85vh]"
   onclose={closePortalModal}
 >
   {#if loadingContent}
@@ -262,7 +313,7 @@
       <span class="ml-3 text-gray-600 dark:text-gray-400">Loading portal content...</span>
     </div>
   {:else if portalContent}
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden max-h-96 overflow-y-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden max-h-[75vh] overflow-y-auto">
       <div class="p-4">
         {#if portalContent.contents}
           {@html portalContent.contents}
