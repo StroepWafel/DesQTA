@@ -14,6 +14,8 @@
   // Remove jsQR import and add html5-qrcode import
   import { Html5Qrcode } from 'html5-qrcode';
   import { onMount } from 'svelte';
+  import { invoke } from '@tauri-apps/api/core';
+  import { invalidateDevSensitiveInfoHiderCache } from '../../utils/netUtil';
 
   interface Props {
     seqtaUrl: string;
@@ -37,6 +39,9 @@
   let showPreviewModal = $state(false);
   let selectedPreview = $state<string | null>(null);
   let showQrInstructionsModal = $state(false);
+  let showDevToggle = $state(false);
+  let devSensitiveInfoHider = $state(false);
+  let devKeyBuffer = '';
   
   // Typewriter animation state
   let currentFeatureIndex = $state(0);
@@ -57,6 +62,12 @@
   ];
 
   onMount(() => {
+    (async () => {
+      try {
+        const subset = await invoke<any>('get_settings_subset', { keys: ['dev_sensitive_info_hider'] });
+        devSensitiveInfoHider = subset?.dev_sensitive_info_hider ?? false;
+      } catch {}
+    })();
     const checkMobile = () => {
       const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
       if (tauri_platform == "ios" || tauri_platform == "android") {
@@ -67,6 +78,15 @@
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
+    const handleKeydown = (e: KeyboardEvent) => {
+      const char = e.key?.toLowerCase();
+      if (!char || char.length !== 1 || !/[a-z]/.test(char)) return;
+      devKeyBuffer = (devKeyBuffer + char).slice(-3);
+      if (devKeyBuffer === 'dev') {
+        showDevToggle = true;
+      }
+    };
+    window.addEventListener('keydown', handleKeydown);
     
     // Auto-maximize window on login screen load (desktop only)
     if (!isMobile) {
@@ -142,6 +162,7 @@
       
       return () => {
         window.removeEventListener('resize', checkMobile);
+        window.removeEventListener('keydown', handleKeydown);
         if (typewriterInterval) clearInterval(typewriterInterval);
         if (pauseTimeout) clearTimeout(pauseTimeout);
       };
@@ -149,6 +170,7 @@
     
     return () => {
       window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('keydown', handleKeydown);
     };
   });
 
@@ -769,6 +791,27 @@
               </div>
             {/if}
             
+            {#if showDevToggle}
+              <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-200 dark:border-purple-800">
+                <div class="flex items-center justify-between">
+                  <div class="text-sm text-purple-800 dark:text-purple-200 font-medium">Mock API backend</div>
+                  <label class="inline-flex items-center cursor-pointer relative">
+                    <input type="checkbox" class="sr-only peer" bind:checked={devSensitiveInfoHider} onchange={async () => {
+                      try {
+                        await invoke('save_settings_merge', { patch: { dev_sensitive_info_hider: devSensitiveInfoHider } });
+                        invalidateDevSensitiveInfoHiderCache();
+                        setTimeout(() => location.reload(), 150);
+                      } catch (e) {
+                        console.warn('Failed to toggle mock API backend', e);
+                      }
+                    }} />
+                    <div class="w-11 h-6 bg-purple-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer dark:bg-purple-800 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+                  </label>
+                </div>
+                <p class="mt-2 text-xs text-purple-700 dark:text-purple-300">Replaces live SEQTA API calls with safe mock data.</p>
+              </div>
+            {/if}
+
             {#if jwtExpiredError}
                 <div class="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800">
                   <div class="flex items-start space-x-4">

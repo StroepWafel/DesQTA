@@ -67,6 +67,7 @@
   ];
   let menu = $state([...DEFAULT_MENU]);
   let menuLoading = $state(true);
+  let devMockEnabled = false;
 
 
 
@@ -80,14 +81,20 @@
   const checkSession = async () => {
     logger.logFunctionEntry('layout', 'checkSession');
     try {
-      const sessionExists = await authService.checkSession();
-      needsSetup.set(!sessionExists);
-      logger.info('layout', 'checkSession', `Session exists: ${sessionExists}`, { sessionExists });
-      
-      if (sessionExists) {
+      if (devMockEnabled) {
+        needsSetup.set(false);
+        logger.info('layout', 'checkSession', 'Dev mock enabled; bypassing login');
         await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
+        logger.logFunctionExit('layout', 'checkSession', { sessionExists: true });
+      } else {
+        const sessionExists = await authService.checkSession();
+        needsSetup.set(!sessionExists);
+        logger.info('layout', 'checkSession', `Session exists: ${sessionExists}`, { sessionExists });
+        if (sessionExists) {
+          await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
+        }
+        logger.logFunctionExit('layout', 'checkSession', { sessionExists });
       }
-      logger.logFunctionExit('layout', 'checkSession', { sessionExists });
     } catch (error) {
       logger.error('layout', 'checkSession', `Failed to check session: ${error}`, { error });
     }
@@ -280,6 +287,12 @@
       loadCurrentTheme(),
     ]);
 
+    // Load dev mock flag early to control session flow
+    try {
+      const settings = await loadSettings(['dev_sensitive_info_hider']);
+      devMockEnabled = settings.dev_sensitive_info_hider ?? false;
+    } catch {}
+
     // Load all settings and check session
     await Promise.all([
       checkSession(),
@@ -295,7 +308,7 @@
     }
 
     // Validate SEQTA session on app launch
-    if (!$needsSetup) {
+    if (!devMockEnabled && !$needsSetup) {
       try {
         const response = await seqtaFetch('/seqta/student/login', {
           method: 'POST',
@@ -355,10 +368,12 @@
 
   const loadSeqtaConfigAndMenu = async () => {
     try {
-      const sessionExists = await authService.checkSession();
-      if (!sessionExists) {
-        logger.debug('layout', 'loadSeqtaConfigAndMenu', 'Skipping: not authenticated');
-        return;
+      if (!devMockEnabled) {
+        const sessionExists = await authService.checkSession();
+        if (!sessionExists) {
+          logger.debug('layout', 'loadSeqtaConfigAndMenu', 'Skipping: not authenticated');
+          return;
+        }
       }
 
       let config = await invoke('load_seqta_config');
