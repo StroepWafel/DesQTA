@@ -19,6 +19,7 @@
   }
 
   let { open = $bindable(false), onclose }: Props = $props();
+  let appVersion: string = '1.0.0-rc2';
 
   function closeModal() {
     onclose?.();
@@ -71,7 +72,7 @@
           <div class="space-y-2 sm:space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm sm:text-base text-slate-600 dark:text-slate-400">Version</span>
-              <span class="text-sm sm:text-base font-medium text-slate-900 dark:text-white">1.0.0</span>
+              <span class="text-sm sm:text-base font-medium text-slate-900 dark:text-white">{appVersion}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm sm:text-base text-slate-600 dark:text-slate-400">Build Date</span>
