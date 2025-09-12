@@ -169,7 +169,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     loading = true;
     try {
       const settings = await invoke<any>('get_settings_subset', { keys: [
-        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula','homepage_edit_mode'
+        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula'
       ]});
       shortcuts = settings.shortcuts || [];
       feeds = settings.feeds || [];
@@ -191,7 +191,6 @@ The Company reserves the right to terminate your access to the Service at any ti
       globalSearchEnabled = settings.global_search_enabled ?? true;
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
-      showDevSettings = settings.homepage_edit_mode ?? false;
 
       console.log('Loading settings', {
         shortcuts,
@@ -283,7 +282,6 @@ The Company reserves the right to terminate your access to the Service at any ti
         global_search_enabled: globalSearchEnabled,
         dev_sensitive_info_hider: devSensitiveInfoHider,
         accepted_cloud_eula: acceptedCloudEula,
-        homepage_edit_mode: showDevSettings,
       };
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
@@ -397,7 +395,6 @@ The Company reserves the right to terminate your access to the Service at any ti
     globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
-    showDevSettings = cloudSettings.homepage_edit_mode ?? false;
 
     notify({
       title: 'Settings Downloaded',
@@ -421,15 +418,6 @@ The Company reserves the right to terminate your access to the Service at any ti
     window.removeEventListener('keydown', handleKeydown);
   });
 
-  // Navigate to homepage and trigger edit layout mode there
-  async function goToHomepageAndEditLayout() {
-    try {
-      await invoke('save_settings_merge', { patch: { homepage_edit_mode: true } });
-    } catch (e) {
-      console.error('Failed to set homepage edit mode flag', e);
-    }
-    goto('/');
-  }
 
   // Clear browser cache to fix routing issues
   async function clearCache() {
