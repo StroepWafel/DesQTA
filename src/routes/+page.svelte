@@ -65,17 +65,17 @@
       </div>
     </div>
 
-    <!-- Second Row - Shortcuts (Full Width) -->
+    <!-- Second Row - Today's Schedule (Full Width) -->
+    <div class="lg:col-span-12">
+      <TodaySchedule />
+    </div>
+
+    <!-- Third Row - Shortcuts (Full Width) -->
     <div class="lg:col-span-12">
       <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6">
         <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quick Links</h2>
         <ShortcutsWidget shortcuts={homepageShortcuts} />
       </div>
-    </div>
-
-    <!-- Third Row - Today's Schedule (Full Width) -->
-    <div class="lg:col-span-12">
-      <TodaySchedule />
     </div>
 
     <!-- Fourth Row - Notices (Full Width) -->
