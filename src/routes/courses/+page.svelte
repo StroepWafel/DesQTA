@@ -371,8 +371,8 @@
                       </div>
                     {/each}
                   </div>
-                </div>
-              {/if}
+    </div>
+  {/if}
             {/if}
           </div>
         </div>
@@ -381,16 +381,16 @@
       <!-- Course Content Navigation View -->
       <div class="absolute inset-0 transition-all duration-500 ease-in-out {selectedSubject ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full pointer-events-none'}">
         <div class="h-full flex flex-col">
-          {#if loadingCourse}
+      {#if loadingCourse}
             <div class="flex-1 flex justify-center items-center">
               <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent/30 border-t-accent"></div>
               <span class="ml-3 text-gray-600 dark:text-gray-400">Loading course...</span>
-            </div>
-          {:else if courseError}
+        </div>
+      {:else if courseError}
             <div class="flex-1 flex justify-center items-center text-red-500">
               ⚠️ {courseError}
-            </div>
-          {:else if coursePayload}
+        </div>
+      {:else if coursePayload}
             <!-- Quick Actions -->
             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
               <div class="space-y-2">
@@ -477,8 +477,8 @@
                   {/each}
                 </div>
               {/each}
-            </div>
-          {/if}
+          </div>
+        {/if}
         </div>
       </div>
     </div>
@@ -503,10 +503,10 @@
     {:else if coursePayload}
       <div class="h-full">
         <div class="course-content h-full overflow-y-auto">
-          <CourseContent {coursePayload} {parsedDocument} {selectedLessonContent} {showingOverview} />
+              <CourseContent {coursePayload} {parsedDocument} {selectedLessonContent} {showingOverview} />
+          </div>
         </div>
-      </div>
-    {:else}
+      {:else}
       <div class="flex justify-center items-center h-full">
         <div class="text-center text-gray-500 dark:text-gray-400">
           <div class="text-6xl mb-4">🎓</div>

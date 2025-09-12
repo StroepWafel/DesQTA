@@ -76,11 +76,12 @@
   <!-- Main Content -->
   <div class="flex-1 space-y-6">
     {#each subjects.filter(subject => assessments.some(a => a.code === subject.code)) as subject}
-      <Card
-        variant="default"
-        padding="none"
-        class="overflow-hidden"
-      >
+      <div id="subject-{subject.code}">
+        <Card
+          variant="default"
+          padding="none"
+          class="overflow-hidden"
+        >
         {#snippet header()}
           <div class="flex gap-3 items-center justify-between">
             <div class="flex gap-3 items-center">
@@ -116,7 +117,8 @@
             {/each}
           {/if}
         </div>
-      </Card>
+        </Card>
+      </div>
     {/each}
   </div>
 </div>

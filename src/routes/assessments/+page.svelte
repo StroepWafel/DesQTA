@@ -4,9 +4,7 @@
   import { cache } from '../../utils/cache';
   import { notify } from '../../utils/notify';
   import { invoke } from '@tauri-apps/api/core';
-  import AssessmentViewTabs from '../../lib/components/AssessmentViewTabs.svelte';
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
-  import YearFilter from '../../lib/components/YearFilter.svelte';
   import GradePredictions from '../../lib/components/GradePredictions.svelte';
   import AssessmentBoardView from '../../lib/components/AssessmentBoardView.svelte';
   import AssessmentCalendarView from '../../lib/components/AssessmentCalendarView.svelte';
@@ -304,59 +302,162 @@
   });
 </script>
 
-<div class="p-4 space-y-6 sm:p-6">
-  <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
-    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Assessments</h1>
-    <AssessmentViewTabs 
-      selectedTab={selectedTab}
-      onTabChange={handleTabChange}
-    />
+<div class="p-4 sm:p-6">
+  <!-- Consolidated Header -->
+  <div class="flex flex-col gap-4 mb-6 p-4 rounded-xl border backdrop-blur-sm bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
+    <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Assessments</h1>
+      
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <!-- Year Filter Dropdown -->
+        {#if availableYears && availableYears.length > 0}
+          <div class="flex items-center gap-2">
+            <label for="year-select" class="text-sm font-medium text-slate-600 dark:text-slate-400">Year:</label>
+            <div class="relative">
+              <select
+                id="year-select"
+                class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+                bind:value={selectedYear}
+                onchange={(e) => {
+                  const target = e.target as HTMLSelectElement;
+                  handleYearChange(Number(target.value));
+                }}
+                onwheel={(e) => {
+                  e.preventDefault();
+                  const currentIndex = availableYears.indexOf(selectedYear);
+                  if (e.deltaY > 0 && currentIndex < availableYears.length - 1) {
+                    handleYearChange(availableYears[currentIndex + 1]);
+                  } else if (e.deltaY < 0 && currentIndex > 0) {
+                    handleYearChange(availableYears[currentIndex - 1]);
+                  }
+                }}
+              >
+                {#each availableYears as year}
+                  <option value={year}>{year}</option>
+                {/each}
+              </select>
+              <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </div>
+        {/if}
+
+        <!-- View Selector Dropdown -->
+        <div class="flex items-center gap-2">
+          <label for="view-select" class="text-sm font-medium text-slate-600 dark:text-slate-400">View:</label>
+          <div class="relative">
+            <select
+              id="view-select"
+              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+              bind:value={selectedTab}
+              onchange={(e) => {
+                const target = e.target as HTMLSelectElement;
+                handleTabChange(target.value as 'list' | 'board' | 'calendar');
+              }}
+              onwheel={(e) => {
+                e.preventDefault();
+                const options = ['list', 'board', 'calendar'] as const;
+                const currentIndex = options.indexOf(selectedTab);
+                if (e.deltaY > 0 && currentIndex < options.length - 1) {
+                  handleTabChange(options[currentIndex + 1]);
+                } else if (e.deltaY < 0 && currentIndex > 0) {
+                  handleTabChange(options[currentIndex - 1]);
+                }
+              }}
+            >
+              <option value="list">List View</option>
+              <option value="board">Board View</option>
+              <option value="calendar">Calendar View</option>
+            </select>
+            <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Year Filter -->
-  <YearFilter 
-    {availableYears}
-    {selectedYear}
-    onYearChange={handleYearChange}
-  />
+  <!-- Content Area -->
+  <div class="space-y-6">
+    <!-- Grade Predictions Section -->
+    <GradePredictions 
+      assessments={upcomingAssessments}
+      {selectedYear}
+      {aiIntegrationsEnabled}
+      {gradeAnalyserEnabled}
+      showInView="list"
+      currentView={selectedTab}
+    />
 
-  <!-- Grade Predictions Section -->
-  <GradePredictions 
-    assessments={upcomingAssessments}
-    {selectedYear}
-    {aiIntegrationsEnabled}
-    {gradeAnalyserEnabled}
-    showInView="list"
-    currentView={selectedTab}
-  />
-
-  {#if loadingAssessments}
-    <LoadingSpinner message="Loading assessments..." />
-  {:else if filteredAssessments.length === 0}
-    <EmptyState 
-      title="No assessments for {selectedYear}!"
-      message="Try selecting a different year."
-      icon="🎉"
-    />
-  {:else if selectedTab === 'board'}
-    <AssessmentBoardView 
-      assessments={filteredAssessments}
-      subjects={allSubjects}
-      {activeSubjects}
-      {groupBy}
-      onGroupByChange={handleGroupByChange}
-    />
-  {:else if selectedTab === 'calendar'}
-    <AssessmentCalendarView 
-      assessments={filteredAssessments}
-    />
-  {:else}
-    <AssessmentListView 
-      assessments={filteredAssessments}
-      subjects={allSubjects}
-      {activeSubjects}
-    />
-  {/if}
+    <!-- Main Assessment Content -->
+    {#if loadingAssessments}
+      <div class="flex justify-center items-center py-12">
+        <LoadingSpinner message="Loading assessments..." />
+      </div>
+    {:else if filteredAssessments.length === 0}
+      <div class="py-12">
+        <EmptyState 
+          title="No assessments for {selectedYear}!"
+          message="Try selecting a different year."
+          icon="🎉"
+        />
+      </div>
+    {:else}
+      <!-- Board View Options -->
+      {#if selectedTab === 'board'}
+        <div class="flex items-center gap-4 p-4 rounded-xl border backdrop-blur-sm bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
+          <label for="group-by-select" class="text-sm font-medium text-slate-600 dark:text-slate-400">Group by:</label>
+          <div class="relative">
+            <select
+              id="group-by-select"
+              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+              bind:value={groupBy}
+              onchange={(e) => {
+                const target = e.target as HTMLSelectElement;
+                handleGroupByChange(target.value as 'subject' | 'month' | 'status');
+              }}
+              onwheel={(e) => {
+                e.preventDefault();
+                const options = ['subject', 'month', 'status'] as const;
+                const currentIndex = options.indexOf(groupBy);
+                if (e.deltaY > 0 && currentIndex < options.length - 1) {
+                  handleGroupByChange(options[currentIndex + 1]);
+                } else if (e.deltaY < 0 && currentIndex > 0) {
+                  handleGroupByChange(options[currentIndex - 1]);
+                }
+              }}
+            >
+              <option value="subject">Subject</option>
+              <option value="month">Month</option>
+              <option value="status">Status</option>
+            </select>
+            <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
+        <AssessmentBoardView 
+          assessments={filteredAssessments}
+          subjects={allSubjects}
+          {activeSubjects}
+          {groupBy}
+          onGroupByChange={handleGroupByChange}
+        />
+      {:else if selectedTab === 'calendar'}
+        <AssessmentCalendarView 
+          assessments={filteredAssessments}
+        />
+      {:else}
+        <AssessmentListView 
+          assessments={filteredAssessments}
+          subjects={allSubjects}
+          {activeSubjects}
+        />
+      {/if}
+    {/if}
+  </div>
 </div>
 
 

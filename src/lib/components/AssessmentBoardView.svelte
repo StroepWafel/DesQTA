@@ -29,7 +29,7 @@
     onGroupByChange: (group: 'subject' | 'month' | 'status') => void;
   }
 
-  let { assessments, subjects, activeSubjects, groupBy, onGroupByChange }: Props = $props();
+  let { assessments, subjects, activeSubjects, groupBy }: Props = $props();
   
   // Assessment card height for virtual scrolling (estimated)
   const ASSESSMENT_CARD_HEIGHT = 120;
@@ -87,29 +87,6 @@
 </script>
 
 <div class="space-y-6">
-  <div class="flex gap-2 justify-end">
-    <button
-      class="px-4 py-2 rounded-lg transition-all duration-300 text-sm {groupBy === 'subject'
-        ? 'accent-bg text-white shadow-lg accent-shadow'
-        : 'bg-slate-200/80 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-700/50'}"
-      onclick={() => onGroupByChange('subject')}>
-      Group by Subject
-    </button>
-    <button
-      class="px-4 py-2 rounded-lg transition-all duration-300 text-sm {groupBy === 'month'
-        ? 'accent-bg text-white shadow-lg accent-shadow'
-        : 'bg-slate-200/80 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-700/50'}"
-      onclick={() => onGroupByChange('month')}>
-      Group by Month
-    </button>
-    <button
-      class="px-4 py-2 rounded-lg transition-all duration-300 text-sm {groupBy === 'status'
-        ? 'accent-bg text-white shadow-lg accent-shadow'
-        : 'bg-slate-200/80 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-700/50'}"
-      onclick={() => onGroupByChange('status')}>
-      Group by Status
-    </button>
-  </div>
 
   <div
     class="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-slate-300/20 dark:scrollbar-track-slate-800/10">
