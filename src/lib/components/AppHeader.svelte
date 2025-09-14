@@ -136,7 +136,7 @@
   let searchInput: HTMLInputElement | null = null;
   let selectedIndex = $state(-1);
   let showPagesMenu = $state(false);
-  let globalSearchEnabled = $state(true);
+  let globalSearchEnabled = $state(false);
   let showNotifications = $state(false);
   let loadingNotifications = $state(false);
   let notifications = $state<Notification[]>([]);
@@ -189,11 +189,11 @@
     
     try {
       const subset = await invoke<any>('get_settings_subset', { keys: ['global_search_enabled'] });
-      globalSearchEnabled = subset?.global_search_enabled ?? true;
+      globalSearchEnabled = false; // Temporarily disabled
       logger.info('AppHeader', 'loadGlobalSearchSetting', `Global search enabled: ${globalSearchEnabled}`);
     } catch (error) {
       logger.error('AppHeader', 'loadGlobalSearchSetting', `Failed to load global search setting: ${error}`, { error });
-      globalSearchEnabled = true; // Default to enabled if loading fails
+      globalSearchEnabled = false; // Temporarily disabled
     }
   }
 
