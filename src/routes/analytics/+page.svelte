@@ -7,8 +7,8 @@
   import { Button } from '$lib/components/ui';
   import Modal from '$lib/components/Modal.svelte';
   import RawDataTable from '$lib/components/RawDataTable.svelte';
-  import GradeDistribution from '$lib/components/GradeDistribution.svelte';
-  import AnalyticsChart from '$lib/components/analytics/AnalyticsChart.svelte';
+  import AnalyticsAreaChart from '$lib/components/analytics/AnalyticsAreaChart.svelte';
+  import AnalyticsBarChart from '$lib/components/analytics/AnalyticsBarChart.svelte';
   import AssessmentFilters from '$lib/components/analytics/AssessmentFilters.svelte';
 
   let analyticsData: AnalyticsData | null = $state(null);
@@ -304,8 +304,11 @@
 
 </script>
 
-<div class="container px-6 py-7 mx-auto">
-  <h1 class="absolute mb-8 text-2xl font-bold">Analytics</h1>
+<div class="container px-6 py-7 mx-auto max-w-7xl">
+  <div class="mb-8">
+    <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">Analytics</h1>
+    <p class="text-zinc-600 dark:text-zinc-400">Track your academic performance and progress over time</p>
+  </div>
 
   {#if loading}
     <div class="flex justify-center items-center h-64">
@@ -314,7 +317,7 @@
   {:else if showGrabData}
     <div class="flex flex-col gap-6 justify-center items-center h-96">
       <div
-        class="flex flex-col items-center p-8 w-full max-w-lg rounded-2xl border shadow-xl border-slate-200 bg-white/90 dark:bg-slate-900/90 dark:border-slate-700 animate-fade-in-up">
+        class="flex flex-col items-center p-8 w-full max-w-lg rounded-2xl border shadow-xl border-zinc-200 bg-white/90 dark:bg-zinc-900/90 dark:border-zinc-700 animate-fade-in-up">
         <svg
           class="mb-4 w-12 h-12 text-indigo-500"
           fill="none"
@@ -325,8 +328,8 @@
             stroke-linejoin="round"
             stroke-width="2"
             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <h2 class="mb-2 text-2xl font-bold text-slate-900 dark:text-white">No Analytics Data</h2>
-        <p class="mb-4 text-center text-slate-600 dark:text-slate-300">
+        <h2 class="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">No Analytics Data</h2>
+        <p class="mb-4 text-center text-zinc-600 dark:text-zinc-300">
           To get started, click <span class="font-semibold text-indigo-600 dark:text-indigo-400"
             >Grab Data</span>
           below.<br />
@@ -357,11 +360,9 @@
     </div>
 
     <!-- Main Analytics Charts -->
-    <div
-      class="flex flex-col gap-8 p-8 mb-8 rounded-2xl border shadow-xl border-slate-200 bg-white/80 dark:bg-slate-900/80 dark:border-slate-700 xl:flex-row"
-      in:fade={{ duration: 400 }}>
-      <GradeDistribution data={analyticsData || []} />
-      <AnalyticsChart data={analyticsData || []} />
+    <div class="grid grid-cols-1 gap-6 mb-8 xl:grid-cols-2" in:fade={{ duration: 400 }}>
+      <AnalyticsAreaChart data={analyticsData || []} />
+      <AnalyticsBarChart data={analyticsData || []} />
     </div>
 
     <!-- Filters -->
@@ -378,24 +379,24 @@
 
     <!-- Raw Data Table -->
     <div
-      class="p-8 rounded-2xl border shadow-xl border-slate-200 bg-white/80 dark:bg-slate-900/80 dark:border-slate-700"
+      class="p-6 bg-white rounded-lg border shadow-sm border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700"
       in:fade={{ duration: 400, delay: 200 }}>
       <RawDataTable data={filteredData()} />
     </div>
   {:else}
-    <div class="text-center text-slate-500 dark:text-slate-400">No analytics data available</div>
+    <div class="text-center text-zinc-500 dark:text-zinc-400">No analytics data available</div>
   {/if}
 
   <Modal
     bind:open={showDeleteModal}
     onclose={closeDeleteModal}
     maxWidth="max-w-md"
-    className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl"
+    className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-2xl"
     showCloseButton={false}
     ariaLabel="Delete Analytics Data">
     <div class="p-8">
-      <h3 class="mb-4 text-xl font-bold text-slate-900 dark:text-white">Delete Analytics Data?</h3>
-      <p class="mb-6 text-slate-600 dark:text-slate-300">
+      <h3 class="mb-4 text-xl font-bold text-zinc-900 dark:text-white">Delete Analytics Data?</h3>
+      <p class="mb-6 text-zinc-600 dark:text-zinc-300">
         Are you sure you want to delete all analytics data?
       </p>
       {#if deleteError}
@@ -403,7 +404,7 @@
       {/if}
       <div class="flex gap-3 justify-end">
         <button
-          class="px-4 py-2 rounded-lg transition-all duration-200 transform text-slate-800 bg-slate-200 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
+          class="px-4 py-2 rounded-lg transition-all duration-200 transform text-zinc-800 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
           onclick={closeDeleteModal}
           disabled={deleteLoading}>Cancel</button>
         <button
@@ -421,5 +422,3 @@
     </div>
   </Modal>
 </div>
-
-
