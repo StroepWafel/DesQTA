@@ -80,7 +80,7 @@
   let buttonClasses = $derived([
     'inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300',
     'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg',
-    'hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-1',
+    'hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-1',
     'transition-all duration-200',
     disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
     className

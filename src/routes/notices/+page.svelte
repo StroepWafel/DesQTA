@@ -178,7 +178,7 @@
         type="date"
         value={formatDate(selectedDate)}
         onchange={updateDate}
-        class="px-4 py-2 bg-white rounded-lg border text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        class="px-4 py-2 bg-white rounded-lg border text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
     </div>
   </div>
 
@@ -188,7 +188,7 @@
       <label for="label-select" class="font-semibold text-sm mr-2">Label:</label>
       <select
         id="label-select"
-        class="px-4 py-2 rounded-lg border text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="px-4 py-2 rounded-lg border text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
         bind:value={selectedLabel}
         onchange={(e) => {
           const target = e.target as HTMLSelectElement;
@@ -203,17 +203,17 @@
   {/if}
 
   {#if loading}
-    <div class="p-8 text-center text-[var(--text-muted)]">Loading notices...</div>
+    <div class="p-8 text-center text-(--text-muted)">Loading notices...</div>
   {:else if error}
     <div class="p-8 text-center text-red-500">{error}</div>
   {:else if filteredNotices.length === 0}
-    <div class="p-8 text-center text-[var(--text-muted)]">No notices found for the selected criteria.</div>
+    <div class="p-8 text-center text-(--text-muted)">No notices found for the selected criteria.</div>
   {:else}
     <!-- Use regular grid -->
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {#each filteredNotices as notice}
         <div
-          class="rounded-xl shadow-lg bg-white/10 text-[var(--text)] border-t-8 flex flex-col h-96"
+          class="rounded-xl shadow-lg bg-white/10 text-(--text) border-t-8 flex flex-col h-96"
           style={`border-top-color: ${getLabelColor(notice.labelId)}; border-top-width: 8px;`}>
           <div class="flex overflow-y-auto flex-col flex-1 p-5">
             <h2 class="mb-1 text-2xl font-bold">{notice.title}</h2>
@@ -223,7 +223,7 @@
               class:text-white={isColorDark(getLabelColor(notice.labelId))}>
               {getLabelTitle(notice.labelId)}
             </div>
-            <div class="text-xs text-[var(--text-muted)] mb-2 uppercase tracking-wide">
+            <div class="text-xs text-(--text-muted) mb-2 uppercase tracking-wide">
               {notice.author}
             </div>
             <div class="flex-1 text-base">{@html notice.content}</div>

@@ -181,7 +181,7 @@
 <div class="notes-container h-full flex bg-white dark:bg-slate-800 min-h-0 relative">
   <!-- Left Sidebar: Notes List -->
   <div 
-    class="flex-shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-700 relative"
+    class="shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-700 relative"
     style="width: {sidebarCollapsed ? '0px' : '320px'}"
   >
     <div class="w-80 h-full overflow-hidden">
@@ -204,7 +204,7 @@
     
     <!-- Sidebar Toggle Button -->
     <button
-      class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-r-md shadow-sm flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 z-10"
+      class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-r-md shadow-xs flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 z-10"
       on:click={toggleSidebar}
       title="{sidebarCollapsed ? 'Expand' : 'Collapse'} sidebar"
     >
@@ -282,7 +282,7 @@
             Select a note from the sidebar to start editing, or create a new note to get started.
           </p>
           <button
-            class="px-6 py-3 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+            class="px-6 py-3 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
             on:click={handleCreateNote}
           >
             Create New Note

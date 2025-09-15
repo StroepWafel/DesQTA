@@ -81,7 +81,7 @@ interface Props {
         
         <button
           onclick={reset}
-          class="px-3 py-1 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300 rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-200 dark:hover:bg-red-700"
+          class="px-3 py-1 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300 rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-200 dark:hover:bg-red-700"
         >
           <Icon src={ArrowPath} size="14" class="inline mr-1" />
           Retry
@@ -198,7 +198,7 @@ A full-screen loading component with animated elements for app initialization.
 #### Implementation
 
 ```svelte
-<div class="flex items-center justify-center h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800">
+<div class="flex items-center justify-center h-screen bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800">
   <div class="flex flex-col items-center space-y-8">
     <!-- Animated plane and clouds -->
     <div class="relative w-48 h-24">
@@ -275,7 +275,7 @@ interface Props {
 
 <div class="flex flex-col justify-center items-center py-12 sm:py-16">
   <div
-    class="flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient {iconSizes[size]}">
+    class="flex items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-purple-600 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient {iconSizes[size]}">
     {icon}
   </div>
   <p class="mt-4 {titleSizes[size]} text-slate-700 dark:text-slate-300">
@@ -554,9 +554,9 @@ A Pomodoro-style timer for study sessions with customizable durations.
   </div>
 
   <div class="flex justify-center gap-2">
-    <button onclick={() => setDuration(25)} class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded">25m</button>
-    <button onclick={() => setDuration(45)} class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded">45m</button>
-    <button onclick={() => setDuration(60)} class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded">60m</button>
+    <button onclick={() => setDuration(25)} class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-sm">25m</button>
+    <button onclick={() => setDuration(45)} class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-sm">45m</button>
+    <button onclick={() => setDuration(60)} class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-sm">60m</button>
   </div>
 </div>
 ```
@@ -654,8 +654,8 @@ Displays the school's welcome portal content in an embedded iframe with full-scr
   });
 </script>
 
-<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-sm bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-  <div class="flex justify-between items-center px-4 py-3 bg-gradient-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+  <div class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
     <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Welcome Portal</h3>
     <button
       onclick={() => (showPortalModal = true)}

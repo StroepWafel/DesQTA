@@ -203,7 +203,7 @@
 </script>
 
 <!-- Theme Store Header -->
-<div class="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700">
+<div class="relative overflow-hidden bg-linear-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700">
   <div class="absolute inset-0 bg-[url('/api/placeholder/1920/400')] opacity-5"></div>
   <div class="relative px-6 py-12 max-w-7xl mx-auto">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -211,7 +211,7 @@
         <div class="flex items-center gap-3">
           <a 
             href="/settings" 
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all duration-200 shadow-sm hover:shadow-md"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all duration-200 shadow-xs hover:shadow-md"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -224,7 +224,7 @@
         </div>
         <div class="relative w-full max-w-3xl">
           <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md">
-            <div class="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm min-h-[120px] transition-all duration-200">
+            <div class="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs min-h-[120px] transition-all duration-200">
               <div class="text-2xl font-bold text-slate-900 dark:text-white">{slides[currentSlide].title}</div>
               <div class="text-slate-600 dark:text-slate-300 mt-2">{slides[currentSlide].description}</div>
             </div>
@@ -244,7 +244,7 @@
       </div>
       
       <div class="flex flex-col sm:flex-row gap-4">
-        <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-xs">
           <div class="text-sm text-slate-600 dark:text-slate-400 mb-1">Currently Active</div>
           <div class="font-semibold text-lg text-slate-900 dark:text-white flex items-center gap-2">
             <Icon src={CheckCircle} class="w-5 h-5 text-green-500" />
@@ -252,7 +252,7 @@
           </div>
         </div>
         <button
-          class="flex items-center gap-2 px-6 py-3 rounded-xl accent-bg hover:accent-bg-hover text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring focus:ring-offset-2"
+          class="flex items-center gap-2 px-6 py-3 rounded-xl accent-bg hover:accent-bg-hover text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring focus:ring-offset-2"
           onclick={() => themeBuilderSidebarOpen.set(true)}
         >
           <Icon src={Swatch} class="w-5 h-5" />
@@ -273,7 +273,7 @@
           type="text" 
           placeholder="Search themes..."
           bind:value={searchQuery}
-          class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring focus:border-transparent transition-all duration-200"
+          class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 accent-ring focus:border-transparent transition-all duration-200"
         />
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
           <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -325,7 +325,7 @@
                 {#if getThemePreviewImage(theme)}
                   <img src={getThemePreviewImage(theme)} alt={`${theme.name} preview`} class="absolute inset-0 w-full h-full object-cover" />
                 {/if}
-                <div class="absolute inset-0 bg-gradient-to-br from-black/10 to-black/30"></div>
+                <div class="absolute inset-0 bg-linear-to-br from-black/10 to-black/30"></div>
                 <div class="absolute top-3 left-3 flex gap-2">
                   {#if currentThemeName === getThemeId(theme)}
                     <span class="px-2 py-1 text-xs font-medium bg-green-500 text-white rounded-full flex items-center gap-1">
@@ -374,7 +374,7 @@
                 <button
                   type="button"
                   onclick={() => handleThemeDeleted(theme.name)}
-                  class="absolute top-3 right-12 p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors bg-white/20 backdrop-blur-sm rounded-full"
+                  class="absolute top-3 right-12 p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors bg-white/20 backdrop-blur-xs rounded-full"
                   aria-label="Delete custom theme"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -421,10 +421,10 @@
               <!-- Sidebar -->
               <div class="w-56 p-3 flex flex-col gap-2 bg-white/85 dark:bg-slate-900/70" style="border-right: 1px solid {selectedTheme.customProperties.borderColor || '#334155'}">
                 <div class="h-8 rounded-lg" style="background: {selectedTheme.customProperties.accentColor || selectedTheme.customProperties.primaryColor || '#3b82f6'}"></div>
-                <div class="h-6 rounded bg-slate-200/80 dark:bg-slate-800/80"></div>
-                <div class="h-6 rounded bg-slate-200/80 dark:bg-slate-800/80"></div>
-                <div class="h-6 rounded bg-slate-200/80 dark:bg-slate-800/80"></div>
-                <div class="mt-auto h-6 rounded bg-slate-200/60 dark:bg-slate-800/60"></div>
+                <div class="h-6 rounded-sm bg-slate-200/80 dark:bg-slate-800/80"></div>
+                <div class="h-6 rounded-sm bg-slate-200/80 dark:bg-slate-800/80"></div>
+                <div class="h-6 rounded-sm bg-slate-200/80 dark:bg-slate-800/80"></div>
+                <div class="mt-auto h-6 rounded-sm bg-slate-200/60 dark:bg-slate-800/60"></div>
               </div>
               <!-- Main -->
               <div class="flex-1 flex flex-col" style="background: {selectedTheme.customProperties.backgroundColor}">
@@ -433,18 +433,18 @@
                   <span class="font-semibold">DesQTA</span>
                   <div class="ml-auto flex items-center gap-2">
                     <div class="w-6 h-6 rounded-full bg-white/70"></div>
-                    <div class="w-16 h-4 rounded bg-white/50"></div>
+                    <div class="w-16 h-4 rounded-sm bg-white/50"></div>
                   </div>
                 </div>
                 <!-- Content -->
                 <div class="flex-1 p-4" style="color: {selectedTheme.customProperties.textColor || '#0f172a'}">
-                  <div class="h-6 w-1/3 rounded mb-3" style="background: rgba(148,163,184,0.35)"></div>
+                  <div class="h-6 w-1/3 rounded-sm mb-3" style="background: rgba(148,163,184,0.35)"></div>
                   <div class="grid grid-cols-3 gap-3 mb-3">
-                    <div class="h-20 rounded" style="background: rgba(148,163,184,0.25)"></div>
-                    <div class="h-20 rounded" style="background: rgba(148,163,184,0.25)"></div>
-                    <div class="h-20 rounded" style="background: rgba(148,163,184,0.25)"></div>
+                    <div class="h-20 rounded-sm" style="background: rgba(148,163,184,0.25)"></div>
+                    <div class="h-20 rounded-sm" style="background: rgba(148,163,184,0.25)"></div>
+                    <div class="h-20 rounded-sm" style="background: rgba(148,163,184,0.25)"></div>
                   </div>
-                  <div class="h-32 rounded" style="background: rgba(148,163,184,0.2)"></div>
+                  <div class="h-32 rounded-sm" style="background: rgba(148,163,184,0.2)"></div>
                 </div>
               </div>
             </div>
@@ -456,14 +456,14 @@
             <!-- Sticky action buttons -->
             <div class="flex gap-4 justify-center items-center p-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 z-10">
               <button
-                class="px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent accent-bg hover:accent-bg-hover active:scale-95"
+                class="px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent accent-bg hover:accent-bg-hover active:scale-95"
                 onclick={() => selectedTheme && handleApplyTheme(getThemeId(selectedTheme))}
               >
                 Apply Theme
               </button>
               {#if currentThemeName !== 'default'}
                 <button
-                  class="px-4 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95"
+                  class="px-4 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95"
                   onclick={() => handleApplyTheme('default')}
                 >
                   Reset to Default

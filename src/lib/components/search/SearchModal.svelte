@@ -72,7 +72,7 @@
 
 {#if showModal}
   <div 
-    class="fixed inset-0 z-[9999999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+    class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs"
     transition:fade={{ duration: 200 }}
   >
     <div 
@@ -110,7 +110,7 @@
         <input
           bind:this={modalInput}
           type="text"
-          class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-gray-800/60 text-slate-900 dark:text-white border border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent transition-all duration-200 placeholder:text-slate-500 dark:placeholder:text-gray-400 text-lg"
+          class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-gray-800/60 text-slate-900 dark:text-white border border-accent/40 focus:outline-hidden focus:ring-2 focus:ring-accent transition-all duration-200 placeholder:text-slate-500 dark:placeholder:text-gray-400 text-lg"
           placeholder={placeholderText}
           bind:value={searchQuery}
           onkeydown={onKeydown}
@@ -172,7 +172,7 @@
                   {#if item.shortcut}
                     <div class="flex items-center gap-1 opacity-60 text-xs">
                       {#each item.shortcut.split('+') as key}
-                        <kbd class="px-1.5 py-0.5 rounded bg-white/20 dark:bg-gray-700/50">{key}</kbd>
+                        <kbd class="px-1.5 py-0.5 rounded-sm bg-white/20 dark:bg-gray-700/50">{key}</kbd>
                       {/each}
                     </div>
                   {/if}
@@ -180,7 +180,7 @@
                   <!-- svelte-ignore a11y_no_static_element_interactions -->
                   <div
                     onclick={(e) => handleFavoriteClick(item.id, e)}
-                    class="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    class="p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     role="button"
                     tabindex="0"
                     aria-label="Toggle favorite"
@@ -244,7 +244,7 @@
                   {#if item.shortcut}
                     <div class="flex items-center gap-1 opacity-60 text-xs">
                       {#each item.shortcut.split('+') as key}
-                        <kbd class="px-1.5 py-0.5 rounded bg-white/20 dark:bg-gray-700/50">{key}</kbd>
+                        <kbd class="px-1.5 py-0.5 rounded-sm bg-white/20 dark:bg-gray-700/50">{key}</kbd>
                       {/each}
                     </div>
                   {/if}
@@ -252,7 +252,7 @@
                   <!-- svelte-ignore a11y_no_static_element_interactions -->
                   <div
                     onclick={(e) => handleFavoriteClick(item.id, e)}
-                    class="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    class="p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     role="button"
                     tabindex="0"
                     aria-label="Toggle favorite"
@@ -290,13 +290,13 @@
       <div class="flex items-center justify-between px-6 py-3 border-t border-white/10 dark:border-gray-700/20 text-xs text-slate-500 dark:text-gray-400">
         <div class="flex items-center gap-4">
           <span class="flex items-center gap-1">
-            <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-gray-700">↑↓</kbd> Navigate
+            <kbd class="px-1 py-0.5 rounded-sm bg-slate-200 dark:bg-gray-700">↑↓</kbd> Navigate
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-gray-700">↵</kbd> Select
+            <kbd class="px-1 py-0.5 rounded-sm bg-slate-200 dark:bg-gray-700">↵</kbd> Select
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-gray-700">Esc</kbd> Close
+            <kbd class="px-1 py-0.5 rounded-sm bg-slate-200 dark:bg-gray-700">Esc</kbd> Close
           </span>
         </div>
         <div class="flex items-center gap-2">
@@ -304,7 +304,7 @@
             {searchMode === 'fuzzy' ? 'Fuzzy' : searchMode === 'command' ? 'Command' : 'Normal'} mode
           </span>
           {#if isAdvancedMode}
-            <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium">
+            <span class="px-2 py-0.5 rounded-sm bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium">
               Advanced
             </span>
           {/if}

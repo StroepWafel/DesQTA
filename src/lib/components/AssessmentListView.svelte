@@ -44,9 +44,9 @@
 
 <div class="flex flex-col gap-6 lg:flex-row">
   <!-- Quick Navigation Sidebar -->
-  <div class="flex-shrink-0 lg:w-48">
+  <div class="shrink-0 lg:w-48">
     <div
-      class="sticky top-6 p-4 rounded-xl border backdrop-blur-sm bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
+      class="sticky top-6 p-4 rounded-xl border backdrop-blur-xs bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
       <h3 class="mb-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Quick Jump</h3>
       <div class="space-y-2">
         {#each subjects.filter(subject => assessments.some(a => a.code === subject.code)) as subject}

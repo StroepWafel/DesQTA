@@ -155,7 +155,7 @@
   >
     <!-- Backdrop -->
     <div 
-      class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+      class="absolute inset-0 bg-black/50 backdrop-blur-xs"
       role="button"
       tabindex="0"
       on:click={closeModal}
@@ -185,7 +185,7 @@
         <!-- Authentication Status -->
         {#if isAuthenticated && cloudUser}
           <div class="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <Icon src={User} class="w-5 h-5 text-green-500 flex-shrink-0" />
+            <Icon src={User} class="w-5 h-5 text-green-500 shrink-0" />
             <div class="flex-1">
               <p class="text-sm font-medium text-green-700 dark:text-green-300">
                 {cloudUser.displayName || cloudUser.username}
@@ -213,7 +213,7 @@
               type="password"
               bind:value={token}
               placeholder="Enter your BetterSEQTA Plus account token"
-              class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+              class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
             />
             <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">
               Get your token from your BetterSEQTA Plus account settings. 
@@ -223,7 +223,7 @@
               </a> if you don't have one yet.
             </p>
             <button
-              class="flex items-center justify-center gap-2 w-full px-4 py-3 mt-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex items-center justify-center gap-2 w-full px-4 py-3 mt-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               on:click={authenticate}
               disabled={loading}
             >
@@ -241,21 +241,21 @@
         <!-- Error/Success Messages -->
         {#if error}
           <div class="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <Icon src={ExclamationTriangle} class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+            <Icon src={ExclamationTriangle} class="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
             <p class="text-sm text-red-700 dark:text-red-300">{error}</p>
           </div>
         {/if}
 
         {#if success}
           <div class="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <Icon src={CheckCircle} class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+            <Icon src={CheckCircle} class="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
             <p class="text-sm text-green-700 dark:text-green-300">{success}</p>
           </div>
         {/if}
 
         <!-- Info -->
         <div class="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <Icon src={InformationCircle} class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+          <Icon src={InformationCircle} class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
           <div class="text-sm text-blue-700 dark:text-blue-300">
             <p class="font-medium mb-1">About Cloud Sync</p>
             <p>Sync your DesQTA settings across devices using BetterSEQTA Plus account cloud syncing. Your settings are encrypted and secure. 
@@ -270,7 +270,7 @@
         {#if isAuthenticated}
           <div class="flex flex-col gap-3">
             <button
-              class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               on:click={uploadSettings}
               disabled={loading}
             >
@@ -284,7 +284,7 @@
             </button>
 
             <button
-              class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               on:click={downloadSettings}
               disabled={loading}
             >

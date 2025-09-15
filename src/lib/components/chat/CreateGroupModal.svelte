@@ -23,7 +23,7 @@
 
 {#if open}
   <div 
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" 
+    class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50" 
     role="dialog" 
     aria-modal="true"
     aria-labelledby="modal-title"
@@ -61,7 +61,7 @@
             <input 
               id="group-name"
               type="text" 
-              class="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 ring-accent-500 focus:border-transparent transition-all duration-200" 
+              class="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 ring-accent-500 focus:border-transparent transition-all duration-200" 
               placeholder="Enter group name..." 
               bind:value={newGroupName} 
               required 
@@ -75,7 +75,7 @@
                 <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer">
                   <input 
                     type="checkbox" 
-                    class="w-4 h-4 text-accent-500 bg-white dark:bg-slate-600 border-slate-300 dark:border-slate-500 rounded focus:ring-accent-500 focus:ring-2" 
+                    class="w-4 h-4 text-accent-500 bg-white dark:bg-slate-600 border-slate-300 dark:border-slate-500 rounded-sm focus:ring-accent-500 focus:ring-2" 
                     bind:group={newGroupMembers} 
                     value={friend.id} 
                   />
@@ -99,14 +99,14 @@
           <div class="flex gap-3 pt-4">
             <button 
               type="button"
-              class="flex-1 px-4 py-3 rounded-lg bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-300 dark:hover:bg-slate-500 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 ring-slate-400" 
+              class="flex-1 px-4 py-3 rounded-lg bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-300 dark:hover:bg-slate-500 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden focus:ring-2 ring-slate-400" 
               onclick={onClose}
             >
               Cancel
             </button>
             <button 
               type="submit"
-              class="flex-1 px-4 py-3 rounded-lg bg-accent-500 text-white font-medium hover:bg-accent-600 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 ring-accent-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
+              class="flex-1 px-4 py-3 rounded-lg bg-accent-500 text-white font-medium hover:bg-accent-600 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden focus:ring-2 ring-accent-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
               disabled={!newGroupName.trim() || newGroupMembers.length === 0 || creatingGroup}
             >
               {creatingGroup ? 'Creating...' : 'Create Group'}

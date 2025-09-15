@@ -107,7 +107,7 @@
               <th class="px-6 py-3 text-left">
                 <input
                   type="checkbox"
-                  class="rounded border-slate-300 dark:border-slate-600 text-accent-600 focus:ring-accent-500"
+                  class="rounded-sm border-slate-300 dark:border-slate-600 text-accent-600 focus:ring-accent-500"
                   checked={tableData.every((row: any) => isRowSelected(row))}
                   onchange={(e) => {
                     const checked = e.currentTarget.checked;
@@ -154,7 +154,7 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                   <input
                     type="checkbox"
-                    class="rounded border-slate-300 dark:border-slate-600 text-accent-600 focus:ring-accent-500"
+                    class="rounded-sm border-slate-300 dark:border-slate-600 text-accent-600 focus:ring-accent-500"
                     checked={isRowSelected(row)}
                     onchange={(e) => handleRowSelect(row, e.currentTarget.checked)}
                   />

@@ -135,7 +135,7 @@
     <div class="flex items-center gap-4">
       <a 
         href="/settings" 
-        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -155,14 +155,14 @@
       {#each plugins as plugin}
         <button
           type="button"
-          class="overflow-hidden bg-white rounded-2xl border shadow-xl transition-all duration-300 cursor-pointer dark:bg-slate-900 border-slate-300 dark:border-slate-800 hover:shadow-2xl hover:border-blue-700 animate-fade-in-up w-full text-left focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+          class="overflow-hidden bg-white rounded-2xl border shadow-xl transition-all duration-300 cursor-pointer dark:bg-slate-900 border-slate-300 dark:border-slate-800 hover:shadow-2xl hover:border-blue-700 animate-fade-in-up w-full text-left focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
           on:click={() => openPluginDetails(plugin)}>
           <div class="overflow-hidden relative h-32">
             <img
               src={plugin.banner.dark}
               alt={`${plugin.name} banner`}
               class="object-cover w-full h-full" />
-            <div class="absolute inset-0 bg-gradient-to-t to-transparent from-slate-900"></div>
+            <div class="absolute inset-0 bg-linear-to-t to-transparent from-slate-900"></div>
           </div>
           <div class="p-6">
             <div class="flex gap-4 items-start">
@@ -200,7 +200,7 @@
 </div>
 
 {#if selectedPlugin}
-  <div class="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm animate-fade-in">
+  <div class="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-xs animate-fade-in">
     <div class="overflow-y-auto fixed inset-0">
       <div class="flex justify-center items-center p-4 min-h-screen">
         <div
@@ -211,7 +211,7 @@
               src={selectedPlugin.banner.dark}
               alt={`${selectedPlugin.name} banner`}
               class="object-cover w-full h-full" />
-            <div class="absolute inset-0 bg-gradient-to-t to-transparent from-slate-900"></div>
+            <div class="absolute inset-0 bg-linear-to-t to-transparent from-slate-900"></div>
             <div class="absolute right-0 bottom-0 left-0 p-6">
               <div class="flex justify-between items-start">
                 <div class="flex gap-4 items-start">
@@ -338,13 +338,13 @@
           <div class="p-6 border-t bg-slate-800 border-slate-700">
             {#if selectedPlugin.installed}
               <button
-                class="px-6 py-3 w-full text-white bg-red-600 rounded shadow transition-transform duration-200 hover:bg-red-700 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105"
+                class="px-6 py-3 w-full text-white bg-red-600 rounded-sm shadow-xs transition-transform duration-200 hover:bg-red-700 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105"
                 on:click={() => selectedPlugin && uninstallPlugin(selectedPlugin.id)}>
                 Uninstall Plugin
               </button>
             {:else}
               <button
-                class="px-6 py-3 w-full text-white bg-blue-600 rounded shadow transition-transform duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105"
+                class="px-6 py-3 w-full text-white bg-blue-600 rounded-sm shadow-xs transition-transform duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105"
                 on:click={() => selectedPlugin && installPlugin(selectedPlugin.id)}>
                 Install Plugin
               </button>

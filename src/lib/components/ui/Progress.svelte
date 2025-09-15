@@ -50,7 +50,7 @@
   let barClasses = $derived([
     'h-full transition-all duration-300 ease-out rounded-full',
     variants[variant],
-    striped ? 'bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:1rem_1rem]' : '',
+    striped ? 'bg-linear-to-r from-transparent via-white/20 to-transparent bg-size-[1rem_1rem]' : '',
     animated && striped ? 'animate-pulse' : '',
     animated ? 'transition-all duration-500' : ''
   ].filter(Boolean).join(' '));

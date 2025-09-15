@@ -43,7 +43,7 @@
 
 <button
   type="button"
-  class="lesson-block flex flex-col justify-start p-2 bg-white/95 backdrop-blur-sm rounded-xl border-l-4 shadow-lg hover:shadow-xl transition-all duration-200 dark:bg-slate-800/95 group cursor-pointer select-none h-full w-full text-left"
+  class="lesson-block flex flex-col justify-start p-2 bg-white/95 backdrop-blur-xs rounded-xl border-l-4 shadow-lg hover:shadow-xl transition-all duration-200 dark:bg-slate-800/95 group cursor-pointer select-none h-full w-full text-left"
   style="border-color: {lesson.colour}; min-height: 54px;"
   class:expanded={expanded}
   onclick={handleClick}

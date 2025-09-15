@@ -332,7 +332,7 @@
 <div class="flex flex-col h-full relative {isMobile ? 'overflow-y-auto' : 'overflow-hidden'} bg-slate-100 dark:bg-slate-950">
   <!-- Window Controls Bar -->
   <div 
-    class="relative flex justify-between items-center px-6 py-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-slate-700/30 z-10 {isMobile ? 'flex-shrink-0' : ''}"
+    class="relative flex justify-between items-center px-6 py-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-slate-700/30 z-10 {isMobile ? 'shrink-0' : ''}"
     data-tauri-drag-region>
     <!-- Draggable area with branding -->
     <div class="flex items-center space-x-3" data-tauri-drag-region>
@@ -346,19 +346,19 @@
     {#if !isMobile}
       <div class="flex items-center space-x-1" data-tauri-drag-region>
         <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           onclick={() => appWindow.minimize()}
           aria-label="Minimize">
           <Icon src={Minus} class="w-4 h-4 text-slate-600 dark:text-slate-400" />
         </button>
         <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           onclick={() => appWindow.toggleMaximize()}
           aria-label="Maximize">
           <Icon src={Square2Stack} class="w-4 h-4 text-slate-600 dark:text-slate-400" />
         </button>
         <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 group hover:bg-red-500/90 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 group hover:bg-red-500/90 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           onclick={() => appWindow.close()}
           aria-label="Close">
           <Icon src={XMark} class="w-4 h-4 transition duration-200 text-slate-600 dark:text-slate-400 group-hover:text-white" />
@@ -374,17 +374,17 @@
     <!-- Top Left - Mini Header Preview -->
     <button 
       type="button"
-      class="absolute top-8 left-8 w-80 h-16 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      class="absolute top-8 left-8 w-80 h-16 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-1 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       onclick={() => openPreviewModal('header')}
       aria-label="Preview application header">
       <div class="flex items-center justify-between h-full px-6 pointer-events-none">
         <div class="flex items-center space-x-3">
           <div class="w-3 h-3 bg-indigo-400 rounded-full"></div>
-          <div class="w-16 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+          <div class="w-16 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
         </div>
         <div class="flex space-x-2">
-          <div class="w-8 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
-          <div class="w-8 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+          <div class="w-8 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
+          <div class="w-8 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
         </div>
       </div>
     </button>
@@ -392,29 +392,29 @@
     <!-- Top Right - Mini Sidebar Preview -->
     <button 
       type="button"
-      class="absolute top-8 right-8 w-64 h-52 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      class="absolute top-8 right-8 w-64 h-52 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       onclick={() => openPreviewModal('sidebar')}
       aria-label="Preview navigation sidebar">
       <div class="p-4 space-y-3 pointer-events-none">
         <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-indigo-400 rounded"></div>
-          <div class="w-20 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+          <div class="w-4 h-4 bg-indigo-400 rounded-sm"></div>
+          <div class="w-20 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
         </div>
         <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-purple-400 rounded"></div>
-          <div class="w-24 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+          <div class="w-4 h-4 bg-purple-400 rounded-sm"></div>
+          <div class="w-24 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
         </div>
         <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-pink-400 rounded"></div>
-          <div class="w-18 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+          <div class="w-4 h-4 bg-pink-400 rounded-sm"></div>
+          <div class="w-18 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
         </div>
         <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-blue-400 rounded"></div>
-          <div class="w-22 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+          <div class="w-4 h-4 bg-blue-400 rounded-sm"></div>
+          <div class="w-22 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
         </div>
         <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-green-400 rounded"></div>
-          <div class="w-16 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+          <div class="w-4 h-4 bg-green-400 rounded-sm"></div>
+          <div class="w-16 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
         </div>
       </div>
     </button>
@@ -422,44 +422,44 @@
         <!-- Bottom Left - Mini Assessment Card -->
     <button 
       type="button"
-      class="absolute bottom-8 left-8 w-72 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 border-l-4 border-l-green-400 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      class="absolute bottom-8 left-8 w-72 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 border-l-4 border-l-green-400 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-3 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       onclick={() => openPreviewModal('assessment')}
       aria-label="Preview assessment card">
       <div class="p-5 pointer-events-none">
         <div class="flex items-center justify-between mb-3">
-          <div class="w-20 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
-          <div class="w-16 h-5 bg-green-400/80 rounded text-xs"></div>
+          <div class="w-20 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
+          <div class="w-16 h-5 bg-green-400/80 rounded-sm text-xs"></div>
         </div>
-        <div class="w-40 h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded mb-2"></div>
-        <div class="w-24 h-3 bg-slate-300/30 dark:bg-slate-600/30 rounded mb-2"></div>
-        <div class="w-32 h-2 bg-slate-300/20 dark:bg-slate-600/20 rounded"></div>
+        <div class="w-40 h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm mb-2"></div>
+        <div class="w-24 h-3 bg-slate-300/30 dark:bg-slate-600/30 rounded-sm mb-2"></div>
+        <div class="w-32 h-2 bg-slate-300/20 dark:bg-slate-600/20 rounded-sm"></div>
       </div>
     </button>
 
     <!-- Bottom Right - Mini Timetable Preview -->
     <button 
       type="button"
-      class="absolute bottom-8 right-8 w-72 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      class="absolute bottom-8 right-8 w-72 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-4 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       onclick={() => openPreviewModal('timetable')}
       aria-label="Preview weekly timetable">
       <div class="p-3 pointer-events-none">
         <!-- Timetable Header -->
-        <div class="grid grid-cols-6 gap-px mb-2 bg-gradient-to-r from-slate-100/50 to-slate-200/50 dark:from-slate-700/50 dark:to-slate-800/50 rounded-lg p-1">
-          <div class="w-8 h-4 bg-slate-300/30 dark:bg-slate-600/30 rounded-sm"></div>
-          <div class="h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm flex items-center justify-center">
-            <div class="w-3 h-1 bg-slate-400/60 rounded"></div>
+        <div class="grid grid-cols-6 gap-px mb-2 bg-linear-to-r from-slate-100/50 to-slate-200/50 dark:from-slate-700/50 dark:to-slate-800/50 rounded-lg p-1">
+          <div class="w-8 h-4 bg-slate-300/30 dark:bg-slate-600/30 rounded-xs"></div>
+          <div class="h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-xs flex items-center justify-center">
+            <div class="w-3 h-1 bg-slate-400/60 rounded-sm"></div>
           </div>
-          <div class="h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm flex items-center justify-center">
-            <div class="w-3 h-1 bg-slate-400/60 rounded"></div>
+          <div class="h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-xs flex items-center justify-center">
+            <div class="w-3 h-1 bg-slate-400/60 rounded-sm"></div>
           </div>
-          <div class="h-4 bg-indigo-400/80 rounded-sm flex items-center justify-center">
-            <div class="w-3 h-1 bg-white/80 rounded"></div>
+          <div class="h-4 bg-indigo-400/80 rounded-xs flex items-center justify-center">
+            <div class="w-3 h-1 bg-white/80 rounded-sm"></div>
           </div>
-          <div class="h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm flex items-center justify-center">
-            <div class="w-3 h-1 bg-slate-400/60 rounded"></div>
+          <div class="h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-xs flex items-center justify-center">
+            <div class="w-3 h-1 bg-slate-400/60 rounded-sm"></div>
           </div>
-          <div class="h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm flex items-center justify-center">
-            <div class="w-3 h-1 bg-slate-400/60 rounded"></div>
+          <div class="h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-xs flex items-center justify-center">
+            <div class="w-3 h-1 bg-slate-400/60 rounded-sm"></div>
           </div>
         </div>
 
@@ -467,59 +467,59 @@
               <div class="relative">
           <!-- Time labels -->
           <div class="absolute left-0 top-0 w-8 h-24 flex flex-col justify-between text-xs">
-            <div class="w-6 h-1 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
-            <div class="w-6 h-1 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
-            <div class="w-6 h-1 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
-            <div class="w-6 h-1 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
+            <div class="w-6 h-1 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
+            <div class="w-6 h-1 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
+            <div class="w-6 h-1 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
+            <div class="w-6 h-1 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
                 </div>
           
           <!-- Lesson blocks -->
           <div class="ml-8 grid grid-cols-5 gap-px h-24">
             <!-- Monday -->
             <div class="relative">
-              <div class="absolute top-1 left-0 right-0 h-5 bg-white/80 dark:bg-slate-700/80 rounded border-l-2 border-purple-400 p-1">
-                <div class="w-full h-1 bg-purple-400/60 rounded mb-0.5"></div>
-                <div class="w-2/3 h-0.5 bg-slate-400/40 rounded"></div>
+              <div class="absolute top-1 left-0 right-0 h-5 bg-white/80 dark:bg-slate-700/80 rounded-sm border-l-2 border-purple-400 p-1">
+                <div class="w-full h-1 bg-purple-400/60 rounded-sm mb-0.5"></div>
+                <div class="w-2/3 h-0.5 bg-slate-400/40 rounded-sm"></div>
               </div>
-              <div class="absolute top-8 left-0 right-0 h-6 bg-white/80 dark:bg-slate-700/80 rounded border-l-2 border-green-400 p-1">
-                <div class="w-full h-1 bg-green-400/60 rounded mb-0.5"></div>
-                <div class="w-3/4 h-0.5 bg-slate-400/40 rounded"></div>
+              <div class="absolute top-8 left-0 right-0 h-6 bg-white/80 dark:bg-slate-700/80 rounded-sm border-l-2 border-green-400 p-1">
+                <div class="w-full h-1 bg-green-400/60 rounded-sm mb-0.5"></div>
+                <div class="w-3/4 h-0.5 bg-slate-400/40 rounded-sm"></div>
               </div>
             </div>
             
             <!-- Tuesday -->
             <div class="relative">
-              <div class="absolute top-2 left-0 right-0 h-8 bg-white/80 dark:bg-slate-700/80 rounded border-l-2 border-blue-400 p-1">
-                <div class="w-full h-1 bg-blue-400/60 rounded mb-0.5"></div>
-                <div class="w-1/2 h-0.5 bg-slate-400/40 rounded"></div>
+              <div class="absolute top-2 left-0 right-0 h-8 bg-white/80 dark:bg-slate-700/80 rounded-sm border-l-2 border-blue-400 p-1">
+                <div class="w-full h-1 bg-blue-400/60 rounded-sm mb-0.5"></div>
+                <div class="w-1/2 h-0.5 bg-slate-400/40 rounded-sm"></div>
               </div>
             </div>
             
             <!-- Wednesday (Today - highlighted) -->
-            <div class="relative bg-indigo-400/10 rounded">
-              <div class="absolute top-0 left-0 right-0 h-4 bg-white/90 dark:bg-slate-700/90 rounded border-l-2 border-indigo-500 p-1 shadow-sm">
-                <div class="w-full h-1 bg-indigo-500/80 rounded mb-0.5"></div>
-                <div class="w-3/4 h-0.5 bg-slate-500/60 rounded"></div>
+            <div class="relative bg-indigo-400/10 rounded-sm">
+              <div class="absolute top-0 left-0 right-0 h-4 bg-white/90 dark:bg-slate-700/90 rounded-sm border-l-2 border-indigo-500 p-1 shadow-xs">
+                <div class="w-full h-1 bg-indigo-500/80 rounded-sm mb-0.5"></div>
+                <div class="w-3/4 h-0.5 bg-slate-500/60 rounded-sm"></div>
               </div>
-              <div class="absolute top-6 left-0 right-0 h-5 bg-white/90 dark:bg-slate-700/90 rounded border-l-2 border-pink-400 p-1 shadow-sm">
-                <div class="w-full h-1 bg-pink-400/80 rounded mb-0.5"></div>
-                <div class="w-2/3 h-0.5 bg-slate-500/60 rounded"></div>
+              <div class="absolute top-6 left-0 right-0 h-5 bg-white/90 dark:bg-slate-700/90 rounded-sm border-l-2 border-pink-400 p-1 shadow-xs">
+                <div class="w-full h-1 bg-pink-400/80 rounded-sm mb-0.5"></div>
+                <div class="w-2/3 h-0.5 bg-slate-500/60 rounded-sm"></div>
               </div>
             </div>
             
             <!-- Thursday -->
             <div class="relative">
-              <div class="absolute top-3 left-0 right-0 h-6 bg-white/80 dark:bg-slate-700/80 rounded border-l-2 border-orange-400 p-1">
-                <div class="w-full h-1 bg-orange-400/60 rounded mb-0.5"></div>
-                <div class="w-4/5 h-0.5 bg-slate-400/40 rounded"></div>
+              <div class="absolute top-3 left-0 right-0 h-6 bg-white/80 dark:bg-slate-700/80 rounded-sm border-l-2 border-orange-400 p-1">
+                <div class="w-full h-1 bg-orange-400/60 rounded-sm mb-0.5"></div>
+                <div class="w-4/5 h-0.5 bg-slate-400/40 rounded-sm"></div>
               </div>
             </div>
             
             <!-- Friday -->
             <div class="relative">
-              <div class="absolute top-1 left-0 right-0 h-7 bg-white/80 dark:bg-slate-700/80 rounded border-l-2 border-red-400 p-1">
-                <div class="w-full h-1 bg-red-400/60 rounded mb-0.5"></div>
-                <div class="w-3/5 h-0.5 bg-slate-400/40 rounded"></div>
+              <div class="absolute top-1 left-0 right-0 h-7 bg-white/80 dark:bg-slate-700/80 rounded-sm border-l-2 border-red-400 p-1">
+                <div class="w-full h-1 bg-red-400/60 rounded-sm mb-0.5"></div>
+                <div class="w-3/5 h-0.5 bg-slate-400/40 rounded-sm"></div>
               </div>
             </div>
           </div>
@@ -530,19 +530,19 @@
     <!-- Left Side - Mini Dashboard Widget -->
     <button 
       type="button"
-      class="absolute left-8 top-1/2 -translate-y-1/2 w-56 h-36 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      class="absolute left-8 top-1/2 -translate-y-1/2 w-56 h-36 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-5 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       onclick={() => openPreviewModal('dashboard')}
       aria-label="Preview dashboard widget">
       <div class="p-4 pointer-events-none">
         <div class="flex items-center space-x-3 mb-4">
-          <div class="w-5 h-5 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full"></div>
-          <div class="w-24 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+          <div class="w-5 h-5 bg-linear-to-r from-indigo-400 to-purple-400 rounded-full"></div>
+          <div class="w-24 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
         </div>
         <div class="space-y-3">
-          <div class="w-full h-3 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
-          <div class="w-4/5 h-3 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
-          <div class="w-3/5 h-3 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
-          <div class="w-2/3 h-2 bg-slate-300/30 dark:bg-slate-600/30 rounded"></div>
+          <div class="w-full h-3 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
+          <div class="w-4/5 h-3 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
+          <div class="w-3/5 h-3 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
+          <div class="w-2/3 h-2 bg-slate-300/30 dark:bg-slate-600/30 rounded-sm"></div>
         </div>
       </div>
     </button>
@@ -550,20 +550,20 @@
     <!-- Right Side - Mini Analytics Chart -->
     <button 
       type="button"
-      class="absolute right-8 top-1/2 -translate-y-1/2 w-64 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-6 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      class="absolute right-8 top-1/2 -translate-y-1/2 w-64 h-40 bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-slate-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-6 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       onclick={() => openPreviewModal('analytics')}
       aria-label="Preview analytics dashboard">
       <div class="p-4 pointer-events-none">
-        <div class="w-20 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded mb-4"></div>
+        <div class="w-20 h-3 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm mb-4"></div>
         <div class="flex items-end justify-between h-20 space-x-1">
-          <div class="w-4 h-10 bg-indigo-400/60 rounded"></div>
-          <div class="w-4 h-16 bg-purple-400/60 rounded"></div>
-          <div class="w-4 h-8 bg-pink-400/60 rounded"></div>
-          <div class="w-4 h-12 bg-blue-400/60 rounded"></div>
-          <div class="w-4 h-18 bg-green-400/60 rounded"></div>
-          <div class="w-4 h-6 bg-orange-400/60 rounded"></div>
-          <div class="w-4 h-11 bg-red-400/60 rounded"></div>
-          <div class="w-4 h-14 bg-teal-400/60 rounded"></div>
+          <div class="w-4 h-10 bg-indigo-400/60 rounded-sm"></div>
+          <div class="w-4 h-16 bg-purple-400/60 rounded-sm"></div>
+          <div class="w-4 h-8 bg-pink-400/60 rounded-sm"></div>
+          <div class="w-4 h-12 bg-blue-400/60 rounded-sm"></div>
+          <div class="w-4 h-18 bg-green-400/60 rounded-sm"></div>
+          <div class="w-4 h-6 bg-orange-400/60 rounded-sm"></div>
+          <div class="w-4 h-11 bg-red-400/60 rounded-sm"></div>
+          <div class="w-4 h-14 bg-teal-400/60 rounded-sm"></div>
         </div>
       </div>
     </button>
@@ -573,15 +573,15 @@
       <!-- Main Login Card -->
       <div class="relative overflow-hidden {isMobile ? 'rounded-2xl' : 'rounded-3xl'} bg-white/5 dark:bg-slate-900/5 backdrop-blur-3xl border border-white/20 dark:border-slate-700/15 shadow-2xl">
         <!-- Animated Background Behind Card -->
-        <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-orange-50 to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
+        <div class="absolute inset-0 bg-linear-to-br from-slate-50 via-orange-50 to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
         
         <!-- Animated Pastel Gradient Overlay -->
         <div class="absolute inset-0 opacity-15 dark:opacity-25 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}">
-          <div class="absolute inset-0 bg-gradient-to-br from-orange-200/8 via-rose-200/10 to-pink-200/8 dark:from-orange-300/15 dark:via-rose-300/18 dark:to-pink-300/15 animate-gradient-shift {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
+          <div class="absolute inset-0 bg-linear-to-br from-orange-200/8 via-rose-200/10 to-pink-200/8 dark:from-orange-300/15 dark:via-rose-300/18 dark:to-pink-300/15 animate-gradient-shift {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
         </div>
         
         <!-- Glass effect overlay -->
-        <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-white/5 dark:from-slate-800/20 dark:via-slate-800/10 dark:to-slate-800/5 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
+        <div class="absolute inset-0 bg-linear-to-br from-white/20 via-white/10 to-white/5 dark:from-slate-800/20 dark:via-slate-800/10 dark:to-slate-800/5 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
         
         <div class="relative flex flex-col {isMobile ? '' : 'lg:flex-row'}">
           <!-- Left side - Hero Section -->
@@ -600,8 +600,8 @@
               <!-- Animated feature highlight -->
               <div class="h-16 flex items-center">
                 <div class="flex items-center space-x-4 text-slate-600 dark:text-slate-300">
-                  <div class="w-2 h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-pulse"></div>
-                  <span class="text-lg font-medium min-h-[1.75rem] flex items-center">
+                  <div class="w-2 h-2 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-pulse"></div>
+                  <span class="text-lg font-medium min-h-7 flex items-center">
                     {currentText}<span class="animate-blink text-indigo-500 ml-1">|</span>
                   </span>
                 </div>
@@ -630,7 +630,7 @@
                 <div class="flex p-1 bg-white/15 dark:bg-slate-800/20 backdrop-blur-xl rounded-2xl relative overflow-hidden border border-white/20 dark:border-slate-700/20">
                   <!-- Animated background slider -->
                   <div 
-                    class="absolute top-1 bottom-1 bg-white/30 dark:bg-slate-700/40 backdrop-blur-xl rounded-xl shadow-sm transition-all duration-300 ease-out border border-white/40 dark:border-slate-600/40"
+                    class="absolute top-1 bottom-1 bg-white/30 dark:bg-slate-700/40 backdrop-blur-xl rounded-xl shadow-xs transition-all duration-300 ease-out border border-white/40 dark:border-slate-600/40"
                     style="left: {loginMethod === 'qr' ? '4px' : 'calc(50% - 4px)'}; width: calc(50% - 4px)"
                   ></div>
                   <button
@@ -691,9 +691,9 @@
 
                     <!-- Divider -->
                     <div class="flex items-center">
-                      <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-600 to-transparent"></div>
+                      <div class="flex-1 h-px bg-linear-to-r from-transparent via-slate-300 dark:via-slate-600 to-transparent"></div>
                       <span class="px-2 text-sm text-slate-500 dark:text-slate-400 font-medium">or</span>
-                      <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-600 to-transparent"></div>
+                      <div class="flex-1 h-px bg-linear-to-r from-transparent via-slate-300 dark:via-slate-600 to-transparent"></div>
                     </div>
 
                                       <!-- Live scan button -->
@@ -703,7 +703,7 @@
                     fullWidth={true}
                     icon={Camera}
                     onclick={startLiveScan}
-                    class="py-3 px-6 bg-gradient-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-slate-700 dark:text-slate-800 font-semibold rounded-2xl shadow-lg hover:shadow-xl"
+                    class="py-3 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-slate-700 dark:text-slate-800 font-semibold rounded-2xl shadow-lg hover:shadow-xl"
                   >
                     Scan with Camera
                   </Button>
@@ -713,7 +713,7 @@
                     <button
                       type="button"
                       onclick={openQrInstructionsModal}
-                      class="mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rounded"
+                      class="mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm"
                     >
                       How do I get a QR code?
                     </button>
@@ -749,7 +749,7 @@
                             }
                           }}
                           placeholder="school.seqta.com.au"
-                          inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-slate-800/10 backdrop-blur-xl border border-white/20 dark:border-slate-700/20 rounded-2xl text-slate-900 dark:text-white placeholder:text-base placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-slate-800/20"
+                          inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-slate-800/10 backdrop-blur-xl border border-white/20 dark:border-slate-700/20 rounded-2xl text-slate-900 dark:text-white placeholder:text-base placeholder-slate-500 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-slate-800/20"
                         />
                       </div>
                     </div>
@@ -805,7 +805,7 @@
                         console.warn('Failed to toggle mock API backend', e);
                       }
                     }} />
-                    <div class="w-11 h-6 bg-purple-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer dark:bg-purple-800 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+                    <div class="w-11 h-6 bg-purple-200 peer-focus:outline-hidden peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer dark:bg-purple-800 peer-checked:after:translate-x-full peer-checked:rtl:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
                   </label>
                 </div>
                 <p class="mt-2 text-xs text-purple-700 dark:text-purple-300">Replaces live SEQTA API calls with safe mock data.</p>
@@ -815,7 +815,7 @@
             {#if jwtExpiredError}
                 <div class="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800">
                   <div class="flex items-start space-x-4">
-                    <div class="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div class="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                       <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                   </svg>
@@ -838,7 +838,7 @@
                   onStartLogin();
                 }}
                 disabled={jwtExpiredError || (!isMobile && loginMethod === 'url' && !seqtaUrl.trim()) || ((isMobile || loginMethod === 'qr') && !qrSuccess)}
-                class="py-4 px-6 bg-gradient-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-slate-300 disabled:to-slate-400 text-slate-700 dark:text-slate-800 disabled:text-slate-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none"
+                class="py-4 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-slate-300 disabled:to-slate-400 text-slate-700 dark:text-slate-800 disabled:text-slate-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none"
               >
                 Sign In to DesQTA
               </Button>
@@ -871,7 +871,7 @@
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Live QR Scanner</h2>
           <button
-            class="p-2 rounded-full bg-white/20 dark:bg-slate-800/30 backdrop-blur-sm hover:bg-white/30 dark:hover:bg-slate-800/40 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 border border-white/30 dark:border-slate-700/30"
+            class="p-2 rounded-full bg-white/20 dark:bg-slate-800/30 backdrop-blur-xs hover:bg-white/30 dark:hover:bg-slate-800/40 transition-all duration-200 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 border border-white/30 dark:border-slate-700/30"
             onclick={stopLiveScan}
             aria-label="Close live scan modal"
           >
@@ -903,7 +903,7 @@
       <div class="relative w-full max-w-4xl mx-8" transition:fly={{ y: 50, duration: 500 }} style="transform-origin: center;">
         <!-- Close Button -->
         <button
-          class="absolute -top-12 right-0 p-3 rounded-full bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl hover:bg-white/30 dark:hover:bg-slate-800/40 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 border border-white/30 dark:border-slate-700/30 z-10"
+          class="absolute -top-12 right-0 p-3 rounded-full bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl hover:bg-white/30 dark:hover:bg-slate-800/40 transition-all duration-200 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-white/50 focus:ring-offset-2 border border-white/30 dark:border-slate-700/30 z-10"
           onclick={closePreviewModal}
           aria-label="Close preview modal"
         >
@@ -922,11 +922,11 @@
                        <div class="w-8 h-8 bg-indigo-400 rounded-full"></div>
                        <div class="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
                      </div>
-                     <div class="w-32 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+                     <div class="w-32 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
                    </div>
                    <div class="flex space-x-3">
-                     <div class="w-12 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
-                     <div class="w-12 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+                     <div class="w-12 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
+                     <div class="w-12 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
                    </div>
                  </div>
               </div>
@@ -947,10 +947,10 @@
                      { icon: 'green-400', label: 'Settings', desc: 'App preferences' }
                    ] as item}
                      <div class="flex items-center space-x-4">
-                       <div class="w-8 h-8 bg-{item.icon} rounded"></div>
+                       <div class="w-8 h-8 bg-{item.icon} rounded-sm"></div>
                        <div class="flex-1">
-                         <div class="w-24 h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded mb-1"></div>
-                         <div class="w-16 h-3 bg-slate-300/30 dark:bg-slate-600/30 rounded"></div>
+                         <div class="w-24 h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm mb-1"></div>
+                         <div class="w-16 h-3 bg-slate-300/30 dark:bg-slate-600/30 rounded-sm"></div>
                        </div>
                      </div>
                    {/each}
@@ -966,12 +966,12 @@
               <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30 border-l-8 border-l-green-400">
                                  <div class="space-y-4">
                    <div class="flex items-center justify-between">
-                     <div class="w-32 h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
-                     <div class="w-20 h-6 bg-green-400/80 rounded"></div>
+                     <div class="w-32 h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
+                     <div class="w-20 h-6 bg-green-400/80 rounded-sm"></div>
                    </div>
-                   <div class="w-48 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
-                   <div class="w-32 h-4 bg-slate-300/30 dark:bg-slate-600/30 rounded"></div>
-                   <div class="w-40 h-3 bg-slate-300/20 dark:bg-slate-600/20 rounded"></div>
+                   <div class="w-48 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
+                   <div class="w-32 h-4 bg-slate-300/30 dark:bg-slate-600/30 rounded-sm"></div>
+                   <div class="w-40 h-3 bg-slate-300/20 dark:bg-slate-600/20 rounded-sm"></div>
                  </div>
               </div>
               <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -987,7 +987,7 @@
                     <div class="text-center text-xs text-slate-600 dark:text-slate-400">Time</div>
                     <div class="text-center text-xs text-slate-600 dark:text-slate-400">Mon</div>
                     <div class="text-center text-xs text-slate-600 dark:text-slate-400">Tue</div>
-                    <div class="text-center text-xs text-slate-600 dark:text-slate-400 bg-indigo-400/20 rounded px-2 py-1">Wed (Today)</div>
+                    <div class="text-center text-xs text-slate-600 dark:text-slate-400 bg-indigo-400/20 rounded-sm px-2 py-1">Wed (Today)</div>
                     <div class="text-center text-xs text-slate-600 dark:text-slate-400">Thu</div>
                     <div class="text-center text-xs text-slate-600 dark:text-slate-400">Fri</div>
                   </div>
@@ -1001,26 +1001,26 @@
                     {#each Array(5) as _, dayIdx}
                       <div class="relative">
                         {#if dayIdx === 0}
-                          <div class="absolute top-2 left-0 right-0 h-8 bg-purple-400/60 rounded border-l-2 border-purple-500 p-1">
+                          <div class="absolute top-2 left-0 right-0 h-8 bg-purple-400/60 rounded-sm border-l-2 border-purple-500 p-1">
                             <div class="text-xs text-white font-medium">Math</div>
                           </div>
                         {:else if dayIdx === 1}
-                          <div class="absolute top-4 left-0 right-0 h-12 bg-blue-400/60 rounded border-l-2 border-blue-500 p-1">
+                          <div class="absolute top-4 left-0 right-0 h-12 bg-blue-400/60 rounded-sm border-l-2 border-blue-500 p-1">
                             <div class="text-xs text-white font-medium">Science</div>
                           </div>
                         {:else if dayIdx === 2}
-                          <div class="absolute top-0 left-0 right-0 h-6 bg-indigo-500/80 rounded border-l-2 border-indigo-600 p-1 shadow-md">
+                          <div class="absolute top-0 left-0 right-0 h-6 bg-indigo-500/80 rounded-sm border-l-2 border-indigo-600 p-1 shadow-md">
                             <div class="text-xs text-white font-medium">English</div>
                           </div>
-                          <div class="absolute top-8 left-0 right-0 h-8 bg-pink-400/60 rounded border-l-2 border-pink-500 p-1">
+                          <div class="absolute top-8 left-0 right-0 h-8 bg-pink-400/60 rounded-sm border-l-2 border-pink-500 p-1">
                             <div class="text-xs text-white font-medium">History</div>
                           </div>
                         {:else if dayIdx === 3}
-                          <div class="absolute top-6 left-0 right-0 h-10 bg-orange-400/60 rounded border-l-2 border-orange-500 p-1">
+                          <div class="absolute top-6 left-0 right-0 h-10 bg-orange-400/60 rounded-sm border-l-2 border-orange-500 p-1">
                             <div class="text-xs text-white font-medium">Art</div>
                           </div>
                         {:else if dayIdx === 4}
-                          <div class="absolute top-2 left-0 right-0 h-12 bg-red-400/60 rounded border-l-2 border-red-500 p-1">
+                          <div class="absolute top-2 left-0 right-0 h-12 bg-red-400/60 rounded-sm border-l-2 border-red-500 p-1">
                             <div class="text-xs text-white font-medium">PE</div>
                           </div>
                         {/if}
@@ -1039,14 +1039,14 @@
               <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
                                  <div class="space-y-4">
                    <div class="flex items-center space-x-4 mb-6">
-                     <div class="w-10 h-10 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full"></div>
-                     <div class="w-32 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded"></div>
+                     <div class="w-10 h-10 bg-linear-to-r from-indigo-400 to-purple-400 rounded-full"></div>
+                     <div class="w-32 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm"></div>
                    </div>
                    <div class="space-y-3">
-                     <div class="w-full h-4 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
-                     <div class="w-4/5 h-4 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
-                     <div class="w-3/5 h-4 bg-slate-300/40 dark:bg-slate-600/40 rounded"></div>
-                     <div class="w-2/3 h-3 bg-slate-300/30 dark:bg-slate-600/30 rounded"></div>
+                     <div class="w-full h-4 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
+                     <div class="w-4/5 h-4 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
+                     <div class="w-3/5 h-4 bg-slate-300/40 dark:bg-slate-600/40 rounded-sm"></div>
+                     <div class="w-2/3 h-3 bg-slate-300/30 dark:bg-slate-600/30 rounded-sm"></div>
                    </div>
                  </div>
               </div>
@@ -1059,7 +1059,7 @@
               <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Analytics Dashboard</h2>
               <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
                                  <div class="space-y-4">
-                   <div class="w-32 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded mb-6"></div>
+                   <div class="w-32 h-6 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm mb-6"></div>
                    <div class="flex items-end justify-between h-32 space-x-2">
                      {#each [
                        { height: 'h-16', color: 'indigo-400' },
@@ -1071,7 +1071,7 @@
                        { height: 'h-18', color: 'red-400' },
                        { height: 'h-22', color: 'teal-400' }
                      ] as bar}
-                       <div class="w-6 {bar.height} bg-{bar.color}/60 rounded"></div>
+                       <div class="w-6 {bar.height} bg-{bar.color}/60 rounded-sm"></div>
                      {/each}
                    </div>
                  </div>
@@ -1098,11 +1098,11 @@
         <div class="space-y-6">
           <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
             <div class="flex items-start space-x-4">
-              <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
+              <div class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
               <div class="flex-1">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Open SEQTA in Your Browser</h3>
                 <p class="text-slate-600 dark:text-slate-300">
-                  Go to your school's SEQTA URL (e.g., <code class="bg-slate-200/50 dark:bg-slate-700/50 px-2 py-1 rounded text-sm">yourschool.seqta.com.au</code>) and log in with your usual credentials.
+                  Go to your school's SEQTA URL (e.g., <code class="bg-slate-200/50 dark:bg-slate-700/50 px-2 py-1 rounded-sm text-sm">yourschool.seqta.com.au</code>) and log in with your usual credentials.
                 </p>
               </div>
             </div>
@@ -1110,7 +1110,7 @@
 
           <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
             <div class="flex items-start space-x-4">
-              <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
+              <div class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
               <div class="flex-1">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Navigate to Settings</h3>
                 <p class="text-slate-600 dark:text-slate-300">
@@ -1122,7 +1122,7 @@
 
           <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
             <div class="flex items-start space-x-4">
-              <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">3</div>
+              <div class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">3</div>
               <div class="flex-1">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Click "Connect Mobile App"</h3>
                 <p class="text-slate-600 dark:text-slate-300">
@@ -1134,7 +1134,7 @@
 
           <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
             <div class="flex items-start space-x-4">
-              <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">4</div>
+              <div class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">4</div>
               <div class="flex-1">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Check Your Email</h3>
                 <p class="text-slate-600 dark:text-slate-300 mb-3">
@@ -1151,7 +1151,7 @@
 
           <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
             <div class="flex items-start space-x-4">
-              <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">5</div>
+              <div class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">5</div>
               <div class="flex-1">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Screenshot or Save the QR Code</h3>
                 <p class="text-slate-600 dark:text-slate-300 mb-3">
@@ -1171,7 +1171,7 @@
 
           <div class="bg-white/20 dark:bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-slate-700/30">
             <div class="flex items-start space-x-4">
-              <div class="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">6</div>
+              <div class="shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">6</div>
               <div class="flex-1">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Upload to DesQTA</h3>
                 <p class="text-slate-600 dark:text-slate-300">
@@ -1203,7 +1203,7 @@
             variant="primary"
             size="lg"
             onclick={closeQrInstructionsModal}
-            class="py-3 px-8 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200"
+            class="py-3 px-8 bg-linear-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200"
           >
             Got it, thanks!
           </Button>

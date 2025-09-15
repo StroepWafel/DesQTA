@@ -35,7 +35,7 @@
   }>();
 </script>
 
-<aside class="w-64 min-w-[200px] max-w-xs bg-white/10 dark:bg-slate-900/60 border-r border-slate-300/50 dark:border-slate-800/50 shadow-md rounded-xl m-2 p-4 flex flex-col gap-4 backdrop-blur-sm">
+<aside class="w-64 min-w-[200px] max-w-xs bg-white/10 dark:bg-slate-900/60 border-r border-slate-300/50 dark:border-slate-800/50 shadow-md rounded-xl m-2 p-4 flex flex-col gap-4 backdrop-blur-xs">
   {#if cloudUser}
     <div class="flex items-center gap-3 mb-4">
       {#if cloudUser.pfpUrl}
@@ -53,7 +53,7 @@
   <div class="flex items-center justify-between mb-2">
     <h2 class="font-semibold text-lg text-slate-900 dark:text-white">Conversations</h2>
     <button 
-      class="px-3 py-1 rounded-lg bg-orange-500 text-white text-xs hover:bg-orange-600 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 ring-orange-500" 
+      class="px-3 py-1 rounded-lg bg-orange-500 text-white text-xs hover:bg-orange-600 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 ring-orange-500" 
       onclick={onCreateGroup}
     >
       + New Group
@@ -72,7 +72,7 @@
         <div class="space-y-1">
           {#each groups as group}
             <button 
-              class="flex items-center gap-3 w-full px-3 py-3 rounded-lg transition-all duration-200 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02] focus:outline-none focus:ring-2 ring-accent-500 {selectedGroup?.id === group.id ? 'bg-accent-500/20 text-accent-500' : 'text-slate-900 dark:text-white'}" 
+              class="flex items-center gap-3 w-full px-3 py-3 rounded-lg transition-all duration-200 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02] focus:outline-hidden focus:ring-2 ring-accent-500 {selectedGroup?.id === group.id ? 'bg-accent-500/20 text-accent-500' : 'text-slate-900 dark:text-white'}" 
               onclick={() => onSelectGroup(group)}
             >
               {#if group.iconUrl}
@@ -105,7 +105,7 @@
         <div class="space-y-1">
           {#each friends as friend}
             <button 
-              class="flex items-center gap-3 w-full px-3 py-3 rounded-lg transition-all duration-200 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02] focus:outline-none focus:ring-2 ring-accent-500 {selectedFriend?.id === friend.id ? 'bg-accent-500/20 text-accent-500' : 'text-slate-900 dark:text-white'}" 
+              class="flex items-center gap-3 w-full px-3 py-3 rounded-lg transition-all duration-200 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02] focus:outline-hidden focus:ring-2 ring-accent-500 {selectedFriend?.id === friend.id ? 'bg-accent-500/20 text-accent-500' : 'text-slate-900 dark:text-white'}" 
               onclick={() => onSelectFriend(friend)}
             >
               {#if friend.pfpUrl}

@@ -137,8 +137,8 @@
   });
 </script>
 
-<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-sm bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-  <div class="flex justify-between items-center px-4 py-3 bg-gradient-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+  <div class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
     <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Notices</h3>
     <a
       href="/notices"
@@ -150,18 +150,18 @@
   
   <div class="overflow-y-auto px-4 py-4 max-h-80 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-slate-800/10">
     {#if loading}
-      <div class="p-8 text-center text-[var(--text-muted)]">
+      <div class="p-8 text-center text-(--text-muted)">
         <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent-500/30 border-t-accent-500 mx-auto"></div>
         <p class="mt-4 text-sm">Loading notices...</p>
       </div>
     {:else if notices.length === 0}
-      <div class="p-8 text-center text-[var(--text-muted)]">
+      <div class="p-8 text-center text-(--text-muted)">
         <p class="text-sm">No notices available today.</p>
       </div>
     {:else}
       <div class="space-y-3">
         {#each notices as notice}
-          <div class="rounded-lg shadow-sm bg-white/10 text-[var(--text)] border-l-4 p-3 transition-all duration-200 hover:shadow-md hover:bg-white/20"
+          <div class="rounded-lg shadow-xs bg-white/10 text-(--text) border-l-4 p-3 transition-all duration-200 hover:shadow-md hover:bg-white/20"
                style="border-left-color: {getLabelColor(notice.labelId)};">
             <div class="flex items-start gap-2 mb-2">
               <span
@@ -170,12 +170,12 @@
                 class:text-black={!isColorDark(getLabelColor(notice.labelId))}>
                 {getLabelTitle(notice.labelId)}
               </span>
-              <span class="text-xs text-[var(--text-muted)] uppercase tracking-wide shrink-0">
+              <span class="text-xs text-(--text-muted) uppercase tracking-wide shrink-0">
                 {notice.author}
               </span>
             </div>
             <h4 class="font-semibold text-sm mb-1 line-clamp-1">{notice.title}</h4>
-            <div class="text-xs text-[var(--text-muted)] line-clamp-2">
+            <div class="text-xs text-(--text-muted) line-clamp-2">
               {@html notice.content}
             </div>
           </div>

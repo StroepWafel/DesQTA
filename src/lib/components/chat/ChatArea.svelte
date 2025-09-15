@@ -66,7 +66,7 @@
   });
 </script>
 
-<section class="flex-1 flex flex-col h-full bg-white/10 dark:bg-slate-900/60 shadow-md rounded-xl m-2 p-4 backdrop-blur-sm border border-slate-300/50 dark:border-slate-800/50">
+<section class="flex-1 flex flex-col h-full bg-white/10 dark:bg-slate-900/60 shadow-md rounded-xl m-2 p-4 backdrop-blur-xs border border-slate-300/50 dark:border-slate-800/50">
   {#if selectedFriend || selectedGroup}
     <div class="flex items-center gap-3 mb-4">
       {#if selectedFriend}
@@ -93,7 +93,7 @@
         {#if hasMoreMessages}
           <div class="flex justify-center mb-4">
             <button 
-              class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 ring-accent-500 disabled:opacity-50" 
+              class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition-all duration-200 hover:scale-[1.02] focus:outline-hidden focus:ring-2 ring-accent-500 disabled:opacity-50" 
               onclick={onLoadOlderMessages}
               disabled={loadingOlderMessages}
             >

@@ -213,7 +213,7 @@
     <div class="flex items-center justify-center min-h-screen p-4">
       <!-- Background overlay -->
       <div 
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
+        class="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity" 
         onclick={closeModal}
         role="button"
         tabindex="0"
@@ -364,14 +364,14 @@
               <div class="flex gap-3">
                 <button
                   onclick={runSystemDiagnostics}
-                  class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
+                  class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
                 >
                   <Icon src={Beaker} size="16" class="inline mr-2" />
                   Run Diagnostics
                 </button>
         <button 
                   onclick={generateDiagnosticReport}
-                  class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
+                  class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                 >
                   <Icon src={ClipboardDocument} size="16" class="inline mr-2" />
                   {copiedToClipboard ? 'Copied!' : 'Copy Report'}
@@ -387,7 +387,7 @@
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Recent Error Logs</h3>
           <button
                   onclick={clearErrorLogs}
-                  class="px-3 py-1 bg-red-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
+                  class="px-3 py-1 bg-red-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
                 >
             Clear Logs
           </button>
@@ -415,13 +415,13 @@
                   <button
                     onclick={loadSystemLogs}
                     disabled={loadingLogs}
-                    class="px-3 py-1 bg-blue-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="px-3 py-1 bg-blue-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loadingLogs ? 'Loading...' : 'Load Logs'}
                   </button>
                   <button
                     onclick={exportLogs}
-                    class="px-3 py-1 bg-green-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
+                    class="px-3 py-1 bg-green-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                   >
                     Export All
                   </button>
@@ -567,13 +567,13 @@
                   <div class="space-y-3">
                     <button
                       onclick={testApiConnection}
-                      class="w-full px-3 py-2 bg-blue-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
+                      class="w-full px-3 py-2 bg-blue-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
                     >
                       Test API Connection
                     </button>
                     <button
                       onclick={() => window.open('https://www.google.com', '_blank')}
-                      class="w-full px-3 py-2 bg-green-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
+                      class="w-full px-3 py-2 bg-green-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                     >
                       Test Internet Connection
                     </button>
@@ -644,13 +644,13 @@
               <div class="flex gap-3">
                 <button
                   onclick={() => localStorage.clear()}
-                  class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
+                  class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
                 >
                   Clear Local Storage
                 </button>
                 <button
                   onclick={() => sessionStorage.clear()}
-                  class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 hover:bg-orange-600"
+                  class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 hover:bg-orange-600"
                 >
                   Clear Session Storage
                 </button>

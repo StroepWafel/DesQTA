@@ -208,10 +208,10 @@
           type="text"
           bind:value={newTodoText}
           placeholder="Add a quick task..."
-          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-sm" />
+          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" />
         <button
           type="submit"
-          class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring text-sm font-medium">
+          class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium">
           Add
         </button>
       </div>
@@ -219,10 +219,10 @@
         <input
           type="date"
           bind:value={newTodoDueDate}
-          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" />
+          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" />
         <select
           bind:value={newTodoPriority}
-          class="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm">
+          class="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm">
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
@@ -232,7 +232,7 @@
         type="text"
         bind:value={newTodoTags}
         placeholder="Tags (comma separated)"
-        class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-sm" />
+        class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" />
     </form>
 
     <!-- Tasks List -->
@@ -259,12 +259,12 @@
                 type="checkbox" 
                 checked={todo.completed} 
                 onchange={() => toggleTodo(todo.id)} 
-                class="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" 
+                class="mt-0.5 w-4 h-4 rounded-sm border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" 
                 aria-label="Toggle complete" />
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
                   <div class="truncate text-slate-900 dark:text-white font-medium text-sm">{todo.title || 'Untitled task'}</div>
-                  <div class="flex items-center gap-1 flex-shrink-0">
+                  <div class="flex items-center gap-1 shrink-0">
                     <span class="text-xs px-1.5 py-0.5 rounded-full border priority-indicator {getPriorityStyles(todo.priority)}">{todo.priority ?? 'medium'}</span>
                     <button 
                       class="p-1 text-slate-400 hover:text-red-600 transition-colors" 
@@ -300,7 +300,7 @@
                           type="checkbox" 
                           checked={sub.completed} 
                           onchange={() => toggleSubtask(todo.id, sub.id)} 
-                          class="w-3 h-3 rounded border-slate-300 dark:border-slate-700 focus:ring-1 accent-ring" 
+                          class="w-3 h-3 rounded-sm border-slate-300 dark:border-slate-700 focus:ring-1 accent-ring" 
                           aria-label="Toggle subtask" />
                         <span class="text-xs text-slate-600 dark:text-slate-300 {sub.completed ? 'line-through' : ''}">{sub.title}</span>
                       </div>

@@ -37,12 +37,12 @@
   class:sm:w-64={sidebarOpen}
   class:sm:w-0={!sidebarOpen}
   style="background: var(--background-color);">
-  <nav class="p-3 py-[1px] space-y-2 w-full sm:w-64 sm:min-w-64 h-screen sm:h-auto relative">
+  <nav class="p-3 py-px space-y-2 w-full sm:w-64 sm:min-w-64 h-screen sm:h-auto relative">
     <!-- Mobile Close Button -->
     <div class="flex justify-end sm:hidden mb-4">
       <button
         onclick={handleCloseSidebar}
-        class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         aria-label="Close sidebar"
       >
         <Icon src={XMark} class="w-5 h-5" />
@@ -59,7 +59,7 @@
       <a
         href={item.path}
         onclick={handleMenuItemClick}
-        class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 hover:bg-accent-100 hover:text-slate-900 dark:hover:bg-accent-600 dark:hover:text-white focus:outline-none {(
+        class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 hover:bg-accent-100 hover:text-slate-900 dark:hover:bg-accent-600 dark:hover:text-white focus:outline-hidden {(
           item.path === '/'
             ? $page.url.pathname === '/'
             : $page.url.pathname.startsWith(item.path)

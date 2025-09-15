@@ -10,7 +10,7 @@
 
 <div class="inline-block relative text-left export-dropdown-container">
   <button
-    class="flex gap-3 items-center px-5 py-3 rounded-xl border transition-all duration-200 bg-white/90 hover:bg-white dark:bg-slate-700/90 dark:hover:bg-slate-600 border-slate-200/70 hover:border-slate-300 dark:border-slate-600 dark:hover:border-slate-500 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-md hover:shadow-lg"
+    class="flex gap-3 items-center px-5 py-3 rounded-xl border transition-all duration-200 bg-white/90 hover:bg-white dark:bg-slate-700/90 dark:hover:bg-slate-600 border-slate-200/70 hover:border-slate-300 dark:border-slate-600 dark:hover:border-slate-500 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500/50 shadow-md hover:shadow-lg"
     on:click={() => (showExportMenu = !showExportMenu)}
     aria-label="Export options"
     aria-expanded={showExportMenu}>

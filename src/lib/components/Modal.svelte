@@ -91,7 +91,7 @@
       {#if title}
         <div class="px-8 pt-8 pb-4">
           <h2
-            class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
+            class="text-2xl font-bold text-transparent bg-clip-text bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
             {title}
           </h2>
         </div>

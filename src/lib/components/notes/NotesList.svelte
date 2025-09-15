@@ -271,12 +271,12 @@
 
 <div class="notes-list h-full flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 min-h-0">
   <!-- Header -->
-  <div class="flex-shrink-0 p-4 border-b border-slate-200 dark:border-slate-700">
+  <div class="shrink-0 p-4 border-b border-slate-200 dark:border-slate-700">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Notes</h2>
       <div class="flex items-center space-x-2">
         <button
-          class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 accent-ring hover:shadow-sm"
+          class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring hover:shadow-xs"
           on:click={() => showSearchModal = true}
           title="Search notes"
           aria-label="Search notes"
@@ -284,7 +284,7 @@
           <Icon src={MagnifyingGlass} class="w-4 h-4" />
         </button>
         <button
-          class="p-2 rounded-lg accent-bg text-white transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 accent-ring hover:shadow-md"
+          class="p-2 rounded-lg accent-bg text-white transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring hover:shadow-md"
           on:click={createNewNote}
           title="Create new note"
           aria-label="Create new note"
@@ -299,7 +299,7 @@
       <input
         type="text"
         placeholder="Search notes..."
-        class="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring transition-all duration-300 ease-out focus:scale-[1.01] focus:shadow-sm"
+        class="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 accent-ring transition-all duration-300 ease-out focus:scale-[1.01] focus:shadow-xs"
         bind:value={searchQuery}
       />
       <Icon src={MagnifyingGlass} class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -310,7 +310,7 @@
       <div class="flex items-center justify-between mb-2">
         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Folders</h3>
         <button
-          class="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200"
+          class="p-1 rounded-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200"
           on:click={() => showCreateFolder ? (showCreateFolder = false) : startCreateFolder()}
           title="Create new folder"
         >
@@ -325,7 +325,7 @@
             <input
               type="text"
               placeholder="Folder name"
-              class="flex-1 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+              class="flex-1 px-2 py-1 text-xs rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
               bind:value={newFolderName}
               bind:this={createFolderInput}
               on:keydown={(e) => {
@@ -334,7 +334,7 @@
               }}
             />
             <button
-              class="px-2 py-1 text-xs rounded accent-bg text-white hover:opacity-90 transition-opacity"
+              class="px-2 py-1 text-xs rounded-sm accent-bg text-white hover:opacity-90 transition-opacity"
               on:click={createFolder}
               disabled={!newFolderName.trim()}
             >
@@ -348,7 +348,7 @@
       <div class="space-y-1">
         <!-- All Notes -->
         <button
-          class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.01] {selectedFolder === 'all' ? 'bg-accent-100 dark:bg-accent-900 text-accent-800 dark:text-accent-200 border border-accent-200 dark:border-accent-800 shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-transparent'}"
+          class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.01] {selectedFolder === 'all' ? 'bg-accent-100 dark:bg-accent-900 text-accent-800 dark:text-accent-200 border border-accent-200 dark:border-accent-800 shadow-xs' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-transparent'}"
           on:click={() => selectedFolder = 'all'}
         >
           <Icon src={FolderOpen} class="w-4 h-4 mr-2 opacity-60" />
@@ -367,7 +367,7 @@
                <input
                  type="text"
                  value={folder.name}
-                 class="w-full px-2 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                 class="w-full px-2 py-1 text-sm rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
                  on:keydown={(e) => {
                    if (e.key === 'Enter') renameFolder(folder, e.currentTarget.value);
                    if (e.key === 'Escape') editingFolder = null;
@@ -379,7 +379,7 @@
                <!-- Normal Mode -->
                <div class="group">
                  <button
-                   class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.01] {selectedFolder === folder.id ? 'bg-accent-100 dark:bg-accent-900 text-accent-800 dark:text-accent-200 border border-accent-200 dark:border-accent-800 shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-transparent'}"
+                   class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.01] {selectedFolder === folder.id ? 'bg-accent-100 dark:bg-accent-900 text-accent-800 dark:text-accent-200 border border-accent-200 dark:border-accent-800 shadow-xs' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-transparent'}"
                    on:click={() => selectedFolder = folder.id}
                  >
                    <span class="text-lg mr-2">{folder.icon || '📁'}</span>
@@ -449,7 +449,7 @@
       <div class="p-4 text-center">
         <p class="text-sm text-red-500 dark:text-red-400">{error}</p>
         <button
-          class="mt-2 px-3 py-1 text-xs rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring"
+          class="mt-2 px-3 py-1 text-xs rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
           on:click={loadNotes}
         >
           Retry
@@ -468,7 +468,7 @@
         {:else}
           <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">No notes yet.</p>
           <button
-            class="px-4 py-2 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+            class="px-4 py-2 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
             on:click={createNewNote}
           >
             Create your first note
@@ -480,7 +480,7 @@
         {#each filteredNotes as note (note.id)}
           <div class="note-menu-container relative">
             <div
-              class="note-item p-3 rounded-lg cursor-pointer transition-all duration-300 ease-out hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-[1.01] hover:shadow-sm group {selectedNoteId === note.id ? 'bg-accent-100 dark:bg-accent-900 border border-accent-200 dark:border-accent-800 shadow-sm' : 'text-slate-900 dark:text-white border border-transparent'}"
+              class="note-item p-3 rounded-lg cursor-pointer transition-all duration-300 ease-out hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-[1.01] hover:shadow-xs group {selectedNoteId === note.id ? 'bg-accent-100 dark:bg-accent-900 border border-accent-200 dark:border-accent-800 shadow-xs' : 'text-slate-900 dark:text-white border border-transparent'}"
               on:click={() => selectNote(note)}
               on:keydown={(e) => e.key === 'Enter' && selectNote(note)}
               role="button"
@@ -563,7 +563,7 @@
   </div>
 
   <!-- Footer Stats -->
-  <div class="flex-shrink-0 p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+  <div class="shrink-0 p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
     <div class="text-xs text-slate-500 dark:text-slate-400 text-center">
       {filteredNotes.length} of {notes.length} notes
       {#if notes.length > 0}
@@ -576,7 +576,7 @@
 <!-- Move Note Modal -->
 {#if showMoveNoteModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     transition:fly={{ y: 50, duration: 200 }}
   >
     <div

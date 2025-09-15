@@ -141,9 +141,9 @@
 </script>
 
 <div
-  class="overflow-hidden rounded-2xl border shadow-xl backdrop-blur-sm bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+  class="overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
   <div
-    class="flex flex-col gap-4 justify-between items-start px-3 py-3 bg-gradient-to-r border-b sm:flex-row sm:items-center sm:px-4 border-slate-300/50 dark:border-slate-700/50 from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30">
+    class="flex flex-col gap-4 justify-between items-start px-3 py-3 bg-linear-to-r border-b sm:flex-row sm:items-center sm:px-4 border-slate-300/50 dark:border-slate-700/50 from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30">
     <span class="text-xl font-semibold text-slate-900 dark:text-white">{lessonsSubtitle()}</span>
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
       <!-- Date Picker -->
@@ -152,7 +152,7 @@
           type="date"
           value={formatDate(currentSelectedDate)}
           onchange={onDateChange}
-          class="w-full sm:w-auto px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white/80 dark:bg-slate-800/80 text-slate-900 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 hover:border-accent-400 dark:hover:border-accent-400"
+          class="w-full sm:w-auto px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white/80 dark:bg-slate-800/80 text-slate-900 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-accent-500 hover:border-accent-400 dark:hover:border-accent-400"
           title="Select a date"
         />
         <Icon 
@@ -216,14 +216,14 @@
         <div
           class="flex relative flex-col w-full max-w-xs border-t-4 group"
           style="border-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
-          <div class="flex relative flex-col flex-1 gap-2 p-3 backdrop-blur-sm sm:p-4">
+          <div class="flex relative flex-col flex-1 gap-2 p-3 backdrop-blur-xs sm:p-4">
             <div class="flex justify-between items-center">
               <span
                 class="text-base font-bold truncate text-slate-900 sm:text-lg dark:text-white"
                 >{lesson.description}</span>
               {#if lesson.active}
                 <span
-                  class="px-2.5 py-1 ml-2 text-xs font-medium text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-full shadow-sm animate-gradient"
+                  class="px-2.5 py-1 ml-2 text-xs font-medium text-white bg-linear-to-r from-green-500 to-emerald-600 rounded-full shadow-xs animate-gradient"
                   >Now</span>
               {/if}
             </div>

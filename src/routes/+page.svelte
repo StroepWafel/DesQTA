@@ -55,12 +55,12 @@
     <!-- Top Row - Full Width Components -->
     <div class="lg:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
       <!-- Recent News -->
-      <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6">
+      <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-4 sm:p-6">
         <RecentNews />
       </div>
       
       <!-- Messages Preview -->
-      <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6">
+      <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-4 sm:p-6">
         <MessagesPreview />
       </div>
     </div>
@@ -72,7 +72,7 @@
 
     <!-- Third Row - Shortcuts (Full Width) -->
     <div class="lg:col-span-12">
-      <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6">
+      <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-4 sm:p-6">
         <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quick Links</h2>
         <ShortcutsWidget shortcuts={homepageShortcuts} />
       </div>

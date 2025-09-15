@@ -21,7 +21,7 @@
       href={shortcut.url}
       target="_blank"
       rel="noopener noreferrer"
-      class="flex relative flex-col justify-center items-center p-6 rounded-2xl border shadow-sm transition-all duration-200 cursor-pointer border-slate-200 group bg-white/80 dark:bg-slate-900/60 dark:border-slate-800 hover:accent-bg hover:shadow-lg hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+      class="flex relative flex-col justify-center items-center p-6 rounded-2xl border shadow-xs transition-all duration-200 cursor-pointer border-slate-200 group bg-white/80 dark:bg-slate-900/60 dark:border-slate-800 hover:accent-bg hover:shadow-lg hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
       tabindex="0"
       aria-label={shortcut.name}
       on:click={(e) => handleShortcutClick(e, shortcut.url)}>

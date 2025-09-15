@@ -88,7 +88,7 @@
   {:else if error}
     <div class="flex flex-col justify-center items-center py-24">
       <div
-        class="flex justify-center items-center w-20 h-20 text-3xl bg-gradient-to-br from-red-500 to-red-600 rounded-full shadow animate-gradient">
+        class="flex justify-center items-center w-20 h-20 text-3xl bg-linear-to-br from-red-500 to-red-600 rounded-full shadow-xs animate-gradient">
         ⚠️
       </div>
       <p class="mt-4 text-xl text-slate-700 dark:text-slate-300">{error}</p>
@@ -97,7 +97,7 @@
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {#each reports as report}
         <div
-          class="group dark:bg-slate-800 dark:border-[#333] border border-slate-200 bg-slate-100 rounded-2xl p-0 overflow-hidden shadow-md transition-all duration-200 hover:scale-[1.03] hover:shadow-lg focus:outline-none">
+          class="group dark:bg-slate-800 dark:border-[#333] border border-slate-200 bg-slate-100 rounded-2xl p-0 overflow-hidden shadow-md transition-all duration-200 hover:scale-[1.03] hover:shadow-lg focus:outline-hidden">
           <div class="flex justify-between items-center px-6 pt-6">
             <div
               class="px-6 py-2 text-lg font-bold tracking-widest text-white rounded-full transition-colors duration-300 accent-bg group-hover:opacity-90 animate-gradient">
@@ -120,7 +120,7 @@
               {formatDate(report.created_date)}
             </div>
             <button
-              class="mt-4 inline-block w-full text-center px-4 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 accent-bg accent-ring text-white"
+              class="mt-4 inline-block w-full text-center px-4 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 accent-bg accent-ring text-white"
               onclick={() => openReportInBrowser(report)}
             >
               Download

@@ -817,9 +817,9 @@
 <!-- Theme Builder Sidebar Content (single scrollable form, no stepper) -->
 <div class="flex flex-col h-full w-full max-w-xl bg-white dark:bg-slate-900 shadow-xl border-l border-slate-200 dark:border-slate-700 pt-16">
   <!-- Header -->
-  <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-800">
+  <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 bg-linear-to-r from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-800">
     <div class="flex items-center gap-3">
-      <div class="p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+      <div class="p-2 rounded-lg bg-linear-to-r from-indigo-500 to-purple-600 text-white">
         <Icon src={Swatch} class="w-6 h-6" />
       </div>
       <div>
@@ -961,7 +961,7 @@
                 <button
                   type="button"
                   onclick={() => addCommonTag(tag)}
-                  class="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                  class="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                   disabled={themeTags.includes(tag)}
                 >
                   {tag}
@@ -993,7 +993,7 @@
                   type="text"
                   id="accent-color-text"
                   bind:value={themeConfig.settings.defaultAccentColor}
-                  class="w-full text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  class="w-full text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
             </div>
@@ -1019,7 +1019,7 @@
                       type="text"
                       id={property + '-text'}
                       bind:value={themeConfig.customProperties[property]}
-                      class="w-full text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                      class="w-full text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -1101,7 +1101,7 @@
                   </div>
                 {/if}
               </div>
-              <div class="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded text-sm" style="font-family: {themeConfig.fonts.primary}">
+              <div class="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-sm text-sm" style="font-family: {themeConfig.fonts.primary}">
                 The quick brown fox jumps over the lazy dog
               </div>
             </div>
@@ -1147,7 +1147,7 @@
                 <input
                   type="checkbox"
                   bind:checked={themeConfig.features[feature as keyof typeof themeConfig.features]}
-                  class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                  class="w-5 h-5 text-indigo-600 rounded-sm focus:ring-indigo-500"
                 />
                 <div>
                   <div class="font-medium text-slate-900 dark:text-white">

@@ -269,7 +269,7 @@
           type="text"
           placeholder="Subject..."
           bind:value={composeSubject}
-          class="px-4 py-3 w-full rounded-lg border bg-slate-100/20 border-slate-300/50 dark:border-slate-700 placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          class="px-4 py-3 w-full rounded-lg border bg-slate-100/20 border-slate-300/50 dark:border-slate-700 placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
       </div>
 
       <!-- Editor -->
@@ -290,7 +290,7 @@
             placeholder="Search students..."
             bind:value={studentSearchQuery}
             onfocus={() => (showStudentDropdown = true)}
-            class="px-4 py-2 w-full bg-white rounded-lg placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            class="px-4 py-2 w-full bg-white rounded-lg placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
           {#if showStudentDropdown}
             <div
               id="student-dropdown"
@@ -329,7 +329,7 @@
           placeholder="Search staff..."
           bind:value={staffSearchQuery}
           onfocus={() => (showStaffDropdown = true)}
-          class="px-4 py-2 w-full bg-white rounded-lg placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          class="px-4 py-2 w-full bg-white rounded-lg placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
         {#if showStaffDropdown}
           <div
             id="staff-dropdown"
@@ -359,7 +359,7 @@
           <input
             type="checkbox"
             bind:checked={useBCC}
-            class="text-blue-500 bg-white rounded border-slate-300 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700" />
+            class="text-blue-500 bg-white rounded-sm border-slate-300 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700" />
           <span>Keep recipient list private (BCC)</span>
         </label>
       </div>
@@ -410,7 +410,7 @@
     </div>
     <div class="flex flex-col gap-3 w-full sm:flex-row sm:w-auto">
       <button
-        class="px-4 py-3 mb-2 w-full rounded-lg transition-colors sm:w-auto sm:mb-0 text-slate-900 bg-slate-200 dark:text-white dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
+        class="px-4 py-3 mb-2 w-full rounded-lg transition-colors sm:w-auto sm:mb-0 text-slate-900 bg-slate-200 dark:text-white dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
         onclick={closeModal}>
         Cancel
       </button>

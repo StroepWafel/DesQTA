@@ -1794,7 +1794,7 @@ export class EditorCore {
 
      // Create modal backdrop with proper Tailwind classes
      const backdrop = document.createElement('div');
-     backdrop.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
+     backdrop.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs';
 
      // Create modal content following project patterns
      const modal = document.createElement('div');
@@ -2134,13 +2134,13 @@ export class EditorCore {
      // Apply button styling based on variant following user guidelines
      switch (variant) {
        case 'primary':
-         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 accent-bg text-white hover:accent-bg-hover focus:accent-ring';
+         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-bg text-white hover:accent-bg-hover focus:accent-ring';
          break;
        case 'secondary':
-         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600';
+         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-offset-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600';
          break;
        case 'danger':
-         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-red-500 text-white hover:bg-red-600 focus:ring-red-500';
+         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-offset-2 bg-red-500 text-white hover:bg-red-600 focus:ring-red-500';
          break;
      }
 
@@ -2150,7 +2150,7 @@ export class EditorCore {
    private showConfirmModal(title: string, message: string, onConfirm: () => void) {
      // Create confirmation modal with proper Tailwind classes
      const backdrop = document.createElement('div');
-     backdrop.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
+     backdrop.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs';
 
      const modal = document.createElement('div');
      modal.className = 'relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden';
@@ -2507,7 +2507,7 @@ export class EditorCore {
     if (info) {
       const infoSpan = document.createElement('span');
       infoSpan.textContent = info;
-      infoSpan.className = 'ml-2 px-1.5 py-0.5 rounded bg-white/20 text-white/90 text-xs align-middle';
+      infoSpan.className = 'ml-2 px-1.5 py-0.5 rounded-sm bg-white/20 text-white/90 text-xs align-middle';
       infoSpan.style.marginLeft = '0.375rem';
       infoSpan.style.padding = '0.125rem 0.375rem';
       infoSpan.style.borderRadius = '0.25rem';
@@ -2716,7 +2716,7 @@ export class EditorCore {
     this.element.removeEventListener('keyup', this.handleKeyUp.bind(this));
     this.element.removeEventListener('paste', this.handlePaste.bind(this));
     this.element.removeEventListener('focus', this.handleFocus.bind(this));
-    this.element.removeEventListener('blur', this.handleBlur.bind(this));
+    this.element.removeEventListener('blur-sm', this.handleBlur.bind(this));
     document.removeEventListener('selectionchange', this.handleSelectionChange.bind(this));
 
     this.isInitialized = false;

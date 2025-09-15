@@ -173,7 +173,7 @@
     <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('bold') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('bold') ? 'accent-bg text-white' : ''}"
         on:click={toggleBold}
         disabled={readonly}
         title="Bold (Ctrl+B)"
@@ -184,7 +184,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('italic') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('italic') ? 'accent-bg text-white' : ''}"
         on:click={toggleItalic}
         disabled={readonly}
         title="Italic (Ctrl+I)"
@@ -195,7 +195,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('underline') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('underline') ? 'accent-bg text-white' : ''}"
         on:click={toggleUnderline}
         disabled={readonly}
         title="Underline (Ctrl+U)"
@@ -206,7 +206,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('strikethrough') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('strikethrough') ? 'accent-bg text-white' : ''}"
         on:click={toggleStrikethrough}
         disabled={readonly}
         title="Strikethrough"
@@ -217,7 +217,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('code') ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {activeFormats.has('code') ? 'accent-bg text-white' : ''}"
         on:click={toggleCode}
         disabled={readonly}
         title="Inline code"
@@ -230,7 +230,7 @@
     <!-- Font size group -->
     <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
       <select
-        class="px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-2 py-1 text-sm rounded-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
         on:change={handleFontSizeChange}
         disabled={readonly}
         title="Font size"
@@ -256,7 +256,7 @@
     <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-1' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-1' ? 'accent-bg text-white' : ''}"
         on:click={() => setHeading(1)}
         disabled={readonly}
         title="Heading 1"
@@ -267,7 +267,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-2' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-2' ? 'accent-bg text-white' : ''}"
         on:click={() => setHeading(2)}
         disabled={readonly}
         title="Heading 2"
@@ -278,7 +278,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-3' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'heading-3' ? 'accent-bg text-white' : ''}"
         on:click={() => setHeading(3)}
         disabled={readonly}
         title="Heading 3"
@@ -289,7 +289,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'blockquote' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'blockquote' ? 'accent-bg text-white' : ''}"
         on:click={setBlockquote}
         disabled={readonly}
         title="Blockquote"
@@ -300,7 +300,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'code-block' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'code-block' ? 'accent-bg text-white' : ''}"
         on:click={setCodeBlock}
         disabled={readonly}
         title="Code block"
@@ -314,7 +314,7 @@
     <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'bullet-list' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'bullet-list' ? 'accent-bg text-white' : ''}"
         on:click={toggleBulletList}
         disabled={readonly}
         title="Bullet list"
@@ -325,7 +325,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'numbered-list' ? 'accent-bg text-white' : ''}"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed {currentBlockType === 'numbered-list' ? 'accent-bg text-white' : ''}"
         on:click={toggleNumberList}
         disabled={readonly}
         title="Numbered list"
@@ -339,7 +339,7 @@
     <div class="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-2">
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
         on:click={insertTable}
         disabled={readonly}
         title="Insert table"
@@ -353,7 +353,7 @@
     <div class="flex items-center space-x-1">
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
         on:click={insertLink}
         disabled={readonly}
         title="Insert link"
@@ -364,7 +364,7 @@
 
       <button
         type="button"
-        class="p-2 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        class="p-2 rounded-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
         on:click={insertImage}
         disabled={readonly}
         title="Insert image"
@@ -379,7 +379,7 @@
   <div>
     <button
       type="button"
-      class="px-4 py-2 accent-bg text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="px-4 py-2 accent-bg text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       on:click={handleSave}
       disabled={readonly}
       title="Save note (Ctrl+S)"

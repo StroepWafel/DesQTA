@@ -269,7 +269,7 @@
             selectedLessonContent = null;
             showingOverview = true;
           }}
-          class="p-2 text-gray-600 rounded-lg transition-all duration-200 transform dark:text-gray-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+          class="p-2 text-gray-600 rounded-lg transition-all duration-200 transform dark:text-gray-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
           title="Back to subjects"
           aria-label="Back to subjects"
         >
@@ -291,7 +291,7 @@
               <input
                 type="text"
                 placeholder="Search subjects..."
-                class="px-4 py-2 w-full bg-white rounded-lg border border-gray-200 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                class="px-4 py-2 w-full bg-white rounded-lg border border-gray-200 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent"
                 bind:value={search}
               />
               <svg class="absolute right-3 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

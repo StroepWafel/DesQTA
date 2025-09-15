@@ -92,7 +92,7 @@
         <div class="flex flex-wrap gap-2">
           <button
             onclick={() => handleReset(reset)}
-            class="px-3 py-1 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300 rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-200 dark:hover:bg-red-700"
+            class="px-3 py-1 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300 rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-200 dark:hover:bg-red-700"
           >
             <Icon src={ArrowPath} size="14" class="inline mr-1" />
             Retry
@@ -100,7 +100,7 @@
           
           <button
             onclick={toggleDetails}
-            class="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 hover:bg-slate-200 dark:hover:bg-slate-600"
+            class="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 hover:bg-slate-200 dark:hover:bg-slate-600"
           >
             <Icon src={InformationCircle} size="14" class="inline mr-1" />
             {showDetails ? 'Hide' : 'Show'} Details
@@ -109,7 +109,7 @@
           {#if showTroubleshooting}
             <button
               onclick={openTroubleshooting}
-              class="px-3 py-1 bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300 rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-200 dark:hover:bg-blue-700"
+              class="px-3 py-1 bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300 rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-200 dark:hover:bg-blue-700"
             >
               <Icon src={Cog} size="14" class="inline mr-1" />
               Troubleshoot
@@ -118,7 +118,7 @@
         </div>
         
         {#if showDetails && errorDetails}
-          <div class="mt-3 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs">
+          <div class="mt-3 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm text-xs">
             <div class="mb-2">
               <strong class="text-slate-700 dark:text-slate-300">Time:</strong>
               <span class="text-slate-600 dark:text-slate-400">{new Date(errorDetails.timestamp).toLocaleString()}</span>
@@ -130,7 +130,7 @@
             {#if errorDetails.stack}
               <div>
                 <strong class="text-slate-700 dark:text-slate-300">Stack Trace:</strong>
-                <pre class="mt-1 p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded text-xs text-slate-600 dark:text-slate-400 overflow-auto max-h-32">{errorDetails.stack}</pre>
+                <pre class="mt-1 p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-sm text-xs text-slate-600 dark:text-slate-400 overflow-auto max-h-32">{errorDetails.stack}</pre>
               </div>
             {/if}
           </div>

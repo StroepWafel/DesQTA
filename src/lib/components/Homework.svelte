@@ -71,7 +71,7 @@
               </h3>
               <div class="flex flex-col gap-3">
                 {#each homework.items as item}
-                  <div class="flex gap-2 items-start px-4 py-3 rounded-lg border backdrop-blur-sm border-slate-300 bg-slate-200/80 dark:bg-slate-700/50 dark:border-slate-600">
+                  <div class="flex gap-2 items-start px-4 py-3 rounded-lg border backdrop-blur-xs border-slate-300 bg-slate-200/80 dark:bg-slate-700/50 dark:border-slate-600">
                     <span class="mt-1 text-xl accent-text">•</span>
                     <span class="text-slate-800 dark:text-slate-50">{item}</span>
                   </div>

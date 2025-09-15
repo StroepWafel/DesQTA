@@ -88,7 +88,7 @@
   ].filter(Boolean).join(' '));
 
   let inputClasses = $derived([
-    'w-full border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1',
+    'w-full border rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-1',
     hasError 
       ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
       : 'border-slate-300 dark:border-slate-600 focus:border-accent-500 focus:ring-accent-500',

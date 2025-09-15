@@ -103,7 +103,7 @@
 </script>
 
 {#if aiIntegrationsEnabled && gradeAnalyserEnabled && currentView === showInView}
-  <div class="flex flex-col gap-4 p-4 rounded-xl border backdrop-blur-sm bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200/50 dark:border-purple-700/50">
+  <div class="flex flex-col gap-4 p-4 rounded-xl border backdrop-blur-xs bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200/50 dark:border-purple-700/50">
     <div class="flex justify-between items-center">
       <div>
         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">AI Grade Predictions</h3>
@@ -112,7 +112,7 @@
         </p>
       </div>
       <button
-        class="px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         onclick={generateGradePredictions}
         disabled={generatingPredictions}>
         {#if generatingPredictions}

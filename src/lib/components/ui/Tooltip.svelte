@@ -80,7 +80,7 @@
   {#if showTooltip && content}
     <div
       bind:this={tooltipElement}
-      class="absolute z-50 px-2 py-1 text-xs text-white bg-slate-800 rounded shadow-lg whitespace-nowrap pointer-events-none {placementClasses[placement]}"
+      class="absolute z-50 px-2 py-1 text-xs text-white bg-slate-800 rounded-sm shadow-lg whitespace-nowrap pointer-events-none {placementClasses[placement]}"
       role="tooltip"
     >
       {content}

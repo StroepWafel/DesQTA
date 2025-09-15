@@ -355,14 +355,14 @@
 {#if showCloudMessaging}
 <div class="flex gap-2 p-4 bg-white border-b border-slate-300/50 dark:border-slate-800/50 dark:bg-slate-900">
   <button
-    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring text-base
       {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
     onclick={() => openTab('SEQTA')}
     disabled={selectedTab === 'SEQTA'}>
     SEQTA Messages
   </button>
   <button
-    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
+    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring text-base
       {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
     onclick={() => openTab('BetterSEQTA')}
     disabled={selectedTab === 'BetterSEQTA'}>
@@ -413,7 +413,7 @@
         onclose={() => (selectedMessage = null)}
         maxWidth="w-full"
         maxHeight="h-full"
-        className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-none"
+        className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-none"
         showCloseButton={false}
         closeOnBackdrop={false}
         ariaLabel="Message Detail">

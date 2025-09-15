@@ -95,7 +95,7 @@
 
   function handleBlur() {
     isFocused = false;
-    dispatch('blur');
+    dispatch('blur-sm');
   }
 
   function handleSave() {
@@ -173,7 +173,7 @@
   bind:this={editorContainer}
 >
   <!-- Editor Toolbar -->
-  <div class="flex-shrink-0 border-b border-slate-200 dark:border-slate-700">
+  <div class="shrink-0 border-b border-slate-200 dark:border-slate-700">
     <EditorToolbar 
       bind:editor={editorCore}
       {readonly}
@@ -184,7 +184,7 @@
   <!-- Main Editor Content -->
   <div class="flex-1 relative min-h-0">
     <div
-      class="editor-content h-full p-4 prose prose-slate dark:prose-invert max-w-none focus:outline-none overflow-y-auto"
+      class="editor-content h-full p-4 prose prose-slate dark:prose-invert max-w-none focus:outline-hidden overflow-y-auto"
       contenteditable={!readonly}
       bind:this={contentElement}
       data-placeholder={placeholder}
@@ -196,7 +196,7 @@
   </div>
 
   <!-- Editor Status Bar -->
-  <div class="flex-shrink-0 border-t border-slate-200 dark:border-slate-700">
+  <div class="shrink-0 border-t border-slate-200 dark:border-slate-700">
     <EditorStatusBar 
       {wordCount}
       {characterCount}

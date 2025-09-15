@@ -475,7 +475,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     <div class="space-y-6 sm:space-y-8">
       <!-- Cloud Sync Section -->
       <section
-        class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/30 dark:border-slate-800/30">
           <h2 class="text-base font-semibold sm:text-lg text-slate-500 dark:text-slate-400">
             Cloud Sync
@@ -499,7 +499,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             {#if !acceptedCloudEula}
               <!-- EULA gate overlay -->
               <div
-                class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 rounded-xl backdrop-blur-sm bg-black/40">
+                class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 rounded-xl backdrop-blur-xs bg-black/40">
                 <div
                   class="p-5 w-full max-w-xl rounded-xl border shadow-lg bg-white/95 dark:bg-slate-900/95 border-slate-300/50 dark:border-slate-800/50 text-slate-800 dark:text-white">
                   <h3 class="mb-2 text-base font-semibold sm:text-lg">
@@ -510,7 +510,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   </p>
                   <div class="flex gap-2">
                     <button
-                      class="px-4 py-2 text-white rounded-lg transition-all duration-200 accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+                      class="px-4 py-2 text-white rounded-lg transition-all duration-200 accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
                       onclick={() => (showEulaModal = true)}>Read & Accept</button>
                   </div>
                 </div>
@@ -559,7 +559,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   </p>
                   <div class="flex flex-col gap-3 sm:flex-row">
                     <button
-                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-xs transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                       onclick={openCloudSyncModal}
                       disabled={!acceptedCloudEula}>
                       <Icon src={CloudArrowUp} class="w-5 h-5" />
@@ -572,7 +572,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               <!-- Not logged in state -->
               <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
                 <div
-                  class="p-3 mb-3 rounded border border-yellow-200 bg-yellow-100/60 dark:bg-yellow-900/30 dark:border-yellow-800">
+                  class="p-3 mb-3 rounded-sm border border-yellow-200 bg-yellow-100/60 dark:bg-yellow-900/30 dark:border-yellow-800">
                   <div class="flex gap-2 items-center">
                     <input
                       id="accept-eula-loggedout"
@@ -615,7 +615,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   </div>
                   <div class="flex flex-col gap-3 sm:flex-row">
                     <button
-                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                       onclick={openCloudSyncModal}
                       disabled={!acceptedCloudEula}>
                       <Icon src={CloudArrowUp} class="w-5 h-5" />
@@ -634,7 +634,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Homepage Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Homepage</h2>
           <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -686,7 +686,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                       >Fallback City:</label>
                     <input
                       id="weather-city"
-                      class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="px-3 py-2 w-full bg-white rounded-sm border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       placeholder="Perth"
                       bind:value={weatherCity} />
                   </div>
@@ -706,7 +706,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     </span>
                     <input
                       id="weather-country"
-                      class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="px-3 py-2 w-full bg-white rounded-sm border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       placeholder="AU"
                       bind:value={weatherCountry} />
                   </div>
@@ -719,7 +719,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Dashboard Shortcuts Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-150 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-150 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Dashboard Shortcuts</h2>
           <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -741,7 +741,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <label for="shortcut-name-{idx}" class="text-xs text-slate-600 dark:text-slate-400">Name</label>
                     <input
                       id="shortcut-name-{idx}"
-                      class="px-2 py-1.5 w-full text-sm bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
+                      class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
                       placeholder="Dashboard"
                       bind:value={shortcut.name} />
                   </div>
@@ -749,7 +749,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <label for="shortcut-icon-{idx}" class="text-xs text-slate-600 dark:text-slate-400">Icon</label>
                     <input
                       id="shortcut-icon-{idx}"
-                      class="px-2 py-1.5 w-full text-sm text-center bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
+                      class="px-2 py-1.5 w-full text-sm text-center bg-white rounded-sm transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
                       placeholder="🏠"
                       bind:value={shortcut.icon} />
                   </div>
@@ -757,13 +757,13 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <label for="shortcut-url-{idx}" class="text-xs text-slate-600 dark:text-slate-400">URL</label>
                     <input
                       id="shortcut-url-{idx}"
-                      class="px-2 py-1.5 w-full text-sm bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
+                      class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
                       placeholder="/dashboard"
                       bind:value={shortcut.url} />
                   </div>
                   <div class="flex items-end pt-4 h-full sm:pt-0">
                     <button
-                      class="px-3 py-2 text-red-400 rounded transition-all duration-200 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95"
+                      class="px-3 py-2 text-red-400 rounded-sm transition-all duration-200 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95"
                       onclick={() => removeShortcut(idx)}
                       title="Remove shortcut">
                       <Icon src={Trash} class="w-4 h-4" />
@@ -779,7 +779,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 </div>
               {/if}
               <button
-                class="flex gap-2 justify-center items-center px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
+                class="flex gap-2 justify-center items-center px-4 py-2 w-full text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
                 onclick={addShortcut}>
                 <Icon src={Plus} class="w-4 h-4" />
                 Add Dashboard Shortcut
@@ -791,7 +791,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Appearance Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Appearance</h2>
           <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -815,14 +815,14 @@ The Company reserves the right to terminate your access to the Service at any ti
                     type="color"
                     id="accent-color"
                     bind:value={$accentColor}
-                    class="w-11 h-12 bg-transparent rounded-xl cursor-pointer focus:outline-none" />
+                    class="w-11 h-12 bg-transparent rounded-xl cursor-pointer focus:outline-hidden" />
                   <input
                     type="text"
                     bind:value={$accentColor}
-                    class="flex-1 px-3 py-2 bg-white rounded border transition text-slate-900 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="flex-1 px-3 py-2 bg-white rounded-sm border transition text-slate-900 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                     placeholder="#3b82f6" />
                   <button
-                    class="px-3 py-2 rounded transition text-slate-800 bg-slate-200 dark:bg-slate-700/50 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600/50 focus:ring-2 focus:ring-blue-500"
+                    class="px-3 py-2 rounded-sm transition text-slate-800 bg-slate-200 dark:bg-slate-700/50 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600/50 focus:ring-2 focus:ring-blue-500"
                     onclick={() => accentColor.set('#3b82f6')}>
                     Reset
                   </button>
@@ -954,7 +954,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Notification Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Notifications</h2>
           <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -976,7 +976,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 >Enable assessment reminder notifications</label>
             </div>
             <button
-              class="px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
+              class="px-4 py-2 w-full text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
               onclick={sendTestNotification}>
               Send Test Notification
             </button>
@@ -987,7 +987,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       {#if showDevSettings}
         <!-- Cloud Provider Settings (Dev) -->
         <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
           <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
             <h2 class="text-base font-semibold sm:text-lg">Cloud Provider (Dev)</h2>
             <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -1000,7 +1000,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               <label for="cloud-base-url" class="text-sm font-medium text-slate-800 dark:text-slate-200">Base URL</label>
               <input
                 id="cloud-base-url"
-                class="px-3 py-2 w-full rounded-lg border transition-colors duration-200 border-slate-300/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-white focus:outline-none focus:ring-2 accent-ring"
+                class="px-3 py-2 w-full rounded-lg border transition-colors duration-200 border-slate-300/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 accent-ring"
                 placeholder="https://accounts.example.com"
                 bind:value={cloudBaseUrl}
                 oninput={() => {
@@ -1018,13 +1018,13 @@ The Company reserves the right to terminate your access to the Service at any ti
             </div>
             <div class="flex gap-3">
               <button
-                class="px-4 py-2 text-white rounded-lg shadow transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
+                class="px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
                 disabled={cloudBaseUrlSaving}
                 onclick={saveCloudBaseUrl}>
                 {cloudBaseUrlSaving ? 'Saving...' : 'Save URL'}
               </button>
               <button
-                class="px-4 py-2 rounded-lg border transition-all duration-200 border-slate-300/70 dark:border-slate-700/70 text-slate-800 dark:text-white bg-slate-100/60 dark:bg-slate-800/40 hover:bg-slate-200/60 dark:hover:bg-slate-700/40 focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
+                class="px-4 py-2 rounded-lg border transition-all duration-200 border-slate-300/70 dark:border-slate-700/70 text-slate-800 dark:text-white bg-slate-100/60 dark:bg-slate-800/40 hover:bg-slate-200/60 dark:hover:bg-slate-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
                 onclick={resetCloudBaseUrlToDefault}>
                 Reset to Default
               </button>
@@ -1035,7 +1035,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- RSS Feeds Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
           <h2 class="text-base font-semibold sm:text-lg">RSS Feeds</h2>
           <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -1052,7 +1052,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 </p>
               </div>
               <button
-                class="flex gap-2 items-center px-4 py-2 text-white rounded-lg shadow transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
+                class="flex gap-2 items-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
                 onclick={addFeed}>
                 <Icon src={Plus} class="w-4 h-4" />
                 Add Feed
@@ -1072,7 +1072,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                         </span>
                       </div>
                       <input
-                        class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-2 w-full bg-white rounded-sm border transition text-slate-900 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                         placeholder="https://example.com/feed.xml"
                         bind:value={feed.url} />
                     </div>
@@ -1107,7 +1107,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- AI Features -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
           <h2 class="text-base font-semibold sm:text-lg">AI Features</h2>
           <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -1162,7 +1162,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <input
                   id="gemini-api-key"
                   type="text"
-                  class="px-3 py-2 w-full bg-white rounded border border-slate-300/50 dark:border-slate-700/50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="px-3 py-2 w-full bg-white rounded-sm border border-slate-300/50 dark:border-slate-700/50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="Paste your Gemini API key here"
                   bind:value={geminiApiKey}
                   autocomplete="off"
@@ -1185,7 +1185,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Plugins Section -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Plugins</h2>
           <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -1199,7 +1199,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             </p>
             <a
               href="/settings/plugins"
-              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
+              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
               Open Plugin Store
             </a>
           </div>
@@ -1208,7 +1208,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Theme Store Link -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Theme Store</h2>
           <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -1239,7 +1239,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   console.log('Page pathname:', window.location.pathname);
                 }, 100);
               }}
-              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
+              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
               Open Theme Store
             </button>
           </div>
@@ -1248,7 +1248,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Troubleshooting button -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">Troubleshooting</h2>
@@ -1257,7 +1257,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             </p>
           </div>
           <button
-            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-blue-500 rounded-lg shadow transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105"
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-blue-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105"
             onclick={openTroubleshootingModal}>
             <Icon src={Cog} class="w-4 h-4" />
             Open
@@ -1267,7 +1267,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Cache Management -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-red-700/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-red-700/50 animate-fade-in-up">
         <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">Cache Management</h2>
@@ -1279,7 +1279,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             type="button"
             onclick={clearCache}
             disabled={clearingCache}
-            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-red-500 rounded-lg shadow transition-all duration-200 hover:bg-red-600 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-red-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-red-600 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
             <Icon src={Trash} class="w-4 h-4" />
             {clearingCache ? 'Clearing...' : 'Clear Cache'}
           </button>
@@ -1289,7 +1289,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       <!-- Dev Settings Section -->
       {#if showDevSettings}
         <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-400 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-400 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
           <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
             <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
             <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -1329,7 +1329,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 {#if showEulaModal}
   <div class="flex fixed inset-0 z-50 justify-center items-center">
     <div
-      class="absolute inset-0 backdrop-blur-sm bg-black/50"
+      class="absolute inset-0 backdrop-blur-xs bg-black/50"
       role="button"
       tabindex="0"
       onclick={() => (showEulaModal = false)}
@@ -1345,10 +1345,10 @@ The Company reserves the right to terminate your access to the Service at any ti
       </div>
       <div class="flex gap-2 justify-end mt-4">
         <button
-          class="px-4 py-2 rounded-lg transition-all duration-200 bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-400"
+          class="px-4 py-2 rounded-lg transition-all duration-200 bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
           onclick={() => (showEulaModal = false)}>Decline</button>
         <button
-          class="px-4 py-2 text-white rounded-lg transition-all duration-200 accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          class="px-4 py-2 text-white rounded-lg transition-all duration-200 accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
           onclick={async () => {
             try {
               await invoke('save_settings_merge', { patch: { accepted_cloud_eula: true } });

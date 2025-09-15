@@ -304,7 +304,7 @@
 
 <div class="p-4 sm:p-6">
   <!-- Consolidated Header -->
-  <div class="flex flex-col gap-4 mb-6 p-4 rounded-xl border backdrop-blur-sm bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
+  <div class="flex flex-col gap-4 mb-6 p-4 rounded-xl border backdrop-blur-xs bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
     <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
       <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Assessments</h1>
       
@@ -316,7 +316,7 @@
             <div class="relative">
               <select
                 id="year-select"
-                class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+                class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
                 bind:value={selectedYear}
                 onchange={(e) => {
                   const target = e.target as HTMLSelectElement;
@@ -349,7 +349,7 @@
           <div class="relative">
             <select
               id="view-select"
-              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
               bind:value={selectedTab}
               onchange={(e) => {
                 const target = e.target as HTMLSelectElement;
@@ -407,12 +407,12 @@
     {:else}
       <!-- Board View Options -->
       {#if selectedTab === 'board'}
-        <div class="flex items-center gap-4 p-4 rounded-xl border backdrop-blur-sm bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
+        <div class="flex items-center gap-4 p-4 rounded-xl border backdrop-blur-xs bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
           <label for="group-by-select" class="text-sm font-medium text-slate-600 dark:text-slate-400">Group by:</label>
           <div class="relative">
             <select
               id="group-by-select"
-              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
               bind:value={groupBy}
               onchange={(e) => {
                 const target = e.target as HTMLSelectElement;

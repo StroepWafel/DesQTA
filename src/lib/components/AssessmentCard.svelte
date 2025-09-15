@@ -40,7 +40,7 @@
 
 <a
   href="/assessments/{assessment.id}/{assessment.metaclass}?tab={detailsTab}#top"
-  class="block bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 shadow-lg border-l-8 border border-slate-300/50 dark:border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+  class="block bg-white/80 dark:bg-slate-900/50 backdrop-blur-xs rounded-xl p-4 shadow-lg border-l-8 border border-slate-300/50 dark:border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(99,102,241,0.2)]"
   style="border-color: {assessment.colour};">
   <div class="flex gap-2 items-center">
     <div class="text-sm font-semibold text-slate-600 dark:text-slate-400">

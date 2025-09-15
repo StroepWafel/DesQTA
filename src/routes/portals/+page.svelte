@@ -209,7 +209,7 @@
   {:else if error}
     <div class="space-y-6">
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-red-50/80 dark:bg-red-900/20 sm:rounded-2xl border-red-200/50 dark:border-red-800/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-red-50/80 dark:bg-red-900/20 sm:rounded-2xl border-red-200/50 dark:border-red-800/50 animate-fade-in-up">
         <div class="p-6">
           <div class="flex flex-col items-center justify-center py-12 text-center">
             <Icon src={ExclamationTriangle} class="w-16 h-16 text-red-500 mb-4" />
@@ -220,7 +220,7 @@
               {error}
             </p>
             <button
-              class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               onclick={loadPortals}>
               Try Again
             </button>
@@ -231,7 +231,7 @@
   {:else if portals.length === 0}
     <div class="space-y-6">
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 animate-fade-in-up">
         <div class="p-6">
           <div class="flex flex-col items-center justify-center py-12 text-center">
             <Icon src={GlobeAlt} class="w-16 h-16 text-slate-400 dark:text-slate-500 mb-4" />
@@ -249,7 +249,7 @@
     <div class="space-y-6">
       <!-- Portals Grid -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 animate-fade-in-up">
         <div class="px-6 py-4 border-b border-slate-300/50 dark:border-slate-800/50">
           <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Available Portals</h2>
           <p class="text-sm text-slate-600 dark:text-slate-400">
@@ -260,7 +260,7 @@
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {#each portals as portal (portal.uuid)}
               <button
-                class="group relative p-6 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/30 backdrop-blur-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 cursor-pointer"
+                class="group relative p-6 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/30 backdrop-blur-xs transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 cursor-pointer"
                 onclick={() => handlePortalClick(portal)}>
                 
                 <!-- Portal Icon -->
@@ -289,7 +289,7 @@
                 </div>
                 
                 <!-- Hover Effect -->
-                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-accent-500/0 to-accent-600/0 group-hover:from-accent-500/5 group-hover:to-accent-600/10 transition-all duration-200 pointer-events-none"></div>
+                <div class="absolute inset-0 rounded-xl bg-linear-to-br from-accent-500/0 to-accent-600/0 group-hover:from-accent-500/5 group-hover:to-accent-600/10 transition-all duration-200 pointer-events-none"></div>
               </button>
             {/each}
           </div>

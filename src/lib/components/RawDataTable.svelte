@@ -107,7 +107,7 @@
 <div class="p-8 rounded-2xl border shadow-xl border-slate-200 bg-white/80 dark:bg-slate-900/80 dark:border-slate-700">
   <h2 class="flex gap-2 items-center mb-6 text-2xl font-bold text-slate-900 dark:text-white">
     <span
-      class="flex justify-center items-center w-6 h-6 text-white bg-gradient-to-tr from-indigo-500 to-blue-400 rounded-full shadow">
+      class="flex justify-center items-center w-6 h-6 text-white bg-linear-to-tr from-indigo-500 to-blue-400 rounded-full shadow-xs">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
         ><path
           stroke-linecap="round"
@@ -191,7 +191,7 @@
     </div>
     {#if hasActiveFilters()}
       <button
-        class="px-4 py-2 ml-2 text-sm font-semibold rounded-lg transition-all duration-200 transform text-slate-800 bg-slate-200 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+        class="px-4 py-2 ml-2 text-sm font-semibold rounded-lg transition-all duration-200 transform text-slate-800 bg-slate-200 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
         on:click={() => {
           filterSubject = '';
           filterStatus = '';
@@ -265,7 +265,7 @@
           class="overflow-hidden mb-4 rounded-xl border border-slate-200 dark:border-slate-700"
           in:slide={{ duration: 350 }}>
           <button
-            class="w-full flex items-center justify-between px-6 py-3 bg-accent-700 text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 accent-ring font-semibold text-left text-lg"
+            class="w-full flex items-center justify-between px-6 py-3 bg-accent-700 text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 accent-ring font-semibold text-left text-lg"
             on:click={() => toggleYear(year)}>
             <span class="flex gap-2 items-center">
               {#if expandedYears[year]}
@@ -283,7 +283,7 @@
                   class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
                   in:slide={{ duration: 350 }}>
                   <button
-                    class="w-full flex items-center justify-between px-6 py-3 bg-accent-600 text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 accent-ring font-semibold text-left text-lg"
+                    class="w-full flex items-center justify-between px-6 py-3 bg-accent-600 text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 accent-ring font-semibold text-left text-lg"
                     on:click={() => toggleSubject(subject)}>
                     <span class="flex gap-2 items-center">
                       {#if expandedSubjects[subject]}

@@ -50,7 +50,7 @@
     pills: {
       container: 'bg-slate-100 dark:bg-slate-800 rounded-lg p-1',
       tab: 'rounded-md transition-all duration-200',
-      active: 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm',
+      active: 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs',
       inactive: 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
     },
     underline: {

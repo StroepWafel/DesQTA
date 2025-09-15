@@ -285,7 +285,7 @@ export default config;
       "center": true,
       "visible": true,
       "transparent": true,   // Transparent background
-      "shadow": false
+      "shadow-xs": false
     }],
     "security": {
       "csp": null           // No CSP restrictions

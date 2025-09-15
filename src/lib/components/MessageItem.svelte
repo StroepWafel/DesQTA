@@ -55,7 +55,7 @@
     ? 'border-2 border-accent-500 focus:ring-2 accent-ring'
     : 'border border-slate-300/30 dark:border-slate-800/30 hover:border-accent-500/30 dark:hover:border-accent-700/30 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02]'}
     {msg.unread ? 'border-l-4 border-l-accent-500' : ''}
-    focus:outline-none focus:ring-2 accent-ring"
+    focus:outline-hidden focus:ring-2 accent-ring"
   onclick={() => openMessage(msg)}>
   <!-- Top row: sender and date -->
   <div class="flex justify-between items-center w-full">

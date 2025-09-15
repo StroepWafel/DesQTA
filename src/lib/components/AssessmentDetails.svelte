@@ -43,7 +43,7 @@
           </div>
           <div class="flex relative z-10 justify-center items-center h-full">
             <span
-              class="text-3xl font-extrabold tracking-wide text-white drop-shadow animate-fade-in"
+              class="text-3xl font-extrabold tracking-wide text-white drop-shadow-xs animate-fade-in"
               style="text-shadow: 0 2px 8px #000a">
               {firstCriterion.results.grade ||
                 (firstCriterion.results.percentage ? firstCriterion.results.percentage.toFixed(2) + '%' : 'No Grade')}

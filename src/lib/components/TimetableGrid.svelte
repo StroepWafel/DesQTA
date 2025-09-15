@@ -159,7 +159,7 @@
     <div
       class="flex justify-between items-center px-4 py-2 border-b border-slate-300 sm:hidden dark:border-slate-700" style="background: var(--background-color);">
       <button
-        class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 bg-white/80 hover:bg-white dark:bg-slate-700/80 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+        class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 bg-white/80 hover:bg-white dark:bg-slate-700/80 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500/50"
         onclick={prevDay}
         disabled={loadingLessons}
         aria-label="Previous day">
@@ -172,7 +172,7 @@
         </p>
       </div>
       <button
-        class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 bg-white/80 hover:bg-white dark:bg-slate-700/80 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+        class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 bg-white/80 hover:bg-white dark:bg-slate-700/80 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500/50"
         onclick={nextDay}
         disabled={loadingLessons}
         aria-label="Next day">
@@ -187,7 +187,7 @@
         <h3 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">Failed to Load Timetable</h3>
         <p class="text-red-500 dark:text-red-400 mb-4 text-center max-w-md">{error}</p>
         <button
-          class="px-6 py-3 text-sm font-semibold bg-red-600 hover:bg-red-500 dark:bg-red-500 dark:hover:bg-red-400 text-white rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500/50 shadow-md"
+          class="px-6 py-3 text-sm font-semibold bg-red-600 hover:bg-red-500 dark:bg-red-500 dark:hover:bg-red-400 text-white rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500/50 shadow-md"
           onclick={onRetry}>
           Try Again
         </button>
@@ -212,7 +212,7 @@
                   timeBounds.max,
                 )}px;">
                 <div class="flex items-center justify-center h-5">
-                  <span class="text-xs font-mono font-semibold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 px-1 rounded">
+                  <span class="text-xs font-mono font-semibold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 px-1 rounded-sm">
                     {formatTime(time as string)}
                   </span>
                 </div>
@@ -261,7 +261,7 @@
     {:else}
       <div class="flex flex-col justify-center items-center py-16">
         <div
-          class="w-24 h-24 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-4xl shadow-[0_0_30px_rgba(99,102,241,0.3)] animate-pulse mb-6">
+          class="w-24 h-24 flex items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-purple-600 text-4xl shadow-[0_0_30px_rgba(99,102,241,0.3)] animate-pulse mb-6">
           📚
         </div>
         <h3 class="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">

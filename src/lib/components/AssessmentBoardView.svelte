@@ -87,9 +87,9 @@
     class="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-slate-300/20 dark:scrollbar-track-slate-800/10">
     {#if groupBy === 'subject'}
       {#each subjects.filter(subject => assessments.some(a => a.code === subject.code)) as subject}
-        <div class="flex-shrink-0 w-72 sm:w-80">
+        <div class="shrink-0 w-72 sm:w-80">
           <div
-            class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-sm bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50"
+            class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50"
             style="border-color: {subject.colour || '#8e8e8e'};">
             <div class="flex justify-between items-start">
               <div>
@@ -115,9 +115,9 @@
       {/each}
     {:else if groupBy === 'month'}
       {#each getAssessmentsByMonth() as [month, monthAssessments]}
-        <div class="flex-shrink-0 w-72 sm:w-80">
+        <div class="shrink-0 w-72 sm:w-80">
           <div
-            class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-sm bg-slate-800/50 border-slate-700/50">
+            class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-slate-800/50 border-slate-700/50">
             <h3 class="text-base font-bold sm:text-lg text-slate-900 dark:text-white">
               {month}
             </h3>
@@ -134,9 +134,9 @@
       {/each}
     {:else if groupBy === 'status'}
       {#each getAssessmentsByStatus() as [status, statusAssessments]}
-        <div class="flex-shrink-0 w-72 sm:w-80">
+        <div class="shrink-0 w-72 sm:w-80">
           <div
-            class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-sm bg-slate-800/50 border-slate-700/50"
+            class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-slate-800/50 border-slate-700/50"
             style="border-color: {getStatusBadge(statusAssessments[0].status, statusAssessments[0].due)
               .color};">
             <h3 class="text-base font-bold sm:text-lg text-slate-900 dark:text-white">

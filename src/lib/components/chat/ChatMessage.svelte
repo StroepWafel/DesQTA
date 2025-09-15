@@ -64,7 +64,7 @@
     {/if}
     
     {#if message.replyTo}
-      <div class="mb-1 p-2 rounded bg-slate-200/60 dark:bg-slate-800/60 text-xs text-slate-700 dark:text-slate-300">
+      <div class="mb-1 p-2 rounded-sm bg-slate-200/60 dark:bg-slate-800/60 text-xs text-slate-700 dark:text-slate-300">
         <div class="prose prose-sm dark:prose-invert max-w-none">{@html renderMarkdown(message.replyTo.content)}</div>
       </div>
     {/if}

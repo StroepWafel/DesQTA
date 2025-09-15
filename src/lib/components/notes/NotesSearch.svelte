@@ -198,7 +198,7 @@
 {#if isOpen}
   <!-- Search Modal -->
   <div
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/50 backdrop-blur-xs"
     transition:fly={{ y: -50, duration: 200 }}
     onclick={() => dispatch('close')}
     onkeydown={(e) => e.key === 'Escape' && dispatch('close')}
@@ -259,7 +259,7 @@
                       type="checkbox"
                       value={folder.id}
                       bind:group={selectedFolders}
-                      class="rounded accent-bg focus:accent-ring"
+                      class="rounded-sm accent-bg focus:accent-ring"
                     />
                     <span class="ml-2 text-sm text-slate-600 dark:text-slate-400">
                       {folder.icon || '📁'} {folder.name}
@@ -279,7 +279,7 @@
                       type="checkbox"
                       value={tag}
                       bind:group={selectedTags}
-                      class="rounded accent-bg focus:accent-ring"
+                      class="rounded-sm accent-bg focus:accent-ring"
                     />
                     <span class="ml-2 text-sm text-slate-600 dark:text-slate-400">
                       #{tag}
@@ -296,14 +296,14 @@
                 <input
                   type="date"
                   bind:value={dateFrom}
-                  class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                  class="w-full px-3 py-1 text-sm rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
                   placeholder="From date"
                   aria-label="From date"
                 />
                 <input
                   type="date"
                   bind:value={dateTo}
-                  class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                  class="w-full px-3 py-1 text-sm rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
                   placeholder="To date"
                   aria-label="To date"
                 />
@@ -319,14 +319,14 @@
                   bind:value={wordCountMin}
                   placeholder="Min words"
                   aria-label="Minimum word count"
-                  class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                  class="w-full px-3 py-1 text-sm rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
                 />
                 <input
                   type="number"
                   bind:value={wordCountMax}
                   placeholder="Max words"
                   aria-label="Maximum word count"
-                  class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                  class="w-full px-3 py-1 text-sm rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
                 />
               </div>
             </fieldset>
@@ -337,7 +337,7 @@
               <select
                 id="seqta-references-filter"
                 bind:value={hasSeqtaReferences}
-                class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                class="w-full px-3 py-1 text-sm rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
               >
                 <option value={undefined}>Any</option>
                 <option value={true}>Has SEQTA references</option>
@@ -378,7 +378,7 @@
                 <div class="flex flex-wrap gap-2">
                   {#each recentSearches as recent}
                     <button
-                      class="px-2 py-1 text-xs rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      class="px-2 py-1 text-xs rounded-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                       onclick={() => useRecentSearch(recent)}
                     >
                       {recent}
@@ -416,7 +416,7 @@
                   <div class="space-y-1 mb-3">
                     {#each result.matches.slice(0, 3) as match}
                       <div class="flex items-start space-x-2 text-sm">
-                        <Icon src={getMatchIcon(match.field)} class="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                        <Icon src={getMatchIcon(match.field)} class="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                         <div class="flex-1">
                           <span class="text-xs text-slate-500 dark:text-slate-400 capitalize">{match.field}:</span>
                           <span class="text-slate-600 dark:text-slate-300">
@@ -472,7 +472,7 @@
             </h4>
             <div class="space-y-2">
               {#each recentSearches as recent}
-                <div class="flex items-center justify-between p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <div class="flex items-center justify-between p-2 rounded-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                   <button
                     class="flex-1 text-left text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                     onclick={() => useRecentSearch(recent)}

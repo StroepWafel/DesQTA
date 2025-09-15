@@ -54,7 +54,7 @@
         <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="invert size-10 sm:size-14 dark:invert-0" />
         <div>
           <h2
-            class="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
+            class="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
             About DesQTA
           </h2>
           <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400">Your SEQTA Learn Desktop Experience</p>

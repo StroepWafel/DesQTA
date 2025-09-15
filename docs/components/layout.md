@@ -163,14 +163,14 @@ const checkMobile = async () => {
 The header uses consistent theming with the application:
 ```svelte
 <header 
-  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-[999999]" 
+  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999" 
   data-tauri-drag-region 
   style="background: var(--background-color);">
 ```
 
 **Key Classes:**
 - `data-tauri-drag-region`: Enables window dragging on desktop
-- `z-[999999]`: Ensures header stays above all other elements
+- `z-999999`: Ensures header stays above all other elements
 - `playful`: Custom animation class for interactive elements
 
 ## 🧭 AppSidebar Component

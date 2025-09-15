@@ -93,7 +93,7 @@
 
 <div class="relative user-dropdown-container">
   <button
-    class="flex gap-3 items-center px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 border-slate-200/40 hover:accent-bg dark:bg-slate-800/60 dark:border-slate-700/40 dark:hover:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-slate-500/50"
+    class="flex gap-3 items-center px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 border-slate-200/40 hover:accent-bg dark:bg-slate-800/60 dark:border-slate-700/40 dark:hover:bg-slate-800/80 focus:outline-hidden focus:ring-2 focus:ring-slate-500/50"
     onclick={onToggleUserDropdown}
     aria-label="User menu"
     tabindex="0">
@@ -101,14 +101,14 @@
       <img
         src={randomAvatarUrl}
         alt="Random avatar"
-        class="object-cover w-8 h-8 rounded-full border-2 shadow-sm border-white/60 dark:border-slate-600/60" />
+        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-slate-600/60" />
     {:else if !disableSchoolPicture && userInfo.profilePicture}
       <img
         src={userInfo.profilePicture}
         alt=""
-        class="object-cover w-8 h-8 rounded-full border-2 shadow-sm border-white/60 dark:border-slate-600/60" />
+        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-slate-600/60" />
     {:else}
-      <div class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold text-base border-2 shadow-sm border-white/60 dark:border-slate-600/60">
+      <div class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-slate-600/60">
         {userInfo.displayName ? userInfo.displayName[0] : userInfo.userName[0]}
       </div>
     {/if}

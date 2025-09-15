@@ -374,7 +374,7 @@ interface Props {
 Simple navigation header with back button.
 
 ```svelte
-<div class="flex sticky top-0 z-10 gap-4 items-center px-6 py-4 bg-opacity-80 border-b backdrop-blur-sm">
+<div class="flex sticky top-0 z-10 gap-4 items-center px-6 py-4 bg-opacity-80 border-b backdrop-blur-xs">
   <a href="/assessments" class="flex gap-2 items-center transition-colors duration-200">
     <Icon src={ArrowLeft} class="w-5 h-5" />
     <span>Back to Assessments</span>
@@ -627,7 +627,7 @@ All assessment components follow the application's design system:
 #### Glass Morphism Effects
 ```css
 /* Backdrop blur with transparency */
-.backdrop-blur-sm {
+.backdrop-blur-xs {
   backdrop-filter: blur(4px);
 }
 

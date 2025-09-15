@@ -192,7 +192,7 @@
 
 <div class="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-8">
   <div class="max-w-4xl w-full">
-    <div class="bg-white/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-8">
+    <div class="bg-white/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-8">
       <!-- Error Header -->
       <div class="mb-8">
         <div class="flex items-center justify-between mb-6">
@@ -220,7 +220,7 @@
           </div>
           <button
             onclick={toggleDetailedInfo}
-            class="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-200 dark:hover:bg-slate-700"
+            class="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-200 dark:hover:bg-slate-700"
           >
             <Icon src={InformationCircle} size="16" class="inline mr-1" />
             {showDetailedInfo ? 'Hide' : 'Show'} Details
@@ -284,7 +284,7 @@
         {#if isAuthError}
           <button
             onclick={goHome}
-            class="px-4 py-3 bg-accent-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 hover:bg-accent-600"
+            class="px-4 py-3 bg-accent-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 hover:bg-accent-600"
           >
             <Icon src={Home} size="20" class="inline mr-2" />
             Go to Login
@@ -292,7 +292,7 @@
         {:else}
           <button
             onclick={goBack}
-            class="px-4 py-3 bg-accent-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 hover:bg-accent-600"
+            class="px-4 py-3 bg-accent-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 hover:bg-accent-600"
           >
             <Icon src={ArrowLeft} size="20" class="inline mr-2" />
             Go Back
@@ -301,7 +301,7 @@
 
         <button
           onclick={retryOperation}
-          class="px-4 py-3 bg-blue-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
+          class="px-4 py-3 bg-blue-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
         >
           <Icon src={ArrowPath} size="20" class="inline mr-2" />
           Retry Operation
@@ -309,7 +309,7 @@
 
         <button
           onclick={refreshPage}
-          class="px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-200 dark:hover:bg-slate-700"
+          class="px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-200 dark:hover:bg-slate-700"
         >
           <Icon src={ArrowPath} size="20" class="inline mr-2" />
           Refresh Page
@@ -317,7 +317,7 @@
 
         <button
           onclick={openTroubleshooting}
-          class="px-4 py-3 bg-purple-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 hover:bg-purple-600"
+          class="px-4 py-3 bg-purple-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 hover:bg-purple-600"
         >
           <Icon src={Cog} size="20" class="inline mr-2" />
           Advanced Troubleshooting
@@ -325,7 +325,7 @@
 
         <button
           onclick={goHome}
-          class="px-4 py-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-100 dark:hover:bg-slate-800"
+          class="px-4 py-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <Icon src={Home} size="20" class="inline mr-2" />
           Go Home
@@ -334,7 +334,7 @@
         {#if errorId !== 'unknown'}
           <button
             onclick={markErrorResolved}
-            class="px-4 py-3 bg-green-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
+            class="px-4 py-3 bg-green-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
           >
             <Icon src={CheckCircle} size="20" class="inline mr-2" />
             Mark as Resolved
@@ -413,7 +413,7 @@
           {#if errorReport?.error?.context}
             <div class="mb-4">
               <h4 class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Error Context</h4>
-              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">{JSON.stringify(errorReport.error.context, null, 2)}</pre>
+              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700">{JSON.stringify(errorReport.error.context, null, 2)}</pre>
             </div>
           {/if}
 
@@ -421,7 +421,7 @@
           {#if errorReport?.environment}
             <div class="mb-4">
               <h4 class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Environment</h4>
-              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">{JSON.stringify(errorReport.environment, null, 2)}</pre>
+              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700">{JSON.stringify(errorReport.environment, null, 2)}</pre>
             </div>
           {/if}
 
@@ -429,7 +429,7 @@
           {#if error?.stack}
             <div class="mb-4">
               <h4 class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Stack Trace</h4>
-              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 max-h-48">{error.stack}</pre>
+              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700 max-h-48">{error.stack}</pre>
             </div>
           {/if}
 
@@ -437,7 +437,7 @@
           {#if errorReport}
             <div>
               <h4 class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Complete Error Report</h4>
-              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 max-h-64">{JSON.stringify(errorReport, null, 2)}</pre>
+              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700 max-h-64">{JSON.stringify(errorReport, null, 2)}</pre>
             </div>
           {/if}
         </div>
@@ -447,7 +447,7 @@
       {#if import.meta.env.DEV}
         <div class="mt-8 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-left border border-slate-200 dark:border-slate-700">
           <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Development Debug Information:</h3>
-          <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">{JSON.stringify({
+          <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700">{JSON.stringify({
             errorId,
             status: errorStatus,
             message: errorMessage,

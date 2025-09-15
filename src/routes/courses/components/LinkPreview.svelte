@@ -109,7 +109,7 @@
           alt={preview.title}
           class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
         <div
-          class="absolute inset-0 bg-gradient-to-t via-transparent to-transparent transition-opacity duration-300 from-black/80 group-hover:opacity-90">
+          class="absolute inset-0 bg-linear-to-t via-transparent to-transparent transition-opacity duration-300 from-black/80 group-hover:opacity-90">
         </div>
         <div class="absolute bottom-2 right-4 left-4">
           <h4

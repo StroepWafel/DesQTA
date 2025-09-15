@@ -71,7 +71,7 @@
 </script>
 
 <div
-  class="p-4 rounded-xl border backdrop-blur-sm bg-slate-100/80 dark:bg-slate-800/50 sm:p-6 border-slate-300/50 dark:border-slate-700/50">
+  class="p-4 rounded-xl border backdrop-blur-xs bg-slate-100/80 dark:bg-slate-800/50 sm:p-6 border-slate-300/50 dark:border-slate-700/50">
   <div class="flex justify-between items-center mb-6">
     <button
       class="p-2 rounded-lg transition-all duration-300 hover:bg-slate-200/80 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
@@ -129,7 +129,7 @@
                   : '#fff'}
                 <div class="flex gap-1 items-center">
                   <div
-                    class="flex-1 p-1 text-xs truncate rounded"
+                    class="flex-1 p-1 text-xs truncate rounded-sm"
                     style={`background: rgba(0,0,0,0.2); color: ${textColor};`}>
                     {assessment.title}
                   </div>

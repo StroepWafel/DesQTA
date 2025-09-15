@@ -222,7 +222,7 @@
 <div class="overflow-y-auto relative flex-1">
   {#if settingsLoaded && !showingOverview && selectedLessonContent && aiIntegrationsEnabled && lessonSummaryAnalyserEnabled}
     <div class="px-2 sm:px-4 md:px-8 py-2 sm:py-4 md:py-6">
-      <div class="p-4 mb-6 flex flex-col gap-4 rounded-xl border backdrop-blur-sm bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200/50 dark:border-purple-700/50">
+      <div class="p-4 mb-6 flex flex-col gap-4 rounded-xl border backdrop-blur-xs bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200/50 dark:border-purple-700/50">
         <div class="flex justify-between items-center">
           <div>
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white">AI Lesson Summary</h3>
@@ -231,7 +231,7 @@
             </p>
           </div>
           <button
-            class="px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             onclick={generateLessonSummary}
             disabled={aiSummaryLoading}
           >
@@ -279,7 +279,7 @@
 
       {#if selectedLessonContent.h}
         <div
-          class="p-4 mb-4 rounded-xl border backdrop-blur-sm bg-white/80 dark:bg-slate-900/50 border-slate-300/50 dark:border-slate-800/50 animate-slide-in animate-delay-1">
+          class="p-4 mb-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-slate-900/50 border-slate-300/50 dark:border-slate-800/50 animate-slide-in animate-delay-1">
           <h3 class="mb-2 text-lg font-semibold text-slate-900 dark:text-white">Homework/Notes</h3>
           <div class="max-w-none prose prose-slate dark:prose-invert prose-indigo">
             <p class="text-slate-700 dark:text-slate-300">
@@ -299,7 +299,7 @@
             {#each selectedLessonContent.r as resource}
               <button
                 type="button"
-                class="flex items-center p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
+                class="flex items-center p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
                 onclick={async () => {
                   try {
                     const url = await invoke('get_seqta_file', {
@@ -345,7 +345,7 @@
                   </h2>
                 {:else if renderedModule.type === 'text'}
                   <div
-                    class="p-4 my-4 rounded-xl border backdrop-blur-sm bg-white/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50 animate-slide-in hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
+                    class="p-4 my-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50 animate-slide-in hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
                     style="--animation-delay: {0.2 + i * 0.05}s;">
                     {@html sanitizeHtml(renderedModule.content)}
                   </div>
@@ -382,7 +382,7 @@
                 </h2>
               {:else if renderedModule.type === 'text'}
                 <div
-                  class="p-4 mb-6 rounded-xl border backdrop-blur-sm bg-white/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50 animate-slide-in"
+                  class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50 animate-slide-in"
                   style="--animation-delay: {0.1 + i * 0.05}s;">
                   {@html sanitizeHtml(renderedModule.content)}
                 </div>
@@ -394,7 +394,7 @@
                       {#if fileDetails}
                         <button
                           type="button"
-                          class="flex items-center p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
+                          class="flex items-center p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
                           onclick={async () => {
                             try {
                               const url = await invoke('get_seqta_file', {

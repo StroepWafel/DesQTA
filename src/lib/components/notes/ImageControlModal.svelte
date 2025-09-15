@@ -43,7 +43,7 @@
 {#if isOpen}
   <!-- Modal Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     transition:fly={{ y: -50, duration: 200 }}
     onclick={() => dispatch('close')}
     onkeydown={(e) => e.key === 'Escape' && dispatch('close')}
@@ -76,7 +76,7 @@
       <!-- Image Preview -->
       <div class="p-6 border-b border-slate-200 dark:border-slate-700">
         <div class="flex items-center space-x-4">
-          <div class="flex-shrink-0">
+          <div class="shrink-0">
             <img
               src={imageSrc}
               alt={imageAlt}
@@ -98,7 +98,7 @@
       <div class="p-6 space-y-2">
         <!-- Copy Alt Text -->
         <button
-          class="w-full flex items-center px-4 py-3 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-[1.01] focus:outline-none focus:ring-2 accent-ring"
+          class="w-full flex items-center px-4 py-3 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-[1.01] focus:outline-hidden focus:ring-2 accent-ring"
           onclick={handleCopyAlt}
         >
           <Icon src={DocumentDuplicate} class="w-5 h-5 mr-3 text-slate-400" />
@@ -112,7 +112,7 @@
 
         <!-- Replace Image -->
         <button
-          class="w-full flex items-center px-4 py-3 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-[1.01] focus:outline-none focus:ring-2 accent-ring"
+          class="w-full flex items-center px-4 py-3 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-[1.01] focus:outline-hidden focus:ring-2 accent-ring"
           onclick={handleReplaceImage}
         >
           <Icon src={ArrowPath} class="w-5 h-5 mr-3 text-slate-400" />
@@ -126,7 +126,7 @@
 
         <!-- Remove Image -->
         <button
-          class="w-full flex items-center px-4 py-3 text-left rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-red-500"
+          class="w-full flex items-center px-4 py-3 text-left rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 hover:scale-[1.01] focus:outline-hidden focus:ring-2 focus:ring-red-500"
           onclick={handleRemoveImage}
         >
           <Icon src={Trash} class="w-5 h-5 mr-3" />

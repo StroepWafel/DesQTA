@@ -337,7 +337,7 @@
           privately for your own analytics.
         </p>
         <button
-          class="px-6 py-3 mt-2 text-lg font-semibold text-white bg-indigo-600 rounded-lg shadow transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring hover:bg-indigo-700"
+          class="px-6 py-3 mt-2 text-lg font-semibold text-white bg-indigo-600 rounded-lg shadow-xs transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring hover:bg-indigo-700"
           onclick={grabData}>
           Grab Data
         </button>
@@ -403,11 +403,11 @@
       {/if}
       <div class="flex gap-3 justify-end">
         <button
-          class="px-4 py-2 rounded-lg transition-all duration-200 transform text-slate-800 bg-slate-200 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          class="px-4 py-2 rounded-lg transition-all duration-200 transform text-slate-800 bg-slate-200 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
           onclick={closeDeleteModal}
           disabled={deleteLoading}>Cancel</button>
         <button
-          class="px-4 py-2 text-white bg-red-600 rounded-lg transition-all duration-200 transform hover:bg-red-700 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          class="px-4 py-2 text-white bg-red-600 rounded-lg transition-all duration-200 transform hover:bg-red-700 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
           onclick={confirmDeleteAnalytics}
           disabled={deleteLoading}>
           {#if deleteLoading}

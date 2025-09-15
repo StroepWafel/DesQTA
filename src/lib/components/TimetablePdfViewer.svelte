@@ -64,7 +64,7 @@
         </div>
       </div>
     {:else if pdfUrl}
-      <iframe src={pdfUrl} class="w-full min-h-[70vh] rounded-lg border border-slate-200 dark:border-slate-700 shadow" title="Timetable PDF"></iframe>
+      <iframe src={pdfUrl} class="w-full min-h-[70vh] rounded-lg border border-slate-200 dark:border-slate-700 shadow-xs" title="Timetable PDF"></iframe>
     {/if}
   </div>
 </Modal> 
