@@ -337,7 +337,7 @@
           privately for your own analytics.
         </p>
         <button
-          class="px-6 py-3 mt-2 text-lg font-semibold text-white bg-indigo-600 rounded-lg shadow-xs transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring hover:bg-indigo-700"
+          class="px-6 py-3 mt-2 text-lg font-semibold text-white bg-indigo-600 rounded-lg transition-all duration-200 transform shadow-xs hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring hover:bg-indigo-700"
           onclick={grabData}>
           Grab Data
         </button>
