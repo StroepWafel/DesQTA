@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "npm install && npm run tauri dev",
+    "predev": "node scripts/generate-themes.mjs",
     "dev": "vite dev",
+    "prebuild": "node scripts/generate-themes.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
