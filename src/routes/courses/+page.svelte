@@ -250,12 +250,12 @@
   });
 </script>
 
-<div class="flex w-full h-full overflow-hidden">
+<div class="flex overflow-hidden w-full h-full">
   <!-- Unified Navigation Sidebar -->
-  <div class="flex flex-col w-80 h-full border-r border-gray-200 dark:border-gray-700 transition-all duration-300">
+  <div class="flex flex-col w-80 h-full border-r border-gray-200 transition-all duration-300 dark:border-gray-700">
     
     <!-- Navigation Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+    <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
       <h2 class="text-xl font-bold text-gray-900 dark:text-white">
         {selectedSubject ? selectedSubject.title : 'Courses'}
       </h2>
@@ -269,7 +269,7 @@
             selectedLessonContent = null;
             showingOverview = true;
           }}
-          class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-accent dark:hover:text-accent transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+          class="p-2 text-gray-600 rounded-lg transition-all duration-200 transform dark:text-gray-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
           title="Back to subjects"
           aria-label="Back to subjects"
         >
@@ -281,52 +281,46 @@
     </div>
 
     <!-- Content Area with Transition -->
-    <div class="flex-1 overflow-hidden relative">
+    <div class="overflow-hidden relative flex-1">
       <!-- Subject Selection View -->
       <div class="absolute inset-0 transition-all duration-500 ease-in-out {!selectedSubject ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none'}">
-        <div class="h-full flex flex-col">
+        <div class="flex flex-col h-full">
           <!-- Search Bar -->
           <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
             <div class="relative">
               <input
                 type="text"
                 placeholder="Search subjects..."
-                class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
+                class="px-4 py-2 w-full bg-white rounded-lg border border-gray-200 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                 bind:value={search}
               />
-              <svg class="absolute right-3 top-1/2 w-5 h-5 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="absolute right-3 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
             </div>
           </div>
 
           <!-- Subject List -->
-          <div class="flex-1 overflow-y-auto">
+          <div class="overflow-y-auto flex-1">
             {#if loading}
               <div class="flex justify-center items-center p-8">
                 <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent/30 border-t-accent"></div>
                 <span class="ml-3 text-gray-600 dark:text-gray-400">Loading subjects...</span>
               </div>
             {:else if error}
-              <div class="p-6 text-red-500 text-center">⚠️ {error}</div>
+              <div class="p-6 text-center text-red-500">⚠️ {error}</div>
             {:else}
               <!-- Active Subjects -->
               <div class="px-4 py-3">
-                <h3 class="px-2 py-1 text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Current Subjects</h3>
-                <div class="space-y-2 mt-2">
+                <h3 class="px-1 py-1 text-sm font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">Current Subjects</h3>
+                <div class="mt-2 space-y-1">
                   {#each activeSubjects.filter(subjectMatches) as subject}
                     <button
-                      class="w-full px-4 py-3 text-left bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] group"
+                      class="py-3 w-full text-left group"
                       onclick={() => selectSubject(subject)}
                     >
-                      <div class="font-semibold text-gray-900 dark:text-white group-hover:text-accent transition-colors duration-200">
+                      <div class="font-semibold text-gray-900 transition-colors duration-100 dark:text-white group-hover:text-accent">
                         {subject.title}
-                      </div>
-                      <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {subject.description}
-                      </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        {subject.code}
                       </div>
                     </button>
                   {/each}
@@ -335,13 +329,13 @@
 
               <!-- Other Folders -->
               {#if otherFolders.length > 0}
-                <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
-                  <h3 class="px-2 py-1 text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Other Years</h3>
-                  <div class="space-y-2 mt-2">
+                <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+                  <h3 class="px-2 py-1 text-sm font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">Other Years</h3>
+                  <div class="mt-2 space-y-2">
                     {#each otherFolders.filter(folderMatches) as folder}
                       <div>
                         <button
-                          class="w-full px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 flex items-center justify-between border-l-4 border-transparent hover:border-accent/50"
+                          class="flex justify-between items-center px-4 py-3 w-full font-medium text-left text-gray-700 rounded-lg border-l-4 border-transparent transition-all duration-200 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-accent/50"
                           onclick={() => (expandedFolders[folder.code] = !expandedFolders[folder.code])}
                         >
                           <span>{folder.code}</span>
@@ -356,14 +350,14 @@
                           </svg>
                         </button>
                         {#if expandedFolders[folder.code]}
-                          <div class="ml-4 mt-2 space-y-2">
+                          <div class="mt-2 ml-4 space-y-2">
                             {#each folder.subjects.filter(subjectMatches) as subject}
                               <button
-                                class="w-full px-4 py-3 text-left bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-sm border-l-4 border-transparent hover:border-accent/50"
+                                class="px-4 py-3 w-full text-sm text-left bg-gray-50 rounded-lg border-l-4 border-transparent transition-all duration-200 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-accent/50"
                                 onclick={() => selectSubject(subject)}
                               >
                                 <div class="font-medium text-gray-800 dark:text-gray-200">{subject.title}</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">{subject.code}</div>
+                                <div class="mt-1 text-xs text-gray-600 dark:text-gray-400">{subject.code}</div>
                               </button>
                             {/each}
                           </div>
@@ -380,14 +374,14 @@
 
       <!-- Course Content Navigation View -->
       <div class="absolute inset-0 transition-all duration-500 ease-in-out {selectedSubject ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full pointer-events-none'}">
-        <div class="h-full flex flex-col">
+        <div class="flex flex-col h-full">
       {#if loadingCourse}
-            <div class="flex-1 flex justify-center items-center">
+            <div class="flex flex-1 justify-center items-center">
               <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent/30 border-t-accent"></div>
               <span class="ml-3 text-gray-600 dark:text-gray-400">Loading course...</span>
         </div>
       {:else if courseError}
-            <div class="flex-1 flex justify-center items-center text-red-500">
+            <div class="flex flex-1 justify-center items-center text-red-500">
               ⚠️ {courseError}
         </div>
       {:else if coursePayload}
@@ -399,7 +393,7 @@
                   onclick={() => selectOverview()}
                 >
                   <div class="font-semibold">📚 Course Overview</div>
-                  <div class="text-sm opacity-80 mt-1">Main course content and resources</div>
+                  <div class="mt-1 text-sm opacity-80">Main course content and resources</div>
                 </button>
                 
                 <!-- Jump to Today/Latest -->
@@ -432,13 +426,13 @@
                   
                   {#if jumpTarget}
                     <button
-                      class="w-full px-4 py-3 text-left bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-all duration-200"
+                      class="px-4 py-3 w-full text-left bg-green-50 rounded-lg border border-green-200 transition-all duration-200 dark:bg-green-900/20 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30"
                       onclick={() => selectLesson(jumpTarget.termSchedule, jumpTarget.lesson, jumpTarget.lessonIndex)}
                     >
                       <div class="font-semibold text-green-800 dark:text-green-300">
                         🕐 {jumpTarget.type === 'today' ? "Today's Lesson" : 'Latest Lesson'}
                       </div>
-                      <div class="text-sm text-green-600 dark:text-green-400 mt-1">
+                      <div class="mt-1 text-sm text-green-600 dark:text-green-400">
                         {jumpTarget.lesson.p}
                       </div>
                     </button>
@@ -448,10 +442,10 @@
             </div>
 
             <!-- Lesson Schedule -->
-            <div class="flex-1 overflow-y-auto">
+            <div class="overflow-y-auto flex-1">
               {#each coursePayload.d as termSchedule}
                 <div>
-                  <div class="sticky top-0 px-4 py-3 text-sm font-semibold text-white accent-bg border-b border-gray-200 dark:border-gray-700">
+                  <div class="sticky top-0 px-4 py-3 text-sm font-semibold text-white border-b border-gray-200 accent-bg dark:border-gray-700">
                     Term {termSchedule.t} - Week {termSchedule.w}
                   </div>
                   {#each termSchedule.l as lesson, lessonIndex}
@@ -463,14 +457,14 @@
                       <div class="font-semibold text-gray-900 dark:text-white">
                         {lesson.p}
                       </div>
-                      <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <div class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                         {new Date(lesson.d).toLocaleDateString('en-AU', { 
                           weekday: 'short', 
                           month: 'short', 
                           day: 'numeric' 
                         })}
                       </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                      <div class="mt-1 text-xs text-gray-500 dark:text-gray-500">
                         {lesson.s} - {lesson.e}
                       </div>
                     </button>
@@ -485,32 +479,32 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="flex-1 overflow-y-auto" bind:this={contentScrollContainer}>
+  <div class="overflow-y-auto flex-1" bind:this={contentScrollContainer}>
     {#if loadingCourse}
       <div class="flex justify-center items-center h-full">
         <div class="text-center">
-          <div class="w-12 h-12 mx-auto rounded-full border-4 animate-spin border-accent/30 border-t-accent mb-4"></div>
+          <div class="mx-auto mb-4 w-12 h-12 rounded-full border-4 animate-spin border-accent/30 border-t-accent"></div>
           <div class="text-lg text-gray-600 dark:text-gray-300">Loading course content...</div>
         </div>
       </div>
     {:else if courseError}
       <div class="flex justify-center items-center h-full">
         <div class="text-center text-red-500">
-          <div class="text-6xl mb-4">⚠️</div>
+          <div class="mb-4 text-6xl">⚠️</div>
           <div class="text-lg">Error loading course: {courseError}</div>
         </div>
       </div>
     {:else if coursePayload}
       <div class="h-full">
-        <div class="course-content h-full overflow-y-auto">
+        <div class="overflow-y-auto h-full course-content">
               <CourseContent {coursePayload} {parsedDocument} {selectedLessonContent} {showingOverview} />
           </div>
         </div>
       {:else}
       <div class="flex justify-center items-center h-full">
         <div class="text-center text-gray-500 dark:text-gray-400">
-          <div class="text-6xl mb-4">🎓</div>
-          <div class="text-xl mb-2">Welcome to Courses</div>
+          <div class="mb-4 text-6xl">🎓</div>
+          <div class="mb-2 text-xl">Welcome to Courses</div>
           <div class="text-lg">Select a subject from the sidebar to get started</div>
         </div>
       </div>

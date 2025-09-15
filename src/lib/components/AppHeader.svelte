@@ -133,7 +133,6 @@
     $search ? pages.filter((p) => p.name.toLowerCase().includes($search.toLowerCase())) : pages
   );
 
-  let searchInput: HTMLInputElement | null = null;
   let selectedIndex = $state(-1);
   let showPagesMenu = $state(false);
   let globalSearchEnabled = $state(false);
@@ -170,14 +169,6 @@
       handleSelect($filteredPages[selectedIndex]);
       e.preventDefault();
     }
-  }
-
-  function openPagesMenu() {
-    showPagesMenu = true;
-    setTimeout(() => {
-      const input = document.getElementById('pages-search-input');
-      if (input) input.focus();
-    }, 10);
   }
 
   function closePagesMenu() {
@@ -379,7 +370,7 @@
     {/if}
   </div>
   </div>
-  <div class="flex-1 flex justify-center">
+  <div class="flex flex-1 justify-center">
     {#if globalSearchEnabled}
     <GlobalSearch />
     {/if}
@@ -400,14 +391,14 @@
 
       {#if showNotifications}
         <div
-          class="absolute right-0 mt-2 w-96 max-h-96 overflow-y-auto bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50"
+          class="overflow-y-auto absolute right-0 z-50 mt-2 w-96 max-h-96 bg-white rounded-xl border shadow-2xl dark:bg-slate-800 border-slate-200 dark:border-slate-700"
           transition:scale={{ duration: 200 }}
           style="transform-origin: top right;">
           <div class="p-4 border-b border-slate-200 dark:border-slate-700">
             <div class="flex justify-between items-center">
               <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Notifications</h3>
               <button
-                class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                class="transition-colors text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                 onclick={clearNotifications}>
                 Clear all
               </button>
@@ -420,30 +411,30 @@
                 <div class="w-6 h-6 rounded-full border-2 animate-spin border-accent/30 border-t-accent"></div>
               </div>
             {:else if notifications.length === 0}
-              <div class="text-center py-8 text-slate-500 dark:text-slate-400">
-                <Icon src={Bell} class="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <div class="py-8 text-center text-slate-500 dark:text-slate-400">
+                <Icon src={Bell} class="mx-auto mb-2 w-12 h-12 opacity-50" />
                 <p>No notifications</p>
               </div>
             {:else}
               {#each notifications as notification (notification.notificationID)}
                 <button type="button"
-                  class="p-3 w-full text-left rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                  class="p-3 w-full text-left rounded-lg transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50"
 
                   aria-label={getNotificationTitle(notification)}
                   onclick={() => handleNotificationClick(notification)}
                   onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleNotificationClick(notification); } }}>
                   <div class="flex gap-3">
-                    <div class="flex-shrink-0 w-2 h-2 bg-accent rounded-full mt-2"></div>
+                    <div class="flex-shrink-0 mt-2 w-2 h-2 rounded-full bg-accent"></div>
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      <p class="text-sm font-medium truncate text-slate-900 dark:text-white">
                         {getNotificationTitle(notification)}
                       </p>
                       {#if getNotificationSubtitle(notification)}
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate">
+                        <p class="mt-1 text-xs truncate text-slate-600 dark:text-slate-400">
                           {getNotificationSubtitle(notification)}
                         </p>
                       {/if}
-                      <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                      <p class="mt-1 text-xs text-slate-500 dark:text-slate-500">
                         {formatNotificationTime(notification.timestamp)}
                       </p>
                     </div>
@@ -505,11 +496,11 @@
       onclick={() => { showNotificationsModal = false; }}
       onkeydown={e => { if (e.key === 'Escape') showNotificationsModal = false; }}
     >
-      <div class="relative w-full max-w-xl mx-auto rounded-2xl bg-white/70 dark:bg-gray-900/80 shadow-2xl border border-white/20 dark:border-gray-700/40 backdrop-blur-xl p-0 flex flex-col animate-in pointer-events-auto" role="document">
+      <div class="flex relative flex-col p-0 mx-auto w-full max-w-xl rounded-2xl border shadow-2xl backdrop-blur-xl pointer-events-auto bg-white/70 dark:bg-gray-900/80 border-white/20 dark:border-gray-700/40 animate-in" role="document">
         <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
           <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Notifications</h3>
           <button
-            class="ml-2 px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold text-base"
+            class="px-3 py-1 ml-2 text-base font-semibold rounded-lg transition-colors bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600"
             onclick={() => { showNotificationsModal = false; }}>
             Close
           </button>
@@ -520,30 +511,30 @@
               <div class="w-6 h-6 rounded-full border-2 animate-spin border-accent/30 border-t-accent"></div>
             </div>
           {:else if sortedNotifications.length === 0}
-            <div class="text-center py-8 text-slate-500 dark:text-slate-400">
-              <Icon src={Bell} class="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <div class="py-8 text-center text-slate-500 dark:text-slate-400">
+              <Icon src={Bell} class="mx-auto mb-2 w-12 h-12 opacity-50" />
               <p>No notifications</p>
             </div>
           {:else}
             {#each sortedNotifications as notification (notification.notificationID)}
               <button type="button"
-                class="p-3 w-full text-left rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                class="p-3 w-full text-left rounded-lg transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50"
 
                 aria-label={getNotificationTitle(notification)}
                 onclick={() => handleNotificationClick(notification)}
                 onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleNotificationClick(notification); } }}>
                 <div class="flex gap-3">
-                  <div class="flex-shrink-0 w-2 h-2 bg-accent rounded-full mt-2"></div>
+                  <div class="flex-shrink-0 mt-2 w-2 h-2 rounded-full bg-accent"></div>
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">
+                    <p class="text-sm font-medium truncate text-slate-900 dark:text-white">
                       {getNotificationTitle(notification)}
                     </p>
                     {#if getNotificationSubtitle(notification)}
-                      <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate">
+                      <p class="mt-1 text-xs truncate text-slate-600 dark:text-slate-400">
                         {getNotificationSubtitle(notification)}
                       </p>
                     {/if}
-                    <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-500">
                       {formatNotificationTime(notification.timestamp)}
                     </p>
                   </div>

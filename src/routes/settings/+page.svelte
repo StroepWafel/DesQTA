@@ -433,12 +433,18 @@ The Company reserves the right to terminate your access to the Service at any ti
 
 <div class="p-4 mx-auto max-w-4xl sm:p-6 md:p-8">
   <div
-    class="sticky top-0 z-20 flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center animate-fade-in-up backdrop-blur-md bg-white/80 dark:bg-slate-900/80 py-4 px-6 border-b border-slate-200 dark:border-slate-800 rounded-xl">
-    <h1 class="text-xl font-bold sm:text-2xl px-2 py-1 rounded-lg">Settings</h1>
+    class="flex sticky top-0 z-20 flex-col gap-4 justify-between items-start px-6 py-4 mb-8 rounded-xl border-b backdrop-blur-md sm:flex-row sm:items-center animate-fade-in-up bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800">
+    <h1 class="px-2 py-1 text-xl font-bold rounded-lg sm:text-2xl">Settings</h1>
     <div class="flex flex-col gap-2 items-start w-full sm:flex-row sm:items-center sm:w-auto">
+      {#if saveSuccess}
+        <span class="text-sm text-green-400 animate-fade-in sm:text-base">Saved!</span>
+      {/if}
+      {#if saveError}
+        <span class="text-sm text-red-400 animate-fade-in sm:text-base">{saveError}</span>
+      {/if}
       <div class="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
         <button
-          class="px-6 py-2 w-full text-white bg-gradient-to-r from-green-600 to-green-500 rounded-lg shadow-lg transition-all duration-200 sm:w-auto hover:from-green-700 hover:to-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 playful"
+          class="px-6 py-2 w-full text-white rounded-lg shadow-lg transition-all duration-200 bg-accent-500 sm:w-auto hover:from-green-700 hover:to-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 playful"
           onclick={saveSettings}
           disabled={saving}>
           {#if saving}
@@ -453,12 +459,6 @@ The Company reserves the right to terminate your access to the Service at any ti
           {/if}
         </button>
       </div>
-      {#if saveSuccess}
-        <span class="text-sm text-green-400 animate-fade-in sm:text-base">Saved!</span>
-      {/if}
-      {#if saveError}
-        <span class="text-sm text-red-400 animate-fade-in sm:text-base">{saveError}</span>
-      {/if}
     </div>
   </div>
 
@@ -475,7 +475,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     <div class="space-y-6 sm:space-y-8">
       <!-- Cloud Sync Section -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up relative">
+        class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-slate-300/30 dark:border-slate-800/30">
           <h2 class="text-base font-semibold sm:text-lg text-slate-500 dark:text-slate-400">
             Cloud Sync
@@ -484,10 +484,10 @@ The Company reserves the right to terminate your access to the Service at any ti
             Sync your settings across devices with BetterSEQTA Plus account cloud syncing
           </p>
         </div>
-        <div class="p-4 sm:p-6 relative">
+        <div class="relative p-4 sm:p-6">
           {#if cloudUserLoading}
             <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
-              <div class="flex items-center gap-3">
+              <div class="flex gap-3 items-center">
                 <div
                   class="w-6 h-6 rounded-full border-2 animate-spin border-slate-400/30 border-t-slate-400">
                 </div>
@@ -499,18 +499,18 @@ The Company reserves the right to terminate your access to the Service at any ti
             {#if !acceptedCloudEula}
               <!-- EULA gate overlay -->
               <div
-                class="absolute inset-0 z-10 flex flex-col justify-center items-center p-6 bg-black/40 backdrop-blur-sm rounded-xl">
+                class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 rounded-xl backdrop-blur-sm bg-black/40">
                 <div
-                  class="max-w-xl w-full p-5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-300/50 dark:border-slate-800/50 shadow-lg text-slate-800 dark:text-white">
-                  <h3 class="text-base sm:text-lg font-semibold mb-2">
+                  class="p-5 w-full max-w-xl rounded-xl border shadow-lg bg-white/95 dark:bg-slate-900/95 border-slate-300/50 dark:border-slate-800/50 text-slate-800 dark:text-white">
+                  <h3 class="mb-2 text-base font-semibold sm:text-lg">
                     Accept BetterSEQTA Cloud EULA
                   </h3>
-                  <p class="text-sm opacity-80 mb-4">
+                  <p class="mb-4 text-sm opacity-80">
                     You must read and accept the Cloud Sync EULA before using cloud features.
                   </p>
                   <div class="flex gap-2">
                     <button
-                      class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+                      class="px-4 py-2 text-white rounded-lg transition-all duration-200 accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
                       onclick={() => (showEulaModal = true)}>Read & Accept</button>
                   </div>
                 </div>
@@ -520,39 +520,39 @@ The Company reserves the right to terminate your access to the Service at any ti
             {#if cloudUser && cloudToken}
               <!-- Logged in state -->
               <div
-                class="p-4 rounded-lg bg-green-100/60 dark:bg-green-900/30 animate-fade-in border border-green-200 dark:border-green-800">
-                <div class="flex items-start gap-4">
+                class="p-4 rounded-lg border border-green-200 bg-green-100/60 dark:bg-green-900/30 animate-fade-in dark:border-green-800">
+                <div class="flex gap-4 items-start">
                   {#if cloudUser.pfpUrl}
                     <img
                       src={getFullPfpUrl(cloudUser.pfpUrl) ||
                         `https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
                       alt={cloudUser.displayName || cloudUser.username}
-                      class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
+                      class="object-cover w-12 h-12 rounded-full border-2 border-green-300 dark:border-green-700" />
                   {:else}
                     <img
                       src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
                       alt={cloudUser.displayName || cloudUser.username}
-                      class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
+                      class="object-cover w-12 h-12 rounded-full border-2 border-green-300 dark:border-green-700" />
                   {/if}
                   <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
+                    <div class="flex gap-2 items-center mb-1">
                       <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                       <span class="text-sm font-semibold text-green-800 dark:text-green-200"
                         >Logged in to BetterSEQTA Plus</span>
                     </div>
-                    <div class="text-sm text-green-700 dark:text-green-300 mb-1">
+                    <div class="mb-1 text-sm text-green-700 dark:text-green-300">
                       <strong>{cloudUser.displayName || cloudUser.username}</strong>
                     </div>
-                    <div class="text-xs text-green-600 dark:text-green-400 mb-3">
+                    <div class="mb-3 text-xs text-green-600 dark:text-green-400">
                       @{cloudUser.username}
                     </div>
                   </div>
                 </div>
-                <div class="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
-                  <h4 class="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">
+                <div class="pt-4 mt-4 border-t border-green-200 dark:border-green-800">
+                  <h4 class="mb-2 text-sm font-semibold text-green-800 dark:text-green-200">
                     Settings Synchronization
                   </h4>
-                  <p class="text-xs text-green-700 dark:text-green-300 mb-4">
+                  <p class="mb-4 text-xs text-green-700 dark:text-green-300">
                     Upload your current settings to the cloud or download settings from another
                     device. This includes all your shortcuts, feeds, theme preferences, and other
                     customizations.
@@ -572,8 +572,8 @@ The Company reserves the right to terminate your access to the Service at any ti
               <!-- Not logged in state -->
               <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
                 <div
-                  class="mb-3 p-3 rounded bg-yellow-100/60 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800">
-                  <div class="flex items-center gap-2">
+                  class="p-3 mb-3 rounded border border-yellow-200 bg-yellow-100/60 dark:bg-yellow-900/30 dark:border-yellow-800">
+                  <div class="flex gap-2 items-center">
                     <input
                       id="accept-eula-loggedout"
                       type="checkbox"
@@ -584,22 +584,22 @@ The Company reserves the right to terminate your access to the Service at any ti
                   </div>
                 </div>
                 <div class="flex flex-col gap-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+                  <div class="flex gap-3 items-center">
+                    <div class="w-2 h-2 rounded-full bg-slate-400"></div>
                     <span class="text-sm font-semibold text-slate-600 dark:text-slate-300"
                       >Not logged in to BetterSEQTA Plus</span>
                   </div>
                   <div>
                     <h3
-                      class="text-sm font-semibold sm:text-base mb-2 text-slate-500 dark:text-slate-400">
+                      class="mb-2 text-sm font-semibold sm:text-base text-slate-500 dark:text-slate-400">
                       Settings Synchronization
                     </h3>
-                    <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                    <p class="mb-4 text-xs text-slate-500 sm:text-sm dark:text-slate-500">
                       Upload your current settings to the cloud or download settings from another
                       device. This includes all your shortcuts, feeds, theme preferences, and other
                       customizations.
                     </p>
-                    <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                    <p class="mb-4 text-xs text-slate-500 sm:text-sm dark:text-slate-500">
                       <a
                         href="https://accounts.betterseqta.org"
                         target="_blank"
@@ -608,7 +608,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                         Create a free BetterSEQTA Plus account
                       </a> to get started with cloud syncing.
                     </p>
-                    <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                    <p class="mb-4 text-xs text-slate-500 sm:text-sm dark:text-slate-500">
                       <strong>Cloud API URL:</strong>
                       {CLOUD_API_URL}
                     </p>
@@ -741,7 +741,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <label for="shortcut-name-{idx}" class="text-xs text-slate-600 dark:text-slate-400">Name</label>
                     <input
                       id="shortcut-name-{idx}"
-                      class="px-2 py-1.5 w-full bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 text-sm"
+                      class="px-2 py-1.5 w-full text-sm bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
                       placeholder="Dashboard"
                       bind:value={shortcut.name} />
                   </div>
@@ -749,7 +749,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <label for="shortcut-icon-{idx}" class="text-xs text-slate-600 dark:text-slate-400">Icon</label>
                     <input
                       id="shortcut-icon-{idx}"
-                      class="px-2 py-1.5 w-full bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 text-sm text-center"
+                      class="px-2 py-1.5 w-full text-sm text-center bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
                       placeholder="🏠"
                       bind:value={shortcut.icon} />
                   </div>
@@ -757,11 +757,11 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <label for="shortcut-url-{idx}" class="text-xs text-slate-600 dark:text-slate-400">URL</label>
                     <input
                       id="shortcut-url-{idx}"
-                      class="px-2 py-1.5 w-full bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 text-sm"
+                      class="px-2 py-1.5 w-full text-sm bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500"
                       placeholder="/dashboard"
                       bind:value={shortcut.url} />
                   </div>
-                  <div class="flex items-end h-full pt-4 sm:pt-0">
+                  <div class="flex items-end pt-4 h-full sm:pt-0">
                     <button
                       class="px-3 py-2 text-red-400 rounded transition-all duration-200 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95"
                       onclick={() => removeShortcut(idx)}
@@ -773,13 +773,13 @@ The Company reserves the right to terminate your access to the Service at any ti
               {/each}
               {#if shortcuts.length === 0}
                 <div class="py-8 text-center text-slate-600 dark:text-slate-400 animate-fade-in">
-                  <div class="text-4xl mb-3 opacity-50">⚡</div>
+                  <div class="mb-3 text-4xl opacity-50">⚡</div>
                   <p class="text-sm">No dashboard shortcuts configured</p>
                   <p class="mt-1 text-xs">Add your first shortcut to get started</p>
                 </div>
               {/if}
               <button
-                class="px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
+                class="flex gap-2 justify-center items-center px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
                 onclick={addShortcut}>
                 <Icon src={Plus} class="w-4 h-4" />
                 Add Dashboard Shortcut
@@ -893,7 +893,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 When enabled, the sidebar will automatically collapse when you click on a page link,
                 giving you more space for content.
               </p>
-              <div class="flex gap-4 items-center mb-4 mt-4">
+              <div class="flex gap-4 items-center mt-4 mb-4">
                 <input
                   id="auto-expand-sidebar-hover"
                   type="checkbox"
@@ -908,7 +908,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 When enabled and the sidebar is collapsed, hovering near the left edge will
                 temporarily expand the sidebar for easy navigation.
               </p>
-              <div class="flex gap-4 items-center mb-4 mt-4">
+              <div class="flex gap-4 items-center mt-4 mb-4">
                 <input
                   id="global-search-enabled"
                   type="checkbox"
@@ -1000,7 +1000,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               <label for="cloud-base-url" class="text-sm font-medium text-slate-800 dark:text-slate-200">Base URL</label>
               <input
                 id="cloud-base-url"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-white focus:outline-none focus:ring-2 accent-ring transition-colors duration-200"
+                class="px-3 py-2 w-full rounded-lg border transition-colors duration-200 border-slate-300/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-white focus:outline-none focus:ring-2 accent-ring"
                 placeholder="https://accounts.example.com"
                 bind:value={cloudBaseUrl}
                 oninput={() => {
@@ -1024,7 +1024,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 {cloudBaseUrlSaving ? 'Saving...' : 'Save URL'}
               </button>
               <button
-                class="px-4 py-2 rounded-lg border border-slate-300/70 dark:border-slate-700/70 text-slate-800 dark:text-white bg-slate-100/60 dark:bg-slate-800/40 hover:bg-slate-200/60 dark:hover:bg-slate-700/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
+                class="px-4 py-2 rounded-lg border transition-all duration-200 border-slate-300/70 dark:border-slate-700/70 text-slate-800 dark:text-white bg-slate-100/60 dark:bg-slate-800/40 hover:bg-slate-200/60 dark:hover:bg-slate-700/40 focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
                 onclick={resetCloudBaseUrlToDefault}>
                 Reset to Default
               </button>
@@ -1156,18 +1156,18 @@ The Company reserves the right to terminate your access to the Service at any ti
               <div class="mt-6">
                 <label
                   for="gemini-api-key"
-                  class="text-sm font-medium text-slate-800 dark:text-slate-200 block mb-1">
+                  class="block mb-1 text-sm font-medium text-slate-800 dark:text-slate-200">
                   Gemini API Key
                 </label>
                 <input
                   id="gemini-api-key"
                   type="text"
-                  class="w-full px-3 py-2 rounded border border-slate-300/50 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="px-3 py-2 w-full bg-white rounded border border-slate-300/50 dark:border-slate-700/50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Paste your Gemini API key here"
                   bind:value={geminiApiKey}
                   autocomplete="off"
                   spellcheck="false" />
-                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
                   Get your API key from
                   <a
                     href="https://aistudio.google.com"
@@ -1249,7 +1249,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       <!-- Troubleshooting button -->
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="p-4 sm:p-6 flex items-center justify-between">
+        <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">Troubleshooting</h2>
             <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -1257,7 +1257,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             </p>
           </div>
           <button
-            class="px-4 py-2 text-white bg-blue-500 rounded-lg shadow transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-blue-500 rounded-lg shadow transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105"
             onclick={openTroubleshootingModal}>
             <Icon src={Cog} class="w-4 h-4" />
             Open
@@ -1268,7 +1268,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       <!-- Cache Management -->
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-red-700/50 animate-fade-in-up">
-        <div class="p-4 sm:p-6 flex items-center justify-between">
+        <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">Cache Management</h2>
             <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
@@ -1279,7 +1279,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             type="button"
             onclick={clearCache}
             disabled={clearingCache}
-            class="px-4 py-2 text-white bg-red-500 rounded-lg shadow transition-all duration-200 hover:bg-red-600 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-red-500 rounded-lg shadow transition-all duration-200 hover:bg-red-600 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
             <Icon src={Trash} class="w-4 h-4" />
             {clearingCache ? 'Clearing...' : 'Clear Cache'}
           </button>
@@ -1327,9 +1327,9 @@ The Company reserves the right to terminate your access to the Service at any ti
 <TroubleshootingModal open={showTroubleshootingModal} onclose={closeTroubleshootingModal} />
 
 {#if showEulaModal}
-  <div class="fixed inset-0 z-50 flex items-center justify-center">
+  <div class="flex fixed inset-0 z-50 justify-center items-center">
     <div
-      class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+      class="absolute inset-0 backdrop-blur-sm bg-black/50"
       role="button"
       tabindex="0"
       onclick={() => (showEulaModal = false)}
@@ -1337,18 +1337,18 @@ The Company reserves the right to terminate your access to the Service at any ti
     </div>
     <div
       class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 animate-fade-in">
-      <h3 class="text-lg font-semibold mb-3">BetterSEQTA Cloud EULA</h3>
+      <h3 class="mb-3 text-lg font-semibold">BetterSEQTA Cloud EULA</h3>
       <div
-        class="overflow-auto p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 text-sm text-slate-800 dark:text-slate-200"
+        class="overflow-auto p-3 text-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200"
         style="max-height: 50vh;">
-        <pre class="whitespace-pre-wrap font-sans">{CLOUD_EULA_TEXT}</pre>
+        <pre class="font-sans whitespace-pre-wrap">{CLOUD_EULA_TEXT}</pre>
       </div>
-      <div class="mt-4 flex justify-end gap-2">
+      <div class="flex gap-2 justify-end mt-4">
         <button
-          class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-400"
+          class="px-4 py-2 rounded-lg transition-all duration-200 bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-400"
           onclick={() => (showEulaModal = false)}>Decline</button>
         <button
-          class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          class="px-4 py-2 text-white rounded-lg transition-all duration-200 accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
           onclick={async () => {
             try {
               await invoke('save_settings_merge', { patch: { accepted_cloud_eula: true } });
