@@ -25,7 +25,7 @@ interface Props {
   closeOnBackdrop?: boolean;        // Close when clicking backdrop (default: true)
   closeOnEscape?: boolean;          // Close on Escape key (default: true)
   ariaLabel?: string;               // Accessibility label (default: 'Modal')
-  customClasses?: string;           // Additional CSS classes
+  className?: string;           // Additional CSS classes
   onclose?: () => void;             // Close callback function
   children: Snippet;                // Modal content
 }
@@ -53,7 +53,7 @@ interface Props {
   bind:open={showModal}
   title="Large Modal"
   maxWidth="max-w-6xl"
-  customClasses="min-h-96"
+  className="min-h-96"
   closeOnBackdrop={false}>
   <div class="p-8">
     <p>This modal won't close when clicking the backdrop</p>

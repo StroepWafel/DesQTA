@@ -2,13 +2,12 @@
   import type { Message } from '../../routes/direqt-messages/types';
 
   interface Props {
-    item: Message;
-    index: number;
+    message: Message;
     selectedMessage: Message | null;
     openMessage: (msg: Message) => void;
   }
 
-  let { item: msg, index, selectedMessage, openMessage }: Props = $props();
+  let { message: msg, selectedMessage, openMessage }: Props = $props();
 
   // Format date to readable format
   function formatDate(dateStr: string): string {
@@ -109,4 +108,4 @@
       {hasAttachment(msg.preview) ? msg.preview.replace(/\(Attachment\)/, '') : msg.preview}
     </span>
   </div>
-</button> 
+</button>

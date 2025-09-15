@@ -231,13 +231,13 @@
   bind:open={showComposeModal}
   onclose={closeModal}
   maxWidth="w-full sm:w-[80%]"
-  maxHeight="h-full sm:h-[85vh]"
-  customClasses="bg-white dark:bg-slate-900 rounded-none sm:rounded-xl max-w-none sm:max-w-6xl shadow-2xl flex flex-col border border-slate-300 dark:border-slate-800 overflow-y-auto h-full sm:h-auto p-0"
+  maxHeight="max-h-full"
+  className="bg-white dark:bg-slate-900 rounded-none sm:rounded-xl max-w-none sm:max-w-6xl shadow-2xl flex flex-col border border-slate-300 dark:border-slate-800 overflow-y-auto h-full sm:h-auto p-0"
   showCloseButton={false}
   ariaLabel="Compose message">
   <!-- Header -->
   <div
-    class="flex justify-between items-center p-4 bg-white sm:rounded-t-xl border-b border-slate-300 dark:border-slate-800 dark:bg-slate-900">
+    class="flex justify-between items-center p-4 bg-white border-b sm:rounded-t-xl border-slate-300 dark:border-slate-800 dark:bg-slate-900">
     <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Compose message</h2>
     <button
       class="p-2 rounded-lg transition-all duration-200 text-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 dark:text-white"
@@ -248,7 +248,7 @@
   </div>
 
   <!-- Main content: two columns -->
-  <div class="flex flex-col sm:flex-row overflow-hidden flex-1">
+  <div class="flex overflow-hidden flex-col flex-1 sm:flex-row">
     <!-- Main (left) column -->
     <div class="flex flex-col flex-1 min-w-0">
       {#if errorMessage}
@@ -391,7 +391,7 @@
 
   <!-- Footer with actions -->
   <div
-    class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 p-4 bg-white border-t border-slate-300 dark:border-slate-800 dark:bg-slate-900">
+    class="flex flex-col gap-3 justify-between items-stretch p-4 bg-white border-t sm:flex-row sm:items-center border-slate-300 dark:border-slate-800 dark:bg-slate-900">
     <div>
       <button
         class="flex gap-2 items-center px-4 py-2 text-sm rounded-lg text-slate-900 bg-slate-200 dark:text-white dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700">
@@ -408,14 +408,14 @@
         </svg>
       </button>
     </div>
-    <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+    <div class="flex flex-col gap-3 w-full sm:flex-row sm:w-auto">
       <button
-        class="w-full sm:w-auto mb-2 sm:mb-0 px-4 py-3 rounded-lg transition-colors text-slate-900 bg-slate-200 dark:text-white dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
+        class="px-4 py-3 mb-2 w-full rounded-lg transition-colors sm:w-auto sm:mb-0 text-slate-900 bg-slate-200 dark:text-white dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
         onclick={closeModal}>
         Cancel
       </button>
       <button
-        class="w-full sm:w-auto px-6 py-3 text-white bg-blue-500 rounded-lg transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-6 py-3 w-full text-white bg-blue-500 rounded-lg transition-all duration-200 sm:w-auto hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={!composeSubject.trim() ||
           !composeBody.trim() ||
           selectedRecipients.length === 0 ||

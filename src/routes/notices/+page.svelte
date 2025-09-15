@@ -3,7 +3,6 @@
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
-  import VirtualList from '$lib/components/VirtualList.svelte';
 
   interface Notice {
     id: number;
@@ -209,48 +208,8 @@
     <div class="p-8 text-center text-red-500">{error}</div>
   {:else if filteredNotices.length === 0}
     <div class="p-8 text-center text-[var(--text-muted)]">No notices found for the selected criteria.</div>
-  {:else if filteredNotices.length > 20}
-    <!-- Use virtual scrolling for large lists with grid layout -->
-    <div class="w-full">
-      <!-- Group notices into rows for grid layout -->
-      {#if filteredNotices.length > 0}
-        {@const noticesPerRow = 3}
-        {@const rows = Math.ceil(filteredNotices.length / noticesPerRow)}
-        {@const rowHeight = 420} <!-- h-96 + gap -->
-        <VirtualList
-          items={Array.from({ length: rows }, (_, i) => filteredNotices.slice(i * noticesPerRow, (i + 1) * noticesPerRow))}
-          itemHeight={rowHeight}
-          containerHeight={800}
-          keyFunction={(row, index) => `row-${index}`}
-          class="w-full">
-          {#snippet children({ item: row, index })}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            {#each row as notice}
-              <div
-                class="rounded-xl shadow-lg bg-white/10 text-[var(--text)] border-t-8 flex flex-col h-96"
-                style={`border-top-color: ${getLabelColor(notice.labelId)}; border-top-width: 8px;`}>
-                <div class="flex overflow-y-auto flex-col flex-1 p-5">
-                  <h2 class="mb-1 text-2xl font-bold">{notice.title}</h2>
-                  <div
-                    class="mb-1 text-sm font-semibold"
-                    style={`color: ${getLabelColor(notice.labelId)}`}
-                    class:text-white={isColorDark(getLabelColor(notice.labelId))}>
-                    {getLabelTitle(notice.labelId)}
-                  </div>
-                  <div class="text-xs text-[var(--text-muted)] mb-2 uppercase tracking-wide">
-                    {notice.author}
-                  </div>
-                  <div class="flex-1 text-base">{@html notice.content}</div>
-                </div>
-              </div>
-            {/each}
-            </div>
-          {/snippet}
-        </VirtualList>
-      {/if}
-    </div>
   {:else}
-    <!-- Use regular grid for smaller lists -->
+    <!-- Use regular grid -->
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {#each filteredNotices as notice}
         <div

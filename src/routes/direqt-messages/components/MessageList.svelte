@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Message } from '../types';
-  import VirtualList from '$lib/components/VirtualList.svelte';
-  import VirtualMessageItem from '$lib/components/VirtualMessageItem.svelte';
+  import MessageItem from '$lib/components/MessageItem.svelte';
 
   let { selectedFolder, messages, loading, error, selectedMessage, openMessage } = $props<{
     selectedFolder: string;
@@ -14,13 +13,10 @@
 
   // Filter messages for the selected folder
   const filteredMessages = $derived(messages.filter((m: Message) => m.folder === selectedFolder));
-  
-  // Message item height for virtual scrolling (estimated based on current design)
-  const MESSAGE_ITEM_HEIGHT = 120;
 </script>
 
 <section
-  class="w-full xl:w-[28rem] h-full border-r border-slate-300/50 dark:border-slate-800/50 flex flex-col bg-white dark:bg-slate-900 backdrop-blur-sm shadow-md rounded-xl m-2">
+  class="w-full xl:w-[28rem] border-r border-slate-300/50 dark:border-slate-800/50 flex flex-col bg-white dark:bg-slate-900 backdrop-blur-sm shadow-md rounded-xl m-2">
   <div
     class="flex items-center p-4 text-base font-semibold border-b text-slate-900 sm:text-lg border-slate-300/50 dark:border-slate-800/50 dark:text-white">
     <svg
@@ -33,7 +29,7 @@
     {selectedFolder}
   </div>
 
-  <div class="flex-1 p-2">
+  <div class="overflow-y-scroll flex-1 p-1">
     {#if loading}
       <div
         class="flex flex-col justify-center items-center p-8 h-32 text-center text-slate-600 dark:text-slate-300">
@@ -79,21 +75,14 @@
         <p class="mt-4 text-sm sm:text-base">No messages in this folder.</p>
       </div>
     {:else}
-      <div class="flex-1 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-slate-800/10">
-        <VirtualList
-          items={filteredMessages}
-          itemHeight={MESSAGE_ITEM_HEIGHT}
-          containerHeight={600}
-          keyFunction={(item) => item.id}>
-          {#snippet children({ item, index })}
-            <VirtualMessageItem 
-              {item}
-              {index}
-              {selectedMessage}
-              {openMessage}
-            />
-          {/snippet}
-        </VirtualList>
+      <div class="overflow-y-scroll p-2 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-slate-800/10">
+        {#each filteredMessages as message (message.id)}
+          <MessageItem 
+            {message}
+            {selectedMessage}
+            {openMessage}
+          />
+        {/each}
       </div>
     {/if}
   </div>

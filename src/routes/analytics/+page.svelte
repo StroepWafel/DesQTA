@@ -179,10 +179,6 @@
     }
   });
 
-
-
-
-
   function openDeleteModal() {
     showDeleteModal = true;
     deleteError = null;
@@ -309,7 +305,7 @@
 </script>
 
 <div class="container px-6 py-7 mx-auto">
-  <h1 class="mb-8 text-2xl font-bold">Analytics Dashboard</h1>
+  <h1 class="absolute mb-8 text-2xl font-bold">Analytics</h1>
 
   {#if loading}
     <div class="flex justify-center items-center h-64">
@@ -394,7 +390,7 @@
     bind:open={showDeleteModal}
     onclose={closeDeleteModal}
     maxWidth="max-w-md"
-    customClasses="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl"
+    className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl"
     showCloseButton={false}
     ariaLabel="Delete Analytics Data">
     <div class="p-8">

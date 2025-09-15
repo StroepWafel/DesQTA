@@ -119,7 +119,7 @@
   onclose={closeModal}
   maxWidth="w-[80%]"
   maxHeight="h-[80%]"
-  customClasses="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
+  className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
   ariaLabel="Welcome Portal Modal">
   {#if portalUrl}
     <iframe src={portalUrl} class="w-full h-full rounded-2xl border-0" title="Welcome Portal"></iframe>

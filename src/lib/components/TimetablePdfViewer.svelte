@@ -32,7 +32,7 @@
   bind:open={showPdfViewerState}
   onclose={onClose}
   maxWidth="max-w-4xl"
-  customClasses="min-h-[80vh]"
+  className="min-h-[80vh]"
   title="Timetable PDF"
   ariaLabel="Timetable PDF Viewer"
   showCloseButton={false}

@@ -353,7 +353,7 @@
 
 <!-- Tab Switcher (hidden when showCloudMessaging is false) -->
 {#if showCloudMessaging}
-<div class="flex gap-2 p-4 border-b border-slate-300/50 dark:border-slate-800/50 bg-white dark:bg-slate-900">
+<div class="flex gap-2 p-4 bg-white border-b border-slate-300/50 dark:border-slate-800/50 dark:bg-slate-900">
   <button
     class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
       {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
@@ -375,10 +375,10 @@
   <div class="flex w-full h-full max-xl:flex-col">
     {#if selectedTab === 'SEQTA'}
       {#if seqtaLoadFailed}
-        <div class="flex flex-col items-center justify-center w-full h-full p-8 text-center">
-          <div class="text-red-500 dark:text-red-400 text-lg font-semibold mb-4">SEQTA messaging failed to load.</div>
+        <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
+          <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">SEQTA messaging failed to load.</div>
           {#if showCloudMessaging}
-            <div class="text-slate-500 dark:text-slate-300 mb-4">You can still use Cloud Messaging by switching tabs above.</div>
+            <div class="mb-4 text-slate-500 dark:text-slate-300">You can still use Cloud Messaging by switching tabs above.</div>
           {/if}
         </div>
       {:else}
@@ -413,7 +413,7 @@
         onclose={() => (selectedMessage = null)}
         maxWidth="w-full"
         maxHeight="h-full"
-        customClasses="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-none"
+        className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-none"
         showCloseButton={false}
         closeOnBackdrop={false}
         ariaLabel="Message Detail">

@@ -13,7 +13,7 @@
     closeOnBackdrop?: boolean;
     closeOnEscape?: boolean;
     ariaLabel?: string;
-    customClasses?: string;
+    className?: string;
     onclose?: () => void;
     children: Snippet;
   }
@@ -27,7 +27,7 @@
     closeOnBackdrop = true,
     closeOnEscape = true,
     ariaLabel = 'Modal',
-    customClasses = '',
+    className = '',
     onclose = $bindable(() => {}),
     children,
   }: Props = $props();
@@ -67,7 +67,7 @@
       transition:fade={{ duration: 200 }}>
     </div>
     <div
-      class="overflow-hidden relative w-full {maxWidth} {maxHeight} {customClasses} rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/90 border-slate-200/60 dark:bg-slate-900/90 dark:border-slate-700/60"
+      class="overflow-hidden relative w-full {maxWidth} {maxHeight} {className} rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/90 border-slate-200/60 dark:bg-slate-900/90 dark:border-slate-700/60"
       style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
