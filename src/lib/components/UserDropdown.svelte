@@ -106,11 +106,11 @@
   </button>
   {#if showUserDropdown}
     <div
-      class="absolute right-0 z-50 mt-3 w-56 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/50 dark:border-zinc-700/40"
+      class="absolute right-0 z-50 mt-3 w-56 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/40"
       transition:fly={{ y: -8, duration: 200, opacity: 0 }}>
       <div class="p-2">
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:accent-bg hover:text-white dark:text-zinc-200 group"
+          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
           onclick={() => {
             onToggleUserDropdown();
             onShowAbout();
@@ -138,7 +138,7 @@
         <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
 
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:accent-bg hover:text-white dark:text-zinc-200 group"
+          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
           onclick={() => {
             onToggleUserDropdown();
             onLogout();
@@ -158,7 +158,7 @@
         <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
 
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-red-600 hover:bg-red-500 hover:text-white dark:text-red-400 group"
+          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-red-600 hover:bg-red-900/20 hover:text-white dark:text-red-400 group"
           onclick={() => {
             onToggleUserDropdown();
             // Call the quit command
