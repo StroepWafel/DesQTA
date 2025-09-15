@@ -140,11 +140,11 @@
   }
 </script>
 
-<div class="flex flex-col gap-3 text-slate-900 dark:text-white">
+<div class="flex flex-col gap-3 text-zinc-900 dark:text-white">
   <div class="flex items-center justify-between">
     <h3 class="text-base sm:text-lg font-semibold">Recent News</h3>
     <button
-      class="px-3 py-1.5 rounded-lg bg-slate-800/80 text-white hover:bg-slate-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+      class="px-3 py-1.5 rounded-lg bg-zinc-800/80 text-white hover:bg-zinc-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
       onclick={fetchNews}
       aria-label="Refresh news"
       title="Refresh"
@@ -163,14 +163,14 @@
     <div class="relative">
       <!-- Scroll controls -->
       <button
-        class="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-slate-900/70 text-white hover:bg-slate-800/80 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+        class="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-zinc-900/70 text-white hover:bg-zinc-800/80 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
         onclick={scrollLeft}
         aria-label="Scroll left"
       >
         <Icon src={ChevronLeft} class="w-6 h-6 sm:w-7 sm:h-7" />
       </button>
       <button
-        class="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-slate-900/70 text-white hover:bg-slate-800/80 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+        class="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-zinc-900/70 text-white hover:bg-zinc-800/80 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
         onclick={scrollRight}
         aria-label="Scroll right"
       >
@@ -187,7 +187,7 @@
             target="_blank"
             rel="noopener noreferrer"
             title={n.title}
-            class="group relative min-w-[260px] max-w-[320px] h-40 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-200 dark:bg-slate-800 hover:scale-[1.02] transition-all duration-200"
+            class="group relative min-w-[260px] max-w-[320px] h-40 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-800 hover:scale-[1.02] transition-all duration-200"
           >
             {#if n.image}
               <img src={n.image} alt={n.title} class="absolute inset-0 w-full h-full object-cover" />

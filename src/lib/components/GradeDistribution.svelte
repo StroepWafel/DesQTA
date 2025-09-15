@@ -91,7 +91,7 @@
 </script>
 
 <div class="flex-1 min-w-[350px] max-w-[600px] flex flex-col">
-  <h2 class="flex gap-2 items-center mb-6 text-2xl font-bold text-slate-900 dark:text-white">
+  <h2 class="flex gap-2 items-center mb-6 text-2xl font-bold text-zinc-900 dark:text-white">
     <span
       class="inline-block flex justify-center items-center w-6 h-6 text-white bg-linear-to-tr from-indigo-500 to-blue-400 rounded-full shadow-xs">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -112,7 +112,7 @@
           y1={height - padding - (i * (height - padding * 2)) / (yLabels.length - 1)}
           x2={width - padding}
           y2={height - padding - (i * (height - padding * 2)) / (yLabels.length - 1)}
-          class="stroke-slate-200 dark:stroke-slate-700"
+          class="stroke-zinc-200 dark:stroke-zinc-700"
           stroke-width="1" />
       {/each}
       <!-- Y-axis labels -->
@@ -120,7 +120,7 @@
         <text
           x={padding - 10}
           y={height - padding - (i * (height - padding * 2)) / (yLabels.length - 1)}
-          class="text-xs fill-slate-500 dark:fill-slate-400"
+          class="text-xs fill-zinc-500 dark:fill-zinc-400"
           text-anchor="end"
           dominant-baseline="middle">
           {label}
@@ -135,7 +135,7 @@
           <text
             x={padding + i * (barWidth + barSpacing) + barWidth / 2}
             y={height - padding + 20}
-            class="text-xs fill-slate-500 dark:fill-slate-400"
+            class="text-xs fill-zinc-500 dark:fill-zinc-400"
             text-anchor="middle">
             {status}% {getLetterGrade(
               (() => {
@@ -150,7 +150,7 @@
               padding -
               count * ((height - padding * 2) / Math.max(...yLabels.map(Number), 1)) -
               10}
-            class="text-sm font-medium fill-slate-900 dark:fill-slate-100"
+            class="text-sm font-medium fill-zinc-900 dark:fill-zinc-100"
             text-anchor="middle">
             {count}
           </text>

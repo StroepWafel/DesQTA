@@ -91,11 +91,11 @@
     'w-full border rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-1',
     hasError 
       ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-      : 'border-slate-300 dark:border-slate-600 focus:border-accent-500 focus:ring-accent-500',
-    'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100',
-    'placeholder-slate-400 dark:placeholder-slate-500',
+      : 'border-zinc-300 dark:border-zinc-600 focus:border-accent-500 focus:ring-accent-500',
+    'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100',
+    'placeholder-zinc-400 dark:placeholder-zinc-500',
     disabled ? 'opacity-50 cursor-not-allowed' : '',
-    readonly ? 'bg-slate-50 dark:bg-slate-700' : '',
+    readonly ? 'bg-zinc-50 dark:bg-zinc-700' : '',
     hasLeftIcon ? 'pl-10' : '',
     hasRightIcon ? 'pr-10' : '',
     sizes[size],
@@ -104,7 +104,7 @@
 
   let labelClasses = $derived([
     'block text-sm font-medium mb-1',
-    hasError ? 'text-red-700 dark:text-red-400' : 'text-slate-700 dark:text-slate-300',
+    hasError ? 'text-red-700 dark:text-red-400' : 'text-zinc-700 dark:text-zinc-300',
     required ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ''
   ].filter(Boolean).join(' '));
 </script>
@@ -122,7 +122,7 @@
         <Icon 
           src={leftIcon} 
           size={iconSizes[size]} 
-          class="text-slate-400 dark:text-slate-500" 
+          class="text-zinc-400 dark:text-zinc-500" 
         />
       </div>
     {/if}
@@ -158,7 +158,7 @@
           <Icon 
             src={rightIcon} 
             size={iconSizes[size]} 
-            class="text-slate-400 dark:text-slate-500" 
+            class="text-zinc-400 dark:text-zinc-500" 
           />
         {/if}
       </div>
@@ -170,7 +170,7 @@
       {error}
     </p>
   {:else if hint}
-    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
       {hint}
     </p>
   {/if}

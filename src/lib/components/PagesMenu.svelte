@@ -79,7 +79,7 @@ onMount(() => {
         id="pages-search-input"
         bind:this={searchInput}
         type="text"
-        class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-gray-800/60 text-slate-900 dark:text-white border border-accent-500/40 focus:outline-hidden focus:ring-2 accent-ring transition-all duration-200 placeholder:text-slate-500 dark:placeholder:text-gray-400 text-lg shadow-md"
+        class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-gray-800/60 text-zinc-900 dark:text-white border border-accent-500/40 focus:outline-hidden focus:ring-2 accent-ring transition-all duration-200 placeholder:text-zinc-500 dark:placeholder:text-gray-400 text-lg shadow-md"
         placeholder="Search pages..."
         bind:value={$searchStore}
         onkeydown={handleKeydown}
@@ -97,7 +97,7 @@ onMount(() => {
             type="button"
             role="option"
             aria-selected={selectedIndex === i}
-            class={`flex items-center gap-3 w-full text-left px-5 py-3 cursor-pointer transition-all duration-200 rounded-xl hover:scale-[1.02] hover:bg-accent-100 dark:hover:bg-accent-700 text-base font-medium ${selectedIndex === i ? 'bg-accent-500 text-white' : 'text-slate-900 dark:text-white'}`}
+            class={`flex items-center gap-3 w-full text-left px-5 py-3 cursor-pointer transition-all duration-200 rounded-xl hover:scale-[1.02] hover:bg-accent-100 dark:hover:bg-accent-700 text-base font-medium ${selectedIndex === i ? 'bg-accent-500 text-white' : 'text-zinc-900 dark:text-white'}`}
             onmousedown={() => handleSelect(page)}
             tabindex="-1"
           >
@@ -109,10 +109,10 @@ onMount(() => {
         {/each}
       </ul>
     {/if}
-    <div class="flex items-center gap-4 px-6 pb-4 pt-2 text-xs text-slate-500 dark:text-gray-400">
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-slate-200 dark:bg-gray-700">↑</kbd><kbd class="px-1 py-0.5 rounded-sm bg-slate-200 dark:bg-gray-700">↓</kbd> Navigate</span>
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-slate-200 dark:bg-gray-700">⏎</kbd> Select</span>
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-slate-200 dark:bg-gray-700">Esc</kbd> Close</span>
+    <div class="flex items-center gap-4 px-6 pb-4 pt-2 text-xs text-zinc-500 dark:text-gray-400">
+      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">↑</kbd><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">↓</kbd> Navigate</span>
+      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">⏎</kbd> Select</span>
+      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">Esc</kbd> Close</span>
     </div>
   </div>
 </div> 

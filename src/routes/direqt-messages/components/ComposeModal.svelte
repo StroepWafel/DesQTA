@@ -232,15 +232,15 @@
   onclose={closeModal}
   maxWidth="w-full sm:w-[80%]"
   maxHeight="max-h-full"
-  className="bg-white dark:bg-slate-900 rounded-none sm:rounded-xl max-w-none sm:max-w-6xl shadow-2xl flex flex-col border border-slate-300 dark:border-slate-800 overflow-y-auto h-full sm:h-auto p-0"
+  className="bg-white dark:bg-zinc-900 rounded-none sm:rounded-xl max-w-none sm:max-w-6xl shadow-2xl flex flex-col border border-zinc-300 dark:border-zinc-800 overflow-y-auto h-full sm:h-auto p-0"
   showCloseButton={false}
   ariaLabel="Compose message">
   <!-- Header -->
   <div
-    class="flex justify-between items-center p-4 bg-white border-b sm:rounded-t-xl border-slate-300 dark:border-slate-800 dark:bg-slate-900">
-    <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Compose message</h2>
+    class="flex justify-between items-center p-4 bg-white border-b sm:rounded-t-xl border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900">
+    <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">Compose message</h2>
     <button
-      class="p-2 rounded-lg transition-all duration-200 text-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 dark:text-white"
+      class="p-2 rounded-lg transition-all duration-200 text-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 dark:text-white"
       onclick={closeModal}
       aria-label="Close">
       <Icon src={XMark} class="w-6 h-6" />
@@ -262,24 +262,24 @@
       {/if}
 
       <!-- Subject -->
-      <div class="p-4 bg-white border-b border-slate-300 dark:border-slate-800 dark:bg-slate-900">
+      <div class="p-4 bg-white border-b border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900">
         <label for="subject" class="block mb-1 text-sm">Subject</label>
         <input
           id="subject"
           type="text"
           placeholder="Subject..."
           bind:value={composeSubject}
-          class="px-4 py-3 w-full rounded-lg border bg-slate-100/20 border-slate-300/50 dark:border-slate-700 placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
+          class="px-4 py-3 w-full rounded-lg border bg-zinc-100/20 border-zinc-300/50 dark:border-zinc-700 placeholder-zinc-500 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
       </div>
 
       <!-- Editor -->
-      <div class="overflow-y-auto flex-1 p-4 bg-white dark:bg-slate-900">
+      <div class="overflow-y-auto flex-1 p-4 bg-white dark:bg-zinc-900">
         <Editor bind:content={composeBody} />
       </div>
     </div>
 
     <!-- Sidebar (right) column -->
-    <div class="flex flex-col w-full sm:w-[320px] min-w-0 sm:min-w-[260px] sm:max-w-[360px] border-t sm:border-t-0 sm:border-l border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 gap-4">
+    <div class="flex flex-col w-full sm:w-[320px] min-w-0 sm:min-w-[260px] sm:max-w-[360px] border-t sm:border-t-0 sm:border-l border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 gap-4">
       <!-- Student selector (conditionally rendered) -->
       {#if studentsEnabled}
         <div class="relative mb-2">
@@ -290,26 +290,26 @@
             placeholder="Search students..."
             bind:value={studentSearchQuery}
             onfocus={() => (showStudentDropdown = true)}
-            class="px-4 py-2 w-full bg-white rounded-lg placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
+            class="px-4 py-2 w-full bg-white rounded-lg placeholder-zinc-500 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
           {#if showStudentDropdown}
             <div
               id="student-dropdown"
-              class="overflow-y-auto absolute z-10 mt-1 w-full max-h-60 bg-white rounded-lg border shadow-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+              class="overflow-y-auto absolute z-10 mt-1 w-full max-h-60 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700">
               {#if loadingStudents}
-                <div class="p-3 text-center text-slate-600 dark:text-slate-400">
+                <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
                   Loading students...
                 </div>
               {:else if filteredStudents.length === 0}
-                <div class="p-3 text-center text-slate-600 dark:text-slate-400">
+                <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
                   {studentSearchQuery ? 'No matching students' : 'Type to search students'}
                 </div>
               {:else}
                 {#each filteredStudents as student}
                   <button
-                    class="flex justify-between items-center px-4 py-2 w-full text-left text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
+                    class="flex justify-between items-center px-4 py-2 w-full text-left text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
                     onclick={() => addRecipient(student.id, student.xx_display, false)}>
                     <span>{student.xx_display}</span>
-                    <span class="text-xs text-slate-600 dark:text-slate-400">
+                    <span class="text-xs text-zinc-600 dark:text-zinc-400">
                       Year {student.year} · {student['sub-school']}
                     </span>
                   </button>
@@ -329,21 +329,21 @@
           placeholder="Search staff..."
           bind:value={staffSearchQuery}
           onfocus={() => (showStaffDropdown = true)}
-          class="px-4 py-2 w-full bg-white rounded-lg placeholder-slate-500 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
+          class="px-4 py-2 w-full bg-white rounded-lg placeholder-zinc-500 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
         {#if showStaffDropdown}
           <div
             id="staff-dropdown"
-            class="overflow-y-auto absolute z-10 mt-1 w-full max-h-60 bg-white rounded-lg border shadow-lg border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+            class="overflow-y-auto absolute z-10 mt-1 w-full max-h-60 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700">
             {#if loadingStaff}
-              <div class="p-3 text-center text-slate-600 dark:text-slate-400">Loading staff...</div>
+              <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">Loading staff...</div>
             {:else if filteredStaff.length === 0}
-              <div class="p-3 text-center text-slate-600 dark:text-slate-400">
+              <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
                 {staffSearchQuery ? 'No matching staff' : 'Type to search staff'}
               </div>
             {:else}
               {#each filteredStaff as teacher}
                 <button
-                  class="px-4 py-2 w-full text-left text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
+                  class="px-4 py-2 w-full text-left text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
                   onclick={() => addRecipient(teacher.id, teacher.xx_display, true)}>
                   {teacher.xx_display}
                 </button>
@@ -359,29 +359,29 @@
           <input
             type="checkbox"
             bind:checked={useBCC}
-            class="text-blue-500 bg-white rounded-sm border-slate-300 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700" />
+            class="text-blue-500 bg-white rounded-sm border-zinc-300 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700" />
           <span>Keep recipient list private (BCC)</span>
         </label>
       </div>
 
       <!-- Selected recipients -->
       <div>
-        <div class="flex flex-wrap gap-2 p-3 rounded-lg bg-slate-100 min-h-12 dark:bg-slate-800">
+        <div class="flex flex-wrap gap-2 p-3 rounded-lg bg-zinc-100 min-h-12 dark:bg-zinc-800">
           {#each selectedRecipients as recipient, i}
             <div
-              class="flex gap-1 items-center px-2 py-1 text-sm rounded-md text-slate-900 bg-slate-200 dark:bg-slate-700 dark:text-white">
+              class="flex gap-1 items-center px-2 py-1 text-sm rounded-md text-zinc-900 bg-zinc-200 dark:bg-zinc-700 dark:text-white">
               <span>{recipient.name}</span>
-              <span class="text-xs text-slate-600 dark:text-slate-400"
+              <span class="text-xs text-zinc-600 dark:text-zinc-400"
                 >{recipient.staff ? '(Staff)' : '(Student)'}</span>
               <button
                 onclick={() => removeRecipient(i)}
-                class="ml-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                class="ml-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                 aria-label="Remove recipient">×</button>
             </div>
           {/each}
 
           {#if selectedRecipients.length === 0}
-            <span class="px-2 py-1 text-sm text-slate-600 dark:text-slate-500"
+            <span class="px-2 py-1 text-sm text-zinc-600 dark:text-zinc-500"
               >No recipients selected</span>
           {/if}
         </div>
@@ -391,10 +391,10 @@
 
   <!-- Footer with actions -->
   <div
-    class="flex flex-col gap-3 justify-between items-stretch p-4 bg-white border-t sm:flex-row sm:items-center border-slate-300 dark:border-slate-800 dark:bg-slate-900">
+    class="flex flex-col gap-3 justify-between items-stretch p-4 bg-white border-t sm:flex-row sm:items-center border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900">
     <div>
       <button
-        class="flex gap-2 items-center px-4 py-2 text-sm rounded-lg text-slate-900 bg-slate-200 dark:text-white dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700">
+        class="flex gap-2 items-center px-4 py-2 text-sm rounded-lg text-zinc-900 bg-zinc-200 dark:text-white dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700">
         <span>Add files</span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -410,7 +410,7 @@
     </div>
     <div class="flex flex-col gap-3 w-full sm:flex-row sm:w-auto">
       <button
-        class="px-4 py-3 mb-2 w-full rounded-lg transition-colors sm:w-auto sm:mb-0 text-slate-900 bg-slate-200 dark:text-white dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
+        class="px-4 py-3 mb-2 w-full rounded-lg transition-colors sm:w-auto sm:mb-0 text-zinc-900 bg-zinc-200 dark:text-white dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 focus:outline-hidden focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
         onclick={closeModal}>
         Cancel
       </button>

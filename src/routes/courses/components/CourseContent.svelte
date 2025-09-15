@@ -225,8 +225,8 @@
       <div class="p-4 mb-6 flex flex-col gap-4 rounded-xl border backdrop-blur-xs bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200/50 dark:border-purple-700/50">
         <div class="flex justify-between items-center">
           <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">AI Lesson Summary</h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400">
+            <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">AI Lesson Summary</h3>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
               Generate an AI-powered summary and actionable steps for this lesson's content and resources.
             </p>
           </div>
@@ -256,11 +256,11 @@
           </div>
         {/if}
         {#if aiSummary}
-          <div class="p-4 rounded-xl border bg-white/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 shadow-md mb-2">
-            <div class="mb-2 text-lg font-semibold text-slate-900 dark:text-white">Summary</div>
-            <div class="mb-4 text-slate-800 dark:text-slate-200">{aiSummary.summary}</div>
-            <div class="mb-2 text-lg font-semibold text-slate-900 dark:text-white">Steps</div>
-            <ol class="list-decimal list-inside space-y-1 text-slate-800 dark:text-slate-200">
+          <div class="p-4 rounded-xl border bg-white/80 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 shadow-md mb-2">
+            <div class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">Summary</div>
+            <div class="mb-4 text-zinc-800 dark:text-zinc-200">{aiSummary.summary}</div>
+            <div class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">Steps</div>
+            <ol class="list-decimal list-inside space-y-1 text-zinc-800 dark:text-zinc-200">
               {#each aiSummary.steps as step}
                 <li>{step}</li>
               {/each}
@@ -279,10 +279,10 @@
 
       {#if selectedLessonContent.h}
         <div
-          class="p-4 mb-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-slate-900/50 border-slate-300/50 dark:border-slate-800/50 animate-slide-in animate-delay-1">
-          <h3 class="mb-2 text-lg font-semibold text-slate-900 dark:text-white">Homework/Notes</h3>
-          <div class="max-w-none prose prose-slate dark:prose-invert prose-indigo">
-            <p class="text-slate-700 dark:text-slate-300">
+          class="p-4 mb-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-900/50 border-zinc-300/50 dark:border-zinc-800/50 animate-slide-in animate-delay-1">
+          <h3 class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">Homework/Notes</h3>
+          <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
+            <p class="text-zinc-700 dark:text-zinc-300">
               {selectedLessonContent.h}
             </p>
           </div>
@@ -334,7 +334,7 @@
         {@const lessonDoc = parseLessonDocument(selectedLessonContent)}
         {#if lessonDoc?.document?.modules}
           {@const sortedModules = sortModules(lessonDoc.document.modules)}
-          <div class="max-w-none prose prose-slate dark:prose-invert prose-indigo">
+          <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
             {#each sortedModules as module, i}
               {@const renderedModule = renderModule(module)}
               {#if renderedModule}
@@ -345,7 +345,7 @@
                   </h2>
                 {:else if renderedModule.type === 'text'}
                   <div
-                    class="p-4 my-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50 animate-slide-in hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
+                    class="p-4 my-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 animate-slide-in hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
                     style="--animation-delay: {0.2 + i * 0.05}s;">
                     {@html sanitizeHtml(renderedModule.content)}
                   </div>
@@ -371,7 +371,7 @@
 
       {#if parsedDocument?.document?.modules}
         {@const sortedModules = sortModules(parsedDocument.document.modules)}
-        <div class="max-w-none prose prose-slate dark:prose-invert prose-indigo">
+        <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
           {#each sortedModules as module, i}
             {@const renderedModule = renderModule(module)}
             {#if renderedModule}
@@ -382,7 +382,7 @@
                 </h2>
               {:else if renderedModule.type === 'text'}
                 <div
-                  class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50 animate-slide-in"
+                  class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 animate-slide-in"
                   style="--animation-delay: {0.1 + i * 0.05}s;">
                   {@html sanitizeHtml(renderedModule.content)}
                 </div>

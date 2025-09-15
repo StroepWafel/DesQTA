@@ -1,8 +1,8 @@
 <script lang="ts">
   import TrendingUpIcon from "@lucide/svelte/icons/trending-up";
   import * as Chart from "$lib/components/ui/chart/index.js";
-  import { Card } from "$lib/components/ui";
-  import { Dropdown } from "$lib/components/ui";
+  import * as Card from "$lib/components/ui/card/index.js";
+  import * as Select from "$lib/components/ui/select/index.js";
   import { scaleUtc } from "d3-scale";
   import { Area, AreaChart, ChartClipPath } from "layerchart";
   import { curveNatural } from "d3-shape";
@@ -15,7 +15,7 @@
 
   let { data }: Props = $props();
 
-  let timeRange = $state("90d");
+  let timeRange = $state("all");
 
   const selectedLabel = $derived.by(() => {
     switch (timeRange) {
@@ -25,45 +25,86 @@
         return "Last 30 days";
       case "7d":
         return "Last 7 days";
+      case "365d":
+        return "Last 12 months";
+      case "all":
+        return "All Time";
       default:
-        return "Last 3 months";
+        return "All Time";
     }
   });
 
-  // Process data into chart format
+  // Process data into chart format with adaptive granularity
   const chartData = $derived(() => {
     if (!data?.length) return [];
     
-    const monthlyData: Record<string, number[]> = {};
+    // Determine if we should use monthly or weekly grouping
+    const useMonthlyGrouping = timeRange === "365d" || timeRange === "all";
     
-    data.forEach((assessment) => {
-      if (assessment.finalGrade !== undefined && assessment.finalGrade !== null) {
-        const date = new Date(assessment.due);
-        const monthKey = date.toISOString().slice(0, 7); // YYYY-MM format
-        
-        if (!monthlyData[monthKey]) monthlyData[monthKey] = [];
-        monthlyData[monthKey].push(assessment.finalGrade);
-      }
-    });
-
-    const result = Object.entries(monthlyData)
-      .map(([month, grades]) => ({
-        date: new Date(month + '-01'),
-        average: grades.reduce((sum, grade) => sum + grade, 0) / grades.length,
-        count: grades.length
-      }))
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+    if (useMonthlyGrouping) {
+      // Group by month for longer time periods
+      const monthlyData: Record<string, number[]> = {};
       
-    return result;
+      data.forEach((assessment) => {
+        if (assessment.finalGrade !== undefined && assessment.finalGrade !== null) {
+          const date = new Date(assessment.due);
+          const monthKey = date.toISOString().slice(0, 7); // YYYY-MM format
+          
+          if (!monthlyData[monthKey]) monthlyData[monthKey] = [];
+          monthlyData[monthKey].push(assessment.finalGrade);
+        }
+      });
+
+      return Object.entries(monthlyData)
+        .map(([month, grades]) => ({
+          date: new Date(month + '-01'),
+          average: grades.reduce((sum, grade) => sum + grade, 0) / grades.length,
+          count: grades.length
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+    } else {
+      // Group by week for shorter time periods (≤3 months)
+      const weeklyData: Record<string, number[]> = {};
+      
+      data.forEach((assessment) => {
+        if (assessment.finalGrade !== undefined && assessment.finalGrade !== null) {
+          const date = new Date(assessment.due);
+          // Get the Monday of the week for this assessment
+          const monday = new Date(date);
+          const dayOfWeek = date.getDay();
+          const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // adjust when day is Sunday
+          monday.setDate(diff);
+          
+          const weekKey = monday.toISOString().slice(0, 10); // YYYY-MM-DD format
+          
+          if (!weeklyData[weekKey]) weeklyData[weekKey] = [];
+          weeklyData[weekKey].push(assessment.finalGrade);
+        }
+      });
+
+      return Object.entries(weeklyData)
+        .map(([week, grades]) => ({
+          date: new Date(week),
+          average: grades.reduce((sum, grade) => sum + grade, 0) / grades.length,
+          count: grades.length
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+    }
   });
 
   const filteredData = $derived(() => {
+    if (timeRange === "all") {
+      return chartData();
+    }
+
     const referenceDate = new Date();
     let daysToSubtract = 90;
     if (timeRange === "30d") {
       daysToSubtract = 30;
     } else if (timeRange === "7d") {
       daysToSubtract = 7;
+    } else if (timeRange === "365d") {
+      daysToSubtract = 365;
     }
 
     const cutoffDate = new Date(referenceDate);
@@ -75,14 +116,16 @@
   const chartConfig = {
     average: { 
       label: "Average Grade", 
-      color: "hsl(var(--chart-1))" 
+      color: "var(--accent-color-value)" 
     },
   } satisfies Chart.ChartConfig;
 
   const timeRangeOptions = [
-    { id: "7d", label: "Last 7 days", onClick: () => timeRange = "7d" },
-    { id: "30d", label: "Last 30 days", onClick: () => timeRange = "30d" },
-    { id: "90d", label: "Last 3 months", onClick: () => timeRange = "90d" }
+    { id: "all", label: "All Time" },
+    { id: "365d", label: "Last 12 months" },
+    { id: "90d", label: "Last 3 months" },
+    { id: "30d", label: "Last 30 days" },
+    { id: "7d", label: "Last 7 days" }
   ];
 
   // Calculate trend
@@ -101,21 +144,26 @@
   });
 </script>
 
-<Card variant="elevated" padding="none" class="w-full">
-  <div class="flex gap-2 items-center px-6 py-5 space-y-0 border-b sm:flex-row">
-    <div class="grid flex-1 gap-1 text-center sm:text-left">
-      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Grade Trends</h3>
-      <p class="text-sm text-zinc-600 dark:text-zinc-400">Showing average grades over time</p>
+<Card.Root class="justify-between">
+  <Card.Header>
+    <div class="flex justify-between items-start">
+      <div>
+        <Card.Title>Grade Trends</Card.Title>
+        <Card.Description>Showing average grades over time</Card.Description>
+      </div>
+      <Select.Root type="single" bind:value={timeRange}>
+        <Select.Trigger class="w-[160px]">
+          {selectedLabel}
+        </Select.Trigger>
+        <Select.Content>
+          {#each timeRangeOptions as option}
+            <Select.Item value={option.id} label={option.label} />
+          {/each}
+        </Select.Content>
+      </Select.Root>
     </div>
-    <Dropdown
-      items={timeRangeOptions}
-      buttonText={selectedLabel}
-      class="w-[160px] rounded-lg sm:ml-auto"
-      showChevron={true}
-    />
-  </div>
-  
-  <div class="px-6 pb-0">
+  </Card.Header>
+  <Card.Content>
     {#if filteredData().length > 0}
       <Chart.Container config={chartConfig} class="aspect-auto h-[250px] w-full">
         <AreaChart
@@ -156,12 +204,12 @@
               <linearGradient id="fillAverage" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stop-color="hsl(var(--chart-1))"
+                  stop-color="var(--color-average)"
                   stop-opacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stop-color="hsl(var(--chart-1))"
+                  stop-color="var(--color-average)"
                   stop-opacity={0.1}
                 />
               </linearGradient>
@@ -185,6 +233,7 @@
               labelFormatter={(v) => {
                 return v.toLocaleDateString("en-US", {
                   month: "long",
+                  day: "numeric",
                   year: "numeric",
                 });
               }}
@@ -199,9 +248,8 @@
         <p class="text-sm">Complete some assessments to see your trends!</p>
       </div>
     {/if}
-  </div>
-  
-  <div class="px-6 py-4 border-t">
+  </Card.Content>
+  <Card.Footer>
     <div class="flex gap-2 items-start w-full text-sm">
       <div class="grid gap-2">
         {#if trend().direction !== "neutral"}
@@ -219,10 +267,10 @@
             Grades remain stable
           </div>
         {/if}
-        <div class="flex gap-2 items-center leading-none text-zinc-600 dark:text-zinc-400">
+        <div class="flex gap-2 items-center leading-none text-muted-foreground">
           {selectedLabel.toLowerCase()} • {filteredData().length} data points
         </div>
       </div>
     </div>
-  </div>
-</Card>
+  </Card.Footer>
+</Card.Root>

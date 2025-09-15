@@ -178,10 +178,10 @@
   });
 </script>
 
-<div class="notes-container h-full flex bg-white dark:bg-slate-800 min-h-0 relative">
+<div class="notes-container h-full flex bg-white dark:bg-zinc-800 min-h-0 relative">
   <!-- Left Sidebar: Notes List -->
   <div 
-    class="shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-700 relative"
+    class="shrink-0 transition-all duration-300 ease-in-out border-r border-zinc-200 dark:border-zinc-700 relative"
     style="width: {sidebarCollapsed ? '0px' : '320px'}"
   >
     <div class="w-80 h-full overflow-hidden">
@@ -204,7 +204,7 @@
     
     <!-- Sidebar Toggle Button -->
     <button
-      class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-r-md shadow-xs flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 z-10"
+      class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-8 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-r-md shadow-xs flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all duration-200 z-10"
       on:click={toggleSidebar}
       title="{sidebarCollapsed ? 'Expand' : 'Collapse'} sidebar"
     >
@@ -220,20 +220,20 @@
     {#if loading}
       <div class="flex-1 flex items-center justify-center">
         <div class="text-center">
-          <div class="w-8 h-8 rounded-full border-4 border-slate-300 dark:border-slate-700 border-t-transparent animate-spin mx-auto mb-4"></div>
-          <p class="text-slate-600 dark:text-slate-300">Loading note...</p>
+          <div class="w-8 h-8 rounded-full border-4 border-zinc-300 dark:border-zinc-700 border-t-transparent animate-spin mx-auto mb-4"></div>
+          <p class="text-zinc-600 dark:text-zinc-300">Loading note...</p>
         </div>
       </div>
     {:else if selectedNote}
       <div class="flex-1 flex flex-col" in:fly={{ x: 50, duration: 400, easing: quintOut }}>
         <!-- Note Header -->
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
           <div class="flex items-center justify-between">
             <div class="flex-1 min-w-0">
-              <h1 class="text-xl font-semibold text-slate-900 dark:text-white truncate">
+              <h1 class="text-xl font-semibold text-zinc-900 dark:text-white truncate">
                 {selectedNote.title || 'Untitled Note'}
               </h1>
-              <div class="mt-1 flex items-center space-x-4 text-sm text-slate-500 dark:text-slate-400">
+              <div class="mt-1 flex items-center space-x-4 text-sm text-zinc-500 dark:text-zinc-400">
                 <span>{selectedNote.metadata.word_count} words</span>
                 <span>•</span>
                 <span>{selectedNote.metadata.character_count} characters</span>
@@ -250,7 +250,7 @@
               {/if}
               
               {#if isSaving}
-                <span class="text-sm text-slate-500 dark:text-slate-400">Saving...</span>
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">Saving...</span>
               {/if}
             </div>
           </div>
@@ -272,13 +272,13 @@
       <!-- Empty State -->
       <div class="flex-1 flex items-center justify-center" in:fly={{ y: 30, duration: 400, easing: quintOut }}>
         <div class="text-center max-w-md mx-auto px-6">
-          <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-zinc-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-2">No Note Selected</h3>
-          <p class="text-slate-600 dark:text-slate-400 mb-6">
+          <h3 class="text-lg font-medium text-zinc-900 dark:text-white mb-2">No Note Selected</h3>
+          <p class="text-zinc-600 dark:text-zinc-400 mb-6">
             Select a note from the sidebar to start editing, or create a new note to get started.
           </p>
           <button

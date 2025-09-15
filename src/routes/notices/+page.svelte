@@ -178,7 +178,7 @@
         type="date"
         value={formatDate(selectedDate)}
         onchange={updateDate}
-        class="px-4 py-2 bg-white rounded-lg border text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
+        class="px-4 py-2 bg-white rounded-lg border text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
     </div>
   </div>
 
@@ -188,7 +188,7 @@
       <label for="label-select" class="font-semibold text-sm mr-2">Label:</label>
       <select
         id="label-select"
-        class="px-4 py-2 rounded-lg border text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+        class="px-4 py-2 rounded-lg border text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
         bind:value={selectedLabel}
         onchange={(e) => {
           const target = e.target as HTMLSelectElement;

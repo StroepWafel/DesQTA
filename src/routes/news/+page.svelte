@@ -165,28 +165,28 @@
 
 <div class="container px-6 py-7 mx-auto">
   <div class="flex justify-between items-center mb-8">
-    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">News</h1>
+    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">News</h1>
     <div class="relative">
       <button
         id="source-button"
-        class="px-4 py-2 bg-white rounded-lg border transition-colors text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 focus:ring-2 focus:ring-blue-500"
+        class="px-4 py-2 bg-white rounded-lg border transition-colors text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:ring-2 focus:ring-blue-500"
         on:click={() => (showSourceSelector = !showSourceSelector)}>
         {selectedSource.toUpperCase()}
       </button>
       {#if showSourceSelector}
         <div
           id="source-dropdown"
-          class="absolute right-0 z-10 mt-2 w-48 bg-white rounded-lg border shadow-xl text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700"
+          class="absolute right-0 z-10 mt-2 w-48 bg-white rounded-lg border shadow-xl text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700"
           transition:fade>
           {#each Object.keys(rssFeedsByCountry) as country}
             <button
-              class="px-4 py-2 w-full text-left transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 first:rounded-t-lg last:rounded-b-lg"
+              class="px-4 py-2 w-full text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-700 first:rounded-t-lg last:rounded-b-lg"
               on:click={() => handleSourceChange(country)}>
               {country.toUpperCase()}
             </button>
           {/each}
           <button
-            class="px-4 py-2 w-full text-left border-t transition-colors border-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 dark:border-slate-700"
+            class="px-4 py-2 w-full text-left border-t transition-colors border-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 dark:border-zinc-700"
             on:click={() => handleSourceChange('australia')}>
             AUSTRALIA
           </button>
@@ -210,7 +210,7 @@
     </div>
   {:else if news.length === 0}
     <div class="py-8 text-center">
-      <p class="text-slate-400">No news articles found.</p>
+      <p class="text-zinc-400">No news articles found.</p>
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -219,7 +219,7 @@
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          class="group block dark:bg-slate-900 bg-slate-100 border dark:border-slate-800 border-slate-200 rounded-xl shadow-2xl hover:scale-[1.025] hover:shadow-blue-900/30 transition-all duration-200 overflow-hidden focus:ring-2 focus:ring-blue-500"
+          class="group block dark:bg-zinc-900 bg-zinc-100 border dark:border-zinc-800 border-zinc-200 rounded-xl shadow-2xl hover:scale-[1.025] hover:shadow-blue-900/30 transition-all duration-200 overflow-hidden focus:ring-2 focus:ring-blue-500"
           transition:fade>
           <div class="relative">
             {#if article.urlToImage}
@@ -233,7 +233,7 @@
             <h2 class="mb-2 text-lg font-semibold dark:text-white line-clamp-2">
               {article.title}
             </h2>
-            <p class="dark:text-slate-300 text-slate-700 line-clamp-3">
+            <p class="dark:text-zinc-300 text-zinc-700 line-clamp-3">
               {article.description}
             </p>
           </div>

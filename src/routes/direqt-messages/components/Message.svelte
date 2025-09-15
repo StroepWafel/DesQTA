@@ -145,19 +145,19 @@
   {#if selectedMessage}
     <div class="mx-auto w-full max-w-4xl animate-fadeIn">
       <div
-        class="overflow-hidden rounded-xl border shadow-lg backdrop-blur-xs border-slate-300/50 dark:border-slate-800/50 bg-white/40 dark:bg-slate-900/40">
-        <div class="p-4 pb-3 border-b sm:p-6 border-slate-300/50 dark:border-slate-800/50">
+        class="overflow-hidden rounded-xl border shadow-lg backdrop-blur-xs border-zinc-300/50 dark:border-zinc-800/50 bg-white/40 dark:bg-zinc-900/40">
+        <div class="p-4 pb-3 border-b sm:p-6 border-zinc-300/50 dark:border-zinc-800/50">
           <div class="mb-4 text-xl font-bold text-indigo-400 sm:text-2xl">
             {selectedMessage.subject}
           </div>
 
           <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-end">
             <div class="space-y-1">
-              <div class="text-sm sm:text-base text-slate-700 dark:text-slate-200">
+              <div class="text-sm sm:text-base text-zinc-700 dark:text-zinc-200">
                 <span class="font-medium">{selectedMessage.sender}</span>
               </div>
-              <div class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                To: <span class="font-medium text-slate-700 dark:text-slate-300"
+              <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+                To: <span class="font-medium text-zinc-700 dark:text-zinc-300"
                   >{selectedMessage.to}</span>
               </div>
             </div>
@@ -267,7 +267,7 @@
     </div>
   {:else}
     <div
-      class="flex flex-col justify-center items-center h-full text-center text-slate-600 dark:text-slate-400">
+      class="flex flex-col justify-center items-center h-full text-center text-zinc-600 dark:text-zinc-400">
       <div
         class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-blue-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
         <svg

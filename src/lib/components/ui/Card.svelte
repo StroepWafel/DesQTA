@@ -24,10 +24,10 @@
   }: Props = $props();
 
   const variants = {
-    default: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700',
-    elevated: 'bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700',
-    outlined: 'bg-transparent border-2 border-slate-200 dark:border-slate-700',
-    ghost: 'bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50'
+    default: 'bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700',
+    elevated: 'bg-white dark:bg-zinc-800 shadow-md border border-zinc-200 dark:border-zinc-700',
+    outlined: 'bg-transparent border-2 border-zinc-200 dark:border-zinc-700',
+    ghost: 'bg-zinc-50/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50'
   };
 
   const paddings = {
@@ -61,7 +61,7 @@
   tabindex={interactive ? 0 : undefined}
 >
   {#if header}
-    <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+    <div class="border-b border-zinc-200 dark:border-zinc-700 px-4 py-3">
       {@render header()}
     </div>
   {/if}
@@ -73,7 +73,7 @@
   {/if}
   
   {#if footer}
-    <div class="border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+    <div class="border-t border-zinc-200 dark:border-zinc-700 px-4 py-3">
       {@render footer()}
     </div>
   {/if}

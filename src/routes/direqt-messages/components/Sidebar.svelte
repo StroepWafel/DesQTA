@@ -36,8 +36,8 @@
 </script>
 
 <aside
-  class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs xl:w-64 border-slate-300/50 dark:border-slate-800/50 dark:bg-slate-900">
-  <div class="p-4 border-b border-slate-300/50 dark:border-slate-800/50">
+  class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900">
+  <div class="p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
     <button
       class="flex gap-2 items-center px-4 py-2.5 w-full text-sm font-semibold text-white rounded-xl shadow-lg transition-all duration-200 accent-bg sm:text-base hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
       onclick={openCompose}>
@@ -54,7 +54,7 @@
           class="w-full flex items-center gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
             {selectedFolder === folder.name
               ? 'accent-bg text-white border-l-4 accent-bg pl-5 shadow-md'
-              : 'border-l-4 border-transparent text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700 hover:scale-[1.02]'}
+              : 'border-l-4 border-transparent text-zinc-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700 hover:scale-[1.02]'}
             focus:outline-hidden focus:ring-2 accent-ring"
           onclick={() => openFolder(folder)}>
           <Icon src={folder.icon} class="w-5 h-5" />

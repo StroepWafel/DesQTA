@@ -114,7 +114,7 @@
 </script>
 
 {#if replyTo}
-  <div class="mb-2 p-2 rounded-sm bg-slate-200/60 dark:bg-slate-800/60 text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2">
+  <div class="mb-2 p-2 rounded-sm bg-zinc-200/60 dark:bg-zinc-800/60 text-xs text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
     Replying to: {replyTo.content}
     <button class="ml-auto text-xs text-red-500 hover:underline" onclick={onCancelReply}>Cancel</button>
   </div>
@@ -129,15 +129,15 @@
 
 <!-- Formatting toolbar -->
 <div class="flex flex-wrap items-center gap-2 mb-2">
-  <button type="button" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyWrap('**')} title="Bold (Ctrl+B)">B</button>
-  <button type="button" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyWrap('_')} title="Italic (Ctrl+I)">I</button>
-  <button type="button" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyWrap('~~')} title="Strikethrough">S</button>
-  <button type="button" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyWrap('`')} title="Inline code">`</button>
-  <button type="button" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={applyCodeBlock} title="Code block">{"```"}</button>
-  <button type="button" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={applyLink} title="Link">🔗</button>
-  <button type="button" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyLinePrefix('-')} title="Bulleted list">•</button>
-  <button type="button" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyLinePrefix('1.')} title="Numbered list">1.</button>
-  <button type="button" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyLinePrefix('>')} title="Blockquote">“</button>
+  <button type="button" class="px-2 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyWrap('**')} title="Bold (Ctrl+B)">B</button>
+  <button type="button" class="px-2 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyWrap('_')} title="Italic (Ctrl+I)">I</button>
+  <button type="button" class="px-2 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyWrap('~~')} title="Strikethrough">S</button>
+  <button type="button" class="px-2 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyWrap('`')} title="Inline code">`</button>
+  <button type="button" class="px-2 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={applyCodeBlock} title="Code block">{"```"}</button>
+  <button type="button" class="px-2 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={applyLink} title="Link">🔗</button>
+  <button type="button" class="px-2 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyLinePrefix('-')} title="Bulleted list">•</button>
+  <button type="button" class="px-2 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyLinePrefix('1.')} title="Numbered list">1.</button>
+  <button type="button" class="px-2 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500" onclick={() => applyLinePrefix('>')} title="Blockquote">“</button>
 </div>
 
 <form class="flex gap-2 mt-auto" onsubmit={(e) => { e.preventDefault(); onSendMessage(); }}>
@@ -146,7 +146,7 @@
     placeholder="Type a message..."
     disabled={sending}
     class="flex-1"
-    inputClass="bg-white/60 dark:bg-slate-900/80"
+    inputClass="bg-white/60 dark:bg-zinc-900/80"
   />
   
   <input 
@@ -159,7 +159,7 @@
   
   <label 
     for="attachment-input" 
-    class="px-3 py-2 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600/50 focus:ring-2 focus:ring-blue-500 cursor-pointer {uploadingAttachment ? 'opacity-50 cursor-not-allowed' : ''}" 
+    class="px-3 py-2 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600/50 focus:ring-2 focus:ring-blue-500 cursor-pointer {uploadingAttachment ? 'opacity-50 cursor-not-allowed' : ''}" 
     class:disabled={uploadingAttachment}
   >
     {uploadingAttachment ? 'Uploading...' : 'Attach'}
@@ -191,8 +191,8 @@
 
 <!-- Live Markdown preview -->
 {#if newMessage.trim().length > 0}
-  <div class="mt-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-    <div class="text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Preview</div>
+  <div class="mt-2 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50">
+    <div class="text-xs font-semibold mb-1 text-zinc-600 dark:text-zinc-300">Preview</div>
     <div class="prose prose-sm dark:prose-invert max-w-none">{@html renderPreview(newMessage)}</div>
   </div>
 {/if} 

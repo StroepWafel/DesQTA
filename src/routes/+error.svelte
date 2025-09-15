@@ -190,9 +190,9 @@
   <title>Error {errorStatus} - DesQTA</title>
 </svelte:head>
 
-<div class="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-8">
+<div class="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center p-8">
   <div class="max-w-4xl w-full">
-    <div class="bg-white/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-8">
+    <div class="bg-white/80 dark:bg-zinc-900/60 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-8">
       <!-- Error Header -->
       <div class="mb-8">
         <div class="flex items-center justify-between mb-6">
@@ -206,13 +206,13 @@
             </div>
             <div>
               <h1 class="text-4xl font-bold text-red-500 dark:text-red-400 mb-2">{errorStatus}</h1>
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">{errorType}</h2>
+              <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">{errorType}</h2>
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-sm text-slate-500 dark:text-slate-400">Error ID: {errorId}</span>
-                <span class="text-sm px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">Error ID: {errorId}</span>
+                <span class="text-sm px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
                   {errorCategory}
                 </span>
-                <span class="text-sm px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                <span class="text-sm px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
                   {errorSeverity}
                 </span>
               </div>
@@ -220,7 +220,7 @@
           </div>
           <button
             onclick={toggleDetailedInfo}
-            class="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-200 dark:hover:bg-slate-700"
+            class="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 hover:bg-zinc-200 dark:hover:bg-zinc-700"
           >
             <Icon src={InformationCircle} size="16" class="inline mr-1" />
             {showDetailedInfo ? 'Hide' : 'Show'} Details
@@ -229,10 +229,10 @@
 
         <!-- Error Description -->
         <div class="mb-6">
-          <p class="text-slate-600 dark:text-slate-300 leading-relaxed text-lg">{errorDescription}</p>
+          <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed text-lg">{errorDescription}</p>
           {#if !isAuthError && !isNotFoundError}
-            <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-              <p class="text-sm text-slate-700 dark:text-slate-300">
+            <div class="mt-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <p class="text-sm text-zinc-700 dark:text-zinc-300">
                 <span class="font-medium">Error Message:</span> {errorMessage}
               </p>
             </div>
@@ -241,16 +241,16 @@
 
         <!-- System Health Overview -->
         {#if systemHealth || networkStatus || storageStatus}
-          <div class="mb-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-            <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+          <div class="mb-6 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
               <Icon src={ComputerDesktop} size="16" />
               System Health Overview
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               {#if systemHealth}
                 <div class="flex items-center gap-2">
-                  <Icon src={ChartBar} size="16" class="text-slate-500" />
-                  <span class="text-sm text-slate-600 dark:text-slate-400">Overall Health:</span>
+                  <Icon src={ChartBar} size="16" class="text-zinc-500" />
+                  <span class="text-sm text-zinc-600 dark:text-zinc-400">Overall Health:</span>
                   <span class="text-sm font-medium {getHealthColor(systemHealth.overallHealth)}">
                     {systemHealth.overallHealth}
                   </span>
@@ -258,8 +258,8 @@
               {/if}
               {#if networkStatus}
                 <div class="flex items-center gap-2">
-                  <Icon src={Wifi} size="16" class="text-slate-500" />
-                  <span class="text-sm text-slate-600 dark:text-slate-400">Network:</span>
+                  <Icon src={Wifi} size="16" class="text-zinc-500" />
+                  <span class="text-sm text-zinc-600 dark:text-zinc-400">Network:</span>
                   <span class="text-sm font-medium {networkStatus.isOnline ? 'text-green-500' : 'text-red-500'}">
                     {networkStatus.isOnline ? 'Online' : 'Offline'}
                   </span>
@@ -267,9 +267,9 @@
               {/if}
               {#if storageStatus}
                 <div class="flex items-center gap-2">
-                  <Icon src={CircleStack} size="16" class="text-slate-500" />
-                  <span class="text-sm text-slate-600 dark:text-slate-400">Storage:</span>
-                  <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <Icon src={CircleStack} size="16" class="text-zinc-500" />
+                  <span class="text-sm text-zinc-600 dark:text-zinc-400">Storage:</span>
+                  <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     {storageStatus.localStorage} items
                   </span>
                 </div>
@@ -309,7 +309,7 @@
 
         <button
           onclick={refreshPage}
-          class="px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-200 dark:hover:bg-slate-700"
+          class="px-4 py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 hover:bg-zinc-200 dark:hover:bg-zinc-700"
         >
           <Icon src={ArrowPath} size="20" class="inline mr-2" />
           Refresh Page
@@ -325,7 +325,7 @@
 
         <button
           onclick={goHome}
-          class="px-4 py-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 hover:bg-slate-100 dark:hover:bg-slate-800"
+          class="px-4 py-3 bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
         >
           <Icon src={Home} size="20" class="inline mr-2" />
           Go Home
@@ -403,8 +403,8 @@
 
       <!-- Detailed Information (Collapsible) -->
       {#if showDetailedInfo}
-        <div class="mt-8 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+        <div class="mt-8 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
             <Icon src={DocumentText} size="16" />
             Detailed Error Information
           </h3>
@@ -412,32 +412,32 @@
           <!-- Error Context -->
           {#if errorReport?.error?.context}
             <div class="mb-4">
-              <h4 class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Error Context</h4>
-              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700">{JSON.stringify(errorReport.error.context, null, 2)}</pre>
+              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">Error Context</h4>
+              <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700">{JSON.stringify(errorReport.error.context, null, 2)}</pre>
             </div>
           {/if}
 
           <!-- Environment Information -->
           {#if errorReport?.environment}
             <div class="mb-4">
-              <h4 class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Environment</h4>
-              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700">{JSON.stringify(errorReport.environment, null, 2)}</pre>
+              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">Environment</h4>
+              <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700">{JSON.stringify(errorReport.environment, null, 2)}</pre>
             </div>
           {/if}
 
           <!-- Stack Trace -->
           {#if error?.stack}
             <div class="mb-4">
-              <h4 class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Stack Trace</h4>
-              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700 max-h-48">{error.stack}</pre>
+              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">Stack Trace</h4>
+              <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700 max-h-48">{error.stack}</pre>
             </div>
           {/if}
 
           <!-- Full Error Report -->
           {#if errorReport}
             <div>
-              <h4 class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Complete Error Report</h4>
-              <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700 max-h-64">{JSON.stringify(errorReport, null, 2)}</pre>
+              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">Complete Error Report</h4>
+              <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700 max-h-64">{JSON.stringify(errorReport, null, 2)}</pre>
             </div>
           {/if}
         </div>
@@ -445,9 +445,9 @@
 
       <!-- Debug Info (only in development) -->
       {#if import.meta.env.DEV}
-        <div class="mt-8 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-left border border-slate-200 dark:border-slate-700">
-          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Development Debug Information:</h3>
-          <pre class="text-xs text-slate-600 dark:text-slate-400 overflow-auto bg-white dark:bg-slate-900 p-3 rounded-sm border border-slate-200 dark:border-slate-700">{JSON.stringify({
+        <div class="mt-8 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg text-left border border-zinc-200 dark:border-zinc-700">
+          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Development Debug Information:</h3>
+          <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700">{JSON.stringify({
             errorId,
             status: errorStatus,
             message: errorMessage,

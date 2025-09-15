@@ -55,12 +55,12 @@
     <!-- Top Row - Full Width Components -->
     <div class="lg:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
       <!-- Recent News -->
-      <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-4 sm:p-6">
+      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6">
         <RecentNews />
       </div>
       
       <!-- Messages Preview -->
-      <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-4 sm:p-6">
+      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6">
         <MessagesPreview />
       </div>
     </div>
@@ -72,8 +72,8 @@
 
     <!-- Third Row - Shortcuts (Full Width) -->
     <div class="lg:col-span-12">
-      <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-4 sm:p-6">
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quick Links</h2>
+      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6">
+        <h2 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Quick Links</h2>
         <ShortcutsWidget shortcuts={homepageShortcuts} />
       </div>
     </div>
@@ -119,7 +119,7 @@
   onclose={closeModal}
   maxWidth="w-[80%]"
   maxHeight="h-[80%]"
-  className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
+  className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl"
   ariaLabel="Welcome Portal Modal">
   {#if portalUrl}
     <iframe src={portalUrl} class="w-full h-full rounded-2xl border-0" title="Welcome Portal"></iframe>

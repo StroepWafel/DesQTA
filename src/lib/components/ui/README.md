@@ -217,7 +217,7 @@ All components follow consistent design patterns:
 ### Colors
 Components use CSS custom properties for theming:
 - `--accent-*` for primary colors
-- `--slate-*` for neutral colors
+- `--zinc-*` for neutral colors
 - Semantic colors: `red`, `green`, `yellow`, `blue` for states
 
 ### Sizing

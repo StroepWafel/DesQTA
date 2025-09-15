@@ -635,7 +635,7 @@ All assessment components follow the application's design system:
   background-color: rgb(255 255 255 / 0.8);
 }
 
-.dark\:bg-slate-900\/50:is(.dark *) {
+.dark\:bg-zinc-900\/50:is(.dark *) {
   background-color: rgb(15 23 42 / 0.5);
 }
 ```
@@ -715,9 +715,9 @@ try {
 ```svelte
 {#if assessments.length === 0}
   <div class="flex flex-col items-center justify-center py-12">
-    <Icon src={DocumentText} class="w-16 h-16 text-slate-400 mb-4" />
+    <Icon src={DocumentText} class="w-16 h-16 text-zinc-400 mb-4" />
     <h3 class="text-lg font-semibold mb-2">No Assessments Found</h3>
-    <p class="text-slate-600 dark:text-slate-400">
+    <p class="text-zinc-600 dark:text-zinc-400">
       There are no assessments to display for the selected criteria.
     </p>
   </div>

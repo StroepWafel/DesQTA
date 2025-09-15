@@ -1405,7 +1405,7 @@ export class EditorCore {
     if (suggestions.length === 0) {
       // Show "no results" message
       const noResults = document.createElement('div');
-      noResults.className = 'p-3 text-center text-slate-500 dark:text-slate-400';
+      noResults.className = 'p-3 text-center text-zinc-500 dark:text-zinc-400';
       noResults.textContent = query ? `No results for "${query}"` : 'No SEQTA elements found';
       this.currentMentionDropdown!.appendChild(noResults);
       return;
@@ -1414,10 +1414,10 @@ export class EditorCore {
     // Add new suggestions
     suggestions.forEach((suggestion, index) => {
       const item = document.createElement('div');
-      item.className = 'mention-item p-3 cursor-pointer border-b border-slate-100 dark:border-slate-700 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors';
+      item.className = 'mention-item p-3 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors';
       
       if (index === 0) {
-        item.classList.add('selected', 'bg-slate-50', 'dark:bg-slate-700');
+        item.classList.add('selected', 'bg-zinc-50', 'dark:bg-zinc-700');
       }
 
       // Add icon based on type
@@ -1425,8 +1425,8 @@ export class EditorCore {
       item.innerHTML = `
         <span class="text-lg">${icon}</span>
         <div class="flex-1">
-          <div class="font-medium text-slate-900 dark:text-slate-100">${suggestion.title}</div>
-          <div class="text-sm text-slate-600 dark:text-slate-400">${suggestion.subtitle}</div>
+          <div class="font-medium text-zinc-900 dark:text-zinc-100">${suggestion.title}</div>
+          <div class="text-sm text-zinc-600 dark:text-zinc-400">${suggestion.subtitle}</div>
         </div>
       `;
 
@@ -1453,7 +1453,7 @@ export class EditorCore {
       const dropdown = document.createElement('div');
       dropdown.className = 'mention-autocomplete';
       // Use Tailwind-style classes for better theme integration
-      dropdown.className = 'mention-autocomplete fixed z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto min-w-[250px]';
+      dropdown.className = 'mention-autocomplete fixed z-50 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl max-h-48 overflow-y-auto min-w-[250px]';
       dropdown.style.cssText = `
         position: absolute;
         z-index: 1000;
@@ -1476,17 +1476,17 @@ export class EditorCore {
       if (suggestions.length === 0) {
         // Show "no results" message
         const noResults = document.createElement('div');
-        noResults.className = 'p-3 text-center text-slate-500 dark:text-slate-400';
+        noResults.className = 'p-3 text-center text-zinc-500 dark:text-zinc-400';
         noResults.textContent = 'No SEQTA elements found';
         dropdown.appendChild(noResults);
       }
       
       suggestions.forEach((suggestion, index) => {
                const item = document.createElement('div');
-        item.className = 'mention-item p-3 cursor-pointer border-b border-slate-100 dark:border-slate-700 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors';
+        item.className = 'mention-item p-3 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors';
         
         if (index === 0) {
-          item.classList.add('selected', 'bg-slate-50', 'dark:bg-slate-700');
+          item.classList.add('selected', 'bg-zinc-50', 'dark:bg-zinc-700');
         }
 
                // Add icon based on type
@@ -1494,8 +1494,8 @@ export class EditorCore {
         item.innerHTML = `
           <span class="text-lg">${icon}</span>
           <div class="flex-1">
-            <div class="font-medium text-slate-900 dark:text-slate-100">${suggestion.title}</div>
-            <div class="text-sm text-slate-600 dark:text-slate-400">${suggestion.subtitle}</div>
+            <div class="font-medium text-zinc-900 dark:text-zinc-100">${suggestion.title}</div>
+            <div class="text-sm text-zinc-600 dark:text-zinc-400">${suggestion.subtitle}</div>
           </div>
         `;
 
@@ -1649,9 +1649,9 @@ export class EditorCore {
       items.forEach((item, index) => {
         const htmlItem = item as HTMLElement;
         if (index === selectedIndex) {
-          htmlItem.classList.add('selected', 'bg-slate-50', 'dark:bg-slate-700');
+          htmlItem.classList.add('selected', 'bg-zinc-50', 'dark:bg-zinc-700');
         } else {
-          htmlItem.classList.remove('selected', 'bg-slate-50', 'dark:bg-slate-700');
+          htmlItem.classList.remove('selected', 'bg-zinc-50', 'dark:bg-zinc-700');
         }
       });
     }
@@ -1798,11 +1798,11 @@ export class EditorCore {
 
      // Create modal content following project patterns
      const modal = document.createElement('div');
-     modal.className = 'relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden';
+     modal.className = 'relative w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden';
 
      // Create modal header
      const header = document.createElement('div');
-     header.className = 'flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800';
+     header.className = 'flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800';
 
      const headerContent = document.createElement('div');
      headerContent.className = 'flex items-center gap-3';
@@ -1814,18 +1814,18 @@ export class EditorCore {
      const titleContainer = document.createElement('div');
      
      const title = document.createElement('h2');
-     title.className = 'text-xl font-semibold text-slate-900 dark:text-white';
+     title.className = 'text-xl font-semibold text-zinc-900 dark:text-white';
      title.textContent = suggestion.title;
 
      const subtitle = document.createElement('p');
-     subtitle.className = 'text-sm text-slate-600 dark:text-slate-400 mt-1';
+     subtitle.className = 'text-sm text-zinc-600 dark:text-zinc-400 mt-1';
      subtitle.textContent = suggestion.subtitle;
 
      titleContainer.appendChild(title);
      titleContainer.appendChild(subtitle);
 
      const closeBtn = document.createElement('button');
-     closeBtn.className = 'p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700';
+     closeBtn.className = 'p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-200 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700';
      closeBtn.innerHTML = `
        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -1843,13 +1843,13 @@ export class EditorCore {
      body.className = 'p-6';
 
      const detailsLabel = document.createElement('h3');
-      detailsLabel.className = 'text-sm font-medium text-slate-900 dark:text-white mb-3';
+      detailsLabel.className = 'text-sm font-medium text-zinc-900 dark:text-white mb-3';
       detailsLabel.textContent = 'Details';
 
       // Build rich details by type
       const buildDetails = (): HTMLElement => {
         const container = document.createElement('div');
-        container.className = 'space-y-2 text-sm text-slate-700 dark:text-slate-300';
+        container.className = 'space-y-2 text-sm text-zinc-700 dark:text-zinc-300';
         if (suggestion.type === 'assessment' || suggestion.type === 'assignment') {
           const due = suggestion.data?.due || suggestion.data?.dueDate;
           const d = due ? new Date(due) : null;
@@ -1921,10 +1921,10 @@ export class EditorCore {
             // Build day cards only for days with items
             for (const d of daysWithItems) {
              const card = document.createElement('div');
-             card.className = 'rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-3 h-32 flex flex-col';
+             card.className = 'rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md p-3 h-32 flex flex-col';
 
              const title = document.createElement('div');
-             title.className = 'text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-wide';
+             title.className = 'text-xs font-semibold text-zinc-600 dark:text-zinc-300 tracking-wide';
              title.textContent = d;
              card.appendChild(title);
 
@@ -1934,16 +1934,16 @@ export class EditorCore {
                            const items = (deduped[d] || []).slice().sort((a,b)=>a.label.localeCompare(b.label));
               for (const it of items) {
                 const row = document.createElement('div');
-                row.className = 'flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 mb-1 last:mb-0';
+                row.className = 'flex items-center justify-between text-xs text-zinc-700 dark:text-zinc-300 mb-1 last:mb-0';
 
                 const time = document.createElement('span');
-                time.className = 'inline-flex items-center px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-700';
+                time.className = 'inline-flex items-center px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-700';
                 time.textContent = it.label;
                 row.appendChild(time);
 
                 if (it.room) {
                   const room = document.createElement('span');
-                  room.className = 'ml-2 text-[11px] text-slate-500 dark:text-slate-400 truncate';
+                  room.className = 'ml-2 text-[11px] text-zinc-500 dark:text-zinc-400 truncate';
                   room.textContent = it.room;
                   row.appendChild(room);
                 }
@@ -2012,9 +2012,9 @@ export class EditorCore {
                   grid2.className = `mt-2 grid ${colsClass2} gap-3`;
                   for (const d of daysWithItems2) {
                      const card = document.createElement('div');
-                     card.className = 'rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-3 h-32 flex flex-col';
+                     card.className = 'rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md p-3 h-32 flex flex-col';
                      const title = document.createElement('div');
-                     title.className = 'text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-wide';
+                     title.className = 'text-xs font-semibold text-zinc-600 dark:text-zinc-300 tracking-wide';
                      title.textContent = d;
                      card.appendChild(title);
                      const list = document.createElement('div');
@@ -2022,14 +2022,14 @@ export class EditorCore {
                                            const items = (deduped2[d] || []).slice().sort((a,b)=>a.label.localeCompare(b.label));
                       for (const it of items) {
                         const row = document.createElement('div');
-                        row.className = 'flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 mb-1 last:mb-0';
+                        row.className = 'flex items-center justify-between text-xs text-zinc-700 dark:text-zinc-300 mb-1 last:mb-0';
                         const time = document.createElement('span');
-                        time.className = 'inline-flex items-center px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-700';
+                        time.className = 'inline-flex items-center px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-700';
                         time.textContent = it.label;
                         row.appendChild(time);
                         if (it.room) {
                           const room = document.createElement('span');
-                          room.className = 'ml-2 text-[11px] text-slate-500 dark:text-slate-400 truncate';
+                          room.className = 'ml-2 text-[11px] text-zinc-500 dark:text-zinc-400 truncate';
                           room.textContent = it.room;
                           row.appendChild(room);
                         }
@@ -2052,7 +2052,7 @@ export class EditorCore {
           container.appendChild(info);
         } else {
           const pre = document.createElement('pre');
-          pre.className = 'bg-slate-100 dark:bg-slate-800 rounded-lg p-4 text-sm font-mono text-slate-800 dark:text-slate-200 overflow-x-auto max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700';
+          pre.className = 'bg-zinc-100 dark:bg-zinc-800 rounded-lg p-4 text-sm font-mono text-zinc-800 dark:text-zinc-200 overflow-x-auto max-h-64 overflow-y-auto border border-zinc-200 dark:border-zinc-700';
           pre.textContent = JSON.stringify(suggestion.data, null, 2);
           container.appendChild(pre);
         }
@@ -2064,7 +2064,7 @@ export class EditorCore {
 
      // Create modal footer with proper button styling
      const footer = document.createElement('div');
-     footer.className = 'flex gap-3 p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 justify-end';
+     footer.className = 'flex gap-3 p-6 bg-zinc-50 dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 justify-end';
 
      const closeButton = this.createThemedButton('Close', 'secondary', () => {
        this.removeMentionModal();
@@ -2137,7 +2137,7 @@ export class EditorCore {
          button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-bg text-white hover:accent-bg-hover focus:accent-ring';
          break;
        case 'secondary':
-         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-offset-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600';
+         button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-offset-2 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 border border-zinc-200 dark:border-zinc-600';
          break;
        case 'danger':
          button.className = 'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-offset-2 bg-red-500 text-white hover:bg-red-600 focus:ring-red-500';
@@ -2153,13 +2153,13 @@ export class EditorCore {
      backdrop.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs';
 
      const modal = document.createElement('div');
-     modal.className = 'relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden';
+     modal.className = 'relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden';
 
      const header = document.createElement('div');
-     header.className = 'p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800';
+     header.className = 'p-6 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800';
      
      const headerTitle = document.createElement('h2');
-     headerTitle.className = 'text-lg font-semibold text-slate-900 dark:text-white';
+     headerTitle.className = 'text-lg font-semibold text-zinc-900 dark:text-white';
      headerTitle.textContent = title;
      header.appendChild(headerTitle);
 
@@ -2167,12 +2167,12 @@ export class EditorCore {
      body.className = 'p-6';
      
      const bodyText = document.createElement('p');
-     bodyText.className = 'text-slate-600 dark:text-slate-400';
+     bodyText.className = 'text-zinc-600 dark:text-zinc-400';
      bodyText.textContent = message;
      body.appendChild(bodyText);
 
      const footer = document.createElement('div');
-     footer.className = 'flex gap-3 p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 justify-end';
+     footer.className = 'flex gap-3 p-6 bg-zinc-50 dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 justify-end';
 
      const cancelBtn = this.createThemedButton('Cancel', 'secondary', () => {
        document.body.removeChild(backdrop);

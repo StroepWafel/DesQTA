@@ -164,16 +164,16 @@
 
     <!-- Modal -->
     <div 
-      class="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700"
+      class="relative w-full max-w-md bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-700"
       transition:fly={{ y: 20, duration: 200 }}
     >
       <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+      <div class="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
+        <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
           Cloud Sync
         </h2>
         <button
-          class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200"
+          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-200"
           on:click={closeModal}
         >
           <Icon src={XMark} class="w-5 h-5" />
@@ -205,7 +205,7 @@
         {:else}
           <!-- Authentication -->
           <div>
-            <label for="token" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label for="token" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               Authentication Token
             </label>
             <input
@@ -213,9 +213,9 @@
               type="password"
               bind:value={token}
               placeholder="Enter your BetterSEQTA Plus account token"
-              class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+              class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
             />
-            <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">
+            <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
               Get your token from your BetterSEQTA Plus account settings. 
               <a href="https://accounts.betterseqta.org" target="_blank" rel="noopener noreferrer" 
                  class="text-blue-600 dark:text-blue-400 hover:underline">

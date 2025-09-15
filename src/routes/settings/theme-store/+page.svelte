@@ -203,7 +203,7 @@
 </script>
 
 <!-- Theme Store Header -->
-<div class="relative overflow-hidden bg-linear-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700">
+<div class="relative overflow-hidden bg-linear-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
   <div class="absolute inset-0 bg-[url('/api/placeholder/1920/400')] opacity-5"></div>
   <div class="relative px-6 py-12 max-w-7xl mx-auto">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -211,32 +211,32 @@
         <div class="flex items-center gap-3">
           <a 
             href="/settings" 
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all duration-200 shadow-xs hover:shadow-md"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-xs text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 transition-all duration-200 shadow-xs hover:shadow-md"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
             Back
           </a>
-          <div class="h-8 w-px bg-slate-300 dark:bg-slate-600"></div>
-          <Icon src={ShoppingCart} class="w-8 h-8 text-slate-700 dark:text-slate-300" />
-          <h1 class="text-4xl font-bold text-slate-900 dark:text-white">Theme Store</h1>
+          <div class="h-8 w-px bg-zinc-300 dark:bg-zinc-600"></div>
+          <Icon src={ShoppingCart} class="w-8 h-8 text-zinc-700 dark:text-zinc-300" />
+          <h1 class="text-4xl font-bold text-zinc-900 dark:text-white">Theme Store</h1>
         </div>
         <div class="relative w-full max-w-3xl">
-          <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md">
-            <div class="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs min-h-[120px] transition-all duration-200">
-              <div class="text-2xl font-bold text-slate-900 dark:text-white">{slides[currentSlide].title}</div>
-              <div class="text-slate-600 dark:text-slate-300 mt-2">{slides[currentSlide].description}</div>
+          <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-md">
+            <div class="p-6 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-xs min-h-[120px] transition-all duration-200">
+              <div class="text-2xl font-bold text-zinc-900 dark:text-white">{slides[currentSlide].title}</div>
+              <div class="text-zinc-600 dark:text-zinc-300 mt-2">{slides[currentSlide].description}</div>
             </div>
-            <div class="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-900/50">
+            <div class="flex items-center justify-between px-4 py-2 bg-zinc-50 dark:bg-zinc-900/50">
               <div class="flex gap-1">
                 {#each slides as _, idx}
-                  <span class="h-1.5 w-8 rounded-full {currentSlide === idx ? 'accent-bg' : 'bg-slate-300 dark:bg-slate-700'} transition-all"></span>
+                  <span class="h-1.5 w-8 rounded-full {currentSlide === idx ? 'accent-bg' : 'bg-zinc-300 dark:bg-zinc-700'} transition-all"></span>
                 {/each}
               </div>
               <div class="flex gap-2">
-                <button class="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onclick={() => currentSlide = (currentSlide - 1 + slides.length) % slides.length}>‹</button>
-                <button class="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onclick={() => currentSlide = (currentSlide + 1) % slides.length}>›</button>
+                <button class="px-2 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" onclick={() => currentSlide = (currentSlide - 1 + slides.length) % slides.length}>‹</button>
+                <button class="px-2 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" onclick={() => currentSlide = (currentSlide + 1) % slides.length}>›</button>
               </div>
             </div>
           </div>
@@ -244,9 +244,9 @@
       </div>
       
       <div class="flex flex-col sm:flex-row gap-4">
-        <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-xs">
-          <div class="text-sm text-slate-600 dark:text-slate-400 mb-1">Currently Active</div>
-          <div class="font-semibold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+        <div class="bg-white/80 dark:bg-zinc-800/80 backdrop-blur-xs rounded-xl p-4 border border-zinc-200 dark:border-zinc-700 shadow-xs">
+          <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Currently Active</div>
+          <div class="font-semibold text-lg text-zinc-900 dark:text-white flex items-center gap-2">
             <Icon src={CheckCircle} class="w-5 h-5 text-green-500" />
             {capitalizeName(currentThemeName)}
           </div>
@@ -264,7 +264,7 @@
 </div>
 
 <!-- Store Navigation & Filters -->
-<div class="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-b border-slate-200 dark:border-slate-700">
+<div class="sticky top-0 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700">
   <div class="px-6 py-4 max-w-7xl mx-auto">
     <div class="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
       <!-- Search Bar -->
@@ -273,10 +273,10 @@
           type="text" 
           placeholder="Search themes..."
           bind:value={searchQuery}
-          class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 accent-ring focus:border-transparent transition-all duration-200"
+          class="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring focus:border-transparent transition-all duration-200"
         />
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
         </div>
@@ -286,7 +286,7 @@
       <div class="flex items-center gap-2 overflow-x-auto">
         {#each themeCategories as category}
           <button
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 {selectedCategory === category.id ? 'accent-bg text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 {selectedCategory === category.id ? 'accent-bg text-white' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
             onclick={() => selectedCategory = category.id}
           >
             <Icon src={PaintBrush} class="w-4 h-4" />
@@ -304,8 +304,8 @@
   {#if loading}
     <div class="flex justify-center items-center py-16">
       <div class="flex flex-col gap-4 items-center">
-        <div class="w-12 h-12 rounded-full border-4 animate-spin border-slate-200 dark:border-slate-700 border-t-accent"></div>
-        <p class="text-lg text-slate-600 dark:text-slate-400">Loading amazing themes...</p>
+        <div class="w-12 h-12 rounded-full border-4 animate-spin border-zinc-200 dark:border-zinc-700 border-t-accent"></div>
+        <p class="text-lg text-zinc-600 dark:text-zinc-400">Loading amazing themes...</p>
       </div>
     </div>
   {:else if error}
@@ -319,7 +319,7 @@
       {#each getFilteredThemes() as theme, i (theme.name)}
         <div class="relative group">
             <!-- Grid Card -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
               <!-- Theme Preview -->
               <div class="relative h-48 overflow-hidden" style="{getThemePreviewStyle(theme)}">
                 {#if getThemePreviewImage(theme)}
@@ -340,14 +340,14 @@
               <div class="p-6">
                 <div class="flex items-start justify-between mb-3">
                   <div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">{theme.name}</h3>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">by {theme.author}</p>
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-1">{theme.name}</h3>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400">by {theme.author}</p>
                   </div>
                 </div>
                 
-                <p class="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">{theme.description}</p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2">{theme.description}</p>
                 
-                <div class="flex items-center justify-between mb-4 text-xs text-slate-500 dark:text-slate-400">
+                <div class="flex items-center justify-between mb-4 text-xs text-zinc-500 dark:text-zinc-400">
                     <span>v{theme.version}</span>
                 </div>
                 
@@ -361,7 +361,7 @@
                   </button>
                   {#if currentThemeName !== getThemeId(theme)}
                     <button
-                      class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium rounded-xl transition-colors"
+                      class="px-4 py-2 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 font-medium rounded-xl transition-colors"
                       onclick={() => handleApplyTheme(getThemeId(theme))}
                     >
                       Apply
@@ -389,11 +389,11 @@
     
     {#if getFilteredThemes().length === 0}
       <div class="text-center py-16">
-        <div class="w-24 h-24 mx-auto mb-6 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
-          <Icon src={PaintBrush} class="w-12 h-12 text-slate-400" />
+        <div class="w-24 h-24 mx-auto mb-6 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center">
+          <Icon src={PaintBrush} class="w-12 h-12 text-zinc-400" />
         </div>
-        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">No themes found</h3>
-        <p class="text-slate-600 dark:text-slate-400 mb-6">Try adjusting your search or filter criteria.</p>
+        <h3 class="text-xl font-semibold text-zinc-900 dark:text-white mb-2">No themes found</h3>
+        <p class="text-zinc-600 dark:text-zinc-400 mb-6">Try adjusting your search or filter criteria.</p>
         <button
           class="px-6 py-3 accent-bg hover:accent-bg-hover text-white font-medium rounded-xl transition-colors"
           onclick={() => { searchQuery = ''; selectedCategory = 'all'; }}
@@ -419,12 +419,12 @@
             <!-- Simulated App Layout Preview -->
             <div class="flex h-64">
               <!-- Sidebar -->
-              <div class="w-56 p-3 flex flex-col gap-2 bg-white/85 dark:bg-slate-900/70" style="border-right: 1px solid {selectedTheme.customProperties.borderColor || '#334155'}">
+              <div class="w-56 p-3 flex flex-col gap-2 bg-white/85 dark:bg-zinc-900/70" style="border-right: 1px solid {selectedTheme.customProperties.borderColor || '#334155'}">
                 <div class="h-8 rounded-lg" style="background: {selectedTheme.customProperties.accentColor || selectedTheme.customProperties.primaryColor || '#3b82f6'}"></div>
-                <div class="h-6 rounded-sm bg-slate-200/80 dark:bg-slate-800/80"></div>
-                <div class="h-6 rounded-sm bg-slate-200/80 dark:bg-slate-800/80"></div>
-                <div class="h-6 rounded-sm bg-slate-200/80 dark:bg-slate-800/80"></div>
-                <div class="mt-auto h-6 rounded-sm bg-slate-200/60 dark:bg-slate-800/60"></div>
+                <div class="h-6 rounded-sm bg-zinc-200/80 dark:bg-zinc-800/80"></div>
+                <div class="h-6 rounded-sm bg-zinc-200/80 dark:bg-zinc-800/80"></div>
+                <div class="h-6 rounded-sm bg-zinc-200/80 dark:bg-zinc-800/80"></div>
+                <div class="mt-auto h-6 rounded-sm bg-zinc-200/60 dark:bg-zinc-800/60"></div>
               </div>
               <!-- Main -->
               <div class="flex-1 flex flex-col" style="background: {selectedTheme.customProperties.backgroundColor}">
@@ -449,9 +449,9 @@
               </div>
             </div>
             <div class="flex-1 overflow-y-auto px-6 pt-6 pb-2">
-              <div class="font-semibold text-lg mb-2 text-slate-800 dark:text-white">{selectedTheme.name} Theme</div>
-              <div class="text-sm text-slate-700 dark:text-slate-200 mb-2 text-center">{selectedTheme.description}</div>
-              <div class="text-xs text-slate-500 dark:text-slate-400 text-center">by {selectedTheme.author} • v{selectedTheme.version}</div>
+              <div class="font-semibold text-lg mb-2 text-zinc-800 dark:text-white">{selectedTheme.name} Theme</div>
+              <div class="text-sm text-zinc-700 dark:text-zinc-200 mb-2 text-center">{selectedTheme.description}</div>
+              <div class="text-xs text-zinc-500 dark:text-zinc-400 text-center">by {selectedTheme.author} • v{selectedTheme.version}</div>
             </div>
             <!-- Sticky action buttons -->
             <div class="flex gap-4 justify-center items-center p-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 z-10">
@@ -463,7 +463,7 @@
               </button>
               {#if currentThemeName !== 'default'}
                 <button
-                  class="px-4 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95"
+                  class="px-4 py-2 rounded-lg font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-700 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-zinc-400 hover:bg-zinc-300 dark:hover:bg-zinc-600 active:scale-95"
                   onclick={() => handleApplyTheme('default')}
                 >
                   Reset to Default

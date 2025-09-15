@@ -71,18 +71,6 @@
     }
   });
 
-  // Refresh avatar if the setting flips while open
-  async function refreshSensitiveAvatar() {
-    try {
-      const subset = await invoke<any>('get_settings_subset', { keys: ['dev_sensitive_info_hider'] });
-      const newVal = subset?.dev_sensitive_info_hider ?? false;
-      if (newVal && !devSensitiveInfoHider) {
-        randomAvatarUrl = getRandomDicebearAvatar();
-      }
-      devSensitiveInfoHider = newVal;
-    } catch {}
-  }
-
   // Close dropdown when userInfo becomes undefined (logout)
   $effect(() => {
     if (!userInfo) {
@@ -93,7 +81,7 @@
 
 <div class="relative user-dropdown-container">
   <button
-    class="flex gap-3 items-center px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 border-slate-200/40 hover:accent-bg dark:bg-slate-800/60 dark:border-slate-700/40 dark:hover:bg-slate-800/80 focus:outline-hidden focus:ring-2 focus:ring-slate-500/50"
+    class="flex gap-3 items-center px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 dark:hover:bg-zinc-800/80 focus:outline-hidden focus:ring-2 focus:ring-zinc-500/50"
     onclick={onToggleUserDropdown}
     aria-label="User menu"
     tabindex="0">
@@ -101,36 +89,36 @@
       <img
         src={randomAvatarUrl}
         alt="Random avatar"
-        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-slate-600/60" />
+        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else if !disableSchoolPicture && userInfo.profilePicture}
       <img
         src={userInfo.profilePicture}
         alt=""
-        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-slate-600/60" />
+        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else}
-      <div class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-slate-600/60">
+      <div class="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
         {userInfo.displayName ? userInfo.displayName[0] : userInfo.userName[0]}
       </div>
     {/if}
-    <span class="hidden font-semibold text-slate-900 md:inline dark:text-white">
+    <span class="hidden font-semibold text-zinc-900 md:inline dark:text-white">
       {userInfo.userDesc || userInfo.userName}
     </span>
   </button>
   {#if showUserDropdown}
     <div
-      class="absolute right-0 z-50 mt-3 w-56 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-slate-200/60 dark:bg-slate-900/50 dark:border-slate-700/40"
+      class="absolute right-0 z-50 mt-3 w-56 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/50 dark:border-zinc-700/40"
       transition:fly={{ y: -8, duration: 200, opacity: 0 }}>
       <div class="p-2">
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-slate-700 hover:accent-bg hover:text-white dark:text-slate-200 group"
+          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:accent-bg hover:text-white dark:text-zinc-200 group"
           onclick={() => {
             onToggleUserDropdown();
             onShowAbout();
           }}>
           <div
-            class="flex justify-center items-center w-8 h-8 rounded-lg transition-colors bg-slate-100 group-hover:bg-white/20 dark:bg-slate-700/50">
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-colors bg-zinc-100 group-hover:bg-white/20 dark:bg-zinc-700/50">
             <svg
-              class="w-4 h-4 text-slate-600 dark:text-slate-400 group-hover:text-white"
+              class="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24">
@@ -143,31 +131,31 @@
           </div>
           <div class="flex-1">
             <div class="font-medium">About</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 group-hover:text-white/80">App information</div>
+            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80">App information</div>
           </div>
         </button>
 
-        <div class="my-2 border-t border-slate-200 dark:border-slate-700/40"></div>
+        <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
 
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-slate-700 hover:accent-bg hover:text-white dark:text-slate-200 group"
+          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:accent-bg hover:text-white dark:text-zinc-200 group"
           onclick={() => {
             onToggleUserDropdown();
             onLogout();
           }}>
           <div
-            class="flex justify-center items-center w-8 h-8 rounded-lg transition-colors bg-slate-100 group-hover:bg-white/20 dark:bg-slate-700/50">
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-colors bg-zinc-100 group-hover:bg-white/20 dark:bg-zinc-700/50">
             <Icon
               src={ArrowRightOnRectangle}
-              class="w-4 h-4 text-slate-600 dark:text-slate-400 group-hover:text-white" />
+              class="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
           </div>
           <div class="flex-1">
             <div class="font-medium">Sign out</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 group-hover:text-white/80">End your session</div>
+            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80">End your session</div>
           </div>
         </button>
 
-        <div class="my-2 border-t border-slate-200 dark:border-slate-700/40"></div>
+        <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
 
         <button
           class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-red-600 hover:bg-red-500 hover:text-white dark:text-red-400 group"
