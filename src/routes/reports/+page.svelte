@@ -77,13 +77,13 @@
 </script>
 
 <div class="p-8 min-h-screen">
-  <h1 class="mb-8 text-3xl font-bold text-slate-900 dark:text-white">Reports</h1>
+  <h1 class="mb-8 text-3xl font-bold text-zinc-900 dark:text-white">Reports</h1>
   {#if loading}
     <div class="flex flex-col justify-center items-center py-24">
       <div
         class="w-16 h-16 rounded-full border-4 animate-spin border-indigo-500/30 border-t-indigo-500">
       </div>
-      <p class="mt-4 text-slate-600 dark:text-slate-400">Loading reports...</p>
+      <p class="mt-4 text-zinc-600 dark:text-zinc-400">Loading reports...</p>
     </div>
   {:else if error}
     <div class="flex flex-col justify-center items-center py-24">
@@ -91,13 +91,13 @@
         class="flex justify-center items-center w-20 h-20 text-3xl bg-linear-to-br from-red-500 to-red-600 rounded-full shadow-xs animate-gradient">
         ⚠️
       </div>
-      <p class="mt-4 text-xl text-slate-700 dark:text-slate-300">{error}</p>
+      <p class="mt-4 text-xl text-zinc-700 dark:text-zinc-300">{error}</p>
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {#each reports as report}
         <div
-          class="group dark:bg-slate-800 dark:border-[#333] border border-slate-200 bg-slate-100 rounded-2xl p-0 overflow-hidden shadow-md transition-all duration-200 hover:scale-[1.03] hover:shadow-lg focus:outline-hidden">
+          class="group dark:bg-zinc-800 dark:border-[#333] border border-zinc-200 bg-zinc-100 rounded-2xl p-0 overflow-hidden shadow-md transition-all duration-200 hover:scale-[1.03] hover:shadow-lg focus:outline-hidden">
           <div class="flex justify-between items-center px-6 pt-6">
             <div
               class="px-6 py-2 text-lg font-bold tracking-widest text-white rounded-full transition-colors duration-300 accent-bg group-hover:opacity-90 animate-gradient">
@@ -110,13 +110,13 @@
           </div>
           <div class="flex flex-col flex-1 justify-center items-center py-12">
             <div
-              class="mb-2 text-2xl font-extrabold text-center text-slate-900 dark:text-white animate-fade-in">
+              class="mb-2 text-2xl font-extrabold text-center text-zinc-900 dark:text-white animate-fade-in">
               {report.types}
             </div>
           </div>
           <div class="px-6 pb-6">
             <div
-              class="text-xs font-semibold text-center opacity-80 text-slate-900 dark:text-white animate-fade-in">
+              class="text-xs font-semibold text-center opacity-80 text-zinc-900 dark:text-white animate-fade-in">
               {formatDate(report.created_date)}
             </div>
             <button

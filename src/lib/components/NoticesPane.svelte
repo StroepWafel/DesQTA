@@ -137,9 +137,9 @@
   });
 </script>
 
-<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-  <div class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-    <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Notices</h3>
+<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+  <div class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+    <h3 class="text-xl font-semibold text-zinc-900 dark:text-white">Notices</h3>
     <a
       href="/notices"
       class="px-3 py-1.5 text-sm rounded-lg transition-all duration-300 text-nowrap accent-text hover:accent-bg-hover hover:text-white">
@@ -148,7 +148,7 @@
     </a>
   </div>
   
-  <div class="overflow-y-auto px-4 py-4 max-h-80 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-slate-800/10">
+  <div class="overflow-y-auto px-4 py-4 max-h-80 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-zinc-800/10">
     {#if loading}
       <div class="p-8 text-center text-(--text-muted)">
         <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent-500/30 border-t-accent-500 mx-auto"></div>

@@ -135,7 +135,7 @@
     <div class="flex items-center gap-4">
       <a 
         href="/settings" 
-        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -148,34 +148,34 @@
 
   {#if loading}
     <div class="flex justify-center items-center py-12 animate-fade-in">
-      <p class="text-slate-600 dark:text-slate-400">Loading plugins...</p>
+      <p class="text-zinc-600 dark:text-zinc-400">Loading plugins...</p>
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
       {#each plugins as plugin}
         <button
           type="button"
-          class="overflow-hidden bg-white rounded-2xl border shadow-xl transition-all duration-300 cursor-pointer dark:bg-slate-900 border-slate-300 dark:border-slate-800 hover:shadow-2xl hover:border-blue-700 animate-fade-in-up w-full text-left focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+          class="overflow-hidden bg-white rounded-2xl border shadow-xl transition-all duration-300 cursor-pointer dark:bg-zinc-900 border-zinc-300 dark:border-zinc-800 hover:shadow-2xl hover:border-blue-700 animate-fade-in-up w-full text-left focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
           on:click={() => openPluginDetails(plugin)}>
           <div class="overflow-hidden relative h-32">
             <img
               src={plugin.banner.dark}
               alt={`${plugin.name} banner`}
               class="object-cover w-full h-full" />
-            <div class="absolute inset-0 bg-linear-to-t to-transparent from-slate-900"></div>
+            <div class="absolute inset-0 bg-linear-to-t to-transparent from-zinc-900"></div>
           </div>
           <div class="p-6">
             <div class="flex gap-4 items-start">
               <div class="text-4xl">{plugin.icon}</div>
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
                   {plugin.name}
                 </h3>
-                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                   {plugin.description}
                 </p>
                 <div
-                  class="flex gap-2 items-center mt-2 text-sm text-slate-500 dark:text-slate-500">
+                  class="flex gap-2 items-center mt-2 text-sm text-zinc-500 dark:text-zinc-500">
                   <span>v{plugin.version}</span>
                   <span>•</span>
                   <span>by {plugin.author}</span>
@@ -204,14 +204,14 @@
     <div class="overflow-y-auto fixed inset-0">
       <div class="flex justify-center items-center p-4 min-h-screen">
         <div
-          class="bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-fade-in-up">
+          class="bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-fade-in-up">
           <!-- Plugin Header with Banner -->
           <div class="overflow-hidden relative h-48">
             <img
               src={selectedPlugin.banner.dark}
               alt={`${selectedPlugin.name} banner`}
               class="object-cover w-full h-full" />
-            <div class="absolute inset-0 bg-linear-to-t to-transparent from-slate-900"></div>
+            <div class="absolute inset-0 bg-linear-to-t to-transparent from-zinc-900"></div>
             <div class="absolute right-0 bottom-0 left-0 p-6">
               <div class="flex justify-between items-start">
                 <div class="flex gap-4 items-start">
@@ -275,7 +275,7 @@
               <!-- Features -->
               <div>
                 <h3 class="mb-2 text-lg font-semibold">Features</h3>
-                <ul class="space-y-1 list-disc list-inside text-slate-300">
+                <ul class="space-y-1 list-disc list-inside text-zinc-300">
                   {#each selectedPlugin.features as feature}
                     <li>{feature}</li>
                   {/each}
@@ -285,7 +285,7 @@
               <!-- Requirements -->
               <div>
                 <h3 class="mb-2 text-lg font-semibold">Requirements</h3>
-                <ul class="space-y-1 list-disc list-inside text-slate-300">
+                <ul class="space-y-1 list-disc list-inside text-zinc-300">
                   {#each selectedPlugin.requirements as requirement}
                     <li>{requirement}</li>
                   {/each}
@@ -297,12 +297,12 @@
                 <h3 class="mb-2 text-lg font-semibold">Changelog</h3>
                 <div class="space-y-4">
                   {#each selectedPlugin.changelog as entry}
-                    <div class="p-4 rounded-lg bg-slate-800">
+                    <div class="p-4 rounded-lg bg-zinc-800">
                       <div class="flex justify-between items-center mb-2">
                         <span class="font-semibold">v{entry.version}</span>
-                        <span class="text-sm text-slate-400">{entry.date}</span>
+                        <span class="text-sm text-zinc-400">{entry.date}</span>
                       </div>
-                      <ul class="space-y-1 list-disc list-inside text-slate-300">
+                      <ul class="space-y-1 list-disc list-inside text-zinc-300">
                         {#each entry.changes as change}
                           <li>{change}</li>
                         {/each}
@@ -313,7 +313,7 @@
               </div>
 
               <!-- Additional Info -->
-              <div class="grid grid-cols-2 gap-4 text-sm text-slate-400">
+              <div class="grid grid-cols-2 gap-4 text-sm text-zinc-400">
                 <div>
                   <span class="font-semibold">License:</span>
                   {selectedPlugin.license}
@@ -335,7 +335,7 @@
           </div>
 
           <!-- Plugin Footer -->
-          <div class="p-6 border-t bg-slate-800 border-slate-700">
+          <div class="p-6 border-t bg-zinc-800 border-zinc-700">
             {#if selectedPlugin.installed}
               <button
                 class="px-6 py-3 w-full text-white bg-red-600 rounded-sm shadow-xs transition-transform duration-200 hover:bg-red-700 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105"

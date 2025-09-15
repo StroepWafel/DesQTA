@@ -44,7 +44,7 @@
 
 <Card variant="elevated" padding="none">
   {#snippet header()}
-    <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Homework</h3>
+    <h3 class="text-xl font-semibold text-zinc-900 dark:text-white">Homework</h3>
   {/snippet}
 
   <div class="p-6">
@@ -66,14 +66,14 @@
               padding="md"
               class="border-l-8 shadow-lg border-l-accent-500"
             >
-              <h3 class="mb-2 text-lg font-bold text-slate-900 dark:text-white">
+              <h3 class="mb-2 text-lg font-bold text-zinc-900 dark:text-white">
                 {homework.title}
               </h3>
               <div class="flex flex-col gap-3">
                 {#each homework.items as item}
-                  <div class="flex gap-2 items-start px-4 py-3 rounded-lg border backdrop-blur-xs border-slate-300 bg-slate-200/80 dark:bg-slate-700/50 dark:border-slate-600">
+                  <div class="flex gap-2 items-start px-4 py-3 rounded-lg border backdrop-blur-xs border-zinc-300 bg-zinc-200/80 dark:bg-zinc-700/50 dark:border-zinc-600">
                     <span class="mt-1 text-xl accent-text">•</span>
-                    <span class="text-slate-800 dark:text-slate-50">{item}</span>
+                    <span class="text-zinc-800 dark:text-zinc-50">{item}</span>
                   </div>
                 {/each}
               </div>

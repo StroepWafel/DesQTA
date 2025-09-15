@@ -8,7 +8,7 @@
   $: readingTime = Math.ceil(wordCount / 200); // Assuming 200 words per minute reading speed
 </script>
 
-<div class="editor-status-bar flex items-center justify-between px-4 py-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30">
+<div class="editor-status-bar flex items-center justify-between px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/30">
   <!-- Left side: Document stats -->
   <div class="flex items-center space-x-4">
     <span class="flex items-center space-x-1">
@@ -33,12 +33,12 @@
   <div class="flex items-center space-x-4">
     <!-- Focus indicator -->
     <div class="flex items-center space-x-1">
-      <div class="w-2 h-2 rounded-full {isFocused ? 'bg-green-500' : 'bg-slate-400 dark:bg-slate-600'}"></div>
+      <div class="w-2 h-2 rounded-full {isFocused ? 'bg-green-500' : 'bg-zinc-400 dark:bg-zinc-600'}"></div>
       <span>{isFocused ? 'Focused' : 'Not focused'}</span>
     </div>
 
     <!-- Save status placeholder -->
-    <span class="text-slate-400 dark:text-slate-500">
+    <span class="text-zinc-400 dark:text-zinc-500">
       Auto-save enabled
     </span>
   </div>

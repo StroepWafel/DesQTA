@@ -67,7 +67,7 @@
       transition:fade={{ duration: 200 }}>
     </div>
     <div
-      class="overflow-hidden relative w-full {maxWidth} {maxHeight} {className} rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/90 border-slate-200/60 dark:bg-slate-900/90 dark:border-slate-700/60"
+      class="overflow-hidden relative w-full {maxWidth} {maxHeight} {className} rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/90 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/60"
       style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
@@ -83,7 +83,7 @@
             icon={XMark}
             onclick={closeModal}
             ariaLabel="Close modal"
-            class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
+            class="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
           />
         </div>
       {/if}
@@ -91,7 +91,7 @@
       {#if title}
         <div class="px-8 pt-8 pb-4">
           <h2
-            class="text-2xl font-bold text-transparent bg-clip-text bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
+            class="text-2xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300">
             {title}
           </h2>
         </div>

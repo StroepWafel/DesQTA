@@ -187,12 +187,12 @@
 
 <div class="p-6 mx-auto max-w-7xl">
   <div
-    class="sticky top-0 z-20 flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center animate-fade-in-up backdrop-blur-md bg-white/80 dark:bg-slate-900/80 py-4 px-6 border-b border-slate-200 dark:border-slate-800 rounded-xl">
+    class="sticky top-0 z-20 flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center animate-fade-in-up backdrop-blur-md bg-white/80 dark:bg-zinc-900/80 py-4 px-6 border-b border-zinc-200 dark:border-zinc-800 rounded-xl">
     <div class="flex items-center gap-3">
-      <Icon src={GlobeAlt} class="w-8 h-8 text-slate-600 dark:text-slate-400" />
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Portals</h1>
+      <Icon src={GlobeAlt} class="w-8 h-8 text-zinc-600 dark:text-zinc-400" />
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Portals</h1>
     </div>
-    <div class="text-sm text-slate-600 dark:text-slate-400">
+    <div class="text-sm text-zinc-600 dark:text-zinc-400">
       {portals.length} portal{portals.length !== 1 ? 's' : ''} available
     </div>
   </div>
@@ -203,7 +203,7 @@
         <div
           class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-indigo-500/30 border-t-indigo-500">
         </div>
-        <p class="text-sm text-slate-600 dark:text-slate-400 sm:text-base">Loading portals...</p>
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">Loading portals...</p>
       </div>
     </div>
   {:else if error}
@@ -231,14 +231,14 @@
   {:else if portals.length === 0}
     <div class="space-y-6">
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 animate-fade-in-up">
         <div class="p-6">
           <div class="flex flex-col items-center justify-center py-12 text-center">
-            <Icon src={GlobeAlt} class="w-16 h-16 text-slate-400 dark:text-slate-500 mb-4" />
-            <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-2">
+            <Icon src={GlobeAlt} class="w-16 h-16 text-zinc-400 dark:text-zinc-500 mb-4" />
+            <h3 class="text-lg font-medium text-zinc-900 dark:text-white mb-2">
               No Portals Available
             </h3>
-            <p class="text-slate-600 dark:text-slate-400 max-w-md">
+            <p class="text-zinc-600 dark:text-zinc-400 max-w-md">
               There are currently no portals configured for your account.
             </p>
           </div>
@@ -249,10 +249,10 @@
     <div class="space-y-6">
       <!-- Portals Grid -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 animate-fade-in-up">
-        <div class="px-6 py-4 border-b border-slate-300/50 dark:border-slate-800/50">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Available Portals</h2>
-          <p class="text-sm text-slate-600 dark:text-slate-400">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 animate-fade-in-up">
+        <div class="px-6 py-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
+          <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">Available Portals</h2>
+          <p class="text-sm text-zinc-600 dark:text-zinc-400">
             Click on any portal to open it in a new tab
           </p>
         </div>
@@ -260,7 +260,7 @@
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {#each portals as portal (portal.uuid)}
               <button
-                class="group relative p-6 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/30 backdrop-blur-xs transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 cursor-pointer"
+                class="group relative p-6 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/30 backdrop-blur-xs transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 cursor-pointer"
                 onclick={() => handlePortalClick(portal)}>
                 
                 <!-- Portal Icon -->
@@ -274,7 +274,7 @@
                 
                 <!-- Portal Info -->
                 <div class="text-center">
-                  <h3 class="font-semibold text-slate-900 dark:text-white mb-1 group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors">
+                  <h3 class="font-semibold text-zinc-900 dark:text-white mb-1 group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors">
                     {portal.label}
                   </h3>
                   

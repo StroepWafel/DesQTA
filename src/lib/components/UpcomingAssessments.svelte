@@ -118,19 +118,19 @@
 </script>
 
 <div
-  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
   <div
-    class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-    <span class="pr-4 text-xl font-semibold text-slate-900 dark:text-white text-nowrap"
+    class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+    <span class="pr-4 text-xl font-semibold text-zinc-900 dark:text-white text-nowrap"
       >Upcoming Assessments</span>
     <div class="flex overflow-x-scroll gap-2" id="upcoming-filters">
       {#each activeSubjects as subj}
         <label
-          class="flex items-center px-2.5 py-1.5 text-xs rounded-lg border transition-all duration-200 cursor-pointer sm:px-3 sm:text-sm bg-white/60 dark:bg-slate-800/60 border-slate-200/40 dark:border-slate-700/40 hover:accent-bg hover:text-white">
+          class="flex items-center px-2.5 py-1.5 text-xs rounded-lg border transition-all duration-200 cursor-pointer sm:px-3 sm:text-sm bg-white/60 dark:bg-zinc-800/60 border-zinc-200/40 dark:border-zinc-700/40 hover:accent-bg hover:text-white">
           <input
             type="checkbox"
             bind:checked={subjectFilters[subj.code]}
-            class="mr-2 w-3.5 h-3.5 text-slate-600 dark:text-slate-400 rounded-sm border-slate-300 sm:w-4 sm:h-4 form-checkbox dark:border-slate-700 focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900" />
+            class="mr-2 w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400 rounded-sm border-zinc-300 sm:w-4 sm:h-4 form-checkbox dark:border-zinc-700 focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-zinc-900" />
           <span class="transition-colors duration-200" style="color: {subj.colour}">{subj.code}</span>
         </label>
       {/each}
@@ -142,7 +142,7 @@
       <div
         class="w-12 h-12 rounded-full border-4 animate-spin sm:w-16 sm:h-16 border-accent/30 border-t-accent">
       </div>
-      <p class="mt-4 text-sm text-slate-600 sm:text-base dark:text-slate-400">
+      <p class="mt-4 text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
         Loading assessments...
       </p>
     </div>
@@ -152,7 +152,7 @@
         class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-linear-to-br from-accent to-accent-600 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(var(--accent-color-value),0.3)] animate-gradient">
         🎉
       </div>
-      <p class="mt-4 text-lg text-slate-700 sm:text-xl dark:text-slate-300">
+      <p class="mt-4 text-lg text-zinc-700 sm:text-xl dark:text-zinc-300">
         Nothing coming up!
       </p>
     </div>
@@ -195,17 +195,17 @@
               </div>
               <div class="mt-1">
                 <span
-                  class="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400"
+                  class="block text-xs font-semibold uppercase text-zinc-600 dark:text-zinc-400"
                   >{a.subject}</span>
                 <span
-                  class="block text-sm font-semibold truncate text-slate-900 dark:text-white sm:text-base"
+                  class="block text-sm font-semibold truncate text-zinc-900 dark:text-white sm:text-base"
                   >{a.title}</span>
               </div>
             </div>
           </div>
 
           {#if a.description}
-            <div class="relative z-10 text-sm text-slate-700 dark:text-slate-300 line-clamp-2">
+            <div class="relative z-10 text-sm text-zinc-700 dark:text-zinc-300 line-clamp-2">
               {a.description}
             </div>
           {/if}

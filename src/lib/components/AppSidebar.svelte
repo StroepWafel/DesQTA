@@ -42,7 +42,7 @@
     <div class="flex justify-end sm:hidden mb-4">
       <button
         onclick={handleCloseSidebar}
-        class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         aria-label="Close sidebar"
       >
         <Icon src={XMark} class="w-5 h-5" />
@@ -51,7 +51,7 @@
 
     <!-- Mobile Header -->
     <div class="sm:hidden mb-6">
-      <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Menu</h2>
+      <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">Menu</h2>
       <div class="w-12 h-1 bg-accent-500 rounded-full"></div>
     </div>
 
@@ -59,13 +59,13 @@
       <a
         href={item.path}
         onclick={handleMenuItemClick}
-        class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 hover:bg-accent-100 hover:text-slate-900 dark:hover:bg-accent-600 dark:hover:text-white focus:outline-hidden {(
+        class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 hover:bg-accent-100 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white focus:outline-hidden {(
           item.path === '/'
             ? $page.url.pathname === '/'
             : $page.url.pathname.startsWith(item.path)
         )
           ? 'bg-accent text-white'
-          : 'text-slate-900 dark:text-slate-300'} playful">
+          : 'text-zinc-900 dark:text-zinc-300'} playful">
         <Icon
           src={item.icon}
           class="w-6 h-6 {(
@@ -74,7 +74,7 @@
               : $page.url.pathname.startsWith(item.path)
           )
             ? 'text-white'
-            : 'text-slate-600 dark:text-slate-400'}" />
+            : 'text-zinc-600 dark:text-zinc-400'}" />
         <span>{item.label}</span>
       </a>
     {/each}

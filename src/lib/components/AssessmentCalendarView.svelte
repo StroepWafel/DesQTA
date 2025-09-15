@@ -71,18 +71,18 @@
 </script>
 
 <div
-  class="p-4 rounded-xl border backdrop-blur-xs bg-slate-100/80 dark:bg-slate-800/50 sm:p-6 border-slate-300/50 dark:border-slate-700/50">
+  class="p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 sm:p-6 border-zinc-300/50 dark:border-zinc-700/50">
   <div class="flex justify-between items-center mb-6">
     <button
-      class="p-2 rounded-lg transition-all duration-300 hover:bg-slate-200/80 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+      class="p-2 rounded-lg transition-all duration-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
       onclick={prevMonth}>
       ←
     </button>
-    <h2 class="text-lg font-bold sm:text-xl text-slate-900 dark:text-white">
+    <h2 class="text-lg font-bold sm:text-xl text-zinc-900 dark:text-white">
       {getMonthName(currentDate)}
     </h2>
     <button
-      class="p-2 rounded-lg transition-all duration-300 hover:bg-slate-200/80 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+      class="p-2 rounded-lg transition-all duration-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
       onclick={nextMonth}>
       →
     </button>
@@ -91,7 +91,7 @@
   <div class="grid grid-cols-7 gap-2">
     {#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day}
       <div
-        class="py-2 text-xs font-semibold text-center sm:text-sm text-slate-600 dark:text-slate-400">
+        class="py-2 text-xs font-semibold text-center sm:text-sm text-zinc-600 dark:text-zinc-400">
         {day}
       </div>
     {/each}
@@ -109,16 +109,16 @@
           class="h-full rounded-lg border p-2 transition-all duration-300 hover:scale-105 {assessments.length >
           0
             ? ''
-            : 'bg-slate-200/60 dark:bg-slate-800/30'} {isToday
+            : 'bg-zinc-200/60 dark:bg-zinc-800/30'} {isToday
             ? 'border-indigo-500 ring-4 ring-indigo-500/30 animate-pulse-today'
-            : 'border-slate-300/50 dark:border-slate-700/50'}"
+            : 'border-zinc-300/50 dark:border-zinc-700/50'}"
           style={assessments.length > 0 && assessments[0].colour
             ? `background: ${assessments[0].colour}20;`
             : ''}>
           <div
             class="text-sm sm:text-base mb-1 {isToday
               ? 'font-bold text-indigo-400 scale-110'
-              : 'text-slate-700 dark:text-slate-300'}">
+              : 'text-zinc-700 dark:text-zinc-300'}">
             {i + 1}
           </div>
           {#if assessments.length > 0}
@@ -136,7 +136,7 @@
                 </div>
               {/each}
               {#if assessments.length > 2}
-                <div class="text-xs text-center text-slate-600 dark:text-slate-400">
+                <div class="text-xs text-center text-zinc-600 dark:text-zinc-400">
                   +{assessments.length - 2} more
                 </div>
               {/if}

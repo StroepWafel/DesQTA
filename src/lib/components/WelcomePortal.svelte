@@ -48,10 +48,10 @@
 </script>
 
 <div
-  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
   <div
-    class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-    <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Welcome Portal</h3>
+    class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+    <h3 class="text-xl font-semibold text-zinc-900 dark:text-white">Welcome Portal</h3>
     <button
       onclick={() => (showPortalModal = true)}
       class="px-3 py-1.5 text-sm rounded-lg transition-all duration-300 text-nowrap accent-text hover:accent-bg-hover hover:text-white">
@@ -66,7 +66,7 @@
         <div
           class="w-16 h-16 rounded-full border-4 animate-spin border-indigo-500/30 border-t-indigo-500">
         </div>
-        <p class="mt-4 text-slate-400">Loading welcome portal...</p>
+        <p class="mt-4 text-zinc-400">Loading welcome portal...</p>
       </div>
     {:else if portalError}
       <div class="flex flex-col justify-center items-center h-full">
@@ -74,7 +74,7 @@
           class="w-20 h-20 flex items-center justify-center rounded-full bg-linear-to-br from-red-500 to-red-600 text-3xl shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-gradient">
           ⚠️
         </div>
-        <p class="mt-4 text-xl text-slate-300">{portalError}</p>
+        <p class="mt-4 text-xl text-zinc-300">{portalError}</p>
       </div>
     {:else if portalUrl}
       <iframe src={portalUrl} class="w-full h-full border-0" title="Welcome Portal"></iframe>
@@ -87,7 +87,7 @@
   onclose={closeModal}
   maxWidth="w-[80%]"
   maxHeight="h-[80%]"
-  className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
+  className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl"
   ariaLabel="Welcome Portal Modal">
   {#if portalUrl}
     <iframe src={portalUrl} class="w-full h-full rounded-2xl border-0" title="Welcome Portal"></iframe>

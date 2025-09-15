@@ -358,7 +358,7 @@
                 <img
                   src={getStudentAvatar(student)}
                   alt="Student avatar"
-                  class="w-10 h-10 rounded-full object-cover border-2 border-white/60 dark:border-slate-600/60"
+                  class="w-10 h-10 rounded-full object-cover border-2 border-white/60 dark:border-zinc-600/60"
                 />
               {:else}
                 <div 

@@ -2,7 +2,7 @@
   import { fade } from 'svelte/transition';
 </script>
 
-<div class="flex items-center justify-center h-screen bg-slate-100 dark:bg-slate-900">
+<div class="flex items-center justify-center h-screen bg-zinc-100 dark:bg-zinc-900">
   <div class="flex flex-col items-center gap-6" transition:fade>
     <div class="relative w-48 h-32 overflow-visible">
       <!-- Animated clouds using provided SVG -->
@@ -25,7 +25,7 @@
         <path d="M503.407,0.963c-2.579-1.193-5.448-1.251-7.987-0.32c0-0.002,0-0.003-0.001-0.005L9.377,179.106  c-3.876,1.423-6.551,4.996-6.823,9.116c-0.275,4.12,1.904,8.015,5.558,9.939l137.867,72.584v169.208  c0,4.679,3.111,8.787,7.612,10.057c0.94,0.265,1.895,0.393,2.837,0.393c1.992,0,3.923-0.589,5.586-1.644  c0.004,0.006,0.008,0.01,0.014,0.017l113.3-71.9l141.89,132.319c1.966,1.833,4.523,2.807,7.127,2.807c1.15,0,2.31-0.19,3.431-0.58  c3.66-1.273,6.315-4.467,6.898-8.299l74.678-491.105C510.051,7.42,507.628,2.915,503.407,0.963z M434.512,45.265l-279.03,206.867  l-116.834-61.51L434.512,45.265z M166.877,269.699l261.434-193.82L221.954,313.315c-0.386,0.444-0.718,0.915-1.016,1.401  c-0.002-0.003-0.004-0.004-0.007-0.007l-54.055,88.198V269.699H166.877z M188.896,406.972l43.17-70.439l27.465,25.613  L188.896,406.972z M416.988,480.407L244.345,319.408l238.93-274.914L416.988,480.407z"/>
       </svg>
     </div>
-    <p class="text-2xl font-bold text-slate-700 dark:text-slate-200">Loading...</p>
+    <p class="text-2xl font-bold text-zinc-700 dark:text-zinc-200">Loading...</p>
   </div>
 </div>
 

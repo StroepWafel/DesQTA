@@ -42,7 +42,7 @@
   };
 
   let containerClasses = $derived([
-    'w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden',
+    'w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden',
     sizes[size],
     className
   ].filter(Boolean).join(' '));
@@ -58,7 +58,7 @@
 
 <div class="space-y-1">
   {#if showLabel}
-    <div class="flex justify-between items-center text-sm text-slate-600 dark:text-slate-400">
+    <div class="flex justify-between items-center text-sm text-zinc-600 dark:text-zinc-400">
       <span>{displayLabel}</span>
       <span>{value} / {max}</span>
     </div>

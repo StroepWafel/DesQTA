@@ -42,22 +42,22 @@
 
   const variants = {
     default: {
-      container: 'border-b border-slate-200 dark:border-slate-700',
-      tab: 'border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600',
+      container: 'border-b border-zinc-200 dark:border-zinc-700',
+      tab: 'border-b-2 border-transparent hover:border-zinc-300 dark:hover:border-zinc-600',
       active: 'border-accent-500 text-accent-600 dark:text-accent-400',
-      inactive: 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+      inactive: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
     },
     pills: {
-      container: 'bg-slate-100 dark:bg-slate-800 rounded-lg p-1',
+      container: 'bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1',
       tab: 'rounded-md transition-all duration-200',
-      active: 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs',
-      inactive: 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
+      active: 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-xs',
+      inactive: 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-zinc-700/50'
     },
     underline: {
       container: '',
       tab: 'border-b-2 border-transparent',
       active: 'border-accent-500 text-accent-600 dark:text-accent-400',
-      inactive: 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+      inactive: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600'
     }
   };
 
@@ -101,7 +101,7 @@
         <span>{tab.label}</span>
         
         {#if tab.badge}
-          <span class="ml-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-full px-2 py-0.5 text-xs">
+          <span class="ml-2 bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-full px-2 py-0.5 text-xs">
             {tab.badge}
           </span>
         {/if}

@@ -53,7 +53,7 @@
     rounded-lg relative animate-fadeIn shadow-md
     {selectedMessage?.id === msg.id
     ? 'border-2 border-accent-500 focus:ring-2 accent-ring'
-    : 'border border-slate-300/30 dark:border-slate-800/30 hover:border-accent-500/30 dark:hover:border-accent-700/30 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02]'}
+    : 'border border-zinc-300/30 dark:border-zinc-800/30 hover:border-accent-500/30 dark:hover:border-accent-700/30 hover:bg-accent-100/30 dark:hover:bg-accent-700/30 hover:scale-[1.02]'}
     {msg.unread ? 'border-l-4 border-l-accent-500' : ''}
     focus:outline-hidden focus:ring-2 accent-ring"
   onclick={() => openMessage(msg)}>
@@ -63,13 +63,13 @@
       <span
         class="font-bold text-sm {msg.unread
           ? 'text-indigo-400'
-          : 'text-slate-800 dark:text-slate-200'}">{msg.sender}</span>
+          : 'text-zinc-800 dark:text-zinc-200'}">{msg.sender}</span>
       {#if msg.unread}
         <span class="w-2 h-2 bg-indigo-500 rounded-full"></span>
       {/if}
     </div>
     <span
-      class="px-2 py-1 text-xs rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300"
+      class="px-2 py-1 text-xs rounded-full bg-zinc-200/50 dark:bg-zinc-800/50 text-zinc-700 dark:text-zinc-300"
       >{formatDate(msg.date)}</span>
   </div>
 
@@ -77,10 +77,10 @@
   <div
     class="font-semibold text-sm {msg.unread
       ? 'text-indigo-400'
-      : 'text-slate-800 dark:text-slate-200'} flex items-center">
+      : 'text-zinc-800 dark:text-zinc-200'} flex items-center">
     <span class="line-clamp-1">{msg.subject}</span>
     {#if hasAttachment(msg.preview)}
-      <span class="ml-2 text-slate-600 dark:text-slate-400">
+      <span class="ml-2 text-zinc-600 dark:text-zinc-400">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="w-4 h-4"
@@ -98,7 +98,7 @@
   </div>
 
   <!-- Bottom row: to and preview -->
-  <div class="flex items-center text-xs text-slate-600 dark:text-slate-400">
+  <div class="flex items-center text-xs text-zinc-600 dark:text-zinc-400">
     <span class="flex items-center whitespace-nowrap">
       <span class="inline-block mr-1 opacity-70">To:</span>
       <span class="max-w-[100px] truncate">{msg.to}</span>

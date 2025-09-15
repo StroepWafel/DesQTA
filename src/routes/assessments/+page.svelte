@@ -304,15 +304,15 @@
 
 <div class="p-4 sm:p-6">
   <!-- Consolidated Header -->
-  <div class="flex flex-col gap-4 mb-6 p-4 rounded-xl border backdrop-blur-xs bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
+  <div class="flex flex-col gap-4 mb-6 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
     <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Assessments</h1>
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Assessments</h1>
       
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <!-- Year Filter Dropdown -->
         {#if availableYears && availableYears.length > 0}
           <div class="flex items-center gap-2">
-            <label for="year-select" class="text-sm font-medium text-slate-600 dark:text-slate-400">Year:</label>
+            <label for="year-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Year:</label>
             <div class="relative">
               <select
                 id="year-select"
@@ -345,7 +345,7 @@
 
         <!-- View Selector Dropdown -->
         <div class="flex items-center gap-2">
-          <label for="view-select" class="text-sm font-medium text-slate-600 dark:text-slate-400">View:</label>
+          <label for="view-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">View:</label>
           <div class="relative">
             <select
               id="view-select"
@@ -407,8 +407,8 @@
     {:else}
       <!-- Board View Options -->
       {#if selectedTab === 'board'}
-        <div class="flex items-center gap-4 p-4 rounded-xl border backdrop-blur-xs bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
-          <label for="group-by-select" class="text-sm font-medium text-slate-600 dark:text-slate-400">Group by:</label>
+        <div class="flex items-center gap-4 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+          <label for="group-by-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Group by:</label>
           <div class="relative">
             <select
               id="group-by-select"

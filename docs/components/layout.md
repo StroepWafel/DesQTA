@@ -239,7 +239,7 @@ class="{(
     : $page.url.pathname.startsWith(item.path)
 )
   ? 'bg-accent text-white'
-  : 'text-slate-900 dark:text-slate-300'}"
+  : 'text-zinc-900 dark:text-zinc-300'}"
 ```
 
 **Active State Features:**
@@ -251,7 +251,7 @@ class="{(
 ### Animation & Interactions
 
 ```svelte
-class="transition-all duration-200 hover:bg-accent-100 hover:text-slate-900 
+class="transition-all duration-200 hover:bg-accent-100 hover:text-zinc-900 
        dark:hover:bg-accent-600 dark:hover:text-white playful"
 ```
 
@@ -279,7 +279,7 @@ style="background: var(--background-color);"
 ### Dark Mode Support
 Components automatically adapt to dark mode using Tailwind's `dark:` prefix:
 ```svelte
-class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+class="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
 ```
 
 ## 🔧 Best Practices

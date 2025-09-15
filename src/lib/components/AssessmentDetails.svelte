@@ -30,13 +30,13 @@
 
 <div class="grid gap-8 animate-fade-in">
   <div
-    class="p-6 rounded-2xl transition-all duration-300 dark:bg-slate-900 bg-slate-100 hover:shadow-lg hover:shadow-accent-500/10">
+    class="p-6 rounded-2xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10">
     <!-- Grade Bar -->
     {#if assessmentData.marked && firstCriterion && firstCriterion.results}
       <div class="mb-4">
         <div class="mb-2 text-2xl font-bold">Grade</div>
         <div
-          class="overflow-hidden relative w-full h-16 rounded-xl border transition-all duration-300 dark:bg-slate-800 bg-slate-200 dark:border-slate-700 border-slate-200 hover:shadow-lg hover:shadow-accent-500/10">
+          class="overflow-hidden relative w-full h-16 rounded-xl border transition-all duration-300 dark:bg-zinc-800 bg-zinc-200 dark:border-zinc-700 border-zinc-200 hover:shadow-lg hover:shadow-accent-500/10">
           <div
             class="absolute top-0 left-0 h-full bg-accent-600 transition-all duration-500"
             style="width: {firstCriterion.results.percentage || 0}%">
@@ -54,8 +54,8 @@
     {:else if assessmentData.marked && firstCriterion}
       <div class="mb-4">
         <div class="mb-2 text-2xl font-bold">Grade</div>
-        <div class="p-4 rounded-xl border dark:bg-slate-800 bg-slate-200 dark:border-slate-700 border-slate-200">
-          <div class="text-center text-slate-600 dark:text-slate-400">
+        <div class="p-4 rounded-xl border dark:bg-zinc-800 bg-zinc-200 dark:border-zinc-700 border-zinc-200">
+          <div class="text-center text-zinc-600 dark:text-zinc-400">
             Grade not yet available
           </div>
         </div>
@@ -70,29 +70,29 @@
     {/if}
     {#if assessmentData.marked && assessmentData.engagement?.feedbackComment}
       <div
-        class="p-4 mb-4 rounded-xl transition-all duration-300 dark:bg-slate-800 bg-slate-200 hover:shadow-lg hover:shadow-accent-500/5">
+        class="p-4 mb-4 rounded-xl transition-all duration-300 dark:bg-zinc-800 bg-zinc-200 hover:shadow-lg hover:shadow-accent-500/5">
         <div class="mb-1 font-semibold">Teacher feedback</div>
-        <div class="dark:text-slate-300 text-slate-700">
+        <div class="dark:text-zinc-300 text-zinc-700">
           {assessmentData.engagement.feedbackComment}
         </div>
       </div>
     {:else if assessmentData.marked}
       <div class="flex flex-col items-center justify-center py-8 text-center">
-        <div class="w-16 h-16 mb-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-          <Icon src={DocumentText} class="w-8 h-8 text-slate-400" />
+        <div class="w-16 h-16 mb-4 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+          <Icon src={DocumentText} class="w-8 h-8 text-zinc-400" />
         </div>
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Feedback Available</h3>
-        <p class="text-slate-600 dark:text-slate-400">
+        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">No Feedback Available</h3>
+        <p class="text-zinc-600 dark:text-zinc-400">
           This assessment has been marked but no detailed feedback is available yet.
         </p>
       </div>
     {:else}
       <div class="flex flex-col items-center justify-center py-8 text-center">
-        <div class="w-16 h-16 mb-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-          <Icon src={DocumentText} class="w-8 h-8 text-slate-400" />
+        <div class="w-16 h-16 mb-4 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+          <Icon src={DocumentText} class="w-8 h-8 text-zinc-400" />
         </div>
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Assessment Not Yet Marked</h3>
-        <p class="text-slate-600 dark:text-slate-400">
+        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">Assessment Not Yet Marked</h3>
+        <p class="text-zinc-600 dark:text-zinc-400">
           This assessment hasn't been marked yet. Check back later for grades and feedback.
         </p>
       </div>

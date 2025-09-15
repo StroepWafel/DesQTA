@@ -154,7 +154,7 @@ function formatTime(time: string): string {
 ```
 
 #### Header Design
-- **Gradient Background**: `bg-linear-to-r from-slate-50 to-slate-100`
+- **Gradient Background**: `bg-linear-to-r from-zinc-50 to-zinc-100`
 - **Today Highlighting**: Blue background for current day
 - **Responsive Typography**: Scales with screen size
 

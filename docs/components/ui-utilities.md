@@ -75,7 +75,7 @@ interface Props {
           <h3 class="text-sm font-semibold text-red-700 dark:text-red-400">Component Error</h3>
         </div>
         
-        <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">
+        <p class="text-sm text-zinc-600 dark:text-zinc-300 mb-3">
           {error instanceof Error ? error.message : String(error) || 'An error occurred in this component'}
         </p>
         
@@ -164,7 +164,7 @@ interface Props {
   <div
     class="rounded-full border-4 animate-spin border-indigo-500/30 border-t-indigo-500 {sizeClasses[size]}">
   </div>
-  <p class="mt-4 {textSizes[size]} text-slate-600 dark:text-slate-400">
+  <p class="mt-4 {textSizes[size]} text-zinc-600 dark:text-zinc-400">
     {message}
   </p>
 </div>
@@ -198,7 +198,7 @@ A full-screen loading component with animated elements for app initialization.
 #### Implementation
 
 ```svelte
-<div class="flex items-center justify-center h-screen bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800">
+<div class="flex items-center justify-center h-screen bg-linear-to-br from-zinc-100 to-zinc-200 dark:from-zinc-900 dark:to-zinc-800">
   <div class="flex flex-col items-center space-y-8">
     <!-- Animated plane and clouds -->
     <div class="relative w-48 h-24">
@@ -211,7 +211,7 @@ A full-screen loading component with animated elements for app initialization.
     </div>
     
     <!-- Loading text -->
-    <p class="text-2xl font-bold text-slate-700 dark:text-slate-200">Loading...</p>
+    <p class="text-2xl font-bold text-zinc-700 dark:text-zinc-200">Loading...</p>
   </div>
 </div>
 ```
@@ -278,10 +278,10 @@ interface Props {
     class="flex items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-purple-600 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient {iconSizes[size]}">
     {icon}
   </div>
-  <p class="mt-4 {titleSizes[size]} text-slate-700 dark:text-slate-300">
+  <p class="mt-4 {titleSizes[size]} text-zinc-700 dark:text-zinc-300">
     {title}
   </p>
-  <p class="mt-2 {messageSizes[size]} text-slate-600 dark:text-slate-400">
+  <p class="mt-2 {messageSizes[size]} text-zinc-600 dark:text-zinc-400">
     {message}
   </p>
 </div>
@@ -523,12 +523,12 @@ A Pomodoro-style timer for study sessions with customizable durations.
   });
 </script>
 
-<div class="p-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
+<div class="p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-lg">
   <div class="text-center mb-6">
-    <div class="text-4xl font-mono font-bold text-slate-800 dark:text-white mb-2">
+    <div class="text-4xl font-mono font-bold text-zinc-800 dark:text-white mb-2">
       {formatTime(timeLeft)}
     </div>
-    <div class="text-sm text-slate-600 dark:text-slate-400">
+    <div class="text-sm text-zinc-600 dark:text-zinc-400">
       {isBreak ? 'Break Time' : 'Focus Time'}
     </div>
   </div>
@@ -554,9 +554,9 @@ A Pomodoro-style timer for study sessions with customizable durations.
   </div>
 
   <div class="flex justify-center gap-2">
-    <button onclick={() => setDuration(25)} class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-sm">25m</button>
-    <button onclick={() => setDuration(45)} class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-sm">45m</button>
-    <button onclick={() => setDuration(60)} class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-sm">60m</button>
+    <button onclick={() => setDuration(25)} class="px-3 py-1 text-sm bg-zinc-200 dark:bg-zinc-700 rounded-sm">25m</button>
+    <button onclick={() => setDuration(45)} class="px-3 py-1 text-sm bg-zinc-200 dark:bg-zinc-700 rounded-sm">45m</button>
+    <button onclick={() => setDuration(60)} class="px-3 py-1 text-sm bg-zinc-200 dark:bg-zinc-700 rounded-sm">60m</button>
   </div>
 </div>
 ```
@@ -654,9 +654,9 @@ Displays the school's welcome portal content in an embedded iframe with full-scr
   });
 </script>
 
-<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-  <div class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-    <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Welcome Portal</h3>
+<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+  <div class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+    <h3 class="text-xl font-semibold text-zinc-900 dark:text-white">Welcome Portal</h3>
     <button
       onclick={() => (showPortalModal = true)}
       class="px-3 py-1.5 text-sm rounded-lg transition-all duration-300 text-nowrap accent-text hover:accent-bg-hover hover:text-white">
@@ -875,13 +875,13 @@ Components automatically adapt to the current theme:
 
 ```svelte
 <!-- Dynamic background colors -->
-<div class="bg-white dark:bg-slate-800">
+<div class="bg-white dark:bg-zinc-800">
 
 <!-- Accent color integration -->
 <button class="accent-bg hover:accent-bg-hover">
 
 <!-- Text color adaptation -->
-<p class="text-slate-900 dark:text-white">
+<p class="text-zinc-900 dark:text-white">
 ```
 
 ### Responsive Design

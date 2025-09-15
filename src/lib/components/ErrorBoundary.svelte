@@ -85,7 +85,7 @@
           </h3>
         </div>
         
-        <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">
+        <p class="text-sm text-zinc-600 dark:text-zinc-300 mb-3">
           {errorDetails?.message || 'An error occurred in this component'}
         </p>
         
@@ -100,7 +100,7 @@
           
           <button
             onclick={toggleDetails}
-            class="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 hover:bg-slate-200 dark:hover:bg-slate-600"
+            class="px-3 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 hover:bg-zinc-200 dark:hover:bg-zinc-600"
           >
             <Icon src={InformationCircle} size="14" class="inline mr-1" />
             {showDetails ? 'Hide' : 'Show'} Details
@@ -118,19 +118,19 @@
         </div>
         
         {#if showDetails && errorDetails}
-          <div class="mt-3 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm text-xs">
+          <div class="mt-3 p-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm text-xs">
             <div class="mb-2">
-              <strong class="text-slate-700 dark:text-slate-300">Time:</strong>
-              <span class="text-slate-600 dark:text-slate-400">{new Date(errorDetails.timestamp).toLocaleString()}</span>
+              <strong class="text-zinc-700 dark:text-zinc-300">Time:</strong>
+              <span class="text-zinc-600 dark:text-zinc-400">{new Date(errorDetails.timestamp).toLocaleString()}</span>
             </div>
             <div class="mb-2">
-              <strong class="text-slate-700 dark:text-slate-300">Component:</strong>
-              <span class="text-slate-600 dark:text-slate-400">{componentName}</span>
+              <strong class="text-zinc-700 dark:text-zinc-300">Component:</strong>
+              <span class="text-zinc-600 dark:text-zinc-400">{componentName}</span>
             </div>
             {#if errorDetails.stack}
               <div>
-                <strong class="text-slate-700 dark:text-slate-300">Stack Trace:</strong>
-                <pre class="mt-1 p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-sm text-xs text-slate-600 dark:text-slate-400 overflow-auto max-h-32">{errorDetails.stack}</pre>
+                <strong class="text-zinc-700 dark:text-zinc-300">Stack Trace:</strong>
+                <pre class="mt-1 p-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-600 rounded-sm text-xs text-zinc-600 dark:text-zinc-400 overflow-auto max-h-32">{errorDetails.stack}</pre>
               </div>
             {/if}
           </div>

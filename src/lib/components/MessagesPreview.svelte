@@ -70,12 +70,12 @@
   onMount(fetchMessages);
 </script>
 
-<div class="flex flex-col gap-3 text-slate-900 dark:text-white">
+<div class="flex flex-col gap-3 text-zinc-900 dark:text-white">
   <div class="flex items-center justify-between">
     <h3 class="text-base sm:text-lg font-semibold">Messages</h3>
     <div class="flex gap-2">
       <button
-        class="px-3 py-1.5 rounded-lg bg-slate-800/80 text-white hover:bg-slate-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+        class="px-3 py-1.5 rounded-lg bg-zinc-800/80 text-white hover:bg-zinc-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
         onclick={fetchMessages}
         aria-label="Refresh messages"
         title="Refresh"
@@ -104,7 +104,7 @@
       {#each items as m}
         <li>
           <button
-            class="w-full text-left group p-2 rounded-lg transition-all duration-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:scale-[1.02] focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            class="w-full text-left group p-2 rounded-lg transition-all duration-200 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 hover:scale-[1.02] focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
             onclick={() => openMessage(m.id)}
             title={m.subject}
           >

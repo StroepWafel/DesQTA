@@ -16,9 +16,9 @@
 </script>
 
 <section
-  class="w-full xl:w-md border-r border-slate-300/50 dark:border-slate-800/50 flex flex-col bg-white dark:bg-slate-900 backdrop-blur-xs shadow-md rounded-xl m-2">
+  class="w-full xl:w-md border-r border-zinc-300/50 dark:border-zinc-800/50 flex flex-col bg-white dark:bg-zinc-900 backdrop-blur-xs shadow-md rounded-xl m-2">
   <div
-    class="flex items-center p-4 text-base font-semibold border-b text-slate-900 sm:text-lg border-slate-300/50 dark:border-slate-800/50 dark:text-white">
+    class="flex items-center p-4 text-base font-semibold border-b text-zinc-900 sm:text-lg border-zinc-300/50 dark:border-zinc-800/50 dark:text-white">
     <svg
       xmlns="http://www.w3.org/2000/svg"
       class="mr-2 w-5 h-5"
@@ -32,7 +32,7 @@
   <div class="overflow-y-scroll flex-1 p-1">
     {#if loading}
       <div
-        class="flex flex-col justify-center items-center p-8 h-32 text-center text-slate-600 dark:text-slate-300">
+        class="flex flex-col justify-center items-center p-8 h-32 text-center text-zinc-600 dark:text-zinc-300">
         <div
           class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-accent-500/30 border-t-accent-500">
         </div>
@@ -56,7 +56,7 @@
       </div>
     {:else if filteredMessages.length === 0}
       <div
-        class="flex flex-col justify-center items-center p-8 h-32 text-center text-slate-600 dark:text-slate-300">
+        class="flex flex-col justify-center items-center p-8 h-32 text-center text-zinc-600 dark:text-zinc-300">
         <div
           class="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-blue-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
           <svg
@@ -75,7 +75,7 @@
         <p class="mt-4 text-sm sm:text-base">No messages in this folder.</p>
       </div>
     {:else}
-      <div class="overflow-y-scroll p-2 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-slate-800/10">
+      <div class="overflow-y-scroll p-2 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-zinc-800/10">
         {#each filteredMessages as message (message.id)}
           <MessageItem 
             {message}

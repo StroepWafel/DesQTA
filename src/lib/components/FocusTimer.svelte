@@ -65,10 +65,10 @@
 </script>
 
 <div
-  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
   <div
-    class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
-    <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Focus Timer</h3>
+    class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+    <h3 class="text-xl font-semibold text-zinc-900 dark:text-white">Focus Timer</h3>
   </div>
   <div class="p-6">
     <div class="flex flex-col items-center gap-6">
@@ -77,7 +77,7 @@
         class="flex items-center justify-center w-48 h-48 rounded-full border-8 {isBreak
           ? 'border-green-500'
           : 'border-accent'}">
-        <span class="text-4xl font-bold text-slate-900 dark:text-white">{formatTime(timeLeft)}</span>
+        <span class="text-4xl font-bold text-zinc-900 dark:text-white">{formatTime(timeLeft)}</span>
       </div>
 
       <!-- Timer Controls -->
@@ -136,7 +136,7 @@
           bind:value={customMinutes}
           class="w-14 px-2 py-2 rounded-lg border-2 accent-border bg-transparent accent-text focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-center"
         />
-        <span class="text-xl font-bold text-slate-700 dark:text-slate-200">:</span>
+        <span class="text-xl font-bold text-zinc-700 dark:text-zinc-200">:</span>
         <input
           type="number"
           min="0"
@@ -158,10 +158,10 @@
 
       <!-- Status -->
       <div class="text-center">
-        <p class="text-lg font-medium text-slate-900 dark:text-white">
+        <p class="text-lg font-medium text-zinc-900 dark:text-white">
           {isBreak ? 'Break Time!' : 'Focus Time'}
         </p>
-        <p class="text-sm text-slate-600 dark:text-slate-400">
+        <p class="text-sm text-zinc-600 dark:text-zinc-400">
           {isBreak ? 'Take a short break' : 'Stay focused and productive'}
         </p>
       </div>
