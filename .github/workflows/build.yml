@@ -1,157 +1,69 @@
-name: Build DesQTA
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-
-jobs:
-  build-desktop:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build desktop app
-        run: npm run tauri build
-
-      - name: Upload desktop build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: desktop-builds-${{ matrix.os }}
-          path: src-tauri/target/release/bundle/**
-
-  build-android:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Rust Android targets
-        run: |
-          rustup target add aarch64-linux-android
-          rustup target add armv7-linux-androideabi
-          rustup target add i686-linux-android
-          rustup target add x86_64-linux-android
-
-      - name: Install Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          sdk-platform: '34'
-          sdk-build-tools: '34.0.0'
-          ndk-version: '25.2.9519653'
-          cmake-version: '3.22.1'
-
-      - name: Set up Android environment
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
-          echo "NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_HOME" >> $GITHUB_ENV
-          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
-          echo "GRADLE_OPTS=-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" >> $GITHUB_ENV
-          echo "PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_NDK_HOME" >> $GITHUB_ENV
-          
-          # Debug: Print environment variables
-          echo "ANDROID_HOME: $ANDROID_HOME"
-          echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
-          echo "NDK_HOME: $NDK_HOME"
-          echo "JAVA_HOME: $JAVA_HOME"
-          echo "GRADLE_OPTS: $GRADLE_OPTS"
-
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Accept Android licenses
-        run: |
-          yes | sdkmanager --licenses || true
-
-      - name: Verify NDK installation
-        run: |
-          echo "Checking NDK installation..."
-          ls -la $ANDROID_NDK_HOME
-          echo "NDK version:"
-          $ANDROID_NDK_HOME/ndk-build --version || echo "ndk-build not found"
-          echo "Available NDK tools:"
-          ls -la $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/ | head -10
-
-      - name: Fix Gradle Java home
-        run: |
-          echo "Fixing Gradle Java home for Linux..."
-          
-          # Check if gradle.properties exists and show current content
-          echo "Current gradle.properties content:"
-          cat src-tauri/gen/android/gradle.properties || echo "gradle.properties not found"
-          
-          # Create gradle.properties with all necessary properties
-          cat > src-tauri/gen/android/gradle.properties << EOF
-          org.gradle.java.home=$JAVA_HOME
-          android.useAndroidX=true
-          android.enableJetifier=true
-          org.gradle.jvmargs=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
-          org.gradle.daemon=false
-          org.gradle.parallel=true
-          org.gradle.configureondemand=true
-          EOF
-          
-          # Also check and fix gradle-wrapper.properties if needed
-          echo "Current gradle-wrapper.properties content:"
-          cat src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties || echo "gradle-wrapper.properties not found"
-          
-          echo "Fixed gradle.properties:"
-          cat src-tauri/gen/android/gradle.properties
-          
-          echo "JAVA_HOME value: $JAVA_HOME"
-
-      - name: Build Android APK
-        run: |
-          echo "Building with JAVA_HOME: $JAVA_HOME"
-          echo "Building with GRADLE_OPTS: $GRADLE_OPTS"
-          JAVA_HOME=$JAVA_HOME GRADLE_OPTS="-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" npm run tauri android build
-
-      - name: Zip Android build outputs
-        run: |
-          cd src-tauri/gen/android/app/build
-          zip -r outputs.zip outputs || true
-
-      - name: Upload Android build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-build-outputs
-          path: src-tauri/gen/android/app/build/outputs.zip 
+{
+  "name": "desqta",
+  "version": "1.0.0-rc2",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "start": "npm install && npm run tauri dev",
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "format": "prettier --write 'src/**/*.{ts,svelte,css}'",
+    "tauri": "tauri"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.16",
+    "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/plugin-notification": "^2.3.1",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/plugin-opener": "^2.5.0",
+    "@tiptap/core": "^2.12.0",
+    "@tiptap/extension-bubble-menu": "^2.12.0",
+    "@tiptap/extension-dropcursor": "^2.12.0",
+    "@tiptap/extension-image": "^2.14.0",
+    "@tiptap/extension-link": "^2.12.0",
+    "@tiptap/extension-placeholder": "^2.12.0",
+    "@tiptap/extension-task-item": "^2.12.0",
+    "@tiptap/extension-task-list": "^2.12.0",
+    "@tiptap/extension-typography": "^2.12.0",
+    "@tiptap/starter-kit": "^2.12.0",
+    "@tiptap/suggestion": "^2.12.0",
+    "7.css": "^0.18.0",
+    "chart.js": "^4.4.9",
+    "dayjs": "^1.11.13",
+    "dompurify": "^3.2.5",
+    "file-saver": "^2.0.5",
+    "html5-qrcode": "^2.3.8",
+    "ics": "^3.8.1",
+    "js-base64": "^3.7.7",
+    "jspdf": "^3.0.2",
+    "jspdf-autotable": "^5.0.2",
+    "jsqr": "^1.4.0",
+    "marked": "^15.0.12",
+    "motion": "^12.19.1",
+    "pdfjs-dist": "^5.3.31",
+    "rss-parser": "^3.12.0",
+    "svelte-motion": "^0.12.2"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.8",
+    "@sveltejs/kit": "^2.20.8",
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tauri-apps/cli": "^2.5.0",
+    "@types/file-saver": "^2.0.7",
+    "autoprefixer": "^10.4.21",
+    "motion-start": "^0.1.15",
+    "postcss": "^8.5.3",
+    "prettier": "^3.4.2",
+    "prettier-plugin-svelte": "^3.3.2",
+    "svelte": "^5.28.2",
+    "svelte-check": "^4.1.7",
+    "svelte-hero-icons": "^5.2.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.6.3",
+    "vite": "^6.3.5"
+  }
+}
