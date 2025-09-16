@@ -515,7 +515,7 @@
         </button>
         <button
           class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
-          onclick={async () => appWindow.setFullscreen(!(await appWindow.isFullscreen()))}
+          onclick={() => appWindow.toggleMaximize()}
           aria-label="Maximize">
           <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
