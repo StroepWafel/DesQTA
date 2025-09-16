@@ -251,6 +251,16 @@
             {capitalizeName(currentThemeName)}
           </div>
         </div>
+        {#if currentThemeName !== 'default'}
+          <button
+            class="flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 font-medium shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2"
+            onclick={() => handleApplyTheme('default')}
+            aria-label="Disable current theme"
+            title="Disable current theme"
+          >
+            Disable Current Theme
+          </button>
+        {/if}
         <button
           class="flex items-center gap-2 px-6 py-3 rounded-xl accent-bg hover:accent-bg-hover text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring focus:ring-offset-2"
           onclick={() => themeBuilderSidebarOpen.set(true)}
