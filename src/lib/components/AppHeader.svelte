@@ -2,11 +2,22 @@
   import { Window } from '@tauri-apps/api/window';
   import WeatherWidget from './WeatherWidget.svelte';
   import UserDropdown from './UserDropdown.svelte';
-  import { Icon, Bars3, Bell, Minus, Square2Stack, XMark, Squares2x2 } from 'svelte-hero-icons';
+  import {
+    Icon,
+    Bars3,
+    Bell,
+    Minus,
+    Square2Stack,
+    XMark,
+    Squares2x2,
+    ChatBubbleLeftRight,
+    ClipboardDocumentList,
+    DocumentText,
+  } from 'svelte-hero-icons';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { derived, writable } from 'svelte/store';
-  import { fade, scale } from 'svelte/transition';
+  import { fly } from 'svelte/transition';
   import PagesMenu from './PagesMenu.svelte';
   import GlobalSearch from './search/GlobalSearchOptimized.svelte';
   import { invoke } from '@tauri-apps/api/core';
@@ -74,6 +85,11 @@
       title: string;
       assessmentID: number;
       subjectCode: string;
+    };
+    message?: {
+      messageID: number;
+      title: string;
+      subtitle: string;
     };
   }
 
@@ -274,6 +290,8 @@
       return notification.report.title;
     } else if (notification.coneqtAssessments) {
       return notification.coneqtAssessments.title;
+    } else if (notification.message) {
+      return notification.message.title;
     }
     return 'Notification';
   }
@@ -281,16 +299,35 @@
   function getNotificationSubtitle(notification: Notification): string {
     if (notification.coneqtAssessments) {
       return `${notification.coneqtAssessments.subjectCode} - ${notification.coneqtAssessments.subtitle}`;
+    } else if (notification.message) {
+      return notification.message.subtitle;
     }
     return '';
+  }
+
+  function getNotificationIcon(notification: Notification) {
+    if (notification.type === 'message' || notification.message) return ChatBubbleLeftRight;
+    if (notification.type === 'coneqtassessments' || notification.coneqtAssessments)
+      return ClipboardDocumentList;
+    if (notification.type === 'report' || notification.report) return DocumentText;
+    return Bell;
   }
 
   function handleNotificationClick(notification: Notification) {
     if (notification.type === 'coneqtassessments' && notification.coneqtAssessments) {
       const { assessmentID, metaclassID } = notification.coneqtAssessments;
+      showNotifications = false;
+      showNotificationsModal = false;
       goto(`/assessments/${assessmentID}/${metaclassID}`);
     } else if (notification.type === 'report') {
+      showNotifications = false;
+      showNotificationsModal = false;
       goto('/reports');
+    } else if (notification.type === 'message' && notification.message) {
+      const id = notification.message.messageID;
+      showNotifications = false;
+      showNotificationsModal = false;
+      goto(`/direqt-messages?messageID=${id}`);
     }
   }
 
@@ -400,15 +437,19 @@
 
       {#if showNotifications}
         <div
-          class="overflow-y-auto absolute right-0 z-50 mt-2 w-96 max-h-96 bg-white rounded-xl border shadow-2xl dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
-          transition:scale={{ duration: 200 }}
+          class="overflow-y-auto absolute right-0 z-50 mt-2 w-96 max-h-96 rounded-xl border shadow-2xl backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 border-white/20 dark:border-zinc-700/40"
+          transition:fly={{ y: -8, duration: 180 }}
           style="transform-origin: top right;">
           <div class="p-4 border-b border-zinc-200 dark:border-zinc-700">
             <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Notifications</h3>
+              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+                <Icon src={Bell} class="w-5 h-5 opacity-80" />
+                Notifications
+              </h3>
               <button
-                class="transition-colors text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                class="transition-colors text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1"
                 onclick={clearNotifications}>
+                <Icon src={XMark} class="w-4 h-4" />
                 Clear all
               </button>
             </div>
@@ -430,7 +471,7 @@
               {#each notifications as notification (notification.notificationID)}
                 <button
                   type="button"
-                  class="p-3 w-full text-left rounded-lg transition-colors cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
+                  class="p-3 w-full text-left rounded-lg transition-all cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01]"
                   aria-label={getNotificationTitle(notification)}
                   onclick={() => handleNotificationClick(notification)}
                   onkeydown={(e) => {
@@ -439,7 +480,9 @@
                     }
                   }}>
                   <div class="flex gap-3">
-                    <div class="shrink-0 mt-2 w-2 h-2 rounded-full bg-accent"></div>
+                    <div class="shrink-0 mt-1.5">
+                      <Icon src={getNotificationIcon(notification)} class="w-4 h-4 text-accent" />
+                    </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium truncate text-zinc-900 dark:text-white">
                         {getNotificationTitle(notification)}
@@ -534,7 +577,7 @@
             {#each sortedNotifications as notification (notification.notificationID)}
               <button
                 type="button"
-                class="p-3 w-full text-left rounded-lg transition-colors cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
+                class="p-3 w-full text-left rounded-lg transition-all cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01]"
                 aria-label={getNotificationTitle(notification)}
                 onclick={() => handleNotificationClick(notification)}
                 onkeydown={(e) => {
@@ -543,7 +586,9 @@
                   }
                 }}>
                 <div class="flex gap-3">
-                  <div class="shrink-0 mt-2 w-2 h-2 rounded-full bg-accent"></div>
+                  <div class="shrink-0 mt-1.5">
+                    <Icon src={getNotificationIcon(notification)} class="w-4 h-4 text-accent" />
+                  </div>
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium truncate text-zinc-900 dark:text-white">
                       {getNotificationTitle(notification)}

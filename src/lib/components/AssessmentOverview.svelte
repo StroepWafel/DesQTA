@@ -30,26 +30,14 @@
     <h1 class="mb-2 text-2xl font-bold">Assessment Overview</h1>
     
     <!-- Description Section -->
-    <div>
+    {#if assessmentData.description}
       <h2 class="text-lg font-semibold mb-3">Description</h2>
-      {#if assessmentData.description}
-        <div class="max-w-none prose prose-invert">
-          <div class="whitespace-pre-line text-zinc-300">
-            {@html assessmentData.description}
-          </div>
+      <div class="max-w-none prose prose-invert">
+        <div class="whitespace-pre-line text-zinc-300">
+          {@html assessmentData.description}
         </div>
-      {:else}
-        <div class="flex flex-col items-center justify-center py-6 text-center">
-          <div class="w-12 h-12 mb-3 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
-            <Icon src={DocumentText} class="w-6 h-6 text-zinc-400" />
-          </div>
-          <h3 class="text-base font-semibold text-zinc-900 dark:text-white mb-1">No Description Available</h3>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400">
-            This assessment doesn't have a detailed description yet.
-          </p>
-        </div>
-          {/if}
-  </div>
+      </div>
+    {/if}
 </div>
 
 <style>

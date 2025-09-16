@@ -15,6 +15,7 @@
 
   // External Libraries
   import dayjs from 'dayjs';
+  import { page } from '$app/stores';
 
   let messages = $state<Message[]>([]);
   let loading = $state(true);
@@ -34,6 +35,9 @@
   let deleting = $state(false);
   let restoring = $state(false);
 
+  // Deep-link target from notifications
+  let pendingMessageId = $state<number | null>(null);
+
   // Derived state for mobile modal
   let showMobileModal = $derived(!!selectedMessage);
   let selectedTab = $state('SEQTA'); // 'SEQTA' or 'BetterSEQTA'
@@ -44,6 +48,12 @@
   onMount(async () => {
     // Always enable both tabs regardless of SEQTA config
     seqtaMessagesEnabled = true;
+  });
+
+  // Watch URL for messageID parameter and store it until messages load
+  $effect(() => {
+    const idParam = $page.url.searchParams.get('messageID');
+    pendingMessageId = idParam ? Number(idParam) : null;
   });
 
   async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '') {
@@ -186,6 +196,18 @@
   $effect(() => {
     if (selectedTab === 'SEQTA') {
     fetchMessages('inbox');
+    }
+  });
+
+  // When messages are loaded and a target ID exists, open it
+  $effect(() => {
+    if (!loading && pendingMessageId) {
+      const target = messages.find((m) => m.id === pendingMessageId!);
+      if (target) {
+        selectedFolder = target.folder;
+        openMessage(target);
+        pendingMessageId = null;
+      }
     }
   });
 
