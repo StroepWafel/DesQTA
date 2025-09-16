@@ -458,7 +458,7 @@
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t rounded-tl-xl {!$needsSetup ? 'border-l' : ''} border-zinc-200 dark:border-zinc-700/50 bg-zinc-100 dark:bg-zinc-900/50 transition-all duration-200"
+        class="overflow-y-auto flex-1 border-t rounded-tl-xl {!$needsSetup ? 'border-l' : ''} border-zinc-200 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-900/50 transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};"
       >
         {#if $needsSetup}

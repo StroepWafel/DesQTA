@@ -35,8 +35,7 @@
   class:w-full={sidebarOpen}
   class:w-0={!sidebarOpen}
   class:sm:w-64={sidebarOpen}
-  class:sm:w-0={!sidebarOpen}
-  style="background: var(--background-color);">
+  class:sm:w-0={!sidebarOpen}>
   <nav class="p-3 py-px space-y-2 w-full sm:w-64 sm:min-w-64 h-screen sm:h-auto relative">
     <!-- Mobile Close Button -->
     <div class="flex justify-end sm:hidden mb-4">

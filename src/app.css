@@ -311,3 +311,8 @@ body {
     background: rgba(30,41,59,0.8); /* dark:bg-zinc-900/80 */
   }
 }
+
+body > div {
+  @apply bg-white dark:bg-zinc-950;
+  background: var(--background-color);
+}

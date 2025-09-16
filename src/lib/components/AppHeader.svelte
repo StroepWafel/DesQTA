@@ -141,14 +141,6 @@
     goto(page.path);
   }
 
-  function handleFocus() {
-    showDropdownStore.set(true);
-  }
-
-  function handleBlur() {
-    setTimeout(() => showDropdownStore.set(false), 100);
-  }
-
   function handleKeydown(e: KeyboardEvent) {
     if (!$showDropdownStore || $filteredPages.length === 0) return;
     if (e.key === 'ArrowDown') {
@@ -356,8 +348,7 @@
 
 <header
   class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999"
-  data-tauri-drag-region
-  style="background: var(--background-color);">
+  data-tauri-drag-region>
   <div class="flex items-center space-x-4">
     <button
       class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 bg-zinc-100 hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
