@@ -25,7 +25,7 @@ mod todolist;
 mod notes;
 mod global_search;
 
-
+use std::cell::Cell;
 use tauri::{Manager, Emitter};
 #[cfg(desktop)]
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
@@ -319,19 +319,24 @@ pub fn run() {
                     let _ = window.set_decorations(false);
                     let _ = window.center();
                     
+                    let window_clone = window.clone();
+                    let current_fullscreen = Cell::new(window.is_fullscreen().unwrap_or(false));
                     window.on_window_event(move |event| {
                         match event {
                             WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
-                                // Check fullscreen state after resize or move events
-                                if let Ok(is_fullscreen) = window.is_fullscreen() {
-                                    println!("[DesQTA] Fullscreen state changed: {}", is_fullscreen);
-                                    let _ = window.emit("fullscreen-changed", is_fullscreen);
+                                if let Ok(is_fullscreen) = window_clone.is_fullscreen() {
+                                    if is_fullscreen != current_fullscreen.get() {
+                                        println!("[DesQTA] Fullscreen state changed: {}", is_fullscreen);
+                                        let _ = window_clone.emit("fullscreen-changed", is_fullscreen);
+                                        current_fullscreen.set(is_fullscreen);
+                                    }
                                 }
                             }
                             _ => {}
                         }
                     });
-                }        
+                }
+                
                 // Create tray menu
                 let menu = Menu::with_items(
                     app,
