@@ -299,7 +299,7 @@
             {#each selectedLessonContent.r as resource}
               <button
                 type="button"
-                class="flex items-center p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
+                class="flex items-center p-4 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
                 onclick={async () => {
                   try {
                     const url = await invoke('get_seqta_file', {
@@ -316,10 +316,10 @@
                 <div class="flex items-center w-full">
                   <span class="mr-3 text-2xl">{getFileIcon(resource.mimetype)}</span>
                   <div class="flex-1 min-w-0">
-                    <div class="font-semibold truncate text-gray-900 dark:text-white">
+                    <div class="font-semibold truncate text-zinc-900 dark:text-white">
                       {resource.t}
                     </div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                    <div class="text-sm text-zinc-600 dark:text-zinc-400">
                       {formatFileSize(resource.size)}
                     </div>
                   </div>
@@ -394,7 +394,7 @@
                       {#if fileDetails}
                         <button
                           type="button"
-                          class="flex items-center p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
+                          class="flex items-center p-4 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
                           onclick={async () => {
                             try {
                               const url = await invoke('get_seqta_file', {
@@ -411,10 +411,10 @@
                           <div class="flex items-center w-full">
                             <span class="mr-3 text-2xl">{getFileIcon(fileDetails.mimetype)}</span>
                             <div class="flex-1 min-w-0">
-                              <div class="font-semibold truncate text-gray-900 dark:text-white">
+                              <div class="font-semibold truncate text-zinc-900 dark:text-white">
                                 {fileDetails.filename}
                               </div>
-                              <div class="text-sm text-gray-600 dark:text-gray-400">
+                              <div class="text-sm text-zinc-600 dark:text-zinc-400">
                                 {formatFileSize(fileDetails.size)}
                               </div>
                             </div>

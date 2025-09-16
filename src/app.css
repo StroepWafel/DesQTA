@@ -323,3 +323,7 @@ body > div {
 button {
   cursor: pointer;
 }
+
+[data-bits-floating-content-wrapper] {
+  background: transparent !important;
+}

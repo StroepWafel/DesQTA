@@ -316,7 +316,7 @@
             <div class="relative">
               <select
                 id="year-select"
-                class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+                class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
                 bind:value={selectedYear}
                 onchange={(e) => {
                   const target = e.target as HTMLSelectElement;
@@ -336,7 +336,7 @@
                   <option value={year}>{year}</option>
                 {/each}
               </select>
-              <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
             </div>
@@ -349,7 +349,7 @@
           <div class="relative">
             <select
               id="view-select"
-              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
               bind:value={selectedTab}
               onchange={(e) => {
                 const target = e.target as HTMLSelectElement;
@@ -370,7 +370,7 @@
               <option value="board">Board View</option>
               <option value="calendar">Calendar View</option>
             </select>
-            <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
           </div>
@@ -412,7 +412,7 @@
           <div class="relative">
             <select
               id="group-by-select"
-              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
               bind:value={groupBy}
               onchange={(e) => {
                 const target = e.target as HTMLSelectElement;
@@ -433,7 +433,7 @@
               <option value="month">Month</option>
               <option value="status">Status</option>
             </select>
-            <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
           </div>

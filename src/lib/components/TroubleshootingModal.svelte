@@ -173,7 +173,7 @@
       case 'fair': return { color: 'text-yellow-500', icon: ExclamationCircle };
       case 'poor': return { color: 'text-orange-500', icon: ExclamationCircle };
       case 'critical': return { color: 'text-red-500', icon: XCircle };
-      default: return { color: 'text-gray-500', icon: InformationCircle };
+      default: return { color: 'text-zinc-500', icon: InformationCircle };
     }
   }
 

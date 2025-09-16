@@ -92,7 +92,7 @@
     hasError 
       ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
       : 'border-zinc-300 dark:border-zinc-600 focus:border-accent-500 focus:ring-accent-500',
-    'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100',
+    'bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100',
     'placeholder-zinc-400 dark:placeholder-zinc-500',
     disabled ? 'opacity-50 cursor-not-allowed' : '',
     readonly ? 'bg-zinc-50 dark:bg-zinc-700' : '',

@@ -76,7 +76,7 @@
     transition:fade={{ duration: 200 }}
   >
     <div 
-      class="global-search-modal relative w-full max-w-2xl mx-4 rounded-2xl bg-white/90 dark:bg-gray-900/90 shadow-2xl border border-white/20 dark:border-gray-700/40 backdrop-blur-xl flex flex-col overflow-hidden"
+      class="global-search-modal relative w-full max-w-2xl mx-4 rounded-2xl bg-white/90 dark:bg-zinc-900/90 shadow-2xl border border-white/20 dark:border-zinc-700/40 backdrop-blur-xl flex flex-col overflow-hidden"
       style="backdrop-filter: blur(24px); max-height: 80vh;"
       transition:scale={{ duration: 200, start: 0.95 }}
       role="dialog"
@@ -84,10 +84,10 @@
       aria-label="Global search"
     >
       <!-- Search Header -->
-      <div class="flex items-center gap-3 px-6 py-4 border-b border-white/10 dark:border-gray-700/20">
+      <div class="flex items-center gap-3 px-6 py-4 border-b border-white/10 dark:border-zinc-700/20">
         {#if currentCategory || searchMode === 'command'}
           <button 
-            class="p-1 rounded-lg hover:bg-white/20 dark:hover:bg-gray-700/50 transition-colors" 
+            class="p-1 rounded-lg hover:bg-white/20 dark:hover:bg-zinc-700/50 transition-colors" 
             onclick={onGoBack}
             aria-label="Go back"
           >
@@ -110,7 +110,7 @@
         <input
           bind:this={modalInput}
           type="text"
-          class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-gray-800/60 text-zinc-900 dark:text-white border border-accent/40 focus:outline-hidden focus:ring-2 focus:ring-accent transition-all duration-200 placeholder:text-zinc-500 dark:placeholder:text-gray-400 text-lg"
+          class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-zinc-800/60 text-zinc-900 dark:text-white border border-accent/40 focus:outline-hidden focus:ring-2 focus:ring-accent transition-all duration-200 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-lg"
           placeholder={placeholderText}
           bind:value={searchQuery}
           onkeydown={onKeydown}
@@ -130,7 +130,7 @@
           
           <button
             onclick={onClose}
-            class="p-1 rounded-lg hover:bg-white/20 dark:hover:bg-gray-700/50 transition-colors"
+            class="p-1 rounded-lg hover:bg-white/20 dark:hover:bg-zinc-700/50 transition-colors"
             aria-label="Close search"
           >
             <Icon src={XMark} class="w-4 h-4 text-zinc-500" />
@@ -149,18 +149,18 @@
               {#each filteredItems as item, i}
                 <button
                   type="button"
-                  class="flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-200 hover:bg-white/50 dark:hover:bg-gray-800/50 text-left group {selectedIndex === i ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected' : 'text-zinc-900 dark:text-white'}"
+                  class="flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-200 hover:bg-white/50 dark:hover:bg-zinc-800/50 text-left group {selectedIndex === i ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected' : 'text-zinc-900 dark:text-white'}"
                   onclick={(e) => handleItemClick(item, e)}
                   onmouseenter={() => onMouseEnter(i)}
                 >
-                  <div class="p-2 rounded-lg bg-white/20 dark:bg-gray-700/30 group-hover:scale-110 transition-transform">
+                  <div class="p-2 rounded-lg bg-white/20 dark:bg-zinc-700/30 group-hover:scale-110 transition-transform">
                     <Icon src={item.icon} class="w-4 h-4" />
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="font-medium truncate flex items-center gap-2">
                       {item.name}
                       {#if item.badge}
-                        <span class="px-2 py-0.5 rounded-full bg-white/20 dark:bg-gray-700/50 text-xs font-normal opacity-75">
+                        <span class="px-2 py-0.5 rounded-full bg-white/20 dark:bg-zinc-700/50 text-xs font-normal opacity-75">
                           {item.badge}
                         </span>
                       {/if}
@@ -172,7 +172,7 @@
                   {#if item.shortcut}
                     <div class="flex items-center gap-1 opacity-60 text-xs">
                       {#each item.shortcut.split('+') as key}
-                        <kbd class="px-1.5 py-0.5 rounded-sm bg-white/20 dark:bg-gray-700/50">{key}</kbd>
+                        <kbd class="px-1.5 py-0.5 rounded-sm bg-white/20 dark:bg-zinc-700/50">{key}</kbd>
                       {/each}
                     </div>
                   {/if}
@@ -198,7 +198,7 @@
               {#each visibleCategories as category, i}
                 <button
                   type="button"
-                  class="flex items-center gap-4 w-full p-4 rounded-xl transition-all duration-200 hover:bg-white/50 dark:hover:bg-gray-800/50 text-left group {selectedIndex === i ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected' : 'text-zinc-900 dark:text-white'}"
+                  class="flex items-center gap-4 w-full p-4 rounded-xl transition-all duration-200 hover:bg-white/50 dark:hover:bg-zinc-800/50 text-left group {selectedIndex === i ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected' : 'text-zinc-900 dark:text-white'}"
                   onclick={() => onSelectCategory(category.id)}
                   onmouseenter={() => onMouseEnter(i)}
                 >
@@ -221,18 +221,18 @@
               {#each filteredItems as item, i}
                 <button
                   type="button"
-                  class="flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-200 hover:bg-white/50 dark:hover:bg-gray-800/50 text-left group {selectedIndex === i ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected' : 'text-zinc-900 dark:text-white'}"
+                  class="flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-200 hover:bg-white/50 dark:hover:bg-zinc-800/50 text-left group {selectedIndex === i ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected' : 'text-zinc-900 dark:text-white'}"
                   onclick={(e) => handleItemClick(item, e)}
                   onmouseenter={() => onMouseEnter(i)}
                 >
-                  <div class="p-2 rounded-lg bg-white/20 dark:bg-gray-700/30 group-hover:scale-110 transition-transform">
+                  <div class="p-2 rounded-lg bg-white/20 dark:bg-zinc-700/30 group-hover:scale-110 transition-transform">
                     <Icon src={item.icon} class="w-4 h-4" />
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="font-medium truncate flex items-center gap-2">
                       {item.name}
                       {#if item.badge}
-                        <span class="px-2 py-0.5 rounded-full bg-white/20 dark:bg-gray-700/50 text-xs font-normal opacity-75">
+                        <span class="px-2 py-0.5 rounded-full bg-white/20 dark:bg-zinc-700/50 text-xs font-normal opacity-75">
                           {item.badge}
                         </span>
                       {/if}
@@ -244,7 +244,7 @@
                   {#if item.shortcut}
                     <div class="flex items-center gap-1 opacity-60 text-xs">
                       {#each item.shortcut.split('+') as key}
-                        <kbd class="px-1.5 py-0.5 rounded-sm bg-white/20 dark:bg-gray-700/50">{key}</kbd>
+                        <kbd class="px-1.5 py-0.5 rounded-sm bg-white/20 dark:bg-zinc-700/50">{key}</kbd>
                       {/each}
                     </div>
                   {/if}
@@ -265,7 +265,7 @@
           </div>
         {:else if searchQuery.trim()}
           <!-- No Results -->
-          <div class="flex flex-col items-center justify-center py-12 text-zinc-500 dark:text-gray-400">
+          <div class="flex flex-col items-center justify-center py-12 text-zinc-500 dark:text-zinc-400">
             <Icon src={MagnifyingGlass} class="w-12 h-12 mb-4 opacity-50" />
             <p class="text-lg font-medium mb-2">No results found</p>
             <p class="text-sm">Try adjusting your search or browse categories</p>
@@ -278,7 +278,7 @@
               <h3 class="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
                 Enhanced Global Search
               </h3>
-              <p class="text-zinc-600 dark:text-gray-400">
+              <p class="text-zinc-600 dark:text-zinc-400">
                 Search pages, run commands, or browse categories
               </p>
             </div>
@@ -287,16 +287,16 @@
       </div>
       
       <!-- Footer -->
-      <div class="flex items-center justify-between px-6 py-3 border-t border-white/10 dark:border-gray-700/20 text-xs text-zinc-500 dark:text-gray-400">
+      <div class="flex items-center justify-between px-6 py-3 border-t border-white/10 dark:border-zinc-700/20 text-xs text-zinc-500 dark:text-zinc-400">
         <div class="flex items-center gap-4">
           <span class="flex items-center gap-1">
-            <kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">↑↓</kbd> Navigate
+            <kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↑↓</kbd> Navigate
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">↵</kbd> Select
+            <kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↵</kbd> Select
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">Esc</kbd> Close
+            <kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">Esc</kbd> Close
           </span>
         </div>
         <div class="flex items-center gap-2">

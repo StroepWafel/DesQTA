@@ -163,8 +163,8 @@
               <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Reports Viewer & Download</span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
-              <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-gray-100 rounded-lg dark:bg-gray-900/50">
-                <Icon src={CalendarDays} class="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400" />
+              <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-zinc-100 rounded-lg dark:bg-zinc-900/50">
+                <Icon src={CalendarDays} class="w-3 h-3 sm:w-4 sm:h-4 text-zinc-600 dark:text-zinc-400" />
               </div>
               <span class="text-sm sm:text-base text-zinc-900 dark:text-white">QR Sign-in Utility</span>
             </li>

@@ -86,7 +86,7 @@
     const confidence = prediction.confidence;
     
     // Determine color based on grade
-    let colorClass = 'text-gray-500';
+    let colorClass = 'text-zinc-500';
     if (grade >= 90) colorClass = 'text-green-600 dark:text-green-400';
     else if (grade >= 80) colorClass = 'text-blue-600 dark:text-blue-400';
     else if (grade >= 70) colorClass = 'text-yellow-600 dark:text-yellow-400';

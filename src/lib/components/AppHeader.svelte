@@ -547,7 +547,7 @@
         if (e.key === 'Escape') showNotificationsModal = false;
       }}>
       <div
-        class="flex relative flex-col p-0 mx-auto w-full max-w-xl rounded-2xl border shadow-2xl backdrop-blur-xl pointer-events-auto bg-white/70 dark:bg-gray-900/80 border-white/20 dark:border-gray-700/40 animate-in"
+        class="flex relative flex-col p-0 mx-auto w-full max-w-xl rounded-2xl border shadow-2xl backdrop-blur-xl pointer-events-auto bg-white/70 dark:bg-zinc-900/80 border-white/20 dark:border-zinc-700/40 animate-in"
         role="document">
         <div
           class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
