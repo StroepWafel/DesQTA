@@ -169,13 +169,13 @@
   });
 </script>
 
-<main class="flex flex-col flex-1 py-2">
+<main class="flex flex-col flex-1 py-2 overflow-y-scroll h-full">
   {#if selectedMessage}
     <div class="mx-auto w-full max-w-4xl animate-fadeIn">
       <div
         class="overflow-hidden rounded-xl border shadow-lg backdrop-blur-xs border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/40">
         <div class="p-4 pb-3 border-b sm:p-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <div class="mb-4 text-xl font-bold text-indigo-400 sm:text-2xl">
+          <div class="mb-4 text-xl font-bold text-zinc-800 dark:text-zinc-100 sm:text-2xl">
             {selectedMessage.subject}
           </div>
 
@@ -190,7 +190,7 @@
                     onerror={() => (detailAvatarFailed = true)} />
                 {:else}
                   <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
-                    <span class="text-base sm:text-lg font-semibold">{initial(selectedMessage.sender)}</span>
+                    <span class="text-lg font-bold sm:text-lg">{initial(selectedMessage.sender)}</span>
                   </div>
                 {/if}
               </div>
@@ -279,7 +279,7 @@
           {#if detailLoading}
             <div class="flex justify-center items-center py-12">
               <div
-                class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-indigo-500/30 border-t-indigo-500">
+                class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-accent-500/30 border-t-accent-500">
               </div>
             </div>
           {:else if detailError}
