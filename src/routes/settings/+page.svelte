@@ -169,7 +169,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     loading = true;
     try {
       const settings = await invoke<any>('get_settings_subset', { keys: [
-        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula','homepage_edit_mode'
+        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula'
       ]});
       shortcuts = settings.shortcuts || [];
       feeds = settings.feeds || [];
@@ -191,7 +191,6 @@ The Company reserves the right to terminate your access to the Service at any ti
       globalSearchEnabled = settings.global_search_enabled ?? true;
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
-      showDevSettings = settings.homepage_edit_mode ?? false;
 
       console.log('Loading settings', {
         shortcuts,
@@ -283,7 +282,6 @@ The Company reserves the right to terminate your access to the Service at any ti
         global_search_enabled: globalSearchEnabled,
         dev_sensitive_info_hider: devSensitiveInfoHider,
         accepted_cloud_eula: acceptedCloudEula,
-        homepage_edit_mode: showDevSettings,
       };
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
@@ -397,7 +395,6 @@ The Company reserves the right to terminate your access to the Service at any ti
     globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
-    showDevSettings = cloudSettings.homepage_edit_mode ?? false;
 
     notify({
       title: 'Settings Downloaded',
@@ -421,15 +418,6 @@ The Company reserves the right to terminate your access to the Service at any ti
     window.removeEventListener('keydown', handleKeydown);
   });
 
-  // Navigate to homepage and trigger edit layout mode there
-  async function goToHomepageAndEditLayout() {
-    try {
-      await invoke('save_settings_merge', { patch: { homepage_edit_mode: true } });
-    } catch (e) {
-      console.error('Failed to set homepage edit mode flag', e);
-    }
-    goto('/');
-  }
 
   // Clear browser cache to fix routing issues
   async function clearCache() {
@@ -445,12 +433,18 @@ The Company reserves the right to terminate your access to the Service at any ti
 
 <div class="p-4 mx-auto max-w-4xl sm:p-6 md:p-8">
   <div
-    class="sticky top-0 z-20 flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center animate-fade-in-up backdrop-blur-md bg-white/80 dark:bg-slate-900/80 py-4 px-6 border-b border-slate-200 dark:border-slate-800 rounded-xl">
-    <h1 class="text-xl font-bold sm:text-2xl px-2 py-1 rounded-lg">Settings</h1>
+    class="flex sticky top-0 z-20 flex-col gap-4 justify-between items-start px-6 py-4 mb-8 rounded-xl border-b backdrop-blur-md sm:flex-row sm:items-center animate-fade-in-up bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800">
+    <h1 class="px-2 py-1 text-xl font-bold rounded-lg sm:text-2xl">Settings</h1>
     <div class="flex flex-col gap-2 items-start w-full sm:flex-row sm:items-center sm:w-auto">
+      {#if saveSuccess}
+        <span class="text-sm text-green-400 animate-fade-in sm:text-base">Saved!</span>
+      {/if}
+      {#if saveError}
+        <span class="text-sm text-red-400 animate-fade-in sm:text-base">{saveError}</span>
+      {/if}
       <div class="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
         <button
-          class="px-6 py-2 w-full text-white bg-gradient-to-r from-green-600 to-green-500 rounded-lg shadow-lg transition-all duration-200 sm:w-auto hover:from-green-700 hover:to-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 playful"
+          class="px-6 py-2 w-full text-white rounded-lg shadow-lg transition-all duration-200 bg-accent-500 sm:w-auto hover:from-green-700 hover:to-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 playful"
           onclick={saveSettings}
           disabled={saving}>
           {#if saving}
@@ -465,12 +459,6 @@ The Company reserves the right to terminate your access to the Service at any ti
           {/if}
         </button>
       </div>
-      {#if saveSuccess}
-        <span class="text-sm text-green-400 animate-fade-in sm:text-base">Saved!</span>
-      {/if}
-      {#if saveError}
-        <span class="text-sm text-red-400 animate-fade-in sm:text-base">{saveError}</span>
-      {/if}
     </div>
   </div>
 
@@ -480,30 +468,30 @@ The Company reserves the right to terminate your access to the Service at any ti
         <div
           class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-indigo-500/30 border-t-indigo-500">
         </div>
-        <p class="text-sm text-slate-600 dark:text-slate-400 sm:text-base">Loading settings...</p>
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">Loading settings...</p>
       </div>
     </div>
   {:else}
     <div class="space-y-6 sm:space-y-8">
       <!-- Cloud Sync Section -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up relative">
-        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/30 dark:border-slate-800/30">
-          <h2 class="text-base font-semibold sm:text-lg text-slate-500 dark:text-slate-400">
+        class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/30 dark:border-zinc-800/30">
+          <h2 class="text-base font-semibold sm:text-lg text-zinc-500 dark:text-zinc-400">
             Cloud Sync
           </h2>
-          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Sync your settings across devices with BetterSEQTA Plus account cloud syncing
           </p>
         </div>
-        <div class="p-4 sm:p-6 relative">
+        <div class="relative p-4 sm:p-6">
           {#if cloudUserLoading}
-            <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
-              <div class="flex items-center gap-3">
+            <div class="p-4 rounded-lg bg-zinc-200/60 dark:bg-zinc-700/30 animate-fade-in">
+              <div class="flex gap-3 items-center">
                 <div
-                  class="w-6 h-6 rounded-full border-2 animate-spin border-slate-400/30 border-t-slate-400">
+                  class="w-6 h-6 rounded-full border-2 animate-spin border-zinc-400/30 border-t-zinc-400">
                 </div>
-                <span class="text-sm text-slate-500 dark:text-slate-400"
+                <span class="text-sm text-zinc-500 dark:text-zinc-400"
                   >Loading account status...</span>
               </div>
             </div>
@@ -511,18 +499,18 @@ The Company reserves the right to terminate your access to the Service at any ti
             {#if !acceptedCloudEula}
               <!-- EULA gate overlay -->
               <div
-                class="absolute inset-0 z-10 flex flex-col justify-center items-center p-6 bg-black/40 backdrop-blur-sm rounded-xl">
+                class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 rounded-xl backdrop-blur-xs bg-black/40">
                 <div
-                  class="max-w-xl w-full p-5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-300/50 dark:border-slate-800/50 shadow-lg text-slate-800 dark:text-white">
-                  <h3 class="text-base sm:text-lg font-semibold mb-2">
+                  class="p-5 w-full max-w-xl rounded-xl border shadow-lg bg-white/95 dark:bg-zinc-900/95 border-zinc-300/50 dark:border-zinc-800/50 text-zinc-800 dark:text-white">
+                  <h3 class="mb-2 text-base font-semibold sm:text-lg">
                     Accept BetterSEQTA Cloud EULA
                   </h3>
-                  <p class="text-sm opacity-80 mb-4">
+                  <p class="mb-4 text-sm opacity-80">
                     You must read and accept the Cloud Sync EULA before using cloud features.
                   </p>
                   <div class="flex gap-2">
                     <button
-                      class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+                      class="px-4 py-2 text-white rounded-lg transition-all duration-200 accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
                       onclick={() => (showEulaModal = true)}>Read & Accept</button>
                   </div>
                 </div>
@@ -532,46 +520,46 @@ The Company reserves the right to terminate your access to the Service at any ti
             {#if cloudUser && cloudToken}
               <!-- Logged in state -->
               <div
-                class="p-4 rounded-lg bg-green-100/60 dark:bg-green-900/30 animate-fade-in border border-green-200 dark:border-green-800">
-                <div class="flex items-start gap-4">
+                class="p-4 rounded-lg border border-green-200 bg-green-100/60 dark:bg-green-900/30 animate-fade-in dark:border-green-800">
+                <div class="flex gap-4 items-start">
                   {#if cloudUser.pfpUrl}
                     <img
                       src={getFullPfpUrl(cloudUser.pfpUrl) ||
                         `https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
                       alt={cloudUser.displayName || cloudUser.username}
-                      class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
+                      class="object-cover w-12 h-12 rounded-full border-2 border-green-300 dark:border-green-700" />
                   {:else}
                     <img
                       src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
                       alt={cloudUser.displayName || cloudUser.username}
-                      class="w-12 h-12 rounded-full object-cover border-2 border-green-300 dark:border-green-700" />
+                      class="object-cover w-12 h-12 rounded-full border-2 border-green-300 dark:border-green-700" />
                   {/if}
                   <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
+                    <div class="flex gap-2 items-center mb-1">
                       <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                       <span class="text-sm font-semibold text-green-800 dark:text-green-200"
                         >Logged in to BetterSEQTA Plus</span>
                     </div>
-                    <div class="text-sm text-green-700 dark:text-green-300 mb-1">
+                    <div class="mb-1 text-sm text-green-700 dark:text-green-300">
                       <strong>{cloudUser.displayName || cloudUser.username}</strong>
                     </div>
-                    <div class="text-xs text-green-600 dark:text-green-400 mb-3">
+                    <div class="mb-3 text-xs text-green-600 dark:text-green-400">
                       @{cloudUser.username}
                     </div>
                   </div>
                 </div>
-                <div class="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
-                  <h4 class="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">
+                <div class="pt-4 mt-4 border-t border-green-200 dark:border-green-800">
+                  <h4 class="mb-2 text-sm font-semibold text-green-800 dark:text-green-200">
                     Settings Synchronization
                   </h4>
-                  <p class="text-xs text-green-700 dark:text-green-300 mb-4">
+                  <p class="mb-4 text-xs text-green-700 dark:text-green-300">
                     Upload your current settings to the cloud or download settings from another
                     device. This includes all your shortcuts, feeds, theme preferences, and other
                     customizations.
                   </p>
                   <div class="flex flex-col gap-3 sm:flex-row">
                     <button
-                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-xs transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                       onclick={openCloudSyncModal}
                       disabled={!acceptedCloudEula}>
                       <Icon src={CloudArrowUp} class="w-5 h-5" />
@@ -582,10 +570,10 @@ The Company reserves the right to terminate your access to the Service at any ti
               </div>
             {:else}
               <!-- Not logged in state -->
-              <div class="p-4 rounded-lg bg-slate-200/60 dark:bg-slate-700/30 animate-fade-in">
+              <div class="p-4 rounded-lg bg-zinc-200/60 dark:bg-zinc-700/30 animate-fade-in">
                 <div
-                  class="mb-3 p-3 rounded bg-yellow-100/60 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800">
-                  <div class="flex items-center gap-2">
+                  class="p-3 mb-3 rounded-sm border border-yellow-200 bg-yellow-100/60 dark:bg-yellow-900/30 dark:border-yellow-800">
+                  <div class="flex gap-2 items-center">
                     <input
                       id="accept-eula-loggedout"
                       type="checkbox"
@@ -596,22 +584,22 @@ The Company reserves the right to terminate your access to the Service at any ti
                   </div>
                 </div>
                 <div class="flex flex-col gap-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
-                    <span class="text-sm font-semibold text-slate-600 dark:text-slate-300"
+                  <div class="flex gap-3 items-center">
+                    <div class="w-2 h-2 rounded-full bg-zinc-400"></div>
+                    <span class="text-sm font-semibold text-zinc-600 dark:text-zinc-300"
                       >Not logged in to BetterSEQTA Plus</span>
                   </div>
                   <div>
                     <h3
-                      class="text-sm font-semibold sm:text-base mb-2 text-slate-500 dark:text-slate-400">
+                      class="mb-2 text-sm font-semibold sm:text-base text-zinc-500 dark:text-zinc-400">
                       Settings Synchronization
                     </h3>
-                    <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                    <p class="mb-4 text-xs text-zinc-500 sm:text-sm dark:text-zinc-500">
                       Upload your current settings to the cloud or download settings from another
                       device. This includes all your shortcuts, feeds, theme preferences, and other
                       customizations.
                     </p>
-                    <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                    <p class="mb-4 text-xs text-zinc-500 sm:text-sm dark:text-zinc-500">
                       <a
                         href="https://accounts.betterseqta.org"
                         target="_blank"
@@ -620,20 +608,20 @@ The Company reserves the right to terminate your access to the Service at any ti
                         Create a free BetterSEQTA Plus account
                       </a> to get started with cloud syncing.
                     </p>
-                    <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-500 mb-4">
+                    <p class="mb-4 text-xs text-zinc-500 sm:text-sm dark:text-zinc-500">
                       <strong>Cloud API URL:</strong>
                       {CLOUD_API_URL}
                     </p>
                   </div>
                   <div class="flex flex-col gap-3 sm:flex-row">
                     <button
-                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                       onclick={openCloudSyncModal}
                       disabled={!acceptedCloudEula}>
                       <Icon src={CloudArrowUp} class="w-5 h-5" />
                       Login & Sync Settings
                     </button>
-                    <div class="text-xs text-slate-500 dark:text-slate-500 sm:self-center">
+                    <div class="text-xs text-zinc-500 dark:text-zinc-500 sm:self-center">
                       Requires BetterSEQTA Plus account
                     </div>
                   </div>
@@ -646,10 +634,10 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Homepage Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Homepage</h2>
-          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Customize your homepage experience
           </p>
         </div>
@@ -657,11 +645,11 @@ The Company reserves the right to terminate your access to the Service at any ti
           <!-- Widget Settings -->
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Widget Settings</h3>
-            <p class="mb-4 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Configure which widgets appear on your DesQTA dashboard.
             </p>
             <div
-              class="p-4 space-y-4 rounded-lg bg-slate-100/80 dark:bg-slate-800/50 animate-fade-in">
+              class="p-4 space-y-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
               <!-- Always visible -->
               <div class="flex gap-4 items-center">
                 <input
@@ -671,7 +659,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   bind:checked={weatherEnabled} />
                 <label
                   for="weather-enabled"
-                  class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
                   >Show Weather Widget</label>
               </div>
 
@@ -685,7 +673,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     bind:checked={forceUseLocation} />
                   <label
                     for="force-use-location"
-                    class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+                    class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
                     >Only use Fallback Location for Weather</label>
                 </div>
 
@@ -694,11 +682,11 @@ The Company reserves the right to terminate your access to the Service at any ti
                   <div class="flex flex-col gap-2 items-start pl-1">
                     <label
                       for="weather-city"
-                      class="text-xs text-slate-600 sm:text-sm dark:text-slate-400"
+                      class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400"
                       >Fallback City:</label>
                     <input
                       id="weather-city"
-                      class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="px-3 py-2 w-full bg-white rounded-sm border transition text-zinc-900 sm:w-64 dark:bg-zinc-900/50 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       placeholder="Perth"
                       bind:value={weatherCity} />
                   </div>
@@ -706,7 +694,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   <div class="flex flex-col gap-2 items-start pl-1">
                     <label
                       for="weather-country"
-                      class="text-xs text-slate-600 sm:text-sm dark:text-slate-400"
+                      class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400"
                       >Fallback Country Code</label>
                     <span class="text-xs">
                       Visit <a
@@ -718,7 +706,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     </span>
                     <input
                       id="weather-country"
-                      class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 sm:w-64 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="px-3 py-2 w-full bg-white rounded-sm border transition text-zinc-900 sm:w-64 dark:bg-zinc-900/50 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       placeholder="AU"
                       bind:value={weatherCountry} />
                   </div>
@@ -731,51 +719,51 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Dashboard Shortcuts Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-150 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-150 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Dashboard Shortcuts</h2>
-          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Configure quick access shortcuts that appear on your dashboard
           </p>
         </div>
         <div class="p-4 space-y-6 sm:p-6">
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Dashboard Quick Actions</h3>
-            <p class="mb-4 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Add shortcuts to frequently used features that will appear as quick action buttons on
               your dashboard.
             </p>
             <div class="space-y-3 sm:space-y-4">
               {#each shortcuts as shortcut, idx}
                 <div
-                  class="flex flex-col gap-2 items-start p-3 rounded-lg transition-all duration-200 sm:flex-row sm:items-center bg-slate-100/80 dark:bg-slate-800/50 hover:shadow-lg hover:bg-slate-200/80 dark:hover:bg-slate-700/50 animate-fade-in">
+                  class="flex flex-col gap-2 items-start p-3 rounded-lg transition-all duration-200 sm:flex-row sm:items-center bg-zinc-100/80 dark:bg-zinc-800/50 hover:shadow-lg hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 animate-fade-in">
                   <div class="flex flex-col gap-1 w-full sm:w-32">
-                    <label for="shortcut-name-{idx}" class="text-xs text-slate-600 dark:text-slate-400">Name</label>
+                    <label for="shortcut-name-{idx}" class="text-xs text-zinc-600 dark:text-zinc-400">Name</label>
                     <input
                       id="shortcut-name-{idx}"
-                      class="px-2 py-1.5 w-full bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 text-sm"
+                      class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
                       placeholder="Dashboard"
                       bind:value={shortcut.name} />
                   </div>
                   <div class="flex flex-col gap-1 w-full sm:w-16">
-                    <label for="shortcut-icon-{idx}" class="text-xs text-slate-600 dark:text-slate-400">Icon</label>
+                    <label for="shortcut-icon-{idx}" class="text-xs text-zinc-600 dark:text-zinc-400">Icon</label>
                     <input
                       id="shortcut-icon-{idx}"
-                      class="px-2 py-1.5 w-full bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 text-sm text-center"
+                      class="px-2 py-1.5 w-full text-sm text-center bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
                       placeholder="🏠"
                       bind:value={shortcut.icon} />
                   </div>
                   <div class="flex flex-col gap-1 w-full sm:flex-1">
-                    <label for="shortcut-url-{idx}" class="text-xs text-slate-600 dark:text-slate-400">URL</label>
+                    <label for="shortcut-url-{idx}" class="text-xs text-zinc-600 dark:text-zinc-400">URL</label>
                     <input
                       id="shortcut-url-{idx}"
-                      class="px-2 py-1.5 w-full bg-white rounded transition dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 text-sm"
+                      class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
                       placeholder="/dashboard"
                       bind:value={shortcut.url} />
                   </div>
-                  <div class="flex items-end h-full pt-4 sm:pt-0">
+                  <div class="flex items-end pt-4 h-full sm:pt-0">
                     <button
-                      class="px-3 py-2 text-red-400 rounded transition-all duration-200 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95"
+                      class="px-3 py-2 text-red-400 rounded-sm transition-all duration-200 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95"
                       onclick={() => removeShortcut(idx)}
                       title="Remove shortcut">
                       <Icon src={Trash} class="w-4 h-4" />
@@ -784,14 +772,14 @@ The Company reserves the right to terminate your access to the Service at any ti
                 </div>
               {/each}
               {#if shortcuts.length === 0}
-                <div class="py-8 text-center text-slate-600 dark:text-slate-400 animate-fade-in">
-                  <div class="text-4xl mb-3 opacity-50">⚡</div>
+                <div class="py-8 text-center text-zinc-600 dark:text-zinc-400 animate-fade-in">
+                  <div class="mb-3 text-4xl opacity-50">⚡</div>
                   <p class="text-sm">No dashboard shortcuts configured</p>
                   <p class="mt-1 text-xs">Add your first shortcut to get started</p>
                 </div>
               {/if}
               <button
-                class="px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
+                class="flex gap-2 justify-center items-center px-4 py-2 w-full text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
                 onclick={addShortcut}>
                 <Icon src={Plus} class="w-4 h-4" />
                 Add Dashboard Shortcut
@@ -803,10 +791,10 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Appearance Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Appearance</h2>
-          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Customize how DesQTA looks
           </p>
         </div>
@@ -814,42 +802,42 @@ The Company reserves the right to terminate your access to the Service at any ti
           <!-- Theme Settings -->
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Theme</h3>
-            <p class="mb-4 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Choose your preferred color scheme and theme settings.
             </p>
             <div
-              class="p-4 space-y-4 rounded-lg bg-slate-100/80 dark:bg-slate-800/50 animate-fade-in">
+              class="p-4 space-y-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
               <div class="flex flex-col gap-2">
-                <label for="accent-color" class="text-sm text-slate-800 dark:text-slate-200"
+                <label for="accent-color" class="text-sm text-zinc-800 dark:text-zinc-200"
                   >Accent Color</label>
                 <div class="flex gap-2 items-center">
                   <input
                     type="color"
                     id="accent-color"
                     bind:value={$accentColor}
-                    class="w-11 h-12 bg-transparent rounded-xl cursor-pointer focus:outline-none" />
+                    class="w-11 h-12 bg-transparent rounded-xl cursor-pointer focus:outline-hidden" />
                   <input
                     type="text"
                     bind:value={$accentColor}
-                    class="flex-1 px-3 py-2 bg-white rounded border transition text-slate-900 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="flex-1 px-3 py-2 bg-white rounded-sm border transition text-zinc-900 dark:bg-zinc-900/50 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                     placeholder="#3b82f6" />
                   <button
-                    class="px-3 py-2 rounded transition text-slate-800 bg-slate-200 dark:bg-slate-700/50 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600/50 focus:ring-2 focus:ring-blue-500"
+                    class="px-3 py-2 rounded-sm transition text-zinc-800 bg-zinc-200 dark:bg-zinc-700/50 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600/50 focus:ring-2 focus:ring-blue-500"
                     onclick={() => accentColor.set('#3b82f6')}>
                     Reset
                   </button>
                 </div>
-                <p class="text-xs text-slate-600 dark:text-slate-400">
+                <p class="text-xs text-zinc-600 dark:text-zinc-400">
                   This color will be used throughout the app for buttons, links, and other
                   interactive elements.
                 </p>
               </div>
 
               <div class="flex flex-col gap-2">
-                <p class="text-sm text-slate-800 dark:text-slate-200">Theme</p>
+                <p class="text-sm text-zinc-800 dark:text-zinc-200">Theme</p>
                 <div class="flex gap-2">
                   <button
-                    class="flex-1 px-4 py-3 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600/50 focus:ring-2 focus:ring-blue-500 transition flex items-center justify-center gap-2 {$theme ===
+                    class="flex-1 px-4 py-3 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600/50 focus:ring-2 focus:ring-blue-500 transition flex items-center justify-center gap-2 {$theme ===
                     'light'
                       ? 'accent-bg'
                       : ''}"
@@ -858,7 +846,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     Light
                   </button>
                   <button
-                    class="flex-1 px-4 py-3 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600/50 focus:ring-2 focus:ring-blue-500 transition flex items-center justify-center gap-2 {$theme ===
+                    class="flex-1 px-4 py-3 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600/50 focus:ring-2 focus:ring-blue-500 transition flex items-center justify-center gap-2 {$theme ===
                     'dark'
                       ? 'accent-bg'
                       : ''}"
@@ -867,7 +855,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     Dark
                   </button>
                   <button
-                    class="flex-1 px-4 py-3 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600/50 focus:ring-2 focus:ring-blue-500 transition flex items-center justify-center gap-2 {$theme ===
+                    class="flex-1 px-4 py-3 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600/50 focus:ring-2 focus:ring-blue-500 transition flex items-center justify-center gap-2 {$theme ===
                     'system'
                       ? 'accent-bg'
                       : ''}"
@@ -876,7 +864,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     System
                   </button>
                 </div>
-                <p class="text-xs text-slate-600 dark:text-slate-400">
+                <p class="text-xs text-zinc-600 dark:text-zinc-400">
                   Choose between light mode, dark mode, or follow your system preference.
                 </p>
               </div>
@@ -886,10 +874,10 @@ The Company reserves the right to terminate your access to the Service at any ti
           <!-- Layout Settings -->
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Layout</h3>
-            <p class="mb-4 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Adjust the layout and sizing of various elements.
             </p>
-            <div class="p-4 rounded-lg bg-slate-100/80 dark:bg-slate-800/50 animate-fade-in">
+            <div class="p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
               <div class="flex gap-4 items-center mb-4">
                 <input
                   id="auto-collapse-sidebar"
@@ -898,14 +886,14 @@ The Company reserves the right to terminate your access to the Service at any ti
                   bind:checked={autoCollapseSidebar} />
                 <label
                   for="auto-collapse-sidebar"
-                  class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
                   >Auto-collapse sidebar when navigating</label>
               </div>
-              <p class="text-xs text-slate-600 dark:text-slate-400">
+              <p class="text-xs text-zinc-600 dark:text-zinc-400">
                 When enabled, the sidebar will automatically collapse when you click on a page link,
                 giving you more space for content.
               </p>
-              <div class="flex gap-4 items-center mb-4 mt-4">
+              <div class="flex gap-4 items-center mt-4 mb-4">
                 <input
                   id="auto-expand-sidebar-hover"
                   type="checkbox"
@@ -913,14 +901,14 @@ The Company reserves the right to terminate your access to the Service at any ti
                   bind:checked={autoExpandSidebarHover} />
                 <label
                   for="auto-expand-sidebar-hover"
-                  class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
                   >Auto-expand sidebar on hover</label>
               </div>
-              <p class="text-xs text-slate-600 dark:text-slate-400">
+              <p class="text-xs text-zinc-600 dark:text-zinc-400">
                 When enabled and the sidebar is collapsed, hovering near the left edge will
                 temporarily expand the sidebar for easy navigation.
               </p>
-              <div class="flex gap-4 items-center mb-4 mt-4">
+              <div class="flex gap-4 items-center mt-4 mb-4">
                 <input
                   id="global-search-enabled"
                   type="checkbox"
@@ -928,10 +916,10 @@ The Company reserves the right to terminate your access to the Service at any ti
                   bind:checked={globalSearchEnabled} />
                 <label
                   for="global-search-enabled"
-                  class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
                   >Enable global search</label>
               </div>
-              <p class="text-xs text-slate-600 dark:text-slate-400">
+              <p class="text-xs text-zinc-600 dark:text-zinc-400">
                 When enabled, you can use Ctrl+K to open a global search that searches across all
                 your content, courses, and assessments.
               </p>
@@ -946,7 +934,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               bind:checked={disableSchoolPicture} />
             <label
               for="disable-school-picture"
-              class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+              class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
               >Disable school picture in user info</label>
           </div>
           <!-- Enhanced Animations Setting -->
@@ -958,7 +946,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               bind:checked={enhancedAnimations} />
             <label
               for="enhanced-animations"
-              class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+              class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
               >Enhanced Animations</label>
           </div>
         </div>
@@ -966,16 +954,16 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Notification Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Notifications</h2>
-          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Manage your notification preferences
           </p>
         </div>
         <div class="p-4 sm:p-6">
           <div
-            class="flex flex-col gap-4 p-4 rounded-lg bg-slate-100/80 dark:bg-slate-800/50 animate-fade-in">
+            class="flex flex-col gap-4 p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
             <div class="flex gap-3 items-center">
               <input
                 id="reminders-enabled"
@@ -984,11 +972,11 @@ The Company reserves the right to terminate your access to the Service at any ti
                 bind:checked={remindersEnabled} />
               <label
                 for="reminders-enabled"
-                class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200"
+                class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
                 >Enable assessment reminder notifications</label>
             </div>
             <button
-              class="px-4 py-2 w-full text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
+              class="px-4 py-2 w-full text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
               onclick={sendTestNotification}>
               Send Test Notification
             </button>
@@ -999,20 +987,20 @@ The Company reserves the right to terminate your access to the Service at any ti
       {#if showDevSettings}
         <!-- Cloud Provider Settings (Dev) -->
         <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-          <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
             <h2 class="text-base font-semibold sm:text-lg">Cloud Provider (Dev)</h2>
-            <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Configure the BetterSeqta Cloud provider URL. Changing this may require
               re-authentication.
             </p>
           </div>
           <div class="p-4 space-y-4 sm:p-6">
             <div class="space-y-2">
-              <label for="cloud-base-url" class="text-sm font-medium text-slate-800 dark:text-slate-200">Base URL</label>
+              <label for="cloud-base-url" class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Base URL</label>
               <input
                 id="cloud-base-url"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-white focus:outline-none focus:ring-2 accent-ring transition-colors duration-200"
+                class="px-3 py-2 w-full rounded-lg border transition-colors duration-200 border-zinc-300/70 dark:border-zinc-700/70 bg-white/80 dark:bg-zinc-800/70 text-zinc-800 dark:text-white focus:outline-hidden focus:ring-2 accent-ring"
                 placeholder="https://accounts.example.com"
                 bind:value={cloudBaseUrl}
                 oninput={() => {
@@ -1030,13 +1018,13 @@ The Company reserves the right to terminate your access to the Service at any ti
             </div>
             <div class="flex gap-3">
               <button
-                class="px-4 py-2 text-white rounded-lg shadow transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
+                class="px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
                 disabled={cloudBaseUrlSaving}
                 onclick={saveCloudBaseUrl}>
                 {cloudBaseUrlSaving ? 'Saving...' : 'Save URL'}
               </button>
               <button
-                class="px-4 py-2 rounded-lg border border-slate-300/70 dark:border-slate-700/70 text-slate-800 dark:text-white bg-slate-100/60 dark:bg-slate-800/40 hover:bg-slate-200/60 dark:hover:bg-slate-700/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
+                class="px-4 py-2 rounded-lg border transition-all duration-200 border-zinc-300/70 dark:border-zinc-700/70 text-zinc-800 dark:text-white bg-zinc-100/60 dark:bg-zinc-800/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
                 onclick={resetCloudBaseUrlToDefault}>
                 Reset to Default
               </button>
@@ -1047,10 +1035,10 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- RSS Feeds Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-200 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
           <h2 class="text-base font-semibold sm:text-lg">RSS Feeds</h2>
-          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Manage your news and content feeds that appear in your DMs
           </p>
         </div>
@@ -1059,12 +1047,12 @@ The Company reserves the right to terminate your access to the Service at any ti
             <div class="flex justify-between items-center mb-4">
               <div>
                 <h3 class="text-sm font-semibold sm:text-base">Feed Sources</h3>
-                <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+                <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
                   Add RSS feeds to stay updated with your favorite content
                 </p>
               </div>
               <button
-                class="flex gap-2 items-center px-4 py-2 text-white rounded-lg shadow transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
+                class="flex gap-2 items-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
                 onclick={addFeed}>
                 <Icon src={Plus} class="w-4 h-4" />
                 Add Feed
@@ -1073,30 +1061,30 @@ The Company reserves the right to terminate your access to the Service at any ti
             <div class="space-y-3">
               {#each feeds as feed, idx}
                 <div
-                  class="p-4 rounded-lg transition-all duration-200 group bg-slate-100/80 dark:bg-slate-800/50 hover:shadow-lg hover:bg-slate-200/80 dark:hover:bg-slate-700/50 animate-fade-in">
+                  class="p-4 rounded-lg transition-all duration-200 group bg-zinc-100/80 dark:bg-zinc-800/50 hover:shadow-lg hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 animate-fade-in">
                   <div class="flex flex-col gap-3 items-start sm:flex-row sm:items-center">
                     <div class="flex-1 min-w-0">
                       <div class="flex gap-2 items-center mb-2">
                         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         <span
-                          class="text-sm font-medium truncate text-slate-800 dark:text-slate-200">
+                          class="text-sm font-medium truncate text-zinc-800 dark:text-zinc-200">
                           {feed.url ? new URL(feed.url).hostname : 'New Feed'}
                         </span>
                       </div>
                       <input
-                        class="px-3 py-2 w-full bg-white rounded border transition text-slate-900 dark:bg-slate-900/50 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-2 w-full bg-white rounded-sm border transition text-zinc-900 dark:bg-zinc-900/50 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                         placeholder="https://example.com/feed.xml"
                         bind:value={feed.url} />
                     </div>
                     <div class="flex gap-2 items-center">
                       <button
-                        class="p-2 rounded-lg transition-colors text-slate-600 dark:text-slate-400 hover:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700/50"
+                        class="p-2 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:text-blue-400 hover:bg-zinc-200 dark:hover:bg-zinc-700/50"
                         title="Test Feed"
                         onclick={() => testFeed(feed.url)}>
                         <Icon src={ArrowPath} class="w-5 h-5" />
                       </button>
                       <button
-                        class="p-2 rounded-lg transition-colors text-slate-600 dark:text-slate-400 hover:text-red-400 hover:bg-slate-200 dark:hover:bg-slate-700/50"
+                        class="p-2 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:text-red-400 hover:bg-zinc-200 dark:hover:bg-zinc-700/50"
                         title="Remove Feed"
                         onclick={() => removeFeed(idx)}>
                         <Icon src={Trash} class="w-5 h-5" />
@@ -1106,7 +1094,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 </div>
               {/each}
               {#if feeds.length === 0}
-                <div class="py-8 text-center text-slate-600 dark:text-slate-400 animate-fade-in">
+                <div class="py-8 text-center text-zinc-600 dark:text-zinc-400 animate-fade-in">
                   <Icon src={Rss} class="mx-auto mb-3 w-12 h-12 opacity-50" />
                   <p class="text-sm">No feeds added yet</p>
                   <p class="mt-1 text-xs">Add your first RSS feed to get started</p>
@@ -1119,10 +1107,10 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- AI Features -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-100 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
           <h2 class="text-base font-semibold sm:text-lg">AI Features</h2>
-          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Enable AI-powered features by providing your free Gemini API key.
           </p>
         </div>
@@ -1135,7 +1123,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               bind:checked={aiIntegrationsEnabled} />
             <label
               for="ai-integrations-enabled"
-              class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200">
+              class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
               Enable AI Features
             </label>
           </div>
@@ -1149,7 +1137,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   bind:checked={gradeAnalyserEnabled} />
                 <label
                   for="grade-analyser-enabled"
-                  class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200">
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
                   Grade Analyser
                 </label>
               </div>
@@ -1161,25 +1149,25 @@ The Company reserves the right to terminate your access to the Service at any ti
                   bind:checked={lessonSummaryAnalyserEnabled} />
                 <label
                   for="lesson-summary-analyser-enabled"
-                  class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200">
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
                   Lesson Summary Analyser
                 </label>
               </div>
               <div class="mt-6">
                 <label
                   for="gemini-api-key"
-                  class="text-sm font-medium text-slate-800 dark:text-slate-200 block mb-1">
+                  class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
                   Gemini API Key
                 </label>
                 <input
                   id="gemini-api-key"
                   type="text"
-                  class="w-full px-3 py-2 rounded border border-slate-300/50 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="Paste your Gemini API key here"
                   bind:value={geminiApiKey}
                   autocomplete="off"
                   spellcheck="false" />
-                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                   Get your API key from
                   <a
                     href="https://aistudio.google.com"
@@ -1197,21 +1185,21 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Plugins Section -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Plugins</h2>
-          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Enhance your DesQTA experience with plugins
           </p>
         </div>
         <div class="p-4 sm:p-6">
-          <div class="p-4 rounded-lg bg-slate-100/80 dark:bg-slate-800/50 animate-fade-in">
-            <p class="mb-4 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <div class="p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
+            <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Install additional features and customizations from our plugin store.
             </p>
             <a
               href="/settings/plugins"
-              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
+              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
               Open Plugin Store
             </a>
           </div>
@@ -1220,16 +1208,16 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Theme Store Link -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Theme Store</h2>
-          <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Browse and install custom themes for DesQTA
           </p>
         </div>
         <div class="p-4 sm:p-6">
-          <div class="p-4 rounded-lg bg-slate-100/80 dark:bg-slate-800/50 animate-fade-in">
-            <p class="mb-4 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+          <div class="p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
+            <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Explore a collection of beautiful themes to customize your DesQTA experience.
             </p>
             <button
@@ -1251,7 +1239,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   console.log('Page pathname:', window.location.pathname);
                 }, 100);
               }}
-              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
+              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
               Open Theme Store
             </button>
           </div>
@@ -1260,16 +1248,16 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Troubleshooting button -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="p-4 sm:p-6 flex items-center justify-between">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">Troubleshooting</h2>
-            <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Open the troubleshooting tools and diagnostics.
             </p>
           </div>
           <button
-            class="px-4 py-2 text-white bg-blue-500 rounded-lg shadow transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105 flex items-center justify-center gap-2"
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-blue-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105"
             onclick={openTroubleshootingModal}>
             <Icon src={Cog} class="w-4 h-4" />
             Open
@@ -1279,11 +1267,11 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Cache Management -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-300 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-red-700/50 animate-fade-in-up">
-        <div class="p-4 sm:p-6 flex items-center justify-between">
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-red-700/50 animate-fade-in-up">
+        <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">Cache Management</h2>
-            <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Clear browser cache to fix navigation issues.
             </p>
           </div>
@@ -1291,7 +1279,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             type="button"
             onclick={clearCache}
             disabled={clearingCache}
-            class="px-4 py-2 text-white bg-red-500 rounded-lg shadow transition-all duration-200 hover:bg-red-600 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-red-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-red-600 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
             <Icon src={Trash} class="w-4 h-4" />
             {clearingCache ? 'Clearing...' : 'Clear Cache'}
           </button>
@@ -1301,10 +1289,10 @@ The Company reserves the right to terminate your access to the Service at any ti
       <!-- Dev Settings Section -->
       {#if showDevSettings}
         <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-all duration-300 delay-400 bg-white/80 dark:bg-slate-900/50 sm:rounded-2xl border-slate-300/50 dark:border-slate-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-          <div class="px-4 py-4 border-b sm:px-6 border-slate-300/50 dark:border-slate-800/50">
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-400 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
             <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
-            <p class="text-xs text-slate-600 sm:text-sm dark:text-slate-400">
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Developer options for debugging and testing
             </p>
           </div>
@@ -1317,7 +1305,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 bind:checked={devSensitiveInfoHider} />
               <label
                 for="dev-sensitive-info-hider"
-                class="text-sm font-medium cursor-pointer text-slate-800 sm:text-base dark:text-slate-200">
+                class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
                 Sensitive Info Hider (API responses replaced with random mock data)
               </label>
             </div>
@@ -1339,28 +1327,28 @@ The Company reserves the right to terminate your access to the Service at any ti
 <TroubleshootingModal open={showTroubleshootingModal} onclose={closeTroubleshootingModal} />
 
 {#if showEulaModal}
-  <div class="fixed inset-0 z-50 flex items-center justify-center">
+  <div class="flex fixed inset-0 z-50 justify-center items-center">
     <div
-      class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+      class="absolute inset-0 backdrop-blur-xs bg-black/50"
       role="button"
       tabindex="0"
       onclick={() => (showEulaModal = false)}
       onkeydown={(e) => e.key === 'Escape' && (showEulaModal = false)}>
     </div>
     <div
-      class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 animate-fade-in">
-      <h3 class="text-lg font-semibold mb-3">BetterSEQTA Cloud EULA</h3>
+      class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 animate-fade-in">
+      <h3 class="mb-3 text-lg font-semibold">BetterSEQTA Cloud EULA</h3>
       <div
-        class="overflow-auto p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 text-sm text-slate-800 dark:text-slate-200"
+        class="overflow-auto p-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-200"
         style="max-height: 50vh;">
-        <pre class="whitespace-pre-wrap font-sans">{CLOUD_EULA_TEXT}</pre>
+        <pre class="font-sans whitespace-pre-wrap">{CLOUD_EULA_TEXT}</pre>
       </div>
-      <div class="mt-4 flex justify-end gap-2">
+      <div class="flex gap-2 justify-end mt-4">
         <button
-          class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-white transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-400"
+          class="px-4 py-2 rounded-lg transition-all duration-200 bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-400"
           onclick={() => (showEulaModal = false)}>Decline</button>
         <button
-          class="px-4 py-2 rounded-lg text-white accent-bg hover:accent-bg-hover transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+          class="px-4 py-2 text-white rounded-lg transition-all duration-200 accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
           onclick={async () => {
             try {
               await invoke('save_settings_merge', { patch: { accepted_cloud_eula: true } });

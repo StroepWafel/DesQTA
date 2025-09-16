@@ -364,7 +364,7 @@ slate: {
 </button>
 
 <!-- Theme-aware colors -->
-<div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+<div class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">
   Content adapts to theme
 </div>
 

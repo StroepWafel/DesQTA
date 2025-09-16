@@ -106,9 +106,9 @@
   </button>
   
   {#if uploadError}
-    <div class="mt-4 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 shadow-sm">
+    <div class="mt-4 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 shadow-xs">
       <div class="flex items-start gap-3">
-        <div class="flex-shrink-0">
+        <div class="shrink-0">
           <Icon src={ExclamationTriangle} class="w-5 h-5 text-red-500 dark:text-red-400" />
         </div>
         <div class="flex-1 min-w-0">
@@ -128,7 +128,7 @@
         </div>
         <button
           type="button"
-          class="flex-shrink-0 p-1 rounded-md text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors duration-200"
+          class="shrink-0 p-1 rounded-md text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors duration-200"
           onclick={clearError}
           aria-label="Dismiss error">
           <Icon src={XMark} class="w-4 h-4" />
@@ -138,9 +138,9 @@
   {/if}
 
   {#if uploadSuccess}
-    <div class="mt-4 p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 shadow-sm">
+    <div class="mt-4 p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 shadow-xs">
       <div class="flex items-start gap-3">
-        <div class="flex-shrink-0">
+        <div class="shrink-0">
           <div class="w-5 h-5 rounded-full bg-green-500 dark:bg-green-400 flex items-center justify-center">
             <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -157,7 +157,7 @@
         </div>
         <button
           type="button"
-          class="flex-shrink-0 p-1 rounded-md text-green-400 hover:text-green-600 dark:hover:text-green-300 transition-colors duration-200"
+          class="shrink-0 p-1 rounded-md text-green-400 hover:text-green-600 dark:hover:text-green-300 transition-colors duration-200"
           onclick={clearSuccess}
           aria-label="Dismiss success message">
           <Icon src={XMark} class="w-4 h-4" />

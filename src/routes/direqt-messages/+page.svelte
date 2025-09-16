@@ -15,6 +15,7 @@
 
   // External Libraries
   import dayjs from 'dayjs';
+  import { page } from '$app/stores';
 
   let messages = $state<Message[]>([]);
   let loading = $state(true);
@@ -34,6 +35,9 @@
   let deleting = $state(false);
   let restoring = $state(false);
 
+  // Deep-link target from notifications
+  let pendingMessageId = $state<number | null>(null);
+
   // Derived state for mobile modal
   let showMobileModal = $derived(!!selectedMessage);
   let selectedTab = $state('SEQTA'); // 'SEQTA' or 'BetterSEQTA'
@@ -44,6 +48,12 @@
   onMount(async () => {
     // Always enable both tabs regardless of SEQTA config
     seqtaMessagesEnabled = true;
+  });
+
+  // Watch URL for messageID parameter and store it until messages load
+  $effect(() => {
+    const idParam = $page.url.searchParams.get('messageID');
+    pendingMessageId = idParam ? Number(idParam) : null;
   });
 
   async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '') {
@@ -186,6 +196,18 @@
   $effect(() => {
     if (selectedTab === 'SEQTA') {
     fetchMessages('inbox');
+    }
+  });
+
+  // When messages are loaded and a target ID exists, open it
+  $effect(() => {
+    if (!loading && pendingMessageId) {
+      const target = messages.find((m) => m.id === pendingMessageId!);
+      if (target) {
+        selectedFolder = target.folder;
+        openMessage(target);
+        pendingMessageId = null;
+      }
     }
   });
 
@@ -353,17 +375,17 @@
 
 <!-- Tab Switcher (hidden when showCloudMessaging is false) -->
 {#if showCloudMessaging}
-<div class="flex gap-2 p-4 border-b border-slate-300/50 dark:border-slate-800/50 bg-white dark:bg-slate-900">
+<div class="flex gap-2 p-4 bg-white border-b border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900">
   <button
-    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
-      {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring text-base
+      {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-zinc-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
     onclick={() => openTab('SEQTA')}
     disabled={selectedTab === 'SEQTA'}>
     SEQTA Messages
   </button>
   <button
-    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
-      {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
+    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring text-base
+      {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-zinc-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
     onclick={() => openTab('BetterSEQTA')}
     disabled={selectedTab === 'BetterSEQTA'}>
     Cloud Messaging
@@ -375,10 +397,10 @@
   <div class="flex w-full h-full max-xl:flex-col">
     {#if selectedTab === 'SEQTA'}
       {#if seqtaLoadFailed}
-        <div class="flex flex-col items-center justify-center w-full h-full p-8 text-center">
-          <div class="text-red-500 dark:text-red-400 text-lg font-semibold mb-4">SEQTA messaging failed to load.</div>
+        <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
+          <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">SEQTA messaging failed to load.</div>
           {#if showCloudMessaging}
-            <div class="text-slate-500 dark:text-slate-300 mb-4">You can still use Cloud Messaging by switching tabs above.</div>
+            <div class="mb-4 text-zinc-500 dark:text-zinc-300">You can still use Cloud Messaging by switching tabs above.</div>
           {/if}
         </div>
       {:else}
@@ -413,15 +435,15 @@
         onclose={() => (selectedMessage = null)}
         maxWidth="w-full"
         maxHeight="h-full"
-        customClasses="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-none"
+        className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xs rounded-none"
         showCloseButton={false}
         closeOnBackdrop={false}
         ariaLabel="Message Detail">
         <div class="flex flex-col h-full">
           <div
-            class="flex justify-between items-center p-4 border-b border-slate-300/50 dark:border-slate-800/50">
+            class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
             <button
-              class="flex gap-2 items-center transition-colors text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              class="flex gap-2 items-center transition-colors text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               onclick={() => (selectedMessage = null)}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -435,7 +457,7 @@
               </svg>
               <span class="text-sm font-medium">Back</span>
             </button>
-            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Message</span>
+            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Message</span>
             <div class="w-8"></div>
             <!-- Spacer for alignment -->
           </div>

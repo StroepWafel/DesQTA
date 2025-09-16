@@ -22,9 +22,7 @@
       { name: 'Trash', icon: Trash, id: 'trash' },
     ];
     const subset = await invoke<any>('get_settings_subset', { keys: ['feeds'] });
-    console.log(subset?.feeds);
     for (let item of (subset?.feeds || [])) {
-      console.log(item.url);
       let title = await getRSS(item.url);
       folders.push({
         name: `RSS: ${title.channel.title}`,
@@ -38,10 +36,10 @@
 </script>
 
 <aside
-  class="flex flex-col border-r backdrop-blur-sm xl:w-64 border-slate-300/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 shadow-md rounded-xl m-2">
-  <div class="p-4 border-b border-slate-300/50 dark:border-slate-800/50">
+  class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900">
+  <div class="p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
     <button
-      class="flex gap-2 items-center px-4 py-2.5 w-full text-sm font-semibold text-white accent-bg rounded-xl shadow-lg transition-all duration-200 sm:text-base hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+      class="flex gap-2 items-center px-4 py-2.5 w-full text-sm font-semibold text-white rounded-xl shadow-lg transition-all duration-200 accent-bg sm:text-base hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
       onclick={openCompose}>
       <Icon src={Plus} class="w-5 h-5" />
       <span>Compose</span>
@@ -55,15 +53,15 @@
         <button
           class="w-full flex items-center gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
             {selectedFolder === folder.name
-              ? 'accent-bg text-white border-l-4 accent-bg pl-[1.25rem] shadow-md'
-              : 'border-l-4 border-transparent text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700 hover:scale-[1.02]'}
-            focus:outline-none focus:ring-2 accent-ring"
+              ? 'accent-bg text-white border-l-4 accent-bg pl-5 shadow-md'
+              : 'border-l-4 border-transparent text-zinc-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700 hover:scale-[1.02]'}
+            focus:outline-hidden focus:ring-2 accent-ring"
           onclick={() => openFolder(folder)}>
           <Icon src={folder.icon} class="w-5 h-5" />
           <span>{folder.name}</span>
           {#if selectedFolder === folder.name}
             <div
-              class="absolute right-2 top-1/2 w-1.5 h-1.5 accent-bg rounded-full -translate-y-1/2">
+              class="absolute right-2 top-1/2 w-1.5 h-1.5 rounded-full -translate-y-1/2 accent-bg">
             </div>
           {/if}
         </button>

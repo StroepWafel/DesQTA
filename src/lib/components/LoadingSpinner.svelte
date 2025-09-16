@@ -23,7 +23,7 @@
   <div
     class="rounded-full border-4 animate-spin border-indigo-500/30 border-t-indigo-500 {sizeClasses[size]}">
   </div>
-  <p class="mt-4 {textSizes[size]} text-slate-600 dark:text-slate-400">
+  <p class="mt-4 {textSizes[size]} text-zinc-600 dark:text-zinc-400">
     {message}
   </p>
 </div> 

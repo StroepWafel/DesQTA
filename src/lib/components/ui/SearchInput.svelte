@@ -75,10 +75,10 @@
     {#if showClearButton}
       <button
         onclick={handleClear}
-        class="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+        class="p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
         aria-label="Clear search"
       >
-        <Icon src={XMark} size="16" class="text-slate-400 dark:text-slate-500" />
+        <Icon src={XMark} size="16" class="text-zinc-400 dark:text-zinc-500" />
       </button>
     {:else if rightAction}
       {@render rightAction()}

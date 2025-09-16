@@ -1,7 +1,5 @@
 <script lang="ts">
   import AssessmentCard from './AssessmentCard.svelte';
-  import VirtualList from './VirtualList.svelte';
-  import VirtualAssessmentCard from './VirtualAssessmentCard.svelte';
   import { Card, Badge } from '$lib/components/ui';
 
   interface Assessment {
@@ -28,9 +26,6 @@
   }
 
   let { assessments, subjects, activeSubjects }: Props = $props();
-  
-  // Assessment card height for virtual scrolling (estimated)
-  const ASSESSMENT_CARD_HEIGHT = 120;
 
   function scrollToSubject(event: MouseEvent, subjectCode: string) {
     event.preventDefault();
@@ -49,15 +44,15 @@
 
 <div class="flex flex-col gap-6 lg:flex-row">
   <!-- Quick Navigation Sidebar -->
-  <div class="flex-shrink-0 lg:w-48">
+  <div class="shrink-0 lg:w-48">
     <div
-      class="sticky top-6 p-4 rounded-xl border backdrop-blur-sm bg-slate-100/80 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50">
-      <h3 class="mb-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Quick Jump</h3>
+      class="sticky top-6 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+      <h3 class="mb-3 text-sm font-semibold text-zinc-600 dark:text-zinc-400">Quick Jump</h3>
       <div class="space-y-2">
         {#each subjects.filter(subject => assessments.some(a => a.code === subject.code)) as subject}
           <a
             href="#subject-{subject.code}"
-            class="flex gap-2 items-center px-3 py-2 rounded-lg transition-all duration-300 cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+            class="flex gap-2 items-center px-3 py-2 rounded-lg transition-all duration-300 cursor-pointer hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
             onclick={(e) => scrollToSubject(e, subject.code)}>
             <div
               class="w-2 h-2 rounded-full"
@@ -76,11 +71,12 @@
   <!-- Main Content -->
   <div class="flex-1 space-y-6">
     {#each subjects.filter(subject => assessments.some(a => a.code === subject.code)) as subject}
-      <Card
-        variant="default"
-        padding="none"
-        class="overflow-hidden"
-      >
+      <div id="subject-{subject.code}">
+        <Card
+          variant="default"
+          padding="none"
+          class="overflow-hidden"
+        >
         {#snippet header()}
           <div class="flex gap-3 items-center justify-between">
             <div class="flex gap-3 items-center">
@@ -88,10 +84,10 @@
                 class="w-3 h-3 rounded-full"
                 style="background-color: {subject.colour || '#8e8e8e'}">
               </div>
-              <h3 class="text-base font-bold sm:text-lg text-slate-900 dark:text-white">
+              <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
                 {subject.title}
               </h3>
-              <span class="text-sm text-slate-600 dark:text-slate-400">({subject.code})</span>
+              <span class="text-sm text-zinc-600 dark:text-zinc-400">({subject.code})</span>
               {#if activeSubjects && activeSubjects.some((as: any) => as.code === subject.code)}
                 <Badge variant="success" size="xs">Active</Badge>
               {/if}
@@ -100,23 +96,12 @@
         {/snippet}
 
         <div class="p-4 space-y-4">
-          {#if assessments.filter((a) => a.code === subject.code).length > 20}
-            <VirtualList
-              items={assessments.filter((a) => a.code === subject.code)}
-              itemHeight={ASSESSMENT_CARD_HEIGHT}
-              containerHeight={600}
-              keyFunction={(item) => item.id}>
-              {#snippet children({ item, index })}
-                <VirtualAssessmentCard {item} {index} />
-              {/snippet}
-            </VirtualList>
-          {:else}
-            {#each assessments.filter((a) => a.code === subject.code) as assessment}
-              <AssessmentCard {assessment} />
-            {/each}
-          {/if}
+          {#each assessments.filter((a) => a.code === subject.code) as assessment}
+            <AssessmentCard {assessment} />
+          {/each}
         </div>
-      </Card>
+        </Card>
+      </div>
     {/each}
   </div>
 </div>

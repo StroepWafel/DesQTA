@@ -28,7 +28,7 @@
 
 <div class="grid gap-8 animate-fade-in">
   <div
-    class="p-6 rounded-2xl transition-all duration-300 dark:bg-slate-900 bg-slate-100 hover:shadow-lg hover:shadow-accent-500/10">
+    class="p-6 rounded-2xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10">
     <div class="flex justify-between items-center mb-4">
       <h1 class="text-2xl font-bold">Submissions</h1>
       <FileUploadButton 
@@ -40,11 +40,11 @@
     
     {#if studentSubmissions.length === 0}
       <div class="flex flex-col items-center justify-center py-12 text-center">
-        <div class="w-16 h-16 mb-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-          <Icon src={DocumentText} class="w-8 h-8 text-slate-400" />
+        <div class="w-16 h-16 mb-4 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+          <Icon src={DocumentText} class="w-8 h-8 text-zinc-400" />
         </div>
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Submissions Yet</h3>
-        <p class="text-slate-600 dark:text-slate-400 mb-6 max-w-md">
+        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">No Submissions Yet</h3>
+        <p class="text-zinc-600 dark:text-zinc-400 mb-6 max-w-md">
           You haven't submitted any files for this assessment yet. Use the upload button above to add your work.
         </p>
       </div>

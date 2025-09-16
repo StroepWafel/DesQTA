@@ -198,7 +198,7 @@
 {#if isOpen}
   <!-- Search Modal -->
   <div
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/50 backdrop-blur-xs"
     transition:fly={{ y: -50, duration: 200 }}
     onclick={() => dispatch('close')}
     onkeydown={(e) => e.key === 'Escape' && dispatch('close')}
@@ -207,14 +207,14 @@
     tabindex="0"
   >
     <div
-      class="w-full max-w-4xl mt-16 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+      class="w-full max-w-4xl mt-16 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden"
       transition:scale={{ duration: 200, start: 0.95 }}
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
       role="presentation"
     >
       <!-- Search Header -->
-      <div class="flex items-center p-6 border-b border-slate-200 dark:border-slate-700">
+      <div class="flex items-center p-6 border-b border-zinc-200 dark:border-zinc-700">
         <div class="flex-1">
           <SearchInput
             bind:value={searchQuery}
@@ -228,7 +228,7 @@
         
         <div class="flex items-center space-x-2 ml-4">
           <button
-            class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 {showFilters ? 'accent-bg text-white' : ''}"
+            class="p-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 {showFilters ? 'accent-bg text-white' : ''}"
             onclick={() => showFilters = !showFilters}
             title="Search filters"
           >
@@ -236,7 +236,7 @@
           </button>
           
           <button
-            class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+            class="p-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200"
             onclick={() => dispatch('close')}
             title="Close search"
           >
@@ -247,11 +247,11 @@
 
       <!-- Search Filters -->
       {#if showFilters}
-        <div class="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800" transition:slide={{ duration: 200 }}>
+        <div class="p-6 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800" transition:slide={{ duration: 200 }}>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Folders Filter -->
             <fieldset>
-              <legend class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Folders</legend>
+              <legend class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Folders</legend>
               <div class="space-y-1 max-h-32 overflow-y-auto">
                 {#each folders as folder}
                   <label class="flex items-center">
@@ -259,9 +259,9 @@
                       type="checkbox"
                       value={folder.id}
                       bind:group={selectedFolders}
-                      class="rounded accent-bg focus:accent-ring"
+                      class="rounded-sm accent-bg focus:accent-ring"
                     />
-                    <span class="ml-2 text-sm text-slate-600 dark:text-slate-400">
+                    <span class="ml-2 text-sm text-zinc-600 dark:text-zinc-400">
                       {folder.icon || '📁'} {folder.name}
                     </span>
                   </label>
@@ -271,7 +271,7 @@
 
             <!-- Tags Filter -->
             <fieldset>
-              <legend class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tags</legend>
+              <legend class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tags</legend>
               <div class="space-y-1 max-h-32 overflow-y-auto">
                 {#each availableTags as tag}
                   <label class="flex items-center">
@@ -279,9 +279,9 @@
                       type="checkbox"
                       value={tag}
                       bind:group={selectedTags}
-                      class="rounded accent-bg focus:accent-ring"
+                      class="rounded-sm accent-bg focus:accent-ring"
                     />
-                    <span class="ml-2 text-sm text-slate-600 dark:text-slate-400">
+                    <span class="ml-2 text-sm text-zinc-600 dark:text-zinc-400">
                       #{tag}
                     </span>
                   </label>
@@ -291,19 +291,19 @@
 
             <!-- Date Range Filter -->
             <fieldset>
-              <legend class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Date Range</legend>
+              <legend class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Date Range</legend>
               <div class="space-y-2">
                 <input
                   type="date"
                   bind:value={dateFrom}
-                  class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                  class="w-full px-3 py-1 text-sm rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
                   placeholder="From date"
                   aria-label="From date"
                 />
                 <input
                   type="date"
                   bind:value={dateTo}
-                  class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                  class="w-full px-3 py-1 text-sm rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
                   placeholder="To date"
                   aria-label="To date"
                 />
@@ -312,32 +312,32 @@
 
             <!-- Word Count Filter -->
             <fieldset>
-              <legend class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Word Count</legend>
+              <legend class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Word Count</legend>
               <div class="space-y-2">
                 <input
                   type="number"
                   bind:value={wordCountMin}
                   placeholder="Min words"
                   aria-label="Minimum word count"
-                  class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                  class="w-full px-3 py-1 text-sm rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
                 />
                 <input
                   type="number"
                   bind:value={wordCountMax}
                   placeholder="Max words"
                   aria-label="Maximum word count"
-                  class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                  class="w-full px-3 py-1 text-sm rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
                 />
               </div>
             </fieldset>
 
             <!-- SEQTA References Filter -->
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="seqta-references-filter">SEQTA References</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2" for="seqta-references-filter">SEQTA References</label>
               <select
                 id="seqta-references-filter"
                 bind:value={hasSeqtaReferences}
-                class="w-full px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 accent-ring"
+                class="w-full px-3 py-1 text-sm rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
               >
                 <option value={undefined}>Any</option>
                 <option value={true}>Has SEQTA references</option>
@@ -348,7 +348,7 @@
             <!-- Clear Filters -->
             <div class="flex items-end">
               <button
-                class="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
+                class="px-4 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200"
                 onclick={clearFilters}
               >
                 Clear Filters
@@ -362,8 +362,8 @@
       <div class="flex-1 max-h-96 overflow-y-auto">
         {#if loading}
           <div class="flex items-center justify-center p-8">
-            <div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-700 border-t-transparent animate-spin mr-3"></div>
-            <span class="text-slate-600 dark:text-slate-400">Searching...</span>
+            <div class="w-6 h-6 rounded-full border-2 border-zinc-300 dark:border-zinc-700 border-t-transparent animate-spin mr-3"></div>
+            <span class="text-zinc-600 dark:text-zinc-400">Searching...</span>
           </div>
         {:else if error}
           <div class="p-6 text-center">
@@ -371,14 +371,14 @@
           </div>
         {:else if searchQuery && searchResults.length === 0}
           <div class="p-6 text-center">
-            <p class="text-slate-500 dark:text-slate-400 mb-4">No notes found for "{searchQuery}"</p>
+            <p class="text-zinc-500 dark:text-zinc-400 mb-4">No notes found for "{searchQuery}"</p>
             {#if recentSearches.length > 0}
               <div class="text-left max-w-md mx-auto">
-                <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Recent searches:</h4>
+                <h4 class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Recent searches:</h4>
                 <div class="flex flex-wrap gap-2">
                   {#each recentSearches as recent}
                     <button
-                      class="px-2 py-1 text-xs rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      class="px-2 py-1 text-xs rounded-sm bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
                       onclick={() => useRecentSearch(recent)}
                     >
                       {recent}
@@ -392,7 +392,7 @@
           <div class="p-4 space-y-3">
             {#each searchResults as result (result.note.id)}
               <div
-                class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-all duration-200 hover:scale-[1.01]"
+                class="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition-all duration-200 hover:scale-[1.01]"
                 onclick={() => selectNote(result.note)}
                 onkeydown={(e) => e.key === 'Enter' && selectNote(result.note)}
                 role="button"
@@ -401,10 +401,10 @@
               >
                 <!-- Note Header -->
                 <div class="flex items-start justify-between mb-2">
-                  <h3 class="font-medium text-slate-900 dark:text-white">
+                  <h3 class="font-medium text-zinc-900 dark:text-white">
                     {@html highlightMatches(result.note.title || 'Untitled Note', searchQuery)}
                   </h3>
-                  <div class="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400">
+                  <div class="flex items-center space-x-2 text-xs text-zinc-500 dark:text-zinc-400">
                     <span>Score: {result.score.toFixed(1)}</span>
                     <span>•</span>
                     <span>{formatDate(result.note.updated_at)}</span>
@@ -416,17 +416,17 @@
                   <div class="space-y-1 mb-3">
                     {#each result.matches.slice(0, 3) as match}
                       <div class="flex items-start space-x-2 text-sm">
-                        <Icon src={getMatchIcon(match.field)} class="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                        <Icon src={getMatchIcon(match.field)} class="w-4 h-4 text-zinc-400 mt-0.5 shrink-0" />
                         <div class="flex-1">
-                          <span class="text-xs text-slate-500 dark:text-slate-400 capitalize">{match.field}:</span>
-                          <span class="text-slate-600 dark:text-slate-300">
+                          <span class="text-xs text-zinc-500 dark:text-zinc-400 capitalize">{match.field}:</span>
+                          <span class="text-zinc-600 dark:text-zinc-300">
                             {@html highlightMatches(match.snippet, searchQuery)}
                           </span>
                         </div>
                       </div>
                     {/each}
                     {#if result.matches.length > 3}
-                      <div class="text-xs text-slate-400 ml-6">
+                      <div class="text-xs text-zinc-400 ml-6">
                         +{result.matches.length - 3} more matches
                       </div>
                     {/if}
@@ -434,7 +434,7 @@
                 {/if}
 
                 <!-- Note Meta -->
-                <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+                <div class="flex items-center justify-between text-xs text-zinc-400 dark:text-zinc-500">
                   <div class="flex items-center space-x-3">
                     {#if result.note.folder_path.length > 0}
                       <span class="inline-flex items-center">
@@ -466,21 +466,21 @@
         {:else if !searchQuery && recentSearches.length > 0}
           <!-- Recent searches when no query -->
           <div class="p-6">
-            <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center">
+            <h4 class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3 flex items-center">
               <Icon src={Clock} class="w-4 h-4 mr-2" />
               Recent searches
             </h4>
             <div class="space-y-2">
               {#each recentSearches as recent}
-                <div class="flex items-center justify-between p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <div class="flex items-center justify-between p-2 rounded-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
                   <button
-                    class="flex-1 text-left text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                    class="flex-1 text-left text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
                     onclick={() => useRecentSearch(recent)}
                   >
                     {recent}
                   </button>
                   <button
-                    class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    class="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                     onclick={() => removeRecentSearch(recent)}
                     title="Remove from recent searches"
                   >
@@ -493,9 +493,9 @@
         {:else}
           <!-- Empty state -->
           <div class="p-8 text-center">
-            <Icon src={MagnifyingGlass} class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-            <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-2">Search your notes</h3>
-            <p class="text-slate-500 dark:text-slate-400">
+            <Icon src={MagnifyingGlass} class="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
+            <h3 class="text-lg font-medium text-zinc-900 dark:text-white mb-2">Search your notes</h3>
+            <p class="text-zinc-500 dark:text-zinc-400">
               Find notes by title, content, tags, or SEQTA references
             </p>
           </div>
@@ -504,8 +504,8 @@
 
       <!-- Search Footer -->
       {#if searchResults.length > 0}
-        <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-          <div class="text-xs text-slate-500 dark:text-slate-400 text-center">
+        <div class="px-6 py-3 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800">
+          <div class="text-xs text-zinc-500 dark:text-zinc-400 text-center">
             Found {searchResults.length} note{searchResults.length === 1 ? '' : 's'}
             {#if Object.values(filters).some(v => v !== undefined && (Array.isArray(v) ? v.length > 0 : true))}
               with filters applied

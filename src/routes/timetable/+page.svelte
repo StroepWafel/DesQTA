@@ -292,7 +292,7 @@
   });
 </script>
 
-<div class="flex flex-col w-full h-full text-slate-900 dark:text-slate-50 min-h-screen" style="background: var(--background-color);">
+<div class="flex flex-col w-full h-full text-zinc-900 dark:text-zinc-50 min-h-screen" style="background: var(--background-color);">
   <TimetableHeader
     {weekStart}
     {loadingLessons}

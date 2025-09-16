@@ -438,7 +438,7 @@
       />
     {/if}
 
-    <div class="flex flex-1 min-h-0 relative">
+    <div class="flex relative flex-1 min-h-0">
       {#if !$needsSetup && !menuLoading}
         <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
       {/if}
@@ -458,8 +458,8 @@
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} border-slate-200 dark:border-slate-700/50 transition-all duration-200"
-        style="background: var(--background-color); margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};"
+        class="overflow-y-auto flex-1 border-t rounded-tl-xl {!$needsSetup ? 'border-l' : ''} border-zinc-200 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-900/50 transition-all duration-200"
+        style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};"
       >
         {#if $needsSetup}
           <LoginScreen
@@ -474,11 +474,11 @@
 
       <!-- ThemeBuilder Sidebar -->
       {#if $themeBuilderSidebarOpen}
-        <aside class="fixed top-0 right-0 h-full w-96 z-50 bg-white dark:bg-slate-900 shadow-xl border-l border-slate-200 dark:border-slate-700 flex flex-col transition-transform duration-200">
+        <aside class="flex fixed top-0 right-0 z-50 flex-col w-96 h-full bg-white border-l shadow-xl transition-transform duration-200 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700">
           <ThemeBuilder>
             {#snippet close()}
               <button 
-                class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors ml-auto" 
+                class="p-2 ml-auto rounded-lg transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200" 
                 onclick={() => themeBuilderSidebarOpen.set(false)} 
                 aria-label="Close Theme Builder"
               >

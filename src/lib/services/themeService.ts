@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { BUNDLED_THEMES } from '../generated/themes';
 
 export interface ThemeManifest {
   name: string;
@@ -102,6 +103,13 @@ class ThemeService {
   }
 
   async loadThemeManifest(themeName: string): Promise<ThemeManifest> {
+    // 0) Try bundled themes (works in dev and prod without fetch)
+    const bundled = BUNDLED_THEMES?.[themeName];
+    if (bundled?.manifest) {
+      this.loadedThemes.set(themeName, bundled.manifest as unknown as ThemeManifest);
+      return bundled.manifest as unknown as ThemeManifest;
+    }
+
     try {
       // First try to load from backend (supports both static and custom themes)
       const manifest = await invoke<ThemeManifest>('load_theme_manifest', { themeName });
@@ -132,6 +140,27 @@ class ThemeService {
   async loadThemeCSS(themeName: string, manifest: ThemeManifest): Promise<void> {
     // Remove existing theme CSS
     this.removeActiveCSS();
+
+    // 0) Use bundled CSS if available
+    const bundled = BUNDLED_THEMES?.[themeName]?.css;
+    if (bundled) {
+      const currentMode = this.getCurrentThemeMode();
+      const toInject: Array<[string, string | null | undefined]> = [
+        ['global.css', bundled.globalCss],
+        [`${currentMode}.css`, currentMode === 'dark' ? bundled.darkCss : bundled.lightCss],
+        ['components.css', bundled.componentsCss],
+      ];
+      for (const [id, css] of toInject) {
+        if (!css) continue;
+        const style = document.createElement('style');
+        style.dataset.theme = 'true';
+        style.id = `theme-${themeName}-${id}`.replace(/\./g, '-');
+        style.textContent = css;
+        document.head.appendChild(style);
+        this.activeCSSLinks.push(style as unknown as HTMLLinkElement);
+      }
+      return;
+    }
 
     // Try backend-provided CSS for appdata/static themes
     const tryBackendCss = async (fileName: string) => {
@@ -230,13 +259,19 @@ class ThemeService {
   }
 
   async getAvailableThemes(): Promise<string[]> {
+    const bundled = Object.keys(BUNDLED_THEMES || {});
+    let backend: string[] = [];
+    let custom: string[] = [];
     try {
-      return await invoke<string[]>('get_available_themes');
+      backend = await invoke<string[]>('get_available_themes');
     } catch (error) {
       console.error('Failed to get available themes:', error);
-      // No hard-coded fallback; return empty to reflect actual state
-      return [];
     }
+    try {
+      custom = await this.getCustomThemes();
+    } catch {}
+    const all = new Set<string>([...bundled, ...backend, ...custom]);
+    return Array.from(all);
   }
 
   async getCustomThemes(): Promise<string[]> {

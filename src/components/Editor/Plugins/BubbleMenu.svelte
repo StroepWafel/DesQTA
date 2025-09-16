@@ -95,7 +95,7 @@
 
 <!-- Main Bubble Menu -->
 <M.div 
-  class="flex gap-1 items-center p-1 rounded-lg border shadow-xl backdrop-blur-lg menu dark:bg-slate-900/90 bg-white/90 dark:border-slate-700/30 border-slate-200/50"
+  class="flex gap-1 items-center p-1 rounded-lg border shadow-xl backdrop-blur-lg menu dark:bg-zinc-900/90 bg-white/90 dark:border-zinc-700/30 border-zinc-200/50"
   layout
   transition={{ duration: 0.3, ease: "easeInOut" }}
 >
@@ -111,7 +111,7 @@
       <div class="relative turn-into-dropdown">
         <M.button
           onclick={() => showTurnInto = !showTurnInto}
-          class="flex gap-1 items-center px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+          class="flex gap-1 items-center px-3 py-2 text-sm rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
           title="Turn into"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -127,7 +127,7 @@
         
         {#if showTurnInto}
           <M.div 
-            class="absolute left-0 top-full z-50 mt-1 w-48 bg-white rounded-lg border shadow-xl dark:bg-slate-800 border-slate-200/40 dark:border-slate-700/40"
+            class="absolute left-0 top-full z-50 mt-1 w-48 bg-white rounded-lg border shadow-xl dark:bg-zinc-800 border-zinc-200/40 dark:border-zinc-700/40"
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -135,11 +135,11 @@
           >
             {#each turnIntoOptions as option}
               {#if option.id === 'separator'}
-                <div class="my-1 h-px bg-slate-200/60 dark:bg-slate-600/60"></div>
+                <div class="my-1 h-px bg-zinc-200/60 dark:bg-zinc-600/60"></div>
               {:else}
                 <button 
                   onclick={() => turnInto(option.id)} 
-                  class="flex gap-2 items-center px-3 py-2 w-full text-sm text-left transition-colors hover:bg-slate-100/60 dark:hover:bg-slate-700/40"
+                  class="flex gap-2 items-center px-3 py-2 w-full text-sm text-left transition-colors hover:bg-zinc-100/60 dark:hover:bg-zinc-700/40"
                 >
                   <span class="{option.iconClass || ''}">{option.icon}</span> 
                   {option.label}
@@ -150,11 +150,11 @@
         {/if}
       </div>
       
-      <div class="mx-1 w-px h-6 bg-slate-300 dark:bg-slate-600"></div>
+      <div class="mx-1 w-px h-6 bg-zinc-300 dark:bg-zinc-600"></div>
       
       <M.button
         onclick={() => editor.chain().focus().toggleBold().run()}
-        class="p-2 rounded-md transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 {editor.isActive('bold') ? 'bg-slate-200 dark:bg-slate-700' : '' }"
+        class="p-2 rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 {editor.isActive('bold') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
         title="Bold"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -164,7 +164,7 @@
       
       <M.button
         onclick={() => editor.chain().focus().toggleItalic().run()}
-        class="p-2 rounded-md transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 {editor.isActive('italic') ? 'bg-slate-200 dark:bg-slate-700' : '' }"
+        class="p-2 rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 {editor.isActive('italic') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
         title="Italic"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -174,7 +174,7 @@
       
       <M.button
         onclick={() => editor.chain().focus().toggleStrike().run()}
-        class="p-2 rounded-md transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 {editor.isActive('strike') ? 'bg-slate-200 dark:bg-slate-700' : '' }"
+        class="p-2 rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 {editor.isActive('strike') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
         title="Strikethrough"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -184,7 +184,7 @@
       
       <M.button
         onclick={() => editor.chain().focus().toggleCode().run()}
-        class="p-2 rounded-md transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 {editor.isActive('code') ? 'bg-slate-200 dark:bg-slate-700' : '' }"
+        class="p-2 rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 {editor.isActive('code') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
         title="Code"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}

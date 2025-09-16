@@ -63,7 +63,7 @@ export function renderDraftJSText(content: DraftJSContent): string {
         case 'header-three':
           return `<h3 class="mb-2 text-lg font-bold text-white">${text}</h3>`;
         default:
-          return `<p class="mb-2 dark:text-slate-300">${text}</p>`;
+          return `<p class="mb-2 dark:text-zinc-300">${text}</p>`;
       }
     })
     .join('');
