@@ -342,13 +342,34 @@
 
   // Mobile detection and event listeners
   onMount(() => {
+    // Treat mobile either as a native mobile platform (Tauri)
+    // or when viewport is below the `sm` breakpoint (~640px)
+    const mql = window.matchMedia('(max-width: 640px)');
+
     const checkMobile = () => {
       const platform = import.meta.env.TAURI_ENV_PLATFORM;
-      isMobile = platform === 'ios' || platform === 'android';
-      if (isMobile) sidebarOpen = false;
+      const isNativeMobile = platform === 'ios' || platform === 'android';
+      const isSmallViewport = mql.matches;
+      const nextIsMobile = isNativeMobile || isSmallViewport;
+
+      // If switching from non-mobile to mobile, ensure sidebar is closed
+      if (!isMobile && nextIsMobile) {
+        sidebarOpen = false;
+      }
+      isMobile = nextIsMobile;
     };
 
     checkMobile();
+    const onMqlChange = () => checkMobile();
+    try {
+      // Modern browsers
+      mql.addEventListener('change', onMqlChange);
+    } catch {
+      // Safari fallback
+      // @ts-ignore
+      mql.addListener(onMqlChange);
+    }
+
     const events = [
       ['resize', checkMobile],
       ['click', handleClickOutside],
@@ -359,9 +380,17 @@
       document.addEventListener(event, handler as EventListener)
     );
 
-    return () => events.forEach(([event, handler]) => 
-      document.removeEventListener(event, handler as EventListener)
-    );
+    return () => {
+      events.forEach(([event, handler]) => 
+        document.removeEventListener(event, handler as EventListener)
+      );
+      try {
+        mql.removeEventListener('change', onMqlChange);
+      } catch {
+        // @ts-ignore
+        mql.removeListener(onMqlChange);
+      }
+    };
   });
 
   

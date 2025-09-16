@@ -2,6 +2,7 @@ export interface Message {
   id: number;
   folder: string;
   sender: string;
+  senderPhoto: string;
   to: string;
   subject: string;
   preview: string;

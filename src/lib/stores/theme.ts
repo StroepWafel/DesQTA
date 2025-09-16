@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 import { logger } from '../../utils/logger';
 import { themeService, type ThemeManifest } from '../services/themeService';
@@ -13,6 +13,8 @@ export const theme = writable<'light' | 'dark' | 'system'>('system');
 export const currentTheme = writable('default');
 export const themeManifest = writable<ThemeManifest | null>(null);
 export const customCSS = writable('');
+// Previewing theme name (not yet applied)
+export const previewingTheme = writable<string | null>(null);
 
 // Derived store for theme properties
 export const themeProperties = derived(
@@ -47,6 +49,10 @@ function applyTheme(themeValue: 'light' | 'dark' | 'system') {
   // Keep the data attribute for compatibility
   document.documentElement.setAttribute('data-theme', resolvedTheme);
 }
+
+// Track previous mode to restore after preview
+let _previewPreviousMode: 'light' | 'dark' | 'system' | null = null;
+let _previewPreviousAccent: string | null = null;
 
 // Function to load the accent color from settings
 export async function loadAccentColor() {
@@ -177,6 +183,93 @@ export function applyCustomCSS(css: string) {
   import('../services/cssInjectionService').then(({ cssInjectionService }) => {
     cssInjectionService.injectCustomCSS(css);
   });
+}
+
+// Begin live preview of a theme without reloading or persisting
+export async function startThemePreview(themeName: string) {
+  try {
+    // Only capture previous state if not already previewing
+    if (!get(previewingTheme)) {
+      _previewPreviousMode = get(theme);
+      _previewPreviousAccent = get(accentColor);
+    }
+    // Load manifest first so we can switch light/dark before injecting CSS
+    const manifest = await themeService.getThemeManifest(themeName);
+    if (manifest?.settings?.defaultTheme) {
+      const nextMode = manifest.settings.defaultTheme;
+      if (get(theme) !== nextMode) {
+        theme.set(nextMode);
+      }
+      // Allow the DOM to reflect the class change before loading CSS
+      await Promise.resolve();
+    }
+    // Preview accent color from theme manifest, if available
+    if (manifest?.settings?.defaultAccentColor) {
+      const nextAccent = manifest.settings.defaultAccentColor;
+      if (get(accentColor) !== nextAccent) {
+        accentColor.set(nextAccent);
+      }
+    }
+    await themeService.startPreview(themeName);
+    previewingTheme.set(themeName);
+  } catch (error) {
+    console.error('Failed to start theme preview:', error);
+  }
+}
+
+// Cancel a running preview and restore prior look
+export async function cancelThemePreview() {
+  try {
+    await themeService.cancelPreview();
+    if (_previewPreviousMode) {
+      theme.set(_previewPreviousMode);
+    }
+    if (_previewPreviousAccent) {
+      accentColor.set(_previewPreviousAccent);
+    }
+  } catch (error) {
+    console.error('Failed to cancel theme preview:', error);
+  } finally {
+    previewingTheme.set(null);
+    _previewPreviousMode = null;
+    _previewPreviousAccent = null;
+  }
+}
+
+// Commit the preview as the active theme without reloading
+export async function applyPreviewTheme() {
+  try {
+    const name = get(previewingTheme);
+    if (!name) return;
+
+    // Convert preview to active and persist preference
+    await themeService.applyPreview();
+
+    // Sync stores and persist accent/theme like loadAndApplyTheme does,
+    // but avoid re-injecting CSS (already active from preview)
+    currentTheme.set(name);
+    const manifest = await themeService.getThemeManifest(name);
+    themeManifest.set(manifest);
+
+    if (name === 'default') {
+      const defaultAccent = '#3b82f6';
+      const defaultTheme: 'light' | 'dark' | 'system' = 'dark';
+      accentColor.set(defaultAccent);
+      theme.set(defaultTheme);
+      await invoke('save_settings_merge', { patch: { current_theme: 'default', accent_color: defaultAccent, theme: defaultTheme } });
+    } else if (manifest) {
+      const nextAccent = manifest.settings.defaultAccentColor;
+      const nextTheme = manifest.settings.defaultTheme;
+      accentColor.set(nextAccent);
+      theme.set(nextTheme);
+      await invoke('save_settings_merge', { patch: { current_theme: name, accent_color: nextAccent, theme: nextTheme } });
+    }
+  } catch (error) {
+    console.error('Failed to apply preview theme:', error);
+  } finally {
+    previewingTheme.set(null);
+    _previewPreviousMode = null;
+  }
 }
 
 // Load current theme from settings

@@ -316,3 +316,7 @@ body > div {
   @apply bg-white dark:bg-zinc-950;
   background: var(--background-color);
 }
+
+button {
+  cursor: pointer;
+}

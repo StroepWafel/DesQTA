@@ -68,6 +68,45 @@ class ThemeService {
   private currentTheme: string = 'default';
   private loadedThemes: Map<string, ThemeManifest> = new Map();
   private activeCSSLinks: HTMLLinkElement[] = [];
+  // Preview management
+  private previewCSSLinks: Array<HTMLLinkElement | HTMLStyleElement> = [];
+  private disabledDuringPreview: Array<HTMLLinkElement | HTMLStyleElement> = [];
+  private previewThemeName: string | null = null;
+  private previousThemeName: string | null = null;
+  private isPreviewing = false;
+
+  // Utilities for property style management
+  private buildPropertiesCss(properties: Record<string, string>, fonts?: ThemeManifest['fonts']): string {
+    const lines: string[] = [];
+    Object.entries(properties || {}).forEach(([key, value]) => {
+      const name = key.startsWith('--') ? key : `--${key}`;
+      lines.push(`  ${name}: ${value};`);
+    });
+    if (fonts) {
+      lines.push(`  --font-primary: ${fonts.primary};`);
+      lines.push(`  --font-secondary: ${fonts.secondary};`);
+      lines.push(`  --font-monospace: ${fonts.monospace};`);
+      if (fonts.display) lines.push(`  --font-display: ${fonts.display};`);
+    }
+    return `:root{\n${lines.join('\n')}\n}`;
+  }
+
+  private setStyleTag(id: string, css: string, dataset: Record<string, string> = {}): HTMLStyleElement {
+    let style = document.getElementById(id) as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = id;
+      Object.entries(dataset).forEach(([k, v]) => ((style as HTMLStyleElement).dataset[k] = v));
+      document.head.appendChild(style);
+    }
+    style.textContent = css;
+    return style;
+  }
+
+  private removeStyleTag(id: string) {
+    const el = document.getElementById(id);
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
 
   async loadTheme(themeName: string): Promise<void> {
     // If it's the default theme, remove all custom theme CSS
@@ -84,11 +123,8 @@ class ThemeService {
       // Load CSS files
       await this.loadThemeCSS(themeName, manifest);
       
-      // Apply custom properties
-      this.applyCustomProperties(manifest.customProperties);
-      
-      // Load fonts
-      await this.loadThemeFonts(manifest.fonts);
+      // Apply custom properties + fonts via dedicated style tag
+      this.applyCustomProperties(manifest.customProperties, manifest.fonts, { preview: false });
       
       // Update current theme
       this.currentTheme = themeName;
@@ -100,6 +136,109 @@ class ThemeService {
       // Fallback to default theme
       await this.loadTheme('default');
     }
+  }
+
+  // Start a live preview of a theme without persisting settings
+  async startPreview(themeName: string): Promise<ThemeManifest> {
+    // If we are already previewing something else, cancel first
+    if (this.isPreviewing) {
+      await this.cancelPreview();
+    }
+
+    this.previousThemeName = this.currentTheme;
+    const manifest = await this.loadThemeManifest(themeName);
+
+    // Disable currently active CSS so preview can take precedence
+    this.disabledDuringPreview = [];
+    this.activeCSSLinks.forEach((el) => {
+      try {
+        // HTMLLinkElement and HTMLStyleElement both support disabled
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (el as any).disabled = true;
+        this.disabledDuringPreview.push(el);
+      } catch {}
+    });
+
+    // Inject preview CSS without removing current theme CSS
+    await this.loadPreviewCSS(themeName, manifest);
+
+    // Apply custom properties and fonts for the preview (separate style tag)
+    this.applyCustomProperties(manifest.customProperties, manifest.fonts, { preview: true });
+
+    this.previewThemeName = themeName;
+    this.isPreviewing = true;
+    return manifest;
+  }
+
+  // Commit the preview as the active theme, persisting preference
+  async applyPreview(): Promise<void> {
+    if (!this.isPreviewing || !this.previewThemeName) return;
+
+    // Remove the previously active CSS from the DOM
+    this.activeCSSLinks.forEach((el) => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    });
+    this.activeCSSLinks = [];
+
+    // Convert preview links to active
+    this.previewCSSLinks.forEach((el) => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (el as any).disabled = false;
+        (el as HTMLElement).setAttribute('data-theme', 'true');
+        (el as HTMLElement).removeAttribute('data-theme-preview');
+      } catch {}
+      this.activeCSSLinks.push(el as HTMLLinkElement);
+    });
+    this.previewCSSLinks = [];
+
+    // Replace properties style tag: promote preview to active
+    const previewProps = document.getElementById('theme-preview-properties');
+    if (previewProps) {
+      previewProps.removeAttribute('data-theme-preview');
+      previewProps.setAttribute('data-theme', 'true');
+      previewProps.id = 'theme-properties';
+    }
+
+    // Remove disabled originals (already removed), clear preview state
+    this.disabledDuringPreview = [];
+
+    // Update state and persist preference
+    this.currentTheme = this.previewThemeName;
+    await this.saveThemePreference(this.currentTheme);
+
+    this.previewThemeName = null;
+    this.previousThemeName = null;
+    this.isPreviewing = false;
+  }
+
+  // Cancel preview and return to the previously active theme
+  async cancelPreview(): Promise<void> {
+    if (!this.isPreviewing) return;
+
+    // Remove preview CSS from DOM
+    this.previewCSSLinks.forEach((el) => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    });
+    this.previewCSSLinks = [];
+
+    // Remove preview properties style tag
+    this.removeStyleTag('theme-preview-properties');
+
+    // Re-enable previously active CSS
+    this.disabledDuringPreview.forEach((el) => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (el as any).disabled = false;
+      } catch {}
+    });
+    this.disabledDuringPreview = [];
+
+    // No need to touch property styles; active tag remains in place
+
+    this.previewThemeName = null;
+    this.previousThemeName = null;
+    this.isPreviewing = false;
   }
 
   async loadThemeManifest(themeName: string): Promise<ThemeManifest> {
@@ -193,6 +332,65 @@ class ThemeService {
     }
   }
 
+  // Load CSS for preview without removing currently active CSS
+  private async loadPreviewCSS(themeName: string, manifest: ThemeManifest): Promise<void> {
+    // 0) Use bundled CSS if available
+    const bundled = BUNDLED_THEMES?.[themeName]?.css;
+    if (bundled) {
+      const currentMode = this.getCurrentThemeMode();
+      const toInject: Array<[string, string | null | undefined]> = [
+        ['global.css', bundled.globalCss],
+        [`${currentMode}.css`, currentMode === 'dark' ? bundled.darkCss : bundled.lightCss],
+        ['components.css', bundled.componentsCss],
+      ];
+      for (const [id, css] of toInject) {
+        if (!css) continue;
+        const style = document.createElement('style');
+        style.dataset.themePreview = 'true';
+        style.id = `theme-preview-${themeName}-${id}`.replace(/\./g, '-');
+        style.textContent = css;
+        document.head.appendChild(style);
+        this.previewCSSLinks.push(style);
+      }
+      return;
+    }
+
+    // Try backend-provided CSS for appdata/static themes
+    const tryBackendCss = async (fileName: string) => {
+      try {
+        const css = await invoke<string>('read_theme_css', { themeName, fileName });
+        if (css && css.trim().length > 0) {
+          const id = `${themeName}-${fileName}`.replace(/\./g, '-');
+          const style = document.createElement('style');
+          style.dataset.themePreview = 'true';
+          style.id = `theme-preview-${id}`;
+          style.textContent = css;
+          document.head.appendChild(style);
+          this.previewCSSLinks.push(style);
+          return true;
+        }
+      } catch {}
+      return false;
+    };
+
+    const currentMode = this.getCurrentThemeMode();
+    const fileNames = ['global.css', `${currentMode}.css`, 'components.css'];
+    for (const fileName of fileNames) {
+      const ok = await tryBackendCss(fileName);
+      if (!ok) {
+        // Fallback to static link href if backend read fails
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = `/themes/${themeName}/styles/${fileName}`;
+        link.dataset.themePreview = 'true';
+        link.onload = () => {};
+        link.onerror = () => {};
+        document.head.appendChild(link);
+        this.previewCSSLinks.push(link);
+      }
+    }
+  }
+
   private async loadCSSFile(path: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const link = document.createElement('link');
@@ -221,23 +419,19 @@ class ThemeService {
       }
     });
     this.activeCSSLinks = [];
+    // Also remove the active properties style when fully unloading
+    this.removeStyleTag('theme-properties');
   }
 
-  private applyCustomProperties(properties: Record<string, string>): void {
-    const root = document.documentElement;
-    
-    Object.entries(properties).forEach(([key, value]) => {
-      const cssVarName = key.startsWith('--') ? key : `--${key}`;
-      root.style.setProperty(cssVarName, value);
-    });
+  private applyCustomProperties(properties: Record<string, string>, fonts?: ThemeManifest['fonts'], opts?: { preview?: boolean }): void {
+    const css = this.buildPropertiesCss(properties, fonts);
+    const id = opts?.preview ? 'theme-preview-properties' : 'theme-properties';
+    const dataset = opts?.preview ? { themePreview: 'true' } : { theme: 'true' };
+    this.setStyleTag(id, css, dataset);
   }
 
-  private async loadThemeFonts(fonts: ThemeManifest['fonts']): Promise<void> {
-    // For now, just apply font family CSS variables
-    const root = document.documentElement;
-    root.style.setProperty('--font-primary', fonts.primary);
-    root.style.setProperty('--font-secondary', fonts.secondary);
-    root.style.setProperty('--font-monospace', fonts.monospace);
+  private async loadThemeFonts(_fonts: ThemeManifest['fonts']): Promise<void> {
+    // Fonts are applied via CSS variables in the properties style tag now.
   }
 
   private getCurrentThemeMode(): string {
@@ -303,28 +497,21 @@ class ThemeService {
   async resetToDefault(): Promise<void> {
     this.removeActiveCSS();
     this.currentTheme = 'default';
-    
-    // Clear any custom properties
-    const root = document.documentElement;
-    const customProperties = [
-      'primaryColor', 'secondaryColor', 'successColor', 'warningColor', 'errorColor',
-      'backgroundColor', 'surfaceColor', 'textColor', 'borderColor', 'shadowColor',
-      'font-primary', 'font-secondary', 'font-monospace'
-    ];
-    
-    customProperties.forEach(prop => {
-      root.style.removeProperty(`--${prop}`);
-    });
+    // Remove property style tags
+    this.removeStyleTag('theme-properties');
+    this.removeStyleTag('theme-preview-properties');
     
     await this.saveThemePreference('default');
   }
 
   public setCustomProperties(properties: Record<string, string>): void {
-    this.applyCustomProperties(properties);
+    this.applyCustomProperties(properties, undefined, { preview: false });
   }
 
   public setThemeFonts(fonts: ThemeManifest['fonts']): void {
-    this.loadThemeFonts(fonts);
+    // Merge fonts into the active properties style for consistency
+    const css = this.buildPropertiesCss({}, fonts);
+    this.setStyleTag('theme-properties', css, { theme: 'true' });
   }
 
   // Custom theme management methods

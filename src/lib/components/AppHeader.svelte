@@ -388,10 +388,10 @@
   data-tauri-drag-region>
   <div class="flex items-center space-x-4">
     <button
-      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 bg-zinc-100 hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
+      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
       onclick={onToggleSidebar}
       aria-label="Toggle sidebar">
-      <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 hover:text-white" />
+      <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
     </button>
     <div class="flex items-center space-x-3">
       <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0" />

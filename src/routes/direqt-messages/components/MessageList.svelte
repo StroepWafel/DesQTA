@@ -31,12 +31,18 @@
 
   <div class="overflow-y-scroll flex-1 p-1">
     {#if loading}
-      <div
-        class="flex flex-col justify-center items-center p-8 h-32 text-center text-zinc-600 dark:text-zinc-300">
-        <div
-          class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-accent-500/30 border-t-accent-500">
-        </div>
-        <p class="mt-4 text-sm sm:text-base">Loading messages...</p>
+      <div class="p-2 space-y-2">
+        {#each Array(6) as _, i}
+          <div class="flex gap-3 p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900/40 animate-pulse">
+            <div class="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex-shrink-0"></div>
+            <div class="flex-1 min-w-0 space-y-2">
+              <div class="h-5 w-2/3 rounded bg-zinc-200 dark:bg-zinc-800"></div>
+              <div class="h-4 w-5/6 rounded bg-zinc-200 dark:bg-zinc-800"></div>
+              <div class="h-3.5 w-3/5 rounded bg-zinc-200 dark:bg-zinc-800"></div>
+            </div>
+            <div class="w-12 h-4 self-start rounded bg-zinc-200 dark:bg-zinc-800"></div>
+          </div>
+        {/each}
       </div>
     {:else if error}
       <div class="flex justify-center items-center p-8 h-32 text-center text-red-400">

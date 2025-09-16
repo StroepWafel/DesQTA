@@ -1,13 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { themeService, type ThemeManifest } from '$lib/services/themeService';
-  import { loadAndApplyTheme, currentTheme } from '$lib/stores/theme';
+  import { loadAndApplyTheme, currentTheme, startThemePreview, cancelThemePreview, applyPreviewTheme, previewingTheme } from '$lib/stores/theme';
   import { get } from 'svelte/store';
   import { themeBuilderSidebarOpen } from '$lib/stores/themeBuilderSidebar';
   import { Icon, Swatch, ShoppingCart, PaintBrush, Eye, CheckCircle } from 'svelte-hero-icons';
 
   let availableThemes: ThemeManifest[] = [];
-  let selectedTheme: ThemeManifest | null = null;
   let loading = true;
   let error: string | null = null;
   let currentThemeName = 'default';
@@ -34,6 +33,10 @@
     }
   ];
 
+  onDestroy(() => {
+    cancelThemePreview();
+  });
+
   // Load all themes dynamically from both static and custom directories
   async function loadThemes() {
     loading = true;
@@ -56,7 +59,7 @@
       availableThemes = themes.filter((t): t is ThemeManifest => t !== null);
       themeCategories = generateCategories(availableThemes);
       
-      console.log(`Loaded ${availableThemes.length} themes:`, availableThemes.map(t => t.name));
+      // Loaded themes ready
     } catch (e) {
       console.error('Failed to load themes:', e);
       error = 'Failed to load themes. Please try again.';
@@ -92,17 +95,6 @@
 
   async function handleApplyTheme(themeName: string) {
     await loadAndApplyTheme(themeName);
-    selectedTheme = null;
-    // Reload to ensure all assets and classes apply consistently
-    location.reload();
-  }
-
-  function openThemeModal(theme: ThemeManifest) {
-    selectedTheme = theme;
-  }
-
-  function closeThemeModal() {
-    selectedTheme = null;
   }
 
   function getThemePreviewStyle(theme: ThemeManifest) {
@@ -146,8 +138,7 @@
       await themeService.deleteCustomTheme(themeName);
       // Reload themes to reflect the deletion
       await loadThemes();
-      // Refresh the page to ensure stale styles/manifests are gone
-      location.reload();
+      // No full-page reload; simply update the list
       
       // If the deleted theme was the current theme, switch to default
       if (currentThemeName === themeName) {
@@ -364,7 +355,7 @@
                 <div class="flex gap-2">
                   <button
                     class="flex-1 px-4 py-2 accent-bg hover:accent-bg-hover text-white font-medium rounded-xl transition-colors"
-                    onclick={() => openThemeModal(theme)}
+                    onclick={() => startThemePreview(getThemeId(theme))}
                   >
                     <Icon src={Eye} class="w-4 h-4 inline mr-2" />
                     Preview
@@ -413,74 +404,14 @@
       </div>
     {/if}
 
-    {#if selectedTheme}
-      <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-        <div
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden animate-fade-in-up relative flex flex-col"
-          style="{getThemePreviewStyle(selectedTheme)}"
-        >
-          <button
-            class="absolute top-4 right-4 text-xl text-white bg-black/30 rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/60 transition"
-            onclick={closeThemeModal}
-          >
-            ×
-          </button>
-          <div class="flex flex-col h-full">
-            <!-- Simulated App Layout Preview -->
-            <div class="flex h-64">
-              <!-- Sidebar -->
-              <div class="w-56 p-3 flex flex-col gap-2 bg-white/85 dark:bg-zinc-900/70" style="border-right: 1px solid {selectedTheme.customProperties.borderColor || '#334155'}">
-                <div class="h-8 rounded-lg" style="background: {selectedTheme.customProperties.accentColor || selectedTheme.customProperties.primaryColor || '#3b82f6'}"></div>
-                <div class="h-6 rounded-sm bg-zinc-200/80 dark:bg-zinc-800/80"></div>
-                <div class="h-6 rounded-sm bg-zinc-200/80 dark:bg-zinc-800/80"></div>
-                <div class="h-6 rounded-sm bg-zinc-200/80 dark:bg-zinc-800/80"></div>
-                <div class="mt-auto h-6 rounded-sm bg-zinc-200/60 dark:bg-zinc-800/60"></div>
-              </div>
-              <!-- Main -->
-              <div class="flex-1 flex flex-col" style="background: {selectedTheme.customProperties.backgroundColor}">
-                <!-- Topbar -->
-                <div class="h-10 flex items-center px-4 text-white" style="background: {selectedTheme.customProperties.accentColor || selectedTheme.customProperties.primaryColor || '#3b82f6'}">
-                  <span class="font-semibold">DesQTA</span>
-                  <div class="ml-auto flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-full bg-white/70"></div>
-                    <div class="w-16 h-4 rounded-sm bg-white/50"></div>
-                  </div>
-                </div>
-                <!-- Content -->
-                <div class="flex-1 p-4" style="color: {selectedTheme.customProperties.textColor || '#0f172a'}">
-                  <div class="h-6 w-1/3 rounded-sm mb-3" style="background: rgba(148,163,184,0.35)"></div>
-                  <div class="grid grid-cols-3 gap-3 mb-3">
-                    <div class="h-20 rounded-sm" style="background: rgba(148,163,184,0.25)"></div>
-                    <div class="h-20 rounded-sm" style="background: rgba(148,163,184,0.25)"></div>
-                    <div class="h-20 rounded-sm" style="background: rgba(148,163,184,0.25)"></div>
-                  </div>
-                  <div class="h-32 rounded-sm" style="background: rgba(148,163,184,0.2)"></div>
-                </div>
-              </div>
-            </div>
-            <div class="flex-1 overflow-y-auto px-6 pt-6 pb-2">
-              <div class="font-semibold text-lg mb-2 text-zinc-800 dark:text-white">{selectedTheme.name} Theme</div>
-              <div class="text-sm text-zinc-700 dark:text-zinc-200 mb-2 text-center">{selectedTheme.description}</div>
-              <div class="text-xs text-zinc-500 dark:text-zinc-400 text-center">by {selectedTheme.author} • v{selectedTheme.version}</div>
-            </div>
-            <!-- Sticky action buttons -->
-            <div class="flex gap-4 justify-center items-center p-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 z-10">
-              <button
-                class="px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent accent-bg hover:accent-bg-hover active:scale-95"
-                onclick={() => selectedTheme && handleApplyTheme(getThemeId(selectedTheme))}
-              >
-                Apply Theme
-              </button>
-              {#if currentThemeName !== 'default'}
-                <button
-                  class="px-4 py-2 rounded-lg font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-700 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-zinc-400 hover:bg-zinc-300 dark:hover:bg-zinc-600 active:scale-95"
-                  onclick={() => handleApplyTheme('default')}
-                >
-                  Reset to Default
-                </button>
-              {/if}
-            </div>
-          </div>
+    <!-- Live preview action bar -->
+    {#if $previewingTheme}
+      <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+        <div class="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md">
+          <span class="text-sm text-zinc-700 dark:text-zinc-300">Previewing <span class="font-semibold">{$previewingTheme}</span></span>
+          <div class="h-5 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+          <button class="px-3 py-1.5 rounded-lg accent-bg hover:accent-bg-hover text-white text-sm font-medium" onclick={applyPreviewTheme}>Apply</button>
+          <button class="px-3 py-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 text-sm font-medium" onclick={cancelThemePreview}>Cancel</button>
         </div>
       </div>
     {/if}
@@ -492,7 +423,5 @@
     0% { opacity: 0; transform: translateY(32px); }
     100% { opacity: 1; transform: translateY(0); }
   }
-  .animate-fade-in-up {
-    animation: fade-in-up 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-</style> 
+  .animate-fade-in-up { animation: fade-in-up 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+</style>
