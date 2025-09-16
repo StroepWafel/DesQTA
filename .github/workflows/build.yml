@@ -28,7 +28,7 @@ jobs:
         run: npm install -g @tauri-apps/cli
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build desktop app
         run: npm run tauri build
@@ -96,7 +96,7 @@ jobs:
         run: npm install -g @tauri-apps/cli
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Accept Android licenses
         run: |
