@@ -116,6 +116,28 @@
       logger.info('layout', 'reload_listener', 'Received reload event');
       location.reload();
     });
+
+    // Listen for fullscreen changes from Tauri backend
+    await listen<boolean>('fullscreen-changed', (event) => {
+      const isFullscreen = event.payload;
+      logger.debug('layout', 'fullscreen_listener', `Fullscreen changed: ${isFullscreen}`);
+      
+      if (isFullscreen) {
+        // Remove rounded corners when entering fullscreen
+        document.body.classList.remove('rounded-xl');
+        const contentDiv = document.querySelector('.overflow-clip.rounded-xl');
+        if (contentDiv) {
+          contentDiv.classList.remove('rounded-xl');
+        }
+      } else {
+        // Add rounded corners when exiting fullscreen
+        document.body.classList.add('rounded-xl');
+        const contentDiv = document.querySelector('.overflow-clip');
+        if (contentDiv) {
+          contentDiv.classList.add('rounded-xl');
+        }
+      }
+    });
   };
 
   onDestroy(() => {
@@ -330,6 +352,14 @@
     
     // Run a one-time heartbeat health check on app open
     await healthCheck();
+    
+    // Check and apply initial fullscreen styling
+    try {
+      await invoke('handle_fullscreen_change');
+    } catch (e) {
+      logger.debug('layout', 'onMount', 'Failed to check initial fullscreen state', { error: e });
+    }
+    
     isLoading = false;
   });
 
