@@ -1,6 +1,8 @@
 <script lang="ts">
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
+  import { Window } from "@tauri-apps/api/window";
+  const appWindow = Window.getCurrent();
   import AboutModal from '../lib/components/AboutModal.svelte';
   import AppHeader from '../lib/components/AppHeader.svelte';
   import AppSidebar from '../lib/components/AppSidebar.svelte';
@@ -69,7 +71,19 @@
   let menuLoading = $state(true);
   let devMockEnabled = false;
 
-
+onMount(() => {
+  async function updateCorners() {
+    const isMaximized = await appWindow.isMaximized();
+    if (isMaximized) {
+      document.body.classList.remove("rounded-xl");
+    } else {
+      document.body.classList.add("rounded-xl");
+    }
+  }
+  updateCorners();
+  appWindow.onResized(updateCorners);
+  appWindow.onMoved(updateCorners);
+});
 
   const handleClickOutside = (event: MouseEvent) => {
     const target = event.target as Element;

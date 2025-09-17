@@ -309,7 +309,7 @@ export default config;
       "icons/128x128@2x.png",
       "icons/icon.png"
     ],
-    "publisher": "BetterSEQTA+ Studios"
+    "publisher": "BetterSEQTA+"
   },
   
   "plugins": {
