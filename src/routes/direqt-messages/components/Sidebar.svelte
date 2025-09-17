@@ -53,7 +53,7 @@
         <button
           class="w-full flex items-center border gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
             {selectedFolder === folder.name
-              ? 'bg-accent/10 border-accent text-white pl-5 shadow-md'
+              ? 'bg-accent/10 border-accent dark:text-white pl-5 shadow-md'
               : 'border-transparent text-zinc-700 dark:text-white hover:bg-accent-100/10 dark:hover:bg-accent/10 hover:scale-[1.02]'}
             focus:outline-hidden focus:ring-2 accent-ring"
           onclick={() => openFolder(folder)}>
