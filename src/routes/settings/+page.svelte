@@ -28,6 +28,8 @@
   import { logger } from '../../utils/logger';
   import { goto } from '$app/navigation';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
+  import availableLanguages from '../../languages/availablelanguages.json';
+  import { currentLanguage, setLanguage } from '../../lib/services/i18n';
   import { CacheManager } from '../../utils/cacheManager';
 
   interface Shortcut {
@@ -73,6 +75,7 @@
   let cloudBaseUrlSaving = false;
   let cloudBaseUrlError: string | null = null;
   let cloudBaseUrlChanged = false;
+  let languageCode: string = 'eng';
 
   // Inline EULA text (can be updated here)
   const CLOUD_EULA_TEXT = `
@@ -169,7 +172,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     loading = true;
     try {
       const settings = await invoke<any>('get_settings_subset', { keys: [
-        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula'
+        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula','current_language'
       ]});
       shortcuts = settings.shortcuts || [];
       feeds = settings.feeds || [];
@@ -191,6 +194,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       globalSearchEnabled = settings.global_search_enabled ?? true;
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
+      languageCode = (settings.current_language ?? 'eng');
 
       console.log('Loading settings', {
         shortcuts,
@@ -796,6 +800,35 @@ The Company reserves the right to terminate your access to the Service at any ti
           </p>
         </div>
         <div class="p-4 space-y-6 sm:p-6">
+          <!-- Language Selection -->
+          <div>
+            <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Language</h3>
+            <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+              Select your preferred language for the app interface.
+            </p>
+            <div class="flex flex-col gap-2">
+              <label for="language-select" class="text-sm text-zinc-800 dark:text-zinc-200">Current Language</label>
+              <select
+                id="language-select"
+                class="px-3 py-2 w-full bg-white rounded-sm border transition text-zinc-900 sm:w-64 dark:bg-zinc-900/50 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                bind:value={languageCode}
+                onchange={async (e) => {
+                  const code = (e.target as HTMLSelectElement).value;
+                  languageCode = code;
+                  try {
+                    await setLanguage(code);
+                    notify({ title: 'Language', body: 'Language updated' });
+                  } catch (err) {
+                    console.error('Failed to set language', err);
+                  }
+                }}>
+                {#each availableLanguages as it}
+                  <option value={it.code}>{it.nativeName} ({it.name})</option>
+                {/each}
+              </select>
+            </div>
+          </div>
+
           <!-- Theme Settings -->
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Theme</h3>

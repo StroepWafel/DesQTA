@@ -8,6 +8,7 @@
   import { logger } from '../../utils/logger';
   import { getRSS } from '../../utils/netUtil';
   import { invoke } from '@tauri-apps/api/core';
+  import { initI18n, t } from '$lib/services/i18n';
 
   dayjs.extend(relativeTime);
 
@@ -126,7 +127,10 @@
     window.open(url, '_blank');
   }
 
-  onMount(fetchNews);
+  onMount(async () => {
+    await initI18n();
+    await fetchNews();
+  });
 
   let scroller: HTMLDivElement | null = $state(null);
   const scrollAmount = 360; // px per click for wider tiles
@@ -142,7 +146,7 @@
 
 <div class="flex flex-col gap-3 text-zinc-900 dark:text-white">
   <div class="flex items-center justify-between">
-    <h3 class="text-base sm:text-lg font-semibold">Recent News</h3>
+    <h3 class="text-base sm:text-lg font-semibold">{$t.recentnews.title}</h3>
     <button
       class="px-3 py-1.5 rounded-lg bg-zinc-800/80 text-white hover:bg-zinc-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
       onclick={fetchNews}

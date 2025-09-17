@@ -19,6 +19,7 @@
   import { writable } from 'svelte/store';
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
+  import { initI18n, t } from '$lib/services/i18n';
   export const needsSetup = writable(false);
 
   let { children } = $props();
@@ -69,7 +70,7 @@
   let menuLoading = $state(true);
   let devMockEnabled = false;
 
-
+  initI18n();
 
   const handleClickOutside = (event: MouseEvent) => {
     const target = event.target as Element;
