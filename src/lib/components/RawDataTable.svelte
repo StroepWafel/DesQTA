@@ -121,7 +121,7 @@
 </script>
 
 <div class="w-full">
-  <div class="rounded-md border border-zinc-200 dark:border-zinc-800 overflow-clip">
+  <div class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-clip">
     <Table.Root>
       <Table.Header>
         <Table.Row>
@@ -189,7 +189,7 @@
                 {formatStatus(assessment.status)}
               </Badge>
             </Table.Cell>
-            <Table.Cell class="text-right">
+            <Table.Cell class="text-right pr-4">
               {#if assessment.finalGrade !== undefined}
                 <div>
                   <div class="font-medium text-zinc-900 dark:text-zinc-100">{assessment.finalGrade}%</div>

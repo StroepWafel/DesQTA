@@ -266,10 +266,10 @@
               </button>
 
               <button
-                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-indigo-400/20 focus:bg-indigo-400/30 focus:ring-2 focus:ring-indigo-400/30 focus:outline-hidden"
+                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-accent-400/20 focus:bg-accent-400/30 focus:ring-2 focus:ring-accent-400/30 focus:outline-hidden"
                 title="Reply"
                 onclick={openCompose}>
-                <Icon src={PencilSquare} class="w-5 h-5 text-indigo-400" />
+                <Icon src={PencilSquare} class="w-5 h-5 text-accent-400" />
               </button>
             </div>
           </div>
@@ -312,7 +312,7 @@
     <div
       class="flex flex-col justify-center items-center h-full text-center text-zinc-600 dark:text-zinc-400">
       <div
-        class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
+        class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-gradient-to-br from-accent-500 to-accent-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="w-8 h-8 sm:w-10 sm:h-10"
