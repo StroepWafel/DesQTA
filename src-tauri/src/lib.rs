@@ -208,6 +208,7 @@ pub fn run() {
             login::logout,
             login::force_reload,
             login::cleanup_login_windows,
+            login::clear_webview_data,
             settings::get_settings,
             settings::save_settings,
             settings::get_settings_json,
