@@ -1,0 +1,20 @@
+{
+  "menu": {
+    "dashboard": "Приборная панель",
+    "courses": "Курсы",
+    "assessments": "Оценки",
+    "timetable": "Расписание",
+    "study": "Изучать",
+    "messages": "Сообщения",
+    "portals": "Порталы",
+    "notices": "Уведомления",
+    "news": "Новости",
+    "directory": "Каталог",
+    "reports": "Отчеты",
+    "analytics": "Аналитика",
+    "settings": "Настройки"
+  },
+  "recentnews": {
+    "title": "Недавние новости"
+  }
+}

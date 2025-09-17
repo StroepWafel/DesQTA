@@ -1,7 +1,20 @@
 {
+  "menu": {
+    "dashboard": "仪表板",
+    "courses": "课程",
+    "assessments": "评估",
+    "timetable": "时间表",
+    "study": "学习",
+    "messages": "消息",
+    "portals": "门户",
+    "notices": "注意",
+    "news": "消息",
+    "directory": "目录",
+    "reports": "报告",
+    "analytics": "分析",
+    "settings": "设置"
+  },
   "recentnews": {
-    "title": "最新消息"
+    "title": "最近的新闻"
   }
 }
-
-

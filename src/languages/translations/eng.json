@@ -1,4 +1,19 @@
 {
+  "menu": {
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "assessments": "Assessments",
+    "timetable": "Timetable",
+    "study": "Study",
+    "messages": "Messages",
+    "portals": "Portals",
+    "notices": "Notices",
+    "news": "News",
+    "directory": "Directory",
+    "reports": "Reports",
+    "analytics": "Analytics",
+    "settings": "Settings"
+  },
   "recentnews": {
     "title": "Recent News"
   }
