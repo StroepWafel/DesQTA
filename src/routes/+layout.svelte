@@ -51,22 +51,22 @@
   let autoCollapseSidebar = $state(false);
   let autoExpandSidebarHover = $state(false);
   // Menu configuration
-  const DEFAULT_MENU = [
-    { label: 'Dashboard', icon: Home, path: '/' },
-    { label: 'Courses', icon: BookOpen, path: '/courses' },
-    { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
-    { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
-    { label: 'Study', icon: PencilSquare, path: '/study' },
-    { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
-    { label: 'Portals', icon: GlobeAlt, path: '/portals' },
-    { label: 'Notices', icon: DocumentText, path: '/notices' },
-    { label: 'News', icon: Newspaper, path: '/news' },
-    { label: 'Directory', icon: User, path: '/directory' },
-    { label: 'Reports', icon: ChartBar, path: '/reports' },
-    { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
-    { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
-  ];
-  let menu = $state([...DEFAULT_MENU]);
+  const buildMenu = () => ([
+    { label: $t.menu.dashboard, icon: Home, path: '/' },
+    { label: $t.menu.courses, icon: BookOpen, path: '/courses' },
+    { label: $t.menu.assessments, icon: ClipboardDocumentList, path: '/assessments' },
+    { label: $t.menu.timetable, icon: CalendarDays, path: '/timetable' },
+    { label: $t.menu.study, icon: PencilSquare, path: '/study' },
+    { label: $t.menu.messages, icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { label: $t.menu.portals, icon: GlobeAlt, path: '/portals' },
+    { label: $t.menu.notices, icon: DocumentText, path: '/notices' },
+    { label: $t.menu.news, icon: Newspaper, path: '/news' },
+    { label: $t.menu.directory, icon: User, path: '/directory' },
+    { label: $t.menu.reports, icon: ChartBar, path: '/reports' },
+    { label: $t.menu.analytics, icon: AcademicCap, path: '/analytics' },
+    { label: $t.menu.settings, icon: Cog6Tooth, path: '/settings' },
+  ]);
+  let menu = $state(buildMenu());
   let menuLoading = $state(true);
   let devMockEnabled = false;
 
@@ -467,7 +467,7 @@
         }
       }
       
-      menu = [...DEFAULT_MENU]; // Use default menu configuration
+      menu = buildMenu();
     } catch (e) {
       logger.error('layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', { error: e });
     } finally {
