@@ -6,13 +6,13 @@
 
   interface Props {
     data: Assessment[];
-    filterSubject: string;
+    filterSubjects: string[];
     filterStatus: string;
     filterMinGrade: number | null;
     filterMaxGrade: number | null;
     filterSearch: string;
     onFilter: (filters: {
-      subject: string;
+      subject: string[];
       status: string;
       minGrade: number | null;
       maxGrade: number | null;
@@ -22,7 +22,7 @@
 
   let {
     data,
-    filterSubject = $bindable(),
+    filterSubjects = $bindable([] as string[]),
     filterStatus = $bindable(),
     filterMinGrade = $bindable(),
     filterMaxGrade = $bindable(),
@@ -38,13 +38,13 @@
   const uniqueStatuses = $derived([...new Set(data.map(a => a.status))]);
 
   function clearFilters() {
-    filterSubject = '';
+    filterSubjects = [];
     filterStatus = '';
     filterMinGrade = null;
     filterMaxGrade = null;
     filterSearch = '';
     onFilter({
-      subject: '',
+      subject: [],
       status: '',
       minGrade: null,
       maxGrade: null,
@@ -54,7 +54,7 @@
 
   function applyFilters() {
     onFilter({
-      subject: filterSubject,
+      subject: filterSubjects,
       status: filterStatus,
       minGrade: filterMinGrade,
       maxGrade: filterMaxGrade,
@@ -73,12 +73,17 @@
     <!-- Subject Filter -->
     <div>
       <label for="subject-filter" class="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">Subject</label>
-      <Select.Root type="single" bind:value={filterSubject} onValueChange={applyFilters}>
+      <Select.Root type="multiple" bind:value={filterSubjects} onValueChange={applyFilters}>
         <Select.Trigger id="subject-filter" class="w-full">
-          {filterSubject || "All Subjects"}
+          {#if filterSubjects.length === 0}
+            All Subjects
+          {:else if filterSubjects.length === 1}
+            {filterSubjects[0]}
+          {:else}
+            {filterSubjects.length} selected
+          {/if}
         </Select.Trigger>
         <Select.Content>
-          <Select.Item value="" label="All Subjects" />
           {#each uniqueSubjects as subject}
             <Select.Item value={subject} label={subject} />
           {/each}

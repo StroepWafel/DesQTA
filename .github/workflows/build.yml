@@ -30,13 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm i
 
-      - name: Build desktop app (MacOS)
-        if: matrix.os == 'macos-latest'
-        run: rustup target add x86_64-apple-darwin && npm run tauri build -- --target universal-apple-darwin
-        
-      - name: Build desktop app (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Build desktop app
         run: npm run tauri build
+
       - name: Upload desktop build artifacts
         uses: actions/upload-artifact@v4
         with:

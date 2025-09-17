@@ -9,6 +9,7 @@
   import AssessmentBoardView from '../../lib/components/AssessmentBoardView.svelte';
   import AssessmentCalendarView from '../../lib/components/AssessmentCalendarView.svelte';
   import AssessmentListView from '../../lib/components/AssessmentListView.svelte';
+  import AssessmentGanttView from '../../lib/components/AssessmentGanttView.svelte';
   import LoadingSpinner from '../../lib/components/LoadingSpinner.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
 
@@ -19,7 +20,7 @@
   let activeSubjects = $state<any[]>([]);
   let lessonColours = $state<any[]>([]);
   let loadingAssessments = $state<boolean>(true);
-  let selectedTab = $state<'list' | 'board' | 'calendar'>('list');
+  let selectedTab = $state<'list' | 'board' | 'calendar' | 'gantt'>('list');
   let subjectFilters: Record<string, boolean> = {};
   let remindersEnabled = true;
   let groupBy = $state<'subject' | 'month' | 'status'>('subject');
@@ -276,7 +277,7 @@
     }
   }
 
-  function handleTabChange(tab: 'list' | 'board' | 'calendar') {
+  function handleTabChange(tab: 'list' | 'board' | 'calendar' | 'gantt') {
     selectedTab = tab;
   }
 
@@ -353,11 +354,11 @@
               bind:value={selectedTab}
               onchange={(e) => {
                 const target = e.target as HTMLSelectElement;
-                handleTabChange(target.value as 'list' | 'board' | 'calendar');
+                handleTabChange(target.value as 'list' | 'board' | 'calendar' | 'gantt');
               }}
               onwheel={(e) => {
                 e.preventDefault();
-                const options = ['list', 'board', 'calendar'] as const;
+                const options = ['list', 'board', 'calendar', 'gantt'] as const;
                 const currentIndex = options.indexOf(selectedTab);
                 if (e.deltaY > 0 && currentIndex < options.length - 1) {
                   handleTabChange(options[currentIndex + 1]);
@@ -369,6 +370,7 @@
               <option value="list">List View</option>
               <option value="board">Board View</option>
               <option value="calendar">Calendar View</option>
+              <option value="gantt">Gantt View</option>
             </select>
             <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -448,6 +450,12 @@
       {:else if selectedTab === 'calendar'}
         <AssessmentCalendarView 
           assessments={filteredAssessments}
+        />
+      {:else if selectedTab === 'gantt'}
+        <AssessmentGanttView 
+          assessments={filteredAssessments}
+          subjects={allSubjects}
+          {activeSubjects}
         />
       {:else}
         <AssessmentListView 

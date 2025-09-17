@@ -23,6 +23,8 @@ mod news;
 mod todolist;
 #[path = "utils/notes.rs"]
 mod notes;
+#[path = "utils/profile_picture.rs"]
+mod profile_picture;
 mod global_search;
 
 use std::cell::Cell;
@@ -208,6 +210,7 @@ pub fn run() {
             login::logout,
             login::force_reload,
             login::cleanup_login_windows,
+            login::clear_webview_data,
             settings::get_settings,
             settings::save_settings,
             settings::get_settings_json,
@@ -301,7 +304,12 @@ pub fn run() {
             notes::get_image_path,
             notes::get_image_as_base64,
             notes::delete_note_images,
-            notes::cleanup_unused_images
+            notes::cleanup_unused_images,
+            profile_picture::save_profile_picture,
+            profile_picture::get_profile_picture_path_cmd,
+            profile_picture::delete_profile_picture,
+            profile_picture::has_custom_profile_picture,
+            profile_picture::get_profile_picture_data_url
         ])
         .setup(|app| {
             // Initialize logger first

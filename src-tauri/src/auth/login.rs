@@ -56,12 +56,74 @@ pub fn save_session(base_url: String, jsessionid: String) -> Result<(), String> 
 }
 
 #[tauri::command]
-pub async fn logout() -> bool {
+pub async fn logout(app: tauri::AppHandle) -> bool {
+    // Clear webview data first (cache, cookies, etc.)
+    if let Err(e) = clear_webview_data(app).await {
+        println!("[AUTH] Warning: Failed to clear webview data during logout: {}", e);
+        // Continue with logout even if cache clearing fails
+    }
+    
+    // Clear analytics data
+    if let Err(e) = crate::analytics::delete_analytics() {
+        println!("[AUTH] Warning: Failed to clear analytics data during logout: {}", e);
+        // Continue with logout even if analytics clearing fails
+    } else {
+        println!("[AUTH] Successfully cleared analytics data during logout");
+    }
+    
     if let Ok(_) = netgrab::clear_session().await {
         true
     } else {
         false
     }
+}
+
+/// Clear webview cache, cookies, and other browsing data
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+#[tauri::command]
+pub async fn clear_webview_data(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri::{WebviewUrl, WebviewWindowBuilder};
+    
+    // Create a temporary webview window to clear its data
+    // This ensures we can clear data even if no login window is currently open
+    let temp_window_id = "temp_clear_data_window";
+    
+    // Try to create a temporary hidden webview to clear data from
+    match WebviewWindowBuilder::new(&app, temp_window_id, WebviewUrl::App("about:blank".into()))
+        .title("Clearing Data")
+        .inner_size(1.0, 1.0)  // Minimal size
+        .visible(false)  // Keep it hidden
+        .build()
+    {
+        Ok(webview) => {
+            // Clear all browsing data including cache, cookies, etc.
+            match webview.clear_all_browsing_data() {
+                Ok(_) => {
+                    println!("[AUTH] Successfully cleared webview browsing data");
+                    // Clean up the temporary window
+                    let _ = webview.destroy();
+                    Ok(())
+                },
+                Err(e) => {
+                    println!("[AUTH] Failed to clear webview browsing data: {}", e);
+                    let _ = webview.destroy();
+                    Err(format!("Failed to clear browsing data: {}", e))
+                }
+            }
+        },
+        Err(e) => {
+            println!("[AUTH] Failed to create temporary webview for clearing data: {}", e);
+            Err(format!("Failed to create temporary webview: {}", e))
+        }
+    }
+}
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+#[tauri::command]
+pub async fn clear_webview_data(_app: tauri::AppHandle) -> Result<(), String> {
+    // Mobile platforms would need platform-specific implementations
+    println!("[AUTH] Webview data clearing not implemented for mobile platforms");
+    Ok(())
 }
 
 /// Clean up any existing login windows

@@ -52,7 +52,8 @@
     "motion": "^12.19.1",
     "pdfjs-dist": "^5.3.31",
     "rss-parser": "^3.12.0",
-    "svelte-motion": "^0.12.2"
+    "svelte-motion": "^0.12.2",
+    "wx-svelte-gantt": "^2.2.1"
   },
   "devDependencies": {
     "@internationalized/date": "^3.9.0",

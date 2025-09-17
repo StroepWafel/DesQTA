@@ -158,4 +158,4 @@ pnpm-lock.yaml
 .DS_Store
 
 
-src\lib\generated
+src/lib/generated/themes.ts

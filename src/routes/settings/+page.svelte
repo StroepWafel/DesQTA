@@ -22,6 +22,7 @@
     CloudArrowUp,
     Cog,
     Squares2x2,
+    User,
   } from 'svelte-hero-icons';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
@@ -115,6 +116,11 @@ The Company reserves the right to terminate your access to the Service at any ti
 
   // Set the API URL for cloud sync
   const CLOUD_API_URL = 'https://accounts.betterseqta.adenmgb.com';
+
+  // Profile picture state
+  let customProfilePicture: string | null = null;
+  let uploading = false;
+  let fileInput: HTMLInputElement;
 
   async function loadCloudUser() {
     cloudUserLoading = true;
@@ -411,7 +417,7 @@ The Company reserves the right to terminate your access to the Service at any ti
   }
 
   onMount(async () => {
-    await Promise.all([loadSettings(), loadTheme(), loadCloudUser()]);
+    await Promise.all([loadSettings(), loadTheme(), loadCloudUser(), loadProfilePicture()]);
     window.addEventListener('keydown', handleKeydown);
   });
   onDestroy(() => {
@@ -427,6 +433,93 @@ The Company reserves the right to terminate your access to the Service at any ti
     } catch (error) {
       console.error('Failed to clear cache:', error);
       clearingCache = false;
+    }
+  }
+
+  // Load custom profile picture
+  async function loadProfilePicture() {
+    try {
+      const dataUrl = await invoke<string | null>('get_profile_picture_data_url');
+      customProfilePicture = dataUrl;
+    } catch (error) {
+      console.error('Failed to load profile picture:', error);
+      customProfilePicture = null;
+    }
+  }
+
+  // Handle profile picture upload
+  async function handleProfilePictureUpload(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    
+    if (!file) return;
+
+
+    // Validate file size (max 5MB)
+    if (file.size > 10 * 1024 * 1024) {
+      notify({
+        title: 'File Too Large',
+        body: 'Please select an image smaller than 10MB.'
+      });
+      return;
+    }
+
+    uploading = true;
+    
+    try {
+      // Convert file to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Save to backend
+      await invoke('save_profile_picture', { base64Data: base64 });
+      
+      // Update local state
+      customProfilePicture = base64;
+    
+      
+      // Refresh the page to update the header
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to upload profile picture:', error);
+      notify({
+        title: 'Upload Failed',
+        body: 'Failed to save profile picture. Please try again.'
+      });
+    } finally {
+      uploading = false;
+      // Clear the input
+      if (target) target.value = '';
+    }
+  }
+
+  // Remove profile picture
+  async function removeProfilePicture() {
+    try {
+      await invoke('delete_profile_picture');
+      customProfilePicture = null;
+      
+      notify({
+        title: 'Profile Picture Removed',
+        body: 'Your custom profile picture has been removed.'
+      });
+      
+      // Refresh the page to update the header
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to remove profile picture:', error);
+      notify({
+        title: 'Removal Failed',
+        body: 'Failed to remove profile picture. Please try again.'
+      });
     }
   }
 </script>
@@ -629,6 +722,66 @@ The Company reserves the right to terminate your access to the Service at any ti
               </div>
             {/if}
           {/if}
+        </div>
+      </section>
+
+      <!-- Personal Settings -->
+      <section
+        class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/30 dark:border-zinc-800/30">
+          <h2 class="text-base font-semibold sm:text-lg text-zinc-500 dark:text-zinc-400">
+            Personal Settings
+          </h2>
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+            Customize your personal profile and preferences
+          </p>
+        </div>
+        <div class="relative p-4 sm:p-6">
+          <!-- Custom Profile Picture -->
+          <div class="space-y-4">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h3 class="text-sm font-medium text-zinc-900 dark:text-white">Custom Profile Picture</h3>
+                <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                  Upload a custom profile picture that will appear in the app header
+                </p>
+              </div>
+              <div class="flex items-center gap-3 ml-4">
+                {#if customProfilePicture}
+                  <img 
+                    src={customProfilePicture} 
+                    alt="Custom profile" 
+                    class="w-10 h-10 rounded-full object-cover border-2 border-zinc-300 dark:border-zinc-600"
+                  />
+                  <button
+                    class="px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg transition-all duration-200 hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-105 active:scale-95"
+                    onclick={removeProfilePicture}
+                    disabled={uploading}
+                  >
+                    Remove
+                  </button>
+                {:else}
+                  <div class="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                    <Icon src={User} class="w-5 h-5 text-zinc-400" />
+                  </div>
+                {/if}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onchange={handleProfilePictureUpload}
+                  class="hidden"
+                  bind:this={fileInput}
+                />
+                <button
+                  class="px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95"
+                  onclick={() => fileInput?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading...' : 'Upload'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
