@@ -42,15 +42,17 @@
       "icons/icon.icns",
       "icons/32x32.png",
       "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.png"
+      "icons/256x256.png",
+      "icons/512x512.png",
+      "icons/1024x1024.png"
     ],
+
     "publisher": "BetterSEQTA+"
   },
   "plugins": {
     "deep-link": {
       "desktop": {
-      "schemes": ["desqta"]
+        "schemes": ["desqta"]
       }
     },
     "shell": {
