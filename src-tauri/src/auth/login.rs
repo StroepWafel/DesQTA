@@ -63,6 +63,14 @@ pub async fn logout(app: tauri::AppHandle) -> bool {
         // Continue with logout even if cache clearing fails
     }
     
+    // Clear analytics data
+    if let Err(e) = crate::analytics::delete_analytics() {
+        println!("[AUTH] Warning: Failed to clear analytics data during logout: {}", e);
+        // Continue with logout even if analytics clearing fails
+    } else {
+        println!("[AUTH] Successfully cleared analytics data during logout");
+    }
+    
     if let Ok(_) = netgrab::clear_session().await {
         true
     } else {
