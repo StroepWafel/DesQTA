@@ -61,13 +61,13 @@
       <a
         href={item.path}
         onclick={handleMenuItemClick}
-        class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 hover:bg-accent-100 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white focus:outline-hidden {(
+        class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-150 ease-out focus:outline-hidden {(
           item.path === '/'
             ? $page.url.pathname === '/'
             : $page.url.pathname.startsWith(item.path)
         )
           ? 'bg-accent text-white'
-          : 'text-zinc-900 dark:text-zinc-300'} playful">
+          : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white'} playful">
         <Icon
           src={item.icon}
           class="w-6 h-6 {(
