@@ -58,6 +58,17 @@
 
   let devSensitiveInfoHider = $state(false);
   let randomAvatarUrl = $state('');
+  let customProfilePicture = $state<string | null>(null);
+
+  // Load custom profile picture
+  async function loadCustomProfilePicture() {
+    try {
+      const dataUrl = await invoke<string | null>('get_profile_picture_data_url');
+      customProfilePicture = dataUrl;
+    } catch (e) {
+      customProfilePicture = null;
+    }
+  }
 
   onMount(async () => {
     try {
@@ -69,6 +80,9 @@
     } catch (e) {
       devSensitiveInfoHider = false;
     }
+    
+    // Load custom profile picture
+    await loadCustomProfilePicture();
   });
 
   // Close dropdown when userInfo becomes undefined (logout)
@@ -85,7 +99,12 @@
     onclick={onToggleUserDropdown}
     aria-label="User menu"
     tabindex="0">
-    {#if devSensitiveInfoHider && randomAvatarUrl}
+    {#if customProfilePicture}
+      <img
+        src={customProfilePicture}
+        alt="Custom profile picture"
+        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
+    {:else if devSensitiveInfoHider && randomAvatarUrl}
       <img
         src={randomAvatarUrl}
         alt="Random avatar"
