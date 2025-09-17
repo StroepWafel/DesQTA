@@ -74,7 +74,7 @@
       'colour-purple': '#8b5cf6',
       'colour-pink': '#ec4899',
       'colour-yellow': '#eab308',
-      'colour-gray': '#6b7280',
+      'colour-zinc': '#6b7280',
       'colour-grey': '#6b7280',
     };
     
@@ -310,24 +310,24 @@
   {#if loadingContent}
     <div class="flex items-center justify-center py-12">
       <LoadingSpinner />
-      <span class="ml-3 text-gray-600 dark:text-gray-400">Loading portal content...</span>
+      <span class="ml-3 text-zinc-600 dark:text-zinc-400">Loading portal content...</span>
     </div>
   {:else if portalContent}
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden max-h-[75vh] overflow-y-auto">
+    <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
       <div class="p-4">
         {#if portalContent.contents}
           {@html portalContent.contents}
         {:else}
           <div class="text-center py-8">
-            <p class="text-gray-600 dark:text-gray-400">No content available for this portal.</p>
+            <p class="text-zinc-600 dark:text-zinc-400">No content available for this portal.</p>
           </div>
         {/if}
       </div>
     </div>
   {:else}
     <div class="text-center py-12">
-      <div class="w-12 h-12 text-gray-400 mx-auto mb-4">⚠️</div>
-      <p class="text-gray-600 dark:text-gray-400">Failed to load portal content</p>
+      <div class="w-12 h-12 text-zinc-400 mx-auto mb-4">⚠️</div>
+      <p class="text-zinc-600 dark:text-zinc-400">Failed to load portal content</p>
     </div>
   {/if}
 </Modal>

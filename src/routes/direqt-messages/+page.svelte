@@ -12,6 +12,7 @@
   import ComposeModal from './components/ComposeModal.svelte';
   import Modal from '$lib/components/Modal.svelte';
   import BetterSeqtaChat from './components/BetterSeqtaChat.svelte';
+  import MobileFolderTabs from './components/MobileFolderTabs.svelte';
 
   // External Libraries
   import dayjs from 'dayjs';
@@ -98,6 +99,7 @@
           id: msg.id,
           folder: 'Sent',
           sender: msg.sender,
+          senderPhoto: msg.sender_photo,
           to: msg.participants?.[0]?.name || '',
           subject: msg.subject,
           preview: msg.subject + (msg.attachments ? ' (Attachment)' : ''),
@@ -109,6 +111,7 @@
           id: msg.id,
           folder: 'Sent',
           sender: msg.sender,
+          senderPhoto: msg.sender_photo,
           to: msg.participants?.[0]?.name || '',
           subject: msg.subject,
           preview: msg.subject + (msg.attachments ? ' (Attachment)' : ''),
@@ -168,10 +171,12 @@
 
         const data = typeof response === 'string' ? JSON.parse(response) : response;
         if (data?.payload?.messages) {
+          console.log("YO: ", data.payload);
           messages = data.payload.messages.map((msg: any) => ({
             id: msg.id,
             folder: folderLabel.charAt(0).toUpperCase() + folderLabel.slice(1),
             sender: msg.sender,
+            senderPhoto: msg.sender_photo,
             to: msg.participants?.[0]?.name || '',
             subject: msg.subject,
             preview: msg.subject + (msg.attachments ? ' (Attachment)' : ''),
@@ -180,6 +185,7 @@
             unread: !msg.read,
             starred: !!msg.starred,
           }));
+          console.log("MESSAGES: ", messages);
         } else {
           messages = [];
         }
@@ -404,7 +410,10 @@
           {/if}
         </div>
       {:else}
-        <Sidebar {selectedFolder} {openFolder} {openCompose} />
+        <div class="hidden xl:block">
+          <Sidebar {selectedFolder} {openFolder} {openCompose} />
+        </div>
+        <MobileFolderTabs {selectedFolder} {openFolder} {openCompose} />
         <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
         <!-- Message detail view - full screen on mobile -->
         <div class="hidden flex-1 xl:block">

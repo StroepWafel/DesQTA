@@ -9,7 +9,6 @@
     Minus,
     Square2Stack,
     XMark,
-    Squares2x2,
     ChatBubbleLeftRight,
     ClipboardDocumentList,
     DocumentText,
@@ -388,10 +387,10 @@
   data-tauri-drag-region>
   <div class="flex items-center space-x-4">
     <button
-      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 bg-zinc-100 hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
+      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
       onclick={onToggleSidebar}
       aria-label="Toggle sidebar">
-      <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 hover:text-white" />
+      <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
     </button>
     <div class="flex items-center space-x-3">
       <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0" />
@@ -516,7 +515,7 @@
         </button>
         <button
           class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
-          onclick={() => appWindow.toggleMaximize()}
+          onclick={async () => appWindow.setFullscreen(!(await appWindow.isFullscreen()))}
           aria-label="Maximize">
           <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
@@ -548,7 +547,7 @@
         if (e.key === 'Escape') showNotificationsModal = false;
       }}>
       <div
-        class="flex relative flex-col p-0 mx-auto w-full max-w-xl rounded-2xl border shadow-2xl backdrop-blur-xl pointer-events-auto bg-white/70 dark:bg-gray-900/80 border-white/20 dark:border-gray-700/40 animate-in"
+        class="flex relative flex-col p-0 mx-auto w-full max-w-xl rounded-2xl border shadow-2xl backdrop-blur-xl pointer-events-auto bg-white/70 dark:bg-zinc-900/80 border-white/20 dark:border-zinc-700/40 animate-in"
         role="document">
         <div
           class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">

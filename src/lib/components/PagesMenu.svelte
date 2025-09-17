@@ -67,7 +67,7 @@ onMount(() => {
 </script>
 
 <div class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs">
-  <div class="pages-modal relative w-full max-w-xl mx-auto rounded-2xl bg-white/70 dark:bg-gray-900/80 shadow-2xl border border-white/20 dark:border-gray-700/40 backdrop-blur-xl p-0 flex flex-col animate-in"
+  <div class="pages-modal relative w-full max-w-xl mx-auto rounded-2xl bg-white/70 dark:bg-zinc-900/80 shadow-2xl border border-white/20 dark:border-zinc-700/40 backdrop-blur-xl p-0 flex flex-col animate-in"
     style="backdrop-filter: blur(24px);"
     in:scale={{ duration: 180, start: 0.98, opacity: 0 }}
     out:scale={{ duration: 120, start: 1, opacity: 0 }}
@@ -79,7 +79,7 @@ onMount(() => {
         id="pages-search-input"
         bind:this={searchInput}
         type="text"
-        class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-gray-800/60 text-zinc-900 dark:text-white border border-accent-500/40 focus:outline-hidden focus:ring-2 accent-ring transition-all duration-200 placeholder:text-zinc-500 dark:placeholder:text-gray-400 text-lg shadow-md"
+        class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-zinc-800/60 text-zinc-900 dark:text-white border border-accent-500/40 focus:outline-hidden focus:ring-2 accent-ring transition-all duration-200 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-lg shadow-md"
         placeholder="Search pages..."
         bind:value={$searchStore}
         onkeydown={handleKeydown}
@@ -109,10 +109,10 @@ onMount(() => {
         {/each}
       </ul>
     {/if}
-    <div class="flex items-center gap-4 px-6 pb-4 pt-2 text-xs text-zinc-500 dark:text-gray-400">
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">↑</kbd><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">↓</kbd> Navigate</span>
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">⏎</kbd> Select</span>
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-gray-700">Esc</kbd> Close</span>
+    <div class="flex items-center gap-4 px-6 pb-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↑</kbd><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↓</kbd> Navigate</span>
+      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">⏎</kbd> Select</span>
+      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">Esc</kbd> Close</span>
     </div>
   </div>
 </div> 

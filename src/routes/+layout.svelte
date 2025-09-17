@@ -116,6 +116,28 @@
       logger.info('layout', 'reload_listener', 'Received reload event');
       location.reload();
     });
+
+    // Listen for fullscreen changes from Tauri backend
+    await listen<boolean>('fullscreen-changed', (event) => {
+      const isFullscreen = event.payload;
+      logger.debug('layout', 'fullscreen_listener', `Fullscreen changed: ${isFullscreen}`);
+      
+      if (isFullscreen) {
+        // Remove rounded corners when entering fullscreen
+        document.body.classList.remove('rounded-xl');
+        const contentDiv = document.querySelector('.overflow-clip.rounded-xl');
+        if (contentDiv) {
+          contentDiv.classList.remove('rounded-xl');
+        }
+      } else {
+        // Add rounded corners when exiting fullscreen
+        document.body.classList.add('rounded-xl');
+        const contentDiv = document.querySelector('.overflow-clip');
+        if (contentDiv) {
+          contentDiv.classList.add('rounded-xl');
+        }
+      }
+    });
   };
 
   onDestroy(() => {
@@ -330,6 +352,14 @@
     
     // Run a one-time heartbeat health check on app open
     await healthCheck();
+    
+    // Check and apply initial fullscreen styling
+    try {
+      await invoke('handle_fullscreen_change');
+    } catch (e) {
+      logger.debug('layout', 'onMount', 'Failed to check initial fullscreen state', { error: e });
+    }
+    
     isLoading = false;
   });
 
@@ -342,13 +372,34 @@
 
   // Mobile detection and event listeners
   onMount(() => {
+    // Treat mobile either as a native mobile platform (Tauri)
+    // or when viewport is below the `sm` breakpoint (~640px)
+    const mql = window.matchMedia('(max-width: 640px)');
+
     const checkMobile = () => {
       const platform = import.meta.env.TAURI_ENV_PLATFORM;
-      isMobile = platform === 'ios' || platform === 'android';
-      if (isMobile) sidebarOpen = false;
+      const isNativeMobile = platform === 'ios' || platform === 'android';
+      const isSmallViewport = mql.matches;
+      const nextIsMobile = isNativeMobile || isSmallViewport;
+
+      // If switching from non-mobile to mobile, ensure sidebar is closed
+      if (!isMobile && nextIsMobile) {
+        sidebarOpen = false;
+      }
+      isMobile = nextIsMobile;
     };
 
     checkMobile();
+    const onMqlChange = () => checkMobile();
+    try {
+      // Modern browsers
+      mql.addEventListener('change', onMqlChange);
+    } catch {
+      // Safari fallback
+      // @ts-ignore
+      mql.addListener(onMqlChange);
+    }
+
     const events = [
       ['resize', checkMobile],
       ['click', handleClickOutside],
@@ -359,9 +410,17 @@
       document.addEventListener(event, handler as EventListener)
     );
 
-    return () => events.forEach(([event, handler]) => 
-      document.removeEventListener(event, handler as EventListener)
-    );
+    return () => {
+      events.forEach(([event, handler]) => 
+        document.removeEventListener(event, handler as EventListener)
+      );
+      try {
+        mql.removeEventListener('change', onMqlChange);
+      } catch {
+        // @ts-ignore
+        mql.removeListener(onMqlChange);
+      }
+    };
   });
 
   

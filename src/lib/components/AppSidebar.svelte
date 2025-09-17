@@ -30,13 +30,16 @@
   }
 </script>
 
+<!-- Parent container that controls width animation -->
 <aside
-  class="overflow-hidden transition-all duration-300 ease-in-out fixed sm:relative z-30"
+  class="relative transition-all duration-300 ease-in-out overflow-hidden"
   class:w-full={sidebarOpen}
   class:w-0={!sidebarOpen}
   class:sm:w-64={sidebarOpen}
-  class:sm:w-0={!sidebarOpen}>
-  <nav class="p-3 py-px space-y-2 w-full sm:w-64 sm:min-w-64 h-screen sm:h-auto relative">
+  class:sm:w-0={!sidebarOpen}
+>
+  <!-- Nav with fixed width and absolute positioning -->
+  <nav class="absolute top-0 right-0 w-full sm:w-64 h-full overflow-y-auto p-3 py-px space-y-2 transition-transform duration-300 ease-in-out">
     <!-- Mobile Close Button -->
     <div class="flex justify-end sm:hidden mb-4">
       <button

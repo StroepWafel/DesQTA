@@ -34,7 +34,7 @@
 
   const variants = {
     primary: 'bg-accent-500 text-white hover:bg-accent-600 focus:ring-accent-500 border-transparent',
-    secondary: 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600 focus:ring-zinc-500 border-transparent',
+    secondary: 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200/50 dark:bg-zinc-700/50 dark:text-zinc-300 dark:hover:bg-zinc-600 focus:ring-zinc-500 border-transparent',
     ghost: 'bg-transparent text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700 focus:ring-zinc-500 border-transparent',
     danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500 border-transparent',
     success: 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-500 border-transparent',

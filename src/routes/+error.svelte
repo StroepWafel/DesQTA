@@ -158,7 +158,7 @@
       case 'fair': return 'text-yellow-500';
       case 'poor': return 'text-orange-500';
       case 'critical': return 'text-red-500';
-      default: return 'text-gray-500';
+      default: return 'text-zinc-500';
     }
   }
 
@@ -169,7 +169,7 @@
       case ErrorSeverity.MEDIUM: return 'text-yellow-500';
       case ErrorSeverity.HIGH: return 'text-orange-500';
       case ErrorSeverity.CRITICAL: return 'text-red-500';
-      default: return 'text-gray-500';
+      default: return 'text-zinc-500';
     }
   }
 
