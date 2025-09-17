@@ -18,8 +18,8 @@
     selectedYear: number;
     aiIntegrationsEnabled: boolean;
     gradeAnalyserEnabled: boolean;
-    showInView: 'list' | 'board' | 'calendar';
-    currentView: 'list' | 'board' | 'calendar';
+    showInView: 'list' | 'board' | 'calendar' | 'gantt';
+    currentView: 'list' | 'board' | 'calendar' | 'gantt';
   }
 
   let { assessments, selectedYear, aiIntegrationsEnabled, gradeAnalyserEnabled, showInView, currentView }: Props = $props();
