@@ -180,6 +180,22 @@
     return Math.ceil(getFilteredStudents().length / itemsPerPage);
   }
 
+  // Handle scroll wheel navigation through pages (only when hovering over pagination)
+  function handlePaginationWheel(event: WheelEvent) {
+    const totalPages = getTotalPages();
+    
+    if (totalPages <= 1) return; // No pagination needed
+    
+    event.preventDefault();
+    
+    if (event.deltaY > 0 && currentPage < totalPages) {
+      // Scroll down - next page
+      currentPage = Math.min(currentPage + 1, totalPages);
+    } else if (event.deltaY < 0 && currentPage > 1) {
+      // Scroll up - previous page
+      currentPage = Math.max(currentPage - 1, 1);
+    }
+  }
 
   // Reset to first page when filters change
   $effect(() => {
@@ -387,7 +403,7 @@
 
       <!-- Pagination -->
       {#if getTotalPages() > 1}
-        <div class="mt-6">
+        <div class="mt-6" onwheel={handlePaginationWheel}>
           <Pagination.Root count={getFilteredStudents().length} perPage={itemsPerPage} bind:page={currentPage}>
             {#snippet children({ pages, currentPage: paginationCurrentPage })}
               <Pagination.Content>
