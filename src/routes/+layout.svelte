@@ -72,17 +72,31 @@
   let devMockEnabled = false;
 
 onMount(() => {
-  async function updateCorners() {
-    const isMaximized = await appWindow.isMaximized();
-    if (isMaximized) {
-      document.body.classList.remove("rounded-xl");
-    } else {
-      document.body.classList.add("rounded-xl");
+  // Platform detection - similar to LoginScreen
+  const checkPlatform = () => {
+    const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
+    return {
+      isWindows: tauri_platform === "windows",
+      isMobile: tauri_platform === "ios" || tauri_platform === "android"
+    };
+  };
+
+  const { isWindows, isMobile } = checkPlatform();
+
+  // Only run window corner rounding on Windows desktop
+  if (isWindows && !isMobile) {
+    async function updateCorners() {
+      const isMaximized = await appWindow.isMaximized();
+      if (isMaximized) {
+        document.body.classList.remove("rounded-xl");
+      } else {
+        document.body.classList.add("rounded-xl");
+      }
     }
+    updateCorners();
+    appWindow.onResized(updateCorners);
+    appWindow.onMoved(updateCorners);
   }
-  updateCorners();
-  appWindow.onResized(updateCorners);
-  appWindow.onMoved(updateCorners);
 });
 
   const handleClickOutside = (event: MouseEvent) => {
