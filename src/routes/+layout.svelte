@@ -16,7 +16,8 @@
   import { seqtaFetch } from '../utils/netUtil';
   import '../app.css';
   import { accentColor, loadAccentColor, theme, loadTheme, loadCurrentTheme } from '../lib/stores/theme';
-  import { initI18n, locale, availableLocales } from '../lib/i18n';
+  import { initI18n, locale, availableLocales, _ } from '../lib/i18n';
+  import T from '../lib/components/T.svelte';
   import { themeBuilderSidebarOpen } from '../lib/stores/themeBuilderSidebar';
   import { Icon, Home, Newspaper, ClipboardDocumentList, BookOpen, ChatBubbleLeftRight, DocumentText, AcademicCap, ChartBar, Cog6Tooth, CalendarDays, User, GlobeAlt, XMark, PencilSquare } from 'svelte-hero-icons';
   import { writable } from 'svelte/store';
@@ -52,21 +53,21 @@
   let enhancedAnimations = $state(true);
   let autoCollapseSidebar = $state(false);
   let autoExpandSidebarHover = $state(false);
-  // Menu configuration
+  // Menu configuration with translation keys
   const DEFAULT_MENU = [
-    { label: 'Dashboard', icon: Home, path: '/' },
-    { label: 'Courses', icon: BookOpen, path: '/courses' },
-    { label: 'Assessments', icon: ClipboardDocumentList, path: '/assessments' },
-    { label: 'Timetable', icon: CalendarDays, path: '/timetable' },
-    { label: 'Study', icon: PencilSquare, path: '/study' },
-    { label: 'Messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
-    { label: 'Portals', icon: GlobeAlt, path: '/portals' },
-    { label: 'Notices', icon: DocumentText, path: '/notices' },
-    { label: 'News', icon: Newspaper, path: '/news' },
-    { label: 'Directory', icon: User, path: '/directory' },
-    { label: 'Reports', icon: ChartBar, path: '/reports' },
-    { label: 'Analytics', icon: AcademicCap, path: '/analytics' },
-    { label: 'Settings', icon: Cog6Tooth, path: '/settings' },
+    { labelKey: 'navigation.dashboard', icon: Home, path: '/' },
+    { labelKey: 'navigation.courses', icon: BookOpen, path: '/courses' },
+    { labelKey: 'navigation.assessments', icon: ClipboardDocumentList, path: '/assessments' },
+    { labelKey: 'navigation.timetable', icon: CalendarDays, path: '/timetable' },
+    { labelKey: 'navigation.study', icon: PencilSquare, path: '/study' },
+    { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
+    { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },
+    { labelKey: 'navigation.news', icon: Newspaper, path: '/news' },
+    { labelKey: 'navigation.directory', icon: User, path: '/directory' },
+    { labelKey: 'navigation.reports', icon: ChartBar, path: '/reports' },
+    { labelKey: 'navigation.analytics', icon: AcademicCap, path: '/analytics' },
+    { labelKey: 'navigation.settings', icon: Cog6Tooth, path: '/settings' },
   ];
   let menu = $state([...DEFAULT_MENU]);
   let menuLoading = $state(true);
@@ -562,7 +563,7 @@ onMount(() => {
           onclick={() => (sidebarOpen = false)}
           role="button"
           tabindex="0"
-          aria-label="Close sidebar overlay">
+          aria-label={$_('navigation.close_sidebar', { default: 'Close sidebar overlay' })}>
         </div>
       {/if}
 
@@ -590,7 +591,7 @@ onMount(() => {
               <button 
                 class="p-2 ml-auto rounded-lg transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200" 
                 onclick={() => themeBuilderSidebarOpen.set(false)} 
-                aria-label="Close Theme Builder"
+                aria-label={$_('common.close_theme_builder', { default: 'Close Theme Builder' })}
               >
                 <Icon src={XMark} class="w-6 h-6" />
               </button>

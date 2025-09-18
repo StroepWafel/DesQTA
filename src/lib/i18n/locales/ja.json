@@ -16,7 +16,8 @@
     "filter": "フィルター",
     "clear": "クリア",
     "refresh": "更新",
-    "settings": "設定"
+    "settings": "設定",
+    "close_theme_builder": "テーマビルダーを閉じる"
   },
   "navigation": {
     "dashboard": "ダッシュボード",
@@ -31,7 +32,17 @@
     "directory": "ディレクトリ",
     "reports": "レポート",
     "analytics": "分析",
-    "settings": "設定"
+    "settings": "設定",
+    "close_sidebar": "サイドバーを閉じる",
+    "menu": "メニュー",
+    "qr_signin": "QRサインイン",
+    "welcome": "ようこそ"
+  },
+  "header": {
+    "toggle_sidebar": "サイドバーを切り替え",
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "close": "閉じる"
   },
   "login": {
     "welcome_to": "ようこそ",
@@ -62,5 +73,17 @@
     "camera_error": "このデバイスでカメラが見つかりません。",
     "camera_permission": "カメラにアクセスできません。ブラウザの権限を確認してください。",
     "live_scan_error": "ライブスキャンの開始に失敗しました。"
+  },
+  "settings": {
+    "language": "言語",
+    "language_description": "DesQTAインターフェースの優先言語を選択",
+    "personal_preferences": "個人設定",
+    "save_changes": "変更を保存",
+    "saving": "保存中...",
+    "saved": "保存されました！"
+  },
+  "about": {
+    "title": "DesQTAについて",
+    "subtitle": "あなたのSEQTA Learnデスクトップ体験"
   }
 }

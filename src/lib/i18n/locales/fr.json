@@ -16,7 +16,8 @@
     "filter": "Filtrer",
     "clear": "Effacer",
     "refresh": "Actualiser",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "close_theme_builder": "Fermer le Constructeur de Thèmes"
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -31,7 +32,17 @@
     "directory": "Annuaire",
     "reports": "Rapports",
     "analytics": "Analyses",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "close_sidebar": "Fermer la barre latérale",
+    "menu": "Menu",
+    "qr_signin": "Connexion QR",
+    "welcome": "Bienvenue"
+  },
+  "header": {
+    "toggle_sidebar": "Basculer la barre latérale",
+    "minimize": "Réduire",
+    "maximize": "Agrandir",
+    "close": "Fermer"
   },
   "login": {
     "welcome_to": "Bienvenue sur",
@@ -70,5 +81,9 @@
     "save_changes": "Enregistrer les Modifications",
     "saving": "Enregistrement...",
     "saved": "Enregistré !"
+  },
+  "about": {
+    "title": "À propos de DesQTA",
+    "subtitle": "Votre Expérience Bureau SEQTA Learn"
   }
 }

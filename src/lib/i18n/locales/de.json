@@ -16,7 +16,8 @@
     "filter": "Filtern",
     "clear": "Löschen",
     "refresh": "Aktualisieren",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "close_theme_builder": "Themen-Builder Schließen"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -31,7 +32,17 @@
     "directory": "Verzeichnis",
     "reports": "Berichte",
     "analytics": "Analysen",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "close_sidebar": "Seitenleiste schließen",
+    "menu": "Menü",
+    "qr_signin": "QR-Anmeldung",
+    "welcome": "Willkommen"
+  },
+  "header": {
+    "toggle_sidebar": "Seitenleiste umschalten",
+    "minimize": "Minimieren",
+    "maximize": "Maximieren",
+    "close": "Schließen"
   },
   "login": {
     "welcome_to": "Willkommen bei",
@@ -70,5 +81,9 @@
     "save_changes": "Änderungen Speichern",
     "saving": "Speichern...",
     "saved": "Gespeichert!"
+  },
+  "about": {
+    "title": "Über DesQTA",
+    "subtitle": "Ihr SEQTA Learn Desktop-Erlebnis"
   }
 }

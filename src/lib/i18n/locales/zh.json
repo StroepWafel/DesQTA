@@ -16,7 +16,8 @@
     "filter": "筛选",
     "clear": "清除",
     "refresh": "刷新",
-    "settings": "设置"
+    "settings": "设置",
+    "close_theme_builder": "关闭主题构建器"
   },
   "navigation": {
     "dashboard": "仪表板",
@@ -31,7 +32,17 @@
     "directory": "目录",
     "reports": "报告",
     "analytics": "分析",
-    "settings": "设置"
+    "settings": "设置",
+    "close_sidebar": "关闭侧边栏",
+    "menu": "菜单",
+    "qr_signin": "二维码登录",
+    "welcome": "欢迎"
+  },
+  "header": {
+    "toggle_sidebar": "切换侧边栏",
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "close": "关闭"
   },
   "login": {
     "welcome_to": "欢迎使用",
@@ -62,5 +73,17 @@
     "camera_error": "此设备上未找到相机。",
     "camera_permission": "无法访问相机。请检查浏览器权限。",
     "live_scan_error": "启动实时扫描失败。"
+  },
+  "settings": {
+    "language": "语言",
+    "language_description": "选择您首选的DesQTA界面语言",
+    "personal_preferences": "个人偏好",
+    "save_changes": "保存更改",
+    "saving": "正在保存...",
+    "saved": "已保存！"
+  },
+  "about": {
+    "title": "关于DesQTA",
+    "subtitle": "您的SEQTA Learn桌面体验"
   }
 }

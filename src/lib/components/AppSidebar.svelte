@@ -2,9 +2,11 @@
   import { page } from '$app/stores';
   import { Icon } from 'svelte-hero-icons';
   import { XMark } from 'svelte-hero-icons';
+  import { _ } from '../i18n';
+  import T from './T.svelte';
 
   interface MenuItem {
-    label: string;
+    labelKey: string;
     icon: any;
     path: string;
   }
@@ -45,7 +47,7 @@
       <button
         onclick={handleCloseSidebar}
         class="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
-        aria-label="Close sidebar"
+        aria-label={$_('navigation.close_sidebar', { default: 'Close sidebar' })}
       >
         <Icon src={XMark} class="w-5 h-5" />
       </button>
@@ -53,7 +55,9 @@
 
     <!-- Mobile Header -->
     <div class="sm:hidden mb-6">
-      <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">Menu</h2>
+      <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.menu" fallback="Menu" />
+      </h2>
       <div class="w-12 h-1 bg-accent-500 rounded-full"></div>
     </div>
 
@@ -77,7 +81,7 @@
           )
             ? 'text-white'
             : 'text-zinc-600 dark:text-zinc-400'}" />
-        <span>{item.label}</span>
+        <span><T key={item.labelKey} fallback={item.labelKey} /></span>
       </a>
     {/each}
   </nav>

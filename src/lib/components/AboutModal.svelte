@@ -12,6 +12,7 @@
     Sun,
   } from 'svelte-hero-icons';
   import { openUrl } from '@tauri-apps/plugin-opener';
+  import T from './T.svelte';
 
   interface Props {
     open: boolean;
@@ -55,9 +56,11 @@
         <div>
           <h2
             class="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300">
-            About DesQTA
+            <T key="about.title" fallback="About DesQTA" />
           </h2>
-          <p class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">Your SEQTA Learn Desktop Experience</p>
+          <p class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
+            <T key="about.subtitle" fallback="Your SEQTA Learn Desktop Experience" />
+          </p>
         </div>
       </div>
     </div>

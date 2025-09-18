@@ -16,7 +16,8 @@
     "filter": "Filtrar",
     "clear": "Limpiar",
     "refresh": "Actualizar",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "close_theme_builder": "Cerrar Constructor de Temas"
   },
   "navigation": {
     "dashboard": "Panel",
@@ -31,7 +32,17 @@
     "directory": "Directorio",
     "reports": "Informes",
     "analytics": "Análisis",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "close_sidebar": "Cerrar barra lateral",
+    "menu": "Menú",
+    "qr_signin": "Inicio QR",
+    "welcome": "Bienvenida"
+  },
+  "header": {
+    "toggle_sidebar": "Alternar barra lateral",
+    "minimize": "Minimizar",
+    "maximize": "Maximizar",
+    "close": "Cerrar"
   },
   "login": {
     "welcome_to": "Bienvenido a",
@@ -70,5 +81,9 @@
     "save_changes": "Guardar Cambios",
     "saving": "Guardando...",
     "saved": "¡Guardado!"
+  },
+  "about": {
+    "title": "Acerca de DesQTA",
+    "subtitle": "Tu Experiencia de Escritorio SEQTA Learn"
   }
 }
