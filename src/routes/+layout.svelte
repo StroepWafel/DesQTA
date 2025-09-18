@@ -31,7 +31,8 @@
   let seqtaUrl = $state<string>('');
   let userInfo = $state<UserInfo | undefined>(undefined);
   let seqtaConfig: any = $state(null);
-  let isLoading = $state(true);
+  let shellReady = $state(false);
+  let contentLoading = $state(true);
   let isMobile = $state(false);
   
   // UI state  
@@ -350,69 +351,73 @@ onMount(() => {
       loadCurrentTheme(),
       initI18n(),
     ]);
-    
-    // Load saved language preference
+
+    shellReady = true;
+
     try {
-      const settings = await loadSettings(['language']);
-      if (settings.language && availableLocales.some(l => l.code === settings.language)) {
-        locale.set(settings.language);
-      }
-    } catch (e) {
-      logger.debug('layout', 'onMount', 'Could not load language preference', { error: e });
-    }
-
-    // Load dev mock flag early to control session flow
-    try {
-      const settings = await loadSettings(['dev_sensitive_info_hider']);
-      devMockEnabled = settings.dev_sensitive_info_hider ?? false;
-    } catch {}
-
-    // Load all settings and check session
-    await Promise.all([
-      checkSession(),
-      loadWeatherSettings(),
-      loadEnhancedAnimationsSetting(),
-      reloadSidebarSettings()
-    ]);
-    
-    // Background tasks
-    warmUpCommonData().catch(() => {});
-    if (weatherEnabled) {
-      fetchWeather(!forceUseLocation);
-    }
-
-    // Validate SEQTA session on app launch
-    if (!devMockEnabled && !$needsSetup) {
+      // Load saved language preference
       try {
-        const response = await seqtaFetch('/seqta/student/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: { mode: 'normal', query: null, redirect_url: seqtaUrl },
-        });
-        
-        const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
-        const isAuthenticated = responseStr.includes('site.name.abbrev');
-        
-        if (!isAuthenticated && (responseStr.includes('error') || responseStr.includes('unauthorized') || responseStr.includes('401'))) {
-          logger.warn('layout', 'onMount', 'Session invalid, logging out');
-          await handleLogout();
+        const settings = await loadSettings(['language']);
+        if (settings.language && availableLocales.some(l => l.code === settings.language)) {
+          locale.set(settings.language);
         }
       } catch (e) {
-        logger.error('layout', 'onMount', 'SEQTA session check failed', { error: e });
+        logger.debug('layout', 'onMount', 'Could not load language preference', { error: e });
       }
+
+      // Load dev mock flag early to control session flow
+      try {
+        const settings = await loadSettings(['dev_sensitive_info_hider']);
+        devMockEnabled = settings.dev_sensitive_info_hider ?? false;
+      } catch {}
+
+      // Load all settings and check session
+      await Promise.all([
+        checkSession(),
+        loadWeatherSettings(),
+        loadEnhancedAnimationsSetting(),
+        reloadSidebarSettings()
+      ]);
+      
+      // Background tasks
+      warmUpCommonData().catch(() => {});
+      if (weatherEnabled) {
+        fetchWeather(!forceUseLocation);
+      }
+
+      // Validate SEQTA session on app launch
+      if (!devMockEnabled && !$needsSetup) {
+        try {
+          const response = await seqtaFetch('/seqta/student/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: { mode: 'normal', query: null, redirect_url: seqtaUrl },
+          });
+          
+          const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+          const isAuthenticated = responseStr.includes('site.name.abbrev');
+          
+          if (!isAuthenticated && (responseStr.includes('error') || responseStr.includes('unauthorized') || responseStr.includes('401'))) {
+            logger.warn('layout', 'onMount', 'Session invalid, logging out');
+            await handleLogout();
+          }
+        } catch (e) {
+          logger.error('layout', 'onMount', 'SEQTA session check failed', { error: e });
+        }
+      }
+      
+      // Run a one-time heartbeat health check on app open
+      await healthCheck();
+      
+      // Check and apply initial fullscreen styling
+      try {
+        await invoke('handle_fullscreen_change');
+      } catch (e) {
+        logger.debug('layout', 'onMount', 'Failed to check initial fullscreen state', { error: e });
+      }
+    } finally {
+      contentLoading = false;
     }
-    
-    // Run a one-time heartbeat health check on app open
-    await healthCheck();
-    
-    // Check and apply initial fullscreen styling
-    try {
-      await invoke('handle_fullscreen_change');
-    } catch (e) {
-      logger.debug('layout', 'onMount', 'Failed to check initial fullscreen state', { error: e });
-    }
-    
-    isLoading = false;
   });
 
   // Consolidated effects
@@ -529,7 +534,7 @@ onMount(() => {
   // Config/menu loading is handled in checkSession/startLogin
 </script>
 
-{#if isLoading}
+{#if !shellReady}
   <LoadingScreen />
 {:else}
   <div class="flex flex-col h-screen">
@@ -572,14 +577,20 @@ onMount(() => {
         class="overflow-y-auto flex-1 border-t rounded-tl-xl {!$needsSetup ? 'border-l' : ''} border-zinc-200 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-900/50 transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};"
       >
-        {#if $needsSetup}
-          <LoginScreen
-            {seqtaUrl}
-            onStartLogin={startLogin}
-            onUrlChange={(url) => (seqtaUrl = url)}
-          />
+        {#if contentLoading}
+          <div class="flex items-center justify-center w-full h-full py-12">
+            <LoadingScreen inline />
+          </div>
         {:else}
-          {@render children()}
+          {#if $needsSetup}
+            <LoginScreen
+              {seqtaUrl}
+              onStartLogin={startLogin}
+              onUrlChange={(url) => (seqtaUrl = url)}
+            />
+          {:else}
+            {@render children()}
+          {/if}
         {/if}
       </main>
 

@@ -1,10 +1,18 @@
-<script>
+<script lang="ts">
   import { fade } from 'svelte/transition';
   import T from './T.svelte';
+
+  export let inline = false;
+
+  const containerClasses = inline
+    ? 'relative flex w-full h-full min-h-[16rem] items-center justify-center bg-transparent'
+    : 'fixed inset-0 z-50 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900';
+
+  const innerClasses = inline ? 'flex flex-col items-center gap-6 py-10' : 'flex flex-col items-center gap-6';
 </script>
 
-<div class="flex items-center justify-center h-screen bg-zinc-100 dark:bg-zinc-900">
-  <div class="flex flex-col items-center gap-6" transition:fade>
+<div class={containerClasses}>
+  <div class={innerClasses} transition:fade>
     <div class="relative w-48 h-32 overflow-visible">
       <!-- Animated clouds using provided SVG -->
       <svg class="absolute left-4 top-8 animate-cloud1" width="48" height="48" viewBox="0 0 24 24" fill="none">
@@ -60,25 +68,4 @@
 .animate-cloud2 {
   animation: cloud-move2 5s linear infinite alternate;
 }
-
-:global(html), :global(body) {
-  overflow: hidden !important;
-  overscroll-behavior: none !important;
-  height: 100%;
-}
-:global(body) {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-}
-:global(body::-webkit-scrollbar) {
-  display: none; /* Chrome/Safari/Webkit */
-}
-
-/* Ensure the loading screen fills the viewport and cannot be scrolled */
-.flex.items-center.justify-center.h-screen {
-  min-height: 100vh;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-}
-</style> 
+</style>
