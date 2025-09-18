@@ -7,6 +7,7 @@ register('fr', () => import('./locales/fr.json'));
 register('de', () => import('./locales/de.json'));
 register('zh', () => import('./locales/zh.json'));
 register('ja', () => import('./locales/ja.json'));
+register('en-pirate', () => import('./locales/en-pirate.json'));
 
 // Initialize i18n
 export function initI18n() {
@@ -28,6 +29,7 @@ export const availableLocales = [
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
   { code: 'zh', name: '中文', flag: '🇨🇳' },
   { code: 'ja', name: '日本語', flag: '🇯🇵' },
+  { code: 'en-pirate', name: 'English Pirate', flag: '🏴‍☠️' },
 ];
 
 // Helper to get current locale info

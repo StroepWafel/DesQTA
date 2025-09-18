@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { _ } from '../i18n';
+  import { _, locale } from '../i18n';
   
   interface Props {
     key?: string;
@@ -17,8 +17,16 @@
     
     if (!translationKey) return defaultText;
     
-    // Use svelte-i18n's $_ function with default fallback
-    return $_(`${translationKey}`, { default: defaultText, values });
+    // Check if locale is initialized, if not return fallback
+    if (!$locale) return defaultText;
+    
+    try {
+      // Use svelte-i18n's $_ function with default fallback
+      return $_(`${translationKey}`, { default: defaultText, values });
+    } catch (error) {
+      // If translation fails, return fallback
+      return defaultText;
+    }
   });
 </script>
 
