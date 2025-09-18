@@ -26,6 +26,8 @@
   } from 'svelte-hero-icons';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
+  import LanguageSelector from '../../lib/components/LanguageSelector.svelte';
+  import T from '../../lib/components/T.svelte';
   import { logger } from '../../utils/logger';
   import { goto } from '$app/navigation';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
@@ -175,7 +177,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     loading = true;
     try {
       const settings = await invoke<any>('get_settings_subset', { keys: [
-        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula'
+        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula','language'
       ]});
       shortcuts = settings.shortcuts || [];
       feeds = settings.feeds || [];
@@ -779,6 +781,23 @@ The Company reserves the right to terminate your access to the Service at any ti
                 >
                   {uploading ? 'Uploading...' : 'Upload'}
                 </button>
+              </div>
+            </div>
+            
+            <!-- Language Preference -->
+            <div class="space-y-4 pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
+                    <T key="settings.language" fallback="Language" />
+                  </h3>
+                  <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                    <T key="settings.language_description" fallback="Choose your preferred language for the DesQTA interface" />
+                  </p>
+                </div>
+                <div class="ml-4">
+                  <LanguageSelector compact={false} showFlags={true} />
+                </div>
               </div>
             </div>
           </div>

@@ -16,6 +16,9 @@
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { invalidateDevSensitiveInfoHiderCache } from '../../utils/netUtil';
+  import T from './T.svelte';
+  import LanguageSelector from './LanguageSelector.svelte';
+  import { _ } from '../i18n';
 
   interface Props {
     seqtaUrl: string;
@@ -49,16 +52,16 @@
   let isTyping = $state(true);
   
   const features = [
-    'Lightning-fast performance',
-    'Seamless QR code login', 
-    'Beautiful, intuitive interface',
-    'Advanced analytics dashboard',
-    'Real-time notifications',
-    'Offline capability support',
-    'Cross-platform compatibility',
-    'Enhanced security features',
-    'Customizable themes',
-    'Smart grade predictions'
+    'features.lightning_fast',
+    'features.qr_login', 
+    'features.beautiful_ui',
+    'features.analytics',
+    'features.notifications',
+    'features.offline',
+    'features.cross_platform',
+    'features.security',
+    'features.themes',
+    'features.predictions'
   ];
 
   onMount(() => {
@@ -118,7 +121,8 @@
       let pauseTimeout: number;
       
       const startTypewriter = () => {
-        const currentFeature = features[currentFeatureIndex];
+        const currentFeatureKey = features[currentFeatureIndex];
+        const currentFeature = $_(currentFeatureKey) || currentFeatureKey;
         let charIndex = 0;
         
         // Typing phase
@@ -338,8 +342,13 @@
     <div class="flex items-center space-x-3" data-tauri-drag-region>
       <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0" />
       <h1 class="text-xl font-bold text-zinc-800 dark:text-white">
-        DesQTA
+        <T key="login.app_name" fallback="DesQTA" />
       </h1>
+    </div>
+
+    <!-- Language selector for login screen -->
+    <div class="flex items-center space-x-3">
+      <LanguageSelector compact={true} />
     </div>
 
     <!-- Window Controls -->
@@ -590,10 +599,10 @@
             <div class="space-y-8">
               <div class="space-y-4">
                                  <h1 class="text-5xl lg:text-6xl font-bold text-zinc-900 dark:text-white leading-tight">
-                   Welcome to<br><span class="text-indigo-600 dark:text-indigo-400">DesQTA</span>
+                   <T key="login.welcome_to" fallback="Welcome to" /><br><span class="text-indigo-600 dark:text-indigo-400"><T key="login.app_name" fallback="DesQTA" /></span>
                  </h1>
                 <p class="text-xl text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                  Experience SEQTA Learn like never before with our powerful, modern desktop application
+                  <T key="login.subtitle" fallback="Experience SEQTA Learn like never before with our powerful, modern desktop application" />
                 </p>
               </div>
               
@@ -616,10 +625,10 @@
             <!-- Mobile Title -->
             <div class="text-center space-y-4 mb-8">
               <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">
-                Welcome to <span class="text-indigo-600 dark:text-indigo-400">DesQTA</span>
+                <T key="login.welcome_to" fallback="Welcome to" /> <span class="text-indigo-600 dark:text-indigo-400"><T key="login.app_name" fallback="DesQTA" /></span>
               </h1>
               <p class="text-zinc-600 dark:text-zinc-300">
-                Experience SEQTA Learn like never before
+                <T key="login.subtitle_mobile" fallback="Experience SEQTA Learn like never before" />
               </p>
             </div>
             {/if}
@@ -638,13 +647,13 @@
                     onclick={() => loginMethod = 'qr'}
                   >
                     <Icon src={QrCode} class="w-5 h-5 inline mr-2 transition-transform duration-300 {loginMethod === 'qr' ? 'scale-110' : ''}" />
-                    QR Code
+                    <T key="login.qr_code" fallback="QR Code" />
                   </button>
                   <button
                     class="px-6 py-3 rounded-xl font-medium transition-all duration-300 relative z-10 transform hover:scale-105 {loginMethod === 'url' ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
                     onclick={() => loginMethod = 'url'}
                   >
-                    Manual URL
+                    <T key="login.manual_url" fallback="Manual URL" />
                   </button>
                 </div>
               </div>
@@ -660,8 +669,8 @@
                 {#if isMobile || loginMethod === 'qr'}
                   <div class="space-y-2 px-2">
                     <div class="text-center space-y-1 -mt-2">
-                      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Quick Login</h2>
-                      <p class="text-zinc-600 dark:text-zinc-400">Scan your SEQTA QR code to sign in instantly</p>
+                      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white"><T key="login.quick_login" fallback="Quick Login" /></h2>
+                      <p class="text-zinc-600 dark:text-zinc-400"><T key="login.qr_description" fallback="Scan your SEQTA QR code to sign in instantly" /></p>
                     </div>
 
                     <!-- QR Code upload area -->
@@ -682,8 +691,8 @@
                             <Icon src={ArrowUpTray} class="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                           </div>
                           <div class="text-center">
-                            <p class="text-lg font-medium text-indigo-700 dark:text-indigo-300">Upload QR Code</p>
-                            <p class="text-sm text-indigo-600 dark:text-indigo-400">Click to browse or drag & drop</p>
+                            <p class="text-lg font-medium text-indigo-700 dark:text-indigo-300"><T key="login.upload_qr" fallback="Upload QR Code" /></p>
+                            <p class="text-sm text-indigo-600 dark:text-indigo-400"><T key="login.click_browse" fallback="Click to browse or drag & drop" /></p>
                           </div>
                         </div>
                       </label>
@@ -692,7 +701,7 @@
                     <!-- Divider -->
                     <div class="flex items-center">
                       <div class="flex-1 h-px bg-linear-to-r from-transparent via-zinc-300 dark:via-zinc-600 to-transparent"></div>
-                      <span class="px-2 text-sm text-zinc-500 dark:text-zinc-400 font-medium">or</span>
+                      <span class="px-2 text-sm text-zinc-500 dark:text-zinc-400 font-medium"><T key="login.or" fallback="or" /></span>
                       <div class="flex-1 h-px bg-linear-to-r from-transparent via-zinc-300 dark:via-zinc-600 to-transparent"></div>
                     </div>
 
@@ -705,7 +714,7 @@
                     onclick={startLiveScan}
                     class="py-3 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-zinc-700 dark:text-zinc-800 font-semibold rounded-2xl shadow-lg hover:shadow-xl"
                   >
-                    Scan with Camera
+                    <T key="login.scan_camera" fallback="Scan with Camera" />
                   </Button>
 
                   <!-- Inline help link under scan button -->
@@ -715,7 +724,7 @@
                       onclick={openQrInstructionsModal}
                       class="mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm"
                     >
-                      How do I get a QR code?
+                      <T key="login.how_get_qr" fallback="How do I get a QR code?" />
                     </button>
                   </div>
               </div>
@@ -725,8 +734,8 @@
                 {#if loginMethod === 'url' && !isMobile}
                   <div class="space-y-6">
                     <div class="text-center space-y-2">
-                      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Manual Login</h2>
-                      <p class="text-zinc-600 dark:text-zinc-400">Enter your school's SEQTA URL</p>
+                      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white"><T key="login.manual_login" fallback="Manual Login" /></h2>
+                      <p class="text-zinc-600 dark:text-zinc-400"><T key="login.enter_url" fallback="Enter your school's SEQTA URL" /></p>
                     </div>
 
                     <div class="space-y-4">
@@ -748,7 +757,7 @@
                            onStartLogin();
                             }
                           }}
-                          placeholder="school.seqta.com.au"
+                          placeholder={$_('login.url_placeholder', { default: 'school.seqta.com.au' })}
                           inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20"
                         />
                       </div>
@@ -761,7 +770,7 @@
               {#if qrProcessing}
                 <div class="flex items-center justify-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
                   <div class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span class="text-blue-700 dark:text-blue-300 font-medium">Processing QR code...</span>
+                  <span class="text-blue-700 dark:text-blue-300 font-medium"><T key="login.processing_qr" fallback="Processing QR code..." /></span>
               </div>
             {/if}
             
@@ -773,7 +782,7 @@
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                       </svg>
                     </div>
-                    <span class="text-green-700 dark:text-green-300 font-medium">{qrSuccess}</span>
+                    <span class="text-green-700 dark:text-green-300 font-medium"><T key="login.qr_success" fallback="QR code scanned successfully!" /></span>
                   </div>
               </div>
             {/if}
@@ -840,20 +849,20 @@
                 disabled={jwtExpiredError || (!isMobile && loginMethod === 'url' && !seqtaUrl.trim()) || ((isMobile || loginMethod === 'qr') && !qrSuccess)}
                 class="py-4 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none"
               >
-                Sign In to DesQTA
+                <T key="login.sign_in" fallback="Sign In to DesQTA" />
               </Button>
 
               <!-- Help Link -->
           <div class="text-center">
             <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                  Need help? 
+                  <T key="login.need_help" fallback="Need help?" /> 
                   <a
                 href="https://github.com/betterseqta/desqta"
                 target="_blank"
                 rel="noopener noreferrer"
                     class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-all duration-300 hover:underline decoration-2 underline-offset-2"
                   >
-                    Visit our GitHub
+                    <T key="login.visit_github" fallback="Visit our GitHub" />
                   </a>
             </p>
               </div>
@@ -869,7 +878,7 @@
     <div class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xl bg-black/60">
       <div class="bg-white/10 dark:bg-zinc-900/10 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 w-full max-w-md mx-4 border border-white/30 dark:border-zinc-700/20">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Live QR Scanner</h2>
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white"><T key="login.live_scanner" fallback="Live QR Scanner" /></h2>
           <button
             class="p-2 rounded-full bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xs hover:bg-white/30 dark:hover:bg-zinc-800/40 transition-all duration-200 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 border border-white/30 dark:border-zinc-700/30"
             onclick={stopLiveScan}
@@ -891,7 +900,7 @@
         {/if}
         
         <p class="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
-          Position the QR code within the frame to scan
+          <T key="login.position_qr" fallback="Position the QR code within the frame to scan" />
         </p>
       </div>
     </div>

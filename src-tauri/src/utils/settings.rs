@@ -117,6 +117,7 @@ pub struct Settings {
     pub current_theme: Option<String>,
     pub dev_sensitive_info_hider: bool,
     pub accepted_cloud_eula: bool,
+    pub language: String,
 }
 
 impl Default for Settings {
@@ -143,6 +144,7 @@ impl Default for Settings {
             current_theme: Some("default".to_string()),
             dev_sensitive_info_hider: false,
             accepted_cloud_eula: false,
+            language: "en".to_string(), // Default to English
         }
     }
 }
@@ -326,6 +328,7 @@ impl Settings {
         default_settings.current_theme = get_opt_string(&existing_json, "current_theme");
         default_settings.dev_sensitive_info_hider = get_bool(&existing_json, "dev_sensitive_info_hider", default_settings.dev_sensitive_info_hider);
         default_settings.accepted_cloud_eula = get_bool(&existing_json, "accepted_cloud_eula", default_settings.accepted_cloud_eula);
+        default_settings.language = get_string(&existing_json, "language", &default_settings.language);
 
         default_settings
     }

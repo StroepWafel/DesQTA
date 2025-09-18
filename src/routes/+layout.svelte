@@ -16,6 +16,7 @@
   import { seqtaFetch } from '../utils/netUtil';
   import '../app.css';
   import { accentColor, loadAccentColor, theme, loadTheme, loadCurrentTheme } from '../lib/stores/theme';
+  import { initI18n, locale, availableLocales } from '../lib/i18n';
   import { themeBuilderSidebarOpen } from '../lib/stores/themeBuilderSidebar';
   import { Icon, Home, Newspaper, ClipboardDocumentList, BookOpen, ChatBubbleLeftRight, DocumentText, AcademicCap, ChartBar, Cog6Tooth, CalendarDays, User, GlobeAlt, XMark, PencilSquare } from 'svelte-hero-icons';
   import { writable } from 'svelte/store';
@@ -271,6 +272,17 @@ onMount(() => {
     }
   };
 
+  // Language change handler
+  const changeLanguage = async (languageCode: string) => {
+    try {
+      locale.set(languageCode);
+      await invoke('save_settings_merge', { patch: { language: languageCode } });
+      logger.info('layout', 'changeLanguage', `Language changed to ${languageCode}`);
+    } catch (e) {
+      logger.error('layout', 'changeLanguage', `Failed to save language preference: ${e}`, { error: e });
+    }
+  };
+
   const loadUserInfo = async () => {
     const settings = await loadSettings(['disable_school_picture']);
     disableSchoolPicture = settings.disable_school_picture ?? false;
@@ -330,12 +342,23 @@ onMount(() => {
     logger.logComponentMount('layout');
     setupServiceWorkerAndListeners();
     
-    // Initialize theme first
+    // Initialize theme and i18n first
     await Promise.all([
       loadAccentColor(),
       loadTheme(),
       loadCurrentTheme(),
+      initI18n(),
     ]);
+    
+    // Load saved language preference
+    try {
+      const settings = await loadSettings(['language']);
+      if (settings.language && availableLocales.some(l => l.code === settings.language)) {
+        locale.set(settings.language);
+      }
+    } catch (e) {
+      logger.debug('layout', 'onMount', 'Could not load language preference', { error: e });
+    }
 
     // Load dev mock flag early to control session flow
     try {
