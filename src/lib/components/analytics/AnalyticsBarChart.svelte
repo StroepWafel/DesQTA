@@ -6,6 +6,8 @@
   import * as Select from "$lib/components/ui/select/index.js";
   import { cubicInOut } from "svelte/easing";
   import type { Assessment } from "$lib/types";
+  import T from '../T.svelte';
+  import { _ } from '../../i18n';
 
   interface Props {
     data: Assessment[];
@@ -16,7 +18,7 @@
   let timeframe = $state("all");
 
   const chartConfig = {
-    count: { label: "Assessments", color: "var(--accent-color-value)" },
+    count: { label: $_('analytics.assessments') || "Assessments", color: "var(--accent-color-value)" },
   } satisfies Chart.ChartConfig;
 
   let context = $state<ChartContextValue>();
@@ -76,7 +78,7 @@
   });
 
   let timeframeLabel = $derived.by(() => {
-    if (timeframe === "all") return "All Time";
+    if (timeframe === "all") return $_('analytics.all_time') || "All Time";
     return timeframe; // Will be the year as a string
   });
 
@@ -92,15 +94,19 @@
   <Card.Header>
     <div class="flex justify-between items-start">
       <div>
-        <Card.Title>Grade Distribution</Card.Title>
-        <Card.Description>Number of assessments per grade range ({timeframeLabel})</Card.Description>
+        <Card.Title>
+          <T key="analytics.grade_distribution" fallback="Grade Distribution" />
+        </Card.Title>
+        <Card.Description>
+          <T key="analytics.assessments_per_grade_range" fallback="Number of assessments per grade range" values={{ timeframe: timeframeLabel }} />
+        </Card.Description>
       </div>
       <Select.Root type="single" bind:value={timeframe}>
         <Select.Trigger class="w-[140px]">
           {timeframeLabel}
         </Select.Trigger>
         <Select.Content>
-          <Select.Item value="all" label="All Time" />
+          <Select.Item value="all" label={$_('analytics.all_time') || "All Time"} />
           {#each availableYears as year}
             <Select.Item value={year.toString()} label={year.toString()} />
           {/each}
@@ -146,8 +152,12 @@
       </Chart.Container>
     {:else}
       <div class="flex flex-col justify-center items-center h-32 text-zinc-500 dark:text-zinc-400">
-        <p class="text-lg">No graded assessments found</p>
-        <p class="text-sm">for {timeframeLabel.toLowerCase()}</p>
+        <p class="text-lg">
+          <T key="analytics.no_graded_assessments" fallback="No graded assessments found" />
+        </p>
+        <p class="text-sm">
+          <T key="analytics.for_timeframe" fallback="for timeframe" values={{ timeframe: timeframeLabel.toLowerCase() }} />
+        </p>
       </div>
     {/if}
   </Card.Content>
@@ -155,7 +165,7 @@
     <div class="flex gap-2 items-start w-full text-sm">
       <div class="grid gap-2">
         <div class="flex gap-2 items-center leading-none text-muted-foreground">
-          Average grade: {averageGrade}% across {totalAssessments} assessments in {timeframeLabel.toLowerCase()}
+          <T key="analytics.average_grade_summary" fallback="Average grade summary" values={{ grade: averageGrade, count: totalAssessments, timeframe: timeframeLabel.toLowerCase() }} />
         </div>
       </div>
     </div>

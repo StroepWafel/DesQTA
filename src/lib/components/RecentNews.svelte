@@ -8,6 +8,8 @@
   import { logger } from '../../utils/logger';
   import { getRSS } from '../../utils/netUtil';
   import { invoke } from '@tauri-apps/api/core';
+  import T from './T.svelte';
+  import { _ } from '../../lib/i18n';
 
   dayjs.extend(relativeTime);
 
@@ -142,37 +144,43 @@
 
 <div class="flex flex-col gap-3 text-zinc-900 dark:text-white">
   <div class="flex items-center justify-between">
-    <h3 class="text-base sm:text-lg font-semibold">Recent News</h3>
+    <h3 class="text-base sm:text-lg font-semibold">
+      <T key="dashboard.recent_news" fallback="Recent News" />
+    </h3>
     <button
       class="px-3 py-1.5 rounded-lg bg-zinc-800/80 text-white hover:bg-zinc-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
       onclick={fetchNews}
-      aria-label="Refresh news"
-      title="Refresh"
+      aria-label={$_('dashboard.refresh_news') || 'Refresh news'}
+      title={$_('common.refresh') || 'Refresh'}
     >
       <Icon src={ArrowPath} class="w-4 h-4" />
     </button>
   </div>
 
   {#if loading}
-    <div class="text-sm opacity-80">Loading news…</div>
+    <div class="text-sm opacity-80">
+      <T key="dashboard.loading_news" fallback="Loading news…" />
+    </div>
   {:else if error}
     <div class="text-sm text-red-500">{error}</div>
   {:else if items.length === 0}
-    <div class="text-sm opacity-80">No news available.</div>
+    <div class="text-sm opacity-80">
+      <T key="dashboard.no_news" fallback="No news available." />
+    </div>
   {:else}
     <div class="relative">
       <!-- Scroll controls -->
       <button
         class="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-zinc-900/70 text-white hover:bg-zinc-800/80 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
         onclick={scrollLeft}
-        aria-label="Scroll left"
+        aria-label={$_('dashboard.scroll_left') || 'Scroll left'}
       >
         <Icon src={ChevronLeft} class="w-6 h-6 sm:w-7 sm:h-7" />
       </button>
       <button
         class="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-zinc-900/70 text-white hover:bg-zinc-800/80 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
         onclick={scrollRight}
-        aria-label="Scroll right"
+        aria-label={$_('dashboard.scroll_right') || 'Scroll right'}
       >
         <Icon src={ChevronRight} class="w-6 h-6 sm:w-7 sm:h-7" />
       </button>

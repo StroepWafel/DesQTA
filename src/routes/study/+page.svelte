@@ -9,6 +9,8 @@
   import { studyTips } from './studytips';
   import NotesContainer from '$lib/components/notes/NotesContainer.svelte';
   import { Button, Input, Badge } from '$lib/components/ui';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   interface Subtask {
     id: string;
@@ -559,15 +561,19 @@
   <div class="shrink-0 px-4 sm:px-6 py-4 sm:py-6" in:fly={{ y: -30, duration: 500, easing: quintOut }}>
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">Study</h1>
-        <p class="mt-1 text-sm sm:text-base text-zinc-600 dark:text-zinc-300">Plan, track, and focus on your upcoming work.</p>
+        <h1 class="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
+          <T key="navigation.study" fallback="Study" />
+        </h1>
+        <p class="mt-1 text-sm sm:text-base text-zinc-600 dark:text-zinc-300">
+          <T key="study.page_description" fallback="Plan, track, and focus on your upcoming work." />
+        </p>
       </div>
       <div class="flex items-center gap-3">
         <button
           class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-zinc-300 text-zinc-900 dark:text-white dark:border-zinc-700 bg-white dark:bg-zinc-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm sm:text-base"
           on:click={() => { /* timer */ }}
-          aria-label="Open Study Timer">
-          Open Timer
+          aria-label={$_('study.open_timer') || 'Open Study Timer'}>
+          <T key="study.open_timer" fallback="Open Timer" />
         </button>
       </div>
     </div>
@@ -582,7 +588,7 @@
         aria-controls="tasks-panel"
         id="tasks-tab"
       >
-        Tasks
+        <T key="study.tasks" fallback="Tasks" />
       </button>
       <button 
         class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab==='notes' ? 'accent-bg text-white' : 'bg-transparent text-zinc-700 dark:text-zinc-300'}" 
@@ -592,7 +598,7 @@
         aria-controls="notes-panel"
         id="notes-tab"
       >
-        Notes
+        <T key="study.notes" fallback="Notes" />
       </button>
     </div>
   </div>
@@ -617,25 +623,25 @@
           <div class="mb-4 flex flex-col gap-3">
             <!-- Filter buttons -->
             <div class="flex flex-wrap gap-2 justify-center sm:justify-start">
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='all'} in:scale={{ duration: 300, delay: 100, easing: quintOut }}>All</button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='today'} in:scale={{ duration: 300, delay: 150, easing: quintOut }}>Today</button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='week'} in:scale={{ duration: 300, delay: 200, easing: quintOut }}>This Week</button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='completed'} in:scale={{ duration: 300, delay: 250, easing: quintOut }}>Completed</button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='all'} in:scale={{ duration: 300, delay: 100, easing: quintOut }}><T key="study.filter_all" fallback="All" /></button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='today'} in:scale={{ duration: 300, delay: 150, easing: quintOut }}><T key="study.filter_today" fallback="Today" /></button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='week'} in:scale={{ duration: 300, delay: 200, easing: quintOut }}><T key="study.filter_this_week" fallback="This Week" /></button>
+              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='completed'} in:scale={{ duration: 300, delay: 250, easing: quintOut }}><T key="study.filter_completed" fallback="Completed" /></button>
             </div>
             <!-- Controls row -->
             <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-              <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm sm:text-base" on:click={addTodo} aria-label="Add new task">+ New Task</button>
+              <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm sm:text-base" on:click={addTodo} aria-label={$_('study.add_new_task') || 'Add new task'}>+ <T key="study.new_task" fallback="New Task" /></button>
               <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <div class="relative flex-1 sm:flex-initial">
-                  <input class="w-full pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" placeholder="Search tasks..." bind:value={query} />
+                  <input class="w-full pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" placeholder={$_('study.search_tasks') || 'Search tasks...'} bind:value={query} />
                   <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400">
                     <Icon src={MagnifyingGlass} class="w-4 h-4" />
                   </span>
                 </div>
                 <select class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" bind:value={sortBy}>
-                  <option value="due">Due Date</option>
-                  <option value="priority">Priority</option>
-                  <option value="updated">Updated</option>
+                  <option value="due">{$_('study.sort_due_date') || 'Due Date'}</option>
+                  <option value="priority">{$_('study.sort_priority') || 'Priority'}</option>
+                  <option value="updated">{$_('study.sort_updated') || 'Updated'}</option>
                 </select>
               </div>
             </div>
@@ -643,13 +649,19 @@
 
           <!-- Tasks List -->
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">Tasks</h2>
-            <span class="text-sm text-zinc-500 dark:text-zinc-400">{filteredSortedTodos.length} tasks</span>
+            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+              <T key="study.tasks" fallback="Tasks" />
+            </h2>
+            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+              <T key="study.task_count" fallback={`${filteredSortedTodos.length} tasks`} values={{count: filteredSortedTodos.length}} />
+            </span>
           </div>
 
           <div class="space-y-4">
             {#if filteredSortedTodos.length === 0}
-              <div class="text-center py-10 text-zinc-500 dark:text-zinc-400">No tasks match your filters.</div>
+              <div class="text-center py-10 text-zinc-500 dark:text-zinc-400">
+                <T key="study.no_tasks_match" fallback="No tasks match your filters." />
+              </div>
             {/if}
 
             {#each filteredSortedTodos as todo (todo.id)}
@@ -659,14 +671,14 @@
                 {#if !editMode[todo.id]}
                   <!-- Condensed View -->
                   <div class="flex items-start gap-3">
-                    <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
+                    <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" aria-label={$_('study.toggle_complete') || 'Toggle complete'} />
                     <div class="flex-1 min-w-0">
                       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div class="truncate text-zinc-900 dark:text-white font-medium pr-2">{todo.title || 'Untitled task'}</div>
+                        <div class="truncate text-zinc-900 dark:text-white font-medium pr-2">{todo.title || ($_('study.untitled_task') || 'Untitled task')}</div>
                         <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                           <span class="text-xs px-1.5 py-0.5 sm:px-2 rounded-full border priority-indicator {getPriorityStyles(todo.priority)}">{todo.priority ?? 'medium'}</span>
-                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring" on:click={() => editMode[todo.id]=true}>Edit</button>
-                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Del</button>
+                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring" on:click={() => editMode[todo.id]=true}><T key="study.edit" fallback="Edit" /></button>
+                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}><T key="study.delete" fallback="Del" /></button>
                         </div>
                       </div>
                       <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
@@ -700,11 +712,13 @@
                       </div>
                       <div class="mt-2 text-sm text-zinc-600 dark:text-zinc-300 line-clamp-2">{todo.description}</div>
                       {#if (todo.subtasks ?? []).length}
-                        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{(todo.subtasks ?? []).filter(s=>s.completed).length}/{todo.subtasks?.length} subtasks done</div>
+                        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          <T key="study.subtasks_progress" fallback={`${(todo.subtasks ?? []).filter(s=>s.completed).length}/${todo.subtasks?.length || 0} subtasks done`} values={{completed: (todo.subtasks ?? []).filter(s=>s.completed).length, total: todo.subtasks?.length || 0}} />
+                        </div>
                       {/if}
                       <div class="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <Button variant="ghost" size="xs" onclick={() => markAllSubtasksDone(todo.id)}>✓ All subtasks</Button>
-                        <Button variant="ghost" size="xs" onclick={() => duplicateTodo(todo.id)}>Duplicate</Button>
+                        <Button variant="ghost" size="xs" onclick={() => markAllSubtasksDone(todo.id)}>✓ <T key="study.all_subtasks" fallback="All subtasks" /></Button>
+                        <Button variant="ghost" size="xs" onclick={() => duplicateTodo(todo.id)}><T key="study.duplicate" fallback="Duplicate" /></Button>
                       </div>
                     </div>
                   </div>
@@ -714,19 +728,19 @@
                     <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2">
-                        <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-base font-medium" placeholder="Task title" bind:value={todo.title} />
+                        <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-base font-medium" placeholder={$_('study.task_title') || 'Task title'} bind:value={todo.title} />
                         <div class="flex flex-col gap-1">
                           <select class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" bind:value={todo.priority} on:change={() => updateField(todo.id, 'priority', todo.priority)}>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
+                            <option value="low">{$_('study.priority_low') || 'Low'}</option>
+                            <option value="medium">{$_('study.priority_medium') || 'Medium'}</option>
+                            <option value="high">{$_('study.priority_high') || 'High'}</option>
                           </select>
                           <span class="text-xs px-2 py-0.5 rounded-full border priority-indicator {getPriorityStyles(todo.priority)} text-center">{todo.priority ?? 'medium'}</span>
                         </div>
                       </div>
                       <div class="mt-2 grid grid-cols-1 gap-2">
                         <div class="relative">
-                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} on:input={(e) => { subjectQuery[todo.id] = (e.target as HTMLInputElement).value; showSubjectDropdown[todo.id] = true; }} on:focus={() => showSubjectDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showSubjectDropdown[todo.id]=false, 150)} />
+                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring" placeholder={$_('study.related_subject') || 'Related subject'} bind:value={todo.related_subject} on:input={(e) => { subjectQuery[todo.id] = (e.target as HTMLInputElement).value; showSubjectDropdown[todo.id] = true; }} on:focus={() => showSubjectDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showSubjectDropdown[todo.id]=false, 150)} />
                           {#if showSubjectDropdown[todo.id]}
                             <div class="absolute z-20 mt-1 w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md max-h-56 overflow-auto">
                               {#each subjects.filter(s => (subjectQuery[todo.id] ?? todo.related_subject ?? '').toLowerCase().split(' ').every(q => s.title.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))) as s}
@@ -739,7 +753,7 @@
                           {/if}
                         </div>
                         <div class="relative">
-                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} on:input={(e) => { assessmentQuery[todo.id] = (e.target as HTMLInputElement).value; showAssessmentDropdown[todo.id] = true; }} on:focus={() => showAssessmentDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showAssessmentDropdown[todo.id]=false, 150)} />
+                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring" placeholder={$_('study.related_assessment') || 'Related assessment'} bind:value={todo.related_assessment} on:input={(e) => { assessmentQuery[todo.id] = (e.target as HTMLInputElement).value; showAssessmentDropdown[todo.id] = true; }} on:focus={() => showAssessmentDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showAssessmentDropdown[todo.id]=false, 150)} />
                           {#if showAssessmentDropdown[todo.id]}
                             <div class="absolute z-20 mt-1 w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md max-h-64 overflow-auto">
                               {#each assessmentsAll.filter(a => {
@@ -775,28 +789,32 @@
                             {/if}
                           </div>
                         {/if}
-                        <input class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:input={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); }} />
+                        <input class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" placeholder={$_('study.tags_comma_separated') || 'Tags (comma separated)'} value={(todo.tags ?? []).join(', ')} on:input={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); }} />
                       </div>
 
                       <!-- Description and Subtasks -->
                       <div class="mt-3">
-                        <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring" placeholder="Description" bind:value={todo.description}></textarea>
+                        <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring" placeholder={$_('study.description') || 'Description'} bind:value={todo.description}></textarea>
                         <div class="mt-3 space-y-2">
                           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <h3 class="text-sm font-medium text-zinc-900 dark:text-white">Subtasks</h3>
+                            <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
+                              <T key="study.subtasks" fallback="Subtasks" />
+                            </h3>
                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>+ Add</button>
-                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>✓ All</button>
+                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>+ <T key="study.add" fallback="Add" /></button>
+                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>✓ <T key="study.all" fallback="All" /></button>
                             </div>
                           </div>
                           {#if (todo.subtasks ?? []).length === 0}
-                            <div class="text-sm text-zinc-500 dark:text-zinc-400">No subtasks yet.</div>
+                            <div class="text-sm text-zinc-500 dark:text-zinc-400">
+                              <T key="study.no_subtasks_yet" fallback="No subtasks yet." />
+                            </div>
                           {:else}
                             <div class="space-y-2">
                               {#each todo.subtasks ?? [] as sub (sub.id)}
                                 <div class="flex items-center gap-2">
-                                  <input type="checkbox" checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 shrink-0 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" aria-label="Toggle subtask" />
-                                  <input class="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); }} placeholder="Subtask title" />
+                                  <input type="checkbox" checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 shrink-0 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" aria-label={$_('study.toggle_subtask') || 'Toggle subtask'} />
+                                  <input class="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); }} placeholder={$_('study.subtask_title') || 'Subtask title'} />
                                 </div>
                               {/each}
                             </div>
@@ -805,7 +823,7 @@
                       </div>
 
                       <div class="mt-4 flex items-center justify-center sm:justify-end gap-2">
-                        <button class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring w-full sm:w-auto" on:click={() => { editMode[todo.id] = false; saveTodos(); }}>Save Task</button>
+                        <button class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring w-full sm:w-auto" on:click={() => { editMode[todo.id] = false; saveTodos(); }}><T key="study.save_task" fallback="Save Task" /></button>
                       </div>
                     </div>
                   </div>
@@ -820,7 +838,9 @@
         <div class="flex flex-col space-y-6 min-h-0" in:fly={{ x: 50, duration: 500, delay: 200, easing: quintOut }}>
           <div class="flex-1 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md overflow-y-auto">
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">Upcoming Assessments</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
+              <T key="study.upcoming_assessments" fallback="Upcoming Assessments" />
+            </h2>
             <span class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">{upcomingAssessments.length}</span>
           </div>
           {#if loadingAssessments}
@@ -847,11 +867,15 @@
                       {/if}
                     </div>
                   </div>
-                  <button class="px-2 py-1 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring">Open</button>
+                  <button class="px-2 py-1 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring">
+                    <T key="study.open" fallback="Open" />
+                  </button>
                 </div>
               {/each}
               {#if upcomingAssessments.length === 0}
-                <div class="text-center py-6 text-zinc-500 dark:text-zinc-400">No upcoming assessments.</div>
+                <div class="text-center py-6 text-zinc-500 dark:text-zinc-400">
+                  <T key="study.no_upcoming_assessments" fallback="No upcoming assessments." />
+                </div>
               {/if}
             </div>
           {/if}
@@ -861,12 +885,14 @@
           <div class="shrink-0 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md"
                in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">Study Tip</h2>
+            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+              <T key="study.study_tip" fallback="Study Tip" />
+            </h2>
             <button 
               class="px-3 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
               on:click={() => currentStudyTip = getRandomStudyTip()}
-              aria-label="Get new study tip">
-              New Tip
+              aria-label={$_('study.get_new_tip') || 'Get new study tip'}>
+              <T key="study.new_tip" fallback="New Tip" />
             </button>
           </div>
           <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">

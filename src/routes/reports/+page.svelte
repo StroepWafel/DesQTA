@@ -4,6 +4,8 @@
   import { cache } from '../../utils/cache';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   let reports = $state<any[]>([]);
   let loading = $state(true);
@@ -50,10 +52,10 @@
         // Cache reports for 5 minutes
         cache.set('reports', reports);
       } else {
-        error = 'Failed to load reports.';
+        error = $_('reports.failed_to_load') || 'Failed to load reports.';
       }
     } catch (e) {
-      error = 'Error loading reports.';
+      error = $_('reports.error_loading') || 'Error loading reports.';
     } finally {
       loading = false;
     }
@@ -77,13 +79,17 @@
 </script>
 
 <div class="p-8 min-h-screen">
-  <h1 class="mb-8 text-3xl font-bold text-zinc-900 dark:text-white">Reports</h1>
+  <h1 class="mb-8 text-3xl font-bold text-zinc-900 dark:text-white">
+    <T key="navigation.reports" fallback="Reports" />
+  </h1>
   {#if loading}
     <div class="flex flex-col justify-center items-center py-24">
       <div
         class="w-16 h-16 rounded-full border-4 animate-spin border-indigo-500/30 border-t-indigo-500">
       </div>
-      <p class="mt-4 text-zinc-600 dark:text-zinc-400">Loading reports...</p>
+      <p class="mt-4 text-zinc-600 dark:text-zinc-400">
+        <T key="reports.loading" fallback="Loading reports..." />
+      </p>
     </div>
   {:else if error}
     <div class="flex flex-col justify-center items-center py-24">
@@ -123,7 +129,7 @@
               class="mt-4 inline-block w-full text-center px-4 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 accent-bg accent-ring text-white"
               onclick={() => openReportInBrowser(report)}
             >
-              Download
+              <T key="reports.download" fallback="Download" />
             </button>
           </div>
         </div>

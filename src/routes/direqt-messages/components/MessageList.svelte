@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { Message } from '../types';
   import MessageItem from '$lib/components/MessageItem.svelte';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../../lib/i18n';
 
   let { selectedFolder, messages, loading, error, selectedMessage, openMessage } = $props<{
     selectedFolder: string;
@@ -78,7 +80,9 @@
               d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
         </div>
-        <p class="mt-4 text-sm sm:text-base">No messages in this folder.</p>
+        <p class="mt-4 text-sm sm:text-base">
+          <T key="messages.no_messages_in_folder" fallback="No messages in this folder." />
+        </p>
       </div>
     {:else}
       <div class="overflow-y-scroll p-2 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-zinc-800/10">

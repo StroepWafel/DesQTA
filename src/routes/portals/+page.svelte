@@ -6,6 +6,8 @@
   import { fade, fly } from 'svelte/transition';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
   import Modal from '$lib/components/Modal.svelte';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   interface Portal {
     is_power_portal: boolean;
@@ -53,10 +55,10 @@
       if (data.status === '200' && data.payload) {
         portals = data.payload.sort((a, b) => a.priority - b.priority);
       } else {
-        error = 'Failed to load portals';
+        error = $_('portals.failed_to_load') || 'Failed to load portals';
       }
     } catch (err) {
-      error = err instanceof Error ? err.message : 'Failed to load portals';
+      error = err instanceof Error ? err.message : $_('portals.failed_to_load') || 'Failed to load portals';
       console.error('Error loading portals:', err);
     } finally {
       loading = false;
@@ -190,10 +192,12 @@
     class="sticky top-0 z-20 flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center animate-fade-in-up backdrop-blur-md bg-white/80 dark:bg-zinc-900/80 py-4 px-6 border-b border-zinc-200 dark:border-zinc-800 rounded-xl">
     <div class="flex items-center gap-3">
       <Icon src={GlobeAlt} class="w-8 h-8 text-zinc-600 dark:text-zinc-400" />
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Portals</h1>
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
+        <T key="navigation.portals" fallback="Portals" />
+      </h1>
     </div>
     <div class="text-sm text-zinc-600 dark:text-zinc-400">
-      {portals.length} portal{portals.length !== 1 ? 's' : ''} available
+      <T key="portals.count" fallback="portals available" values={{ count: portals.length, plural: portals.length !== 1 ? 's' : '' }} />
     </div>
   </div>
 
@@ -203,7 +207,9 @@
         <div
           class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-indigo-500/30 border-t-indigo-500">
         </div>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">Loading portals...</p>
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
+          <T key="portals.loading" fallback="Loading portals..." />
+        </p>
       </div>
     </div>
   {:else if error}
@@ -214,7 +220,7 @@
           <div class="flex flex-col items-center justify-center py-12 text-center">
             <Icon src={ExclamationTriangle} class="w-16 h-16 text-red-500 mb-4" />
             <h3 class="text-lg font-medium text-red-700 dark:text-red-300 mb-2">
-              Error Loading Portals
+              <T key="portals.error_loading" fallback="Error Loading Portals" />
             </h3>
             <p class="text-red-600 dark:text-red-400 max-w-md mb-4">
               {error}
@@ -222,7 +228,7 @@
             <button
               class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               onclick={loadPortals}>
-              Try Again
+              <T key="common.try_again" fallback="Try Again" />
             </button>
           </div>
         </div>
@@ -236,10 +242,10 @@
           <div class="flex flex-col items-center justify-center py-12 text-center">
             <Icon src={GlobeAlt} class="w-16 h-16 text-zinc-400 dark:text-zinc-500 mb-4" />
             <h3 class="text-lg font-medium text-zinc-900 dark:text-white mb-2">
-              No Portals Available
+              <T key="portals.no_portals_title" fallback="No Portals Available" />
             </h3>
             <p class="text-zinc-600 dark:text-zinc-400 max-w-md">
-              There are currently no portals configured for your account.
+              <T key="portals.no_portals_description" fallback="There are currently no portals configured for your account." />
             </p>
           </div>
         </div>
@@ -251,9 +257,11 @@
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 animate-fade-in-up">
         <div class="px-6 py-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">Available Portals</h2>
+          <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+            <T key="portals.available_portals" fallback="Available Portals" />
+          </h2>
           <p class="text-sm text-zinc-600 dark:text-zinc-400">
-            Click on any portal to open it in a new tab
+            <T key="portals.click_to_open" fallback="Click on any portal to open it in a new tab" />
           </p>
         </div>
         <div class="p-6">
@@ -282,7 +290,7 @@
                   <div class="flex flex-wrap justify-center gap-1 mt-2">
                     {#if portal.is_power_portal}
                       <span class="px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full">
-                        Power Portal
+                        <T key="portals.power_portal" fallback="Power Portal" />
                       </span>
                     {/if}
                   </div>
@@ -310,7 +318,9 @@
   {#if loadingContent}
     <div class="flex items-center justify-center py-12">
       <LoadingSpinner />
-      <span class="ml-3 text-zinc-600 dark:text-zinc-400">Loading portal content...</span>
+      <span class="ml-3 text-zinc-600 dark:text-zinc-400">
+        <T key="portals.loading_content" fallback="Loading portal content..." />
+      </span>
     </div>
   {:else if portalContent}
     <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
@@ -319,7 +329,9 @@
           {@html portalContent.contents}
         {:else}
           <div class="text-center py-8">
-            <p class="text-zinc-600 dark:text-zinc-400">No content available for this portal.</p>
+            <p class="text-zinc-600 dark:text-zinc-400">
+              <T key="portals.no_content" fallback="No content available for this portal." />
+            </p>
           </div>
         {/if}
       </div>
@@ -327,7 +339,9 @@
   {:else}
     <div class="text-center py-12">
       <div class="w-12 h-12 text-zinc-400 mx-auto mb-4">⚠️</div>
-      <p class="text-zinc-600 dark:text-zinc-400">Failed to load portal content</p>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="portals.failed_to_load_content" fallback="Failed to load portal content" />
+      </p>
     </div>
   {/if}
 </Modal>

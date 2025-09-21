@@ -11,6 +11,8 @@
   import * as Popover from "$lib/components/ui/popover/index.js";
   import * as Pagination from "$lib/components/ui/pagination/index.js";
   import * as Select from "$lib/components/ui/select/index.js";
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   interface Student {
     id: number;
@@ -214,32 +216,44 @@
   <!-- Header -->
   <div class="flex justify-between items-start">
     <div>
-      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">School Directory</h1>
-      <p class="text-zinc-600 dark:text-zinc-400">Browse and search through all students</p>
+      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
+        <T key="navigation.directory" fallback="Directory" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="directory.description" fallback="Browse and search through all students" />
+      </p>
     </div>
     
     <div class="flex items-center gap-2">
       <Popover.Root>
         <Popover.Trigger class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2">
           <Icon src={Funnel} class="w-4 h-4" />
-          Filters
+          <T key="directory.filters" fallback="Filters" />
         </Popover.Trigger>
         
         <Popover.Content class="w-96 p-4 space-y-4">
-          <h3 class="font-medium text-zinc-900 dark:text-white">Filter Students</h3>
+          <h3 class="font-medium text-zinc-900 dark:text-white">
+            <T key="directory.filter_students" fallback="Filter Students" />
+          </h3>
           
           <div class="grid grid-cols-1 gap-4">
             <!-- Year Filter -->
             <div class="space-y-2">
-              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Year Level</label>
+              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <T key="directory.year_level" fallback="Year Level" />
+              </label>
               <Select.Root type="single" bind:value={selectedYear}>
                 <Select.Trigger class="w-full">
-                  <span class="truncate">{selectedYear === 'all' ? 'All Years' : `Year ${selectedYear}`}</span>
+                  <span class="truncate">{selectedYear === 'all' ? $_('directory.all_years') || 'All Years' : `${$_('directory.year') || 'Year'} ${selectedYear}`}</span>
                 </Select.Trigger>
                 <Select.Content>
-                  <Select.Item value="all">All Years</Select.Item>
+                  <Select.Item value="all">
+                    <T key="directory.all_years" fallback="All Years" />
+                  </Select.Item>
                   {#each years as year}
-                    <Select.Item value={year}>Year {year}</Select.Item>
+                    <Select.Item value={year}>
+                      <T key="directory.year_number" fallback="Year" values={{ number: year }} />
+                    </Select.Item>
                   {/each}
                 </Select.Content>
               </Select.Root>
@@ -247,13 +261,17 @@
 
             <!-- Sub School Filter -->
             <div class="space-y-2">
-              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Sub School</label>
+              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <T key="directory.sub_school" fallback="Sub School" />
+              </label>
               <Select.Root type="single" bind:value={selectedSubSchool}>
                 <Select.Trigger class="w-full">
-                  <span class="truncate">{selectedSubSchool === 'all' ? 'All Sub Schools' : selectedSubSchool}</span>
+                  <span class="truncate">{selectedSubSchool === 'all' ? $_('directory.all_sub_schools') || 'All Sub Schools' : selectedSubSchool}</span>
                 </Select.Trigger>
                 <Select.Content>
-                  <Select.Item value="all">All Sub Schools</Select.Item>
+                  <Select.Item value="all">
+                    <T key="directory.all_sub_schools" fallback="All Sub Schools" />
+                  </Select.Item>
                   {#each subSchools as subSchool}
                     <Select.Item value={subSchool}>{subSchool}</Select.Item>
                   {/each}
@@ -263,13 +281,17 @@
 
             <!-- House Filter -->
             <div class="space-y-2">
-              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">House</label>
+              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <T key="directory.house" fallback="House" />
+              </label>
               <Select.Root type="single" bind:value={selectedHouse}>
                 <Select.Trigger class="w-full">
-                  <span class="truncate">{selectedHouse === 'all' ? 'All Houses' : selectedHouse}</span>
+                  <span class="truncate">{selectedHouse === 'all' ? $_('directory.all_houses') || 'All Houses' : selectedHouse}</span>
                 </Select.Trigger>
                 <Select.Content>
-                  <Select.Item value="all">All Houses</Select.Item>
+                  <Select.Item value="all">
+                    <T key="directory.all_houses" fallback="All Houses" />
+                  </Select.Item>
                   {#each houses as house}
                     <Select.Item value={house}>{house}</Select.Item>
                   {/each}
@@ -279,15 +301,21 @@
 
             <!-- Campus Filter -->
             <div class="space-y-2">
-              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Campus</label>
+              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <T key="directory.campus" fallback="Campus" />
+              </label>
               <Select.Root type="single" bind:value={selectedCampus}>
                 <Select.Trigger class="w-full">
-                  <span class="truncate">{selectedCampus === 'all' ? 'All Campuses' : `Campus ${selectedCampus}`}</span>
+                  <span class="truncate">{selectedCampus === 'all' ? $_('directory.all_campuses') || 'All Campuses' : `${$_('directory.campus') || 'Campus'} ${selectedCampus}`}</span>
                 </Select.Trigger>
                 <Select.Content>
-                  <Select.Item value="all">All Campuses</Select.Item>
+                  <Select.Item value="all">
+                    <T key="directory.all_campuses" fallback="All Campuses" />
+                  </Select.Item>
                   {#each campuses as campus}
-                    <Select.Item value={campus}>Campus {campus}</Select.Item>
+                    <Select.Item value={campus}>
+                      <T key="directory.campus_name" fallback="Campus {name}" values={{ name: campus }} />
+                    </Select.Item>
                   {/each}
                 </Select.Content>
               </Select.Root>
@@ -300,7 +328,7 @@
         class="px-4 py-2 text-sm font-medium text-white accent-bg rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         onclick={clearFilters}
       >
-        Clear All
+        <T key="directory.clear_all" fallback="Clear All" />
       </button>
     </div>
   </div>
@@ -312,7 +340,7 @@
       <Icon src={MagnifyingGlass} class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-zinc-400 z-10" />
       <Input
         bind:value={search}
-        placeholder="Search by name, display name, or roll group..."
+        placeholder={$_('directory.search_placeholder') || 'Search by name, display name, or roll group...'}
         fullWidth
         leftIcon
         size="lg"
@@ -326,7 +354,7 @@
     <!-- Results Summary -->
     <div class="flex items-center justify-between">
       <p class="text-sm text-zinc-600 dark:text-zinc-400">
-        Showing {getPaginatedStudents().length} of {getFilteredStudents().length} students (Page {currentPage} of {getTotalPages()})
+        <T key="directory.showing_students" fallback="Showing students" values={{ showing: getPaginatedStudents().length, total: getFilteredStudents().length, currentPage, totalPages: getTotalPages() }} />
       </p>
     </div>
 
@@ -335,8 +363,8 @@
       error={error}
       data={getFilteredStudents()}
       empty={getFilteredStudents().length === 0}
-      emptyTitle="No students found"
-      emptyMessage="Try adjusting your search or filters to find what you're looking for."
+      emptyTitle={$_('directory.no_students_found') || 'No students found'}
+      emptyMessage={$_('directory.no_students_message') || 'Try adjusting your search or filters to find what you\'re looking for.'}
       emptyIcon="👥"
       componentName="Directory"
     >
@@ -350,7 +378,7 @@
               {#if devSensitiveInfoHider}
                 <img
                   src={getStudentAvatar(student)}
-                  alt="Student avatar"
+                  alt={$_('directory.student_avatar') || 'Student avatar'}
                   class="w-10 h-10 rounded-full object-cover border-2 border-white/60 dark:border-zinc-600/60"
                 />
               {:else}
@@ -375,7 +403,9 @@
             <div class="space-y-2">
               <div class="flex items-center gap-2 text-xs">
                 <Icon src={AcademicCap} class="w-3 h-3 text-zinc-400" />
-                <span class="text-zinc-600 dark:text-zinc-400">Year {student.year}</span>
+                <span class="text-zinc-600 dark:text-zinc-400">
+                  <T key="directory.year_number" fallback="Year" values={{ number: student.year }} />
+                </span>
               </div>
               
                {#if student.sub_school && student.sub_school.trim() !== ""}

@@ -28,6 +28,7 @@
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
   import LanguageSelector from '../../lib/components/LanguageSelector.svelte';
   import T from '../../lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
   import { goto } from '$app/navigation';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
@@ -529,10 +530,14 @@ The Company reserves the right to terminate your access to the Service at any ti
 <div class="p-4 mx-auto max-w-4xl sm:p-6 md:p-8">
   <div
     class="flex sticky top-0 z-20 flex-col gap-4 justify-between items-start px-6 py-4 mb-8 rounded-xl border-b backdrop-blur-md sm:flex-row sm:items-center animate-fade-in-up bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800">
-    <h1 class="px-2 py-1 text-xl font-bold rounded-lg sm:text-2xl">Settings</h1>
+    <h1 class="px-2 py-1 text-xl font-bold rounded-lg sm:text-2xl">
+      <T key="navigation.settings" fallback="Settings" />
+    </h1>
     <div class="flex flex-col gap-2 items-start w-full sm:flex-row sm:items-center sm:w-auto">
       {#if saveSuccess}
-        <span class="text-sm text-green-400 animate-fade-in sm:text-base">Saved!</span>
+        <span class="text-sm text-green-400 animate-fade-in sm:text-base">
+          <T key="settings.saved" fallback="Saved!" />
+        </span>
       {/if}
       {#if saveError}
         <span class="text-sm text-red-400 animate-fade-in sm:text-base">{saveError}</span>
@@ -547,10 +552,10 @@ The Company reserves the right to terminate your access to the Service at any ti
               <div
                 class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
               </div>
-              <span>Saving...</span>
+              <span><T key="settings.saving" fallback="Saving..." /></span>
             </div>
           {:else}
-            Save Changes
+            <T key="settings.save_changes" fallback="Save Changes" />
           {/if}
         </button>
       </div>
@@ -563,7 +568,9 @@ The Company reserves the right to terminate your access to the Service at any ti
         <div
           class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-indigo-500/30 border-t-indigo-500">
         </div>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">Loading settings...</p>
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
+          <T key="settings.loading_settings" fallback="Loading settings..." />
+        </p>
       </div>
     </div>
   {:else}
@@ -573,10 +580,10 @@ The Company reserves the right to terminate your access to the Service at any ti
         class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/30 dark:border-zinc-800/30">
           <h2 class="text-base font-semibold sm:text-lg text-zinc-500 dark:text-zinc-400">
-            Cloud Sync
+            <T key="settings.cloud_sync" fallback="Cloud Sync" />
           </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Sync your settings across devices with BetterSEQTA Plus account cloud syncing
+            <T key="settings.cloud_sync_description" fallback="Sync your settings across devices with BetterSEQTA Plus account cloud syncing" />
           </p>
         </div>
         <div class="relative p-4 sm:p-6">
@@ -587,7 +594,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   class="w-6 h-6 rounded-full border-2 animate-spin border-zinc-400/30 border-t-zinc-400">
                 </div>
                 <span class="text-sm text-zinc-500 dark:text-zinc-400"
-                  >Loading account status...</span>
+                  ><T key="settings.loading_account_status" fallback="Loading account status..." /></span>
               </div>
             </div>
           {:else}
@@ -598,15 +605,17 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <div
                   class="p-5 w-full max-w-xl rounded-xl border shadow-lg bg-white/95 dark:bg-zinc-900/95 border-zinc-300/50 dark:border-zinc-800/50 text-zinc-800 dark:text-white">
                   <h3 class="mb-2 text-base font-semibold sm:text-lg">
-                    Accept BetterSEQTA Cloud EULA
+                    <T key="settings.accept_cloud_eula" fallback="Accept BetterSEQTA Cloud EULA" />
                   </h3>
                   <p class="mb-4 text-sm opacity-80">
-                    You must read and accept the Cloud Sync EULA before using cloud features.
+                    <T key="settings.cloud_eula_description" fallback="You must read and accept the Cloud Sync EULA before using cloud features." />
                   </p>
                   <div class="flex gap-2">
                     <button
                       class="px-4 py-2 text-white rounded-lg transition-all duration-200 accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
-                      onclick={() => (showEulaModal = true)}>Read & Accept</button>
+                      onclick={() => (showEulaModal = true)}>
+                        <T key="settings.read_accept" fallback="Read & Accept" />
+                      </button>
                   </div>
                 </div>
               </div>
@@ -732,10 +741,10 @@ The Company reserves the right to terminate your access to the Service at any ti
         class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/30 dark:border-zinc-800/30">
           <h2 class="text-base font-semibold sm:text-lg text-zinc-500 dark:text-zinc-400">
-            Personal Settings
+            <T key="settings.personal_settings" fallback="Personal Settings" />
           </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Customize your personal profile and preferences
+            <T key="settings.personal_settings_description" fallback="Customize your personal profile and preferences" />
           </p>
         </div>
         <div class="relative p-4 sm:p-6">
@@ -743,9 +752,11 @@ The Company reserves the right to terminate your access to the Service at any ti
           <div class="space-y-4">
             <div class="flex items-start justify-between">
               <div class="flex-1">
-                <h3 class="text-sm font-medium text-zinc-900 dark:text-white">Custom Profile Picture</h3>
+                <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
+                  <T key="settings.custom_profile_picture" fallback="Custom Profile Picture" />
+                </h3>
                 <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
-                  Upload a custom profile picture that will appear in the app header
+                  <T key="settings.profile_picture_description" fallback="Upload a custom profile picture that will appear in the app header" />
                 </p>
               </div>
               <div class="flex items-center gap-3 ml-4">
@@ -760,7 +771,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     onclick={removeProfilePicture}
                     disabled={uploading}
                   >
-                    Remove
+                    <T key="common.remove" fallback="Remove" />
                   </button>
                 {:else}
                   <div class="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
@@ -779,7 +790,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   onclick={() => fileInput?.click()}
                   disabled={uploading}
                 >
-                  {uploading ? 'Uploading...' : 'Upload'}
+                  {uploading ? ($_('settings.uploading') || 'Uploading...') : ($_('settings.upload') || 'Upload')}
                 </button>
               </div>
             </div>
@@ -808,17 +819,21 @@ The Company reserves the right to terminate your access to the Service at any ti
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-base font-semibold sm:text-lg">Homepage</h2>
+          <h2 class="text-base font-semibold sm:text-lg">
+            <T key="settings.homepage" fallback="Homepage" />
+          </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Customize your homepage experience
+            <T key="settings.homepage_description" fallback="Customize your homepage experience" />
           </p>
         </div>
         <div class="p-4 space-y-6 sm:p-6">
           <!-- Widget Settings -->
           <div>
-            <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Widget Settings</h3>
+            <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">
+              <T key="settings.widget_settings" fallback="Widget Settings" />
+            </h3>
             <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Configure which widgets appear on your DesQTA dashboard.
+              <T key="settings.widget_settings_description" fallback="Configure which widgets appear on your DesQTA dashboard." />
             </p>
             <div
               class="p-4 space-y-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
@@ -832,7 +847,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <label
                   for="weather-enabled"
                   class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
-                  >Show Weather Widget</label>
+                  ><T key="settings.show_weather_widget" fallback="Show Weather Widget" /></label>
               </div>
 
               <!-- Show this ONLY if weatherEnabled is true -->
@@ -846,7 +861,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   <label
                     for="force-use-location"
                     class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
-                    >Only use Fallback Location for Weather</label>
+                    ><T key="settings.only_fallback_location" fallback="Only use Fallback Location for Weather" /></label>
                 </div>
 
                 <!-- Show fallback inputs ONLY if forceUseLocation is true -->
@@ -855,11 +870,11 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <label
                       for="weather-city"
                       class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400"
-                      >Fallback City:</label>
+                      ><T key="settings.fallback_city" fallback="Fallback City:" /></label>
                     <input
                       id="weather-city"
                       class="px-3 py-2 w-full bg-white rounded-sm border transition text-zinc-900 sm:w-64 dark:bg-zinc-900/50 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                      placeholder="Perth"
+                      placeholder={$_('settings.city_placeholder') || 'Perth'}
                       bind:value={weatherCity} />
                   </div>
 
@@ -867,7 +882,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <label
                       for="weather-country"
                       class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400"
-                      >Fallback Country Code</label>
+                      ><T key="settings.fallback_country_code" fallback="Fallback Country Code" /></label>
                     <span class="text-xs">
                       Visit <a
                         href="https://countrycode.org"
@@ -879,7 +894,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <input
                       id="weather-country"
                       class="px-3 py-2 w-full bg-white rounded-sm border transition text-zinc-900 sm:w-64 dark:bg-zinc-900/50 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                      placeholder="AU"
+                      placeholder={$_('settings.country_placeholder') || 'AU'}
                       bind:value={weatherCountry} />
                   </div>
                 {/if}
@@ -893,32 +908,39 @@ The Company reserves the right to terminate your access to the Service at any ti
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-150 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-base font-semibold sm:text-lg">Dashboard Shortcuts</h2>
+          <h2 class="text-base font-semibold sm:text-lg">
+            <T key="settings.dashboard_shortcuts" fallback="Dashboard Shortcuts" />
+          </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Configure quick access shortcuts that appear on your dashboard
+            <T key="settings.dashboard_shortcuts_description" fallback="Configure quick access shortcuts that appear on your dashboard" />
           </p>
         </div>
         <div class="p-4 space-y-6 sm:p-6">
           <div>
-            <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Dashboard Quick Actions</h3>
+            <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">
+              <T key="settings.dashboard_quick_actions" fallback="Dashboard Quick Actions" />
+            </h3>
             <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Add shortcuts to frequently used features that will appear as quick action buttons on
-              your dashboard.
+              <T key="settings.quick_actions_description" fallback="Add shortcuts to frequently used features that will appear as quick action buttons on your dashboard." />
             </p>
             <div class="space-y-3 sm:space-y-4">
               {#each shortcuts as shortcut, idx}
                 <div
                   class="flex flex-col gap-2 items-start p-3 rounded-lg transition-all duration-200 sm:flex-row sm:items-center bg-zinc-100/80 dark:bg-zinc-800/50 hover:shadow-lg hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 animate-fade-in">
                   <div class="flex flex-col gap-1 w-full sm:w-32">
-                    <label for="shortcut-name-{idx}" class="text-xs text-zinc-600 dark:text-zinc-400">Name</label>
+                    <label for="shortcut-name-{idx}" class="text-xs text-zinc-600 dark:text-zinc-400">
+                      <T key="common.name" fallback="Name" />
+                    </label>
                     <input
                       id="shortcut-name-{idx}"
                       class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
-                      placeholder="Dashboard"
+                      placeholder={$_('settings.shortcut_name_placeholder') || 'Dashboard'}
                       bind:value={shortcut.name} />
                   </div>
                   <div class="flex flex-col gap-1 w-full sm:w-16">
-                    <label for="shortcut-icon-{idx}" class="text-xs text-zinc-600 dark:text-zinc-400">Icon</label>
+                    <label for="shortcut-icon-{idx}" class="text-xs text-zinc-600 dark:text-zinc-400">
+                      <T key="settings.icon" fallback="Icon" />
+                    </label>
                     <input
                       id="shortcut-icon-{idx}"
                       class="px-2 py-1.5 w-full text-sm text-center bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
@@ -926,18 +948,20 @@ The Company reserves the right to terminate your access to the Service at any ti
                       bind:value={shortcut.icon} />
                   </div>
                   <div class="flex flex-col gap-1 w-full sm:flex-1">
-                    <label for="shortcut-url-{idx}" class="text-xs text-zinc-600 dark:text-zinc-400">URL</label>
+                    <label for="shortcut-url-{idx}" class="text-xs text-zinc-600 dark:text-zinc-400">
+                      <T key="settings.url" fallback="URL" />
+                    </label>
                     <input
                       id="shortcut-url-{idx}"
                       class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
-                      placeholder="/dashboard"
+                      placeholder={$_('settings.shortcut_url_placeholder') || '/dashboard'}
                       bind:value={shortcut.url} />
                   </div>
                   <div class="flex items-end pt-4 h-full sm:pt-0">
                     <button
                       class="px-3 py-2 text-red-400 rounded-sm transition-all duration-200 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95"
                       onclick={() => removeShortcut(idx)}
-                      title="Remove shortcut">
+                      title={$_('settings.remove_shortcut') || 'Remove shortcut'}>
                       <Icon src={Trash} class="w-4 h-4" />
                     </button>
                   </div>
@@ -946,15 +970,19 @@ The Company reserves the right to terminate your access to the Service at any ti
               {#if shortcuts.length === 0}
                 <div class="py-8 text-center text-zinc-600 dark:text-zinc-400 animate-fade-in">
                   <div class="mb-3 text-4xl opacity-50">⚡</div>
-                  <p class="text-sm">No dashboard shortcuts configured</p>
-                  <p class="mt-1 text-xs">Add your first shortcut to get started</p>
+                  <p class="text-sm">
+                    <T key="settings.no_shortcuts_configured" fallback="No dashboard shortcuts configured" />
+                  </p>
+                  <p class="mt-1 text-xs">
+                    <T key="settings.add_first_shortcut" fallback="Add your first shortcut to get started" />
+                  </p>
                 </div>
               {/if}
               <button
                 class="flex gap-2 justify-center items-center px-4 py-2 w-full text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
                 onclick={addShortcut}>
                 <Icon src={Plus} class="w-4 h-4" />
-                Add Dashboard Shortcut
+                <T key="settings.add_dashboard_shortcut" fallback="Add Dashboard Shortcut" />
               </button>
             </div>
           </div>
@@ -965,23 +993,28 @@ The Company reserves the right to terminate your access to the Service at any ti
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-base font-semibold sm:text-lg">Appearance</h2>
+          <h2 class="text-base font-semibold sm:text-lg">
+            <T key="settings.appearance" fallback="Appearance" />
+          </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Customize how DesQTA looks
+            <T key="settings.appearance_description" fallback="Customize how DesQTA looks" />
           </p>
         </div>
         <div class="p-4 space-y-6 sm:p-6">
           <!-- Theme Settings -->
           <div>
-            <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">Theme</h3>
+            <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">
+              <T key="settings.theme" fallback="Theme" />
+            </h3>
             <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Choose your preferred color scheme and theme settings.
+              <T key="settings.theme_description" fallback="Choose your preferred color scheme and theme settings." />
             </p>
             <div
               class="p-4 space-y-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
               <div class="flex flex-col gap-2">
-                <label for="accent-color" class="text-sm text-zinc-800 dark:text-zinc-200"
-                  >Accent Color</label>
+                <label for="accent-color" class="text-sm text-zinc-800 dark:text-zinc-200">
+                  <T key="settings.accent_color" fallback="Accent Color" />
+                </label>
                 <div class="flex gap-2 items-center">
                   <input
                     type="color"
@@ -996,17 +1029,18 @@ The Company reserves the right to terminate your access to the Service at any ti
                   <button
                     class="px-3 py-2 rounded-sm transition text-zinc-800 bg-zinc-200 dark:bg-zinc-700/50 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600/50 focus:ring-2 focus:ring-blue-500"
                     onclick={() => accentColor.set('#3b82f6')}>
-                    Reset
+                    <T key="common.reset" fallback="Reset" />
                   </button>
                 </div>
                 <p class="text-xs text-zinc-600 dark:text-zinc-400">
-                  This color will be used throughout the app for buttons, links, and other
-                  interactive elements.
+                  <T key="settings.accent_color_description" fallback="This color will be used throughout the app for buttons, links, and other interactive elements." />
                 </p>
               </div>
 
               <div class="flex flex-col gap-2">
-                <p class="text-sm text-zinc-800 dark:text-zinc-200">Theme</p>
+                <p class="text-sm text-zinc-800 dark:text-zinc-200">
+                  <T key="settings.theme" fallback="Theme" />
+                </p>
                 <div class="flex gap-2">
                   <button
                     class="flex-1 px-4 py-3 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600/50 focus:ring-2 focus:ring-blue-500 transition flex items-center justify-center gap-2 {$theme ===
@@ -1015,7 +1049,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                       : ''}"
                     onclick={() => updateTheme('light')}>
                     <Icon src={Sun} class="w-5 h-5" />
-                    Light
+                    <T key="settings.light" fallback="Light" />
                   </button>
                   <button
                     class="flex-1 px-4 py-3 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600/50 focus:ring-2 focus:ring-blue-500 transition flex items-center justify-center gap-2 {$theme ===
@@ -1024,7 +1058,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                       : ''}"
                     onclick={() => updateTheme('dark')}>
                     <Icon src={Moon} class="w-5 h-5" />
-                    Dark
+                    <T key="settings.dark" fallback="Dark" />
                   </button>
                   <button
                     class="flex-1 px-4 py-3 rounded-lg bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600/50 focus:ring-2 focus:ring-blue-500 transition flex items-center justify-center gap-2 {$theme ===
@@ -1033,11 +1067,11 @@ The Company reserves the right to terminate your access to the Service at any ti
                       : ''}"
                     onclick={() => updateTheme('system')}>
                     <Icon src={ComputerDesktop} class="w-5 h-5" />
-                    System
+                    <T key="settings.system" fallback="System" />
                   </button>
                 </div>
                 <p class="text-xs text-zinc-600 dark:text-zinc-400">
-                  Choose between light mode, dark mode, or follow your system preference.
+                  <T key="settings.theme_mode_description" fallback="Choose between light mode, dark mode, or follow your system preference." />
                 </p>
               </div>
             </div>
@@ -1128,9 +1162,11 @@ The Company reserves the right to terminate your access to the Service at any ti
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-base font-semibold sm:text-lg">Notifications</h2>
+          <h2 class="text-base font-semibold sm:text-lg">
+            <T key="settings.notifications" fallback="Notifications" />
+          </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Manage your notification preferences
+            <T key="settings.notifications_description" fallback="Manage your notification preferences" />
           </p>
         </div>
         <div class="p-4 sm:p-6">
@@ -1145,12 +1181,12 @@ The Company reserves the right to terminate your access to the Service at any ti
               <label
                 for="reminders-enabled"
                 class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
-                >Enable assessment reminder notifications</label>
+                ><T key="settings.enable_reminder_notifications" fallback="Enable assessment reminder notifications" /></label>
             </div>
             <button
               class="px-4 py-2 w-full text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
               onclick={sendTestNotification}>
-              Send Test Notification
+              <T key="settings.send_test_notification" fallback="Send Test Notification" />
             </button>
           </div>
         </div>
@@ -1281,9 +1317,11 @@ The Company reserves the right to terminate your access to the Service at any ti
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-base font-semibold sm:text-lg">AI Features</h2>
+          <h2 class="text-base font-semibold sm:text-lg">
+            <T key="settings.ai_features" fallback="AI Features" />
+          </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Enable AI-powered features by providing your free Gemini API key.
+            <T key="settings.ai_features_description" fallback="Enable AI-powered features by providing your free Gemini API key." />
           </p>
         </div>
         <div class="p-4 space-y-4 sm:p-6">
@@ -1296,7 +1334,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             <label
               for="ai-integrations-enabled"
               class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-              Enable AI Features
+              <T key="settings.enable_ai_features" fallback="Enable AI Features" />
             </label>
           </div>
           {#if aiIntegrationsEnabled}
@@ -1310,7 +1348,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <label
                   for="grade-analyser-enabled"
                   class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Grade Analyser
+                  <T key="settings.grade_analyser" fallback="Grade Analyser" />
                 </label>
               </div>
               <div class="flex gap-3 items-center">
@@ -1322,20 +1360,20 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <label
                   for="lesson-summary-analyser-enabled"
                   class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Lesson Summary Analyser
+                  <T key="settings.lesson_summary_analyser" fallback="Lesson Summary Analyser" />
                 </label>
               </div>
               <div class="mt-6">
                 <label
                   for="gemini-api-key"
                   class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  Gemini API Key
+                  <T key="settings.gemini_api_key" fallback="Gemini API Key" />
                 </label>
                 <input
                   id="gemini-api-key"
                   type="text"
                   class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  placeholder="Paste your Gemini API key here"
+                  placeholder={$_('settings.gemini_placeholder') || 'Paste your Gemini API key here'}
                   bind:value={geminiApiKey}
                   autocomplete="off"
                   spellcheck="false" />
@@ -1359,20 +1397,22 @@ The Company reserves the right to terminate your access to the Service at any ti
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-base font-semibold sm:text-lg">Plugins</h2>
+          <h2 class="text-base font-semibold sm:text-lg">
+            <T key="settings.plugins" fallback="Plugins" />
+          </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Enhance your DesQTA experience with plugins
+            <T key="settings.plugins_description" fallback="Enhance your DesQTA experience with plugins" />
           </p>
         </div>
         <div class="p-4 sm:p-6">
           <div class="p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
             <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Install additional features and customizations from our plugin store.
+              <T key="settings.plugin_store_description" fallback="Install additional features and customizations from our plugin store." />
             </p>
             <a
               href="/settings/plugins"
               class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
-              Open Plugin Store
+              <T key="settings.open_plugin_store" fallback="Open Plugin Store" />
             </a>
           </div>
         </div>

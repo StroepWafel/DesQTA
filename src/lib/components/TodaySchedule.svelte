@@ -14,6 +14,8 @@
     CalendarDays,
   } from 'svelte-hero-icons';
   import { Button } from '$lib/components/ui';
+  import T from './T.svelte';
+  import { _ } from '../i18n';
 
   const studentId = 69; //! literally changes nothing but was used in the original seqta code.
 
@@ -120,9 +122,9 @@
   function lessonsSubtitle() {
     const today = new Date();
     const diff = ~~((today.getTime() - currentSelectedDate.getTime()) / 86_400_000);
-    if (diff === 0) return "Today's Lessons";
-    if (diff === -1) return "Tomorrow's Lessons";
-    if (diff === 1) return "Yesterday's Lessons";
+    if (diff === 0) return $_('dashboard.todays_lessons') || "Today's Lessons";
+    if (diff === -1) return $_('dashboard.tomorrows_lessons') || "Tomorrow's Lessons";
+    if (diff === 1) return $_('dashboard.yesterdays_lessons') || "Yesterday's Lessons";
     return currentSelectedDate.toLocaleDateString('en-AU', {
       weekday: 'short',
       year: 'numeric',
@@ -153,7 +155,7 @@
           value={formatDate(currentSelectedDate)}
           onchange={onDateChange}
           class="w-full sm:w-auto px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-accent-500 hover:border-accent-400 dark:hover:border-accent-400"
-          title="Select a date"
+          title={$_('dashboard.select_date') || 'Select a date'}
         />
         <Icon 
           src={CalendarDays} 
@@ -165,8 +167,8 @@
       <button
         onclick={goToToday}
         class="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-200 text-zinc-700 dark:text-zinc-300 bg-zinc-200/70 dark:bg-zinc-800/70 hover:accent-bg-hover hover:text-white border-zinc-300/50 dark:border-zinc-700/50 hover:accent-border"
-        title="Go to today">
-        Today
+        title={$_('dashboard.go_to_today') || 'Go to today'}>
+        <T key="dashboard.today" fallback="Today" />
       </button>
       
       <!-- Navigation Buttons -->
@@ -174,13 +176,13 @@
         <button
           onclick={prevDay}
           class="flex justify-center items-center w-8 h-8 rounded-lg border transition-all duration-300 text-zinc-600 hover:accent-bg-hover dark:text-zinc-400 hover:text-white border-zinc-300/50 dark:border-zinc-700/50 hover:accent-border hover:accent-shadow"
-          title="Previous day">
+          title={$_('dashboard.previous_day') || 'Previous day'}>
           <Icon src={ChevronLeft} class="w-4 h-4" />
         </button>
         <button
           onclick={nextDay}
           class="flex justify-center items-center w-8 h-8 rounded-lg border transition-all duration-300 text-zinc-600 hover:accent-bg-hover dark:text-zinc-400 hover:text-white border-zinc-300/50 dark:border-zinc-700/50 hover:accent-border hover:accent-shadow"
-          title="Next day">
+          title={$_('dashboard.next_day') || 'Next day'}>
           <Icon src={ChevronRight} class="w-4 h-4" />
         </button>
       </div>
@@ -192,7 +194,9 @@
       <div
         class="w-16 h-16 rounded-full border-4 animate-spin border-indigo-500/30 border-t-indigo-500">
       </div>
-      <p class="mt-4 text-zinc-600 dark:text-zinc-400">Loading your schedule...</p>
+      <p class="mt-4 text-zinc-600 dark:text-zinc-400">
+        <T key="dashboard.loading_schedule" fallback="Loading your schedule..." />
+      </p>
     </div>
   {:else if lessons.length === 0}
     <div
@@ -203,10 +207,10 @@
       </div>
       <div class="flex flex-col items-center">
         <p class="mb-2 text-2xl font-bold text-center text-zinc-800 dark:text-white">
-          No lessons today!
+          <T key="dashboard.no_lessons_today" fallback="No lessons today!" />
         </p>
         <p class="text-lg text-center text-zinc-600 dark:text-zinc-300">
-          Enjoy your free time or check your other tasks.
+          <T key="dashboard.enjoy_free_time" fallback="Enjoy your free time or check your other tasks." />
         </p>
       </div>
     </div>
@@ -258,7 +262,7 @@
                   variant="ghost"
                   size="sm"
                   icon={DocumentText}
-                  ariaLabel="View Assessment"
+                  ariaLabel={$_('dashboard.view_assessment') || 'View Assessment'}
                   onclick={() =>
                     (location.href = `/assessments?code=${lesson.code}&date=${lesson.date}`)}
                   class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"
@@ -267,7 +271,7 @@
                   variant="ghost"
                   size="sm"
                   icon={BookOpen}
-                  ariaLabel="View Course"
+                  ariaLabel={$_('dashboard.view_course') || 'View Course'}
                   onclick={() =>
                     (location.href = `/courses?code=${lesson.code}&date=${lesson.date}`)}
                   class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"

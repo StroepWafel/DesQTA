@@ -4,6 +4,8 @@
   import { getRSS } from '../../../utils/netUtil';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../../lib/i18n';
   let { selectedFolder, openFolder, openCompose } = $props<{
     selectedFolder: any;
     openFolder: (folder: any) => void;
@@ -16,10 +18,10 @@
   async function a() {
     // Folder definitions
     let folders = [
-      { name: 'Inbox', icon: Inbox, id: 'inbox' },
-      { name: 'Sent', icon: PaperAirplane, id: 'sent' },
-      { name: 'Starred', icon: Star, id: 'starred' },
-      { name: 'Trash', icon: Trash, id: 'trash' },
+      { name: $_('messages.inbox') || 'Inbox', icon: Inbox, id: 'inbox' },
+      { name: $_('messages.sent') || 'Sent', icon: PaperAirplane, id: 'sent' },
+      { name: $_('messages.starred') || 'Starred', icon: Star, id: 'starred' },
+      { name: $_('messages.trash') || 'Trash', icon: Trash, id: 'trash' },
     ];
     const subset = await invoke<any>('get_settings_subset', { keys: ['feeds'] });
     for (let item of (subset?.feeds || [])) {
@@ -42,11 +44,11 @@
       class="flex gap-2 items-center px-4 py-3 w-full text-sm font-semibold text-white rounded-2xl shadow-md transition-all duration-200 bg-accent/80 border-accent sm:text-base hover:opacity-95 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
       onclick={openCompose}>
       <Icon src={Plus} class="w-5 h-5" />
-      <span>New message</span>
+      <span><T key="messages.new_message" fallback="New message" /></span>
     </button>
   </div>
   {#await rssFeeds}
-    <p>Loading Data...</p>
+    <p><T key="messages.loading_data" fallback="Loading Data..." /></p>
   {:then folders}
     <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
       {#each folders as folder}
@@ -63,6 +65,6 @@
       {/each}
     </nav>
   {:catch error}
-    <p>Error! {error}</p>
+    <p><T key="messages.error" fallback="Error! {error}" values={{error}} /></p>
   {/await}
 </aside>

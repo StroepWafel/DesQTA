@@ -4,6 +4,8 @@
   import { ArrowPath, PencilSquare } from 'svelte-hero-icons';
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
+  import T from './T.svelte';
+  import { _ } from '../../lib/i18n';
 
   interface MessagePreview {
     id: string;
@@ -72,21 +74,23 @@
 
 <div class="flex flex-col gap-3 text-zinc-900 dark:text-white">
   <div class="flex items-center justify-between">
-    <h3 class="text-base sm:text-lg font-semibold">Messages</h3>
+    <h3 class="text-base sm:text-lg font-semibold">
+      <T key="navigation.messages" fallback="Messages" />
+    </h3>
     <div class="flex gap-2">
       <button
         class="px-3 py-1.5 rounded-lg bg-zinc-800/80 text-white hover:bg-zinc-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
         onclick={fetchMessages}
-        aria-label="Refresh messages"
-        title="Refresh"
+        aria-label={$_('dashboard.refresh_messages') || 'Refresh messages'}
+        title={$_('common.refresh') || 'Refresh'}
       >
         <Icon src={ArrowPath} class="w-4 h-4" />
       </button>
       <button
         class="px-3 py-1.5 rounded-lg accent-bg text-white hover:opacity-90 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
         onclick={composeMessage}
-        aria-label="Compose message"
-        title="Compose"
+        aria-label={$_('dashboard.compose_message') || 'Compose message'}
+        title={$_('dashboard.compose') || 'Compose'}
       >
         <Icon src={PencilSquare} class="w-4 h-4" />
       </button>
@@ -94,11 +98,15 @@
   </div>
 
   {#if loading}
-    <div class="text-sm opacity-80">Loading messages…</div>
+    <div class="text-sm opacity-80">
+      <T key="dashboard.loading_messages" fallback="Loading messages…" />
+    </div>
   {:else if error}
     <div class="text-sm text-red-500">{error}</div>
   {:else if items.length === 0}
-    <div class="text-sm opacity-80">No recent messages.</div>
+    <div class="text-sm opacity-80">
+      <T key="dashboard.no_messages" fallback="No recent messages." />
+    </div>
   {:else}
     <ul class="space-y-2">
       {#each items as m}

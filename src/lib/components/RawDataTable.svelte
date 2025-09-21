@@ -5,6 +5,8 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Select from "$lib/components/ui/select/index.js";
   import { Icon, ChevronUp, ChevronDown } from 'svelte-hero-icons';
+  import T from './T.svelte';
+  import { _ } from '../i18n';
 
   let { data }: { data: Assessment[] } = $props();
 
@@ -127,7 +129,7 @@
         <Table.Row>
           <Table.Head class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4 border-tr-lg" onclick={() => handleSort('title')}>
             <div class="flex items-center gap-2">
-              Assessment
+              <T key="analytics.assessment" fallback="Assessment" />
               {#if getSortIcon('title')}
                 <Icon size="16" src={getSortIcon('title')} class="text-zinc-400" />
               {/if}
@@ -135,7 +137,7 @@
           </Table.Head>
           <Table.Head class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4" onclick={() => handleSort('subject')}>
             <div class="flex items-center gap-2">
-              Subject
+              <T key="analytics.subject" fallback="Subject" />
               {#if getSortIcon('subject')}
                 <Icon size="16" src={getSortIcon('subject')} class="text-zinc-400" />
               {/if}
@@ -143,7 +145,7 @@
           </Table.Head>
           <Table.Head class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4" onclick={() => handleSort('due')}>
             <div class="flex items-center gap-2">
-              Due Date
+              <T key="analytics.due_date" fallback="Due Date" />
               {#if getSortIcon('due')}
                 <Icon size="16" src={getSortIcon('due')} class="text-zinc-400" />
               {/if}
@@ -151,7 +153,7 @@
           </Table.Head>
           <Table.Head class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4" onclick={() => handleSort('status')}>
             <div class="flex items-center gap-2">
-              Status
+              <T key="analytics.status" fallback="Status" />
               {#if getSortIcon('status')}
                 <Icon size="16" src={getSortIcon('status')} class="text-zinc-400" />
               {/if}
@@ -159,7 +161,7 @@
           </Table.Head>
           <Table.Head class="text-right cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4" onclick={() => handleSort('finalGrade')}>
             <div class="flex items-center justify-end gap-2">
-              Grade
+              <T key="analytics.grade" fallback="Grade" />
               {#if getSortIcon('finalGrade')}
                 <Icon size="16" src={getSortIcon('finalGrade')} class="text-zinc-400" />
               {/if}
@@ -203,7 +205,7 @@
         {:else}
           <Table.Row>
             <Table.Cell colspan={5} class="h-24 text-center">
-              No assessments found.
+              <T key="analytics.no_assessments_found" fallback="No assessments found." />
             </Table.Cell>
           </Table.Row>
         {/each}
@@ -214,11 +216,13 @@
   <!-- Pagination -->
   <div class="flex items-center justify-between space-x-2 pt-4">
     <div class="text-sm text-zinc-600 dark:text-zinc-400">
-      Showing {currentPage * itemsPerPage + 1} to {Math.min((currentPage + 1) * itemsPerPage, data.length)} of {data.length} assessments
+      <T key="analytics.showing_assessments" fallback="Showing assessments" values={{ start: currentPage * itemsPerPage + 1, end: Math.min((currentPage + 1) * itemsPerPage, data.length), total: data.length }} />
     </div>
     <div class="space-x-2 flex place-items-center">
       <div class="flex items-center gap-2">
-        <span class="text-sm text-zinc-600 dark:text-zinc-400">Rows per page:</span>
+        <span class="text-sm text-zinc-600 dark:text-zinc-400">
+          <T key="analytics.rows_per_page" fallback="Rows per page:" />
+        </span>
         <Select.Root type="single" bind:value={itemsPerPageValue} onValueChange={handleItemsPerPageChange}>
           <Select.Trigger>
             <span>{itemsPerPage}</span>
@@ -237,7 +241,7 @@
         onclick={previousPage}
         disabled={!canPreviousPage()}
       >
-        Previous
+        <T key="analytics.previous" fallback="Previous" />
       </Button>
       <Button
         variant="outline"
@@ -245,7 +249,7 @@
         onclick={nextPage}
         disabled={!canNextPage()}
       >
-        Next
+        <T key="analytics.next" fallback="Next" />
       </Button>
     </div>
   </div>
