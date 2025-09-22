@@ -25,6 +25,8 @@ mod todolist;
 mod notes;
 #[path = "utils/profile_picture.rs"]
 mod profile_picture;
+#[path = "utils/performance_testing.rs"]
+mod performance_testing;
 mod global_search;
 
 use std::cell::Cell;
@@ -309,7 +311,13 @@ pub fn run() {
             profile_picture::get_profile_picture_path_cmd,
             profile_picture::delete_profile_picture,
             profile_picture::has_custom_profile_picture,
-            profile_picture::get_profile_picture_data_url
+            profile_picture::get_profile_picture_data_url,
+            performance_testing::save_performance_test_results,
+            performance_testing::get_performance_test_results,
+            performance_testing::load_performance_test_result,
+            performance_testing::delete_performance_test_result,
+            performance_testing::get_performance_tests_directory,
+            performance_testing::clear_all_performance_tests
         ])
         .setup(|app| {
             // Initialize logger first

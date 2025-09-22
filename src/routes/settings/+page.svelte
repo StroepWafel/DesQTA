@@ -33,6 +33,7 @@
   import { goto } from '$app/navigation';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
   import { CacheManager } from '../../utils/cacheManager';
+  import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
 
   interface Shortcut {
     name: string;
@@ -77,6 +78,7 @@
   let cloudBaseUrlSaving = false;
   let cloudBaseUrlError: string | null = null;
   let cloudBaseUrlChanged = false;
+  let performanceTestRunning = false;
 
   // Inline EULA text (can be updated here)
   const CLOUD_EULA_TEXT = `
@@ -522,6 +524,94 @@ The Company reserves the right to terminate your access to the Service at any ti
       notify({
         title: 'Removal Failed',
         body: 'Failed to remove profile picture. Please try again.'
+      });
+    }
+  }
+
+  async function runPerformanceTest() {
+    if (performanceTestRunning) return;
+    
+    performanceTestRunning = true;
+
+    try {
+      const results = await performanceTester.startPerformanceTest();
+      
+      // Save results to backend and navigate to results page
+      try {
+        const savedPath = await invoke('save_performance_test_results', { results });
+        console.log('Performance test results saved to:', savedPath);
+        
+        // Store results in session storage for the results page
+        sessionStorage.setItem('performance-test-results', JSON.stringify(results));
+        
+        // Navigate to results page
+        goto('/performance-results');
+        
+      } catch (saveError) {
+        console.error('Failed to save performance results:', saveError);
+        notify({
+          title: 'Save Failed',
+          body: 'Performance test completed but failed to save results. Showing results anyway.'
+        });
+        
+        // Still show results even if save failed
+        sessionStorage.setItem('performance-test-results', JSON.stringify(results));
+        goto('/performance-results');
+      }
+    } catch (error) {
+      console.error('Performance test failed:', error);
+      
+      // Still try to save error report to backend
+      try {
+        const errorResults = {
+          startTime: Date.now(),
+          endTime: Date.now(),
+          totalDuration: 0,
+          pages: [],
+          overallErrors: [String(error)],
+          summary: {
+            averageLoadTime: 0,
+            slowestPage: { name: 'N/A', time: 0 },
+            fastestPage: { name: 'N/A', time: 0 },
+            totalErrors: 1,
+            totalWarnings: 0
+          },
+          timestamp: new Date().toISOString(),
+          version: '1.0.0'
+        };
+        
+        await invoke('save_performance_test_results', { results: errorResults });
+        
+        notify({
+          title: 'Performance Test Failed',
+          body: 'Test failed but error report has been saved to AppData.'
+        });
+      } catch (saveError) {
+        console.error('Failed to save error report:', saveError);
+        notify({
+          title: 'Performance Test Failed',
+          body: 'Test failed and could not save error report.'
+        });
+      }
+    } finally {
+      performanceTestRunning = false;
+    }
+  }
+
+  async function openPerformanceTestsFolder() {
+    try {
+      const performanceDir = await invoke('get_performance_tests_directory');
+      await invoke('open_url', { url: `file://${performanceDir}` });
+      
+      notify({
+        title: 'Performance Tests Folder',
+        body: 'Opened the folder containing all saved performance test results.'
+      });
+    } catch (error) {
+      console.error('Failed to open performance tests folder:', error);
+      notify({
+        title: 'Error',
+        body: 'Failed to open performance tests folder.'
       });
     }
   }
@@ -1509,17 +1599,54 @@ The Company reserves the right to terminate your access to the Service at any ti
             </p>
           </div>
           <div class="p-4 sm:p-6">
-            <div class="flex gap-3 items-center">
-              <input
-                id="dev-sensitive-info-hider"
-                type="checkbox"
-                class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                bind:checked={devSensitiveInfoHider} />
-              <label
-                for="dev-sensitive-info-hider"
-                class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                Sensitive Info Hider (API responses replaced with random mock data)
-              </label>
+            <div class="space-y-6">
+              <div class="flex gap-3 items-center">
+                <input
+                  id="dev-sensitive-info-hider"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={devSensitiveInfoHider} />
+                <label
+                  for="dev-sensitive-info-hider"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  Sensitive Info Hider (API responses replaced with random mock data)
+                </label>
+              </div>
+
+              <!-- Performance Testing Section -->
+              <div class="pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
+                <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
+                  Performance Testing
+                </h3>
+                 <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
+                   Run automated performance testing across all pages. This will navigate through each page, 
+                   collect performance metrics including load times, errors, and resource usage, then save 
+                   the results as JSON files in your AppData directory.
+                 </p>
+                
+                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                   <button
+                     class="flex gap-2 items-center justify-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                     onclick={runPerformanceTest}
+                     disabled={performanceTestRunning}>
+                     {#if performanceTestRunning}
+                       <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white"></div>
+                       <span>Running Test...</span>
+                     {:else}
+                       <Icon src={Cog} class="w-4 h-4" />
+                       <span>Run Performance Test</span>
+                     {/if}
+                   </button>
+
+                   <button
+                     class="flex gap-2 items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 border-zinc-300/70 dark:border-zinc-700/70 text-zinc-800 dark:text-white bg-zinc-100/60 dark:bg-zinc-800/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
+                     onclick={openPerformanceTestsFolder}>
+                     <Icon src={CloudArrowUp} class="w-4 h-4" />
+                     <span>Open Saved Tests</span>
+                   </button>
+                 </div>
+
+              </div>
             </div>
           </div>
         </section>
