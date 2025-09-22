@@ -264,9 +264,10 @@
       </div>
     </div>
 
-  <div class="pt-6 sm:pt-4 mt-2 sm:mt-2">
-    <p class="text-center text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-    © 2025 DesQTA. Licensed under MIT License.
-    </p>
+    <div class="pt-6 sm:pt-4 mt-2 sm:mt-2">
+      <p class="text-center text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
+      © 2025 DesQTA. Licensed under MIT License.
+      </p>
+    </div>
   </div>
 </Modal>

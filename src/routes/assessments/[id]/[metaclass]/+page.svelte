@@ -29,9 +29,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: {
-          assessment: parseInt($page.params.id),
+          assessment: parseInt($page.params.id!),
           student: 69,
-          metaclass: parseInt($page.params.metaclass),
+          metaclass: parseInt($page.params.metaclass!),
         },
       });
       assessmentData = JSON.parse(res).payload;
@@ -41,9 +41,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: {
-          assessment: parseInt($page.params.id),
+          assessment: parseInt($page.params.id!),
           student: 69,
-          metaclass: parseInt($page.params.metaclass),
+          metaclass: parseInt($page.params.metaclass!),
         },
       });
       const submissions = JSON.parse(subRes).payload;
@@ -103,8 +103,8 @@
       {:else if tab === 'submissions'}
         <AssessmentSubmissions 
           submissions={allSubmissions}
-          assessmentId={parseInt($page.params.id)}
-          metaclassId={parseInt($page.params.metaclass)}
+          assessmentId={parseInt($page.params.id!)}
+          metaclassId={parseInt($page.params.metaclass!)}
           onUploadComplete={loadAssessmentDetails}
         />
       {/if}

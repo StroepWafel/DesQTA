@@ -426,7 +426,7 @@ class ThemeService {
   private applyCustomProperties(properties: Record<string, string>, fonts?: ThemeManifest['fonts'], opts?: { preview?: boolean }): void {
     const css = this.buildPropertiesCss(properties, fonts);
     const id = opts?.preview ? 'theme-preview-properties' : 'theme-properties';
-    const dataset = opts?.preview ? { themePreview: 'true' } : { theme: 'true' };
+    const dataset: Record<string, string> = opts?.preview ? { themePreview: 'true' } : { theme: 'true' };
     this.setStyleTag(id, css, dataset);
   }
 

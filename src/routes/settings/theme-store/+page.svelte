@@ -441,5 +441,4 @@
     0% { opacity: 0; transform: translateY(32px); }
     100% { opacity: 1; transform: translateY(0); }
   }
-  .animate-fade-in-up { animation: fade-in-up 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
 </style>

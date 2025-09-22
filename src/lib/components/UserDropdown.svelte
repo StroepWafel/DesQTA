@@ -102,12 +102,12 @@
     {#if customProfilePicture}
       <img
         src={customProfilePicture}
-        alt="Custom profile picture"
+        alt=""
         class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else if devSensitiveInfoHider && randomAvatarUrl}
       <img
         src={randomAvatarUrl}
-        alt="Random avatar"
+        alt=""
         class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else if !disableSchoolPicture && userInfo.profilePicture}
       <img

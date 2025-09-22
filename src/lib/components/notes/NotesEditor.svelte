@@ -95,7 +95,7 @@
 
   function handleBlur() {
     isFocused = false;
-    dispatch('blur-sm');
+    dispatch('blur');
   }
 
   function handleSave() {
