@@ -616,48 +616,61 @@
       >
         <!-- Left Column: Tasks content -->
         <div class="lg:col-span-2 flex flex-col min-h-0">
-          <div class="flex-1 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md overflow-y-auto" 
+          <div class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col" 
                in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
                out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
-          <!-- Tasks Controls -->
-          <div class="mb-4 flex flex-col gap-3">
-            <!-- Filter buttons -->
-            <div class="flex flex-wrap gap-2 justify-center sm:justify-start">
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='all'} in:scale={{ duration: 300, delay: 100, easing: quintOut }}><T key="study.filter_all" fallback="All" /></button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='today'} in:scale={{ duration: 300, delay: 150, easing: quintOut }}><T key="study.filter_today" fallback="Today" /></button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='week'} in:scale={{ duration: 300, delay: 200, easing: quintOut }}><T key="study.filter_this_week" fallback="This Week" /></button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-zinc-800'}" on:click={() => filter='completed'} in:scale={{ duration: 300, delay: 250, easing: quintOut }}><T key="study.filter_completed" fallback="Completed" /></button>
-            </div>
-            <!-- Controls row -->
-            <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-              <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm sm:text-base" on:click={addTodo} aria-label={$_('study.add_new_task') || 'Add new task'}>+ <T key="study.new_task" fallback="New Task" /></button>
-              <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <div class="relative flex-1 sm:flex-initial">
-                  <input class="w-full pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" placeholder={$_('study.search_tasks') || 'Search tasks...'} bind:value={query} />
-                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400">
-                    <Icon src={MagnifyingGlass} class="w-4 h-4" />
-                  </span>
+            
+            <!-- Modern Header with inline controls -->
+            <div class="shrink-0 px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <!-- Left side: Title and New Task -->
+                <div class="flex items-center gap-4">
+                  <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                    <T key="study.tasks" fallback="Tasks" />
+                  </h2>
+                  <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium" on:click={addTodo} aria-label={$_('study.add_new_task') || 'Add new task'}>
+                    + <T key="study.new_task" fallback="New Task" />
+                  </button>
                 </div>
-                <select class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" bind:value={sortBy}>
-                  <option value="due">{$_('study.sort_due_date') || 'Due Date'}</option>
-                  <option value="priority">{$_('study.sort_priority') || 'Priority'}</option>
-                  <option value="updated">{$_('study.sort_updated') || 'Updated'}</option>
-                </select>
+                
+                <!-- Right side: Inline controls -->
+                <div class="flex items-center gap-3">
+                  <!-- Filter Selector -->
+                  <select class="px-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90" bind:value={filter}>
+                    <option value="all"><T key="study.filter_all" fallback="All Tasks" /></option>
+                    <option value="today"><T key="study.filter_today" fallback="Due Today" /></option>
+                    <option value="week"><T key="study.filter_this_week" fallback="This Week" /></option>
+                    <option value="completed"><T key="study.filter_completed" fallback="Completed" /></option>
+                  </select>
+                  
+                  <!-- Search -->
+                  <div class="relative">
+                    <input class="w-48 pl-9 pr-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90" placeholder={$_('study.search_tasks') || 'Search tasks...'} bind:value={query} />
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400">
+                      <Icon src={MagnifyingGlass} class="w-4 h-4" />
+                    </span>
+                  </div>
+                  
+                  <!-- Sort Selector -->
+                  <select class="px-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90" bind:value={sortBy}>
+                    <option value="due">{$_('study.sort_due_date') || 'Due Date'}</option>
+                    <option value="priority">{$_('study.sort_priority') || 'Priority'}</option>
+                    <option value="updated">{$_('study.sort_updated') || 'Updated'}</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Task count -->
+              <div class="mt-2 flex items-center justify-between">
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                  <T key="study.task_count" fallback={`${filteredSortedTodos.length} tasks`} values={{count: filteredSortedTodos.length}} />
+                </span>
               </div>
             </div>
-          </div>
-
-          <!-- Tasks List -->
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
-              <T key="study.tasks" fallback="Tasks" />
-            </h2>
-            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-              <T key="study.task_count" fallback={`${filteredSortedTodos.length} tasks`} values={{count: filteredSortedTodos.length}} />
-            </span>
-          </div>
-
-          <div class="space-y-4">
+            
+            <!-- Tasks List -->
+            <div class="flex-1 min-h-0 p-6 overflow-y-auto">
+              <div class="space-y-3">
             {#if filteredSortedTodos.length === 0}
               <div class="text-center py-10 text-zinc-500 dark:text-zinc-400">
                 <T key="study.no_tasks_match" fallback="No tasks match your filters." />
@@ -665,9 +678,9 @@
             {/if}
 
             {#each filteredSortedTodos as todo (todo.id)}
-              <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 enhanced-hover {completingTasks.has(todo.id) ? 'completion-animation' : ''} {deletingTasks.has(todo.id) ? 'opacity-50 scale-95' : ''}"
-                   in:fly={{ y: 30, duration: 400, delay: filteredSortedTodos.indexOf(todo) * 50, easing: quintOut }}
-                   out:fly={{ y: 30, duration: 300, easing: cubicOut }}>
+              <div class="rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-800/40 backdrop-blur-sm p-4 transition-all duration-200 hover:bg-white/80 dark:hover:bg-zinc-800/60 hover:border-zinc-300/60 dark:hover:border-zinc-600/60 hover:shadow-lg {completingTasks.has(todo.id) ? 'completion-animation' : ''} {deletingTasks.has(todo.id) ? 'opacity-50 scale-95' : ''}"
+                   in:fly={{ y: 20, duration: 300, delay: Math.min(filteredSortedTodos.indexOf(todo) * 30, 200), easing: quintOut }}
+                   out:fly={{ y: -10, duration: 200, easing: cubicOut }}>
                 {#if !editMode[todo.id]}
                   <!-- Condensed View -->
                   <div class="flex items-start gap-3">
@@ -829,20 +842,27 @@
                   </div>
                 {/if}
               </div>
-            {/each}
+                {/each}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
               <!-- Right Column: Upcoming Assessments Widget -->
-        <div class="flex flex-col space-y-6 min-h-0" in:fly={{ x: 50, duration: 500, delay: 200, easing: quintOut }}>
-          <div class="flex-1 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md overflow-y-auto">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
-              <T key="study.upcoming_assessments" fallback="Upcoming Assessments" />
-            </h2>
-            <span class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">{upcomingAssessments.length}</span>
-          </div>
+        <div class="flex flex-col gap-6 min-h-0" in:fly={{ x: 50, duration: 500, delay: 200, easing: quintOut }}>
+          <div class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              <div class="flex items-center justify-between">
+                <h2 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
+                  <T key="study.upcoming_assessments" fallback="Upcoming Assessments" />
+                </h2>
+                <span class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">{upcomingAssessments.length}</span>
+              </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1 min-h-0 p-6 overflow-y-auto">
           {#if loadingAssessments}
             <div class="flex items-center justify-center py-6">
               <div class="w-10 h-10 rounded-full border-4 border-zinc-300 dark:border-zinc-700 border-t-transparent animate-spin"></div>
@@ -850,8 +870,8 @@
           {:else}
             <div class="space-y-3">
               {#each upcomingAssessments as a (a.id)}
-                <div class="relative flex items-start gap-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 transition-all duration-200 hover:scale-[1.02]"
-                     in:fly={{ x: 30, duration: 400, delay: upcomingAssessments.indexOf(a) * 100, easing: quintOut }}>
+                <div class="relative flex items-start gap-3 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-800/40 backdrop-blur-sm p-3 transition-all duration-200 hover:bg-white/80 dark:hover:bg-zinc-800/60 hover:shadow-lg"
+                     in:fly={{ x: 20, duration: 300, delay: Math.min(upcomingAssessments.indexOf(a) * 50, 200), easing: quintOut }}>
                   <!-- Left accent bar -->
                   <span class="absolute left-0 top-0 h-full w-1 rounded-l-lg" style="background-color: {a.colour || subjectColours[a.subject?.split(' — ')[0] || ''] || '#8e8e8e'}"></span>
                   <span class="mt-1 ml-1 inline-block w-2 h-2 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
@@ -879,29 +899,37 @@
               {/if}
             </div>
           {/if}
-        </div>
-
-                  <!-- Focus Tips / Placeholder Widget -->
-          <div class="shrink-0 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md"
-               in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
-              <T key="study.study_tip" fallback="Study Tip" />
-            </h2>
-            <button 
-              class="px-3 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
-              on:click={() => currentStudyTip = getRandomStudyTip()}
-              aria-label={$_('study.get_new_tip') || 'Get new study tip'}>
-              <T key="study.new_tip" fallback="New Tip" />
-            </button>
           </div>
-          <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-            {currentStudyTip}
-          </p>
+
+          <!-- Study Tips -->
+          <div class="shrink-0 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden"
+               in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <T key="study.study_tip" fallback="Study Tip" />
+                </h2>
+                <button 
+                  class="px-3 py-1.5 text-xs rounded-lg bg-white/80 dark:bg-zinc-700/80 backdrop-blur-sm text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 transition-all duration-200 hover:scale-105 border border-zinc-200/50 dark:border-zinc-600/50"
+                  on:click={() => currentStudyTip = getRandomStudyTip()}
+                  aria-label={$_('study.get_new_tip') || 'Get new study tip'}>
+                  <T key="study.new_tip" fallback="New Tip" />
+                </button>
+              </div>
+            </div>
+            <!-- Content -->
+            <div class="p-6">
+              <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                {currentStudyTip}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-      {:else}
+    
+    {:else}
       <!-- Notes Tab: Full Width Layout -->
       <div 
         class="h-full flex flex-col min-h-0"
