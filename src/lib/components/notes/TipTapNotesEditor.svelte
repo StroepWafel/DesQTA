@@ -9,6 +9,10 @@
   import Link from '@tiptap/extension-link';
   import BubbleMenu from '@tiptap/extension-bubble-menu';
   import Underline from '@tiptap/extension-underline';
+  import Table from '@tiptap/extension-table';
+  import TableRow from '@tiptap/extension-table-row';
+  import TableHeader from '@tiptap/extension-table-header';
+  import TableCell from '@tiptap/extension-table-cell';
 
   // Custom extensions
   import { SeqtaMentions, seqtaMentionSuggestion } from './plugins/SeqtaMentions';
@@ -84,6 +88,12 @@
             class: 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300',
           },
         }),
+        Table.configure({
+          resizable: true,
+        }),
+        TableRow,
+        TableHeader,
+        TableCell,
         BubbleMenu.configure({
           element: document.querySelector('.bubble-menu') as HTMLElement,
         }),
@@ -248,8 +258,7 @@
       case 'task-list':
         return editor.chain().focus().toggleTaskList().run();
       case 'insert-table':
-        // Table functionality removed for now
-        return false;
+        return editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
       case 'insert-image':
         return editor.chain().focus().insertImageFromFile().run();
       case 'insert-link':

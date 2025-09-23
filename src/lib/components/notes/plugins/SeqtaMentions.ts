@@ -1,4 +1,4 @@
-import { Extension } from '@tiptap/core';
+import { Node } from '@tiptap/core';
 import { PluginKey } from 'prosemirror-state';
 import Suggestion from '@tiptap/suggestion';
 import { SeqtaMentionsService, type SeqtaMentionItem } from '../../../services/seqtaMentionsService';
@@ -9,8 +9,16 @@ export interface SeqtaMentionOptions {
   suggestion: Omit<any, 'editor'>;
 }
 
-export const SeqtaMentions = Extension.create<SeqtaMentionOptions>({
-  name: 'seqtaMentions',
+export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
+  name: 'seqtaMention',
+
+  group: 'inline',
+
+  inline: true,
+
+  selectable: false,
+
+  atom: true,
 
   addOptions() {
     return {
@@ -20,7 +28,7 @@ export const SeqtaMentions = Extension.create<SeqtaMentionOptions>({
       },
       suggestion: {
         char: '@',
-        pluginKey: new PluginKey('seqtaMentions'),
+        pluginKey: new PluginKey('seqtaMention'),
         command: ({ editor, range, props }: { editor: any; range: any; props: any }) => {
           // Insert the mention
           const nodeAfter = editor.view.state.selection.$to.nodeAfter;
@@ -53,6 +61,44 @@ export const SeqtaMentions = Extension.create<SeqtaMentionOptions>({
 
           return $from.parent.type.allowsMarkType(type);
         },
+      },
+    };
+  },
+
+  addAttributes() {
+    return {
+      id: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-id'),
+        renderHTML: attributes => {
+          if (!attributes.id) {
+            return {};
+          }
+          return {
+            'data-id': attributes.id,
+          };
+        },
+      },
+      type: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-type'),
+        renderHTML: attributes => {
+          if (!attributes.type) {
+            return {};
+          }
+          return {
+            'data-type': attributes.type,
+          };
+        },
+      },
+      title: {
+        default: null,
+      },
+      subtitle: {
+        default: null,
+      },
+      label: {
+        default: null,
       },
     };
   },
@@ -109,50 +155,6 @@ export const SeqtaMentions = Extension.create<SeqtaMentionOptions>({
     };
   },
 
-  addGlobalAttributes() {
-    return [
-      {
-        types: [this.name],
-        attributes: {
-          id: {
-            default: null,
-            parseHTML: element => element.getAttribute('data-id'),
-            renderHTML: attributes => {
-              if (!attributes.id) {
-                return {};
-              }
-
-              return {
-                'data-id': attributes.id,
-              };
-            },
-          },
-          type: {
-            default: null,
-            parseHTML: element => element.getAttribute('data-type'),
-            renderHTML: attributes => {
-              if (!attributes.type) {
-                return {};
-              }
-
-              return {
-                'data-type': attributes.type,
-              };
-            },
-          },
-          title: {
-            default: null,
-          },
-          subtitle: {
-            default: null,
-          },
-          label: {
-            default: null,
-          },
-        },
-      },
-    ];
-  },
 
   parseHTML() {
     return [
@@ -213,11 +215,8 @@ export const SeqtaMentions = Extension.create<SeqtaMentionOptions>({
 // Suggestion configuration for SEQTA mentions
 export const seqtaMentionSuggestion = {
   items: async ({ query }: { query: string }): Promise<SeqtaMentionItem[]> => {
-    console.log('SEQTA mentions search called with query:', query);
-    
     try {
       const results = await SeqtaMentionsService.searchMentions(query || '');
-      console.log('SEQTA mentions results:', results);
       return results.slice(0, 10); // Limit to 10 results
     } catch (error) {
       console.error('Failed to fetch SEQTA mentions:', error);
@@ -283,15 +282,15 @@ export const seqtaMentionSuggestion = {
 
       onKeyDown(props: any) {
         if (props.event.key === 'Escape') {
-          component.destroy();
+          component?.destroy();
           return true;
         }
 
-        return component.onKeyDown(props);
+        return component?.onKeyDown(props) || false;
       },
 
       onExit() {
-        component.destroy();
+        component?.destroy();
       },
     };
   },
