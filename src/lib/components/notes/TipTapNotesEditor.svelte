@@ -23,6 +23,7 @@
   import TipTapStatusBar from './TipTapStatusBar.svelte';
   import ImageControlModal from './ImageControlModal.svelte';
   import TipTapBubbleMenu from './TipTapBubbleMenu.svelte';
+  import TipTapContextMenu from './TipTapContextMenu.svelte';
 
   // Props
   export let content: string = '<p></p>';
@@ -48,6 +49,12 @@
   // Image modal state
   let showImageModal = false;
   let currentImageData: { element: HTMLElement; img: HTMLImageElement } | null = null;
+  
+  // Context menu state
+  let showContextMenu = false;
+  let contextMenuX = 0;
+  let contextMenuY = 0;
+  let isInTable = false;
 
   // Word and character count (calculated manually)
   $: wordCount = calculateWordCount(content);
@@ -64,6 +71,11 @@
   }
 
   onMount(() => {
+    // Prevent default context menu on the editor container
+    const preventContextMenu = (e: Event) => {
+      e.preventDefault();
+    };
+    
     editor = new Editor({
       element: editorElement,
       extensions: [
@@ -122,6 +134,10 @@
             isFocused = false;
             dispatch('blur');
             return false;
+          },
+          contextmenu: (view, event) => {
+            handleContextMenu(event);
+            return true; // Prevent TipTap's default handling
           },
         },
       },
@@ -196,6 +212,31 @@
   function closeImageModal() {
     showImageModal = false;
     currentImageData = null;
+  }
+
+  function handleContextMenu(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Close any existing context menu first
+    showContextMenu = false;
+    
+    // Use a small delay to ensure the previous menu is closed
+    setTimeout(() => {
+      contextMenuX = event.clientX;
+      contextMenuY = event.clientY;
+      
+      // Check if we're in a table
+      if (editor) {
+        isInTable = editor.isActive('table');
+      }
+      
+      showContextMenu = true;
+    }, 10);
+  }
+
+  function closeContextMenu() {
+    showContextMenu = false;
   }
 
   function handleSave() {
@@ -288,6 +329,8 @@
     <div
       bind:this={editorElement}
       class="h-full overflow-y-auto"
+      role="textbox"
+      tabindex="0"
     ></div>
     
     <!-- Bubble Menu -->
@@ -305,6 +348,16 @@
     />
   </div>
 </div>
+
+<!-- Context Menu -->
+<TipTapContextMenu
+  bind:editor
+  bind:visible={showContextMenu}
+  x={contextMenuX}
+  y={contextMenuY}
+  {isInTable}
+  on:close={closeContextMenu}
+/>
 
 <!-- Image Control Modal -->
 <ImageControlModal

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onDestroy } from 'svelte';
   import { Icon } from 'svelte-hero-icons';
   import { 
     Bold, 
@@ -34,6 +34,47 @@
   // Toolbar state
   let showBlockTypeDropdown = false;
   let showMoreDropdown = false;
+  
+  // Force reactivity trigger
+  let editorUpdateTrigger = 0;
+  
+  // Reactive active states
+  $: isBoldActive = editorUpdateTrigger >= 0 && editor?.isActive('bold') || false;
+  $: isItalicActive = editorUpdateTrigger >= 0 && editor?.isActive('italic') || false;
+  $: isUnderlineActive = editorUpdateTrigger >= 0 && editor?.isActive('underline') || false;
+  $: isStrikeActive = editorUpdateTrigger >= 0 && editor?.isActive('strike') || false;
+  $: isCodeActive = editorUpdateTrigger >= 0 && editor?.isActive('code') || false;
+  
+  // Set up editor event listeners
+  let currentEditor: any = null;
+  let updateActiveStates: (() => void) | null = null;
+  
+  $: if (editor !== currentEditor) {
+    // Clean up previous editor listeners
+    if (currentEditor && updateActiveStates) {
+      currentEditor.off('selectionUpdate', updateActiveStates);
+      currentEditor.off('transaction', updateActiveStates);
+    }
+    
+    // Set up new editor listeners
+    if (editor) {
+      updateActiveStates = () => {
+        editorUpdateTrigger++;
+      };
+      
+      editor.on('selectionUpdate', updateActiveStates);
+      editor.on('transaction', updateActiveStates);
+    }
+    
+    currentEditor = editor;
+  }
+  
+  onDestroy(() => {
+    if (currentEditor && updateActiveStates) {
+      currentEditor.off('selectionUpdate', updateActiveStates);
+      currentEditor.off('transaction', updateActiveStates);
+    }
+  });
 
   // Block type options
   const blockTypes = [
@@ -136,9 +177,12 @@
     dispatch('save');
   }
 
-  // Get current block type for display
-  function getCurrentBlockType(): string {
+  // Get current block type for display (reactive)
+  $: currentBlockType = (() => {
     if (!editor) return 'Paragraph';
+    
+    // Force reactivity by referencing the trigger
+    editorUpdateTrigger;
     
     if (editor.isActive('heading', { level: 1 })) return 'Heading 1';
     if (editor.isActive('heading', { level: 2 })) return 'Heading 2';
@@ -150,7 +194,7 @@
     if (editor.isActive('codeBlock')) return 'Code Block';
     
     return 'Paragraph';
-  }
+  })();
 
   // Check if format is active
   function isActive(format: string): boolean {
@@ -202,7 +246,7 @@
         disabled={readonly}
         title="Change block type"
       >
-        <span class="text-zinc-700 dark:text-zinc-300">{getCurrentBlockType()}</span>
+        <span class="text-zinc-700 dark:text-zinc-300">{currentBlockType}</span>
         <Icon src={ChevronDown} class="w-4 h-4 text-zinc-500" />
       </button>
 
@@ -239,7 +283,7 @@
 
     <!-- Text Formatting -->
     <button
-      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isActive('bold') ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
+      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isBoldActive ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
       on:click={toggleBold}
       disabled={readonly}
       title="Bold (Ctrl+B)"
@@ -248,7 +292,7 @@
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isActive('italic') ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
+      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isItalicActive ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
       on:click={toggleItalic}
       disabled={readonly}
       title="Italic (Ctrl+I)"
@@ -257,7 +301,7 @@
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isActive('underline') ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
+      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isUnderlineActive ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
       on:click={toggleUnderline}
       disabled={readonly}
       title="Underline (Ctrl+U)"
@@ -266,7 +310,7 @@
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isActive('strike') ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
+      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isStrikeActive ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
       on:click={toggleStrikethrough}
       disabled={readonly}
       title="Strikethrough"
@@ -275,7 +319,7 @@
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isActive('code') ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
+      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isCodeActive ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}"
       on:click={toggleCode}
       disabled={readonly}
       title="Inline Code"
