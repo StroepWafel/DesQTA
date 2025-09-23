@@ -3,6 +3,8 @@
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   interface Notice {
     id: number;
@@ -126,7 +128,7 @@
       }
     } catch (e) {
       console.error('[CACHE] notices fetch failed', { key: `notices_${formatDate(selectedDate)}`, error: e });
-      error = 'Failed to load notices.';
+      error = $_('notices.failed_to_load') || 'Failed to load notices.';
       notices = [];
     } finally {
       loading = false;
@@ -172,7 +174,9 @@
 
 <div class="p-6">
   <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">Notices</h1>
+    <h1 class="text-2xl font-bold">
+      <T key="navigation.notices" fallback="Notices" />
+    </h1>
     <div class="flex gap-4 items-center">
       <input
         type="date"
@@ -185,7 +189,9 @@
   <!-- Label filter dropdown -->
   {#if labels.length > 0}
     <div class="flex gap-2 items-center mb-6">
-      <label for="label-select" class="font-semibold text-sm mr-2">Label:</label>
+      <label for="label-select" class="font-semibold text-sm mr-2">
+        <T key="notices.label" fallback="Label:" />
+      </label>
       <select
         id="label-select"
         class="px-4 py-2 rounded-lg border text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
@@ -194,7 +200,9 @@
           const target = e.target as HTMLSelectElement;
           selectedLabel = target.value === '' ? null : +target.value;
         }}>
-        <option value="">All</option>
+        <option value="">
+          <T key="notices.all" fallback="All" />
+        </option>
         {#each labels as label}
           <option value={label.id}>{label.title}</option>
         {/each}
@@ -203,11 +211,15 @@
   {/if}
 
   {#if loading}
-    <div class="p-8 text-center text-(--text-muted)">Loading notices...</div>
+    <div class="p-8 text-center text-(--text-muted)">
+      <T key="notices.loading" fallback="Loading notices..." />
+    </div>
   {:else if error}
     <div class="p-8 text-center text-red-500">{error}</div>
   {:else if filteredNotices.length === 0}
-    <div class="p-8 text-center text-(--text-muted)">No notices found for the selected criteria.</div>
+    <div class="p-8 text-center text-(--text-muted)">
+      <T key="notices.no_notices_found" fallback="No notices found for the selected criteria." />
+    </div>
   {:else}
     <!-- Use regular grid -->
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

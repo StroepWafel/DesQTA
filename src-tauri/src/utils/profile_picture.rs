@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 use std::fs;
-use tauri::AppHandle;
 use base64::{Engine as _, engine::general_purpose};
 
 /// Get the profile picture directory path

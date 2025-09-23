@@ -3,6 +3,8 @@
   import { invoke } from '@tauri-apps/api/core';
   import { notify } from '../../../utils/notify';
   import { marked } from 'marked';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../../lib/i18n';
 
   interface Plugin {
     id: string;
@@ -122,10 +124,11 @@
     <div class="flex gap-2 items-center">
       <span class="text-xl">⚠️</span>
       <div>
-        <h3 class="font-semibold">Plugin Store Coming Soon</h3>
+        <h3 class="font-semibold">
+          <T key="settings.plugin_store_coming_soon" fallback="Plugin Store Coming Soon" />
+        </h3>
         <p class="text-sm text-yellow-300">
-          The plugin store is currently in development. Installation and management features are not
-          yet functional.
+          <T key="settings.plugin_store_development" fallback="The plugin store is currently in development. Installation and management features are not yet functional." />
         </p>
       </div>
     </div>
@@ -140,15 +143,19 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
         </svg>
-        Back to Settings
+        <T key="settings.back_to_settings" fallback="Back to Settings" />
       </a>
-    <h1 class="text-2xl font-bold">Plugin Store</h1>
+    <h1 class="text-2xl font-bold">
+      <T key="settings.plugin_store" fallback="Plugin Store" />
+    </h1>
     </div>
   </div>
 
   {#if loading}
     <div class="flex justify-center items-center py-12 animate-fade-in">
-      <p class="text-zinc-600 dark:text-zinc-400">Loading plugins...</p>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="settings.loading_plugins" fallback="Loading plugins..." />
+      </p>
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -254,7 +261,9 @@
 
               <!-- Description -->
               <div>
-                <h3 class="mb-2 text-lg font-semibold">Description</h3>
+                <h3 class="mb-2 text-lg font-semibold">
+                  <T key="common.description" fallback="Description" />
+                </h3>
                 <div class="max-w-none prose prose-invert">
                   {@html marked(selectedPlugin.readme)}
                 </div>
@@ -263,7 +272,9 @@
               <!-- Screenshots -->
               {#if selectedPlugin.screenshots.length > 0}
                 <div>
-                  <h3 class="mb-2 text-lg font-semibold">Screenshots</h3>
+                  <h3 class="mb-2 text-lg font-semibold">
+                    <T key="settings.screenshots" fallback="Screenshots" />
+                  </h3>
                   <div class="grid grid-cols-2 gap-4">
                     {#each selectedPlugin.screenshots as screenshot}
                       <img src={screenshot} alt="Plugin screenshot" class="rounded-lg shadow-lg" />
@@ -274,7 +285,9 @@
 
               <!-- Features -->
               <div>
-                <h3 class="mb-2 text-lg font-semibold">Features</h3>
+                <h3 class="mb-2 text-lg font-semibold">
+                  <T key="settings.features" fallback="Features" />
+                </h3>
                 <ul class="space-y-1 list-disc list-inside text-zinc-300">
                   {#each selectedPlugin.features as feature}
                     <li>{feature}</li>
@@ -284,7 +297,9 @@
 
               <!-- Requirements -->
               <div>
-                <h3 class="mb-2 text-lg font-semibold">Requirements</h3>
+                <h3 class="mb-2 text-lg font-semibold">
+                  <T key="settings.requirements" fallback="Requirements" />
+                </h3>
                 <ul class="space-y-1 list-disc list-inside text-zinc-300">
                   {#each selectedPlugin.requirements as requirement}
                     <li>{requirement}</li>
@@ -294,7 +309,9 @@
 
               <!-- Changelog -->
               <div>
-                <h3 class="mb-2 text-lg font-semibold">Changelog</h3>
+                <h3 class="mb-2 text-lg font-semibold">
+                  <T key="settings.changelog" fallback="Changelog" />
+                </h3>
                 <div class="space-y-4">
                   {#each selectedPlugin.changelog as entry}
                     <div class="p-4 rounded-lg bg-zinc-800">
@@ -340,13 +357,13 @@
               <button
                 class="px-6 py-3 w-full text-white bg-red-600 rounded-sm shadow-xs transition-transform duration-200 hover:bg-red-700 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105"
                 on:click={() => selectedPlugin && uninstallPlugin(selectedPlugin.id)}>
-                Uninstall Plugin
+                <T key="settings.uninstall_plugin" fallback="Uninstall Plugin" />
               </button>
             {:else}
               <button
                 class="px-6 py-3 w-full text-white bg-blue-600 rounded-sm shadow-xs transition-transform duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105"
                 on:click={() => selectedPlugin && installPlugin(selectedPlugin.id)}>
-                Install Plugin
+                <T key="settings.install_plugin" fallback="Install Plugin" />
               </button>
             {/if}
           </div>

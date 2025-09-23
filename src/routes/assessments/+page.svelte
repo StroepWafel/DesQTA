@@ -12,6 +12,8 @@
   import AssessmentGanttView from '../../lib/components/AssessmentGanttView.svelte';
   import LoadingSpinner from '../../lib/components/LoadingSpinner.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   const studentId = 69;
 
@@ -307,13 +309,17 @@
   <!-- Consolidated Header -->
   <div class="flex flex-col gap-4 mb-6 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
     <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Assessments</h1>
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
+        <T key="navigation.assessments" fallback="Assessments" />
+      </h1>
       
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <!-- Year Filter Dropdown -->
         {#if availableYears && availableYears.length > 0}
           <div class="flex items-center gap-2">
-            <label for="year-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Year:</label>
+            <label for="year-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+              <T key="assessments.year" fallback="Year:" />
+            </label>
             <div class="relative">
               <select
                 id="year-select"
@@ -346,7 +352,9 @@
 
         <!-- View Selector Dropdown -->
         <div class="flex items-center gap-2">
-          <label for="view-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">View:</label>
+          <label for="view-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            <T key="assessments.view" fallback="View:" />
+          </label>
           <div class="relative">
             <select
               id="view-select"
@@ -367,10 +375,10 @@
                 }
               }}
             >
-              <option value="list">List View</option>
-              <option value="board">Board View</option>
-              <option value="calendar">Calendar View</option>
-              <option value="gantt">Gantt View</option>
+              <option value="list">{$_('assessments.list_view') || 'List View'}</option>
+              <option value="board">{$_('assessments.board_view') || 'Board View'}</option>
+              <option value="calendar">{$_('assessments.calendar_view') || 'Calendar View'}</option>
+              <option value="gantt">{$_('assessments.gantt_view') || 'Gantt View'}</option>
             </select>
             <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -396,13 +404,13 @@
     <!-- Main Assessment Content -->
     {#if loadingAssessments}
       <div class="flex justify-center items-center py-12">
-        <LoadingSpinner message="Loading assessments..." />
+        <LoadingSpinner message={$_('assessments.loading') || 'Loading assessments...'} />
       </div>
     {:else if filteredAssessments.length === 0}
       <div class="py-12">
         <EmptyState 
-          title="No assessments for {selectedYear}!"
-          message="Try selecting a different year."
+          title={$_('assessments.no_assessments_year')?.replace('{year}', selectedYear.toString()) || `No assessments for ${selectedYear}!`}
+          message={$_('assessments.try_different_year') || 'Try selecting a different year.'}
           icon="🎉"
         />
       </div>
@@ -410,7 +418,9 @@
       <!-- Board View Options -->
       {#if selectedTab === 'board'}
         <div class="flex items-center gap-4 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
-          <label for="group-by-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Group by:</label>
+          <label for="group-by-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            <T key="assessments.group_by" fallback="Group by:" />
+          </label>
           <div class="relative">
             <select
               id="group-by-select"
@@ -431,9 +441,9 @@
                 }
               }}
             >
-              <option value="subject">Subject</option>
-              <option value="month">Month</option>
-              <option value="status">Status</option>
+              <option value="subject">{$_('assessments.subject') || 'Subject'}</option>
+              <option value="month">{$_('assessments.month') || 'Month'}</option>
+              <option value="status">{$_('assessments.status') || 'Status'}</option>
             </select>
             <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>

@@ -715,6 +715,7 @@ export class SeqtaMentionsService {
     return date.toLocaleDateString();
   }
 
+
   /**
    * Clear cache (useful for development or when data is stale)
    */

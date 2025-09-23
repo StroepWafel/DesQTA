@@ -75,9 +75,7 @@ pub struct NotesDatabase {
 }
 
 impl NotesDatabase {
-    pub fn new() -> Self {
-        Self::default()
-    }
+    // Removed unused new() function - using Default trait instead
 }
 
 impl Default for NotesDatabase {
@@ -671,7 +669,7 @@ pub fn save_image_from_base64(
 }
 
 #[tauri::command]
-pub fn get_image_path(app: AppHandle, relative_path: String) -> Result<String, String> {
+pub fn get_image_path(_app: AppHandle, relative_path: String) -> Result<String, String> {
     // Get the base notes directory (same as notes.json location but without the filename)
     #[cfg(target_os = "android")]
     let base_dir = PathBuf::from("/data/data/com.desqta.app/files");
@@ -695,7 +693,7 @@ pub fn get_image_path(app: AppHandle, relative_path: String) -> Result<String, S
 }
 
 #[tauri::command]
-pub fn get_image_as_base64(app: AppHandle, relative_path: String) -> Result<String, String> {
+pub fn get_image_as_base64(_app: AppHandle, relative_path: String) -> Result<String, String> {
     // Get the base notes directory
     #[cfg(target_os = "android")]
     let base_dir = PathBuf::from("/data/data/com.desqta.app/files");

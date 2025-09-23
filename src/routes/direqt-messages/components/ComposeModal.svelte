@@ -8,6 +8,8 @@
   import { queueAdd } from '$lib/services/idb';
   import Input from '$lib/components/ui/Input.svelte';
   import { Label } from '$lib/components/ui/label';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../../lib/i18n';
   
   function clickOutside(node: HTMLElement, onOutside: () => void) {
     const handler = (e: MouseEvent) => {
@@ -113,7 +115,7 @@
       console.log('Loaded staff:', staff.length);
     } catch (err) {
       console.error('Failed to load recipients:', err);
-      errorMessage = 'Failed to load recipients. Please try again.';
+      errorMessage = $_('messages.failed_to_load_recipients') || 'Failed to load recipients. Please try again.';
     } finally {
       loadingStudents = false;
       loadingStaff = false;
@@ -169,7 +171,7 @@
         composeBody = '';
         closeModal();
       } else {
-        errorMessage = 'Failed to send message. Please try again.';
+        errorMessage = $_('messages.failed_to_send') || 'Failed to send message. Please try again.';
       }
     } catch (err) {
       // Offline or failed: queue draft for later sync
@@ -225,11 +227,13 @@
   <!-- Header -->
   <div
     class="flex justify-between items-center px-5 py-4 border-b sm:rounded-t-2xl border-zinc-200/60 dark:border-zinc-700/60 bg-transparent">
-    <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">Compose message</h2>
+    <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+      <T key="messages.compose_message" fallback="Compose message" />
+    </h2>
     <button
       class="p-2 rounded-lg transition-all duration-200 text-zinc-900 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 dark:text-white"
       onclick={closeModal}
-      aria-label="Close">
+      aria-label={$_('common.close') || 'Close'}>
       <Icon src={XMark} class="w-6 h-6" />
     </button>
   </div>
@@ -250,8 +254,8 @@
 
       <!-- Subject -->
       <div class="px-5 py-4 border-b space-y-2 border-zinc-200/60 dark:border-zinc-700/60 bg-transparent">
-        <Label for="subject">Subject</Label>
-        <Input id="subject" placeholder="Subject..." bind:value={composeSubject} size="lg" fullWidth />
+        <Label for="subject"><T key="messages.subject" fallback="Subject" /></Label>
+        <Input id="subject" placeholder={$_('messages.subject_placeholder') || 'Subject...'} bind:value={composeSubject} size="lg" fullWidth />
       </div>
 
       <!-- Editor -->
@@ -265,11 +269,11 @@
       <!-- Student selector (conditionally rendered) -->
       {#if studentsEnabled}
         <div class="relative mb-2 space-y-2" use:clickOutside={() => (showStudentDropdown = false)}>
-          <Label for="student-search">Select student</Label>
+          <Label for="student-search"><T key="messages.select_student" fallback="Select student" /></Label>
           <Input
             id="student-search"
             type="search"
-            placeholder="Search students by name, class, house, campus..."
+            placeholder={$_('messages.search_students_placeholder') || 'Search students by name, class, house, campus...'}
             bind:value={studentSearchQuery}
             onfocus={() => { showStudentDropdown = true; showStaffDropdown = false; }}
             onkeydown={(e) => { if (e.key === 'Escape') showStudentDropdown = false; }}
@@ -281,11 +285,11 @@
               class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700">
               {#if loadingStudents}
                 <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
-                  Loading students...
+                  <T key="messages.loading_students" fallback="Loading students..." />
                 </div>
               {:else if filteredStudents.length === 0}
                 <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
-                  {studentSearchQuery ? 'No matching students' : 'Type to search students'}
+                  {studentSearchQuery ? ($_('messages.no_matching_students') || 'No matching students') : ($_('messages.type_to_search_students') || 'Type to search students')}
                 </div>
               {:else}
                 {#each filteredStudents as student}
@@ -330,11 +334,11 @@
 
       <!-- Staff selector -->
       <div class="relative mb-2 space-y-2" use:clickOutside={() => (showStaffDropdown = false)}>
-        <Label for="staff-search">Select staff</Label>
+        <Label for="staff-search"><T key="messages.select_staff" fallback="Select staff" /></Label>
         <Input
           id="staff-search"
           type="search"
-          placeholder="Search staff by name..."
+          placeholder={$_('messages.search_staff_placeholder') || 'Search staff by name...'}
           bind:value={staffSearchQuery}
           onfocus={() => { showStaffDropdown = true; showStudentDropdown = false; }}
           onkeydown={(e) => { if (e.key === 'Escape') showStaffDropdown = false; }}
@@ -346,10 +350,12 @@
             id="staff-dropdown"
             class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700">
             {#if loadingStaff}
-              <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">Loading staff...</div>
+              <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
+                <T key="messages.loading_staff" fallback="Loading staff..." />
+              </div>
             {:else if filteredStaff.length === 0}
               <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
-                {staffSearchQuery ? 'No matching staff' : 'Type to search staff'}
+                {staffSearchQuery ? ($_('messages.no_matching_staff') || 'No matching staff') : ($_('messages.type_to_search_staff') || 'Type to search staff')}
               </div>
             {:else}
               {#each filteredStaff as teacher}
@@ -371,14 +377,16 @@
             type="checkbox"
             bind:checked={useBCC}
             class="text-blue-500 bg-white rounded-sm border-zinc-300 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700" />
-          <span>Keep recipient list private (BCC)</span>
+          <span><T key="messages.keep_private_bcc" fallback="Keep recipient list private (BCC)" /></span>
         </label>
       </div>
 
       <!-- Selected recipients -->
       <div class="rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-700">
         {#if selectedRecipients.length === 0}
-          <div class="px-3 py-2 text-sm text-zinc-600 dark:text-zinc-500">No recipients selected</div>
+          <div class="px-3 py-2 text-sm text-zinc-600 dark:text-zinc-500">
+            <T key="messages.no_recipients_selected" fallback="No recipients selected" />
+          </div>
         {:else}
           {#each selectedRecipients as recipient, i}
             <div class="flex items-center gap-3 px-3 py-2">
@@ -388,7 +396,7 @@
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
                   <span class="font-medium truncate">{recipient.name}</span>
-                  <span class="text-xs text-zinc-600 dark:text-zinc-400">{recipient.staff ? 'Staff' : 'Student'}</span>
+                  <span class="text-xs text-zinc-600 dark:text-zinc-400">{recipient.staff ? ($_('messages.staff') || 'Staff') : ($_('messages.student') || 'Student')}</span>
                 </div>
                 {#if recipient.meta}
                   <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate">{recipient.meta}</div>
@@ -397,7 +405,7 @@
               <button
                 onclick={() => removeRecipient(i)}
                 class="ml-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                aria-label="Remove recipient">×</button>
+                aria-label={$_('messages.remove_recipient') || 'Remove recipient'}>×</button>
             </div>
           {/each}
         {/if}
@@ -408,7 +416,7 @@
             class="px-3 py-1.5 text-xs rounded-md bg-white/70 border border-zinc-300/60 text-zinc-700 hover:bg-white/90 dark:bg-zinc-800/70 dark:text-zinc-200 dark:border-zinc-700/60 dark:hover:bg-zinc-700/80"
             onclick={() => (selectedRecipients = [])}
           >
-            Clear all
+            <T key="messages.clear_all" fallback="Clear all" />
           </button>
         </div>
       {/if}
@@ -421,7 +429,7 @@
     <div>
       <button
         class="flex gap-2 items-center px-4 py-2 text-sm rounded-lg text-zinc-900 bg-white/70 border border-zinc-300/60 dark:text-white dark:bg-zinc-800/70 dark:border-zinc-700/60 hover:bg-white/90 dark:hover:bg-zinc-700/80">
-        <span>Add files</span>
+        <span><T key="messages.add_files" fallback="Add files" /></span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="w-4 h-4"
@@ -438,7 +446,7 @@
       <button
         class="px-4 py-3 mb-2 w-full rounded-lg transition-colors sm:w-auto sm:mb-0 text-zinc-900 bg-white/70 border border-zinc-300/60 dark:text-white dark:bg-zinc-800/70 dark:border-zinc-700/60 hover:bg-white/90 dark:hover:bg-zinc-700/80 focus:outline-hidden focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
         onclick={closeModal}>
-        Cancel
+        <T key="common.cancel" fallback="Cancel" />
       </button>
       <button
         class="px-6 py-3 w-full text-white bg-accent-500 rounded-lg transition-all duration-200 sm:w-auto hover:bg-accent-600 focus:ring-2 focus:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -447,7 +455,7 @@
           selectedRecipients.length === 0 ||
           isSubmitting}
         onclick={sendMessage}>
-        {isSubmitting ? 'Sending...' : 'Send'}
+        {isSubmitting ? ($_('messages.sending') || 'Sending...') : ($_('messages.send') || 'Send')}
       </button>
     </div>
   </div>

@@ -5,6 +5,8 @@
   import { get } from 'svelte/store';
   import { themeBuilderSidebarOpen } from '$lib/stores/themeBuilderSidebar';
   import { Icon, Swatch, ShoppingCart, PaintBrush, Eye, CheckCircle } from 'svelte-hero-icons';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../../lib/i18n';
 
   let availableThemes: ThemeManifest[] = [];
   let loading = true;
@@ -20,16 +22,16 @@
   
   const slides = [
     {
-      title: 'Discover your look',
-      description: 'Browse themes crafted for DesQTA — clean, vibrant, and fast.',
+      title: $_('settings.discover_your_look') || 'Discover your look',
+      description: $_('settings.discover_description') || 'Browse themes crafted for DesQTA — clean, vibrant, and fast.',
     },
     {
-      title: 'Make it yours',
-      description: 'Pick a theme that matches your vibe. Switch instantly.',
+      title: $_('settings.make_it_yours') || 'Make it yours',
+      description: $_('settings.make_it_yours_description') || 'Pick a theme that matches your vibe. Switch instantly.',
     },
     {
-      title: 'Create and share',
-      description: 'Use Theme Builder to design your own theme in minutes.',
+      title: $_('settings.create_and_share') || 'Create and share',
+      description: $_('settings.create_and_share_description') || 'Use Theme Builder to design your own theme in minutes.',
     }
   ];
 
@@ -62,7 +64,7 @@
       // Loaded themes ready
     } catch (e) {
       console.error('Failed to load themes:', e);
-      error = 'Failed to load themes. Please try again.';
+      error = $_('settings.failed_to_load_themes') || 'Failed to load themes. Please try again.';
     } finally {
       loading = false;
     }
@@ -207,11 +209,13 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
-            Back
+            <T key="common.back" fallback="Back" />
           </a>
           <div class="h-8 w-px bg-zinc-300 dark:bg-zinc-600"></div>
           <Icon src={ShoppingCart} class="w-8 h-8 text-zinc-700 dark:text-zinc-300" />
-          <h1 class="text-4xl font-bold text-zinc-900 dark:text-white">Theme Store</h1>
+          <h1 class="text-4xl font-bold text-zinc-900 dark:text-white">
+            <T key="settings.theme_store" fallback="Theme Store" />
+          </h1>
         </div>
         <div class="relative w-full max-w-3xl">
           <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-md">
@@ -236,7 +240,9 @@
       
       <div class="flex flex-col sm:flex-row gap-4">
         <div class="bg-white/80 dark:bg-zinc-800/80 backdrop-blur-xs rounded-xl p-4 border border-zinc-200 dark:border-zinc-700 shadow-xs">
-          <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Currently Active</div>
+          <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+            <T key="settings.currently_active" fallback="Currently Active" />
+          </div>
           <div class="font-semibold text-lg text-zinc-900 dark:text-white flex items-center gap-2">
             <Icon src={CheckCircle} class="w-5 h-5 text-green-500" />
             {capitalizeName(currentThemeName)}
@@ -249,7 +255,7 @@
             aria-label="Disable current theme"
             title="Disable current theme"
           >
-            Disable Current Theme
+            <T key="settings.disable_current_theme" fallback="Disable Current Theme" />
           </button>
         {/if}
         <button
@@ -257,7 +263,7 @@
           onclick={() => themeBuilderSidebarOpen.set(true)}
         >
           <Icon src={Swatch} class="w-5 h-5" />
-          Theme Builder
+          <T key="settings.theme_builder" fallback="Theme Builder" />
         </button>
       </div>
     </div>
@@ -272,7 +278,7 @@
       <div class="relative flex-1 max-w-md">
         <input 
           type="text" 
-          placeholder="Search themes..."
+          placeholder={$_('settings.search_themes') || 'Search themes...'}
           bind:value={searchQuery}
           class="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring focus:border-transparent transition-all duration-200"
         />
@@ -306,12 +312,16 @@
     <div class="flex justify-center items-center py-16">
       <div class="flex flex-col gap-4 items-center">
         <div class="w-12 h-12 rounded-full border-4 animate-spin border-zinc-200 dark:border-zinc-700 border-t-accent"></div>
-        <p class="text-lg text-zinc-600 dark:text-zinc-400">Loading amazing themes...</p>
+        <p class="text-lg text-zinc-600 dark:text-zinc-400">
+          <T key="settings.loading_amazing_themes" fallback="Loading amazing themes..." />
+        </p>
       </div>
     </div>
   {:else if error}
     <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-8 text-center">
-      <div class="text-red-600 dark:text-red-400 text-lg font-semibold mb-2">Oops! Something went wrong</div>
+      <div class="text-red-600 dark:text-red-400 text-lg font-semibold mb-2">
+        <T key="settings.something_went_wrong" fallback="Oops! Something went wrong" />
+      </div>
       <p class="text-red-500 dark:text-red-300">{error}</p>
     </div>
   {:else}
@@ -331,7 +341,7 @@
                   {#if currentThemeName === getThemeId(theme)}
                     <span class="px-2 py-1 text-xs font-medium bg-green-500 text-white rounded-full flex items-center gap-1">
                       <Icon src={CheckCircle} class="w-3 h-3" />
-                      Active
+                      <T key="settings.active" fallback="Active" />
                     </span>
                   {/if}
                 </div>
@@ -358,14 +368,14 @@
                     onclick={() => startThemePreview(getThemeId(theme))}
                   >
                     <Icon src={Eye} class="w-4 h-4 inline mr-2" />
-                    Preview
+                    <T key="settings.preview" fallback="Preview" />
                   </button>
                   {#if currentThemeName !== getThemeId(theme)}
                     <button
                       class="px-4 py-2 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 font-medium rounded-xl transition-colors"
                       onclick={() => handleApplyTheme(getThemeId(theme))}
                     >
-                      Apply
+                      <T key="settings.apply" fallback="Apply" />
                     </button>
                   {/if}
                 </div>
@@ -393,13 +403,17 @@
         <div class="w-24 h-24 mx-auto mb-6 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center">
           <Icon src={PaintBrush} class="w-12 h-12 text-zinc-400" />
         </div>
-        <h3 class="text-xl font-semibold text-zinc-900 dark:text-white mb-2">No themes found</h3>
-        <p class="text-zinc-600 dark:text-zinc-400 mb-6">Try adjusting your search or filter criteria.</p>
+        <h3 class="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
+          <T key="settings.no_themes_found" fallback="No themes found" />
+        </h3>
+        <p class="text-zinc-600 dark:text-zinc-400 mb-6">
+          <T key="settings.try_adjusting_filters" fallback="Try adjusting your search or filter criteria." />
+        </p>
         <button
           class="px-6 py-3 accent-bg hover:accent-bg-hover text-white font-medium rounded-xl transition-colors"
           onclick={() => { searchQuery = ''; selectedCategory = 'all'; }}
         >
-          Clear Filters
+          <T key="settings.clear_filters" fallback="Clear Filters" />
         </button>
       </div>
     {/if}
@@ -410,8 +424,12 @@
         <div class="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md">
           <span class="text-sm text-zinc-700 dark:text-zinc-300">Previewing <span class="font-semibold">{$previewingTheme}</span></span>
           <div class="h-5 w-px bg-zinc-300 dark:bg-zinc-700"></div>
-          <button class="px-3 py-1.5 rounded-lg accent-bg hover:accent-bg-hover text-white text-sm font-medium" onclick={applyPreviewTheme}>Apply</button>
-          <button class="px-3 py-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 text-sm font-medium" onclick={cancelThemePreview}>Cancel</button>
+          <button class="px-3 py-1.5 rounded-lg accent-bg hover:accent-bg-hover text-white text-sm font-medium" onclick={applyPreviewTheme}>
+            <T key="settings.apply" fallback="Apply" />
+          </button>
+          <button class="px-3 py-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 text-sm font-medium" onclick={cancelThemePreview}>
+            <T key="common.cancel" fallback="Cancel" />
+          </button>
         </div>
       </div>
     {/if}
@@ -423,5 +441,4 @@
     0% { opacity: 0; transform: translateY(32px); }
     100% { opacity: 1; transform: translateY(0); }
   }
-  .animate-fade-in-up { animation: fade-in-up 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
 </style>

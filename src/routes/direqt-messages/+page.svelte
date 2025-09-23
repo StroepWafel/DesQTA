@@ -17,6 +17,8 @@
   // External Libraries
   import dayjs from 'dayjs';
   import { page } from '$app/stores';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   let messages = $state<Message[]>([]);
   let loading = $state(true);
@@ -191,7 +193,7 @@
         }
       }
     } catch (e) {
-      error = 'Failed to load messages.';
+      error = $_('messages.failed_to_load') || 'Failed to load messages.';
       messages = [];
       seqtaLoadFailed = true;
     } finally {
@@ -248,14 +250,14 @@
       } else if (selectedFolder.includes('RSS')) {
         msg.body = msg.body;
       } else {
-        msg.body = '<em>No content.</em>';
+        msg.body = `<em>${$_('messages.no_content') || 'No content.'}</em>`;
       }
       // If the API returns starred in the detail, update it
       if (typeof data?.payload?.starred !== 'undefined') {
         msg.starred = !!data.payload.starred;
       }
     } catch (e) {
-      detailError = 'Failed to load message.';
+      detailError = $_('messages.failed_to_load_message') || 'Failed to load message.';
       msg.body = '';
     } finally {
       detailLoading = false;
@@ -387,14 +389,14 @@
       {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-zinc-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
     onclick={() => openTab('SEQTA')}
     disabled={selectedTab === 'SEQTA'}>
-    SEQTA Messages
+    <T key="messages.seqta_messages" fallback="SEQTA Messages" />
   </button>
   <button
     class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring text-base
       {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-zinc-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
     onclick={() => openTab('BetterSEQTA')}
     disabled={selectedTab === 'BetterSEQTA'}>
-    Cloud Messaging
+    <T key="messages.cloud_messaging" fallback="Cloud Messaging" />
   </button>
 </div>
 {/if}
@@ -404,9 +406,13 @@
     {#if selectedTab === 'SEQTA'}
       {#if seqtaLoadFailed}
         <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
-          <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">SEQTA messaging failed to load.</div>
+          <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">
+            <T key="messages.seqta_failed_to_load" fallback="SEQTA messaging failed to load." />
+          </div>
           {#if showCloudMessaging}
-            <div class="mb-4 text-zinc-500 dark:text-zinc-300">You can still use Cloud Messaging by switching tabs above.</div>
+            <div class="mb-4 text-zinc-500 dark:text-zinc-300">
+              <T key="messages.use_cloud_messaging" fallback="You can still use Cloud Messaging by switching tabs above." />
+            </div>
           {/if}
         </div>
       {:else}
@@ -464,9 +470,13 @@
                   d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
                   clip-rule="evenodd" />
               </svg>
-              <span class="text-sm font-medium">Back</span>
+              <span class="text-sm font-medium">
+                <T key="common.back" fallback="Back" />
+              </span>
             </button>
-            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Message</span>
+            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <T key="messages.message" fallback="Message" />
+            </span>
             <div class="w-8"></div>
             <!-- Spacer for alignment -->
           </div>

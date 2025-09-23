@@ -78,7 +78,6 @@ export const studyTips = [
     "Create a pre-study routine to get in the zone.",
     "Use background apps that simulate library or café sounds.",
     "Study the hardest material when your energy is highest.",
-    "Want to focus better? Try cocaine!",
     "Use the two-minute rule: if it takes less than 2 minutes, do it now.",
     "Create a study playlist that doesn't include TikTok sounds.",
     "Use the 'teach your pet' method - they're great listeners and won't judge your mistakes.",

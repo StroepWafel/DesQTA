@@ -8,6 +8,8 @@
   import { curveNatural } from "d3-shape";
   import { cubicInOut } from "svelte/easing";
   import type { Assessment } from "$lib/types";
+  import T from '../T.svelte';
+  import { _ } from '../../i18n';
 
   interface Props {
     data: Assessment[];
@@ -20,17 +22,17 @@
   const selectedLabel = $derived.by(() => {
     switch (timeRange) {
       case "90d":
-        return "Last 3 months";
+        return $_('analytics.last_3_months') || "Last 3 months";
       case "30d":
-        return "Last 30 days";
+        return $_('analytics.last_30_days') || "Last 30 days";
       case "7d":
-        return "Last 7 days";
+        return $_('analytics.last_7_days') || "Last 7 days";
       case "365d":
-        return "Last 12 months";
+        return $_('analytics.last_12_months') || "Last 12 months";
       case "all":
-        return "All Time";
+        return $_('analytics.all_time') || "All Time";
       default:
-        return "All Time";
+        return $_('analytics.all_time') || "All Time";
     }
   });
 
@@ -115,18 +117,18 @@
 
   const chartConfig = {
     average: { 
-      label: "Average Grade", 
+      label: $_('analytics.average_grade') || "Average Grade", 
       color: "var(--accent-color-value)" 
     },
   } satisfies Chart.ChartConfig;
 
-  const timeRangeOptions = [
-    { id: "all", label: "All Time" },
-    { id: "365d", label: "Last 12 months" },
-    { id: "90d", label: "Last 3 months" },
-    { id: "30d", label: "Last 30 days" },
-    { id: "7d", label: "Last 7 days" }
-  ];
+  const timeRangeOptions = $derived([
+    { id: "all", label: $_('analytics.all_time') || "All Time" },
+    { id: "365d", label: $_('analytics.last_12_months') || "Last 12 months" },
+    { id: "90d", label: $_('analytics.last_3_months') || "Last 3 months" },
+    { id: "30d", label: $_('analytics.last_30_days') || "Last 30 days" },
+    { id: "7d", label: $_('analytics.last_7_days') || "Last 7 days" }
+  ]);
 
   // Calculate trend
   const trend = $derived(() => {
@@ -148,8 +150,12 @@
   <Card.Header>
     <div class="flex justify-between items-start">
       <div>
-        <Card.Title>Grade Trends</Card.Title>
-        <Card.Description>Showing average grades over time</Card.Description>
+        <Card.Title>
+          <T key="analytics.grade_trends" fallback="Grade Trends" />
+        </Card.Title>
+        <Card.Description>
+          <T key="analytics.showing_average_grades" fallback="Showing average grades over time" />
+        </Card.Description>
       </div>
       <Select.Root type="single" bind:value={timeRange}>
         <Select.Trigger class="w-[160px]">
@@ -244,8 +250,12 @@
       </Chart.Container>
     {:else}
       <div class="flex flex-col items-center justify-center h-[250px] text-zinc-500 dark:text-zinc-400">
-        <p class="text-lg font-medium">No grade data available</p>
-        <p class="text-sm">Complete some assessments to see your trends!</p>
+        <p class="text-lg font-medium">
+          <T key="analytics.no_grade_data" fallback="No grade data available" />
+        </p>
+        <p class="text-sm">
+          <T key="analytics.complete_assessments_for_trends" fallback="Complete some assessments to see your trends!" />
+        </p>
       </div>
     {/if}
   </Card.Content>
@@ -255,20 +265,20 @@
         {#if trend().direction !== "neutral"}
           <div class="flex gap-2 items-center font-medium leading-none">
             {#if trend().direction === "up"}
-              Trending up by {trend().percentage}% recently 
+              <T key="analytics.trending_up" fallback="Trending up recently" values={{ percentage: trend().percentage }} />
               <TrendingUpIcon class="text-green-600 size-4" />
             {:else}
-              Trending down by {trend().percentage}% recently
+              <T key="analytics.trending_down" fallback="Trending down recently" values={{ percentage: trend().percentage }} />
               <TrendingUpIcon class="text-red-600 rotate-180 size-4" />
             {/if}
           </div>
         {:else}
           <div class="flex gap-2 items-center font-medium leading-none text-zinc-500">
-            Grades remain stable
+            <T key="analytics.grades_stable" fallback="Grades remain stable" />
           </div>
         {/if}
         <div class="flex gap-2 items-center leading-none text-muted-foreground">
-          {selectedLabel.toLowerCase()} • {filteredData().length} data points
+          <T key="analytics.data_points" fallback="data points" values={{ timeframe: selectedLabel.toLowerCase(), count: filteredData().length }} />
         </div>
       </div>
     </div>

@@ -23,6 +23,8 @@
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
   import { flushAll } from '../services/syncService';
+  import { _ } from '../i18n';
+  import T from './T.svelte';
 
   interface Props {
     sidebarOpen: boolean;
@@ -119,25 +121,28 @@
   const appWindow = Window.getCurrent();
 
   const pages = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Analytics', path: '/analytics' },
-    { name: 'Assessments', path: '/assessments' },
-    { name: 'Courses', path: '/courses' },
-    { name: 'Directory', path: '/directory' },
-    { name: 'Direqt Messages', path: '/direqt-messages' },
-    { name: 'News', path: '/news' },
-    { name: 'Notices', path: '/notices' },
-    { name: 'QR Sign In', path: '/qrsignin' },
-    { name: 'Reports', path: '/reports' },
-    { name: 'Settings', path: '/settings' },
-    { name: 'Timetable', path: '/timetable' },
-    { name: 'Welcome', path: '/welcome' },
+    { nameKey: 'navigation.dashboard', path: '/dashboard' },
+    { nameKey: 'navigation.analytics', path: '/analytics' },
+    { nameKey: 'navigation.assessments', path: '/assessments' },
+    { nameKey: 'navigation.courses', path: '/courses' },
+    { nameKey: 'navigation.directory', path: '/directory' },
+    { nameKey: 'navigation.messages', path: '/direqt-messages' },
+    { nameKey: 'navigation.news', path: '/news' },
+    { nameKey: 'navigation.notices', path: '/notices' },
+    { nameKey: 'navigation.qr_signin', path: '/qrsignin' },
+    { nameKey: 'navigation.reports', path: '/reports' },
+    { nameKey: 'navigation.settings', path: '/settings' },
+    { nameKey: 'navigation.timetable', path: '/timetable' },
+    { nameKey: 'navigation.welcome', path: '/welcome' },
   ];
 
   const searchStore = writable('');
   const showDropdownStore = writable(false);
   const filteredPages = derived(searchStore, ($search) =>
-    $search ? pages.filter((p) => p.name.toLowerCase().includes($search.toLowerCase())) : pages,
+    $search ? pages.filter((p) => {
+      const translatedName = $_(`${p.nameKey}`, { default: p.nameKey });
+      return translatedName.toLowerCase().includes($search.toLowerCase());
+    }) : pages,
   );
 
   let selectedIndex = $state(-1);
@@ -150,7 +155,7 @@
   let isMobile = $state(false);
   let showNotificationsModal = $state(false);
 
-  function handleSelect(page: { name: string; path: string }) {
+  function handleSelect(page: { nameKey: string; path: string }) {
     searchStore.set('');
     showDropdownStore.set(false);
     goto(page.path);
@@ -389,7 +394,7 @@
     <button
       class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
       onclick={onToggleSidebar}
-      aria-label="Toggle sidebar">
+      aria-label={$_('header.toggle_sidebar', { default: 'Toggle sidebar' })}>
       <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
     </button>
     <div class="flex items-center space-x-3">
@@ -510,19 +515,19 @@
         <button
           class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
           onclick={() => appWindow.minimize()}
-          aria-label="Minimize">
+          aria-label={$_('header.minimize', { default: 'Minimize' })}>
           <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
           class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
           onclick={() => appWindow.toggleMaximize()}
-          aria-label="Maximize">
+          aria-label={$_('header.maximize', { default: 'Maximize' })}>
           <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
           class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 group hover:bg-red-500 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 playful"
           onclick={() => appWindow.close()}
-          aria-label="Close">
+          aria-label={$_('header.close', { default: 'Close' })}>
           <Icon
             src={XMark}
             class="w-4 h-4 transition duration-200 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />

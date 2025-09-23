@@ -13,6 +13,8 @@
   import * as Select from "$lib/components/ui/select/index.js";
   import { Slider } from "$lib/components/ui/slider/index.js";
   import { Icon, MagnifyingGlass, Trash } from 'svelte-hero-icons';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   let analyticsData: AnalyticsData | null = $state(null);
   let loading = $state(true);
@@ -151,7 +153,7 @@
       });
       window.location.reload();
     } catch (e) {
-      error = 'Failed to grab and save analytics data.';
+      error = $_('analytics.failed_to_grab_data') || 'Failed to grab and save analytics data.';
       loading = false;
     }
   }
@@ -199,7 +201,7 @@
       showGrabData = true;
       showDeleteModal = false;
     } catch (e) {
-      deleteError = 'Failed to delete analytics data';
+      deleteError = $_('analytics.failed_to_delete_data') || 'Failed to delete analytics data';
     } finally {
       deleteLoading = false;
     }
@@ -312,15 +314,19 @@
 <div class="container px-6 py-7 mx-auto flex flex-col h-full gap-8">
   <div class="flex justify-between items-start">
     <div>
-      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">Analytics</h1>
-      <p class="text-zinc-600 dark:text-zinc-400">Track your academic performance and progress over time</p>
+      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
+        <T key="navigation.analytics" fallback="Analytics" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="analytics.description" fallback="Track your academic performance and progress over time" />
+      </p>
     </div>
 
     {#if analyticsData}
     <div>
       <Button class="flex items-center gap-2" variant="ghost" onclick={openDeleteModal}>
         <Icon size="20" src={Trash} />
-          Delete Data
+          <T key="analytics.delete_data" fallback="Delete Data" />
         </Button>
       </div>
     {/if}
@@ -344,21 +350,16 @@
             stroke-linejoin="round"
             stroke-width="2"
             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <h2 class="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">No Analytics Data</h2>
+        <h2 class="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">
+          <T key="analytics.no_data_title" fallback="No Analytics Data" />
+        </h2>
         <p class="mb-4 text-center text-zinc-600 dark:text-zinc-300">
-          To get started, click <span class="font-semibold text-accent-600 dark:text-accent-400"
-            >Grab Data</span>
-          below.<br />
-          This will securely fetch and save your assessment data
-          <span class="font-semibold">locally</span>
-          on your device.<br />
-          <strong>Your data never leaves your computer</strong>—everything is processed and stored
-          privately for your own analytics.
+          <T key="analytics.no_data_description" fallback="To get started, click Grab Data below. This will securely fetch and save your assessment data locally on your device. Your data never leaves your computer—everything is processed and stored privately for your own analytics." />
         </p>
         <button
           class="px-6 py-3 mt-2 text-lg font-semibold text-white bg-accent-600 rounded-lg transition-all duration-200 transform shadow-xs hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring hover:bg-accent-700"
           onclick={grabData}>
-          Grab Data
+          <T key="analytics.grab_data" fallback="Grab Data" />
         </button>
         {#if error}
           <div
@@ -375,11 +376,11 @@
         <Select.Trigger class="w-44">
           <span class="truncate">
             {#if filterSubjects.length === 0}
-              All Subjects
+              <T key="analytics.all_subjects" fallback="All Subjects" />
             {:else if filterSubjects.length === 1}
               {filterSubjects[0]}
             {:else}
-              {filterSubjects.length} selected
+              <T key="analytics.subjects_selected" fallback="subjects selected" values={{ count: filterSubjects.length }} />
             {/if}
           </span>
         </Select.Trigger>
@@ -391,7 +392,9 @@
       </Select.Root>
 
       <div class="flex items-center gap-2 pl-2">
-        <span class="text-xs text-zinc-500 dark:text-zinc-400">Grade Range</span>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400">
+          <T key="analytics.grade_range" fallback="Grade Range" />
+        </span>
         <div class="flex items-center gap-2 w-48">
           <Slider type="multiple" bind:value={gradeRange} min={0} max={100} step={1} class="flex-1" />
         </div>
@@ -404,7 +407,7 @@
         <Icon src={MagnifyingGlass} class="absolute left-2 top-1/2 size-4 transform -translate-y-1/2 text-zinc-500 dark:text-zinc-400" />
         <input
           type="text"
-          placeholder="Search assessments..."
+          placeholder={$_('analytics.search_placeholder') || 'Search assessments...'}
           bind:value={filterSearch}
           class="flex pl-7 h-9 w-56 rounded-md border border-zinc-200 bg-white dark:bg-zinc-900 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 dark:border-zinc-700 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
         />
@@ -424,38 +427,44 @@
 
     <div class="flex items-center gap-3 ml-auto pb-4">
       <div class="text-sm text-zinc-600 dark:text-zinc-400">
-        {filteredData().length} of {analyticsData.length} assessments
+        <T key="analytics.assessments_count" fallback="assessments shown" values={{ filtered: filteredData().length, total: analyticsData.length }} />
       </div>
       {#if hasActiveFilters()}
         <Button variant="ghost" size="sm" onclick={clearFilters}>
-          Clear Filters
+          <T key="analytics.clear_filters" fallback="Clear Filters" />
         </Button>
       {/if}
     </div>
   {:else}
-    <div class="text-center text-zinc-500 dark:text-zinc-400">No analytics data available</div>
+    <div class="text-center text-zinc-500 dark:text-zinc-400">
+      <T key="analytics.no_data_available" fallback="No analytics data available" />
+    </div>
   {/if}
 
   <AlertDialog.Root bind:open={showDeleteModal}>
     <AlertDialog.Content>
       <AlertDialog.Header>
-        <AlertDialog.Title>Delete Analytics Data?</AlertDialog.Title>
+        <AlertDialog.Title>
+          <T key="analytics.delete_confirmation_title" fallback="Delete Analytics Data?" />
+        </AlertDialog.Title>
         <AlertDialog.Description>
-          Are you sure you want to delete all analytics data? This action cannot be undone.
+          <T key="analytics.delete_confirmation_description" fallback="Are you sure you want to delete all analytics data? This action cannot be undone." />
         </AlertDialog.Description>
       </AlertDialog.Header>
       {#if deleteError}
         <div class="mb-4 text-red-600 dark:text-red-400">{deleteError}</div>
       {/if}
       <AlertDialog.Footer>
-        <AlertDialog.Cancel onclick={closeDeleteModal} disabled={deleteLoading}>Cancel</AlertDialog.Cancel>
+        <AlertDialog.Cancel onclick={closeDeleteModal} disabled={deleteLoading}>
+          <T key="common.cancel" fallback="Cancel" />
+        </AlertDialog.Cancel>
         <AlertDialog.Action onclick={confirmDeleteAnalytics} disabled={deleteLoading}>
           {#if deleteLoading}
             <span
               class="inline-block w-5 h-5 mr-2 align-middle rounded-full border-2 border-white animate-spin border-t-transparent"
             ></span>
           {/if}
-          Delete
+          <T key="common.delete" fallback="Delete" />
         </AlertDialog.Action>
       </AlertDialog.Footer>
     </AlertDialog.Content>

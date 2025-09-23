@@ -11,6 +11,8 @@
   import TimetableGrid from '$lib/components/TimetableGrid.svelte';
   import TimetablePdfViewer from '$lib/components/TimetablePdfViewer.svelte';
   import { createEvents, type EventStatus } from 'ics';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -29,7 +31,13 @@
   let pdfUrl = $state<string | null>(null);
   let pdfLoading = $state(false);
 
-  const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const dayLabels = $derived([
+    $_('timetable.monday') || 'Monday',
+    $_('timetable.tuesday') || 'Tuesday', 
+    $_('timetable.wednesday') || 'Wednesday',
+    $_('timetable.thursday') || 'Thursday',
+    $_('timetable.friday') || 'Friday'
+  ]);
 
   function getMonday(d: Date) {
     d = new Date(d);
@@ -100,7 +108,7 @@
       console.info('[IDB] timetable cached (mem+idb)', { key: cacheKey, count: lessons.length });
       await setIdb(cacheKey, lessons);
     } catch (e) {
-      error = 'Failed to load timetable. Please try again.';
+      error = $_('timetable.failed_to_load') || 'Failed to load timetable. Please try again.';
       console.error('Error loading timetable:', e);
     } finally {
       loadingLessons = false;
@@ -171,7 +179,15 @@
   const timeBounds = $derived(getTimeBounds);
 
   function exportTimetableCSV() {
-    const header = ['Day', 'Subject', 'Code', 'From', 'Until', 'Room', 'Teacher'];
+    const header = [
+      $_('timetable.day') || 'Day',
+      $_('timetable.subject') || 'Subject', 
+      $_('timetable.code') || 'Code',
+      $_('timetable.from') || 'From',
+      $_('timetable.until') || 'Until',
+      $_('timetable.room') || 'Room',
+      $_('timetable.teacher') || 'Teacher'
+    ];
     const sortedLessons = [...lessons].sort(
       (a, b) => a.dayIdx - b.dayIdx || a.from.localeCompare(b.from),
     );
@@ -197,7 +213,15 @@
     
     try {
     const doc = new jsPDF();
-    const header = ['Day', 'Subject', 'Code', 'From', 'Until', 'Room', 'Teacher'];
+    const header = [
+      $_('timetable.day') || 'Day',
+      $_('timetable.subject') || 'Subject', 
+      $_('timetable.code') || 'Code',
+      $_('timetable.from') || 'From',
+      $_('timetable.until') || 'Until',
+      $_('timetable.room') || 'Room',
+      $_('timetable.teacher') || 'Teacher'
+    ];
     const sortedLessons = [...lessons].sort(
       (a, b) => a.dayIdx - b.dayIdx || a.from.localeCompare(b.from),
     );
@@ -213,7 +237,7 @@
       
       console.log('Creating PDF with', rows.length, 'rows');
       
-    doc.text('Weekly Timetable', 14, 16);
+    doc.text($_('timetable.weekly_timetable') || 'Weekly Timetable', 14, 16);
     autoTable(doc, {
       head: [header],
       body: rows,

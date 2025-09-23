@@ -4,6 +4,8 @@
   import { cache } from '../../utils/cache';
   import { getRSS } from '../../utils/netUtil';
   import { invoke } from '@tauri-apps/api/core';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   interface NewsArticle {
     title: string;
@@ -116,14 +118,14 @@
         news = articlesArray.flat().filter((article) => article.title !== 'No Title');
 
         if (news.length === 0) {
-          error = 'No articles could be loaded from the selected sources.';
+          error = $_('news.no_articles_loaded') || 'No articles could be loaded from the selected sources.';
         }
       }
 
       // Cache the results for 30 minutes
       cache.set(cacheKey, news, 30 * 60 * 1000);
     } catch (err) {
-      error = err instanceof Error ? err.message : 'Failed to fetch news';
+      error = err instanceof Error ? err.message : $_('news.failed_to_fetch') || 'Failed to fetch news';
       news = [];
     } finally {
       loading = false;
@@ -165,7 +167,9 @@
 
 <div class="container px-6 py-7 mx-auto">
   <div class="flex justify-between items-center mb-8">
-    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">News</h1>
+    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
+      <T key="navigation.news" fallback="News" />
+    </h1>
     <div class="relative">
       <button
         id="source-button"
@@ -205,12 +209,14 @@
       <button
         class="px-4 py-2 text-white bg-blue-600 rounded-lg transition-colors hover:bg-blue-700"
         on:click={() => fetchNews(selectedSource)}>
-        Retry
+        <T key="common.retry" fallback="Retry" />
       </button>
     </div>
   {:else if news.length === 0}
     <div class="py-8 text-center">
-      <p class="text-zinc-400">No news articles found.</p>
+      <p class="text-zinc-400">
+        <T key="news.no_articles_found" fallback="No news articles found." />
+      </p>
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">

@@ -12,6 +12,7 @@
   import ShortcutsWidget from '$lib/components/ShortcutsWidget.svelte';
   import RecentNews from '$lib/components/RecentNews.svelte';
   import MessagesPreview from '$lib/components/MessagesPreview.svelte';
+  import T from '$lib/components/T.svelte';
 
   interface Shortcut {
     name: string;
@@ -73,7 +74,9 @@
     <!-- Third Row - Shortcuts (Full Width) -->
     <div class="lg:col-span-12">
       <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6">
-        <h2 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Quick Links</h2>
+        <h2 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
+          <T key="dashboard.quick_links" fallback="Quick Links" />
+        </h2>
         <ShortcutsWidget shortcuts={homepageShortcuts} />
       </div>
     </div>

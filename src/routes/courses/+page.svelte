@@ -13,6 +13,8 @@
   } from './types';
   import { cache } from '../../utils/cache';
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   let folders: Folder[] = $state([]);
   let activeSubjects: Subject[] = $state([]);
@@ -257,7 +259,7 @@
     <!-- Navigation Header -->
     <div class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
       <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
-        {selectedSubject ? selectedSubject.title : 'Courses'}
+        {selectedSubject ? selectedSubject.title : $_('navigation.courses') || 'Courses'}
       </h2>
       {#if selectedSubject}
         <button
@@ -270,8 +272,8 @@
             showingOverview = true;
           }}
           class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
-          title="Back to subjects"
-          aria-label="Back to subjects"
+          title={$_('courses.back_to_subjects') || 'Back to subjects'}
+          aria-label={$_('courses.back_to_subjects') || 'Back to subjects'}
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -290,7 +292,7 @@
             <div class="relative">
               <input
                 type="text"
-                placeholder="Search subjects..."
+                placeholder={$_('courses.search_subjects') || 'Search subjects...'}
                 class="px-4 py-2 w-full bg-white rounded-lg border border-zinc-200 transition-all duration-200 dark:bg-zinc-800 dark:border-zinc-700 focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent"
                 bind:value={search}
               />
@@ -305,14 +307,18 @@
             {#if loading}
               <div class="flex justify-center items-center p-8">
                 <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent/30 border-t-accent"></div>
-                <span class="ml-3 text-zinc-600 dark:text-zinc-400">Loading subjects...</span>
+                <span class="ml-3 text-zinc-600 dark:text-zinc-400">
+                  <T key="courses.loading_subjects" fallback="Loading subjects..." />
+                </span>
               </div>
             {:else if error}
               <div class="p-6 text-center text-red-500">⚠️ {error}</div>
             {:else}
               <!-- Active Subjects -->
               <div class="px-4 py-3">
-                <h3 class="px-1 py-1 text-sm font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">Current Subjects</h3>
+                <h3 class="px-1 py-1 text-sm font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  <T key="courses.current_subjects" fallback="Current Subjects" />
+                </h3>
                 <div class="mt-2 space-y-1">
                   {#each activeSubjects.filter(subjectMatches) as subject}
                     <button
@@ -330,7 +336,9 @@
               <!-- Other Folders -->
               {#if otherFolders.length > 0}
                 <div class="px-4 py-3 border-t border-zinc-200 dark:border-zinc-700">
-                  <h3 class="px-2 py-1 text-sm font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">Other Years</h3>
+                  <h3 class="px-2 py-1 text-sm font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                    <T key="courses.other_years" fallback="Other Years" />
+                  </h3>
                   <div class="mt-2 space-y-2">
                     {#each otherFolders.filter(folderMatches) as folder}
                       <div>
@@ -378,7 +386,9 @@
       {#if loadingCourse}
             <div class="flex flex-1 justify-center items-center">
               <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent/30 border-t-accent"></div>
-              <span class="ml-3 text-zinc-600 dark:text-zinc-400">Loading course...</span>
+              <span class="ml-3 text-zinc-600 dark:text-zinc-400">
+                <T key="courses.loading_course" fallback="Loading course..." />
+              </span>
         </div>
       {:else if courseError}
             <div class="flex flex-1 justify-center items-center text-red-500">
@@ -392,8 +402,10 @@
                   class="w-full px-4 py-3 text-left rounded-lg border transition-all duration-200 {showingOverview ? 'bg-accent text-white border-accent' : 'bg-accent/10 border-accent/20 hover:bg-accent/20'}"
                   onclick={() => selectOverview()}
                 >
-                  <div class="font-semibold">📚 Course Overview</div>
-                  <div class="mt-1 text-sm opacity-80">Main course content and resources</div>
+                  <div class="font-semibold">📚 <T key="courses.course_overview" fallback="Course Overview" /></div>
+                  <div class="mt-1 text-sm opacity-80">
+                    <T key="courses.course_overview_desc" fallback="Main course content and resources" />
+                  </div>
                 </button>
                 
                 <!-- Jump to Today/Latest -->
@@ -430,7 +442,7 @@
                       onclick={() => selectLesson(jumpTarget.termSchedule, jumpTarget.lesson, jumpTarget.lessonIndex)}
                     >
                       <div class="font-semibold text-green-800 dark:text-green-300">
-                        🕐 {jumpTarget.type === 'today' ? "Today's Lesson" : 'Latest Lesson'}
+                        🕐 {jumpTarget.type === 'today' ? ($_('courses.todays_lesson') || "Today's Lesson") : ($_('courses.latest_lesson') || 'Latest Lesson')}
                       </div>
                       <div class="mt-1 text-sm text-green-600 dark:text-green-400">
                         {jumpTarget.lesson.p}
@@ -446,7 +458,7 @@
               {#each coursePayload.d as termSchedule}
                 <div>
                   <div class="sticky top-0 px-4 py-3 text-sm font-semibold text-white border-b border-zinc-200 accent-bg dark:border-zinc-700">
-                    Term {termSchedule.t} - Week {termSchedule.w}
+                    <T key="courses.term_week" fallback={`Term ${termSchedule.t} - Week ${termSchedule.w}`} values={{term: termSchedule.t, week: termSchedule.w}} />
                   </div>
                   {#each termSchedule.l as lesson, lessonIndex}
                     {@const isSelected = selectedLesson === lesson && !showingOverview}
@@ -484,14 +496,18 @@
       <div class="flex justify-center items-center h-full">
         <div class="text-center">
           <div class="mx-auto mb-4 w-12 h-12 rounded-full border-4 animate-spin border-accent/30 border-t-accent"></div>
-          <div class="text-lg text-zinc-600 dark:text-zinc-300">Loading course content...</div>
+          <div class="text-lg text-zinc-600 dark:text-zinc-300">
+            <T key="courses.loading_content" fallback="Loading course content..." />
+          </div>
         </div>
       </div>
     {:else if courseError}
       <div class="flex justify-center items-center h-full">
         <div class="text-center text-red-500">
           <div class="mb-4 text-6xl">⚠️</div>
-          <div class="text-lg">Error loading course: {courseError}</div>
+          <div class="text-lg">
+            <T key="courses.error_loading" fallback="Error loading course: {error}" values={{error: courseError}} />
+          </div>
         </div>
       </div>
     {:else if coursePayload}
@@ -504,8 +520,12 @@
       <div class="flex justify-center items-center h-full">
         <div class="text-center text-zinc-500 dark:text-zinc-400">
           <div class="mb-4 text-6xl">🎓</div>
-          <div class="mb-2 text-xl">Welcome to Courses</div>
-          <div class="text-lg">Select a subject from the sidebar to get started</div>
+          <div class="mb-2 text-xl">
+            <T key="courses.welcome" fallback="Welcome to Courses" />
+          </div>
+          <div class="text-lg">
+            <T key="courses.select_subject" fallback="Select a subject from the sidebar to get started" />
+          </div>
         </div>
       </div>
     {/if}
