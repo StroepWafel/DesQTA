@@ -8,7 +8,7 @@
   $: readingTime = Math.ceil(wordCount / 200); // Assuming 200 words per minute reading speed
 </script>
 
-<div class="editor-status-bar flex items-center justify-between px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/30">
+<div class="tiptap-status-bar flex items-center justify-between px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/30">
   <!-- Left side: Document stats -->
   <div class="flex items-center space-x-4">
     <span class="flex items-center space-x-1">
@@ -37,15 +37,20 @@
       <span>{isFocused ? 'Focused' : 'Not focused'}</span>
     </div>
 
-    <!-- Save status placeholder -->
+    <!-- Auto-save status -->
     <span class="text-zinc-400 dark:text-zinc-500">
       Auto-save enabled
+    </span>
+
+    <!-- TipTap indicator -->
+    <span class="text-zinc-400 dark:text-zinc-500 font-mono text-xs">
+      TipTap
     </span>
   </div>
 </div>
 
 <style>
-  .editor-status-bar {
+  .tiptap-status-bar {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
-</style> 
+</style>

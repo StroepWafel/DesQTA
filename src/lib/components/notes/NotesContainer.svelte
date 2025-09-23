@@ -4,7 +4,7 @@
   import { quintOut, cubicInOut } from 'svelte/easing';
   import { Icon, ChevronLeft, ChevronRight } from 'svelte-hero-icons';
   import NotesList from './NotesList.svelte';
-  import NotesEditor from './NotesEditor.svelte';
+  import TipTapNotesEditor from './TipTapNotesEditor.svelte';
   import { NotesService } from '../../services/notesService';
   import type { Note } from './types/editor';
 
@@ -258,7 +258,7 @@
 
         <!-- Editor -->
         <div class="flex-1 min-h-0">
-          <NotesEditor
+          <TipTapNotesEditor
             content={selectedNote.content}
             noteId={selectedNote.id}
             placeholder="Start writing your note..."
