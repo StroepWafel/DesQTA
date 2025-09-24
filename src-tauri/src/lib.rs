@@ -21,8 +21,8 @@ mod theme_manager;
 mod news;
 #[path = "utils/todolist.rs"]
 mod todolist;
-#[path = "utils/notes.rs"]
-mod notes;
+#[path = "utils/notes_filesystem.rs"]
+mod notes_filesystem;
 #[path = "utils/profile_picture.rs"]
 mod profile_picture;
 #[path = "utils/performance_testing.rs"]
@@ -289,24 +289,26 @@ pub fn run() {
             news::get_news_australia,
             todolist::load_todos,
             todolist::save_todos,
-            notes::load_notes,
-            notes::save_note,
-            notes::delete_note,
-            notes::get_note,
-            notes::search_notes,
-            notes::search_notes_advanced,
-            notes::load_folders,
-            notes::create_folder,
-            notes::delete_folder,
-            notes::move_note_to_folder,
-            notes::get_notes_stats,
-            notes::backup_notes,
-            notes::restore_notes_from_backup,
-            notes::save_image_from_base64,
-            notes::get_image_path,
-            notes::get_image_as_base64,
-            notes::delete_note_images,
-            notes::cleanup_unused_images,
+            notes_filesystem::load_notes_filesystem,
+            notes_filesystem::save_note_filesystem,
+            notes_filesystem::delete_note_filesystem,
+            notes_filesystem::get_note_filesystem,
+            notes_filesystem::search_notes_filesystem,
+            notes_filesystem::search_notes_advanced_filesystem,
+            notes_filesystem::load_folders_filesystem,
+            notes_filesystem::create_folder_filesystem,
+            notes_filesystem::delete_folder_filesystem,
+            notes_filesystem::rename_folder_filesystem,
+            notes_filesystem::move_note_filesystem,
+            notes_filesystem::get_notes_stats_filesystem,
+            notes_filesystem::backup_notes_filesystem,
+            notes_filesystem::restore_notes_from_backup_filesystem,
+            notes_filesystem::save_image_from_base64_filesystem,
+            notes_filesystem::get_image_path_filesystem,
+            notes_filesystem::get_image_as_base64_filesystem,
+            notes_filesystem::delete_note_images_filesystem,
+            notes_filesystem::cleanup_unused_images_filesystem,
+            notes_filesystem::get_file_tree,
             profile_picture::save_profile_picture,
             profile_picture::get_profile_picture_path_cmd,
             profile_picture::delete_profile_picture,

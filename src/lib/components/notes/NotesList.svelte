@@ -55,6 +55,8 @@
 
       // Folder filter
       if (selectedFolder !== 'all') {
+        // For filesystem approach, folder ID should match folder name
+        // Check if note's folder_path contains the selected folder name
         if (!note.folder_path.includes(selectedFolder)) return false;
       }
 

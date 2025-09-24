@@ -935,6 +935,8 @@ dependencies = [
  "tokio-util",
  "url",
  "urlencoding",
+ "uuid",
+ "walkdir",
  "xmltree",
 ]
 
