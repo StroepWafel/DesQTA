@@ -11,8 +11,6 @@ mod analytics;
 mod session;
 #[path = "utils/seqta_config.rs"]
 mod seqta_config;
-#[path = "utils/cloudmessaging.rs"]
-mod cloudmessaging;
 #[path = "utils/logger.rs"]
 mod logger;
 #[path = "utils/theme_manager.rs"]
@@ -233,14 +231,6 @@ pub fn run() {
             seqta_config::load_seqta_config,
             seqta_config::save_seqta_config,
             seqta_config::is_seqta_config_different,
-            cloudmessaging::get_friends,
-            cloudmessaging::send_message,
-            cloudmessaging::get_messages,
-            cloudmessaging::list_groups,
-            cloudmessaging::create_group,
-            cloudmessaging::upload_attachment,
-            cloudmessaging::write_temp_file,
-            cloudmessaging::delete_temp_file,
             global_search::get_global_search_data,
             global_search::save_global_search_data,
             global_search::clear_search_history,
