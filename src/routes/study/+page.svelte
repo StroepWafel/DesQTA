@@ -521,7 +521,7 @@
     //do {generate new index value} while {new value is in last studybuffer values and the length of study tips is > studybuffer}
     do {
       randomIndex = Math.floor(Math.random() * studyTips.length);
-
+    } while (lastStudyIndexes.includes(randomIndex) && studyTips.length > studybuffer);
     // push new index
     lastStudyIndexes.push(randomIndex);
 
