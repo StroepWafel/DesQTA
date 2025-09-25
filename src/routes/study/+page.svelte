@@ -511,13 +511,27 @@
 
   // Random study tip selection
   let currentStudyTip = '';
-  
-  function getRandomStudyTip() {
-    const randomIndex = Math.floor(Math.random() * studyTips.length);
+
+  const lastStudyIndexes: number[] = [];
+
+  function getRandomStudyTip(): string{
+    let randomIndex: number;
+    let studybuffer = 10; // how many previous tips to remember
+
+    //do {generate new index value} while {new value is in last studybuffer values and the length of study tips is > studybuffer}
+    do {
+      randomIndex = Math.floor(Math.random() * studyTips.length);
+
+    // push new index
+    lastStudyIndexes.push(randomIndex);
+
+    // only keep last 10
+    if (lastStudyIndexes.length > studybuffer) {
+      lastStudyIndexes.shift();
+    }
+
     return studyTips[randomIndex];
   }
-
-
   onMount(async () => {
     currentStudyTip = getRandomStudyTip();
     await Promise.all([
