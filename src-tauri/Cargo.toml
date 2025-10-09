@@ -55,3 +55,19 @@ regex = "1.10"
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.25"
 objc = "0.2"
+
+# Production build optimizations
+[profile.release]
+# Enable Link Time Optimization for maximum performance
+lto = "fat"
+# Optimize for size and speed
+opt-level = 3
+# Enable all codegen units for better optimization
+codegen-units = 1
+# Strip debug symbols from release builds
+strip = true
+# Abort on panic (smaller binary size)
+panic = "abort"
+# Additional optimizations
+incremental = false
+overflow-checks = false
