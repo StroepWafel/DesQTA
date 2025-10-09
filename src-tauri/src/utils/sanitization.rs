@@ -6,12 +6,14 @@ use once_cell::sync::Lazy;
 const MAX_SEARCH_QUERY_LENGTH: usize = 500;
 
 /// Maximum allowed length for filenames
+#[allow(dead_code)]
 const MAX_FILENAME_LENGTH: usize = 255;
 
 /// Regex patterns for sanitization
 static HTML_TAG_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[^>]*>").unwrap());
 static JAVASCRIPT_PROTOCOL: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)javascript:").unwrap());
 static EVENT_HANDLER: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)on\w+\s*=").unwrap());
+#[allow(dead_code)]
 static PATH_TRAVERSAL: Lazy<Regex> = Lazy::new(|| Regex::new(r"\.\./|\.\.\").unwrap());
 
 /// Sanitize search query input
@@ -73,6 +75,7 @@ pub fn sanitize_text(text: &str) -> String {
 }
 
 /// Sanitize filename
+#[allow(dead_code)]
 pub fn sanitize_filename(filename: &str) -> String {
     if filename.is_empty() {
         return "unnamed".to_string();
@@ -122,6 +125,7 @@ pub fn sanitize_filename(filename: &str) -> String {
 }
 
 /// Validate URL
+#[allow(dead_code)]
 pub fn validate_url(url: &str) -> Result<String, String> {
     if url.is_empty() {
         return Err("Empty URL".to_string());
@@ -143,6 +147,7 @@ pub fn validate_url(url: &str) -> Result<String, String> {
 }
 
 /// Validate file extension
+#[allow(dead_code)]
 pub fn validate_file_extension(filename: &str, allowed_extensions: &[&str]) -> Result<(), String> {
     if filename.is_empty() {
         return Err("Empty filename".to_string());
@@ -162,6 +167,7 @@ pub fn validate_file_extension(filename: &str, allowed_extensions: &[&str]) -> R
 }
 
 /// Validate file size
+#[allow(dead_code)]
 pub fn validate_file_size(size_bytes: usize, max_size_mb: usize) -> Result<(), String> {
     let max_bytes = max_size_mb * 1024 * 1024;
     
@@ -176,6 +182,7 @@ pub fn validate_file_size(size_bytes: usize, max_size_mb: usize) -> Result<(), S
 }
 
 /// Escape HTML entities
+#[allow(dead_code)]
 pub fn escape_html(text: &str) -> String {
     text.replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -185,6 +192,7 @@ pub fn escape_html(text: &str) -> String {
 }
 
 /// Sanitize JSON key names (prevent prototype pollution)
+#[allow(dead_code)]
 pub fn sanitize_json_key(key: &str) -> Result<String, String> {
     let dangerous_keys = ["__proto__", "constructor", "prototype"];
     

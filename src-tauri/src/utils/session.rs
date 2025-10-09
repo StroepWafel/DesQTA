@@ -11,6 +11,7 @@ use ring::{
     rand::{SecureRandom, SystemRandom},
 };
 use zeroize::Zeroize;
+use base64::{Engine as _, engine::general_purpose};
 
 /// Custom nonce sequence for AES-GCM
 struct CounterNonceSequence(u32);
@@ -38,7 +39,7 @@ impl SessionEncryption {
         match entry.get_password() {
             Ok(key_b64) => {
                 // Decode from base64
-                base64::decode(&key_b64)
+                general_purpose::STANDARD.decode(&key_b64)
                     .map_err(|e| format!("Failed to decode encryption key: {}", e))
             }
             Err(_) => {
@@ -49,7 +50,7 @@ impl SessionEncryption {
                     .map_err(|e| format!("Failed to generate encryption key: {:?}", e))?;
 
                 // Store in keychain
-                let key_b64 = base64::encode(&key);
+                let key_b64 = general_purpose::STANDARD.encode(&key);
                 entry
                     .set_password(&key_b64)
                     .map_err(|e| format!("Failed to store encryption key: {}", e))?;

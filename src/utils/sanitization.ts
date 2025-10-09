@@ -29,11 +29,11 @@ DOMPurify.addHook('afterSanitizeAttributes', function (node) {
 /**
  * Sanitize HTML content for safe rendering
  */
-export function sanitizeHtml(html: string, customConfig?: DOMPurify.Config): string {
+export function sanitizeHtml(html: string, customConfig?: any): string {
   if (!html) return '';
   
   try {
-    const sanitized = DOMPurify.sanitize(html, customConfig);
+    const sanitized = DOMPurify.sanitize(html, customConfig).toString();
     
     logger.debug('sanitization', 'sanitizeHtml', 'HTML sanitized', {
       originalLength: html.length,

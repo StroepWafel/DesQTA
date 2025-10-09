@@ -3,6 +3,8 @@
   import { Plus, ExclamationTriangle, XMark } from 'svelte-hero-icons';
   import { open } from '@tauri-apps/plugin-dialog';
   import { uploadSeqtaFile, seqtaFetch } from '../../utils/netUtil';
+  import { sanitizeFilename } from '../../utils/sanitization';
+  import { logger } from '../../utils/logger';
 
   interface Props {
     assessmentId: number;
@@ -48,7 +50,15 @@
 
       for (const filePath of files) {
         // Extract filename from path
-        const fileName = filePath.split(/[/\\]/).pop() || 'unknown';
+        let fileName = filePath.split(/[/\\]/).pop() || 'unknown';
+        
+        // Sanitize filename
+        fileName = sanitizeFilename(fileName);
+        
+        logger.info('FileUploadButton', 'handleFileUpload', 'Uploading file', {
+          originalPath: filePath,
+          sanitizedFileName: fileName
+        });
         
         // First, upload the file
         const uploadResponse = await uploadSeqtaFile(fileName, filePath);
@@ -74,6 +84,10 @@
               onUploadComplete();
             }
             uploadSuccess = true;
+            
+            logger.info('FileUploadButton', 'handleFileUpload', 'File uploaded successfully', {
+              fileName
+            });
           } else {
             throw new Error('Failed to link file to assessment');
           }
@@ -82,7 +96,7 @@
         }
       }
     } catch (e) {
-      console.error('File upload error:', e);
+      logger.error('FileUploadButton', 'handleFileUpload', 'File upload failed', { error: e });
       uploadError = e instanceof Error ? e.message : 'Upload failed';
     } finally {
       uploading = false;
