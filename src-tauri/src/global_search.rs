@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::command;
+use crate::sanitization;
 
 #[cfg(not(target_os = "android"))]
 use dirs_next;
@@ -131,8 +132,25 @@ pub fn get_global_search_data() -> Result<GlobalSearchData, String> {
 }
 
 #[command]
-pub fn save_global_search_data(data: GlobalSearchData) -> Result<(), String> {
+pub fn save_global_search_data(mut data: GlobalSearchData) -> Result<(), String> {
     let path = get_search_data_path();
+    
+    // Sanitize search history
+    data.search_history = data.search_history
+        .into_iter()
+        .map(|query| sanitization::sanitize_search_query(&query))
+        .filter(|query| !query.is_empty())
+        .collect();
+    
+    // Sanitize recent items
+    data.recent_items = data.recent_items
+        .into_iter()
+        .map(|mut item| {
+            item.name = sanitization::sanitize_text(&item.name);
+            item.path = sanitization::sanitize_text(&item.path);
+            item
+        })
+        .collect();
     
     // Ensure the directory exists
     if let Some(parent) = path.parent() {

@@ -25,6 +25,8 @@ mod notes_filesystem;
 mod profile_picture;
 #[path = "utils/performance_testing.rs"]
 mod performance_testing;
+#[path = "utils/sanitization.rs"]
+mod sanitization;
 mod global_search;
 
 use std::cell::Cell;
