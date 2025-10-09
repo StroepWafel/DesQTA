@@ -5,6 +5,7 @@
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import { sanitizeHtml } from '../../utils/sanitization';
 
   interface Notice {
     id: number;
@@ -238,7 +239,7 @@
             <div class="text-xs text-(--text-muted) mb-2 uppercase tracking-wide">
               {notice.author}
             </div>
-            <div class="flex-1 text-base">{@html notice.content}</div>
+            <div class="flex-1 text-base">{@html sanitizeHtml(notice.content)}</div>
           </div>
         </div>
       {/each}

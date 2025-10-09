@@ -8,6 +8,7 @@
   import SearchModal from './SearchModal.svelte';
   import { searchItems, categories, type SearchItem } from './SearchData';
   import { handleAction, fuzzyScore } from './SearchActions';
+  import { sanitizeSearchQuery } from '../../../utils/sanitization';
 
   const dispatch = createEventDispatcher();
 
@@ -24,6 +25,17 @@
   let currentCategory = $state<string | null>(null);
   let isAdvancedMode = $state(false);
   let modalInput = $state<HTMLInputElement | null>(null);
+
+  // Sanitize search input reactively
+  $effect(() => {
+    const currentSearch = $searchStore;
+    if (currentSearch) {
+      const sanitized = sanitizeSearchQuery(currentSearch);
+      if (sanitized !== currentSearch) {
+        searchStore.set(sanitized);
+      }
+    }
+  });
 
   // Enhanced filtering - handles both global search and category-specific search
   const filteredItems = derived(

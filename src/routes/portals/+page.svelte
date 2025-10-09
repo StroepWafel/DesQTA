@@ -8,6 +8,7 @@
   import Modal from '$lib/components/Modal.svelte';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import { sanitizeHtml } from '../../utils/sanitization';
 
   interface Portal {
     is_power_portal: boolean;
@@ -326,7 +327,7 @@
     <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
       <div class="p-4">
         {#if portalContent.contents}
-          {@html portalContent.contents}
+          {@html sanitizeHtml(portalContent.contents)}
         {:else}
           <div class="text-center py-8">
             <p class="text-zinc-600 dark:text-zinc-400">

@@ -2,7 +2,7 @@
   import { Icon } from 'svelte-hero-icons';
   import { PencilSquare, Trash, Star, ArrowUturnLeft } from 'svelte-hero-icons';
   import type { Message } from '../types';
-  import DOMPurify from 'dompurify';
+  import { sanitizeHtml } from '../../../utils/sanitization';
   import { onMount } from 'svelte';
   import { seqtaFetch } from '../../../utils/netUtil';
 
@@ -60,16 +60,10 @@
     }
   }
 
-  DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-    if (node.tagName === 'A' && node.getAttribute('href')) {
-      node.setAttribute('target', '_blank');
-      node.setAttribute('rel', 'noopener noreferrer');
-    }
-  });
   function updateIframeContent() {
     if (!selectedMessage || !iframe || !iframe.contentWindow) return;
 
-    const sanitizedContent = DOMPurify.sanitize(selectedMessage.body);
+    const sanitizedContent = sanitizeHtml(selectedMessage.body);
 
     const html = /* html */ `<!DOCTYPE html>
 <html>

@@ -2,6 +2,7 @@
   import { Icon } from 'svelte-hero-icons';
   import { DocumentText } from 'svelte-hero-icons';
   import FileCard from './FileCard.svelte';
+  import { sanitizeHtml } from '../../utils/sanitization';
 
   interface Resource {
     name: string;
@@ -34,7 +35,7 @@
       <h2 class="text-lg font-semibold mb-3">Description</h2>
       <div class="max-w-none prose prose-invert">
         <div class="whitespace-pre-line text-zinc-300">
-          {@html assessmentData.description}
+          {@html sanitizeHtml(assessmentData.description)}
         </div>
       </div>
     {/if}

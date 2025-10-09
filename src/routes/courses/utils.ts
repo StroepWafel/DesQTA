@@ -1,37 +1,8 @@
-import DOMPurify from 'dompurify';
+import { sanitizeHtml } from '../../utils/sanitization';
 import type { DraftJSContent, LinkPreview, Lesson } from './types';
 
-// HTML sanitization function using DOMPurify
-export function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: [
-      'p',
-      'br',
-      'strong',
-      'em',
-      'u',
-      'h1',
-      'h2',
-      'h3',
-      'h4',
-      'h5',
-      'h6',
-      'ul',
-      'ol',
-      'li',
-      'a',
-      'img',
-      'blockquote',
-      'code',
-      'pre',
-    ],
-    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel'],
-    ALLOWED_URI_REGEXP:
-      /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|xxx):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-    ADD_ATTR: ['target', 'rel'],
-    ADD_DATA_URI_TAGS: ['img'],
-  });
-}
+// Re-export sanitizeHtml for backwards compatibility
+export { sanitizeHtml };
 
 export function renderDraftJSText(content: DraftJSContent): string {
   return content.blocks
