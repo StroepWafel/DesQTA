@@ -23,10 +23,12 @@
     Cog,
     Squares2x2,
     User,
+    BookOpen,
   } from 'svelte-hero-icons';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
   import LanguageSelector from '../../lib/components/LanguageSelector.svelte';
+  import Card from '../../lib/components/ui/Card.svelte';
   import T from '../../lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
@@ -650,6 +652,31 @@ The Company reserves the right to terminate your access to the Service at any ti
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- User Documentation Link -->
+  <div class="mb-6 animate-fade-in-up" style="animation-delay: 0.05s">
+    <Card
+      variant="elevated"
+      padding="md"
+      interactive={true}
+      onclick={() => goto('/user-documentation')}
+      class="cursor-pointer bg-gradient-to-r from-accent-500/10 to-accent-600/10 border-accent-200 dark:border-accent-800 hover:shadow-lg transition-all duration-200">
+      <div class="flex gap-4 items-center">
+        <div class="flex justify-center items-center w-12 h-12 rounded-lg bg-accent-500 text-white">
+          <Icon src={BookOpen} class="w-6 h-6" />
+        </div>
+        <div class="flex-1">
+          <h2 class="text-base font-semibold text-zinc-900 dark:text-white sm:text-lg">
+            <T key="settings.user_documentation" fallback="User Documentation" />
+          </h2>
+          <p class="text-xs text-zinc-600 dark:text-zinc-400 sm:text-sm">
+            <T key="settings.user_documentation_description" fallback="User guide and FAQ section - Learn how to use DesQTA" />
+          </p>
+        </div>
+        <Icon src={ArrowPath} class="w-5 h-5 text-zinc-400 rotate-90" />
+      </div>
+    </Card>
   </div>
 
   {#if loading}
