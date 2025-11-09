@@ -60,6 +60,9 @@
   let devSensitiveInfoHider = $state(false);
   let randomAvatarUrl = $state('');
   let customProfilePicture = $state<string | null>(null);
+  let customProfilePictureError = $state(false);
+  let randomAvatarError = $state(false);
+  let schoolPictureError = $state(false);
 
   // Load custom profile picture
   async function loadCustomProfilePicture() {
@@ -100,20 +103,23 @@
     onclick={onToggleUserDropdown}
     aria-label="User menu"
     tabindex="0">
-    {#if customProfilePicture}
+    {#if customProfilePicture && !customProfilePictureError}
       <img
         src={customProfilePicture}
         alt=""
+        onerror={() => customProfilePictureError = true}
         class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
-    {:else if devSensitiveInfoHider && randomAvatarUrl}
+    {:else if devSensitiveInfoHider && randomAvatarUrl && !randomAvatarError}
       <img
         src={randomAvatarUrl}
         alt=""
+        onerror={() => randomAvatarError = true}
         class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
-    {:else if !disableSchoolPicture && userInfo.profilePicture}
+    {:else if !disableSchoolPicture && userInfo.profilePicture && !schoolPictureError}
       <img
         src={userInfo.profilePicture}
         alt=""
+        onerror={() => schoolPictureError = true}
         class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else}
       <div class="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
