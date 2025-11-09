@@ -42,13 +42,21 @@
     try {
       const cacheKey = 'courses_subjects_folders';
       const cached = cache.get<Folder[]>(cacheKey) || await getWithIdbFallback<Folder[]>(cacheKey, cacheKey, () => cache.get<Folder[]>(cacheKey));
-      if (cached) {
+      if (cached && Array.isArray(cached) && cached.length > 0) {
         folders = cached;
-        const activeFolder = folders.find((f: Folder) => f.active === 1);
-        activeSubjects = activeFolder ? activeFolder.subjects : [];
+        // Handle multiple active folders - combine all active subjects
+        const activeFolders = folders.filter((f: Folder) => f.active === 1);
+        activeSubjects = activeFolders.flatMap((f: Folder) => f.subjects || []);
         otherFolders = folders.filter((f: Folder) => f.active !== 1);
-        loading = false;
-        return;
+        
+        // If no subjects found but folders exist, clear cache and refetch
+        if (activeSubjects.length === 0 && folders.length > 0) {
+          cache.delete(cacheKey);
+          // Continue to fetch fresh data below
+        } else {
+          loading = false;
+          return;
+        }
       }
 
       const res = await seqtaFetch('/seqta/student/load/subjects?', {
@@ -56,14 +64,32 @@
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: {},
       });
-      const data = JSON.parse(res);
-      folders = data.payload;
-      const activeFolder = folders.find((f: Folder) => f.active === 1);
-      activeSubjects = activeFolder ? activeFolder.subjects : [];
+      
+      // Handle both string and already-parsed responses
+      let data: any;
+      if (typeof res === 'string') {
+        try {
+          data = JSON.parse(res);
+        } catch (e) {
+          // If parsing fails, try parsing again (double-encoded)
+          try {
+            data = JSON.parse(JSON.parse(res));
+          } catch (e2) {
+            throw new Error('Failed to parse API response');
+          }
+        }
+      } else {
+        data = res;
+      }
+      
+      folders = Array.isArray(data.payload) ? data.payload : [];
+      
+      // Handle multiple active folders - combine all active subjects
+      const activeFolders = folders.filter((f: Folder) => f.active === 1);
+      activeSubjects = activeFolders.flatMap((f: Folder) => f.subjects || []);
       otherFolders = folders.filter((f: Folder) => f.active !== 1);
 
       cache.set(cacheKey, folders, 60);
-      console.info('[IDB] courses folders cached (mem+idb)', { count: folders.length });
       await setIdb(cacheKey, folders);
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
@@ -159,10 +185,11 @@
 
   function subjectMatches(subj: Subject) {
     const q = search.trim().toLowerCase();
+    if (!q) return true; // Show all if search is empty
     return (
-      subj.title.toLowerCase().includes(q) ||
-      subj.code.toLowerCase().includes(q) ||
-      subj.description.toLowerCase().includes(q)
+      subj.title?.toLowerCase().includes(q) ||
+      subj.code?.toLowerCase().includes(q) ||
+      subj.description?.toLowerCase().includes(q)
     );
   }
 
@@ -320,16 +347,22 @@
                   <T key="courses.current_subjects" fallback="Current Subjects" />
                 </h3>
                 <div class="mt-2 space-y-1">
-                  {#each activeSubjects.filter(subjectMatches) as subject}
-                    <button
-                      class="py-3 w-full text-left group"
-                      onclick={() => selectSubject(subject)}
-                    >
-                      <div class="font-semibold text-zinc-900 transition-colors duration-100 dark:text-white group-hover:text-accent">
-                        {subject.title}
-                      </div>
-                    </button>
-                  {/each}
+                  {#if activeSubjects.length === 0}
+                    <div class="py-2 text-sm text-zinc-500 dark:text-zinc-400">
+                      No subjects available
+                    </div>
+                  {:else}
+                    {#each activeSubjects.filter(subjectMatches) as subject}
+                      <button
+                        class="py-3 w-full text-left group"
+                        onclick={() => selectSubject(subject)}
+                      >
+                        <div class="font-semibold text-zinc-900 transition-colors duration-100 dark:text-white group-hover:text-accent">
+                          {subject.title}
+                        </div>
+                      </button>
+                    {/each}
+                  {/if}
                 </div>
               </div>
 
