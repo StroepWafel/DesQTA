@@ -529,6 +529,8 @@
                   </div>
                   {#each termSchedule.l as lesson, lessonIndex}
                     {@const isSelected = selectedLesson === lesson && !showingOverview}
+                    {@const lessonContent = coursePayload?.w?.[termSchedule.n]?.[lessonIndex]}
+                    {@const lessonTopic = lessonContent?.t}
                     <button
                       class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 {isSelected ? 'bg-zinc-100 dark:bg-zinc-800 border-accent' : 'border-transparent hover:border-accent/50'}"
                       onclick={() => selectLesson(termSchedule, lesson, lessonIndex)}
@@ -536,6 +538,11 @@
                       <div class="font-semibold text-zinc-900 dark:text-white">
                         {lesson.p}
                       </div>
+                      {#if lessonTopic}
+                        <div class="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          {lessonTopic}
+                        </div>
+                      {/if}
                       <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                         {new Date(lesson.d).toLocaleDateString('en-AU', { 
                           weekday: 'short', 
