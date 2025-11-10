@@ -4,6 +4,8 @@
   import { type Message } from './types';
   import { cache } from '../../utils/cache';
   import { invoke } from '@tauri-apps/api/core';
+  import { getWithIdbFallback, setIdb } from '../../lib/services/idbCache';
+  import { isOfflineMode } from '../../lib/utils/offlineMode';
 
   // Components
   import Sidebar from './components/Sidebar.svelte';
@@ -61,6 +63,44 @@
     error = null;
     seqtaLoadFailed = false;
     console.log(folderLabel);
+
+    try {
+      // Step 1: Try to load from cache/SQLite first
+      const cacheKey = `messages_${folderLabel}`;
+      const cachedMessages =
+        cache.get<Message[]>(cacheKey) ||
+        (await getWithIdbFallback<Message[]>(cacheKey, cacheKey, () =>
+          cache.get<Message[]>(cacheKey),
+        ));
+
+      if (cachedMessages && cachedMessages.length > 0) {
+        // Show cached messages immediately
+        messages = cachedMessages;
+        loading = false;
+
+        // Step 2: Sync in background if online (non-blocking)
+        const offline = await isOfflineMode();
+        if (!offline) {
+          syncMessagesInBackground(folderLabel, rssname, cacheKey).catch(() => {});
+        }
+        return;
+      }
+
+      // No cache - fetch fresh data
+      await fetchFreshMessages(folderLabel, rssname, cacheKey);
+    } catch (e) {
+      error = $_('messages.failed_to_load') || 'Failed to load messages.';
+      messages = [];
+      seqtaLoadFailed = true;
+      loading = false;
+    }
+  }
+
+  async function fetchFreshMessages(
+    folderLabel: string = 'inbox',
+    rssname: string = '',
+    cacheKey: string,
+  ) {
     try {
       if (folderLabel === 'sent') {
         // Fetch both sent and outbox, then combine
@@ -119,6 +159,10 @@
           unread: !msg.read,
         }));
         messages = [...sentMsgs, ...outboxMsgs].sort((a, b) => b.date.localeCompare(a.date));
+
+        // Cache the messages list
+        cache.set(cacheKey, messages, 10); // 10 min TTL
+        await setIdb(cacheKey, messages);
       } else if (folderLabel.includes('rss-')) {
         let rssfeeddata: any = [];
         console.log();
@@ -153,6 +197,10 @@
           .sort((a: any, b: any) => b.date.localeCompare(a.date));
         // console.log(rssfeeddata)
         messages = rssfeeddata;
+
+        // Cache RSS messages
+        cache.set(cacheKey, messages, 10); // 10 min TTL
+        await setIdb(cacheKey, messages);
       } else {
         const response = await seqtaFetch('/seqta/student/load/message?', {
           method: 'POST',
@@ -170,7 +218,7 @@
 
         const data = typeof response === 'string' ? JSON.parse(response) : response;
         if (data?.payload?.messages) {
-          console.log("YO: ", data.payload);
+          console.log('YO: ', data.payload);
           messages = data.payload.messages.map((msg: any) => ({
             id: msg.id,
             folder: folderLabel.charAt(0).toUpperCase() + folderLabel.slice(1),
@@ -184,17 +232,30 @@
             unread: !msg.read,
             starred: !!msg.starred,
           }));
-          console.log("MESSAGES: ", messages);
+          console.log('MESSAGES: ', messages);
+
+          // Cache the messages list
+          cache.set(cacheKey, messages, 10); // 10 min TTL
+          await setIdb(cacheKey, messages);
         } else {
           messages = [];
         }
       }
     } catch (e) {
-      error = $_('messages.failed_to_load') || 'Failed to load messages.';
-      messages = [];
-      seqtaLoadFailed = true;
+      throw e; // Re-throw to be handled by caller
     } finally {
       loading = false;
+    }
+  }
+
+  async function syncMessagesInBackground(folderLabel: string, rssname: string, cacheKey: string) {
+    // Background sync - updates data without blocking UI
+    try {
+      await fetchFreshMessages(folderLabel, rssname, cacheKey);
+      // Data is already updated in state by fetchFreshMessages
+    } catch (e) {
+      // Silently fail - cached data is already shown
+      console.debug('Background sync failed:', e);
     }
   }
 
@@ -218,15 +279,28 @@
     selectedMessage = msg;
     msg.unread = false;
 
-    // Check cache first
+    // Step 1: Check cache/SQLite first
     const cacheKey = `message_${msg.id}`;
-    const cachedContent = cache.get<string>(cacheKey);
+    const cachedContent =
+      cache.get<string>(cacheKey) ||
+      (await getWithIdbFallback<string>(cacheKey, cacheKey, () => cache.get<string>(cacheKey)));
 
     if (cachedContent) {
       msg.body = cachedContent;
+
+      // Step 2: Sync in background if online (non-blocking)
+      const offline = await isOfflineMode();
+      if (!offline) {
+        syncMessageContentInBackground(msg, cacheKey).catch(() => {});
+      }
       return;
     }
 
+    // No cache - fetch fresh data
+    await fetchFreshMessageContent(msg, cacheKey);
+  }
+
+  async function fetchFreshMessageContent(msg: Message, cacheKey: string) {
     detailLoading = true;
     detailError = null;
     try {
@@ -240,8 +314,9 @@
       const data = typeof response === 'string' ? JSON.parse(response) : response;
       if (data?.payload?.contents) {
         msg.body = data.payload.contents;
-        // Cache the message content for 24 hours
+        // Cache the message content for 24 hours (memory + SQLite)
         cache.set(cacheKey, msg.body, 1440); // 24 hours TTL
+        await setIdb(cacheKey, msg.body);
       } else if (selectedFolder.includes('RSS')) {
         msg.body = msg.body;
       } else {
@@ -256,6 +331,17 @@
       msg.body = '';
     } finally {
       detailLoading = false;
+    }
+  }
+
+  async function syncMessageContentInBackground(msg: Message, cacheKey: string) {
+    // Background sync - updates message content without blocking UI
+    try {
+      await fetchFreshMessageContent(msg, cacheKey);
+      // Data is already updated in state by fetchFreshMessageContent
+    } catch (e) {
+      // Silently fail - cached content is already shown
+      console.debug('Background sync failed:', e);
     }
   }
 
@@ -369,9 +455,7 @@
       restoring = false;
     }
   }
-
 </script>
-
 
 <div class="flex h-full">
   <div class="flex w-full h-full max-xl:flex-col">
