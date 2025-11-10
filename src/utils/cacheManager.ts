@@ -62,8 +62,9 @@ export class CacheManager {
   static async clearIndexedDBCaches(): Promise<void> {
     try {
       if ('indexedDB' in window) {
-        // Only clear cache-related IndexedDB stores, not user data
-        const cacheDatabases = ['cache', 'syncQueue'];
+        // Clear cache-related IndexedDB databases
+        // Note: 'desqta-idb-v1' contains both cache and syncQueue stores
+        const cacheDatabases = ['desqta-idb-v1', 'cache', 'syncQueue'];
         
         for (const dbName of cacheDatabases) {
           try {
@@ -71,6 +72,14 @@ export class CacheManager {
             await new Promise((resolve, reject) => {
               deleteReq.onsuccess = () => resolve(void 0);
               deleteReq.onerror = () => reject(deleteReq.error);
+              deleteReq.onblocked = () => {
+                // If database is blocked, wait a bit and try again
+                setTimeout(() => {
+                  const retryReq = indexedDB.deleteDatabase(dbName);
+                  retryReq.onsuccess = () => resolve(void 0);
+                  retryReq.onerror = () => reject(retryReq.error);
+                }, 100);
+              };
             });
             console.log(`Cleared IndexedDB: ${dbName}`);
           } catch (error) {

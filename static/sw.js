@@ -1,24 +1,23 @@
 const CACHE_NAME = 'desqta-static-v2'; // Increment version when significant changes occur
-const STATIC_ASSETS = [
-  '/',
-  '/favicon.png',
-  '/icon.png',
-  '/svelte.svg',
-  '/tauri.svg',
-  '/vite.svg',
-];
+const STATIC_ASSETS = ['/', '/favicon.png', '/icon.png', '/svelte.svg', '/tauri.svg', '/vite.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .then(() => self.skipWaiting()),
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))),
+      )
+      .then(() => self.clients.claim()),
   );
 });
 
@@ -30,15 +29,17 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   // SvelteKit generated files - always fetch fresh to prevent routing issues
-  const isSvelteKitFile = url.pathname.includes('/.svelte-kit/') || 
-                         url.pathname.includes('/src/') ||
-                         url.pathname.includes('/app.css') ||
-                         url.pathname.startsWith('/@fs/');
-  
+  const isSvelteKitFile =
+    url.pathname.includes('/.svelte-kit/') ||
+    url.pathname.includes('/src/') ||
+    url.pathname.includes('/app.css') ||
+    url.pathname.startsWith('/@fs/');
+
   // App routes (non-static assets) - use network-first for fresh navigation
-  const isAppRoute = !url.pathname.startsWith('/static/') && 
-                    !url.pathname.startsWith('/themes/') &&
-                    !/\.(png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$/.test(url.pathname);
+  const isAppRoute =
+    !url.pathname.startsWith('/static/') &&
+    !url.pathname.startsWith('/themes/') &&
+    !/\.(png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$/.test(url.pathname);
 
   if (isSvelteKitFile || isAppRoute) {
     // Network-first strategy for SvelteKit files and routes
@@ -48,11 +49,14 @@ self.addEventListener('fetch', (event) => {
           // Only cache successful responses
           if (res.status === 200) {
             const resClone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
+            caches
+              .open(CACHE_NAME)
+              .then((cache) => cache.put(req, resClone))
+              .catch(() => {});
           }
           return res;
         })
-        .catch(() => caches.match(req)) // Fallback to cache when offline
+        .catch(() => caches.match(req)), // Fallback to cache when offline
     );
     return;
   }
@@ -68,12 +72,13 @@ self.addEventListener('fetch', (event) => {
       return fetch(req)
         .then((res) => {
           const resClone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
+          caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(req, resClone))
+            .catch(() => {});
           return res;
         })
         .catch(() => caches.match('/')); // Fallback to app shell when offline
-    })
+    }),
   );
 });
-
-
