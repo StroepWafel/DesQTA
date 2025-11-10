@@ -9,6 +9,16 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { sanitizeHtml } from '../../utils/sanitization';
+  import { renderDraftJSText } from '../courses/utils';
+  import type {
+    Module,
+    TitleModule,
+    TextBlockModule,
+    ResourceModule,
+    LinkModule,
+    ParsedDocument,
+    ResourceLink,
+  } from '../courses/types';
 
   interface Portal {
     is_power_portal: boolean;
@@ -31,6 +41,7 @@
   let portals: Portal[] = [];
   let selectedPortal: Portal | null = null;
   let portalContent: any = null;
+  let parsedPortalDocument: ParsedDocument | null = null;
   let loadingContent = false;
   let showPortalModal = false;
 
@@ -93,12 +104,101 @@
       .replace(/'/g, '&#39;');
   }
 
+  // Module type checking functions (same as CourseContent and WelcomePortal)
+  function isModule<T extends Module>(
+    module: Module,
+    contentCheck: (content: any) => boolean,
+  ): module is T {
+    return 'content' in module && contentCheck(module.content);
+  }
+
+  function isTitleModule(module: Module): module is TitleModule {
+    return isModule(module, (content) => content && typeof content.value === 'string');
+  }
+
+  function isTextBlockModule(module: Module): module is TextBlockModule {
+    return isModule(module, (content) => content && content.content && content.content.blocks);
+  }
+
+  function isResourceModule(module: Module): module is ResourceModule {
+    return isModule(module, (content) => content && content.value && content.value.resources);
+  }
+
+  function isLinkModule(module: Module): module is LinkModule {
+    return isModule(module, (content) => content && content.url);
+  }
+
+  type RenderedModule =
+    | { type: 'title'; content: string }
+    | { type: 'text'; content: string }
+    | { type: 'resources'; content: ResourceLink[] }
+    | { type: 'link'; content: string };
+
+  function renderModule(module: Module): RenderedModule | null {
+    if (isTitleModule(module)) {
+      return { type: 'title', content: module.content.value };
+    } else if (isTextBlockModule(module)) {
+      return {
+        type: 'text',
+        content: renderDraftJSText(module.content.content),
+      };
+    } else if (isResourceModule(module)) {
+      return {
+        type: 'resources',
+        content: module.content.value.resources.filter((r) => r.selected),
+      };
+    } else if (isLinkModule(module)) {
+      return { type: 'link', content: module.content.url };
+    }
+    return null;
+  }
+
+  function sortModules(modules: Module[]): Module[] {
+    if (!modules || modules.length === 0) return [];
+
+    // Filter out the container module (the one with parentModule === null)
+    const contentModules = modules.filter((m) => m.parentModule !== null);
+    if (contentModules.length === 0) return modules;
+
+    const moduleMap = new Map<string, Module>();
+    contentModules.forEach((module) => {
+      moduleMap.set(module.uuid, module);
+    });
+
+    const firstModule = contentModules.find(
+      (module) => !module.prevModule || !moduleMap.has(module.prevModule),
+    );
+
+    if (!firstModule) {
+      return contentModules;
+    }
+
+    const orderedModules: Module[] = [];
+    let currentModule: Module | undefined = firstModule;
+
+    while (currentModule && orderedModules.length < modules.length) {
+      orderedModules.push(currentModule);
+      currentModule = currentModule.nextModule
+        ? moduleMap.get(currentModule.nextModule)
+        : undefined;
+    }
+
+    contentModules.forEach((module) => {
+      if (!orderedModules.includes(module)) {
+        orderedModules.push(module);
+      }
+    });
+
+    return orderedModules;
+  }
+
   async function handlePortalClick(portal: Portal) {
     console.log('Portal clicked:', portal);
     selectedPortal = portal;
     loadingContent = true;
     showPortalModal = true;
     portalContent = null;
+    parsedPortalDocument = null;
     console.log('Modal should be showing:', showPortalModal);
 
     try {
@@ -138,27 +238,52 @@
         try {
           const json = JSON.parse(responseText);
           if (json && json.status === '200') {
-            let contentsHtml = '';
             const payload = json.payload;
 
-            if (payload && typeof payload === 'object' && typeof payload.contents === 'string') {
-              contentsHtml = payload.contents;
-            } else if (payload && Array.isArray(payload.links)) {
-              contentsHtml = `<div class="space-y-2">${payload.links
-                .map((l: any) => `<div><a class=\"text-accent-500 underline\" href=\"${l.url}\" target=\"_blank\" rel=\"noreferrer noopener\">${escapeHtml(l.label || l.url)}</a></div>`) 
-                .join('')}</div>`;
-            } else if (typeof payload === 'string' && payload.trim().startsWith('<')) {
-              contentsHtml = payload;
+            // Check if it's a power portal with Draft.js content
+            if (payload && payload.is_power_portal && payload.contents) {
+              try {
+                const contentsJson = JSON.parse(payload.contents);
+                if (contentsJson.document && contentsJson.document.modules) {
+                  parsedPortalDocument = contentsJson as ParsedDocument;
+                  console.log('Power portal content parsed');
+                } else {
+                  portalContent = {
+                    contents: '<div class="text-center py-8"><p class="text-zinc-600 dark:text-zinc-400">No content available for this portal.</p></div>',
+                    is_power_portal: portal.is_power_portal,
+                    inherit_styles: portal.inherit_styles
+                  };
+                }
+              } catch (e) {
+                console.error('Error parsing power portal content:', e);
+                portalContent = {
+                  contents: '<div class="text-center py-8"><p class="text-zinc-600 dark:text-zinc-400">Error parsing portal content.</p></div>',
+                  is_power_portal: portal.is_power_portal,
+                  inherit_styles: portal.inherit_styles
+                };
+              }
             } else {
-              contentsHtml = `<pre class=\"text-xs whitespace-pre-wrap\">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>`;
-            }
+              // Handle regular portal content
+              let contentsHtml = '';
+              if (payload && typeof payload === 'object' && typeof payload.contents === 'string') {
+                contentsHtml = payload.contents;
+              } else if (payload && Array.isArray(payload.links)) {
+                contentsHtml = `<div class="space-y-2">${payload.links
+                  .map((l: any) => `<div><a class=\"text-accent-500 underline\" href=\"${l.url}\" target=\"_blank\" rel=\"noreferrer noopener\">${escapeHtml(l.label || l.url)}</a></div>`) 
+                  .join('')}</div>`;
+              } else if (typeof payload === 'string' && payload.trim().startsWith('<')) {
+                contentsHtml = payload;
+              } else {
+                contentsHtml = `<pre class=\"text-xs whitespace-pre-wrap\">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>`;
+              }
 
-            portalContent = {
-              contents: contentsHtml,
-              is_power_portal: portal.is_power_portal,
-              inherit_styles: portal.inherit_styles
-            };
-            console.log('Portal JSON content loaded');
+              portalContent = {
+                contents: contentsHtml,
+                is_power_portal: portal.is_power_portal,
+                inherit_styles: portal.inherit_styles
+              };
+              console.log('Portal JSON content loaded');
+            }
           } else {
             throw new Error('Unexpected portal response');
           }
@@ -184,6 +309,7 @@
     showPortalModal = false;
     selectedPortal = null;
     portalContent = null;
+    parsedPortalDocument = null;
     loadingContent = false;
   }
 </script>
@@ -322,6 +448,51 @@
       <span class="ml-3 text-zinc-600 dark:text-zinc-400">
         <T key="portals.loading_content" fallback="Loading portal content..." />
       </span>
+    </div>
+  {:else if parsedPortalDocument?.document?.modules}
+    {@const sortedModules = sortModules(parsedPortalDocument.document.modules)}
+    <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
+      <div class="p-6">
+        <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
+          {#each sortedModules as module, i}
+            {@const renderedModule = renderModule(module)}
+            {#if renderedModule}
+              {#if renderedModule.type === 'title'}
+                <h2 class="px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg">
+                  {renderedModule.content}
+                </h2>
+              {:else if renderedModule.type === 'text'}
+                <div
+                  class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+                  {@html sanitizeHtml(renderedModule.content)}
+                </div>
+              {:else if renderedModule.type === 'resources'}
+                <div class="mb-6">
+                  <h3 class="text-lg font-semibold mb-3 text-white">Resources</h3>
+                  <div class="space-y-2">
+                    {#each renderedModule.content as resource}
+                      <div
+                        class="p-3 rounded-lg border border-zinc-300/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50">
+                        <p class="text-white">{resource.filename}</p>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {:else if renderedModule.type === 'link'}
+                <div class="mb-6">
+                  <a
+                    href={renderedModule.content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-400 underline hover:text-purple-300">
+                    {renderedModule.content}
+                  </a>
+                </div>
+              {/if}
+            {/if}
+          {/each}
+        </div>
+      </div>
     </div>
   {:else if portalContent}
     <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
