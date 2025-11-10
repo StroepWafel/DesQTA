@@ -9,19 +9,98 @@ export function renderDraftJSText(content: DraftJSContent): string {
     .map((block) => {
       let text = block.text;
 
-      // Apply entity ranges (links, etc.)
-      if (block.entityRanges.length > 0) {
-        // Sort ranges by offset in reverse order to apply from end to start
-        const sortedRanges = [...block.entityRanges].sort((a, b) => b.offset - a.offset);
+      // Collect all style ranges (both inline styles and entity ranges)
+      const styleRanges: Array<{
+        offset: number;
+        length: number;
+        type: 'style' | 'entity';
+        style?: string;
+        entityKey?: number;
+      }> = [];
 
-        for (const range of sortedRanges) {
-          const entity = content.entityMap[range.key];
-          if (entity && entity.type === 'LINK') {
-            const before = text.substring(0, range.offset);
-            const linkText = text.substring(range.offset, range.offset + range.length);
-            const after = text.substring(range.offset + range.length);
-            text = `${before}<a href="${entity.data.href || entity.data.url}" class="text-indigo-400 underline transition-colors hover:text-purple-300" target="_blank" rel="noopener noreferrer">${linkText}</a>${after}`;
+      // Add inline style ranges
+      if (block.inlineStyleRanges && block.inlineStyleRanges.length > 0) {
+        block.inlineStyleRanges.forEach((range) => {
+          styleRanges.push({
+            offset: range.offset,
+            length: range.length,
+            type: 'style',
+            style: range.style,
+          });
+        });
+      }
+
+      // Add entity ranges
+      if (block.entityRanges && block.entityRanges.length > 0) {
+        block.entityRanges.forEach((range) => {
+          styleRanges.push({
+            offset: range.offset,
+            length: range.length,
+            type: 'entity',
+            entityKey: range.key,
+          });
+        });
+      }
+
+      // Apply styles from end to start to preserve offsets
+      if (styleRanges.length > 0) {
+        // Group styles by their range (offset + length)
+        const rangeMap = new Map<string, Array<(typeof styleRanges)[0]>>();
+
+        styleRanges.forEach((range) => {
+          const key = `${range.offset}-${range.length}`;
+          if (!rangeMap.has(key)) {
+            rangeMap.set(key, []);
           }
+          rangeMap.get(key)!.push(range);
+        });
+
+        // Sort ranges by offset in reverse order
+        const sortedKeys = Array.from(rangeMap.keys()).sort((a, b) => {
+          const [offsetA] = a.split('-').map(Number);
+          const [offsetB] = b.split('-').map(Number);
+          return offsetB - offsetA;
+        });
+
+        for (const key of sortedKeys) {
+          const ranges = rangeMap.get(key)!;
+          const [offset, length] = key.split('-').map(Number);
+
+          const before = text.substring(0, offset);
+          const styledText = text.substring(offset, offset + length);
+          const after = text.substring(offset + length);
+
+          let wrappedText = styledText;
+
+          // Apply all styles for this range (nested)
+          for (const range of ranges) {
+            if (range.type === 'entity') {
+              const entity = content.entityMap[range.entityKey!];
+              if (entity && entity.type === 'LINK') {
+                wrappedText = `<a href="${entity.data.href || entity.data.url}" class="text-indigo-400 underline transition-colors hover:text-purple-300" target="_blank" rel="noopener noreferrer">${wrappedText}</a>`;
+              }
+            } else if (range.type === 'style') {
+              switch (range.style) {
+                case 'BOLD':
+                  wrappedText = `<strong>${wrappedText}</strong>`;
+                  break;
+                case 'ITALIC':
+                  wrappedText = `<em>${wrappedText}</em>`;
+                  break;
+                case 'UNDERLINE':
+                  wrappedText = `<u>${wrappedText}</u>`;
+                  break;
+                case 'STRIKETHROUGH':
+                  wrappedText = `<s>${wrappedText}</s>`;
+                  break;
+                case 'CODE':
+                  wrappedText = `<code class="px-1 py-0.5 rounded bg-zinc-700 text-sm font-mono">${wrappedText}</code>`;
+                  break;
+              }
+            }
+          }
+
+          text = `${before}${wrappedText}${after}`;
         }
       }
 
