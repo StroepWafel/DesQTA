@@ -8,6 +8,7 @@
   let loadingPortal = $state<boolean>(true);
   let portalError = $state<string>('');
   let showPortalModal = $state(false);
+  let showDefaultContent = $state<boolean>(false);
 
   const parser = new DOMParser();
 
@@ -20,13 +21,29 @@
       });
 
       const data = JSON.parse(response);
-      if (data.status === '200' && (data.payload?.url || data.payload?.contents)) {
-        if (data.payload?.url) {
-          portalUrl = data.payload.url;
+      if (data.status === '200') {
+        // Check if payload is empty or has no url/contents
+        const payload = data.payload || {};
+        const isEmptyPayload =
+          Object.keys(payload).length === 0 || (!payload.url && !payload.contents);
+
+        if (isEmptyPayload) {
+          // Show default content when payload is empty
+          showDefaultContent = true;
+        } else if (payload.url || payload.contents) {
+          if (payload.url) {
+            portalUrl = payload.url;
+          } else {
+            const html = parser.parseFromString(payload.contents, 'text/html');
+            const iframe = html.getElementsByTagName('iframe')[0];
+            if (iframe) {
+              portalUrl = iframe.src;
+            } else {
+              showDefaultContent = true;
+            }
+          }
         } else {
-          const html = parser.parseFromString(data.payload?.contents, 'text/html');
-          const iframe = html.getElementsByTagName('iframe')[0];
-          portalUrl = iframe.src;
+          showDefaultContent = true;
         }
       } else {
         portalError = 'Failed to load portal URL';
@@ -76,6 +93,46 @@
         </div>
         <p class="mt-4 text-xl text-zinc-300">{portalError}</p>
       </div>
+    {:else if showDefaultContent}
+      <div class="h-full overflow-y-auto p-6 text-white">
+        <div class="space-y-6">
+          <div>
+            <h2 class="text-2xl font-semibold mb-3">Welcome to DesQTA!</h2>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-semibold mb-2">Getting around</h3>
+            <p class="text-zinc-300 leading-relaxed">
+              Use the menu on the left to navigate. If you're on a small screen, the menu hides
+              automatically, but you can summon it using the menu button in the corner.
+            </p>
+            <p class="text-zinc-300 leading-relaxed mt-2">
+              Use the menu to explore and see what you can find. Note that your school may not be
+              using all of the pages.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-semibold mb-2">Your dashboard</h3>
+            <p class="text-zinc-300 leading-relaxed">
+              The dashboard page includes dashlets which your school has enabled (and which you
+              can't disable!), as well as optional dashlets that you can toggle on or off.
+            </p>
+            <p class="text-zinc-300 leading-relaxed mt-2">
+              Some dashlets help you to get organised, some give you key information, and some are
+              just for fun.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-semibold mb-2">Colour your timetable</h3>
+            <p class="text-zinc-300 leading-relaxed">
+              On the timetable page, tap (or click) on a class to access more details -- and then
+              tap the palette button to colour up your timetable.
+            </p>
+          </div>
+        </div>
+      </div>
     {:else if portalUrl}
       <iframe src={portalUrl} class="w-full h-full border-0" title="Welcome Portal"></iframe>
     {/if}
@@ -89,7 +146,48 @@
   maxHeight="h-[80%]"
   className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl"
   ariaLabel="Welcome Portal Modal">
-  {#if portalUrl}
-    <iframe src={portalUrl} class="w-full h-full rounded-2xl border-0" title="Welcome Portal"></iframe>
+  {#if showDefaultContent}
+    <div class="h-full overflow-y-auto p-6 text-white">
+      <div class="space-y-6">
+        <div>
+          <h2 class="text-2xl font-semibold mb-3">Welcome to SEQTA Learn!</h2>
+        </div>
+
+        <div>
+          <h3 class="text-xl font-semibold mb-2">Getting around</h3>
+          <p class="text-zinc-300 leading-relaxed">
+            Use the menu on the left to navigate. If you're on a small screen, the menu hides
+            automatically, but you can summon it using the menu button in the corner.
+          </p>
+          <p class="text-zinc-300 leading-relaxed mt-2">
+            Use the menu to explore and see what you can find. Note that your school may not be
+            using all of the pages.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-xl font-semibold mb-2">Your dashboard</h3>
+          <p class="text-zinc-300 leading-relaxed">
+            The dashboard page includes dashlets which your school has enabled (and which you can't
+            disable!), as well as optional dashlets that you can toggle on or off.
+          </p>
+          <p class="text-zinc-300 leading-relaxed mt-2">
+            Some dashlets help you to get organised, some give you key information, and some are
+            just for fun.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-xl font-semibold mb-2">Colour your timetable</h3>
+          <p class="text-zinc-300 leading-relaxed">
+            On the timetable page, tap (or click) on a class to access more details -- and then tap
+            the palette button to colour up your timetable.
+          </p>
+        </div>
+      </div>
+    </div>
+  {:else if portalUrl}
+    <iframe src={portalUrl} class="w-full h-full rounded-2xl border-0" title="Welcome Portal"
+    ></iframe>
   {/if}
-</Modal> 
+</Modal>
