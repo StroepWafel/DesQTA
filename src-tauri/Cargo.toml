@@ -45,6 +45,7 @@ tokio-util = "0.7.15"
 once_cell = "1"
 uuid = { version = "1.0", features = ["v4", "serde"] }
 walkdir = "2.0"
+rusqlite = { version = "0.31", features = ["bundled", "chrono", "serde_json"] }
 
 # Security & Encryption
 ring = "0.17"

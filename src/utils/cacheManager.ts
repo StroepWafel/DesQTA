@@ -3,6 +3,8 @@
  * Provides functions to clear browser caches that might cause routing issues
  */
 
+import { invoke } from '@tauri-apps/api/core';
+
 export class CacheManager {
   /**
    * Clear all browser caches including service worker cache
@@ -30,7 +32,7 @@ export class CacheManager {
         console.log('Cleared sessionStorage');
       }
 
-      // Clear IndexedDB caches (but preserve user data)
+      // Clear SQLite cache (via Rust backend)
       await this.clearIndexedDBCaches();
 
     } catch (error) {
@@ -57,38 +59,18 @@ export class CacheManager {
   }
 
   /**
-   * Clear IndexedDB caches (but preserve user data like settings)
+   * Clear SQLite cache (replaces IndexedDB cache clearing)
    */
   static async clearIndexedDBCaches(): Promise<void> {
     try {
-      if ('indexedDB' in window) {
-        // Clear cache-related IndexedDB databases
-        // Note: 'desqta-idb-v1' contains both cache and syncQueue stores
-        const cacheDatabases = ['desqta-idb-v1', 'cache', 'syncQueue'];
-        
-        for (const dbName of cacheDatabases) {
-          try {
-            const deleteReq = indexedDB.deleteDatabase(dbName);
-            await new Promise((resolve, reject) => {
-              deleteReq.onsuccess = () => resolve(void 0);
-              deleteReq.onerror = () => reject(deleteReq.error);
-              deleteReq.onblocked = () => {
-                // If database is blocked, wait a bit and try again
-                setTimeout(() => {
-                  const retryReq = indexedDB.deleteDatabase(dbName);
-                  retryReq.onsuccess = () => resolve(void 0);
-                  retryReq.onerror = () => reject(retryReq.error);
-                }, 100);
-              };
-            });
-            console.log(`Cleared IndexedDB: ${dbName}`);
-          } catch (error) {
-            console.warn(`Failed to clear IndexedDB ${dbName}:`, error);
-          }
-        }
-      }
+      // Clear SQLite cache via Rust backend
+      await invoke('db_cache_clear');
+      console.log('Cleared SQLite cache');
+      
+      // Also cleanup expired entries
+      await invoke('db_cache_cleanup_expired');
     } catch (error) {
-      console.error('Failed to clear IndexedDB caches:', error);
+      console.error('Failed to clear SQLite cache:', error);
     }
   }
 

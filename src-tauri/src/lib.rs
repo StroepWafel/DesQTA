@@ -27,6 +27,8 @@ mod profile_picture;
 mod performance_testing;
 #[path = "utils/sanitization.rs"]
 mod sanitization;
+#[path = "utils/database.rs"]
+mod database;
 mod global_search;
 
 use std::cell::Cell;
@@ -311,12 +313,27 @@ pub fn run() {
             performance_testing::load_performance_test_result,
             performance_testing::delete_performance_test_result,
             performance_testing::get_performance_tests_directory,
-            performance_testing::clear_all_performance_tests
+            performance_testing::clear_all_performance_tests,
+            database::db_cache_get,
+            database::db_cache_set,
+            database::db_cache_delete,
+            database::db_cache_clear,
+            database::db_cache_cleanup_expired,
+            database::db_queue_add,
+            database::db_queue_all,
+            database::db_queue_delete,
+            database::db_queue_clear,
+            database::db_get_assessments_by_year
         ])
         .setup(|app| {
             // Initialize logger first
             if let Err(e) = logger::init_logger() {
                 eprintln!("Failed to initialize logger: {}", e);
+            }
+            
+            // Initialize database
+            if let Err(e) = database::init_database(app.app_handle()) {
+                eprintln!("Failed to initialize database: {}", e);
             }
 
             #[cfg(desktop)]
