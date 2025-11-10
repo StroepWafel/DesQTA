@@ -18,7 +18,7 @@
   "license": "MIT",
   "dependencies": {
     "@tailwindcss/typography": "^0.5.16",
-    "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/api": "2.9.0",
     "@tauri-apps/plugin-dialog": "^2.4.0",
     "@tauri-apps/plugin-notification": "^2.3.1",
     "@tauri-apps/plugin-opener": "2.5.0",
@@ -73,7 +73,7 @@
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tailwindcss/postcss": "^4.1.13",
     "@tanstack/table-core": "^8.21.3",
-    "@tauri-apps/cli": "^2.8.0",
+    "@tauri-apps/cli": "2.9.4",
     "@types/file-saver": "^2.0.7",
     "bits-ui": "^2.9.8",
     "clsx": "^2.1.1",
