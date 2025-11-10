@@ -4,64 +4,112 @@
   import { Icon, ArrowTopRightOnSquare } from 'svelte-hero-icons';
   import Modal from './Modal.svelte';
   import { _ } from '../i18n';
-  import { renderDraftJSText } from '../../routes/courses/utils';
   import { sanitizeHtml } from '../../utils/sanitization';
-  import type { DraftJSContent } from '../../routes/courses/types';
+  import { renderDraftJSText } from '../../routes/courses/utils';
+  import type {
+    Module,
+    TitleModule,
+    TextBlockModule,
+    ResourceModule,
+    LinkModule,
+    ParsedDocument,
+    ResourceLink,
+  } from '../../routes/courses/types';
 
   let portalUrl = $state<string>('');
   let loadingPortal = $state<boolean>(true);
   let portalError = $state<string>('');
   let showPortalModal = $state(false);
   let showDefaultContent = $state<boolean>(false);
-  let powerPortalModules = $state<Array<{ type: string; content: string }>>([]);
+  let parsedPortalDocument = $state<ParsedDocument | null>(null);
   const parser = new DOMParser();
 
-  const TITLE_MODULE_TYPE = 'c44f844e-cdd1-4462-951f-f8a1ad02c3b0';
+  // Module type checking functions (same as CourseContent)
+  function isModule<T extends Module>(
+    module: Module,
+    contentCheck: (content: any) => boolean,
+  ): module is T {
+    return 'content' in module && contentCheck(module.content);
+  }
 
-  function sortModulesByOrder(modules: any[]): any[] {
-    if (modules.length === 0) return [];
+  function isTitleModule(module: Module): module is TitleModule {
+    return isModule(module, (content) => content && typeof content.value === 'string');
+  }
+
+  function isTextBlockModule(module: Module): module is TextBlockModule {
+    return isModule(module, (content) => content && content.content && content.content.blocks);
+  }
+
+  function isResourceModule(module: Module): module is ResourceModule {
+    return isModule(module, (content) => content && content.value && content.value.resources);
+  }
+
+  function isLinkModule(module: Module): module is LinkModule {
+    return isModule(module, (content) => content && content.url);
+  }
+
+  type RenderedModule =
+    | { type: 'title'; content: string }
+    | { type: 'text'; content: string }
+    | { type: 'resources'; content: ResourceLink[] }
+    | { type: 'link'; content: string };
+
+  function renderModule(module: Module): RenderedModule | null {
+    if (isTitleModule(module)) {
+      return { type: 'title', content: module.content.value };
+    } else if (isTextBlockModule(module)) {
+      return {
+        type: 'text',
+        content: renderDraftJSText(module.content.content),
+      };
+    } else if (isResourceModule(module)) {
+      return {
+        type: 'resources',
+        content: module.content.value.resources.filter((r) => r.selected),
+      };
+    } else if (isLinkModule(module)) {
+      return { type: 'link', content: module.content.url };
+    }
+    return null;
+  }
+
+  function sortModules(modules: Module[]): Module[] {
+    if (!modules || modules.length === 0) return [];
 
     // Filter out the container module (the one with parentModule === null)
-    // We only want to sort content modules (those with a parentModule)
     const contentModules = modules.filter((m) => m.parentModule !== null);
-
     if (contentModules.length === 0) return modules;
 
-    // Create a map of UUID to module for quick lookup
-    const moduleMap = new Map<string, any>();
+    const moduleMap = new Map<string, Module>();
     contentModules.forEach((module) => {
       moduleMap.set(module.uuid, module);
     });
 
-    // Find the first content module (one with prevModule === null or prevModule pointing to container)
-    let firstModule = contentModules.find(
-      (m) => m.prevModule === null || !moduleMap.has(m.prevModule),
+    const firstModule = contentModules.find(
+      (module) => !module.prevModule || !moduleMap.has(module.prevModule),
     );
 
     if (!firstModule) {
-      // Fallback: return content modules as-is
       return contentModules;
     }
 
-    // Build ordered array by following nextModule links
-    const ordered: any[] = [];
-    let current: any = firstModule;
+    const orderedModules: Module[] = [];
+    let currentModule: Module | undefined = firstModule;
 
-    while (current) {
-      ordered.push(current);
-      const nextUuid = current.nextModule;
-      current = nextUuid ? moduleMap.get(nextUuid) : null;
+    while (currentModule && orderedModules.length < modules.length) {
+      orderedModules.push(currentModule);
+      currentModule = currentModule.nextModule
+        ? moduleMap.get(currentModule.nextModule)
+        : undefined;
     }
 
-    // Add any remaining modules that weren't in the chain (shouldn't happen, but safety check)
-    const orderedUuids = new Set(ordered.map((m) => m.uuid));
     contentModules.forEach((module) => {
-      if (!orderedUuids.has(module.uuid)) {
-        ordered.push(module);
+      if (!orderedModules.includes(module)) {
+        orderedModules.push(module);
       }
     });
 
-    return ordered;
+    return orderedModules;
   }
 
   async function loadPortal() {
@@ -84,44 +132,11 @@
           // Show default content when payload is empty
           showDefaultContent = true;
         } else if (payload.is_power_portal && payload.contents) {
-          // Handle power portal with Draft.js content
+          // Handle power portal with Draft.js content (same structure as lesson content)
           try {
             const contentsJson = JSON.parse(payload.contents);
             if (contentsJson.document && contentsJson.document.modules) {
-              // Sort modules by their order (using prevModule/nextModule links)
-              const sortedModules = sortModulesByOrder(contentsJson.document.modules);
-              const modules: Array<{ type: string; content: string }> = [];
-
-              for (const module of sortedModules) {
-                // Check if this is a title module
-                if (module.type === TITLE_MODULE_TYPE && module.content && module.content.value) {
-                  modules.push({
-                    type: 'title',
-                    content: module.content.value,
-                  });
-                }
-                // Check if this is a text module with Draft.js content
-                else if (
-                  module.content &&
-                  module.content.content &&
-                  module.content.content.blocks
-                ) {
-                  const draftContent: DraftJSContent = {
-                    blocks: module.content.content.blocks,
-                    entityMap: module.content.content.entityMap || {},
-                  };
-                  modules.push({
-                    type: 'text',
-                    content: renderDraftJSText(draftContent),
-                  });
-                }
-              }
-
-              if (modules.length > 0) {
-                powerPortalModules = modules;
-              } else {
-                showDefaultContent = true;
-              }
+              parsedPortalDocument = contentsJson as ParsedDocument;
             } else {
               showDefaultContent = true;
             }
@@ -244,21 +259,45 @@
           </div>
         </div>
       </div>
-    {:else if powerPortalModules.length > 0}
+    {:else if parsedPortalDocument?.document?.modules}
+      {@const sortedModules = sortModules(parsedPortalDocument.document.modules)}
       <div class="h-full overflow-y-auto p-6 text-white">
-        <div class="space-y-4">
-          {#each powerPortalModules as module}
-            {#if module.type === 'title'}
-              <div
-                class="w-full px-6 py-4 mb-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg">
-                <h1 class="text-4xl font-bold text-white uppercase tracking-wide drop-shadow-md">
-                  {module.content}
-                </h1>
-              </div>
-            {:else if module.type === 'text'}
-              <div class="space-y-2">
-                {@html sanitizeHtml(module.content)}
-              </div>
+        <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
+          {#each sortedModules as module, i}
+            {@const renderedModule = renderModule(module)}
+            {#if renderedModule}
+              {#if renderedModule.type === 'title'}
+                <h2 class="px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg">
+                  {renderedModule.content}
+                </h2>
+              {:else if renderedModule.type === 'text'}
+                <div
+                  class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+                  {@html sanitizeHtml(renderedModule.content)}
+                </div>
+              {:else if renderedModule.type === 'resources'}
+                <div class="mb-6">
+                  <h3 class="text-lg font-semibold mb-3 text-white">Resources</h3>
+                  <div class="space-y-2">
+                    {#each renderedModule.content as resource}
+                      <div
+                        class="p-3 rounded-lg border border-zinc-300/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50">
+                        <p class="text-white">{resource.filename}</p>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {:else if renderedModule.type === 'link'}
+                <div class="mb-6">
+                  <a
+                    href={renderedModule.content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-400 underline hover:text-purple-300">
+                    {renderedModule.content}
+                  </a>
+                </div>
+              {/if}
             {/if}
           {/each}
         </div>
@@ -324,21 +363,45 @@
         </div>
       </div>
     </div>
-  {:else if powerPortalModules.length > 0}
+  {:else if parsedPortalDocument?.document?.modules}
+    {@const sortedModules = sortModules(parsedPortalDocument.document.modules)}
     <div class="h-full overflow-y-auto p-6 text-white">
-      <div class="space-y-4">
-        {#each powerPortalModules as module}
-          {#if module.type === 'title'}
-            <div
-              class="w-full px-6 py-4 mb-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg">
-              <h1 class="text-4xl font-bold text-white uppercase tracking-wide drop-shadow-md">
-                {module.content}
-              </h1>
-            </div>
-          {:else if module.type === 'text'}
-            <div class="space-y-2">
-              {@html sanitizeHtml(module.content)}
-            </div>
+      <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
+        {#each sortedModules as module, i}
+          {@const renderedModule = renderModule(module)}
+          {#if renderedModule}
+            {#if renderedModule.type === 'title'}
+              <h2 class="px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg">
+                {renderedModule.content}
+              </h2>
+            {:else if renderedModule.type === 'text'}
+              <div
+                class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+                {@html sanitizeHtml(renderedModule.content)}
+              </div>
+            {:else if renderedModule.type === 'resources'}
+              <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-3 text-white">Resources</h3>
+                <div class="space-y-2">
+                  {#each renderedModule.content as resource}
+                    <div
+                      class="p-3 rounded-lg border border-zinc-300/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50">
+                      <p class="text-white">{resource.filename}</p>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {:else if renderedModule.type === 'link'}
+              <div class="mb-6">
+                <a
+                  href={renderedModule.content}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-indigo-400 underline hover:text-purple-300">
+                  {renderedModule.content}
+                </a>
+              </div>
+            {/if}
           {/if}
         {/each}
       </div>
