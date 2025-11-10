@@ -26,7 +26,7 @@
   let subjectFilters: Record<string, boolean> = {};
   let remindersEnabled = true;
   let groupBy = $state<'subject' | 'month' | 'status'>('subject');
-  
+
   // Year filter state
   let selectedYear = $state<number>(new Date().getFullYear());
   let availableYears = $state<number[]>([]);
@@ -39,14 +39,18 @@
       // Filter by year only
       const assessmentYear = new Date(a.due).getFullYear();
       if (assessmentYear !== selectedYear) return false;
-      
+
       return true;
     }),
   );
 
   async function loadLessonColours() {
     // Check cache first
-    const cachedColours = cache.get<any[]>('lesson_colours') || await getWithIdbFallback<any[]>('lesson_colours', 'lesson_colours', () => cache.get<any[]>('lesson_colours'));
+    const cachedColours =
+      cache.get<any[]>('lesson_colours') ||
+      (await getWithIdbFallback<any[]>('lesson_colours', 'lesson_colours', () =>
+        cache.get<any[]>('lesson_colours'),
+      ));
     if (cachedColours) {
       lessonColours = cachedColours;
       return lessonColours;
@@ -68,31 +72,53 @@
     loadingAssessments = true;
 
     try {
-      // Check cache first
-      const cachedData = cache.get<{
-        assessments: any[];
-        subjects: any[];
-        allSubjects: any[];
-        filters: Record<string, boolean>;
-        years: number[];
-      }>('assessments_overview_data') || await getWithIdbFallback<{
-        assessments: any[];
-        subjects: any[];
-        allSubjects: any[];
-        filters: Record<string, boolean>;
-        years: number[];
-      }>('assessments_overview_data', 'assessments_overview_data', () => cache.get('assessments_overview_data'));
+      // Step 1: Load from cache/SQLite immediately (should be pre-loaded by startupService)
+      const cachedData =
+        cache.get<{
+          assessments: any[];
+          subjects: any[];
+          allSubjects: any[];
+          filters: Record<string, boolean>;
+          years: number[];
+        }>('assessments_overview_data') ||
+        (await getWithIdbFallback<{
+          assessments: any[];
+          subjects: any[];
+          allSubjects: any[];
+          filters: Record<string, boolean>;
+          years: number[];
+        }>('assessments_overview_data', 'assessments_overview_data', () =>
+          cache.get('assessments_overview_data'),
+        ));
 
       if (cachedData) {
+        // Show cached data immediately
         upcomingAssessments = cachedData.assessments;
         activeSubjects = cachedData.subjects;
         allSubjects = cachedData.allSubjects;
         subjectFilters = cachedData.filters;
         availableYears = cachedData.years;
         loadingAssessments = false;
+
+        // Step 2: Sync in background if online (non-blocking)
+        const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+        const offline = await isOfflineMode();
+        if (!offline) {
+          syncAssessmentsInBackground().catch(() => {});
+        }
         return;
       }
 
+      // No cache - fetch fresh data
+      await fetchFreshAssessments();
+    } catch (e) {
+      console.error('Failed to load assessments:', e);
+      loadingAssessments = false;
+    }
+  }
+
+  async function fetchFreshAssessments() {
+    try {
       const classesRes = await seqtaFetch('/seqta/student/load/subjects?', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -103,10 +129,10 @@
 
       const classesResJson = JSON.parse(classesRes);
       const folders = classesResJson.payload;
-      
+
       // Get all subjects from all folders
       allSubjects = folders.flatMap((f: any) => f.subjects);
-      
+
       // Remove duplicate subjects by programme+metaclass
       const uniqueSubjectsMap = new Map();
       allSubjects.forEach((s: any) => {
@@ -196,7 +222,10 @@
         },
         10,
       );
-      console.info('[IDB] assessments_overview_data cached (mem+idb)', { assessments: upcomingAssessments.length, subjects: activeSubjects.length });
+      console.info('[IDB] assessments_overview_data cached (mem+idb)', {
+        assessments: upcomingAssessments.length,
+        subjects: activeSubjects.length,
+      });
       await setIdb('assessments_overview_data', {
         assessments: upcomingAssessments,
         subjects: activeSubjects,
@@ -208,6 +237,17 @@
       console.error('Error loading assessments:', e);
     } finally {
       loadingAssessments = false;
+    }
+  }
+
+  async function syncAssessmentsInBackground() {
+    // Background sync - updates data without blocking UI
+    try {
+      await fetchFreshAssessments();
+      // Data is already updated in state by fetchFreshAssessments
+    } catch (e) {
+      // Silently fail - cached data is already shown
+      console.debug('Background sync failed:', e);
     }
   }
 
@@ -293,7 +333,9 @@
 
   onMount(async () => {
     try {
-      const subset = await invoke<any>('get_settings_subset', { keys: ['ai_integrations_enabled','grade_analyser_enabled'] });
+      const subset = await invoke<any>('get_settings_subset', {
+        keys: ['ai_integrations_enabled', 'grade_analyser_enabled'],
+      });
       aiIntegrationsEnabled = subset?.ai_integrations_enabled ?? false;
       gradeAnalyserEnabled = subset?.grade_analyser_enabled ?? true;
     } catch (e) {
@@ -307,12 +349,13 @@
 
 <div class="p-4 sm:p-6">
   <!-- Consolidated Header -->
-  <div class="flex flex-col gap-4 mb-6 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+  <div
+    class="flex flex-col gap-4 mb-6 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
     <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
       <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
         <T key="navigation.assessments" fallback="Assessments" />
       </h1>
-      
+
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <!-- Year Filter Dropdown -->
         {#if availableYears && availableYears.length > 0}
@@ -337,14 +380,21 @@
                   } else if (e.deltaY < 0 && currentIndex > 0) {
                     handleYearChange(availableYears[currentIndex - 1]);
                   }
-                }}
-              >
+                }}>
                 {#each availableYears as year}
                   <option value={year}>{year}</option>
                 {/each}
               </select>
-              <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              <svg
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7" />
               </svg>
             </div>
           </div>
@@ -373,15 +423,22 @@
                 } else if (e.deltaY < 0 && currentIndex > 0) {
                   handleTabChange(options[currentIndex - 1]);
                 }
-              }}
-            >
+              }}>
               <option value="list">{$_('assessments.list_view') || 'List View'}</option>
               <option value="board">{$_('assessments.board_view') || 'Board View'}</option>
               <option value="calendar">{$_('assessments.calendar_view') || 'Calendar View'}</option>
               <option value="gantt">{$_('assessments.gantt_view') || 'Gantt View'}</option>
             </select>
-            <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            <svg
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
@@ -392,14 +449,13 @@
   <!-- Content Area -->
   <div class="space-y-6">
     <!-- Grade Predictions Section -->
-    <GradePredictions 
+    <GradePredictions
       assessments={upcomingAssessments}
       {selectedYear}
       {aiIntegrationsEnabled}
       {gradeAnalyserEnabled}
       showInView="list"
-      currentView={selectedTab}
-    />
+      currentView={selectedTab} />
 
     <!-- Main Assessment Content -->
     {#if loadingAssessments}
@@ -408,16 +464,19 @@
       </div>
     {:else if filteredAssessments.length === 0}
       <div class="py-12">
-        <EmptyState 
-          title={$_('assessments.no_assessments_year')?.replace('{year}', selectedYear.toString()) || `No assessments for ${selectedYear}!`}
+        <EmptyState
+          title={$_('assessments.no_assessments_year')?.replace(
+            '{year}',
+            selectedYear.toString(),
+          ) || `No assessments for ${selectedYear}!`}
           message={$_('assessments.try_different_year') || 'Try selecting a different year.'}
-          icon="🎉"
-        />
+          icon="🎉" />
       </div>
     {:else}
       <!-- Board View Options -->
       {#if selectedTab === 'board'}
-        <div class="flex items-center gap-4 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+        <div
+          class="flex items-center gap-4 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
           <label for="group-by-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
             <T key="assessments.group_by" fallback="Group by:" />
           </label>
@@ -439,43 +498,43 @@
                 } else if (e.deltaY < 0 && currentIndex > 0) {
                   handleGroupByChange(options[currentIndex - 1]);
                 }
-              }}
-            >
+              }}>
               <option value="subject">{$_('assessments.subject') || 'Subject'}</option>
               <option value="month">{$_('assessments.month') || 'Month'}</option>
               <option value="status">{$_('assessments.status') || 'Status'}</option>
             </select>
-            <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            <svg
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
-        <AssessmentBoardView 
+        <AssessmentBoardView
           assessments={filteredAssessments}
           subjects={allSubjects}
           {activeSubjects}
           {groupBy}
-          onGroupByChange={handleGroupByChange}
-        />
+          onGroupByChange={handleGroupByChange} />
       {:else if selectedTab === 'calendar'}
-        <AssessmentCalendarView 
-          assessments={filteredAssessments}
-        />
+        <AssessmentCalendarView assessments={filteredAssessments} />
       {:else if selectedTab === 'gantt'}
-        <AssessmentGanttView 
+        <AssessmentGanttView
           assessments={filteredAssessments}
           subjects={allSubjects}
-          {activeSubjects}
-        />
+          {activeSubjects} />
       {:else}
-        <AssessmentListView 
+        <AssessmentListView
           assessments={filteredAssessments}
           subjects={allSubjects}
-          {activeSubjects}
-        />
+          {activeSubjects} />
       {/if}
     {/if}
   </div>
 </div>
-
-

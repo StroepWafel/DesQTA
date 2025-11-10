@@ -83,11 +83,31 @@
       const cacheKey = `timetable_${from}_${until}`;
       const cachedLessons = cache.get<any[]>(cacheKey) || await getWithIdbFallback<any[]>(cacheKey, cacheKey, () => cache.get<any[]>(cacheKey));
       if (cachedLessons) {
+        // Show cached data immediately
         lessons = cachedLessons;
         loadingLessons = false;
+        
+        // Sync in background if online
+        const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+        const offline = await isOfflineMode();
+        if (!offline) {
+          syncTimetableInBackground(from, until, cacheKey).catch(() => {});
+        }
         return;
       }
 
+      // No cache - fetch fresh data
+      await fetchFreshTimetable(from, until, cacheKey);
+    } catch (e) {
+      error = $_('timetable.failed_to_load') || 'Failed to load timetable. Please try again.';
+      console.error('Error loading timetable:', e);
+    } finally {
+      loadingLessons = false;
+    }
+  }
+
+  async function fetchFreshTimetable(from: string, until: string, cacheKey: string) {
+    try {
       const res = await seqtaFetch('/seqta/student/load/timetable?', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -108,10 +128,18 @@
       console.info('[IDB] timetable cached (mem+idb)', { key: cacheKey, count: lessons.length });
       await setIdb(cacheKey, lessons);
     } catch (e) {
-      error = $_('timetable.failed_to_load') || 'Failed to load timetable. Please try again.';
-      console.error('Error loading timetable:', e);
-    } finally {
-      loadingLessons = false;
+      throw e; // Re-throw to be handled by caller
+    }
+  }
+
+  async function syncTimetableInBackground(from: string, until: string, cacheKey: string) {
+    // Background sync - updates data without blocking UI
+    try {
+      await fetchFreshTimetable(from, until, cacheKey);
+      // Data is already updated in state by fetchFreshTimetable
+    } catch (e) {
+      // Silently fail - cached data is already shown
+      console.debug('Background sync failed:', e);
     }
   }
 

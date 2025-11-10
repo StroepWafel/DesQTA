@@ -116,6 +116,7 @@ pub struct Settings {
     pub global_search_enabled: bool,
     pub current_theme: Option<String>,
     pub dev_sensitive_info_hider: bool,
+    pub dev_force_offline_mode: bool,
     pub accepted_cloud_eula: bool,
     pub language: String,
 }
@@ -143,6 +144,7 @@ impl Default for Settings {
             global_search_enabled: false,
             current_theme: Some("default".to_string()),
             dev_sensitive_info_hider: false,
+            dev_force_offline_mode: false,
             accepted_cloud_eula: false,
             language: "en".to_string(), // Default to English
         }
@@ -327,6 +329,7 @@ impl Settings {
         default_settings.global_search_enabled = get_bool(&existing_json, "global_search_enabled", default_settings.global_search_enabled);
         default_settings.current_theme = get_opt_string(&existing_json, "current_theme");
         default_settings.dev_sensitive_info_hider = get_bool(&existing_json, "dev_sensitive_info_hider", default_settings.dev_sensitive_info_hider);
+        default_settings.dev_force_offline_mode = get_bool(&existing_json, "dev_force_offline_mode", default_settings.dev_force_offline_mode);
         default_settings.accepted_cloud_eula = get_bool(&existing_json, "accepted_cloud_eula", default_settings.accepted_cloud_eula);
         default_settings.language = get_string(&existing_json, "language", &default_settings.language);
 

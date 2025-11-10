@@ -1,0 +1,129 @@
+/**
+ * Startup Service - Instant Offline Mode
+ *
+ * Loads cached data from SQLite immediately on app startup to enable instant UI rendering.
+ * Then triggers background sync to update data from SEQTA API.
+ */
+
+import { invoke } from '@tauri-apps/api/core';
+import { cache } from '../../utils/cache';
+import { logger } from '../../utils/logger';
+import { idbCacheGet } from '../services/idb';
+import { isOfflineMode } from '../utils/offlineMode';
+
+/**
+ * Load all cached data from SQLite into memory cache for instant access
+ * This runs synchronously on startup to populate the UI immediately
+ */
+export async function loadCachedDataOnStartup(): Promise<void> {
+  try {
+    logger.info('startup', 'loadCachedDataOnStartup', 'Loading cached data from SQLite');
+
+    // Load common cache keys that pages need immediately
+    const cacheKeys = [
+      'assessments_overview_data',
+      'upcoming_assessments_data',
+      'lesson_colours',
+      'notices_labels',
+    ];
+
+    // Load today's timetable and notices
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = (today.getMonth() + 1).toString().padStart(2, '0');
+    const d = today.getDate().toString().padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
+
+    // Get Monday of current week for timetable
+    const getMonday = (d: Date): Date => {
+      const copy = new Date(d);
+      const day = copy.getDay();
+      const diff = copy.getDate() - day + (day === 0 ? -6 : 1);
+      copy.setDate(diff);
+      copy.setHours(0, 0, 0, 0);
+      return copy;
+    };
+
+    const weekStart = getMonday(today);
+    const from = `${weekStart.getFullYear()}-${(weekStart.getMonth() + 1).toString().padStart(2, '0')}-${weekStart.getDate().toString().padStart(2, '0')}`;
+    const until = new Date(weekStart.getTime() + 4 * 86400000);
+    const untilStr = `${until.getFullYear()}-${(until.getMonth() + 1).toString().padStart(2, '0')}-${until.getDate().toString().padStart(2, '0')}`;
+    const timetableKey = `timetable_${from}_${untilStr}`;
+    const noticesKey = `notices_${dateStr}`;
+
+    cacheKeys.push(timetableKey, noticesKey);
+
+    // Load all cached data in parallel
+    const loadPromises = cacheKeys.map(async (key) => {
+      try {
+        const cached = await idbCacheGet(key);
+        if (cached) {
+          // Restore to memory cache with appropriate TTL
+          let ttl = 60; // default 60 minutes
+          if (key === 'lesson_colours') ttl = 10;
+          else if (key.startsWith('timetable_')) ttl = 30;
+          else if (key.startsWith('notices_')) ttl = 30;
+          else if (key === 'assessments_overview_data') ttl = 10;
+
+          cache.set(key, cached, ttl);
+          logger.debug('startup', 'loadCachedDataOnStartup', `Loaded ${key} from SQLite`, {
+            hasData: !!cached,
+            size: JSON.stringify(cached)?.length,
+          });
+        }
+      } catch (e) {
+        logger.warn('startup', 'loadCachedDataOnStartup', `Failed to load ${key}`, { error: e });
+      }
+    });
+
+    await Promise.allSettled(loadPromises);
+
+    logger.info('startup', 'loadCachedDataOnStartup', 'Finished loading cached data from SQLite');
+  } catch (e) {
+    logger.error('startup', 'loadCachedDataOnStartup', 'Failed to load cached data', { error: e });
+  }
+}
+
+/**
+ * Trigger background sync to update data from SEQTA API
+ * This runs after cached data is loaded to update in the background
+ */
+export async function triggerBackgroundSync(): Promise<void> {
+  try {
+    // Check if offline mode is forced
+    const offline = await isOfflineMode();
+    if (offline) {
+      logger.info('startup', 'triggerBackgroundSync', 'Skipping background sync (offline mode)');
+      return;
+    }
+
+    logger.info('startup', 'triggerBackgroundSync', 'Starting background sync');
+
+    // Import warmupService dynamically to avoid circular dependencies
+    const { warmUpCommonData } = await import('./warmupService');
+
+    // Run sync in background (don't await - let it run async)
+    warmUpCommonData()
+      .then(() => {
+        logger.info('startup', 'triggerBackgroundSync', 'Background sync completed');
+      })
+      .catch((e) => {
+        logger.error('startup', 'triggerBackgroundSync', 'Background sync failed', { error: e });
+      });
+  } catch (e) {
+    logger.error('startup', 'triggerBackgroundSync', 'Failed to trigger background sync', {
+      error: e,
+    });
+  }
+}
+
+/**
+ * Initialize startup sequence: load cached data → show UI → sync in background
+ */
+export async function initializeApp(): Promise<void> {
+  // Step 1: Load cached data from SQLite immediately (blocks until loaded)
+  await loadCachedDataOnStartup();
+
+  // Step 2: Trigger background sync (non-blocking)
+  triggerBackgroundSync();
+}

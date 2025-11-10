@@ -72,6 +72,7 @@
   let autoExpandSidebarHover = false;
   let globalSearchEnabled = true;
   let devSensitiveInfoHider = false;
+  let devForceOfflineMode = false;
   let showDevSettings = false;
   let keyBuffer = '';
   let acceptedCloudEula = false;
@@ -182,7 +183,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     loading = true;
     try {
       const settings = await invoke<any>('get_settings_subset', { keys: [
-        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','accepted_cloud_eula','language'
+        'shortcuts','feeds','weather_enabled','weather_city','weather_country','reminders_enabled','force_use_location','accent_color','theme','disable_school_picture','enhanced_animations','gemini_api_key','ai_integrations_enabled','grade_analyser_enabled','lesson_summary_analyser_enabled','auto_collapse_sidebar','auto_expand_sidebar_hover','global_search_enabled','dev_sensitive_info_hider','dev_force_offline_mode','accepted_cloud_eula','language'
       ]});
       shortcuts = settings.shortcuts || [];
       feeds = settings.feeds || [];
@@ -203,6 +204,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       autoExpandSidebarHover = settings.auto_expand_sidebar_hover ?? false;
       globalSearchEnabled = settings.global_search_enabled ?? true;
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
+      devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
 
       console.log('Loading settings', {
@@ -234,6 +236,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       autoExpandSidebarHover = false;
       globalSearchEnabled = true;
       devSensitiveInfoHider = false;
+      devForceOfflineMode = false;
       acceptedCloudEula = false;
       showDevSettings = false;
     }
@@ -294,10 +297,18 @@ The Company reserves the right to terminate your access to the Service at any ti
         auto_expand_sidebar_hover: autoExpandSidebarHover,
         global_search_enabled: globalSearchEnabled,
         dev_sensitive_info_hider: devSensitiveInfoHider,
+        dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
       };
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
+      
+      // Invalidate offline mode cache if setting changed
+      if (patch.dev_force_offline_mode !== undefined) {
+        const { invalidateOfflineModeCache } = await import('../../lib/utils/offlineMode');
+        invalidateOfflineModeCache();
+      }
+      
       saveSuccess = true;
       setTimeout(() => location.reload(), 1500);
     } catch (e) {
@@ -1637,6 +1648,19 @@ The Company reserves the right to terminate your access to the Service at any ti
                   for="dev-sensitive-info-hider"
                   class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
                   Sensitive Info Hider (API responses replaced with random mock data)
+                </label>
+              </div>
+
+              <div class="flex gap-3 items-center">
+                <input
+                  id="dev-force-offline-mode"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={devForceOfflineMode} />
+                <label
+                  for="dev-force-offline-mode"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  Force Offline Mode (Prevents all network requests, uses cached data only)
                 </label>
               </div>
 

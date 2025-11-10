@@ -1,7 +1,7 @@
 <script lang="ts">
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
-  import { Window } from "@tauri-apps/api/window";
+  import { Window } from '@tauri-apps/api/window';
   const appWindow = Window.getCurrent();
   import AboutModal from '../lib/components/AboutModal.svelte';
   import AppHeader from '../lib/components/AppHeader.svelte';
@@ -15,11 +15,33 @@
   import { logger } from '../utils/logger';
   import { seqtaFetch } from '../utils/netUtil';
   import '../app.css';
-  import { accentColor, loadAccentColor, theme, loadTheme, loadCurrentTheme } from '../lib/stores/theme';
+  import {
+    accentColor,
+    loadAccentColor,
+    theme,
+    loadTheme,
+    loadCurrentTheme,
+  } from '../lib/stores/theme';
   import { initI18n, locale, availableLocales, _ } from '../lib/i18n';
   import T from '../lib/components/T.svelte';
   import { themeBuilderSidebarOpen } from '../lib/stores/themeBuilderSidebar';
-  import { Icon, Home, Newspaper, ClipboardDocumentList, BookOpen, ChatBubbleLeftRight, DocumentText, AcademicCap, ChartBar, Cog6Tooth, CalendarDays, User, GlobeAlt, XMark, PencilSquare } from 'svelte-hero-icons';
+  import {
+    Icon,
+    Home,
+    Newspaper,
+    ClipboardDocumentList,
+    BookOpen,
+    ChatBubbleLeftRight,
+    DocumentText,
+    AcademicCap,
+    ChartBar,
+    Cog6Tooth,
+    CalendarDays,
+    User,
+    GlobeAlt,
+    XMark,
+    PencilSquare,
+  } from 'svelte-hero-icons';
   import { writable } from 'svelte/store';
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
@@ -34,12 +56,12 @@
   let shellReady = $state(false);
   let contentLoading = $state(true);
   let isMobile = $state(false);
-  
-  // UI state  
+
+  // UI state
   let sidebarOpen = $state(true);
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
-  
+
   // Weather state
   let weatherEnabled = $state(false);
   let forceUseLocation = $state(true);
@@ -48,7 +70,7 @@
   let weatherData = $state<WeatherData | null>(null);
   let loadingWeather = $state(false);
   let weatherError = $state('');
-  
+
   // Settings state
   let disableSchoolPicture = $state(false);
   let enhancedAnimations = $state(true);
@@ -74,33 +96,33 @@
   let menuLoading = $state(true);
   let devMockEnabled = false;
 
-onMount(() => {
-  // Platform detection - similar to LoginScreen
-  const checkPlatform = () => {
-    const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
-    return {
-      isWindows: tauri_platform === "windows",
-      isMobile: tauri_platform === "ios" || tauri_platform === "android"
+  onMount(() => {
+    // Platform detection - similar to LoginScreen
+    const checkPlatform = () => {
+      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
+      return {
+        isWindows: tauri_platform === 'windows',
+        isMobile: tauri_platform === 'ios' || tauri_platform === 'android',
+      };
     };
-  };
 
-  const { isWindows, isMobile } = checkPlatform();
+    const { isWindows, isMobile } = checkPlatform();
 
-  // Only run window corner rounding on Windows desktop
-  if (isWindows && !isMobile) {
-    async function updateCorners() {
-      const isMaximized = await appWindow.isMaximized();
-      if (isMaximized) {
-        document.body.classList.remove("rounded-xl");
-      } else {
-        document.body.classList.add("rounded-xl");
+    // Only run window corner rounding on Windows desktop
+    if (isWindows && !isMobile) {
+      async function updateCorners() {
+        const isMaximized = await appWindow.isMaximized();
+        if (isMaximized) {
+          document.body.classList.remove('rounded-xl');
+        } else {
+          document.body.classList.add('rounded-xl');
+        }
       }
+      updateCorners();
+      appWindow.onResized(updateCorners);
+      appWindow.onMoved(updateCorners);
     }
-    updateCorners();
-    appWindow.onResized(updateCorners);
-    appWindow.onMoved(updateCorners);
-  }
-});
+  });
 
   const handleClickOutside = (event: MouseEvent) => {
     const target = event.target as Element;
@@ -120,7 +142,9 @@ onMount(() => {
       } else {
         const sessionExists = await authService.checkSession();
         needsSetup.set(!sessionExists);
-        logger.info('layout', 'checkSession', `Session exists: ${sessionExists}`, { sessionExists });
+        logger.info('layout', 'checkSession', `Session exists: ${sessionExists}`, {
+          sessionExists,
+        });
         if (sessionExists) {
           await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
         }
@@ -134,7 +158,7 @@ onMount(() => {
   // Remove duplicate onMount - consolidating below
 
   let unlisten: (() => void) | undefined;
-  
+
   const setupServiceWorkerAndListeners = async () => {
     // Register service worker for offline static assets
     if ('serviceWorker' in navigator) {
@@ -152,7 +176,7 @@ onMount(() => {
     await listen<boolean>('fullscreen-changed', (event) => {
       const isFullscreen = event.payload;
       logger.debug('layout', 'fullscreen_listener', `Fullscreen changed: ${isFullscreen}`);
-      
+
       if (isFullscreen) {
         // Remove rounded corners when entering fullscreen
         document.body.classList.remove('rounded-xl');
@@ -193,7 +217,11 @@ onMount(() => {
   const reloadEnhancedAnimationsSetting = async () => {
     const settings = await loadSettings(['enhanced_animations']);
     enhancedAnimations = settings.enhanced_animations ?? true;
-    logger.debug('layout', 'reloadEnhancedAnimationsSetting', `Enhanced animations: ${enhancedAnimations}`);
+    logger.debug(
+      'layout',
+      'reloadEnhancedAnimationsSetting',
+      `Enhanced animations: ${enhancedAnimations}`,
+    );
   };
 
   const reloadSidebarSettings = async () => {
@@ -225,8 +253,8 @@ onMount(() => {
         method: 'POST',
         body: {
           timestamp: '1970-01-01 00:00:00.0',
-          hash: '#?page=/home'
-        }
+          hash: '#?page=/home',
+        },
       });
 
       const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
@@ -281,7 +309,9 @@ onMount(() => {
       await invoke('save_settings_merge', { patch: { language: languageCode } });
       logger.info('layout', 'changeLanguage', `Language changed to ${languageCode}`);
     } catch (e) {
-      logger.error('layout', 'changeLanguage', `Failed to save language preference: ${e}`, { error: e });
+      logger.error('layout', 'changeLanguage', `Failed to save language preference: ${e}`, {
+        error: e,
+      });
     }
   };
 
@@ -308,7 +338,7 @@ onMount(() => {
     loadingWeather = true;
     weatherError = '';
     try {
-      weatherData = useIP 
+      weatherData = useIP
         ? await weatherService.fetchWeatherWithIP()
         : await weatherService.fetchWeather(weatherCity, weatherCountry);
     } catch (e) {
@@ -322,17 +352,23 @@ onMount(() => {
   $effect(() => {
     document.documentElement.setAttribute('data-accent-color', '');
     document.documentElement.style.setProperty('--accent-color-value', $accentColor);
-    logger.debug('layout', '$effect', 'Applied accent color to root as CSS var', { accent: $accentColor });
+    logger.debug('layout', '$effect', 'Applied accent color to root as CSS var', {
+      accent: $accentColor,
+    });
   });
 
   const loadEnhancedAnimationsSetting = async () => {
     const settings = await loadSettings(['enhanced_animations']);
     enhancedAnimations = settings.enhanced_animations ?? true;
-    logger.info('layout', 'loadEnhancedAnimationsSetting', 'Setting loaded', { enhancedAnimations });
+    logger.info('layout', 'loadEnhancedAnimationsSetting', 'Setting loaded', {
+      enhancedAnimations,
+    });
   };
 
   $effect(() => {
-    logger.debug('layout', '$effect', 'Enhanced animations effect triggered', { enhancedAnimations });
+    logger.debug('layout', '$effect', 'Enhanced animations effect triggered', {
+      enhancedAnimations,
+    });
     if (enhancedAnimations) {
       document.body.classList.add('enhanced-animations');
     } else {
@@ -343,14 +379,9 @@ onMount(() => {
   onMount(async () => {
     logger.logComponentMount('layout');
     setupServiceWorkerAndListeners();
-    
+
     // Initialize theme and i18n first
-    await Promise.all([
-      loadAccentColor(),
-      loadTheme(),
-      loadCurrentTheme(),
-      initI18n(),
-    ]);
+    await Promise.all([loadAccentColor(), loadTheme(), loadCurrentTheme(), initI18n()]);
 
     shellReady = true;
 
@@ -358,7 +389,7 @@ onMount(() => {
       // Load saved language preference
       try {
         const settings = await loadSettings(['language']);
-        if (settings.language && availableLocales.some(l => l.code === settings.language)) {
+        if (settings.language && availableLocales.some((l) => l.code === settings.language)) {
           locale.set(settings.language);
         }
       } catch (e) {
@@ -376,11 +407,14 @@ onMount(() => {
         checkSession(),
         loadWeatherSettings(),
         loadEnhancedAnimationsSetting(),
-        reloadSidebarSettings()
+        reloadSidebarSettings(),
       ]);
-      
-      // Background tasks
-      warmUpCommonData().catch(() => {});
+
+      // Load cached data from SQLite immediately for instant UI
+      const { initializeApp } = await import('$lib/services/startupService');
+      await initializeApp();
+
+      // Background tasks (warmup already triggered by startupService)
       if (weatherEnabled) {
         fetchWeather(!forceUseLocation);
       }
@@ -393,11 +427,16 @@ onMount(() => {
             headers: { 'Content-Type': 'application/json' },
             body: { mode: 'normal', query: null, redirect_url: seqtaUrl },
           });
-          
+
           const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
           const isAuthenticated = responseStr.includes('site.name.abbrev');
-          
-          if (!isAuthenticated && (responseStr.includes('error') || responseStr.includes('unauthorized') || responseStr.includes('401'))) {
+
+          if (
+            !isAuthenticated &&
+            (responseStr.includes('error') ||
+              responseStr.includes('unauthorized') ||
+              responseStr.includes('401'))
+          ) {
             logger.warn('layout', 'onMount', 'Session invalid, logging out');
             await handleLogout();
           }
@@ -405,10 +444,10 @@ onMount(() => {
           logger.error('layout', 'onMount', 'SEQTA session check failed', { error: e });
         }
       }
-      
+
       // Run a one-time heartbeat health check on app open
       await healthCheck();
-      
+
       // Check and apply initial fullscreen styling
       try {
         await invoke('handle_fullscreen_change');
@@ -460,16 +499,16 @@ onMount(() => {
     const events = [
       ['resize', checkMobile],
       ['click', handleClickOutside],
-      ['mousemove', handleMouseMove]
+      ['mousemove', handleMouseMove],
     ] as const;
-    
-    events.forEach(([event, handler]) => 
-      document.addEventListener(event, handler as EventListener)
+
+    events.forEach(([event, handler]) =>
+      document.addEventListener(event, handler as EventListener),
     );
 
     return () => {
-      events.forEach(([event, handler]) => 
-        document.removeEventListener(event, handler as EventListener)
+      events.forEach(([event, handler]) =>
+        document.removeEventListener(event, handler as EventListener),
       );
       try {
         mql.removeEventListener('change', onMqlChange);
@@ -479,8 +518,6 @@ onMount(() => {
       }
     };
   });
-
-  
 
   const loadSeqtaConfigAndMenu = async () => {
     try {
@@ -494,7 +531,7 @@ onMount(() => {
 
       let config = await invoke('load_seqta_config');
       let latestConfig = null;
-      
+
       if (!config) {
         // Fetch latest config
         const res = await seqtaFetch('/seqta/student/load/settings', {
@@ -514,7 +551,7 @@ onMount(() => {
         });
         latestConfig = typeof res === 'string' ? JSON.parse(res) : res;
         const isDifferent = await invoke('is_seqta_config_different', { newConfig: latestConfig });
-        
+
         if (isDifferent) {
           seqtaConfig = latestConfig;
           await invoke('save_seqta_config', { config: latestConfig });
@@ -522,7 +559,7 @@ onMount(() => {
           seqtaConfig = config;
         }
       }
-      
+
       menu = [...DEFAULT_MENU]; // Use default menu configuration
     } catch (e) {
       logger.error('layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', { error: e });
@@ -550,8 +587,7 @@ onMount(() => {
         onLogout={handleLogout}
         onShowAbout={() => (showAboutModal = true)}
         onClickOutside={handleClickOutside}
-        {disableSchoolPicture}
-      />
+        {disableSchoolPicture} />
     {/if}
 
     <div class="flex relative flex-1 min-h-0">
@@ -574,36 +610,34 @@ onMount(() => {
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t rounded-tl-xl {!$needsSetup ? 'border-l' : ''} border-zinc-200 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-900/50 transition-all duration-200"
-        style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};"
-      >
+        class="overflow-y-auto flex-1 border-t rounded-tl-xl {!$needsSetup
+          ? 'border-l'
+          : ''} border-zinc-200 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-900/50 transition-all duration-200"
+        style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if contentLoading}
           <div class="flex items-center justify-center w-full h-full py-12">
             <LoadingScreen inline />
           </div>
+        {:else if $needsSetup}
+          <LoginScreen
+            {seqtaUrl}
+            onStartLogin={startLogin}
+            onUrlChange={(url) => (seqtaUrl = url)} />
         {:else}
-          {#if $needsSetup}
-            <LoginScreen
-              {seqtaUrl}
-              onStartLogin={startLogin}
-              onUrlChange={(url) => (seqtaUrl = url)}
-            />
-          {:else}
-            {@render children()}
-          {/if}
+          {@render children()}
         {/if}
       </main>
 
       <!-- ThemeBuilder Sidebar -->
       {#if $themeBuilderSidebarOpen}
-        <aside class="flex fixed top-0 right-0 z-50 flex-col w-96 h-full bg-white border-l shadow-xl transition-transform duration-200 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700">
+        <aside
+          class="flex fixed top-0 right-0 z-50 flex-col w-96 h-full bg-white border-l shadow-xl transition-transform duration-200 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700">
           <ThemeBuilder>
             {#snippet close()}
-              <button 
-                class="p-2 ml-auto rounded-lg transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200" 
-                onclick={() => themeBuilderSidebarOpen.set(false)} 
-                aria-label={$_('common.close_theme_builder', { default: 'Close Theme Builder' })}
-              >
+              <button
+                class="p-2 ml-auto rounded-lg transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                onclick={() => themeBuilderSidebarOpen.set(false)}
+                aria-label={$_('common.close_theme_builder', { default: 'Close Theme Builder' })}>
                 <Icon src={XMark} class="w-6 h-6" />
               </button>
             {/snippet}
