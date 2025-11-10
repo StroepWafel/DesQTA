@@ -13,8 +13,56 @@
   let portalError = $state<string>('');
   let showPortalModal = $state(false);
   let showDefaultContent = $state<boolean>(false);
-  let powerPortalContent = $state<string>('');
+  let powerPortalModules = $state<Array<{ type: string; content: string }>>([]);
   const parser = new DOMParser();
+
+  const TITLE_MODULE_TYPE = 'c44f844e-cdd1-4462-951f-f8a1ad02c3b0';
+
+  function sortModulesByOrder(modules: any[]): any[] {
+    if (modules.length === 0) return [];
+
+    // Filter out the container module (the one with parentModule === null)
+    // We only want to sort content modules (those with a parentModule)
+    const contentModules = modules.filter((m) => m.parentModule !== null);
+
+    if (contentModules.length === 0) return modules;
+
+    // Create a map of UUID to module for quick lookup
+    const moduleMap = new Map<string, any>();
+    contentModules.forEach((module) => {
+      moduleMap.set(module.uuid, module);
+    });
+
+    // Find the first content module (one with prevModule === null or prevModule pointing to container)
+    let firstModule = contentModules.find(
+      (m) => m.prevModule === null || !moduleMap.has(m.prevModule),
+    );
+
+    if (!firstModule) {
+      // Fallback: return content modules as-is
+      return contentModules;
+    }
+
+    // Build ordered array by following nextModule links
+    const ordered: any[] = [];
+    let current: any = firstModule;
+
+    while (current) {
+      ordered.push(current);
+      const nextUuid = current.nextModule;
+      current = nextUuid ? moduleMap.get(nextUuid) : null;
+    }
+
+    // Add any remaining modules that weren't in the chain (shouldn't happen, but safety check)
+    const orderedUuids = new Set(ordered.map((m) => m.uuid));
+    contentModules.forEach((module) => {
+      if (!orderedUuids.has(module.uuid)) {
+        ordered.push(module);
+      }
+    });
+
+    return ordered;
+  }
 
   async function loadPortal() {
     try {
@@ -40,21 +88,37 @@
           try {
             const contentsJson = JSON.parse(payload.contents);
             if (contentsJson.document && contentsJson.document.modules) {
-              let renderedHtml = '';
+              // Sort modules by their order (using prevModule/nextModule links)
+              const sortedModules = sortModulesByOrder(contentsJson.document.modules);
+              const modules: Array<{ type: string; content: string }> = [];
 
-              for (const module of contentsJson.document.modules) {
+              for (const module of sortedModules) {
+                // Check if this is a title module
+                if (module.type === TITLE_MODULE_TYPE && module.content && module.content.value) {
+                  modules.push({
+                    type: 'title',
+                    content: module.content.value,
+                  });
+                }
                 // Check if this is a text module with Draft.js content
-                if (module.content && module.content.content && module.content.content.blocks) {
+                else if (
+                  module.content &&
+                  module.content.content &&
+                  module.content.content.blocks
+                ) {
                   const draftContent: DraftJSContent = {
                     blocks: module.content.content.blocks,
                     entityMap: module.content.content.entityMap || {},
                   };
-                  renderedHtml += renderDraftJSText(draftContent);
+                  modules.push({
+                    type: 'text',
+                    content: renderDraftJSText(draftContent),
+                  });
                 }
               }
 
-              if (renderedHtml) {
-                powerPortalContent = renderedHtml;
+              if (modules.length > 0) {
+                powerPortalModules = modules;
               } else {
                 showDefaultContent = true;
               }
@@ -180,10 +244,23 @@
           </div>
         </div>
       </div>
-    {:else if powerPortalContent}
+    {:else if powerPortalModules.length > 0}
       <div class="h-full overflow-y-auto p-6 text-white">
         <div class="space-y-4">
-          {@html sanitizeHtml(powerPortalContent)}
+          {#each powerPortalModules as module}
+            {#if module.type === 'title'}
+              <div
+                class="w-full px-6 py-4 mb-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg">
+                <h1 class="text-4xl font-bold text-white uppercase tracking-wide drop-shadow-md">
+                  {module.content}
+                </h1>
+              </div>
+            {:else if module.type === 'text'}
+              <div class="space-y-2">
+                {@html sanitizeHtml(module.content)}
+              </div>
+            {/if}
+          {/each}
         </div>
       </div>
     {:else if portalUrl}
@@ -247,10 +324,23 @@
         </div>
       </div>
     </div>
-  {:else if powerPortalContent}
+  {:else if powerPortalModules.length > 0}
     <div class="h-full overflow-y-auto p-6 text-white">
       <div class="space-y-4">
-        {@html sanitizeHtml(powerPortalContent)}
+        {#each powerPortalModules as module}
+          {#if module.type === 'title'}
+            <div
+              class="w-full px-6 py-4 mb-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg">
+              <h1 class="text-4xl font-bold text-white uppercase tracking-wide drop-shadow-md">
+                {module.content}
+              </h1>
+            </div>
+          {:else if module.type === 'text'}
+            <div class="space-y-2">
+              {@html sanitizeHtml(module.content)}
+            </div>
+          {/if}
+        {/each}
       </div>
     </div>
   {:else if portalUrl}
