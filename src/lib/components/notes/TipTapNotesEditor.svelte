@@ -218,13 +218,17 @@
     event.preventDefault();
     event.stopPropagation();
     
+    // Capture coordinates immediately before any async operations
+    const x = event.clientX;
+    const y = event.clientY;
+    
     // Close any existing context menu first
     showContextMenu = false;
     
     // Use a small delay to ensure the previous menu is closed
     setTimeout(() => {
-      contextMenuX = event.clientX;
-      contextMenuY = event.clientY;
+      contextMenuX = x;
+      contextMenuY = y;
       
       // Check if we're in a table
       if (editor) {

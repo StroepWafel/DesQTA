@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onDestroy } from 'svelte';
+  import { createEventDispatcher, onDestroy, tick } from 'svelte';
   import { fly } from 'svelte/transition';
   import { 
     Icon,
@@ -31,19 +31,53 @@
   const dispatch = createEventDispatcher();
 
   let menuElement: HTMLElement;
+  let adjustedX = x;
+  let adjustedY = y;
+  let lastVisible = false;
 
-  $: if (visible && menuElement) {
-    // Adjust position if menu would go off screen
-    const rect = menuElement.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+  // Portal action to move element to body (bypasses transform contexts)
+  function portalAction(node: HTMLElement) {
+    // Only append if not already in body
+    if (node.parentNode !== document.body) {
+      document.body.appendChild(node);
+    }
     
-    if (x + rect.width > viewportWidth) {
-      x = viewportWidth - rect.width - 10;
-    }
-    if (y + rect.height > viewportHeight) {
-      y = viewportHeight - rect.height - 10;
-    }
+    return {
+      destroy() {
+        // Clean up when destroyed
+        if (node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+      }
+    };
+  }
+
+  // Update position when coordinates change
+  $: adjustedX = x;
+  $: adjustedY = y;
+
+  // Adjust position when menu becomes visible
+  $: if (visible && !lastVisible && menuElement) {
+    lastVisible = true;
+    // Use tick to ensure DOM is ready, then adjust position
+    tick().then(() => {
+      if (menuElement && menuElement.parentNode && visible) {
+        const rect = menuElement.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        if (x + rect.width > viewportWidth) {
+          adjustedX = viewportWidth - rect.width - 10;
+        }
+        if (y + rect.height > viewportHeight) {
+          adjustedY = viewportHeight - rect.height - 10;
+        }
+        if (adjustedX < 10) adjustedX = 10;
+        if (adjustedY < 10) adjustedY = 10;
+      }
+    });
+  } else if (!visible) {
+    lastVisible = false;
   }
 
   function executeCommand(command: string, value?: any) {
@@ -158,9 +192,9 @@
 {#if visible}
   <div
     bind:this={menuElement}
+    use:portalAction
     class="fixed z-50 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-2 min-w-48"
-    style="left: {x}px; top: {y}px;"
-    transition:fly={{ duration: 150, y: -10 }}
+    style="left: {adjustedX}px; top: {adjustedY}px; pointer-events: auto;"
   >
     {#if !isInTable}
       <!-- Text Formatting Options -->
