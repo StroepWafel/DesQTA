@@ -19,8 +19,19 @@
     TableCells,
     ArrowDownTray,
     ChevronDown,
+    AtSymbol,
+    Calendar,
+    AcademicCap,
+    User,
+    Clock,
+    DocumentText,
+    ChartBar,
+    Clipboard,
+    BookOpen,
+    Megaphone,
   } from 'svelte-hero-icons';
-  import type { Editor } from '@tiptap/core';
+  import TimetableSelector from './plugins/TimetableSelector.svelte';
+  import type { SeqtaMentionItem } from '$lib/services/seqtaMentionsService';
 
   // Props
   export let editor: Editor | null = null;
@@ -34,6 +45,8 @@
   // Toolbar state
   let showBlockTypeDropdown = false;
   let showMoreDropdown = false;
+  let showMentionsDropdown = false;
+  let showTimetableSelector = false;
   
   // Force reactivity trigger
   let editorUpdateTrigger = 0;
@@ -168,9 +181,59 @@
     editor.chain().focus().insertImageFromFile().run();
   }
 
-  function insertTable() {
+  // Mention types
+  const mentionTypes = [
+    { id: 'assessment', label: 'Assessment', icon: ChartBar },
+    { id: 'assignment', label: 'Assignment', icon: DocumentText },
+    { id: 'homework', label: 'Homework', icon: Clipboard },
+    { id: 'class', label: 'Class', icon: AcademicCap },
+    { id: 'subject', label: 'Subject', icon: BookOpen },
+    { id: 'teacher', label: 'Teacher', icon: User },
+    { id: 'timetable_slot', label: 'Timetable Slot', icon: Clock },
+    { id: 'notice', label: 'Notice', icon: Megaphone },
+  ];
+
+  // Insert mention
+  function insertMention(type?: string) {
     if (!editor || readonly) return;
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    
+    // Special handling for timetable slots - show selector popup
+    if (type === 'timetable_slot') {
+      showTimetableSelector = true;
+      showMentionsDropdown = false;
+      return;
+    }
+    
+    // Insert @ followed by type name to trigger filtered search (no space)
+    if (type) {
+      editor.chain().focus().insertContent(`@${type}`).run();
+    } else {
+      editor.chain().focus().insertContent('@').run();
+    }
+    
+    showMentionsDropdown = false;
+  }
+
+  function handleTimetableSelect(item: SeqtaMentionItem) {
+    if (!editor || readonly) return;
+    
+    // Insert the mention
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'seqtaMention',
+        attrs: {
+          id: item.id,
+          type: item.type,
+          title: item.title,
+          subtitle: item.subtitle,
+          label: item.title,
+          data: item.data,
+        },
+      })
+      .insertContent({ type: 'text', text: ' ' })
+      .run();
   }
 
   function handleSave() {
@@ -221,6 +284,7 @@
     if (!(event.target as Element).closest('.dropdown-container')) {
       showBlockTypeDropdown = false;
       showMoreDropdown = false;
+      showMentionsDropdown = false;
     }
   }
 
@@ -229,6 +293,7 @@
     if (event.key === 'Escape') {
       showBlockTypeDropdown = false;
       showMoreDropdown = false;
+      showMentionsDropdown = false;
     }
   }
 </script>
@@ -330,6 +395,40 @@
     <!-- Divider -->
     <div class="w-px h-6 bg-zinc-300 dark:bg-zinc-600"></div>
 
+    <!-- SEQTA Mentions Dropdown -->
+    <div class="relative dropdown-container">
+      <button
+        class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {showMentionsDropdown ? 'bg-zinc-200 dark:bg-zinc-700' : ''}"
+        on:click={() => showMentionsDropdown = !showMentionsDropdown}
+        disabled={readonly}
+        title="Insert SEQTA Mention"
+      >
+        <Icon src={AtSymbol} class="w-4 h-4" />
+      </button>
+
+      {#if showMentionsDropdown}
+        <div class="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
+          <button
+            class="w-full flex items-center space-x-2 px-3 py-2 text-sm text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700"
+            on:click={() => insertMention()}
+          >
+            <Icon src={AtSymbol} class="w-5 h-5 text-zinc-500" />
+            <span class="flex-1 text-zinc-700 dark:text-zinc-300">Search All...</span>
+          </button>
+          <div class="h-px bg-zinc-200 dark:bg-zinc-700 my-1"></div>
+          {#each mentionTypes as mentionType}
+            <button
+              class="w-full flex items-center space-x-2 px-3 py-2 text-sm text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+              on:click={() => insertMention(mentionType.id)}
+            >
+              <Icon src={mentionType.icon} class="w-5 h-5 text-zinc-500" />
+              <span class="flex-1 text-zinc-700 dark:text-zinc-300">{mentionType.label}</span>
+            </button>
+          {/each}
+        </div>
+      {/if}
+    </div>
+
     <!-- Insert Tools -->
     <button
       class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400"
@@ -414,6 +513,12 @@
     </button>
   </div>
 </div>
+
+<!-- Timetable Selector -->
+<TimetableSelector
+  bind:open={showTimetableSelector}
+  onSelect={handleTimetableSelect}
+/>
 
 <style>
   kbd {

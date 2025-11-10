@@ -17,6 +17,7 @@
   // Custom extensions
   import { SeqtaMentions, seqtaMentionSuggestion } from './plugins/SeqtaMentions';
   import { ImageExtension } from './plugins/ImageExtension';
+  import { SeqtaContentBlock } from './plugins/SeqtaContentBlock';
 
   // Components
   import TipTapToolbar from './TipTapToolbar.svelte';
@@ -24,6 +25,7 @@
   import ImageControlModal from './ImageControlModal.svelte';
   import TipTapBubbleMenu from './TipTapBubbleMenu.svelte';
   import TipTapContextMenu from './TipTapContextMenu.svelte';
+  import SeqtaMentionDetailModal from './plugins/SeqtaMentionDetailModal.svelte';
 
   // Props
   export let content: string = '<p></p>';
@@ -49,12 +51,22 @@
   // Image modal state
   let showImageModal = false;
   let currentImageData: { element: HTMLElement; img: HTMLImageElement } | null = null;
-  
+
   // Context menu state
   let showContextMenu = false;
   let contextMenuX = 0;
   let contextMenuY = 0;
   let isInTable = false;
+
+  // SEQTA Mention modal state
+  let showMentionModal = false;
+  let mentionModalData: {
+    mentionId: string;
+    mentionType: string;
+    title: string;
+    subtitle: string;
+    data?: any;
+  } | null = null;
 
   // Word and character count (calculated manually)
   $: wordCount = calculateWordCount(content);
@@ -62,7 +74,7 @@
 
   function calculateWordCount(html: string): number {
     const textContent = html.replace(/<[^>]*>/g, '').trim();
-    return textContent.split(/\s+/).filter(word => word.length > 0).length;
+    return textContent.split(/\s+/).filter((word) => word.length > 0).length;
   }
 
   function calculateCharacterCount(html: string): number {
@@ -75,7 +87,17 @@
     const preventContextMenu = (e: Event) => {
       e.preventDefault();
     };
-    
+
+    // Listen for SEQTA mention clicks
+    const handleMentionClick = (event: CustomEvent) => {
+      console.log('Received mention click event:', event.detail);
+      const { mentionId, mentionType, title, subtitle, data } = event.detail;
+      mentionModalData = { mentionId, mentionType, title, subtitle, data };
+      showMentionModal = true;
+    };
+
+    window.addEventListener('seqta-mention-click', handleMentionClick as EventListener);
+
     editor = new Editor({
       element: editorElement,
       extensions: [
@@ -97,7 +119,8 @@
         Link.configure({
           openOnClick: false,
           HTMLAttributes: {
-            class: 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300',
+            class:
+              'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300',
           },
         }),
         Table.configure({
@@ -110,8 +133,15 @@
           element: document.querySelector('.bubble-menu') as HTMLElement,
         }),
         SeqtaMentions.configure({
-          suggestion: seqtaMentionSuggestion,
+          suggestion: {
+            ...seqtaMentionSuggestion,
+            items: async ({ query, editor: suggestionEditor }: { query: string; editor?: any }) => {
+              // Use editor from suggestion props (provided by TipTap)
+              return seqtaMentionSuggestion.items({ query, editor: suggestionEditor });
+            },
+          },
         }),
+        SeqtaContentBlock.configure({}),
         ImageExtension.configure({
           allowBase64: true,
           onImageClick: handleImageClick,
@@ -135,6 +165,36 @@
             dispatch('blur');
             return false;
           },
+          mousedown: (view, event) => {
+            // Check if mousedown is on a SEQTA mention
+            const target = event.target as HTMLElement;
+            const mentionElement = target.closest('.seqta-mention');
+            if (mentionElement) {
+              const mentionId = mentionElement.getAttribute('data-id');
+              // Try data-mention-type first (from renderHTML), then data-type (from nodeView)
+              const mentionType =
+                mentionElement.getAttribute('data-mention-type') ||
+                mentionElement.getAttribute('data-type') ||
+                '';
+              const title = mentionElement.getAttribute('data-title') || '';
+              const subtitle = mentionElement.getAttribute('data-subtitle') || '';
+
+              if (mentionId && mentionType && mentionType !== 'seqtaMention') {
+                console.log('TipTap intercepted mention mousedown:', {
+                  mentionId,
+                  mentionType,
+                  title,
+                  subtitle,
+                });
+                mentionModalData = { mentionId, mentionType, title, subtitle };
+                showMentionModal = true;
+                event.preventDefault();
+                event.stopPropagation();
+                return true; // Prevent TipTap's default handling
+              }
+            }
+            return false; // Let TipTap handle other mousedowns
+          },
           contextmenu: (view, event) => {
             handleContextMenu(event);
             return true; // Prevent TipTap's default handling
@@ -153,6 +213,7 @@
 
     return () => {
       editor?.destroy();
+      window.removeEventListener('seqta-mention-click', handleMentionClick as EventListener);
     };
   });
 
@@ -190,7 +251,11 @@
       if (pos >= 0) {
         const node = editor.view.state.doc.nodeAt(pos);
         if (node) {
-          editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
+          editor
+            .chain()
+            .focus()
+            .deleteRange({ from: pos, to: pos + node.nodeSize })
+            .run();
         }
       }
     }
@@ -217,24 +282,24 @@
   function handleContextMenu(event: MouseEvent) {
     event.preventDefault();
     event.stopPropagation();
-    
+
     // Capture coordinates immediately before any async operations
     const x = event.clientX;
     const y = event.clientY;
-    
+
     // Close any existing context menu first
     showContextMenu = false;
-    
+
     // Use a small delay to ensure the previous menu is closed
     setTimeout(() => {
       contextMenuX = x;
       contextMenuY = y;
-      
+
       // Check if we're in a table
       if (editor) {
         isInTable = editor.isActive('table');
       }
-      
+
       showContextMenu = true;
     }, 10);
   }
@@ -272,7 +337,7 @@
 
   export function executeCommand(command: string, value?: any) {
     if (!editor) return false;
-    
+
     switch (command) {
       case 'bold':
         return editor.chain().focus().toggleBold().run();
@@ -318,25 +383,19 @@
   }
 </script>
 
-<div class="tiptap-notes-editor h-full flex flex-col bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-md transition-all duration-200 {isFocused ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}">
+<div
+  class="tiptap-notes-editor h-full flex flex-col bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-md transition-all duration-200 {isFocused
+    ? 'ring-2 ring-blue-500 dark:ring-blue-400'
+    : ''}">
   <!-- Toolbar -->
   <div class="shrink-0 border-b border-zinc-200 dark:border-zinc-700">
-    <TipTapToolbar 
-      bind:editor
-      {readonly}
-      on:save={handleSave}
-    />
+    <TipTapToolbar bind:editor {readonly} on:save={handleSave} />
   </div>
 
   <!-- Editor Content -->
   <div class="flex-1 relative min-h-0">
-    <div
-      bind:this={editorElement}
-      class="h-full overflow-y-auto"
-      role="textbox"
-      tabindex="0"
-    ></div>
-    
+    <div bind:this={editorElement} class="h-full overflow-y-auto" role="textbox" tabindex="0"></div>
+
     <!-- Bubble Menu -->
     <div class="bubble-menu">
       <TipTapBubbleMenu bind:editor />
@@ -345,11 +404,7 @@
 
   <!-- Status Bar -->
   <div class="shrink-0 border-t border-zinc-200 dark:border-zinc-700">
-    <TipTapStatusBar 
-      {wordCount}
-      {characterCount}
-      {isFocused}
-    />
+    <TipTapStatusBar {wordCount} {characterCount} {isFocused} />
   </div>
 </div>
 
@@ -360,8 +415,7 @@
   x={contextMenuX}
   y={contextMenuY}
   {isInTable}
-  on:close={closeContextMenu}
-/>
+  on:close={closeContextMenu} />
 
 <!-- Image Control Modal -->
 <ImageControlModal
@@ -371,8 +425,22 @@
   on:copyAlt={handleCopyAlt}
   on:removeImage={handleRemoveImage}
   on:replaceImage={handleReplaceImage}
-  on:close={closeImageModal}
-/>
+  on:close={closeImageModal} />
+
+<!-- SEQTA Mention Detail Modal -->
+{#if mentionModalData}
+  <SeqtaMentionDetailModal
+    bind:open={showMentionModal}
+    mentionId={mentionModalData.mentionId}
+    mentionType={mentionModalData.mentionType}
+    title={mentionModalData.title}
+    subtitle={mentionModalData.subtitle}
+    data={mentionModalData.data}
+    onclose={() => {
+      showMentionModal = false;
+      mentionModalData = null;
+    }} />
+{/if}
 
 <style>
   .tiptap-notes-editor {
@@ -404,23 +472,23 @@
   }
 
   /* Task list styling */
-  :global(.ProseMirror ul[data-type="taskList"]) {
+  :global(.ProseMirror ul[data-type='taskList']) {
     list-style: none;
     padding: 0;
   }
 
-  :global(.ProseMirror ul[data-type="taskList"] li) {
+  :global(.ProseMirror ul[data-type='taskList'] li) {
     display: flex;
     align-items: flex-start;
   }
 
-  :global(.ProseMirror ul[data-type="taskList"] li > label) {
+  :global(.ProseMirror ul[data-type='taskList'] li > label) {
     flex: 0 0 auto;
     margin-right: 0.5rem;
     user-select: none;
   }
 
-  :global(.ProseMirror ul[data-type="taskList"] li > div) {
+  :global(.ProseMirror ul[data-type='taskList'] li > div) {
     flex: 1 1 auto;
   }
 
@@ -475,5 +543,54 @@
 
   :global(.ProseMirror .image-node-view.error img) {
     display: none;
+  }
+
+  /* SEQTA Content Block styling */
+  :global(.seqta-content-block-card) {
+    position: relative;
+    min-width: 200px;
+    min-height: 120px;
+  }
+
+  :global(.seqta-content-block-card:hover) {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  :global(.seqta-content-block-card.ProseMirror-selectednode) {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    border-color: rgb(59, 130, 246);
+  }
+
+  :global(.dark .seqta-content-block-card.ProseMirror-selectednode) {
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
+    border-color: rgb(96, 165, 250);
+  }
+
+  /* Drag handle styling */
+  :global([data-drag-handle]) {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+  }
+
+  :global([data-drag-handle]:active) {
+    cursor: grabbing !important;
+  }
+
+  /* Resize handle styling */
+  :global([data-resize-handle]) {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+  }
+
+  :global([data-resize-handle]:hover) {
+    background-color: rgb(59, 130, 246);
+    border-color: rgb(37, 99, 235);
+  }
+
+  :global(.dark [data-resize-handle]:hover) {
+    background-color: rgb(96, 165, 250);
+    border-color: rgb(59, 130, 246);
   }
 </style>
