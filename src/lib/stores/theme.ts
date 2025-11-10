@@ -275,8 +275,11 @@ export async function applyPreviewTheme() {
 // Load current theme from settings
 export async function loadCurrentTheme() {
   try {
+    // Load both theme pack name and user's manual theme preference
     const subset = await invoke<any>('get_settings_subset', { keys: ['current_theme','theme'] });
-    const savedThemeName: string = subset?.current_theme || subset?.theme || 'default';
+    const savedThemeName: string = subset?.current_theme || 'default';
+    const userThemePreference: 'light' | 'dark' | 'system' | undefined = subset?.theme;
+    
     currentTheme.set(savedThemeName);
 
     // Load the theme pack
@@ -286,15 +289,29 @@ export async function loadCurrentTheme() {
       const manifest = await themeService.getThemeManifest(savedThemeName);
       themeManifest.set(manifest);
       if (manifest) {
-        // Ensure accent and theme stores reflect manifest on startup
+        // Set accent color from manifest
         accentColor.set(manifest.settings.defaultAccentColor);
-        theme.set(manifest.settings.defaultTheme);
-        applyTheme(manifest.settings.defaultTheme);
+        
+        // Check if user has manually overridden the theme preference
+        // If userThemePreference exists and is a valid theme value, use it instead of manifest default
+        if (userThemePreference && ['light', 'dark', 'system'].includes(userThemePreference)) {
+          // User has manually set a preference, use that
+          theme.set(userThemePreference);
+          applyTheme(userThemePreference);
+        } else {
+          // No manual override, use manifest default
+          theme.set(manifest.settings.defaultTheme);
+          applyTheme(manifest.settings.defaultTheme);
+        }
       }
     } else {
       // Default theme fallback
       const defaultAccent = '#3b82f6';
-      const defaultTheme: 'light' | 'dark' | 'system' = 'dark';
+      // Check if user has manually overridden the theme preference
+      const defaultTheme: 'light' | 'dark' | 'system' = 
+        (userThemePreference && ['light', 'dark', 'system'].includes(userThemePreference)) 
+          ? userThemePreference 
+          : 'dark';
       accentColor.set(defaultAccent);
       theme.set(defaultTheme);
       applyTheme(defaultTheme);
