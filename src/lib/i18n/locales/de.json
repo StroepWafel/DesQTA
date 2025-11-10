@@ -435,6 +435,23 @@
     "no_content": "Für dieses Portal ist kein Inhalt verfügbar.",
     "failed_to_load_content": "Fehler beim Laden des Portal-Inhalts"
   },
+  "welcome_portal": {
+    "title": "Willkommens-Portal",
+    "open_full_screen": "Vollbild öffnen",
+    "loading": "Willkommens-Portal wird geladen...",
+    "failed_to_load_url": "Fehler beim Laden der Portal-URL",
+    "error_loading": "Fehler beim Laden des Portals",
+    "welcome_title": "Willkommen bei DesQTA!",
+    "getting_around_title": "Navigation",
+    "getting_around_p1": "Verwenden Sie das Menü links zur Navigation. Wenn Sie einen kleinen Bildschirm haben, versteckt sich das Menü automatisch, aber Sie können es mit der Menü-Schaltfläche in der Ecke wieder aufrufen.",
+    "getting_around_p2": "Verwenden Sie das Menü, um zu erkunden und zu sehen, was Sie finden können. Beachten Sie, dass Ihre Schule möglicherweise nicht alle Seiten verwendet.",
+    "dashboard_title": "Ihr Dashboard",
+    "dashboard_p1": "Die Dashboard-Seite enthält Dashlets, die Ihre Schule aktiviert hat (und die Sie nicht deaktivieren können!), sowie optionale Dashlets, die Sie ein- und ausschalten können.",
+    "dashboard_p2": "Einige Dashlets helfen Ihnen, organisiert zu bleiben, andere geben Ihnen wichtige Informationen, und einige sind einfach nur zum Spaß.",
+    "timetable_title": "Färben Sie Ihren Stundenplan",
+    "timetable_p1": "Auf der Stundenplan-Seite tippen (oder klicken) Sie auf eine Klasse, um weitere Details zu erhalten – und tippen Sie dann auf die Palette-Schaltfläche, um Ihren Stundenplan zu färben.",
+    "modal_aria_label": "Willkommens-Portal Modal"
+  },
   "directory": {
     "description": "Durchsuchen und suchen Sie alle Schüler",
     "filters": "Filter",

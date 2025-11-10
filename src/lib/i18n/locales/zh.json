@@ -435,6 +435,23 @@
     "no_content": "此门户无可用内容。",
     "failed_to_load_content": "加载门户内容失败"
   },
+  "welcome_portal": {
+    "title": "欢迎门户",
+    "open_full_screen": "全屏打开",
+    "loading": "正在加载欢迎门户...",
+    "failed_to_load_url": "加载门户URL失败",
+    "error_loading": "加载门户时出错",
+    "welcome_title": "欢迎使用DesQTA！",
+    "getting_around_title": "导航",
+    "getting_around_p1": "使用左侧菜单进行导航。如果您使用的是小屏幕，菜单会自动隐藏，但您可以使用角落的菜单按钮来打开它。",
+    "getting_around_p2": "使用菜单进行探索，看看您能找到什么。请注意，您的学校可能没有使用所有页面。",
+    "dashboard_title": "您的仪表板",
+    "dashboard_p1": "仪表板页面包括您学校已启用的仪表板小部件（您无法禁用！），以及您可以打开或关闭的可选仪表板小部件。",
+    "dashboard_p2": "一些仪表板小部件帮助您保持有序，一些提供关键信息，还有一些只是为了好玩。",
+    "timetable_title": "为时间表着色",
+    "timetable_p1": "在时间表页面上，点击（或单击）一个班级以访问更多详细信息，然后点击调色板按钮为时间表着色。",
+    "modal_aria_label": "欢迎门户模态框"
+  },
   "directory": {
     "description": "浏览和搜索所有学生",
     "filters": "筛选器",

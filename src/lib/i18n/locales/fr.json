@@ -435,6 +435,23 @@
     "no_content": "Aucun contenu disponible pour ce portail.",
     "failed_to_load_content": "Échec du chargement du contenu du portail"
   },
+  "welcome_portal": {
+    "title": "Portail de Bienvenue",
+    "open_full_screen": "Ouvrir en Plein Écran",
+    "loading": "Chargement du portail de bienvenue...",
+    "failed_to_load_url": "Échec du chargement de l'URL du portail",
+    "error_loading": "Erreur lors du chargement du portail",
+    "welcome_title": "Bienvenue sur DesQTA !",
+    "getting_around_title": "Se déplacer",
+    "getting_around_p1": "Utilisez le menu de gauche pour naviguer. Si vous êtes sur un petit écran, le menu se cache automatiquement, mais vous pouvez le faire apparaître en utilisant le bouton du menu dans le coin.",
+    "getting_around_p2": "Utilisez le menu pour explorer et voir ce que vous pouvez trouver. Notez que votre école peut ne pas utiliser toutes les pages.",
+    "dashboard_title": "Votre tableau de bord",
+    "dashboard_p1": "La page du tableau de bord comprend des widgets que votre école a activés (et que vous ne pouvez pas désactiver !), ainsi que des widgets optionnels que vous pouvez activer ou désactiver.",
+    "dashboard_p2": "Certains widgets vous aident à vous organiser, d'autres vous donnent des informations clés, et certains sont juste pour le plaisir.",
+    "timetable_title": "Coloriez votre emploi du temps",
+    "timetable_p1": "Sur la page de l'emploi du temps, appuyez (ou cliquez) sur une classe pour accéder à plus de détails, puis appuyez sur le bouton de la palette pour colorer votre emploi du temps.",
+    "modal_aria_label": "Modal du Portail de Bienvenue"
+  },
   "directory": {
     "description": "Parcourir et rechercher parmi tous les étudiants",
     "filters": "Filtres",

@@ -435,6 +435,23 @@
     "no_content": "No hay contenido disponible para este portal.",
     "failed_to_load_content": "Error al cargar el contenido del portal"
   },
+  "welcome_portal": {
+    "title": "Portal de Bienvenida",
+    "open_full_screen": "Abrir en Pantalla Completa",
+    "loading": "Cargando portal de bienvenida...",
+    "failed_to_load_url": "Error al cargar la URL del portal",
+    "error_loading": "Error al cargar el portal",
+    "welcome_title": "¡Bienvenido a DesQTA!",
+    "getting_around_title": "Cómo moverse",
+    "getting_around_p1": "Usa el menú de la izquierda para navegar. Si estás en una pantalla pequeña, el menú se oculta automáticamente, pero puedes abrirlo usando el botón del menú en la esquina.",
+    "getting_around_p2": "Usa el menú para explorar y ver qué puedes encontrar. Ten en cuenta que tu escuela puede no estar usando todas las páginas.",
+    "dashboard_title": "Tu panel",
+    "dashboard_p1": "La página del panel incluye widgets que tu escuela ha habilitado (¡y que no puedes desactivar!), así como widgets opcionales que puedes activar o desactivar.",
+    "dashboard_p2": "Algunos widgets te ayudan a organizarte, otros te dan información clave, y algunos son solo por diversión.",
+    "timetable_title": "Colorea tu horario",
+    "timetable_p1": "En la página del horario, toca (o haz clic) en una clase para acceder a más detalles, y luego toca el botón de la paleta para colorear tu horario.",
+    "modal_aria_label": "Modal del Portal de Bienvenida"
+  },
   "directory": {
     "description": "Navegar y buscar entre todos los estudiantes",
     "filters": "Filtros",

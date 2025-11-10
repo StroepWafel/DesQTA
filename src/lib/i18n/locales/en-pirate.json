@@ -448,6 +448,23 @@
     "no_content": "No treasure found in this portal, matey.",
     "failed_to_load_content": "Failed to plunder the portal treasures"
   },
+  "welcome_portal": {
+    "title": "Welcome Portal",
+    "open_full_screen": "Open Full Screen",
+    "loading": "Loading welcome portal...",
+    "failed_to_load_url": "Failed to load portal URL",
+    "error_loading": "Error loading portal",
+    "welcome_title": "Welcome to DesQTA!",
+    "getting_around_title": "Getting around",
+    "getting_around_p1": "Use the menu on the left to navigate. If you're on a small screen, the menu hides automatically, but you can summon it using the menu button in the corner.",
+    "getting_around_p2": "Use the menu to explore and see what you can find. Note that your school may not be using all of the pages.",
+    "dashboard_title": "Your dashboard",
+    "dashboard_p1": "The dashboard page includes dashlets which your school has enabled (and which you can't disable!), as well as optional dashlets that you can toggle on or off.",
+    "dashboard_p2": "Some dashlets help you to get organised, some give you key information, and some are just for fun.",
+    "timetable_title": "Colour your timetable",
+    "timetable_p1": "On the timetable page, tap (or click) on a class to access more details -- and then tap the palette button to colour up your timetable.",
+    "modal_aria_label": "Welcome Portal Modal"
+  },
   "directory": {
     "description": "Browse and search through all crew members aboard",
     "filters": "Search Filters",
