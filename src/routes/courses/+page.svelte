@@ -108,14 +108,19 @@
 
     try {
       const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
-      const cached = cache.get<CoursePayload>(cacheKey) || await getWithIdbFallback<CoursePayload>(cacheKey, cacheKey, () => cache.get<CoursePayload>(cacheKey));
-      if (cached) {
-        coursePayload = cached;
-        if (coursePayload?.document) {
-          try { parsedDocument = JSON.parse(coursePayload.document); } catch {}
+      const isOnline = navigator.onLine;
+      
+      // Only use cache when offline - always fetch fresh data when online
+      if (!isOnline) {
+        const cached = cache.get<CoursePayload>(cacheKey) || await getWithIdbFallback<CoursePayload>(cacheKey, cacheKey, () => cache.get<CoursePayload>(cacheKey));
+        if (cached) {
+          coursePayload = cached;
+          if (coursePayload?.document) {
+            try { parsedDocument = JSON.parse(coursePayload.document); } catch {}
+          }
+          loadingCourse = false;
+          return;
         }
-        loadingCourse = false;
-        return;
       }
 
       const res = await seqtaFetch('/seqta/student/load/courses', {
@@ -137,6 +142,8 @@
           console.error('Failed to parse document JSON:', e);
         }
       }
+      
+      // Always cache the data (for offline use), even when online
       cache.set(cacheKey, coursePayload, 60);
       console.info('[IDB] course payload cached (mem+idb)', { key: cacheKey });
       await setIdb(cacheKey, coursePayload);
@@ -221,23 +228,50 @@
     selectedLesson = null;
     selectedLessonContent = null;
     try {
-      const res = await seqtaFetch('/seqta/student/load/courses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {
-          programme: subject.programme.toString(),
-          metaclass: subject.metaclass.toString(),
-        },
-      });
-      const data = JSON.parse(res);
-      coursePayload = data.payload;
-      if (coursePayload?.document) {
-        try {
-          parsedDocument = JSON.parse(coursePayload.document);
-        } catch (e) {
-          console.error('Failed to parse document JSON:', e);
+      const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
+      const isOnline = navigator.onLine;
+      
+      // Only use cache when offline - always fetch fresh data when online
+      if (!isOnline) {
+        const cached = cache.get<CoursePayload>(cacheKey) || await getWithIdbFallback<CoursePayload>(cacheKey, cacheKey, () => cache.get<CoursePayload>(cacheKey));
+        if (cached) {
+          coursePayload = cached;
+          if (coursePayload?.document) {
+            try {
+              parsedDocument = JSON.parse(coursePayload.document);
+            } catch (e) {
+              console.error('Failed to parse document JSON:', e);
+            }
+          }
         }
       }
+      
+      // Fetch fresh data if online or if cache miss when offline
+      if (isOnline || !coursePayload) {
+        const res = await seqtaFetch('/seqta/student/load/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: {
+            programme: subject.programme.toString(),
+            metaclass: subject.metaclass.toString(),
+          },
+        });
+        const data = JSON.parse(res);
+        coursePayload = data.payload;
+        if (coursePayload?.document) {
+          try {
+            parsedDocument = JSON.parse(coursePayload.document);
+          } catch (e) {
+            console.error('Failed to parse document JSON:', e);
+          }
+        }
+        
+        // Always cache the data (for offline use), even when online
+        cache.set(cacheKey, coursePayload, 60);
+        console.info('[IDB] course payload cached (mem+idb)', { key: cacheKey });
+        await setIdb(cacheKey, coursePayload);
+      }
+      
       // Find the lesson closest to the date
       if (coursePayload?.d && coursePayload?.w) {
         let closest: {
