@@ -155,90 +155,28 @@ export async function warmUpCommonData(): Promise<void> {
   ]);
 }
 
-// Assessments Overview warm-up: builds the exact cache object used by assessments/+page.svelte
+// Assessments Overview warm-up: uses Rust backend for processing
 async function prefetchAssessmentsOverview(): Promise<void> {
   try {
     if (cache.get('assessments_overview_data')) return;
 
-    // 1) Load folders/subjects
-    const classesRes = await seqtaFetch('/seqta/student/load/subjects?', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: {},
-    });
-    const classesResJson = JSON.parse(classesRes);
-    const folders = classesResJson.payload;
+    // Use Rust backend to process all assessments data
+    const { invoke } = await import('@tauri-apps/api/core');
+    const result = await invoke<{
+      assessments: any[];
+      subjects: any[];
+      all_subjects: any[];
+      filters: Record<string, boolean>;
+      years: number[];
+    }>('get_processed_assessments');
 
-    // 2) Build allSubjects and activeSubjects
-    let allSubjects: any[] = folders.flatMap((f: any) => f.subjects);
-    const uniqueSubjectsMap = new Map<string, any>();
-    allSubjects.forEach((s: any) => {
-      const key = `${s.programme}-${s.metaclass}`;
-      if (!uniqueSubjectsMap.has(key)) uniqueSubjectsMap.set(key, s);
-    });
-    allSubjects = Array.from(uniqueSubjectsMap.values());
-    const activeFolder = folders.find((c: any) => c.active);
-    const activeSubjects = activeFolder ? activeFolder.subjects : [];
-
-    // 3) Initialize subject filters (active ones enabled by default)
-    const subjectFilters: Record<string, boolean> = {};
-    allSubjects.forEach((s: any) => {
-      subjectFilters[s.code] = activeSubjects.some((as: any) => as.code === s.code);
-    });
-
-    // 4) Colours (used to annotate assessments)
-    const colours = await prefetchLessonColours();
-
-    // 5) Upcoming assessments (global)
-    const assessmentsRes = await seqtaFetch('/seqta/student/assessment/list/upcoming?', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: { student: STUDENT_ID },
-    });
-
-    // 6) Past assessments for every subject (can be many calls; run in parallel and ignore failures)
-    const pastPromises = allSubjects.map((subject: any) =>
-      seqtaFetch('/seqta/student/assessment/list/past?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: { programme: subject.programme, metaclass: subject.metaclass, student: STUDENT_ID },
-      }),
-    );
-    const pastResults = await Promise.allSettled(pastPromises);
-    const pastAssessments = pastResults
-      .map((r) => (r.status === 'fulfilled' ? JSON.parse(r.value).payload.tasks || [] : []))
-      .flat();
-
-    // 7) Combine and process
-    const combined = [...JSON.parse(assessmentsRes).payload, ...pastAssessments];
-    const uniqueAssessmentsMap = new Map<number, any>();
-    combined.forEach((a: any) => {
-      if (!uniqueAssessmentsMap.has(a.id)) uniqueAssessmentsMap.set(a.id, a);
-    });
-    const uniqueAssessments = Array.from(uniqueAssessmentsMap.values());
-    const upcomingAssessments = uniqueAssessments
-      .map((a: any) => {
-        const prefName = `timetable.subject.colour.${a.code}`;
-        const c = colours.find((p: any) => p.name === prefName);
-        a.colour = c ? c.value : '#8e8e8e';
-        const subject = allSubjects.find((s: any) => s.code === a.code);
-        a.metaclass = subject?.metaclass;
-        return a;
-      })
-      .sort((a: any, b: any) => new Date(b.due).getTime() - new Date(a.due).getTime());
-
-    // 8) Years list
-    const yearsSet = new Set<number>();
-    upcomingAssessments.forEach((a: any) => yearsSet.add(new Date(a.due).getFullYear()));
-    const years = Array.from(yearsSet).sort((a, b) => b - a);
-
-    // 9) Store cache object exactly as page expects (10 minute TTL)
+    // Store cache object exactly as page expects (10 minute TTL)
     const overviewData = {
-      assessments: upcomingAssessments,
-      subjects: activeSubjects,
-      allSubjects: allSubjects,
-      filters: subjectFilters,
-      years: years,
+      assessments: result.assessments,
+      subjects: result.subjects,
+      allSubjects: result.all_subjects,
+      filters: result.filters,
+      years: result.years,
     };
     cache.set('assessments_overview_data', overviewData, 10);
     await setIdb('assessments_overview_data', overviewData);
@@ -246,7 +184,11 @@ async function prefetchAssessmentsOverview(): Promise<void> {
       'warmup',
       'prefetchAssessmentsOverview',
       'Cached assessments_overview_data (mem+idb)',
-      { ttlMin: 10, assessments: upcomingAssessments?.length, subjects: activeSubjects?.length },
+      {
+        ttlMin: 10,
+        assessments: result.assessments?.length,
+        subjects: result.subjects?.length,
+      },
     );
   } catch {
     // ignore warmup errors

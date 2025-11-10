@@ -29,6 +29,8 @@ mod performance_testing;
 mod sanitization;
 #[path = "utils/database.rs"]
 mod database;
+#[path = "utils/assessments.rs"]
+mod assessments;
 mod global_search;
 
 use std::cell::Cell;
@@ -323,7 +325,8 @@ pub fn run() {
             database::db_queue_all,
             database::db_queue_delete,
             database::db_queue_clear,
-            database::db_get_assessments_by_year
+            database::db_get_assessments_by_year,
+            assessments::get_processed_assessments
         ])
         .setup(|app| {
             // Initialize logger first
