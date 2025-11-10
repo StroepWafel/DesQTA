@@ -4,12 +4,16 @@
   import { Icon, ArrowTopRightOnSquare } from 'svelte-hero-icons';
   import Modal from './Modal.svelte';
   import { _ } from '../i18n';
+  import { renderDraftJSText } from '../../routes/courses/utils';
+  import { sanitizeHtml } from '../../utils/sanitization';
+  import type { DraftJSContent } from '../../routes/courses/types';
 
   let portalUrl = $state<string>('');
   let loadingPortal = $state<boolean>(true);
   let portalError = $state<string>('');
   let showPortalModal = $state(false);
   let showDefaultContent = $state<boolean>(false);
+  let powerPortalContent = $state<string>('');
   const parser = new DOMParser();
 
   async function loadPortal() {
@@ -25,11 +29,42 @@
         // Check if payload is empty or has no url/contents
         const payload = data.payload || {};
         const isEmptyPayload =
-          Object.keys(payload).length === 0 || (!payload.url && !payload.contents);
+          Object.keys(payload).length === 0 ||
+          (!payload.url && !payload.contents && !payload.is_power_portal);
 
         if (isEmptyPayload) {
           // Show default content when payload is empty
           showDefaultContent = true;
+        } else if (payload.is_power_portal && payload.contents) {
+          // Handle power portal with Draft.js content
+          try {
+            const contentsJson = JSON.parse(payload.contents);
+            if (contentsJson.document && contentsJson.document.modules) {
+              let renderedHtml = '';
+
+              for (const module of contentsJson.document.modules) {
+                // Check if this is a text module with Draft.js content
+                if (module.content && module.content.content && module.content.content.blocks) {
+                  const draftContent: DraftJSContent = {
+                    blocks: module.content.content.blocks,
+                    entityMap: module.content.content.entityMap || {},
+                  };
+                  renderedHtml += renderDraftJSText(draftContent);
+                }
+              }
+
+              if (renderedHtml) {
+                powerPortalContent = renderedHtml;
+              } else {
+                showDefaultContent = true;
+              }
+            } else {
+              showDefaultContent = true;
+            }
+          } catch (e) {
+            console.error('Error parsing power portal content:', e);
+            showDefaultContent = true;
+          }
         } else if (payload.url || payload.contents) {
           if (payload.url) {
             portalUrl = payload.url;
@@ -145,6 +180,12 @@
           </div>
         </div>
       </div>
+    {:else if powerPortalContent}
+      <div class="h-full overflow-y-auto p-6 text-white">
+        <div class="space-y-4">
+          {@html sanitizeHtml(powerPortalContent)}
+        </div>
+      </div>
     {:else if portalUrl}
       <iframe src={portalUrl} class="w-full h-full border-0" title="Welcome Portal"></iframe>
     {/if}
@@ -204,6 +245,12 @@
               'On the timetable page, tap (or click) on a class to access more details -- and then tap the palette button to colour up your timetable.'}
           </p>
         </div>
+      </div>
+    </div>
+  {:else if powerPortalContent}
+    <div class="h-full overflow-y-auto p-6 text-white">
+      <div class="space-y-4">
+        {@html sanitizeHtml(powerPortalContent)}
       </div>
     </div>
   {:else if portalUrl}
