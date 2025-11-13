@@ -202,10 +202,19 @@ async fn fetch_past_assessments(programme: i32, metaclass: i32) -> Result<Vec<Va
     let data: Value = serde_json::from_str(&response)
         .map_err(|e| format!("Failed to parse past assessments: {}", e))?;
 
-    Ok(data["payload"]["tasks"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default())
+    // The API returns assessments in payload.pending (for pending/past assessments)
+    // and payload.tasks (for completed tasks). Check both.
+    let mut result = Vec::new();
+    
+    if let Some(pending) = data["payload"]["pending"].as_array() {
+        result.extend(pending.iter().cloned());
+    }
+    
+    if let Some(tasks) = data["payload"]["tasks"].as_array() {
+        result.extend(tasks.iter().cloned());
+    }
+    
+    Ok(result)
 }
 
 /// Process and merge all assessments data
