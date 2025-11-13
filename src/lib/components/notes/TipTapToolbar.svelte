@@ -32,7 +32,7 @@
     Megaphone,
   } from 'svelte-hero-icons';
   import TimetableSelector from './plugins/TimetableSelector.svelte';
-  import type { SeqtaMentionItem } from '$lib/services/seqtaMentionsService';
+  import type { SeqtaMentionItem } from '$lib/services/seqtaMentionsServiceRust';
 
   // Props
   export let editor: Editor | null = null;

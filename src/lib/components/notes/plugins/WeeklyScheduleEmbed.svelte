@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { SeqtaMentionsService } from '../../../services/seqtaMentionsService';
+  import { SeqtaMentionsServiceRust as SeqtaMentionsService } from '../../../services/seqtaMentionsServiceRust';
   import { Icon, ChevronDown, ChevronUp } from 'svelte-hero-icons';
 
   interface Props {

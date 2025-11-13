@@ -31,6 +31,8 @@ mod sanitization;
 mod database;
 #[path = "utils/assessments.rs"]
 mod assessments;
+#[path = "services/seqta_mentions.rs"]
+mod seqta_mentions;
 mod global_search;
 
 use std::cell::Cell;
@@ -326,7 +328,12 @@ pub fn run() {
             database::db_queue_delete,
             database::db_queue_clear,
             database::db_get_assessments_by_year,
-            assessments::get_processed_assessments
+            assessments::get_processed_assessments,
+            seqta_mentions::search_seqta_mentions,
+            seqta_mentions::search_seqta_mentions_with_context,
+            seqta_mentions::update_seqta_mention_data,
+            seqta_mentions::get_weekly_schedule_for_class_cmd,
+            seqta_mentions::fetch_lesson_content_cmd
         ])
         .setup(|app| {
             // Initialize logger first

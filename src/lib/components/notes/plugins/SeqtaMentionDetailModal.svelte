@@ -1,9 +1,9 @@
 <script lang="ts">
   import Modal from '$lib/components/Modal.svelte';
   import {
-    SeqtaMentionsService,
+    SeqtaMentionsServiceRust as SeqtaMentionsService,
     type SeqtaMentionItem,
-  } from '../../../services/seqtaMentionsService';
+  } from '../../../services/seqtaMentionsServiceRust';
   import {
     Icon,
     Clock,

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { fade } from 'svelte/transition';
-  import { SeqtaMentionsService, type SeqtaMentionItem } from '../../../services/seqtaMentionsService';
+  import { SeqtaMentionsServiceRust as SeqtaMentionsService, type SeqtaMentionItem } from '../../../services/seqtaMentionsServiceRust';
   import { Icon, Clock, MapPin, User, Calendar } from 'svelte-hero-icons';
 
   interface Props {

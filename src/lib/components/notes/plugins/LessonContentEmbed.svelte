@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { SeqtaMentionsService } from '../../../services/seqtaMentionsService';
+  import { SeqtaMentionsServiceRust as SeqtaMentionsService } from '../../../services/seqtaMentionsServiceRust';
   import { Icon, ChevronDown, ChevronUp, DocumentText, PaperClip, ArrowTopRightOnSquare } from 'svelte-hero-icons';
   import { goto } from '$app/navigation';
 

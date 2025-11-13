@@ -2,9 +2,9 @@ import { Node } from '@tiptap/core';
 import { PluginKey } from 'prosemirror-state';
 import Suggestion from '@tiptap/suggestion';
 import {
-  SeqtaMentionsService,
+  SeqtaMentionsServiceRust as SeqtaMentionsService,
   type SeqtaMentionItem,
-} from '../../../services/seqtaMentionsService';
+} from '../../../services/seqtaMentionsServiceRust';
 
 // Helper function to create SVG icon elements
 const createIconSVG = (
@@ -338,8 +338,10 @@ export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
         tooltipTimeout = setTimeout(async () => {
           try {
             // Fetch mention data
-            const { SeqtaMentionsService } = await import('../../../services/seqtaMentionsService');
-            mentionData = await SeqtaMentionsService.updateMentionData(
+            const { SeqtaMentionsServiceRust } = await import(
+              '../../../services/seqtaMentionsServiceRust'
+            );
+            mentionData = await SeqtaMentionsServiceRust.updateMentionData(
               node.attrs.id,
               node.attrs.type,
             );

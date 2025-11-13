@@ -10,7 +10,7 @@
     MapPin,
     User,
   } from 'svelte-hero-icons';
-  import type { SeqtaMentionItem } from '$lib/services/seqtaMentionsService';
+  import type { SeqtaMentionItem } from '$lib/services/seqtaMentionsServiceRust';
 
   interface Props {
     open: boolean;
