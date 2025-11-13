@@ -67,9 +67,30 @@
     error = null;
     try {
       const cacheKey = 'directory_students_all';
-      const cached = cache.get<Student[]>(cacheKey) || await getWithIdbFallback<Student[]>(cacheKey, cacheKey, () => cache.get<Student[]>(cacheKey));
-      if (cached) {
-        students = cached;
+      const TTL_MINUTES = 60; // 1 hour TTL
+      
+      // Step 1: Check memory cache first (respects TTL)
+      const memCached = cache.get<Student[]>(cacheKey);
+      if (memCached) {
+        console.info('[CACHE] directory hit (memory)', { count: memCached.length });
+        students = memCached;
+        // hydrate filters from cached too
+        const uniqueYears = [...new Set(students.map(s => s.year))].sort();
+        const uniqueSubSchools = [...new Set(students.map(s => s.sub_school))].sort();
+        const uniqueHouses = [...new Set(students.map(s => s.house))].sort();
+        const uniqueCampuses = [...new Set(students.map(s => s.campus))].sort();
+        years = uniqueYears; subSchools = uniqueSubSchools; houses = uniqueHouses; campuses = uniqueCampuses;
+        loading = false;
+        return;
+      }
+      
+      // Step 2: Check DB if memory cache expired/missing
+      const idbCached = await getWithIdbFallback<Student[]>(cacheKey, cacheKey, () => null);
+      if (idbCached) {
+        console.info('[CACHE] directory hit (IndexedDB)', { count: idbCached.length });
+        students = idbCached;
+        // Restore to memory cache with TTL
+        cache.set(cacheKey, idbCached, TTL_MINUTES);
         // hydrate filters from cached too
         const uniqueYears = [...new Set(students.map(s => s.year))].sort();
         const uniqueSubSchools = [...new Set(students.map(s => s.sub_school))].sort();
@@ -80,6 +101,8 @@
         return;
       }
 
+      // Step 3: Cache expired/missing - fetch from API
+      console.info('[API] fetching directory from API (cache expired/missing)');
       const res = await seqtaFetch('/seqta/student/load/message/people', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -125,14 +148,10 @@
       houses = uniqueHouses;
       campuses = uniqueCampuses;
 
-      // Cache mem + IDB
-      cache.set(cacheKey, students, 60);
+      // Always cache the data (for offline use), even when online
+      cache.set(cacheKey, students, TTL_MINUTES);
       console.info('[IDB] directory cached (mem+idb)', { count: students.length });
       await setIdb(cacheKey, students);
-      
-      console.log('Loaded students:', students.length, 'students');
-      console.log('Sample student:', students[0]);
-      console.log('Response structure:', typeof res, res);
       
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);

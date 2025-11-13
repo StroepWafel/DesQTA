@@ -105,18 +105,35 @@ export const authService = {
     logger.logFunctionEntry('authService', 'loadUserInfo', { options });
     
     try {
+      const cacheKey = 'userInfo';
+      const TTL_MINUTES = 60; // 1 hour TTL
+      
       if (options?.disableSchoolPicture) {
         logger.debug('authService', 'loadUserInfo', 'Disabling school picture, clearing cache');
-        cache.delete('userInfo');
+        cache.delete(cacheKey);
       }
       
-      const cachedUserInfo = cache.get<UserInfo>('userInfo');
-      if (cachedUserInfo) {
-        logger.debug('authService', 'loadUserInfo', 'Returning cached user info');
+      // Step 1: Check memory cache first (respects TTL)
+      const memCached = cache.get<UserInfo>(cacheKey);
+      if (memCached) {
+        logger.debug('authService', 'loadUserInfo', 'Returning cached user info (memory)');
         logger.logFunctionExit('authService', 'loadUserInfo', { cached: true });
-        return cachedUserInfo;
+        return memCached;
+      }
+      
+      // Step 2: Check DB if memory cache expired/missing
+      const { getWithIdbFallback, setIdb } = await import('./idbCache');
+      const idbCached = await getWithIdbFallback<UserInfo>(cacheKey, cacheKey, () => null);
+      if (idbCached) {
+        logger.debug('authService', 'loadUserInfo', 'Returning cached user info (IndexedDB)');
+        // Restore to memory cache with TTL
+        cache.set(cacheKey, idbCached, TTL_MINUTES);
+        logger.logFunctionExit('authService', 'loadUserInfo', { cached: true });
+        return idbCached;
       }
 
+      // Step 3: Cache expired/missing - fetch from API
+      logger.debug('authService', 'loadUserInfo', 'Fetching user info from API (cache expired/missing)');
       const res = await seqtaFetch('/seqta/student/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -153,8 +170,10 @@ export const authService = {
         userInfo.profilePicture = `data:image/png;base64,${profileImage}`;
       }
 
-      logger.debug('authService', 'loadUserInfo', 'Caching user info');
-      cache.set('userInfo', userInfo);
+      // Always cache the data (for offline use), even when online
+      logger.debug('authService', 'loadUserInfo', 'Caching user info (mem+idb)');
+      cache.set(cacheKey, userInfo, TTL_MINUTES);
+      await setIdb(cacheKey, userInfo);
       logger.logFunctionExit('authService', 'loadUserInfo', { success: true });
       return userInfo;
     } catch (e) {
