@@ -86,26 +86,37 @@
     error = null;
     try {
       const key = `notices_${formatDate(selectedDate)}`;
+      const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+      const offline = await isOfflineMode();
       
-      const memCached = cache.get<Notice[]>(key);
-      if (memCached) {
-        console.info('[CACHE] notices hit (memory)', { key, count: memCached.length });
-        notices = memCached;
+      // If offline, use database only
+      if (offline) {
+        const memCached = cache.get<Notice[]>(key);
+        if (memCached) {
+          console.info('[CACHE] notices hit (memory, offline)', { key, count: memCached.length });
+          notices = memCached;
+          loading = false;
+          return;
+        }
+        
+        const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
+        if (idbCached) {
+          console.info('[CACHE] notices hit (IndexedDB, offline)', { key, count: idbCached.length });
+          notices = idbCached;
+          cache.set(key, idbCached, 30);
+          loading = false;
+          return;
+        }
+        
+        // No cached data when offline
+        error = $_('notices.offline_no_cache') || 'No cached notices available. Please go online to fetch notices.';
+        notices = [];
         loading = false;
         return;
       }
       
-      const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
-      if (idbCached) {
-        console.info('[CACHE] notices hit (IndexedDB fallback)', { key, count: idbCached.length });
-        notices = idbCached;
-        // Restore to memory cache with remaining TTL estimation
-        cache.set(key, idbCached, 30);
-        loading = false;
-        return;
-      }
-      
-      console.info('[CACHE] notices miss - fetching from API', { key, date: formatDate(selectedDate) });
+      // Online: Always fetch from API and save to DB
+      console.info('[API] fetching notices from API', { key, date: formatDate(selectedDate) });
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { date: formatDate(selectedDate) },
@@ -121,7 +132,8 @@
           labelId: n.label,
           content: n.contents,
         }));
-        cache.set(key, notices, 30); // 30 min TTL
+        // Always cache the data (for offline use), even when online
+        cache.set(key, notices, 30);
         await setIdb(key, notices);
         console.info('[CACHE] notices stored (mem+idb)', { key, count: notices.length });
       } else {

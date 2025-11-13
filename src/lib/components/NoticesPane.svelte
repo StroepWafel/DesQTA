@@ -70,20 +70,30 @@
     try {
       const today = new Date();
       const key = `notices_${formatDate(today)}`;
+      const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+      const offline = await isOfflineMode();
       
-      const memCached = cache.get<Notice[]>(key);
-      if (memCached) {
-        notices = memCached.slice(0, 10); // Show only first 10 notices in widget
+      // If offline, use database only
+      if (offline) {
+        const memCached = cache.get<Notice[]>(key);
+        if (memCached) {
+          notices = memCached.slice(0, 10); // Show only first 10 notices in widget
+          return;
+        }
+        
+        const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
+        if (idbCached) {
+          notices = idbCached.slice(0, 10);
+          cache.set(key, idbCached, 30);
+          return;
+        }
+        
+        // No cached data when offline
+        notices = [];
         return;
       }
       
-      const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
-      if (idbCached) {
-        notices = idbCached.slice(0, 10);
-        cache.set(key, idbCached, 30);
-        return;
-      }
-      
+      // Online: Always fetch from API and save to DB
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { date: formatDate(today) },
@@ -100,6 +110,7 @@
           content: n.contents,
         }));
         notices = fetchedNotices.slice(0, 10);
+        // Always cache the data (for offline use), even when online
         cache.set(key, fetchedNotices, 30);
         await setIdb(key, fetchedNotices);
       }
