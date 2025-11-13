@@ -469,6 +469,8 @@
           <div class="space-y-2">
             {#each relatedItems.slice(0, 5) as item}
               <div
+                role="button"
+                tabindex="0"
                 class="flex items-center justify-between p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 onclick={() => {
                   mentionId = item.id;
@@ -476,6 +478,16 @@
                   title = item.title;
                   subtitle = item.subtitle;
                   loadMentionData();
+                }}
+                onkeydown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    mentionId = item.id;
+                    mentionType = item.type;
+                    title = item.title;
+                    subtitle = item.subtitle;
+                    loadMentionData();
+                  }
                 }}>
                 <div>
                   <div class="text-sm font-medium text-zinc-900 dark:text-white">{item.title}</div>

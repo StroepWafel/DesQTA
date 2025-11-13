@@ -17,7 +17,7 @@
   // Gantt columns configuration with assessment count column
   const columns = [
     { id: "text", header: "Assessment", flexgrow: 1 },
-    { id: "count", header: "Count", width: 80, align: "center" }
+    { id: "count", header: "Count", width: 80, align: "center" as const }
   ];
 
   // Enhanced scales configuration with proper formatting
