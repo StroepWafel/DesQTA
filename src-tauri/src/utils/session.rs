@@ -113,7 +113,7 @@ impl SessionEncryption {
     }
 }
 
-/// Location: `$DATA_DIR/DesQTA/session.enc`
+/// Location: `$DATA_DIR/DesQTA/session.enc` (desktop) or `session.json` (mobile)
 #[allow(dead_code)]
 pub fn session_file() -> PathBuf {
     #[cfg(target_os = "android")]
@@ -124,10 +124,21 @@ pub fn session_file() -> PathBuf {
         if !dir.exists() {
             fs::create_dir_all(&dir).expect("Unable to create data dir");
         }
-        dir.push("session.enc"); // Changed to .enc extension
+        dir.push("session.json"); // Plain JSON on Android
         dir
     }
-    #[cfg(not(target_os = "android"))]
+    #[cfg(target_os = "ios")]
+    {
+        // On iOS, use the Documents directory
+        let mut dir = dirs_next::document_dir().expect("Unable to determine documents dir");
+        dir.push("DesQTA");
+        if !dir.exists() {
+            fs::create_dir_all(&dir).expect("Unable to create data dir");
+        }
+        dir.push("session.json"); // Plain JSON on iOS
+        dir
+    }
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
         // e.g. %APPDATA%/DesQTA on Windows, ~/.local/share/DesQTA on Linux/macOS
         let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
@@ -135,7 +146,7 @@ pub fn session_file() -> PathBuf {
         if !dir.exists() {
             fs::create_dir_all(&dir).expect("Unable to create data dir");
         }
-        dir.push("session.enc"); // Changed to .enc extension
+        dir.push("session.enc"); // Encrypted on desktop platforms
         dir
     }
 }
@@ -158,35 +169,37 @@ pub struct Cookie {
 
 #[allow(dead_code)]
 impl Session {
-    /// Load from disk with decryption; returns empty/default if none.
+    /// Load from disk with decryption (desktop) or plain JSON (mobile); returns empty/default if none.
     pub fn load() -> Self {
-        if let Some(logger) = logger::get_logger() {
-            let _ = logger.log(
-                logger::LogLevel::DEBUG,
-                "session",
-                "load",
-                "Loading encrypted session from disk",
-                serde_json::json!({})
-            );
-        }
-
         let path = session_file();
         
-        // First try encrypted file
-        if path.exists() {
-            if let Ok(encrypted_data) = fs::read(&path) {
-                if let Ok(decrypted_data) = SessionEncryption::decrypt(&encrypted_data) {
-                    if let Ok(mut json_str) = String::from_utf8(decrypted_data) {
-                        if let Ok(sess) = serde_json::from_str::<Session>(&json_str) {
+        #[cfg(any(target_os = "android", target_os = "ios"))]
+        {
+            // On mobile platforms, load plain JSON
+            if let Some(logger) = logger::get_logger() {
+                let _ = logger.log(
+                    logger::LogLevel::DEBUG,
+                    "session",
+                    "load",
+                    "Loading plain JSON session from disk",
+                    serde_json::json!({})
+                );
+            }
+
+            if path.exists() {
+                if let Ok(mut file) = fs::File::open(&path) {
+                    let mut contents = String::new();
+                    if file.read_to_string(&mut contents).is_ok() {
+                        if let Ok(sess) = serde_json::from_str::<Session>(&contents) {
                             // Clear sensitive data from memory
-                            json_str.zeroize();
+                            contents.zeroize();
                             
                             if let Some(logger) = logger::get_logger() {
                                 let _ = logger.log(
                                     logger::LogLevel::DEBUG,
                                     "session",
                                     "load",
-                                    "Encrypted session loaded successfully",
+                                    "Plain JSON session loaded successfully",
                                     serde_json::json!({"has_base_url": !sess.base_url.is_empty()})
                                 );
                             }
@@ -197,38 +210,77 @@ impl Session {
             }
         }
 
-        // Fallback: try to load old unencrypted session.json and migrate
-        let old_path = {
-            let mut p = path.clone();
-            p.set_file_name("session.json");
-            p
-        };
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
+        {
+            // On desktop platforms, load encrypted file
+            if let Some(logger) = logger::get_logger() {
+                let _ = logger.log(
+                    logger::LogLevel::DEBUG,
+                    "session",
+                    "load",
+                    "Loading encrypted session from disk",
+                    serde_json::json!({})
+                );
+            }
 
-        if old_path.exists() {
-            if let Ok(mut file) = fs::File::open(&old_path) {
-                let mut contents = String::new();
-                if file.read_to_string(&mut contents).is_ok() {
-                    if let Ok(sess) = serde_json::from_str::<Session>(&contents) {
-                        if let Some(logger) = logger::get_logger() {
-                            let _ = logger.log(
-                                logger::LogLevel::INFO,
-                                "session",
-                                "load",
-                                "Migrating old unencrypted session to encrypted format",
-                                serde_json::json!({})
-                            );
+            // First try encrypted file
+            if path.exists() {
+                if let Ok(encrypted_data) = fs::read(&path) {
+                    if let Ok(decrypted_data) = SessionEncryption::decrypt(&encrypted_data) {
+                        if let Ok(mut json_str) = String::from_utf8(decrypted_data) {
+                            if let Ok(sess) = serde_json::from_str::<Session>(&json_str) {
+                                // Clear sensitive data from memory
+                                json_str.zeroize();
+                                
+                                if let Some(logger) = logger::get_logger() {
+                                    let _ = logger.log(
+                                        logger::LogLevel::DEBUG,
+                                        "session",
+                                        "load",
+                                        "Encrypted session loaded successfully",
+                                        serde_json::json!({"has_base_url": !sess.base_url.is_empty()})
+                                    );
+                                }
+                                return sess;
+                            }
                         }
+                    }
+                }
+            }
 
-                        // Save in encrypted format
-                        let _ = sess.save();
+            // Fallback: try to load old unencrypted session.json and migrate
+            let old_path = {
+                let mut p = path.clone();
+                p.set_file_name("session.json");
+                p
+            };
 
-                        // Remove old unencrypted file
-                        let _ = fs::remove_file(&old_path);
+            if old_path.exists() {
+                if let Ok(mut file) = fs::File::open(&old_path) {
+                    let mut contents = String::new();
+                    if file.read_to_string(&mut contents).is_ok() {
+                        if let Ok(sess) = serde_json::from_str::<Session>(&contents) {
+                            if let Some(logger) = logger::get_logger() {
+                                let _ = logger.log(
+                                    logger::LogLevel::INFO,
+                                    "session",
+                                    "load",
+                                    "Migrating old unencrypted session to encrypted format",
+                                    serde_json::json!({})
+                                );
+                            }
 
-                        // Clear sensitive data from memory
-                        contents.zeroize();
+                            // Save in encrypted format
+                            let _ = sess.save();
 
-                        return sess;
+                            // Remove old unencrypted file
+                            let _ = fs::remove_file(&old_path);
+
+                            // Clear sensitive data from memory
+                            contents.zeroize();
+
+                            return sess;
+                        }
                     }
                 }
             }
@@ -251,33 +303,56 @@ impl Session {
         }
     }
 
-    /// Persist to disk with encryption.
+    /// Persist to disk with encryption (desktop) or plain JSON (mobile).
     pub fn save(&self) -> io::Result<()> {
         let path = session_file();
         
-        // Serialize to JSON
-        let mut json_data = serde_json::to_string(self)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        #[cfg(any(target_os = "android", target_os = "ios"))]
+        {
+            // On mobile platforms, save as plain JSON
+            let json_data = serde_json::to_string(self)
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-        // Encrypt the data
-        let encrypted_data = SessionEncryption::encrypt(json_data.as_bytes())
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            fs::write(&path, json_data)?;
 
-        // Clear sensitive data from memory
-        json_data.zeroize();
+            if let Some(logger) = logger::get_logger() {
+                let _ = logger.log(
+                    logger::LogLevel::DEBUG,
+                    "session",
+                    "save",
+                    "Session saved as plain JSON",
+                    serde_json::json!({})
+                );
+            }
+        }
 
-        // Write encrypted data to file
-        let mut file = fs::File::create(path)?;
-        file.write_all(&encrypted_data)?;
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
+        {
+            // On desktop platforms, encrypt the data
+            // Serialize to JSON
+            let mut json_data = serde_json::to_string(self)
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-        if let Some(logger) = logger::get_logger() {
-            let _ = logger.log(
-                logger::LogLevel::DEBUG,
-                "session",
-                "save",
-                "Session saved with encryption",
-                serde_json::json!({})
-            );
+            // Encrypt the data
+            let encrypted_data = SessionEncryption::encrypt(json_data.as_bytes())
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+
+            // Clear sensitive data from memory
+            json_data.zeroize();
+
+            // Write encrypted data to file
+            let mut file = fs::File::create(path)?;
+            file.write_all(&encrypted_data)?;
+
+            if let Some(logger) = logger::get_logger() {
+                let _ = logger.log(
+                    logger::LogLevel::DEBUG,
+                    "session",
+                    "save",
+                    "Session saved with encryption",
+                    serde_json::json!({})
+                );
+            }
         }
 
         Ok(())
@@ -289,45 +364,60 @@ impl Session {
         !(s.base_url.is_empty() || s.jsessionid.is_empty())
     }
 
-    /// Clear the session data, remove the file, and clear encryption key
+    /// Clear the session data, remove the file, and clear encryption key (desktop only)
     pub fn clear_file() -> io::Result<()> {
-        // Remove encrypted session file
         let path = session_file();
         if path.exists() {
             fs::remove_file(&path)?;
         }
 
-        // Also remove old unencrypted file if it exists
-        let old_path = {
-            let mut p = path.clone();
-            p.set_file_name("session.json");
-            p
-        };
-        if old_path.exists() {
-            fs::remove_file(&old_path)?;
-        }
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
+        {
+            // On desktop, also remove old unencrypted file if it exists
+            let old_path = {
+                let mut p = path.clone();
+                p.set_file_name("session.json");
+                p
+            };
+            if old_path.exists() {
+                fs::remove_file(&old_path)?;
+            }
 
-        // Clear encryption key from keychain
-        if let Err(e) = SessionEncryption::clear_key() {
+            // Clear encryption key from keychain (desktop only)
+            if let Err(e) = SessionEncryption::clear_key() {
+                if let Some(logger) = logger::get_logger() {
+                    let _ = logger.log(
+                        logger::LogLevel::WARN,
+                        "session",
+                        "clear_file",
+                        "Failed to clear encryption key from keychain",
+                        serde_json::json!({"error": e})
+                    );
+                }
+            }
+
             if let Some(logger) = logger::get_logger() {
                 let _ = logger.log(
-                    logger::LogLevel::WARN,
+                    logger::LogLevel::INFO,
                     "session",
                     "clear_file",
-                    "Failed to clear encryption key from keychain",
-                    serde_json::json!({"error": e})
+                    "Session cleared and encryption key removed",
+                    serde_json::json!({})
                 );
             }
         }
 
-        if let Some(logger) = logger::get_logger() {
-            let _ = logger.log(
-                logger::LogLevel::INFO,
-                "session",
-                "clear_file",
-                "Session cleared and encryption key removed",
-                serde_json::json!({})
-            );
+        #[cfg(any(target_os = "android", target_os = "ios"))]
+        {
+            if let Some(logger) = logger::get_logger() {
+                let _ = logger.log(
+                    logger::LogLevel::INFO,
+                    "session",
+                    "clear_file",
+                    "Session cleared",
+                    serde_json::json!({})
+                );
+            }
         }
 
         Ok(())

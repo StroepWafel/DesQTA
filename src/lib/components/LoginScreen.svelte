@@ -39,6 +39,8 @@
   let html5QrLive: Html5Qrcode | null = null;
   let isMobile = $state(false);
   let loginMethod = $state<'url' | 'qr'>('qr'); // Default to QR for modern experience
+  let mobileSsoUrl = $state(''); // For manual SSO URL entry on mobile
+  let showMobileSsoInput = $state(false); // Toggle for mobile SSO URL input
   let showPreviewModal = $state(false);
   let selectedPreview = $state<string | null>(null);
   let showQrInstructionsModal = $state(false);
@@ -657,16 +659,66 @@
                   </button>
                 </div>
               </div>
+              {:else}
+              <!-- Mobile: Toggle link to switch to manual SSO URL -->
+              {#if loginMethod === 'qr' && !showMobileSsoInput}
+              <div class="text-center">
+                <button
+                  type="button"
+                  onclick={() => showMobileSsoInput = true}
+                  class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm transition-all duration-200"
+                >
+                  <T key="login.enter_sso_url_manually" fallback="Enter SSO URL manually" />
+                </button>
+              </div>
+              {/if}
               {/if}
 
                             <!-- Content Container with Height Animation -->
                       <div
                         class="transition-all duration-500 ease-in-out overflow-hidden"
-                        style="height: {isMobile || loginMethod === 'qr' ? '350px' : '200px'};"
+                        style="height: {(isMobile && showMobileSsoInput) ? '200px' : loginMethod === 'qr' ? '350px' : '200px'};"
                       >
 
-                <!-- QR Code Method -->
-                {#if isMobile || loginMethod === 'qr'}
+                <!-- Mobile SSO URL Input -->
+                {#if isMobile && showMobileSsoInput}
+                  <div class="space-y-6">
+                    <div class="text-center space-y-2">
+                      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white"><T key="login.manual_sso_login" fallback="Manual SSO Login" /></h2>
+                      <p class="text-zinc-600 dark:text-zinc-400"><T key="login.enter_sso_deeplink" fallback="Enter your SSO deeplink URL" /></p>
+                    </div>
+
+                    <div class="space-y-4">
+                      <div class="relative px-4">
+                        <Input
+                          type="text"
+                          bind:value={mobileSsoUrl}
+                          onkeydown={(e: KeyboardEvent) => {
+                            if (e.key === 'Enter' && mobileSsoUrl.trim().startsWith('seqtalearn://')) {
+                              jwtExpiredError = false;
+                              onUrlChange(mobileSsoUrl.trim());
+                              onStartLogin();
+                            }
+                          }}
+                          placeholder={$_('login.sso_url_placeholder', { default: 'seqtalearn://sso/...' })}
+                          inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20"
+                        />
+                      </div>
+                      <div class="text-center">
+                        <button
+                          type="button"
+                          onclick={() => {
+                            showMobileSsoInput = false;
+                            mobileSsoUrl = '';
+                          }}
+                          class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm transition-all duration-200"
+                        >
+                          <T key="login.use_qr_code" fallback="Use QR code instead" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                {:else if loginMethod === 'qr'}
                   <div class="space-y-2 px-2">
                     <div class="text-center space-y-1 -mt-2">
                       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white"><T key="login.quick_login" fallback="Quick Login" /></h2>
@@ -731,7 +783,7 @@
             {/if}
             
                 <!-- Manual URL Method -->
-                {#if loginMethod === 'url' && !isMobile}
+                {#if loginMethod === 'url'}
                   <div class="space-y-6">
                     <div class="text-center space-y-2">
                       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white"><T key="login.manual_login" fallback="Manual Login" /></h2>
@@ -761,6 +813,17 @@
                           inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20"
                         />
                       </div>
+                      {#if isMobile}
+                      <div class="text-center">
+                        <button
+                          type="button"
+                          onclick={() => loginMethod = 'qr'}
+                          class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm transition-all duration-200"
+                        >
+                          <T key="login.use_qr_code" fallback="Use QR code instead" />
+                        </button>
+                      </div>
+                      {/if}
                     </div>
                   </div>
                 {/if}
@@ -844,9 +907,13 @@
                 fullWidth={true}
                 onclick={() => {
                   jwtExpiredError = false;
+                  if (isMobile && showMobileSsoInput && mobileSsoUrl.trim()) {
+                    // Use the manually entered SSO URL
+                    onUrlChange(mobileSsoUrl.trim());
+                  }
                   onStartLogin();
                 }}
-                disabled={jwtExpiredError || (!isMobile && loginMethod === 'url' && !seqtaUrl.trim()) || ((isMobile || loginMethod === 'qr') && !qrSuccess)}
+                disabled={jwtExpiredError || (loginMethod === 'url' && !seqtaUrl.trim()) || (loginMethod === 'qr' && !qrSuccess && !(isMobile && showMobileSsoInput && mobileSsoUrl.trim().startsWith('seqtalearn://')))}
                 class="py-4 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none"
               >
                 <T key="login.sign_in" fallback="Sign In to DesQTA" />
