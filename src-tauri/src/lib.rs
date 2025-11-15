@@ -36,7 +36,9 @@ mod seqta_mentions;
 mod global_search;
 
 use std::cell::Cell;
-use tauri::{Manager, Emitter, Listener};
+use tauri::{Manager, Emitter};
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use tauri::Listener;
 #[cfg(desktop)]
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 #[cfg(desktop)]
@@ -50,6 +52,7 @@ use tauri_plugin_autostart;
 #[cfg(desktop)]
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_dialog;
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use serde_json;
 
 #[cfg(desktop)]
@@ -136,22 +139,7 @@ pub fn run() {
             // Handle deep link in single instance
             if let Some(url) = argv.get(1) {
                 println!("[Desqta] Processing deep link in single instance: {}", url);
-                if url.starts_with("seqtalearn://") {
-                    // Handle SEQTA Learn SSO deeplink
-                    println!("[Desqta] Processing SEQTA Learn SSO deeplink: {}", url);
-                    let app_handle = app.app_handle().clone();
-                    let url_clone = url.clone();
-                    tauri::async_runtime::spawn(async move {
-                        match login::create_login_window(app_handle, url_clone).await {
-                            Ok(_) => {
-                                println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink");
-                            },
-                            Err(e) => {
-                                eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e);
-                            }
-                        }
-                    });
-                } else if url.starts_with("desqta://auth") {
+                if url.starts_with("desqta://auth") {
                     // Extract cookie and URL from the deep link
                     let mut cookie = None;
                     let mut base_url = None;
@@ -362,42 +350,45 @@ pub fn run() {
                 eprintln!("Failed to initialize database: {}", e);
             }
 
-            // Listen for deep link events (works on all platforms)
-            let app_handle = app.app_handle().clone();
-            let app_handle_for_listener = app_handle.clone();
-            app_handle_for_listener.listen("deep-link://new-url", move |event| {
-                println!("[Desqta] Deep link event received: {:?}", event);
-                
-                // Extract URL from event - the data field contains a JSON array string
-                // Based on logs: Event { id: 0, data: "[\"seqtalearn://sso/...\"]" }
-                // event.payload() returns &str directly
-                let payload_str = event.payload();
-                println!("[Desqta] Event payload: {}", payload_str);
-                
-                // Try to parse as JSON array
-                if let Ok(urls) = serde_json::from_str::<Vec<String>>(payload_str) {
-                    for url in urls {
-                        println!("[Desqta] Processing URL from deep link: {}", url);
-                        
-                        if url.starts_with("seqtalearn://") {
-                            println!("[Desqta] Processing SEQTA Learn SSO deeplink: {}", url);
-                            let app_handle_clone = app_handle.clone();
-                            tauri::async_runtime::spawn(async move {
-                                match login::create_login_window(app_handle_clone, url.clone()).await {
-                                    Ok(_) => {
-                                        println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink");
-                                    },
-                                    Err(e) => {
-                                        eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e);
+            // Listen for deep link events (mobile only - desktop uses single instance handler)
+            #[cfg(any(target_os = "android", target_os = "ios"))]
+            {
+                let app_handle = app.app_handle().clone();
+                let app_handle_for_listener = app_handle.clone();
+                app_handle_for_listener.listen("deep-link://new-url", move |event| {
+                    println!("[Desqta] Deep link event received: {:?}", event);
+                    
+                    // Extract URL from event - the data field contains a JSON array string
+                    // Based on logs: Event { id: 0, data: "[\"seqtalearn://sso/...\"]" }
+                    // event.payload() returns &str directly
+                    let payload_str = event.payload();
+                    println!("[Desqta] Event payload: {}", payload_str);
+                    
+                    // Try to parse as JSON array
+                    if let Ok(urls) = serde_json::from_str::<Vec<String>>(payload_str) {
+                        for url in urls {
+                            println!("[Desqta] Processing URL from deep link: {}", url);
+                            
+                            if url.starts_with("seqtalearn://") {
+                                println!("[Desqta] Processing SEQTA Learn SSO deeplink: {}", url);
+                                let app_handle_clone = app_handle.clone();
+                                tauri::async_runtime::spawn(async move {
+                                    match login::create_login_window(app_handle_clone, url.clone()).await {
+                                        Ok(_) => {
+                                            println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink");
+                                        },
+                                        Err(e) => {
+                                            eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e);
+                                        }
                                     }
-                                }
-                            });
+                                });
+                            }
                         }
+                    } else {
+                        println!("[Desqta] Failed to parse event payload as JSON array: {}", payload_str);
                     }
-                } else {
-                    println!("[Desqta] Failed to parse event payload as JSON array: {}", payload_str);
-                }
-            });
+                });
+            }
 
             #[cfg(desktop)]
             {

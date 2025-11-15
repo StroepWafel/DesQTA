@@ -123,7 +123,7 @@
         class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else}
       <div class="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
-        {userInfo.displayName ? userInfo.displayName[0] : userInfo.userName[0]}
+        {(userInfo.displayName || userInfo.userName || '?')[0]}
       </div>
     {/if}
     <span class="hidden font-semibold text-zinc-900 md:inline dark:text-white">

@@ -10,12 +10,12 @@ export async function getWithIdbFallback<T>(memKey: string, idbKey: string, memG
   return idb ?? null;
 }
 
-export async function setIdb<T>(idbKey: string, value: T): Promise<void> {
+export async function setIdb<T>(idbKey: string, value: T, ttlMinutes?: number | null): Promise<void> {
   try {
     // Ensure plain JSON-serializable data (avoid Svelte proxies/DataCloneError)
     const plain = JSON.parse(JSON.stringify(value));
-    await idbCacheSet(idbKey, plain);
-    logger.info('idbCache', 'setIdb', 'SQLite write', { idbKey, size: JSON.stringify(plain)?.length });
+    await idbCacheSet(idbKey, plain, ttlMinutes);
+    logger.info('idbCache', 'setIdb', 'SQLite write', { idbKey, size: JSON.stringify(plain)?.length, ttlMinutes });
   } catch (e) {
     logger.warn('idbCache', 'setIdb', 'SQLite write failed', { idbKey, error: String(e) });
   }

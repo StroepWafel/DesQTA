@@ -12,10 +12,13 @@ export type QueueItem = {
   created_at: number;
 };
 
-export async function idbCacheSet(key: string, value: any): Promise<void> {
+export async function idbCacheSet(
+  key: string,
+  value: any,
+  ttlMinutes?: number | null,
+): Promise<void> {
   try {
-    // Note: TTL is not currently passed from frontend, but could be added
-    await invoke('db_cache_set', { key, value, ttlMinutes: null });
+    await invoke('db_cache_set', { key, value, ttlMinutes: ttlMinutes ?? null });
   } catch (error) {
     console.error('Failed to set cache:', error);
     throw error;
@@ -29,6 +32,15 @@ export async function idbCacheGet<T>(key: string): Promise<T | undefined> {
   } catch (error) {
     console.error('Failed to get cache:', error);
     return undefined;
+  }
+}
+
+export async function idbCacheDelete(key: string): Promise<void> {
+  try {
+    await invoke('db_cache_delete', { key });
+  } catch (error) {
+    console.error('Failed to delete cache:', error);
+    throw error;
   }
 }
 
@@ -63,5 +75,3 @@ export async function queueDelete(id: number): Promise<void> {
     throw error;
   }
 }
-
-

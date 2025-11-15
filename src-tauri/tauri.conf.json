@@ -54,7 +54,7 @@
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["desqta", "seqtalearn"]
+        "schemes": ["desqta"]
       },
       "mobile": [
         {
