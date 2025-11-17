@@ -265,6 +265,40 @@ fn extract_final_grade(assessment: &Value) -> Option<f32> {
     None
 }
 
+/// Extract letterGrade from assessment data
+fn extract_letter_grade(assessment: &Value) -> Option<String> {
+    // Check if status is MARKS_RELEASED
+    let status = assessment.get("status")?.as_str()?;
+    if status != "MARKS_RELEASED" {
+        return None;
+    }
+
+    // Try criteria[0].results.grade first (matching assessment detail page)
+    if let Some(criteria) = assessment.get("criteria").and_then(|c| c.as_array()) {
+        if let Some(first_criterion) = criteria.get(0) {
+            if let Some(results) = first_criterion.get("results") {
+                if let Some(grade) = results.get("grade").and_then(|g| g.as_str()) {
+                    return Some(grade.to_string());
+                }
+            }
+        }
+    }
+
+    // Fallback to results.grade
+    if let Some(results) = assessment.get("results") {
+        if let Some(grade) = results.get("grade").and_then(|g| g.as_str()) {
+            return Some(grade.to_string());
+        }
+    }
+
+    // Check if letterGrade is already set
+    if let Some(letter_grade) = assessment.get("letterGrade").and_then(|g| g.as_str()) {
+        return Some(letter_grade.to_string());
+    }
+
+    None
+}
+
 /// Sync analytics data - fetches new assessments and merges with existing
 #[tauri::command]
 pub async fn sync_analytics_data() -> Result<String, String> {
@@ -348,6 +382,11 @@ pub async fn sync_analytics_data() -> Result<String, String> {
         // Extract finalGrade
         if let Some(final_grade) = extract_final_grade(&assessment) {
             assessment["finalGrade"] = json!(final_grade);
+        }
+
+        // Extract letterGrade
+        if let Some(letter_grade) = extract_letter_grade(&assessment) {
+            assessment["letterGrade"] = json!(letter_grade);
         }
 
         // Merge with existing: keep existing if it has finalGrade and new doesn't, or update if new has more complete data

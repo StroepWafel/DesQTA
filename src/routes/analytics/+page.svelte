@@ -51,6 +51,18 @@
         }
       }
 
+      // Extract letterGrade from assessment data (if available)
+      let letterGrade = undefined;
+      if (data.letterGrade !== undefined && data.letterGrade !== null) {
+        letterGrade = String(data.letterGrade);
+      } else if (data.criteria && data.criteria[0]?.results?.grade) {
+        // Extract from criteria[0].results.grade (matching assessment detail page)
+        letterGrade = String(data.criteria[0].results.grade);
+      } else if (data.results && data.results.grade) {
+        // Fallback to results.grade
+        letterGrade = String(data.results.grade);
+      }
+
       const assessment: Assessment = {
         id: Number(data.id),
         title: String(data.title || ''),
@@ -69,6 +81,7 @@
         reflectionsCompleted: Boolean(data.reflectionsCompleted),
         availability: String(data.availability || ''),
         finalGrade,
+        letterGrade,
       };
 
       if (

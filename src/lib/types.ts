@@ -15,7 +15,8 @@ export interface Assessment {
   reflectionsEnabled: boolean;
   reflectionsCompleted: boolean;
   availability: string;
-  finalGrade?: number; // Optional final grade
+  finalGrade?: number; // Optional final grade percentage
+  letterGrade?: string; // Optional letter grade from assessment (e.g., "A+", "B", "D")
 }
 
 export type AnalyticsData = Assessment[];

@@ -15,7 +15,14 @@
     expandedSubjects[subject] = !expandedSubjects[subject];
   }
 
-  function getLetterGrade(percentage: number | undefined): string {
+  function getLetterGrade(assessment: Assessment): string {
+    // Use letter grade from assessment if available
+    if (assessment.letterGrade) {
+      return assessment.letterGrade;
+    }
+    
+    // Fallback to custom scale based on percentage
+    const percentage = assessment.finalGrade;
     if (percentage === undefined) return '';
     if (percentage >= 90) return 'A+';
     if (percentage >= 85) return 'A';
@@ -111,7 +118,7 @@
                       {assessment.finalGrade}%
                     </div>
                     <div class="text-sm text-zinc-600 dark:text-zinc-400">
-                      {getLetterGrade(assessment.finalGrade)}
+                      {getLetterGrade(assessment)}
                     </div>
                   </div>
                 {:else}

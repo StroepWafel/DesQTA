@@ -28,7 +28,14 @@
   let sortColumn = $state<keyof Assessment | null>(null);
   let sortDirection = $state<'asc' | 'desc'>('asc');
 
-  function getLetterGrade(percentage: number | undefined): string {
+  function getLetterGrade(assessment: Assessment): string {
+    // Use letter grade from assessment if available
+    if (assessment.letterGrade) {
+      return assessment.letterGrade;
+    }
+    
+    // Fallback to custom scale based on percentage
+    const percentage = assessment.finalGrade;
     if (percentage === undefined) return '';
     if (percentage >= 90) return 'A+';
     if (percentage >= 85) return 'A';
@@ -195,7 +202,7 @@
               {#if assessment.finalGrade !== undefined}
                 <div>
                   <div class="font-medium text-zinc-900 dark:text-zinc-100">{assessment.finalGrade}%</div>
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400">{getLetterGrade(assessment.finalGrade)}</div>
+                  <div class="text-xs text-zinc-500 dark:text-zinc-400">{getLetterGrade(assessment)}</div>
                 </div>
               {:else}
                 <span class="text-zinc-500 dark:text-zinc-400">—</span>
