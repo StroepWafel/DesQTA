@@ -240,6 +240,7 @@ pub fn run() {
             analytics::save_analytics,
             analytics::load_analytics,
             analytics::delete_analytics,
+            analytics::sync_analytics_data,
             seqta_config::load_seqta_config,
             seqta_config::save_seqta_config,
             seqta_config::is_seqta_config_different,

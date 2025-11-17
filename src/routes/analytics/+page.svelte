@@ -2,16 +2,15 @@
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import type { AnalyticsData, Assessment } from '$lib/types';
-  import { seqtaFetch } from '../../utils/netUtil';
   import { fade } from 'svelte/transition';
   import { Button } from '$lib/components/ui';
-  import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
+  import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
   import RawDataTable from '$lib/components/RawDataTable.svelte';
   import AnalyticsAreaChart from '$lib/components/analytics/AnalyticsAreaChart.svelte';
   import AnalyticsBarChart from '$lib/components/analytics/AnalyticsBarChart.svelte';
-  import * as Card from "$lib/components/ui/card/index.js";
-  import * as Select from "$lib/components/ui/select/index.js";
-  import { Slider } from "$lib/components/ui/slider/index.js";
+  import * as Card from '$lib/components/ui/card/index.js';
+  import * as Select from '$lib/components/ui/select/index.js';
+  import { Slider } from '$lib/components/ui/slider/index.js';
   import { Icon, MagnifyingGlass, Trash } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
@@ -19,12 +18,9 @@
   let analyticsData: AnalyticsData | null = $state(null);
   let loading = $state(true);
   let error: string | null = $state(null);
-  let showGrabData = $state(false);
   let showDeleteModal = $state(false);
   let deleteLoading = $state(false);
   let deleteError: string | null = $state(null);
-
-  const studentId = 69;
 
   // Filter state
   let filterSubjects: string[] = $state([]);
@@ -41,6 +37,19 @@
   function parseAssessment(data: any): Assessment | null {
     try {
       if (!data || typeof data !== 'object') return null;
+
+      // Extract finalGrade: check finalGrade field first, then results.percentage (matching Rust sync logic)
+      let finalGrade = undefined;
+      if (data.finalGrade !== undefined && data.finalGrade !== null) {
+        finalGrade = Number(data.finalGrade);
+      } else if (data.status === 'MARKS_RELEASED') {
+        // Fallback to results.percentage if finalGrade is not set but marks are released
+        if (data.criteria && data.criteria[0]?.results?.percentage !== undefined) {
+          finalGrade = Number(data.criteria[0].results.percentage);
+        } else if (data.results && data.results.percentage !== undefined) {
+          finalGrade = Number(data.results.percentage);
+        }
+      }
 
       const assessment: Assessment = {
         id: Number(data.id),
@@ -59,10 +68,15 @@
         reflectionsEnabled: Boolean(data.reflectionsEnabled),
         reflectionsCompleted: Boolean(data.reflectionsCompleted),
         availability: String(data.availability || ''),
-        finalGrade: data.finalGrade ? Number(data.finalGrade) : undefined,
+        finalGrade,
       };
 
-      if (!assessment.id || !assessment.title || !assessment.subject || !isValidDate(assessment.due)) {
+      if (
+        !assessment.id ||
+        !assessment.title ||
+        !assessment.subject ||
+        !isValidDate(assessment.due)
+      ) {
         return null;
       }
 
@@ -73,94 +87,9 @@
     }
   }
 
-  async function grabData() {
-    loading = true;
-    error = null;
+  async function loadAnalyticsData() {
     try {
-      // Fetch all folders and all subjects (not just active)
-      const classesRes = await seqtaFetch('/seqta/student/load/subjects?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {},
-      });
-      const data = JSON.parse(classesRes);
-      const folders = data.payload;
-      const allSubjects = folders.flatMap((f: any) => f.subjects);
-
-      // Remove duplicate subjects by programme+metaclass
-      const uniqueSubjectsMap = new Map();
-      allSubjects.forEach((s: any) => {
-        const key = `${s.programme}-${s.metaclass}`;
-        if (!uniqueSubjectsMap.has(key)) uniqueSubjectsMap.set(key, s);
-      });
-      const uniqueSubjects = Array.from(uniqueSubjectsMap.values());
-
-      // Fetch upcoming assessments for current active subjects (optional, can be skipped if you want only past)
-      const activeFolder = folders.find((f: any) => f.active === 1);
-      const activeSubjects = activeFolder ? activeFolder.subjects : [];
-      const assessmentsRes = await seqtaFetch('/seqta/student/assessment/list/upcoming?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: { student: studentId },
-      });
-      const upcomingAssessments = JSON.parse(assessmentsRes).payload;
-
-      // Fetch past assessments for every subject ever
-      const pastAssessmentsPromises = uniqueSubjects.map((subject: any) =>
-        seqtaFetch('/seqta/student/assessment/list/past?', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json; charset=utf-8' },
-          body: {
-            programme: subject.programme,
-            metaclass: subject.metaclass,
-            student: studentId,
-          },
-        }),
-      );
-      const pastAssessmentsResponses = await Promise.all(pastAssessmentsPromises);
-      const pastAssessments = pastAssessmentsResponses
-        .map((res) => JSON.parse(res).payload.tasks || [])
-        .flat();
-
-      // Combine and process all assessments
-      const allAssessments = [...upcomingAssessments, ...pastAssessments];
-
-      // Remove duplicates by id
-      const uniqueAssessmentsMap = new Map();
-      allAssessments.forEach((a: any) => {
-        if (!uniqueAssessmentsMap.has(a.id)) {
-          uniqueAssessmentsMap.set(a.id, a);
-        }
-      });
-      const uniqueAssessments = Array.from(uniqueAssessmentsMap.values());
-
-      // Add finalGrade if marks are released
-      const processedAssessments = uniqueAssessments.map((a: any) => {
-        let finalGrade = undefined;
-        if (a.status === 'MARKS_RELEASED') {
-          if (a.criteria && a.criteria[0]?.results?.percentage !== undefined) {
-            finalGrade = a.criteria[0].results.percentage;
-          } else if (a.results && a.results.percentage !== undefined) {
-            finalGrade = a.results.percentage;
-          }
-        }
-        return { ...a, finalGrade };
-      });
-
-      // Save to analytics.json via Tauri
-      await invoke('save_analytics', {
-        data: JSON.stringify(processedAssessments),
-      });
-      window.location.reload();
-    } catch (e) {
-      error = $_('analytics.failed_to_grab_data') || 'Failed to grab and save analytics data.';
-      loading = false;
-    }
-  }
-
-  onMount(async () => {
-    try {
-      console.log('Fetching analytics data...');
+      console.log('Loading analytics data...');
       const response = await invoke<string>('load_analytics');
       console.log('Received raw data:', response);
       const parsedData = JSON.parse(response);
@@ -170,13 +99,28 @@
         .filter((assessment): assessment is Assessment => assessment !== null);
       console.log('Valid assessments:', validAssessments);
       analyticsData = validAssessments;
-      showGrabData = false;
-
+      error = null;
     } catch (e) {
-      // Do not use console.error here to avoid global error page; show local recovery UI instead
-      console.warn('Analytics: no local analytics file found or failed to parse. Prompting user to rebuild.');
-      error = '';
-      showGrabData = true;
+      console.warn('Analytics: no local analytics file found or failed to parse:', e);
+      analyticsData = [];
+      error = null; // Don't show error, just show empty state
+    }
+  }
+
+  onMount(async () => {
+    try {
+      // First, sync analytics data (this will fetch new data and merge with existing)
+      console.log('Syncing analytics data...');
+      await invoke<string>('sync_analytics_data');
+      console.log('Analytics data synced successfully');
+
+      // Then load the updated data
+      await loadAnalyticsData();
+    } catch (e) {
+      console.error('Failed to sync analytics data:', e);
+      // Try to load existing data even if sync failed
+      await loadAnalyticsData();
+      error = $_('analytics.sync_failed') || 'Failed to sync analytics data, showing cached data.';
     } finally {
       loading = false;
     }
@@ -197,22 +141,24 @@
     deleteError = null;
     try {
       await invoke('delete_analytics');
-      analyticsData = null;
-      showGrabData = true;
+      analyticsData = [];
       showDeleteModal = false;
+      // Sync and reload data after deletion
+      loading = true;
+      await invoke<string>('sync_analytics_data');
+      await loadAnalyticsData();
     } catch (e) {
       deleteError = $_('analytics.failed_to_delete_data') || 'Failed to delete analytics data';
     } finally {
       deleteLoading = false;
+      loading = false;
     }
   }
-
-
 
   // Derived unique values for filter options
   const uniqueSubjects = $derived(() => {
     if (!analyticsData) return [];
-    return [...new Set(analyticsData.map(a => a.subject))].sort();
+    return [...new Set(analyticsData.map((a) => a.subject))].sort();
   });
 
   function clearFilters() {
@@ -247,8 +193,6 @@
       return true;
     });
   });
-
-
 
   function hasActiveFilters() {
     return !!(
@@ -318,14 +262,16 @@
         <T key="navigation.analytics" fallback="Analytics" />
       </h1>
       <p class="text-zinc-600 dark:text-zinc-400">
-        <T key="analytics.description" fallback="Track your academic performance and progress over time" />
+        <T
+          key="analytics.description"
+          fallback="Track your academic performance and progress over time" />
       </p>
     </div>
 
     {#if analyticsData}
-    <div>
-      <Button class="flex items-center gap-2" variant="ghost" onclick={openDeleteModal}>
-        <Icon size="20" src={Trash} />
+      <div>
+        <Button class="flex items-center gap-2" variant="ghost" onclick={openDeleteModal}>
+          <Icon size="20" src={Trash} />
           <T key="analytics.delete_data" fallback="Delete Data" />
         </Button>
       </div>
@@ -336,40 +282,7 @@
     <div class="flex justify-center items-center h-64">
       <div class="w-12 h-12 rounded-full border-b-2 border-accent-600 animate-spin"></div>
     </div>
-  {:else if showGrabData}
-    <div class="flex flex-col gap-6 justify-center items-center flex-1">
-      <div
-        class="flex flex-col items-center p-8 w-full max-w-lg rounded-2xl border shadow-xl border-zinc-200 bg-white/90 dark:bg-zinc-900/90 dark:border-zinc-700 animate-fade-in-up">
-        <svg
-          class="mb-4 w-12 h-12 text-accent-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          ><path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <h2 class="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">
-          <T key="analytics.no_data_title" fallback="No Analytics Data" />
-        </h2>
-        <p class="mb-4 text-center text-zinc-600 dark:text-zinc-300">
-          <T key="analytics.no_data_description" fallback="To get started, click Grab Data below. This will securely fetch and save your assessment data locally on your device. Your data never leaves your computer—everything is processed and stored privately for your own analytics." />
-        </p>
-        <button
-          class="px-6 py-3 mt-2 text-lg font-semibold text-white bg-accent-600 rounded-lg transition-all duration-200 transform shadow-xs hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring hover:bg-accent-700"
-          onclick={grabData}>
-          <T key="analytics.grab_data" fallback="Grab Data" />
-        </button>
-        {#if error}
-          <div
-            class="px-4 py-3 mt-4 w-full text-center text-red-700 bg-red-50 rounded-lg border border-red-200">
-            {error}
-          </div>
-        {/if}
-      </div>
-    </div>
-  {:else if analyticsData}
+  {:else if analyticsData && analyticsData.length > 0}
     <!-- Compact filters near heading -->
     <div class="flex flex-wrap items-center gap-4 -mb-4" in:fade={{ duration: 400 }}>
       <Select.Root type="multiple" bind:value={filterSubjects}>
@@ -380,7 +293,10 @@
             {:else if filterSubjects.length === 1}
               {filterSubjects[0]}
             {:else}
-              <T key="analytics.subjects_selected" fallback="subjects selected" values={{ count: filterSubjects.length }} />
+              <T
+                key="analytics.subjects_selected"
+                fallback="subjects selected"
+                values={{ count: filterSubjects.length }} />
             {/if}
           </span>
         </Select.Trigger>
@@ -396,7 +312,13 @@
           <T key="analytics.grade_range" fallback="Grade Range" />
         </span>
         <div class="flex items-center gap-2 w-48">
-          <Slider type="multiple" bind:value={gradeRange} min={0} max={100} step={1} class="flex-1" />
+          <Slider
+            type="multiple"
+            bind:value={gradeRange}
+            min={0}
+            max={100}
+            step={1}
+            class="flex-1" />
         </div>
         <div class="text-xs text-zinc-500 dark:text-zinc-400 min-w-fit">
           {gradeRange[0]}%-{gradeRange[1]}%
@@ -404,13 +326,14 @@
       </div>
 
       <div class="relative ml-auto">
-        <Icon src={MagnifyingGlass} class="absolute left-2 top-1/2 size-4 transform -translate-y-1/2 text-zinc-500 dark:text-zinc-400" />
+        <Icon
+          src={MagnifyingGlass}
+          class="absolute left-2 top-1/2 size-4 transform -translate-y-1/2 text-zinc-500 dark:text-zinc-400" />
         <input
           type="text"
           placeholder={$_('analytics.search_placeholder') || 'Search assessments...'}
           bind:value={filterSearch}
-          class="flex pl-7 h-9 w-56 rounded-md border border-zinc-200 bg-white dark:bg-zinc-900 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 dark:border-zinc-700 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
-        />
+          class="flex pl-7 h-9 w-56 rounded-md border border-zinc-200 bg-white dark:bg-zinc-900 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 dark:border-zinc-700 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300" />
       </div>
     </div>
 
@@ -427,7 +350,10 @@
 
     <div class="flex items-center gap-3 ml-auto pb-4">
       <div class="text-sm text-zinc-600 dark:text-zinc-400">
-        <T key="analytics.assessments_count" fallback="assessments shown" values={{ filtered: filteredData().length, total: analyticsData.length }} />
+        <T
+          key="analytics.assessments_count"
+          fallback="assessments shown"
+          values={{ filtered: filteredData().length, total: analyticsData.length }} />
       </div>
       {#if hasActiveFilters()}
         <Button variant="ghost" size="sm" onclick={clearFilters}>
@@ -436,8 +362,21 @@
       {/if}
     </div>
   {:else}
-    <div class="text-center text-zinc-500 dark:text-zinc-400">
-      <T key="analytics.no_data_available" fallback="No analytics data available" />
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+      <div class="mb-4 text-zinc-500 dark:text-zinc-400">
+        <T key="analytics.no_data_available" fallback="No analytics data available" />
+      </div>
+      {#if error}
+        <div class="px-4 py-2 text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+          {error}
+        </div>
+      {:else}
+        <p class="text-sm text-zinc-400 dark:text-zinc-500">
+          <T
+            key="analytics.syncing_automatically"
+            fallback="Data syncs automatically when you visit this page. If you have assessments with released marks, they will appear here." />
+        </p>
+      {/if}
     </div>
   {/if}
 
@@ -448,7 +387,9 @@
           <T key="analytics.delete_confirmation_title" fallback="Delete Analytics Data?" />
         </AlertDialog.Title>
         <AlertDialog.Description>
-          <T key="analytics.delete_confirmation_description" fallback="Are you sure you want to delete all analytics data? This action cannot be undone." />
+          <T
+            key="analytics.delete_confirmation_description"
+            fallback="Are you sure you want to delete all analytics data? This action cannot be undone." />
         </AlertDialog.Description>
       </AlertDialog.Header>
       {#if deleteError}
