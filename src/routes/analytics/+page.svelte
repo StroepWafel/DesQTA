@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import type { AnalyticsData, Assessment } from '$lib/types';
   import { fade } from 'svelte/transition';
@@ -17,10 +17,23 @@
 
   let analyticsData: AnalyticsData | null = $state(null);
   let loading = $state(true);
+  let syncing = $state(false);
+  let lastUpdated: Date | null = $state(null);
+  let timestampRefresh = $state(0); // Used to trigger reactive updates
   let error: string | null = $state(null);
   let showDeleteModal = $state(false);
   let deleteLoading = $state(false);
   let deleteError: string | null = $state(null);
+
+  // Update timestamp display every minute
+  let timestampInterval: ReturnType<typeof setInterval> | null = null;
+
+  // Reactive formatted timestamp that updates every minute
+  const formattedTimestamp = $derived(() => {
+    if (!lastUpdated) return '';
+    timestampRefresh; // Reference to trigger reactivity
+    return formatLastUpdated(lastUpdated);
+  });
 
   // Filter state
   let filterSubjects: string[] = $state([]);
@@ -112,6 +125,7 @@
         .filter((assessment): assessment is Assessment => assessment !== null);
       console.log('Valid assessments:', validAssessments);
       analyticsData = validAssessments;
+      lastUpdated = new Date();
       error = null;
     } catch (e) {
       console.warn('Analytics: no local analytics file found or failed to parse:', e);
@@ -120,22 +134,64 @@
     }
   }
 
+  function formatLastUpdated(date: Date | null): string {
+    if (!date) return '';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
   onMount(async () => {
+    // Set up interval to refresh timestamp display every minute
+    timestampInterval = setInterval(() => {
+      timestampRefresh = Date.now();
+    }, 60000); // Update every minute
+
+    // Load existing data immediately (if available)
     try {
-      // First, sync analytics data (this will fetch new data and merge with existing)
-      console.log('Syncing analytics data...');
+      await loadAnalyticsData();
+    } catch (e) {
+      console.warn('Failed to load existing analytics data:', e);
+    } finally {
+      loading = false;
+    }
+
+    // Then sync in the background and refresh data when complete
+    syncing = true;
+    try {
+      console.log('Syncing analytics data in background...');
       await invoke<string>('sync_analytics_data');
       console.log('Analytics data synced successfully');
 
-      // Then load the updated data
+      // Reload data after sync completes
       await loadAnalyticsData();
+      error = null;
     } catch (e) {
       console.error('Failed to sync analytics data:', e);
-      // Try to load existing data even if sync failed
-      await loadAnalyticsData();
       error = $_('analytics.sync_failed') || 'Failed to sync analytics data, showing cached data.';
     } finally {
-      loading = false;
+      syncing = false;
+    }
+  });
+
+  onDestroy(() => {
+    if (timestampInterval) {
+      clearInterval(timestampInterval);
     }
   });
 
@@ -270,19 +326,35 @@
 
 <div class="container px-6 py-7 mx-auto flex flex-col h-full gap-8">
   <div class="flex justify-between items-start">
-    <div>
-      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
-        <T key="navigation.analytics" fallback="Analytics" />
-      </h1>
+    <div class="flex-1">
+      <div class="flex items-center gap-3 mb-2">
+        <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">
+          <T key="navigation.analytics" fallback="Analytics" />
+        </h1>
+        {#if syncing}
+          <div
+            class="flex items-center gap-2 px-3 py-1 text-sm text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-950/30 rounded-lg">
+            <div
+              class="w-4 h-4 rounded-full border-2 border-accent-600 dark:border-accent-400 border-t-transparent animate-spin">
+            </div>
+            <span><T key="analytics.syncing" fallback="Syncing..." /></span>
+          </div>
+        {/if}
+      </div>
       <p class="text-zinc-600 dark:text-zinc-400">
         <T
           key="analytics.description"
           fallback="Track your academic performance and progress over time" />
       </p>
+      {#if lastUpdated && analyticsData && analyticsData.length > 0}
+        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <T key="analytics.last_updated" fallback="Last updated" />: {formattedTimestamp()}
+        </p>
+      {/if}
     </div>
 
     {#if analyticsData}
-      <div>
+      <div class="flex items-center gap-3">
         <Button class="flex items-center gap-2" variant="ghost" onclick={openDeleteModal}>
           <Icon size="20" src={Trash} />
           <T key="analytics.delete_data" fallback="Delete Data" />
@@ -380,7 +452,8 @@
         <T key="analytics.no_data_available" fallback="No analytics data available" />
       </div>
       {#if error}
-        <div class="px-4 py-2 text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+        <div
+          class="px-4 py-2 text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
           {error}
         </div>
       {:else}
