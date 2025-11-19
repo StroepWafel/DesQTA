@@ -72,7 +72,7 @@ export default defineConfig(async () => ({
             if (id.includes('@tiptap')) {
               return 'vendor-tiptap';
             }
-            if (id.includes('chart.js') || id.includes('d3-')) {
+            if (id.includes('d3-')) {
               return 'vendor-charts';
             }
             if (id.includes('dompurify') || id.includes('marked')) {
