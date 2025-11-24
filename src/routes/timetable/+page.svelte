@@ -250,4 +250,26 @@
 
     font-family: inherit;
   }
+
+  /* Fix date picker popup background and text visibility */
+  :global(.sx__date-picker__popup),
+  :global(.sx__date-picker-popup),
+  :global(.sx__date-picker__wrapper) {
+    background-color: var(--color-card) !important;
+    border: 1px solid var(--color-border);
+    box-shadow:
+      0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+
+  :global(.sx__date-picker__years-view),
+  :global(.sx__date-picker__months-view),
+  :global(.sx__date-picker__month-view) {
+    background-color: var(--color-card);
+  }
+
+  :global(.sx__date-picker__day.is-selected) {
+    background-color: var(--color-accent) !important;
+    color: var(--color-accent-foreground) !important;
+  }
 </style>
