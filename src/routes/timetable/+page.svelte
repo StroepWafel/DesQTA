@@ -9,13 +9,15 @@
     createViewMonthAgenda,
   } from '@schedule-x/calendar';
   import '@schedule-x/theme-default/dist/index.css';
-  import 'temporal-polyfill/global';
+  import { createCalendarControlsPlugin } from '@schedule-x/calendar-controls';
+  import { createCurrentTimePlugin } from '@schedule-x/current-time';
+  import { createEventModalPlugin } from '@schedule-x/event-modal';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import TimeGridEvent from '$lib/components/timetable/TimeGridEvent.svelte';
   import { _ } from '../../lib/i18n';
-  import { theme } from '$lib/stores/theme';
+  import 'temporal-polyfill/global';
 
   const studentId = 69;
 
@@ -24,8 +26,7 @@
   let lessonColours = $state<any[]>([]);
   let loadingLessons = $state(true);
 
-  // Helper to format date for Schedule-X (YYYY-MM-DD HH:mm)
-  // function formatEventDate(dateStr: string, timeStr: string): string { ... } - Unused now
+  import { theme } from '$lib/stores/theme';
 
   async function loadLessonColours() {
     const cachedColours = cache.get<any[]>('lesson_colours');
@@ -103,7 +104,7 @@
         location: lesson.room,
         staff: lesson.staff,
         color: color,
-        description: `Room: ${lesson.room || 'N/A'}\nTeacher: ${lesson.staff || 'N/A'}`,
+        description: lesson.staff ? `Teacher: ${lesson.staff}` : undefined,
       };
     });
   }
@@ -151,6 +152,12 @@
     // Determine initial date (today)
     const today = new Date().toISOString().split('T')[0];
 
+    const plugins = [
+      createCalendarControlsPlugin(),
+      createCurrentTimePlugin(),
+      createEventModalPlugin(),
+    ];
+
     calendarApp = createCalendar({
       // @ts-ignore
       selectedDate: Temporal.PlainDate.from(today),
@@ -172,6 +179,7 @@
       views: [createViewWeek(), createViewDay(), createViewMonthGrid(), createViewMonthAgenda()],
       events: events,
       isDark: $theme === 'dark',
+      plugins: plugins,
       callbacks: {
         // We could hook into view changes here to fetch more data if needed
       },
@@ -201,10 +209,11 @@
 </div>
 
 <style>
-  /* Target the wrapper AND the internal calendar root to ensure overrides win against library defaults */
+  /* Target the wrapper, internal calendar, and the modal (which attaches to body) */
   :global(.sx-svelte-calendar-wrapper),
   :global(.sx-svelte-calendar-wrapper .sx__calendar),
-  :global(.sx-svelte-calendar-wrapper .is-dark) {
+  :global(.sx-svelte-calendar-wrapper .is-dark),
+  :global(.sx__event-modal) {
     /* Customization for Schedule-X to match app theme */
     --sx-color-primary: var(--color-accent);
     --sx-color-on-primary: var(--color-accent-foreground);
@@ -249,6 +258,20 @@
     --sx-internal-color-gray-ripple-background: var(--color-muted);
 
     font-family: inherit;
+  }
+
+  /* Modal specific overrides for background */
+  :global(.sx__event-modal),
+  :global(.sx__event-modal__content) {
+    background-color: var(--color-card) !important;
+    border: 1px solid var(--color-border);
+    box-shadow:
+      0 20px 25px -5px rgb(0 0 0 / 0.1),
+      0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+
+  :global(.sx__event-modal__content) {
+    color: var(--color-foreground) !important;
   }
 
   /* Fix date picker popup background and text visibility */
