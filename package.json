@@ -17,6 +17,11 @@
   },
   "license": "MIT",
   "dependencies": {
+    "7.css": "^0.18.0",
+    "@preact/signals": "^2.5.1",
+    "@schedule-x/calendar": "^3.4.2",
+    "@schedule-x/svelte": "^3.0.0",
+    "@schedule-x/theme-default": "^3.4.2",
     "@tailwindcss/typography": "^0.5.16",
     "@tauri-apps/api": "2.9.0",
     "@tauri-apps/plugin-dialog": "^2.4.0",
@@ -42,7 +47,6 @@
     "@tiptap/suggestion": "^2.12.0",
     "@types/d3-scale": "^4.0.9",
     "@types/d3-shape": "^3.1.7",
-    "7.css": "^0.18.0",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.2.0",
     "dayjs": "^1.11.13",
@@ -57,11 +61,13 @@
     "marked": "^15.0.12",
     "motion": "^12.19.1",
     "pdfjs-dist": "^5.3.31",
+    "preact": "^10.27.2",
     "prosemirror-state": "^1.4.3",
     "prosemirror-view": "^1.33.9",
     "rss-parser": "^3.12.0",
     "svelte-i18n": "^4.0.1",
     "svelte-motion": "^0.12.2",
+    "temporal-polyfill": "^0.3.0",
     "wx-svelte-gantt": "^2.2.1"
   },
   "devDependencies": {
