@@ -168,13 +168,13 @@
       firstDayOfWeek: 1,
       weekOptions: {
         nDays: 5,
-        gridHeight: 2000, // Taller grid for better visibility
-        eventOverlap: false, // School timetables usually don't overlap, or if they do we want to see them clearly
+        gridHeight: 1350, // Further reduced height for compact view
+        eventOverlap: false,
       },
-      // Restrict the visible hours to reasonable school day times (e.g. 7am to 6pm) to avoid empty space
+      // Tighten visible hours to standard school day (8am - 4pm)
       dayBoundaries: {
-        start: '07:00',
-        end: '18:00',
+        start: '08:00',
+        end: '16:00',
       },
       views: [createViewWeek(), createViewDay(), createViewMonthGrid(), createViewMonthAgenda()],
       events: events,
