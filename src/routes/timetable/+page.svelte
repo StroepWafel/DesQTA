@@ -154,7 +154,22 @@
     calendarApp = createCalendar({
       // @ts-ignore
       selectedDate: Temporal.PlainDate.from(today),
-      views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
+      // Set the calendar timezone to match the user's local time so events appear at the correct wall-clock time
+      // @ts-ignore
+      timezone: Temporal.Now.timeZoneId(),
+      // Configure the week view to show only 5 days (Mon-Fri) which is standard for schools
+      firstDayOfWeek: 1,
+      weekOptions: {
+        nDays: 5,
+        gridHeight: 2000, // Taller grid for better visibility
+        eventOverlap: false, // School timetables usually don't overlap, or if they do we want to see them clearly
+      },
+      // Restrict the visible hours to reasonable school day times (e.g. 7am to 6pm) to avoid empty space
+      dayBoundaries: {
+        start: '07:00',
+        end: '18:00',
+      },
+      views: [createViewWeek(), createViewDay(), createViewMonthGrid(), createViewMonthAgenda()],
       events: events,
       isDark: $theme === 'dark',
       callbacks: {
