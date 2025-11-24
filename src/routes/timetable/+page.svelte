@@ -166,10 +166,22 @@
       timezone: Temporal.Now.timeZoneId(),
       // Configure the week view to show only 5 days (Mon-Fri) which is standard for schools
       firstDayOfWeek: 1,
+      // Skip heavy validation for performance since data is programmatically generated
+      skipValidation: true,
+
       weekOptions: {
         nDays: 5,
         gridHeight: 1350, // Further reduced height for compact view
         eventOverlap: false,
+        eventWidth: 98, // Slight gap between events for cleaner look
+        // Clean 24h format for the axis (09:00, 10:00) matches school schedules well
+        timeAxisFormatOptions: { hour: '2-digit', minute: '2-digit' },
+      },
+
+      monthGridOptions: {
+        // Show more events in month view before collapsing to "+X more"
+        // A typical school day has ~6 periods, so 7 ensures we see the full day usually
+        nEventsPerDay: 7,
       },
       // Tighten visible hours to standard school day (8am - 4pm)
       dayBoundaries: {
