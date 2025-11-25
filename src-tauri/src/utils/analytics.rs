@@ -66,27 +66,6 @@ where
     deserializer.deserialize_any(BoolOrIntVisitor)
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AssessmentData {
-    pub id: i32,
-    pub title: String,
-    pub subject: String,
-    pub status: String,
-    pub due: String,
-    pub code: String,
-    pub metaclass_id: i32,
-    pub programme_id: i32,
-    pub graded: bool,
-    pub overdue: bool,
-    pub has_feedback: bool,
-    pub expectations_enabled: bool,
-    pub expectations_completed: bool,
-    pub reflections_enabled: bool,
-    pub reflections_completed: bool,
-    pub availability: String,
-    pub final_grade: Option<f32>,
-}
-
 fn analytics_file() -> PathBuf {
     #[cfg(target_os = "android")]
     {

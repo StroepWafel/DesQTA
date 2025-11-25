@@ -4,7 +4,6 @@ use std::sync::{Mutex, OnceLock};
 use tauri::AppHandle;
 use chrono::Utc;
 use anyhow::{Context, Result};
-use std::path::PathBuf;
 use std::fs;
 
 // Global database connection pool (single connection for now)
@@ -15,7 +14,8 @@ pub fn init_database(_app: &AppHandle) -> Result<()> {
     // Use the same data directory logic as other modules
     #[cfg(target_os = "android")]
     {
-        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+        let mut dir = dirs_next::data_dir()
+            .ok_or_else(|| anyhow::anyhow!("Unable to determine data dir"))?;
         dir.push("DesQTA");
         if !dir.exists() {
             fs::create_dir_all(&dir)

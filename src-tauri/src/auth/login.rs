@@ -20,12 +20,6 @@ struct SeqtaSSOPayload {
     n: String, // User number
 }
 
-#[derive(Deserialize)]
-struct AppLinkPayload {}
-
-#[derive(Deserialize)]
-struct AppLinkResponse {}
-
 #[derive(Debug, Deserialize)]
 struct SeqtaJWT {
     exp: i64,       // Expiration timestamp

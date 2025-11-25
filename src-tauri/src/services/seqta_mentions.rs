@@ -103,32 +103,6 @@ fn format_date(date_str: &str) -> String {
     date_str.to_string()
 }
 
-/// Get teacher from timetable (cached)
-async fn get_teacher_from_timetable(
-    programme: Option<i32>,
-    metaclass: Option<i32>,
-    code: Option<&str>,
-) -> Option<String> {
-    init_caches();
-    let key = format!("{}-{}-{}", 
-        programme.map(|p| p.to_string()).unwrap_or_default(),
-        metaclass.map(|m| m.to_string()).unwrap_or_default(),
-        code.unwrap_or("")
-    );
-    
-    // Check cache first
-    {
-        init_caches();
-        let teacher_cache = TEACHER_CACHE.get().unwrap().lock().unwrap();
-        if let Some(teacher) = teacher_cache.get(&key) {
-            return Some(teacher.clone());
-        }
-    }
-    
-    // Fetch from API (simplified - would need student ID from session)
-    // For now, return None and let frontend handle it
-    None
-}
 
 /// Fetch assignments from SEQTA
 async fn fetch_assignments(

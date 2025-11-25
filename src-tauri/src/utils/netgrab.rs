@@ -19,20 +19,6 @@ use crate::logger;
 static GLOBAL_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct HomeworkItem {
-    pub meta: i32,
-    pub id: i32,
-    pub title: String,
-    pub items: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct HomeworkResponse {
-    pub payload: Vec<HomeworkItem>,
-    pub status: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub enum RequestMethod {
     GET,
     POST,
@@ -425,19 +411,6 @@ pub async fn upload_seqta_file(file_name: String, file_path: String) -> Result<S
         },
         Err(e) => Err(format!("File upload failed: {e}")),
     }
-}
-
-#[derive(Serialize)]
-pub struct FeedItem {
-    title: Option<String>,
-    link: Option<String>,
-    description: Option<String>,
-    pub_date: Option<String>,
-}
-#[derive(Serialize)]
-pub struct FeedResponse {
-    title: String,
-    items: Vec<FeedItem>,
 }
 
 #[tauri::command]

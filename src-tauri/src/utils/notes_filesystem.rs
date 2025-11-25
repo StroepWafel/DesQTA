@@ -46,21 +46,6 @@ pub struct Note {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NoteFolder {
-    pub id: String,
-    pub name: String,
-    #[serde(default)]
-    pub parent_id: Option<String>,
-    #[serde(default)]
-    pub color: Option<String>,
-    #[serde(default)]
-    pub icon: Option<String>,
-    pub auto_generated: bool, // true for SEQTA-synced folders
-    pub created_at: String,
-    pub updated_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileSystemNote {
     pub id: String,
     pub title: String,
