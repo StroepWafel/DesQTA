@@ -3,7 +3,8 @@
   import { onMount } from 'svelte';
 
   // $lib/ imports
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import { setIdb } from '$lib/services/idbCache';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
 
@@ -46,43 +47,32 @@
   }
 
   async function fetchLabels() {
-    try {
-      const memCached = cache.get<Label[]>('notices_labels');
-      if (memCached) {
-        logger.debug('notices', 'fetchLabels', 'notices_labels hit (memory)', { count: memCached.length });
-        labels = memCached;
-        return;
-      }
-      
-      const idbCached = await getWithIdbFallback<Label[]>('notices_labels', 'notices_labels', () => null);
-      if (idbCached) {
-        logger.debug('notices', 'fetchLabels', 'notices_labels hit (IndexedDB fallback)', { count: idbCached.length });
-        labels = idbCached;
-        // Restore to memory cache with remaining TTL estimation
-        cache.set('notices_labels', idbCached, 60);
-        return;
-      }
-      
-      logger.debug('notices', 'fetchLabels', 'notices_labels miss - fetching from API');
-      const response = await seqtaFetch('/seqta/student/load/notices?', {
-        method: 'POST',
-        body: { mode: 'labels' },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (Array.isArray(data?.payload)) {
-        labels = data.payload.map((l: any) => ({
-          id: l.id,
-          title: l.title,
-          color: l.colour,
-        }));
-        cache.set('notices_labels', labels, 60); // 60 min TTL
-        await setIdb('notices_labels', labels);
-        logger.debug('notices', 'fetchLabels', 'notices_labels stored (mem+idb)', { count: labels.length });
-      } else {
-        labels = [];
-      }
-    } catch (e) {
-      logger.error('notices', 'fetchLabels', 'notices_labels fetch failed', { error: e });
+    const data = await useDataLoader<Label[]>({
+      cacheKey: 'notices_labels',
+      ttlMinutes: 60,
+      context: 'notices',
+      functionName: 'fetchLabels',
+      fetcher: async () => {
+        const response = await seqtaFetch('/seqta/student/load/notices?', {
+          method: 'POST',
+          body: { mode: 'labels' },
+        });
+        const data = typeof response === 'string' ? JSON.parse(response) : response;
+        if (Array.isArray(data?.payload)) {
+          return data.payload.map((l: any) => ({
+            id: l.id,
+            title: l.title,
+            color: l.colour,
+          }));
+        }
+        return [];
+      },
+      onDataLoaded: (data) => {
+        labels = data;
+      },
+    });
+
+    if (!data) {
       labels = [];
     }
   }
@@ -90,39 +80,45 @@
   async function fetchNotices() {
     loading = true;
     error = null;
-    try {
-      const key = `notices_${formatDate(selectedDate)}`;
-      const { isOfflineMode } = await import('../../lib/utils/offlineMode');
-      const offline = await isOfflineMode();
-      
-      // If offline, use database only
-      if (offline) {
-        const memCached = cache.get<Notice[]>(key);
-        if (memCached) {
-          logger.debug('notices', 'fetchNotices', 'notices hit (memory, offline)', { key, count: memCached.length });
-          notices = memCached;
-          loading = false;
-          return;
-        }
-        
-        const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
-        if (idbCached) {
-          logger.debug('notices', 'fetchNotices', 'notices hit (IndexedDB, offline)', { key, count: idbCached.length });
-          notices = idbCached;
-          cache.set(key, idbCached, 30);
-          loading = false;
-          return;
-        }
-        
-        // No cached data when offline
-        error = $_('notices.offline_no_cache') || 'No cached notices available. Please go online to fetch notices.';
-        notices = [];
+
+    const key = `notices_${formatDate(selectedDate)}`;
+    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+    const offline = await isOfflineMode();
+
+    // If offline, manually check cache only
+    if (offline) {
+      const memCached = cache.get<Notice[]>(key);
+      if (memCached) {
+        notices = memCached;
         loading = false;
         return;
       }
-      
-      // Online: Always fetch from API and save to DB
-      logger.debug('notices', 'fetchNotices', 'fetching notices from API', { key, date: formatDate(selectedDate) });
+
+      const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
+      if (idbCached) {
+        notices = idbCached;
+        cache.set(key, idbCached, 30);
+        loading = false;
+        return;
+      }
+
+      error = $_('notices.offline_no_cache') || 'No cached notices available. Please go online to fetch notices.';
+      notices = [];
+      loading = false;
+      return;
+    }
+
+    // Online: Use useDataLoader but always fetch fresh (skip cache for fresh data)
+    try {
+      // First check cache for instant display
+      const cached = cache.get<Notice[]>(key) || (await getWithIdbFallback<Notice[]>(key, key, () => null));
+      if (cached) {
+        notices = cached;
+        loading = false;
+        // Fetch fresh in background
+      }
+
+      // Always fetch fresh when online
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { date: formatDate(selectedDate) },
@@ -138,18 +134,16 @@
           labelId: n.label,
           content: n.contents,
         }));
-        // Always cache the data (for offline use), even when online
         cache.set(key, notices, 30);
         await setIdb(key, notices);
-        logger.debug('notices', 'fetchNotices', 'notices stored (mem+idb)', { key, count: notices.length });
       } else {
         notices = [];
       }
+      loading = false;
     } catch (e) {
-      logger.error('notices', 'fetchNotices', 'notices fetch failed', { key: `notices_${formatDate(selectedDate)}`, error: e });
+      logger.error('notices', 'fetchNotices', 'notices fetch failed', { key, error: e });
       error = $_('notices.failed_to_load') || 'Failed to load notices.';
       notices = [];
-    } finally {
       loading = false;
     }
   }
