@@ -15,11 +15,11 @@
     urlToImage: string | null;
   }
 
-  let loading = true;
-  let error: string | null = null;
-  let news: NewsArticle[] = [];
-  let selectedSource = 'australia';
-  let showSourceSelector = false;
+  let loading = $state(true);
+  let error = $state<string | null>(null);
+  let news = $state<NewsArticle[]>([]);
+  let selectedSource = $state('australia');
+  let showSourceSelector = $state(false);
 
   const rssFeedsByCountry: Record<string, string[]> = {
     usa: [
