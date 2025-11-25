@@ -88,63 +88,55 @@
         context: 'directory',
         functionName: 'loadStudents',
         fetcher: async () => {
-
-      // Step 3: Cache expired/missing - fetch from API
-      logger.debug('directory', 'loadStudents', 'fetching directory from API (cache expired/missing)');
-      const res = await seqtaFetch('/seqta/student/load/message/people', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {
-          mode: 'student'
+          logger.debug('directory', 'loadStudents', 'fetching directory from API (cache expired/missing)');
+          const res = await seqtaFetch('/seqta/student/load/message/people', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: {
+              mode: 'student'
+            },
+          });
+          
+          // Parse the response - it might be a string that needs parsing
+          const parsedData = typeof res === 'string' ? JSON.parse(res) : res;
+          
+          // Handle different possible response structures
+          let studentArray: Student[] = [];
+          if (Array.isArray(parsedData)) {
+            studentArray = parsedData;
+          } else if (parsedData && typeof parsedData === 'object') {
+            // Check if it's wrapped in a payload or other property
+            if (parsedData.payload && Array.isArray(parsedData.payload)) {
+              studentArray = parsedData.payload;
+            } else if (parsedData.data && Array.isArray(parsedData.data)) {
+              studentArray = parsedData.data;
+            } else if (parsedData.students && Array.isArray(parsedData.students)) {
+              studentArray = parsedData.students;
+            } else {
+              // Try to find any array property
+              const arrayProps = Object.values(parsedData).filter(val => Array.isArray(val));
+              if (arrayProps.length > 0) {
+                studentArray = arrayProps[0];
+              }
+            }
+          }
+          
+          return studentArray;
+        },
+        onDataLoaded: (studentArray) => {
+          students = studentArray;
+          updateFilters(studentArray);
+          loading = false;
         },
       });
-      
-      // Parse the response - it might be a string that needs parsing
-      const data = typeof res === 'string' ? JSON.parse(res) : res;
-      
-      // Handle different possible response structures
-      let studentArray: Student[] = [];
-      if (Array.isArray(data)) {
-        studentArray = data;
-      } else if (data && typeof data === 'object') {
-        // Check if it's wrapped in a payload or other property
-        if (data.payload && Array.isArray(data.payload)) {
-          studentArray = data.payload;
-        } else if (data.data && Array.isArray(data.data)) {
-          studentArray = data.data;
-        } else if (data.students && Array.isArray(data.students)) {
-          studentArray = data.students;
-        } else {
-          // Try to find any array property
-          const arrayProps = Object.values(data).filter(val => Array.isArray(val));
-          if (arrayProps.length > 0) {
-            studentArray = arrayProps[0];
-          }
-        }
-      }
-      
-      students = studentArray;
-      
-      // Extract unique values for filters
-      const uniqueYears = [...new Set(students.map(s => s.year))].sort();
-      const uniqueSubSchools = [...new Set(students.map(s => s.sub_school))].sort();
-      const uniqueHouses = [...new Set(students.map(s => s.house))].sort();
-      const uniqueCampuses = [...new Set(students.map(s => s.campus))].sort();
-      
-      years = uniqueYears;
-      subSchools = uniqueSubSchools;
-      houses = uniqueHouses;
-      campuses = uniqueCampuses;
 
-      // Always cache the data (for offline use), even when online
-      cache.set(cacheKey, students, TTL_MINUTES);
-      logger.debug('directory', 'loadStudents', 'directory cached (mem+idb)', { count: students.length });
-      await setIdb(cacheKey, students);
-      
+      if (!data) {
+        error = 'Failed to load students';
+        loading = false;
+      }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
       logger.error('directory', 'loadStudents', `Failed to load students: ${e}`, { error: e });
-    } finally {
       loading = false;
     }
   }
