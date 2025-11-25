@@ -32,9 +32,11 @@
 
   async function loadHomepageShortcuts() {
     try {
-      const subset = await invoke<any>('get_settings_subset', { keys: ['shortcuts'] });
+      const subset = await invoke<{ shortcuts?: Shortcut[] }>('get_settings_subset', {
+        keys: ['shortcuts'],
+      });
       if (subset?.shortcuts && Array.isArray(subset.shortcuts) && subset.shortcuts.length > 0) {
-        homepageShortcuts = subset.shortcuts as Shortcut[];
+        homepageShortcuts = subset.shortcuts;
       }
     } catch (e) {
       logger.error('dashboard', 'loadHomepageShortcuts', `Failed to load homepage shortcuts: ${e}`, { error: e });

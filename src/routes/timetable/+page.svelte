@@ -141,7 +141,9 @@
     try {
       let items =
         cache.get<unknown[]>(cacheKey) ||
-        (await getWithIdbFallback<unknown[]>(cacheKey, cacheKey, () => cache.get<unknown[]>(cacheKey)));
+        (await getWithIdbFallback<unknown[]>(cacheKey, cacheKey, () =>
+          cache.get<unknown[]>(cacheKey),
+        ));
 
       if (!items) {
         items = await fetchLessons(fromStr, untilStr);
