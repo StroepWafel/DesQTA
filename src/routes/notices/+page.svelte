@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
 
   // $lib/ imports
-  import { setIdb } from '$lib/services/idbCache';
+  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
