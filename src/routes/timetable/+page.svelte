@@ -76,8 +76,9 @@
     // @ts-ignore - Temporal is globally available via polyfill
     const timeZone = Temporal.Now.timeZoneId();
 
-    return items.map((lesson: Record<string, unknown>) => {
-      const colourPrefName = `timetable.subject.colour.${lesson.code}`;
+    return items.map((lesson: unknown) => {
+      const lessonObj = lesson as Record<string, unknown>;
+      const colourPrefName = `timetable.subject.colour.${lessonObj.code}`;
       const subjectColour = colours.find((c) => c.name === colourPrefName);
       const color = subjectColour ? `${subjectColour.value}` : '#3b82f6';
 
@@ -163,7 +164,7 @@
     }
   }
 
-  function initCalendar(events: unknown[]) {
+  function initCalendar(events: ReturnType<typeof transformLessonsToEvents>) {
     // Determine initial date (today)
     const today = new Date().toISOString().split('T')[0];
 
