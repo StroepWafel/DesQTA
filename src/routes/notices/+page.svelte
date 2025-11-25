@@ -1,10 +1,15 @@
 <script lang="ts">
+  // Svelte imports
   import { onMount } from 'svelte';
-  import { seqtaFetch } from '../../utils/netUtil';
-  import { cache } from '../../utils/cache';
+
+  // $lib/ imports
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import T from '$lib/components/T.svelte';
-  import { _ } from '../../lib/i18n';
+  import { _ } from '$lib/i18n';
+
+  // Relative imports
+  import { seqtaFetch } from '../../utils/netUtil';
+  import { cache } from '../../utils/cache';
   import { sanitizeHtml } from '../../utils/sanitization';
   import { logger } from '../../utils/logger';
 

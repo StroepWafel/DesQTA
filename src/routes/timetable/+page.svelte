@@ -1,5 +1,8 @@
 <script lang="ts">
+  // Svelte imports
   import { onMount } from 'svelte';
+
+  // External libraries
   import { ScheduleXCalendar } from '@schedule-x/svelte';
   import {
     createCalendar,
@@ -8,17 +11,22 @@
     createViewMonthGrid,
     createViewMonthAgenda,
   } from '@schedule-x/calendar';
-  import '@schedule-x/theme-default/dist/index.css';
   import { createCalendarControlsPlugin } from '@schedule-x/calendar-controls';
   import { createCurrentTimePlugin } from '@schedule-x/current-time';
   import { createEventModalPlugin } from '@schedule-x/event-modal';
-  import { seqtaFetch } from '../../utils/netUtil';
-  import { cache } from '../../utils/cache';
+  import '@schedule-x/theme-default/dist/index.css';
+  import 'temporal-polyfill/global';
+
+  // $lib/ imports
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import TimeGridEvent from '$lib/components/timetable/TimeGridEvent.svelte';
-  import { _ } from '../../lib/i18n';
+  import { _ } from '$lib/i18n';
+  import { theme } from '$lib/stores/theme';
+
+  // Relative imports
+  import { seqtaFetch } from '../../utils/netUtil';
+  import { cache } from '../../utils/cache';
   import { logger } from '../../utils/logger';
-  import 'temporal-polyfill/global';
 
   const studentId = 69;
 
@@ -26,8 +34,6 @@
   let lessons = $state<any[]>([]);
   let lessonColours = $state<any[]>([]);
   let loadingLessons = $state(true);
-
-  import { theme } from '$lib/stores/theme';
 
   async function loadLessonColours() {
     const cachedColours = cache.get<any[]>('lesson_colours');
@@ -46,7 +52,9 @@
       cache.set('lesson_colours', lessonColours, 30);
       return lessonColours;
     } catch (e) {
-      logger.error('timetable', 'loadLessonColours', `Failed to load lesson colours: ${e}`, { error: e });
+      logger.error('timetable', 'loadLessonColours', `Failed to load lesson colours: ${e}`, {
+        error: e,
+      });
       return [];
     }
   }

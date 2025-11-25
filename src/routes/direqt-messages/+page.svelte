@@ -1,26 +1,33 @@
 <script lang="ts">
+  // Svelte imports
   import { onMount, onDestroy } from 'svelte';
-  import { seqtaFetch, getRSS } from '../../utils/netUtil';
-  import { type Message } from './types';
-  import { cache } from '../../utils/cache';
-  import { invoke } from '@tauri-apps/api/core';
-  import { getWithIdbFallback, setIdb } from '../../lib/services/idbCache';
-  import { isOfflineMode } from '../../lib/utils/offlineMode';
-  import { logger } from '../../utils/logger';
+  import { page } from '$app/stores';
 
-  // Components
+  // External libraries
+  import dayjs from 'dayjs';
+
+  // Tauri imports
+  import { invoke } from '@tauri-apps/api/core';
+
+  // $lib/ imports
+  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import { isOfflineMode } from '$lib/utils/offlineMode';
+  import Modal from '$lib/components/Modal.svelte';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '$lib/i18n';
+
+  // Relative imports
+  import { seqtaFetch, getRSS } from '../../utils/netUtil';
+  import { cache } from '../../utils/cache';
+  import { logger } from '../../utils/logger';
   import Sidebar from './components/Sidebar.svelte';
   import MessageList from './components/MessageList.svelte';
   import MessageDetail from './components/Message.svelte';
   import ComposeModal from './components/ComposeModal.svelte';
-  import Modal from '$lib/components/Modal.svelte';
   import MobileFolderTabs from './components/MobileFolderTabs.svelte';
 
-  // External Libraries
-  import dayjs from 'dayjs';
-  import { page } from '$app/stores';
-  import T from '$lib/components/T.svelte';
-  import { _ } from '../../lib/i18n';
+  // Types
+  import { type Message } from './types';
 
   let messages = $state<Message[]>([]);
   let loading = $state(true);

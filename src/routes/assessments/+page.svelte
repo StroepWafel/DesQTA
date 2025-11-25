@@ -1,20 +1,27 @@
 <script lang="ts">
+  // Svelte imports
   import { onMount } from 'svelte';
+
+  // Tauri imports
+  import { invoke } from '@tauri-apps/api/core';
+
+  // $lib/ imports
+  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import T from '$lib/components/T.svelte';
+  import GradePredictions from '$lib/components/GradePredictions.svelte';
+  import AssessmentBoardView from '$lib/components/AssessmentBoardView.svelte';
+  import AssessmentCalendarView from '$lib/components/AssessmentCalendarView.svelte';
+  import AssessmentListView from '$lib/components/AssessmentListView.svelte';
+  import AssessmentGanttView from '$lib/components/AssessmentGanttView.svelte';
+  import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import { _ } from '$lib/i18n';
+
+  // Relative imports
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { notify } from '../../utils/notify';
-  import { invoke } from '@tauri-apps/api/core';
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import { logger } from '../../utils/logger';
-  import GradePredictions from '../../lib/components/GradePredictions.svelte';
-  import AssessmentBoardView from '../../lib/components/AssessmentBoardView.svelte';
-  import AssessmentCalendarView from '../../lib/components/AssessmentCalendarView.svelte';
-  import AssessmentListView from '../../lib/components/AssessmentListView.svelte';
-  import AssessmentGanttView from '../../lib/components/AssessmentGanttView.svelte';
-  import LoadingSpinner from '../../lib/components/LoadingSpinner.svelte';
-  import EmptyState from '../../lib/components/EmptyState.svelte';
-  import T from '$lib/components/T.svelte';
-  import { _ } from '../../lib/i18n';
 
   const studentId = 69;
 

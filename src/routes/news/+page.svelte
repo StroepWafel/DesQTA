@@ -1,11 +1,18 @@
 <script lang="ts">
+  // Svelte imports
   import { onMount, onDestroy } from 'svelte';
   import { fade } from 'svelte/transition';
+
+  // Tauri imports
+  import { invoke } from '@tauri-apps/api/core';
+
+  // $lib/ imports
+  import T from '$lib/components/T.svelte';
+  import { _ } from '$lib/i18n';
+
+  // Relative imports
   import { cache } from '../../utils/cache';
   import { getRSS } from '../../utils/netUtil';
-  import { invoke } from '@tauri-apps/api/core';
-  import T from '$lib/components/T.svelte';
-  import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
 
   interface NewsArticle {

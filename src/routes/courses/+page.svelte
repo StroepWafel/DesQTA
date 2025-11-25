@@ -1,7 +1,19 @@
 <script lang="ts">
+  // Svelte imports
   import { onMount } from 'svelte';
+
+  // $lib/ imports
+  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '$lib/i18n';
+
+  // Relative imports
   import { seqtaFetch } from '../../utils/netUtil';
+  import { cache } from '../../utils/cache';
+  import { logger } from '../../utils/logger';
   import CourseContent from './components/CourseContent.svelte';
+
+  // Types
   import type {
     Subject,
     Folder,
@@ -11,11 +23,6 @@
     TermSchedule,
     WeeklyLessonContent,
   } from './types';
-  import { cache } from '../../utils/cache';
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
-  import T from '$lib/components/T.svelte';
-  import { _ } from '../../lib/i18n';
-  import { logger } from '../../utils/logger';
 
   let folders: Folder[] = $state([]);
   let activeSubjects: Subject[] = $state([]);
