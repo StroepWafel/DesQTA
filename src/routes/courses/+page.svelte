@@ -119,82 +119,42 @@
     selectedLesson = null;
     selectedLessonContent = null;
 
-    try {
-      const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
+    const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
 
-      // Step 1: Load from cache/SQLite immediately
-      const cached =
-        cache.get<CoursePayload>(cacheKey) ||
-        (await getWithIdbFallback<CoursePayload>(cacheKey, cacheKey, () =>
-          cache.get<CoursePayload>(cacheKey),
-        ));
-      if (cached) {
-        // Show cached data immediately
-        coursePayload = cached;
-        if (coursePayload?.document) {
+    const data = await useDataLoader<CoursePayload>({
+      cacheKey,
+      ttlMinutes: 60,
+      context: 'courses',
+      functionName: 'loadCourseContent',
+      fetcher: async () => {
+        const res = await seqtaFetch('/seqta/student/load/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: {
+            programme: subject.programme.toString(),
+            metaclass: subject.metaclass.toString(),
+          },
+        });
+        const data = JSON.parse(res);
+        return data.payload;
+      },
+      onDataLoaded: async (payload) => {
+        coursePayload = payload;
+        if (payload?.document) {
           try {
-            parsedDocument = JSON.parse(coursePayload.document);
-          } catch {}
+            parsedDocument = JSON.parse(payload.document);
+          } catch (e) {
+            logger.error('courses', 'loadCourseContent', 'Failed to parse document JSON', { error: e });
+          }
         }
         loadingCourse = false;
+      },
+    });
 
-        // Step 2: Sync in background if online (non-blocking)
-        const { isOfflineMode } = await import('../../lib/utils/offlineMode');
-        const offline = await isOfflineMode();
-        if (!offline) {
-          syncCourseInBackground(subject, cacheKey).catch(() => {});
-        }
-        return;
-      }
-
-      // No cache - fetch fresh data
-      await fetchFreshCourse(subject, cacheKey);
-    } catch (e) {
-      courseError = e instanceof Error ? e.message : String(e);
-    } finally {
+    if (!data) {
+      const errorMessage = 'Failed to load course content';
+      courseError = errorMessage;
       loadingCourse = false;
-    }
-  }
-
-  async function fetchFreshCourse(subject: Subject, cacheKey: string) {
-    try {
-      const res = await seqtaFetch('/seqta/student/load/courses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {
-          programme: subject.programme.toString(),
-          metaclass: subject.metaclass.toString(),
-        },
-      });
-      const data = JSON.parse(res);
-      coursePayload = data.payload;
-
-      // Parse the main document JSON string
-      if (coursePayload?.document) {
-        try {
-          parsedDocument = JSON.parse(coursePayload.document);
-        } catch (e) {
-          logger.error('courses', 'fetchFreshCourse', 'Failed to parse document JSON', { error: e });
-        }
-      }
-
-      // Always cache the data (for offline use), even when online
-      cache.set(cacheKey, coursePayload, 60);
-      logger.debug('courses', 'fetchFreshCourse', 'course payload cached (mem+idb)', { key: cacheKey });
-      await setIdb(cacheKey, coursePayload);
-    } catch (e) {
-      throw e; // Re-throw to be handled by caller
-    }
-  }
-
-  async function syncCourseInBackground(subject: Subject, cacheKey: string) {
-    // Background sync - updates data without blocking UI
-    try {
-      await fetchFreshCourse(subject, cacheKey);
-      // Data is already updated in state by fetchFreshCourse
-    } catch (e) {
-      // Silently fail - cached data is already shown
-      logger.debug('courses', 'syncCourseInBackground', 'Background sync failed', { error: e });
     }
   }
 
@@ -287,7 +247,9 @@
             try {
               parsedDocument = JSON.parse(coursePayload.document);
             } catch (e) {
-              logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', { error: e });
+              logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', {
+                error: e,
+              });
             }
           }
         }
@@ -309,13 +271,17 @@
           try {
             parsedDocument = JSON.parse(coursePayload.document);
           } catch (e) {
-            logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', { error: e });
+            logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', {
+              error: e,
+            });
           }
         }
 
         // Always cache the data (for offline use), even when online
         cache.set(cacheKey, coursePayload, 60);
-        logger.debug('courses', 'autoSelectFromQuery', 'course payload cached (mem+idb)', { key: cacheKey });
+        logger.debug('courses', 'autoSelectFromQuery', 'course payload cached (mem+idb)', {
+          key: cacheKey,
+        });
         await setIdb(cacheKey, coursePayload);
       }
 
