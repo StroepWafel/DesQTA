@@ -95,13 +95,13 @@
       // The error said "needs to be a Temporal.ZonedDateTime" object.
 
       // @ts-ignore
-      const startObj = Temporal.PlainDateTime.from(`${lessonObj.date}T${lessonObj.from}`).toZonedDateTime(
-        timeZone,
-      );
+      const startObj = Temporal.PlainDateTime.from(
+        `${lessonObj.date}T${lessonObj.from}`,
+      ).toZonedDateTime(timeZone);
       // @ts-ignore
-      const endObj = Temporal.PlainDateTime.from(`${lessonObj.date}T${lessonObj.until}`).toZonedDateTime(
-        timeZone,
-      );
+      const endObj = Temporal.PlainDateTime.from(
+        `${lessonObj.date}T${lessonObj.until}`,
+      ).toZonedDateTime(timeZone);
 
       // Sanitize ID for DOM selector compatibility
       const rawId =
@@ -117,8 +117,8 @@
         title: (lessonObj.description as string) || (lessonObj.code as string) || 'Lesson',
         start: startObj,
         end: endObj,
-        location: lessonObj.room,
-        staff: lessonObj.staff,
+        location: (lessonObj.room as string | undefined) || undefined,
+        staff: (lessonObj.staff as string | undefined) || undefined,
         color: color,
         description: lessonObj.staff ? `Teacher: ${lessonObj.staff}` : undefined,
       };
