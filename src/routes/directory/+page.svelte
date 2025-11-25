@@ -125,7 +125,7 @@
         },
         onDataLoaded: (studentArray) => {
           students = studentArray;
-          updateFilters(studentArray);
+          hydrateFilters(studentArray);
           loading = false;
         },
       });
