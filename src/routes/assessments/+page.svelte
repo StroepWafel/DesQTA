@@ -6,7 +6,7 @@
   import { invoke } from '@tauri-apps/api/core';
 
   // $lib/ imports
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import { setIdb } from '$lib/services/idbCache';
   import T from '$lib/components/T.svelte';
   import GradePredictions from '$lib/components/GradePredictions.svelte';
   import AssessmentBoardView from '$lib/components/AssessmentBoardView.svelte';
@@ -22,6 +22,7 @@
   import { cache } from '../../utils/cache';
   import { notify } from '../../utils/notify';
   import { logger } from '../../utils/logger';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
 
   // Types
   import type { Assessment, Subject, LessonColour, AssessmentsOverviewData } from '$lib/types';
@@ -82,100 +83,40 @@
   async function loadAssessments() {
     loadingAssessments = true;
 
-    try {
-      // Step 1: Load from cache/SQLite immediately (should be pre-loaded by startupService)
-      const cachedData =
-        cache.get<AssessmentsOverviewData>('assessments_overview_data') ||
-        (await getWithIdbFallback<AssessmentsOverviewData>(
-          'assessments_overview_data',
-          'assessments_overview_data',
-          () => cache.get<AssessmentsOverviewData>('assessments_overview_data'),
-        ));
+    const data = await useDataLoader<AssessmentsOverviewData>({
+      cacheKey: 'assessments_overview_data',
+      ttlMinutes: 10,
+      context: 'assessments',
+      functionName: 'loadAssessments',
+      fetcher: async () => {
+        const result = await invoke<{
+          assessments: Assessment[];
+          subjects: Subject[];
+          all_subjects: Subject[];
+          filters: Record<string, boolean>;
+          years: number[];
+        }>('get_processed_assessments');
 
-      if (cachedData) {
-        // Show cached data immediately
-        upcomingAssessments = cachedData.assessments;
-        activeSubjects = cachedData.subjects;
-        allSubjects = cachedData.allSubjects;
-        subjectFilters = cachedData.filters;
-        availableYears = cachedData.years;
+        return {
+          assessments: result.assessments,
+          subjects: result.subjects,
+          allSubjects: result.all_subjects,
+          filters: result.filters,
+          years: result.years,
+        };
+      },
+      onDataLoaded: (data) => {
+        upcomingAssessments = data.assessments;
+        activeSubjects = data.subjects;
+        allSubjects = data.allSubjects;
+        subjectFilters = data.filters;
+        availableYears = data.years;
         loadingAssessments = false;
+      },
+    });
 
-        // Step 2: Sync in background if online (non-blocking)
-        const { isOfflineMode } = await import('../../lib/utils/offlineMode');
-        const offline = await isOfflineMode();
-        if (!offline) {
-          syncAssessmentsInBackground().catch((e) => {
-            logger.debug('assessments', 'loadAssessments', 'Background sync failed silently', { error: e });
-          });
-        }
-        return;
-      }
-
-      // No cache - fetch fresh data
-      await fetchFreshAssessments();
-    } catch (e) {
-      logger.error('assessments', 'loadAssessments', `Failed to load assessments: ${e}`, { error: e });
+    if (!data) {
       loadingAssessments = false;
-    }
-  }
-
-  async function fetchFreshAssessments() {
-    try {
-      // Call Rust backend to process all assessments data
-      const result = await invoke<{
-        assessments: Assessment[];
-        subjects: Subject[];
-        all_subjects: Subject[];
-        filters: Record<string, boolean>;
-        years: number[];
-      }>('get_processed_assessments');
-
-      // Use the processed data directly
-      upcomingAssessments = result.assessments;
-      activeSubjects = result.subjects;
-      allSubjects = result.all_subjects;
-      subjectFilters = result.filters;
-      availableYears = result.years;
-
-      // Cache all the data for 10 minutes
-      cache.set(
-        'assessments_overview_data',
-        {
-          assessments: upcomingAssessments,
-          subjects: activeSubjects,
-          allSubjects: allSubjects,
-          filters: subjectFilters,
-          years: availableYears,
-        },
-        10,
-      );
-      logger.debug('assessments', 'fetchFreshAssessments', 'assessments_overview_data cached (mem+idb)', {
-        assessments: upcomingAssessments.length,
-        subjects: activeSubjects.length,
-      });
-      await setIdb('assessments_overview_data', {
-        assessments: upcomingAssessments,
-        subjects: activeSubjects,
-        allSubjects: allSubjects,
-        filters: subjectFilters,
-        years: availableYears,
-      });
-    } catch (e) {
-      logger.error('assessments', 'fetchFreshAssessments', `Error loading assessments: ${e}`, { error: e });
-    } finally {
-      loadingAssessments = false;
-    }
-  }
-
-  async function syncAssessmentsInBackground() {
-    // Background sync - updates data without blocking UI
-    try {
-      await fetchFreshAssessments();
-      // Data is already updated in state by fetchFreshAssessments
-    } catch (e) {
-      // Silently fail - cached data is already shown
-      logger.debug('assessments', 'syncAssessmentsInBackground', 'Background sync failed', { error: e });
     }
   }
 
