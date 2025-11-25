@@ -31,6 +31,8 @@ mod sanitization;
 mod database;
 #[path = "utils/assessments.rs"]
 mod assessments;
+#[path = "utils/courses.rs"]
+mod courses;
 #[path = "services/seqta_mentions.rs"]
 mod seqta_mentions;
 mod global_search;
@@ -334,6 +336,8 @@ pub fn run() {
             database::db_queue_clear,
             database::db_get_assessments_by_year,
             assessments::get_processed_assessments,
+            courses::get_courses_subjects,
+            courses::get_course_content,
             seqta_mentions::search_seqta_mentions,
             seqta_mentions::search_seqta_mentions_with_context,
             seqta_mentions::update_seqta_mention_data,

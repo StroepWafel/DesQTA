@@ -8,7 +8,7 @@
   import { _ } from '$lib/i18n';
 
   // Relative imports
-  import { seqtaFetch } from '../../utils/netUtil';
+  import { invoke } from '@tauri-apps/api/core';
   import { cache } from '../../utils/cache';
   import { logger } from '../../utils/logger';
   import { useDataLoader } from '$lib/utils/useDataLoader';
@@ -53,9 +53,9 @@
 
     const processFolders = (foldersData: Folder[]) => {
       folders = foldersData;
-      const activeFolders = folders.filter((f: Folder) => f.active === 1);
+      const activeFolders = folders.filter((f: Folder) => f.active);
       activeSubjects = activeFolders.flatMap((f: Folder) => f.subjects || []);
-      otherFolders = folders.filter((f: Folder) => f.active !== 1);
+      otherFolders = folders.filter((f: Folder) => !f.active);
     };
 
     try {
@@ -65,35 +65,12 @@
         context: 'courses',
         functionName: 'loadSubjects',
         fetcher: async () => {
-          const res = await seqtaFetch('/seqta/student/load/subjects?', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json; charset=utf-8' },
-            body: {},
-          });
-
-          // Handle both string and already-parsed responses
-          let data: any;
-          if (typeof res === 'string') {
-            try {
-              data = JSON.parse(res);
-            } catch (e) {
-              // If parsing fails, try parsing again (double-encoded)
-              try {
-                data = JSON.parse(JSON.parse(res));
-              } catch (e2) {
-                throw new Error('Failed to parse API response');
-              }
-            }
-          } else {
-            data = res;
-          }
-
-          return Array.isArray(data.payload) ? data.payload : [];
+          return await invoke<Folder[]>('get_courses_subjects');
         },
         onDataLoaded: (foldersData) => {
           processFolders(foldersData);
           // If no subjects found but folders exist, clear cache and refetch
-          const testActiveFolders = foldersData.filter((f: Folder) => f.active === 1);
+          const testActiveFolders = foldersData.filter((f: Folder) => f.active);
           const testActiveSubjects = testActiveFolders.flatMap((f: Folder) => f.subjects || []);
           if (testActiveSubjects.length === 0 && foldersData.length > 0) {
             cache.delete(cacheKey);
@@ -106,7 +83,7 @@
         shouldSyncInBackground: (foldersData) => {
           // Don't sync if cached data has no active subjects
           const testFolders = foldersData;
-          const testActiveFolders = testFolders.filter((f: Folder) => f.active === 1);
+          const testActiveFolders = testFolders.filter((f: Folder) => f.active);
           const testActiveSubjects = testActiveFolders.flatMap((f: Folder) => f.subjects || []);
           return testActiveSubjects.length > 0;
         },
@@ -137,16 +114,10 @@
       context: 'courses',
       functionName: 'loadCourseContent',
       fetcher: async () => {
-        const res = await seqtaFetch('/seqta/student/load/courses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json; charset=utf-8' },
-          body: {
-            programme: subject.programme.toString(),
-            metaclass: subject.metaclass.toString(),
-          },
+        return await invoke<CoursePayload>('get_course_content', {
+          programme: subject.programme,
+          metaclass: subject.metaclass,
         });
-        const data = JSON.parse(res);
-        return data.payload;
       },
       onDataLoaded: async (payload) => {
         coursePayload = payload;
@@ -281,16 +252,10 @@
         context: 'courses',
         functionName: 'autoSelectFromQuery',
         fetcher: async () => {
-          const res = await seqtaFetch('/seqta/student/load/courses', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json; charset=utf-8' },
-            body: {
-              programme: subject.programme.toString(),
-              metaclass: subject.metaclass.toString(),
-            },
+          return await invoke<CoursePayload>('get_course_content', {
+            programme: subject.programme,
+            metaclass: subject.metaclass,
           });
-          const data = JSON.parse(res);
-          return data.payload;
         },
         onDataLoaded: async (payload) => {
           coursePayload = payload;
@@ -803,6 +768,7 @@
     grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 1rem;
     padding: 1rem;
+    padding: 1rem;
   }
 
   @media (min-width: 768px) {
@@ -821,6 +787,7 @@
   :global(.course-content iframe) {
     width: 100%;
     border-radius: 0.5rem;
+    border: none;
   }
 
   :global(.course-content video) {
