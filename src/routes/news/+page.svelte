@@ -6,6 +6,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import { logger } from '../../utils/logger';
 
   interface NewsArticle {
     title: string;
@@ -64,7 +65,7 @@
       const response = await invoke<any>('get_news_australia', { from, domains });
       return response;
     } catch (error) {
-      console.error('Error fetching Australian news:', error);
+      logger.error('news', 'fetchAustraliaNews', `Error fetching Australian news: ${error}`, { error });
       throw error;
     }
   };
@@ -99,7 +100,7 @@
           try {
             const feed = await getRSS(feedUrl);
             if (!feed || !feed.items || !Array.isArray(feed.items)) {
-              console.warn(`Invalid feed format from ${feedUrl}`);
+              logger.warn('news', 'fetchNews', `Invalid feed format from ${feedUrl}`, { feedUrl });
               return [];
             }
             return feed.items.map((item: any) => ({
@@ -109,7 +110,7 @@
               urlToImage: null,
             }));
           } catch (error) {
-            console.error(`Failed to fetch RSS feed: ${feedUrl}`, error);
+            logger.error('news', 'fetchNews', `Failed to fetch RSS feed: ${feedUrl}`, { feedUrl, error });
             return [];
           }
         });

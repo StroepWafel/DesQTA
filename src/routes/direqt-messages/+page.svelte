@@ -6,6 +6,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { getWithIdbFallback, setIdb } from '../../lib/services/idbCache';
   import { isOfflineMode } from '../../lib/utils/offlineMode';
+  import { logger } from '../../utils/logger';
 
   // Components
   import Sidebar from './components/Sidebar.svelte';
@@ -62,7 +63,7 @@
     loading = true;
     error = null;
     seqtaLoadFailed = false;
-    console.log(folderLabel);
+    logger.debug('messages', 'fetchMessages', `Fetching messages for folder: ${folderLabel}`);
 
     try {
       // Step 1: Try to load from cache/SQLite first
@@ -165,9 +166,8 @@
         await setIdb(cacheKey, messages);
       } else if (folderLabel.includes('rss-')) {
         let rssfeeddata: any = [];
-        console.log();
         let rss = await getRSS(folderLabel.replace('rss-', ''));
-        console.log(rss);
+        logger.debug('messages', 'fetchFreshMessages', 'RSS feed loaded', { feed: folderLabel });
         rssfeeddata = rss.feeds
           ?.map((msg: any) => {
             let date;
@@ -182,7 +182,6 @@
             } else {
               date = dayjs(msg.pubDate).format('YYYY-MM-DD HH:mm:ss');
             }
-            console.log(date);
             return {
               id: Math.floor(Math.random() * 10000000) + 1,
               folder: rssname,
@@ -195,7 +194,6 @@
             };
           })
           .sort((a: any, b: any) => b.date.localeCompare(a.date));
-        // console.log(rssfeeddata)
         messages = rssfeeddata;
 
         // Cache RSS messages
@@ -218,7 +216,6 @@
 
         const data = typeof response === 'string' ? JSON.parse(response) : response;
         if (data?.payload?.messages) {
-          console.log('YO: ', data.payload);
           messages = data.payload.messages.map((msg: any) => ({
             id: msg.id,
             folder: folderLabel.charAt(0).toUpperCase() + folderLabel.slice(1),
@@ -232,7 +229,6 @@
             unread: !msg.read,
             starred: !!msg.starred,
           }));
-          console.log('MESSAGES: ', messages);
 
           // Cache the messages list
           cache.set(cacheKey, messages, 10); // 10 min TTL
@@ -255,7 +251,7 @@
       // Data is already updated in state by fetchFreshMessages
     } catch (e) {
       // Silently fail - cached data is already shown
-      console.debug('Background sync failed:', e);
+      logger.debug('messages', 'syncMessagesInBackground', 'Background sync failed', { error: e });
     }
   }
 
@@ -341,14 +337,14 @@
       // Data is already updated in state by fetchFreshMessageContent
     } catch (e) {
       // Silently fail - cached content is already shown
-      console.debug('Background sync failed:', e);
+      logger.debug('messages', 'syncMessageContentInBackground', 'Background sync failed', { error: e });
     }
   }
 
   function openFolder(folder: any) {
     selectedFolder = folder.name;
     selectedMessage = null;
-    console.log(folder.id);
+    logger.debug('messages', 'openFolder', `Opening folder: ${folder.name}`, { folderId: folder.id });
     if (folder.id.includes('rss-')) {
       selectedRSS = folder.id;
       fetchMessages(folder.id, folder.name);

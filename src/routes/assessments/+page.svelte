@@ -5,6 +5,7 @@
   import { notify } from '../../utils/notify';
   import { invoke } from '@tauri-apps/api/core';
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import { logger } from '../../utils/logger';
   import GradePredictions from '../../lib/components/GradePredictions.svelte';
   import AssessmentBoardView from '../../lib/components/AssessmentBoardView.svelte';
   import AssessmentCalendarView from '../../lib/components/AssessmentCalendarView.svelte';
@@ -112,7 +113,7 @@
       // No cache - fetch fresh data
       await fetchFreshAssessments();
     } catch (e) {
-      console.error('Failed to load assessments:', e);
+      logger.error('assessments', 'loadAssessments', `Failed to load assessments: ${e}`, { error: e });
       loadingAssessments = false;
     }
   }
@@ -147,7 +148,7 @@
         },
         10,
       );
-      console.info('[IDB] assessments_overview_data cached (mem+idb)', {
+      logger.debug('assessments', 'fetchFreshAssessments', 'assessments_overview_data cached (mem+idb)', {
         assessments: upcomingAssessments.length,
         subjects: activeSubjects.length,
       });
@@ -159,7 +160,7 @@
         years: availableYears,
       });
     } catch (e) {
-      console.error('Error loading assessments:', e);
+      logger.error('assessments', 'fetchFreshAssessments', `Error loading assessments: ${e}`, { error: e });
     } finally {
       loadingAssessments = false;
     }
@@ -172,7 +173,7 @@
       // Data is already updated in state by fetchFreshAssessments
     } catch (e) {
       // Silently fail - cached data is already shown
-      console.debug('Background sync failed:', e);
+      logger.debug('assessments', 'syncAssessmentsInBackground', 'Background sync failed', { error: e });
     }
   }
 

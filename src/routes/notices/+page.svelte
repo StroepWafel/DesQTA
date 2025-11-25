@@ -6,6 +6,7 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { sanitizeHtml } from '../../utils/sanitization';
+  import { logger } from '../../utils/logger';
 
   interface Notice {
     id: number;
@@ -43,21 +44,21 @@
     try {
       const memCached = cache.get<Label[]>('notices_labels');
       if (memCached) {
-        console.info('[CACHE] notices_labels hit (memory)', { count: memCached.length });
+        logger.debug('notices', 'fetchLabels', 'notices_labels hit (memory)', { count: memCached.length });
         labels = memCached;
         return;
       }
       
       const idbCached = await getWithIdbFallback<Label[]>('notices_labels', 'notices_labels', () => null);
       if (idbCached) {
-        console.info('[CACHE] notices_labels hit (IndexedDB fallback)', { count: idbCached.length });
+        logger.debug('notices', 'fetchLabels', 'notices_labels hit (IndexedDB fallback)', { count: idbCached.length });
         labels = idbCached;
         // Restore to memory cache with remaining TTL estimation
         cache.set('notices_labels', idbCached, 60);
         return;
       }
       
-      console.info('[CACHE] notices_labels miss - fetching from API');
+      logger.debug('notices', 'fetchLabels', 'notices_labels miss - fetching from API');
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { mode: 'labels' },
@@ -71,12 +72,12 @@
         }));
         cache.set('notices_labels', labels, 60); // 60 min TTL
         await setIdb('notices_labels', labels);
-        console.info('[CACHE] notices_labels stored (mem+idb)', { count: labels.length });
+        logger.debug('notices', 'fetchLabels', 'notices_labels stored (mem+idb)', { count: labels.length });
       } else {
         labels = [];
       }
     } catch (e) {
-      console.error('[CACHE] notices_labels fetch failed', e);
+      logger.error('notices', 'fetchLabels', 'notices_labels fetch failed', { error: e });
       labels = [];
     }
   }
@@ -93,7 +94,7 @@
       if (offline) {
         const memCached = cache.get<Notice[]>(key);
         if (memCached) {
-          console.info('[CACHE] notices hit (memory, offline)', { key, count: memCached.length });
+          logger.debug('notices', 'fetchNotices', 'notices hit (memory, offline)', { key, count: memCached.length });
           notices = memCached;
           loading = false;
           return;
@@ -101,7 +102,7 @@
         
         const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
         if (idbCached) {
-          console.info('[CACHE] notices hit (IndexedDB, offline)', { key, count: idbCached.length });
+          logger.debug('notices', 'fetchNotices', 'notices hit (IndexedDB, offline)', { key, count: idbCached.length });
           notices = idbCached;
           cache.set(key, idbCached, 30);
           loading = false;
@@ -116,7 +117,7 @@
       }
       
       // Online: Always fetch from API and save to DB
-      console.info('[API] fetching notices from API', { key, date: formatDate(selectedDate) });
+      logger.debug('notices', 'fetchNotices', 'fetching notices from API', { key, date: formatDate(selectedDate) });
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { date: formatDate(selectedDate) },
@@ -135,12 +136,12 @@
         // Always cache the data (for offline use), even when online
         cache.set(key, notices, 30);
         await setIdb(key, notices);
-        console.info('[CACHE] notices stored (mem+idb)', { key, count: notices.length });
+        logger.debug('notices', 'fetchNotices', 'notices stored (mem+idb)', { key, count: notices.length });
       } else {
         notices = [];
       }
     } catch (e) {
-      console.error('[CACHE] notices fetch failed', { key: `notices_${formatDate(selectedDate)}`, error: e });
+      logger.error('notices', 'fetchNotices', 'notices fetch failed', { key: `notices_${formatDate(selectedDate)}`, error: e });
       error = $_('notices.failed_to_load') || 'Failed to load notices.';
       notices = [];
     } finally {

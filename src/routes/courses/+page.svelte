@@ -15,6 +15,7 @@
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import { logger } from '../../utils/logger';
 
   let folders: Folder[] = $state([]);
   let activeSubjects: Subject[] = $state([]);
@@ -165,13 +166,13 @@
         try {
           parsedDocument = JSON.parse(coursePayload.document);
         } catch (e) {
-          console.error('Failed to parse document JSON:', e);
+          logger.error('courses', 'fetchFreshCourse', 'Failed to parse document JSON', { error: e });
         }
       }
 
       // Always cache the data (for offline use), even when online
       cache.set(cacheKey, coursePayload, 60);
-      console.info('[IDB] course payload cached (mem+idb)', { key: cacheKey });
+      logger.debug('courses', 'fetchFreshCourse', 'course payload cached (mem+idb)', { key: cacheKey });
       await setIdb(cacheKey, coursePayload);
     } catch (e) {
       throw e; // Re-throw to be handled by caller
@@ -185,7 +186,7 @@
       // Data is already updated in state by fetchFreshCourse
     } catch (e) {
       // Silently fail - cached data is already shown
-      console.debug('Background sync failed:', e);
+      logger.debug('courses', 'syncCourseInBackground', 'Background sync failed', { error: e });
     }
   }
 
@@ -300,13 +301,13 @@
           try {
             parsedDocument = JSON.parse(coursePayload.document);
           } catch (e) {
-            console.error('Failed to parse document JSON:', e);
+            logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', { error: e });
           }
         }
 
         // Always cache the data (for offline use), even when online
         cache.set(cacheKey, coursePayload, 60);
-        console.info('[IDB] course payload cached (mem+idb)', { key: cacheKey });
+        logger.debug('courses', 'autoSelectFromQuery', 'course payload cached (mem+idb)', { key: cacheKey });
         await setIdb(cacheKey, coursePayload);
       }
 
