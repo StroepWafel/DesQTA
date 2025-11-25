@@ -23,12 +23,15 @@
   import { notify } from '../../utils/notify';
   import { logger } from '../../utils/logger';
 
+  // Types
+  import type { Assessment, Subject, LessonColour, AssessmentsOverviewData } from '$lib/types';
+
   const studentId = 69;
 
-  let upcomingAssessments = $state<any[]>([]);
-  let allSubjects = $state<any[]>([]);
-  let activeSubjects = $state<any[]>([]);
-  let lessonColours = $state<any[]>([]);
+  let upcomingAssessments = $state<Assessment[]>([]);
+  let allSubjects = $state<Subject[]>([]);
+  let activeSubjects = $state<Subject[]>([]);
+  let lessonColours = $state<LessonColour[]>([]);
   let loadingAssessments = $state<boolean>(true);
   let selectedTab = $state<'list' | 'board' | 'calendar' | 'gantt'>('list');
   let subjectFilters: Record<string, boolean> = {};
@@ -43,7 +46,7 @@
   let gradeAnalyserEnabled = $state(true);
 
   const filteredAssessments = $derived(
-    upcomingAssessments.filter((a: any) => {
+    upcomingAssessments.filter((a) => {
       // Filter by year only
       const assessmentYear = new Date(a.due).getFullYear();
       if (assessmentYear !== selectedYear) return false;
@@ -55,9 +58,9 @@
   async function loadLessonColours() {
     // Check cache first
     const cachedColours =
-      cache.get<any[]>('lesson_colours') ||
-      (await getWithIdbFallback<any[]>('lesson_colours', 'lesson_colours', () =>
-        cache.get<any[]>('lesson_colours'),
+      cache.get<LessonColour[]>('lesson_colours') ||
+      (await getWithIdbFallback<LessonColour[]>('lesson_colours', 'lesson_colours', () =>
+        cache.get<LessonColour[]>('lesson_colours'),
       ));
     if (cachedColours) {
       lessonColours = cachedColours;
@@ -82,21 +85,11 @@
     try {
       // Step 1: Load from cache/SQLite immediately (should be pre-loaded by startupService)
       const cachedData =
-        cache.get<{
-          assessments: any[];
-          subjects: any[];
-          allSubjects: any[];
-          filters: Record<string, boolean>;
-          years: number[];
-        }>('assessments_overview_data') ||
-        (await getWithIdbFallback<{
-          assessments: any[];
-          subjects: any[];
-          allSubjects: any[];
-          filters: Record<string, boolean>;
-          years: number[];
-        }>('assessments_overview_data', 'assessments_overview_data', () =>
-          cache.get('assessments_overview_data'),
+        cache.get<AssessmentsOverviewData>('assessments_overview_data') ||
+        (await getWithIdbFallback<AssessmentsOverviewData>(
+          'assessments_overview_data',
+          'assessments_overview_data',
+          () => cache.get<AssessmentsOverviewData>('assessments_overview_data'),
         ));
 
       if (cachedData) {
@@ -131,9 +124,9 @@
     try {
       // Call Rust backend to process all assessments data
       const result = await invoke<{
-        assessments: any[];
-        subjects: any[];
-        all_subjects: any[];
+        assessments: Assessment[];
+        subjects: Subject[];
+        all_subjects: Subject[];
         filters: Record<string, boolean>;
         years: number[];
       }>('get_processed_assessments');
@@ -186,7 +179,7 @@
     }
   }
 
-  function scheduleAssessmentReminders(assessments: any[]) {
+  function scheduleAssessmentReminders(assessments: Assessment[]) {
     if (!remindersEnabled) return;
     const now = Date.now();
     const scheduled = new Set(

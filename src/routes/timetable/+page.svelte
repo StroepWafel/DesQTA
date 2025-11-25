@@ -28,15 +28,19 @@
   import { cache } from '../../utils/cache';
   import { logger } from '../../utils/logger';
 
+  // Types
+  import type { LessonColour } from '$lib/types';
+  import type { CalendarApp } from '@schedule-x/calendar';
+
   const studentId = 69;
 
-  let calendarApp = $state<any>(null);
-  let lessons = $state<any[]>([]);
-  let lessonColours = $state<any[]>([]);
+  let calendarApp = $state<CalendarApp | null>(null);
+  let lessons = $state<unknown[]>([]);
+  let lessonColours = $state<LessonColour[]>([]);
   let loadingLessons = $state(true);
 
   async function loadLessonColours() {
-    const cachedColours = cache.get<any[]>('lesson_colours');
+    const cachedColours = cache.get<LessonColour[]>('lesson_colours');
     if (cachedColours) {
       lessonColours = cachedColours;
       return lessonColours;
@@ -68,13 +72,13 @@
     return JSON.parse(res).payload.items;
   }
 
-  function transformLessonsToEvents(items: any[], colours: any[]) {
+  function transformLessonsToEvents(items: unknown[], colours: LessonColour[]) {
     // @ts-ignore - Temporal is globally available via polyfill
     const timeZone = Temporal.Now.timeZoneId();
 
-    return items.map((lesson: any) => {
+    return items.map((lesson: Record<string, unknown>) => {
       const colourPrefName = `timetable.subject.colour.${lesson.code}`;
-      const subjectColour = colours.find((c: any) => c.name === colourPrefName);
+      const subjectColour = colours.find((c) => c.name === colourPrefName);
       const color = subjectColour ? `${subjectColour.value}` : '#3b82f6';
 
       // Construct ZonedDateTime objects
@@ -136,8 +140,8 @@
 
     try {
       let items =
-        cache.get<any[]>(cacheKey) ||
-        (await getWithIdbFallback<any[]>(cacheKey, cacheKey, () => cache.get<any[]>(cacheKey)));
+        cache.get<unknown[]>(cacheKey) ||
+        (await getWithIdbFallback<unknown[]>(cacheKey, cacheKey, () => cache.get<unknown[]>(cacheKey)));
 
       if (!items) {
         items = await fetchLessons(fromStr, untilStr);
@@ -157,7 +161,7 @@
     }
   }
 
-  function initCalendar(events: any[]) {
+  function initCalendar(events: unknown[]) {
     // Determine initial date (today)
     const today = new Date().toISOString().split('T')[0];
 

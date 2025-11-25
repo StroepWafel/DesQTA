@@ -20,3 +20,23 @@ export interface Assessment {
 }
 
 export type AnalyticsData = Assessment[];
+
+export interface LessonColour {
+  name: string;
+  value: string;
+}
+
+export interface Subject {
+  code: string;
+  title: string;
+  colour?: string;
+  [key: string]: unknown;
+}
+
+export interface AssessmentsOverviewData {
+  assessments: Assessment[];
+  subjects: Subject[];
+  allSubjects: Subject[];
+  filters: Record<string, boolean>;
+  years: number[];
+}
