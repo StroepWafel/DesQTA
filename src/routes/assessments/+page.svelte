@@ -57,27 +57,25 @@
   );
 
   async function loadLessonColours() {
-    // Check cache first
-    const cachedColours =
-      cache.get<LessonColour[]>('lesson_colours') ||
-      (await getWithIdbFallback<LessonColour[]>('lesson_colours', 'lesson_colours', () =>
-        cache.get<LessonColour[]>('lesson_colours'),
-      ));
-    if (cachedColours) {
-      lessonColours = cachedColours;
-      return lessonColours;
-    }
-
-    const res = await seqtaFetch('/seqta/student/load/prefs?', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: { request: 'userPrefs', asArray: true, user: studentId },
+    const colours = await useDataLoader<LessonColour[]>({
+      cacheKey: 'lesson_colours',
+      ttlMinutes: 10,
+      context: 'assessments',
+      functionName: 'loadLessonColours',
+      fetcher: async () => {
+        const res = await seqtaFetch('/seqta/student/load/prefs?', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: { request: 'userPrefs', asArray: true, user: studentId },
+        });
+        return JSON.parse(res).payload;
+      },
+      onDataLoaded: (colours) => {
+        lessonColours = colours;
+      },
     });
-    lessonColours = JSON.parse(res).payload;
-    // Cache for 10 minutes
-    cache.set('lesson_colours', lessonColours, 10);
-    await setIdb('lesson_colours', lessonColours);
-    return lessonColours;
+
+    return colours || [];
   }
 
   async function loadAssessments() {
