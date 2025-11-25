@@ -5,7 +5,8 @@
   import { MagnifyingGlass, Funnel, User, AcademicCap, MapPin } from 'svelte-hero-icons';
   import { invoke } from '@tauri-apps/api/core';
   import { cache } from '../../utils/cache';
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import { setIdb } from '$lib/services/idbCache';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
   import { AsyncWrapper, SearchInput, Badge } from '$lib/components/ui';
   import Input from '$lib/components/ui/Input.svelte';
   import * as Popover from "$lib/components/ui/popover/index.js";
@@ -63,44 +64,30 @@
     }
   }
 
+  const hydrateFilters = (studentsData: Student[]) => {
+    const uniqueYears = [...new Set(studentsData.map((s) => s.year))].sort();
+    const uniqueSubSchools = [...new Set(studentsData.map((s) => s.sub_school))].sort();
+    const uniqueHouses = [...new Set(studentsData.map((s) => s.house))].sort();
+    const uniqueCampuses = [...new Set(studentsData.map((s) => s.campus))].sort();
+    years = uniqueYears;
+    subSchools = uniqueSubSchools;
+    houses = uniqueHouses;
+    campuses = uniqueCampuses;
+  };
+
   async function loadStudents() {
     loading = true;
     error = null;
+
+    const cacheKey = 'directory_students_all';
+
     try {
-      const cacheKey = 'directory_students_all';
-      const TTL_MINUTES = 60; // 1 hour TTL
-      
-      // Step 1: Check memory cache first (respects TTL)
-      const memCached = cache.get<Student[]>(cacheKey);
-      if (memCached) {
-        logger.debug('directory', 'loadStudents', 'directory hit (memory)', { count: memCached.length });
-        students = memCached;
-        // hydrate filters from cached too
-        const uniqueYears = [...new Set(students.map(s => s.year))].sort();
-        const uniqueSubSchools = [...new Set(students.map(s => s.sub_school))].sort();
-        const uniqueHouses = [...new Set(students.map(s => s.house))].sort();
-        const uniqueCampuses = [...new Set(students.map(s => s.campus))].sort();
-        years = uniqueYears; subSchools = uniqueSubSchools; houses = uniqueHouses; campuses = uniqueCampuses;
-        loading = false;
-        return;
-      }
-      
-      // Step 2: Check DB if memory cache expired/missing
-      const idbCached = await getWithIdbFallback<Student[]>(cacheKey, cacheKey, () => null);
-      if (idbCached) {
-        logger.debug('directory', 'loadStudents', 'directory hit (IndexedDB)', { count: idbCached.length });
-        students = idbCached;
-        // Restore to memory cache with TTL
-        cache.set(cacheKey, idbCached, TTL_MINUTES);
-        // hydrate filters from cached too
-        const uniqueYears = [...new Set(students.map(s => s.year))].sort();
-        const uniqueSubSchools = [...new Set(students.map(s => s.sub_school))].sort();
-        const uniqueHouses = [...new Set(students.map(s => s.house))].sort();
-        const uniqueCampuses = [...new Set(students.map(s => s.campus))].sort();
-        years = uniqueYears; subSchools = uniqueSubSchools; houses = uniqueHouses; campuses = uniqueCampuses;
-        loading = false;
-        return;
-      }
+      const data = await useDataLoader<Student[]>({
+        cacheKey,
+        ttlMinutes: 60,
+        context: 'directory',
+        functionName: 'loadStudents',
+        fetcher: async () => {
 
       // Step 3: Cache expired/missing - fetch from API
       logger.debug('directory', 'loadStudents', 'fetching directory from API (cache expired/missing)');
