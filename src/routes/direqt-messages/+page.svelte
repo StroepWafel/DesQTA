@@ -10,8 +10,8 @@
   import { invoke } from '@tauri-apps/api/core';
 
   // $lib/ imports
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
-  import { isOfflineMode } from '$lib/utils/offlineMode';
+  import { setIdb } from '$lib/services/idbCache';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
   import Modal from '$lib/components/Modal.svelte';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
@@ -72,31 +72,25 @@
     seqtaLoadFailed = false;
     logger.debug('messages', 'fetchMessages', `Fetching messages for folder: ${folderLabel}`);
 
-    try {
-      // Step 1: Try to load from cache/SQLite first
-      const cacheKey = `messages_${folderLabel}`;
-      const cachedMessages =
-        cache.get<Message[]>(cacheKey) ||
-        (await getWithIdbFallback<Message[]>(cacheKey, cacheKey, () =>
-          cache.get<Message[]>(cacheKey),
-        ));
+    const cacheKey = `messages_${folderLabel}`;
 
-      if (cachedMessages && cachedMessages.length > 0) {
-        // Show cached messages immediately
-        messages = cachedMessages;
+    const data = await useDataLoader<Message[]>({
+      cacheKey,
+      ttlMinutes: 10,
+      context: 'direqt-messages',
+      functionName: 'fetchMessages',
+      fetcher: async () => {
+        await fetchFreshMessages(folderLabel, rssname, cacheKey);
+        return messages;
+      },
+      onDataLoaded: (data) => {
+        messages = data;
         loading = false;
+      },
+      shouldSyncInBackground: (data) => data.length > 0,
+    });
 
-        // Step 2: Sync in background if online (non-blocking)
-        const offline = await isOfflineMode();
-        if (!offline) {
-          syncMessagesInBackground(folderLabel, rssname, cacheKey).catch(() => {});
-        }
-        return;
-      }
-
-      // No cache - fetch fresh data
-      await fetchFreshMessages(folderLabel, rssname, cacheKey);
-    } catch (e) {
+    if (!data || data.length === 0) {
       error = $_('messages.failed_to_load') || 'Failed to load messages.';
       messages = [];
       seqtaLoadFailed = true;
@@ -282,25 +276,26 @@
     selectedMessage = msg;
     msg.unread = false;
 
-    // Step 1: Check cache/SQLite first
     const cacheKey = `message_${msg.id}`;
-    const cachedContent =
-      cache.get<string>(cacheKey) ||
-      (await getWithIdbFallback<string>(cacheKey, cacheKey, () => cache.get<string>(cacheKey)));
 
-    if (cachedContent) {
-      msg.body = cachedContent;
+    const content = await useDataLoader<string>({
+      cacheKey,
+      ttlMinutes: 1440, // 24 hours
+      context: 'direqt-messages',
+      functionName: 'openMessage',
+      fetcher: async () => {
+        await fetchFreshMessageContent(msg, cacheKey);
+        return msg.body;
+      },
+      onDataLoaded: (content) => {
+        msg.body = content;
+      },
+    });
 
-      // Step 2: Sync in background if online (non-blocking)
-      const offline = await isOfflineMode();
-      if (!offline) {
-        syncMessageContentInBackground(msg, cacheKey).catch(() => {});
-      }
-      return;
+    if (!content) {
+      // Content will be set by fetchFreshMessageContent if fetch succeeds
+      await fetchFreshMessageContent(msg, cacheKey);
     }
-
-    // No cache - fetch fresh data
-    await fetchFreshMessageContent(msg, cacheKey);
   }
 
   async function fetchFreshMessageContent(msg: Message, cacheKey: string) {
