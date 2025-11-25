@@ -88,8 +88,9 @@ pub async fn fetch_messages(folder: String, rss_url: Option<String>) -> Result<V
 
     if folder == "sent" {
         // Fetch both sent and outbox in parallel
-        let sent_future = fetch_seqta_messages("sent");
-        let outbox_future = fetch_seqta_messages("outbox");
+        // Force "Sent" as the folder name for UI consistency, merging sent/outbox
+        let sent_future = fetch_seqta_messages("sent", Some("Sent"));
+        let outbox_future = fetch_seqta_messages("outbox", Some("Sent"));
 
         let (sent_res, outbox_res) = tokio::join!(sent_future, outbox_future);
         
@@ -163,12 +164,12 @@ pub async fn fetch_messages(folder: String, rss_url: Option<String>) -> Result<V
         }
     } else {
         // Regular folder
-        let msgs = fetch_seqta_messages(&folder).await?;
+        let msgs = fetch_seqta_messages(&folder, None).await?;
         Ok(msgs)
     }
 }
 
-async fn fetch_seqta_messages(label: &str) -> Result<Vec<Message>, String> {
+async fn fetch_seqta_messages(label: &str, folder_override: Option<&str>) -> Result<Vec<Message>, String> {
     let body = json!({
         "searchValue": "",
         "sortBy": "date",
@@ -199,9 +200,11 @@ async fn fetch_seqta_messages(label: &str) -> Result<Vec<Message>, String> {
         .map_err(|e| format!("Failed to parse response: {}", e))?;
 
     let mut messages = Vec::new();
+    let folder_name = folder_override.unwrap_or(label);
+
     if let Some(msgs_array) = data.get("payload").and_then(|p| p.get("messages")).and_then(|m| m.as_array()) {
         for msg_val in msgs_array {
-            if let Some(msg) = parse_message_json(msg_val, label) {
+            if let Some(msg) = parse_message_json(msg_val, folder_name) {
                 messages.push(msg);
             }
         }
@@ -318,4 +321,3 @@ pub async fn restore_messages(items: Vec<i64>) -> Result<(), String> {
 
     Ok(())
 }
-
