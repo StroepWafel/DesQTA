@@ -175,15 +175,15 @@
     // Then sync in the background and refresh data when complete
     syncing = true;
     try {
-      console.log('Syncing analytics data in background...');
+      logger.debug('analytics', 'onMount', 'Syncing analytics data in background');
       await invoke<string>('sync_analytics_data');
-      console.log('Analytics data synced successfully');
+      logger.debug('analytics', 'onMount', 'Analytics data synced successfully');
 
       // Reload data after sync completes
       await loadAnalyticsData();
       error = null;
     } catch (e) {
-      console.error('Failed to sync analytics data:', e);
+      logger.error('analytics', 'onMount', `Failed to sync analytics data: ${e}`, { error: e });
       error = $_('analytics.sync_failed') || 'Failed to sync analytics data, showing cached data.';
     } finally {
       syncing = false;
