@@ -48,65 +48,75 @@
   async function loadSubjects() {
     loading = true;
     error = null;
-    try {
-      const cacheKey = 'courses_subjects_folders';
-      const cached =
-        cache.get<Folder[]>(cacheKey) ||
-        (await getWithIdbFallback<Folder[]>(cacheKey, cacheKey, () =>
-          cache.get<Folder[]>(cacheKey),
-        ));
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        folders = cached;
-        // Handle multiple active folders - combine all active subjects
-        const activeFolders = folders.filter((f: Folder) => f.active === 1);
-        activeSubjects = activeFolders.flatMap((f: Folder) => f.subjects || []);
-        otherFolders = folders.filter((f: Folder) => f.active !== 1);
 
-        // If no subjects found but folders exist, clear cache and refetch
-        if (activeSubjects.length === 0 && folders.length > 0) {
-          cache.delete(cacheKey);
-          // Continue to fetch fresh data below
-        } else {
-          loading = false;
-          return;
-        }
-      }
+    const cacheKey = 'courses_subjects_folders';
 
-      const res = await seqtaFetch('/seqta/student/load/subjects?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {},
-      });
-
-      // Handle both string and already-parsed responses
-      let data: any;
-      if (typeof res === 'string') {
-        try {
-          data = JSON.parse(res);
-        } catch (e) {
-          // If parsing fails, try parsing again (double-encoded)
-          try {
-            data = JSON.parse(JSON.parse(res));
-          } catch (e2) {
-            throw new Error('Failed to parse API response');
-          }
-        }
-      } else {
-        data = res;
-      }
-
-      folders = Array.isArray(data.payload) ? data.payload : [];
-
-      // Handle multiple active folders - combine all active subjects
+    const processFolders = (foldersData: Folder[]) => {
+      folders = foldersData;
       const activeFolders = folders.filter((f: Folder) => f.active === 1);
       activeSubjects = activeFolders.flatMap((f: Folder) => f.subjects || []);
       otherFolders = folders.filter((f: Folder) => f.active !== 1);
+    };
 
-      cache.set(cacheKey, folders, 60);
-      await setIdb(cacheKey, folders);
+    try {
+      const data = await useDataLoader<Folder[]>({
+        cacheKey,
+        ttlMinutes: 60,
+        context: 'courses',
+        functionName: 'loadSubjects',
+        fetcher: async () => {
+          const res = await seqtaFetch('/seqta/student/load/subjects?', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: {},
+          });
+
+          // Handle both string and already-parsed responses
+          let data: any;
+          if (typeof res === 'string') {
+            try {
+              data = JSON.parse(res);
+            } catch (e) {
+              // If parsing fails, try parsing again (double-encoded)
+              try {
+                data = JSON.parse(JSON.parse(res));
+              } catch (e2) {
+                throw new Error('Failed to parse API response');
+              }
+            }
+          } else {
+            data = res;
+          }
+
+          return Array.isArray(data.payload) ? data.payload : [];
+        },
+        onDataLoaded: (foldersData) => {
+          processFolders(foldersData);
+          // If no subjects found but folders exist, clear cache and refetch
+          const testActiveFolders = foldersData.filter((f: Folder) => f.active === 1);
+          const testActiveSubjects = testActiveFolders.flatMap((f: Folder) => f.subjects || []);
+          if (testActiveSubjects.length === 0 && foldersData.length > 0) {
+            cache.delete(cacheKey);
+            // Refetch immediately
+            loadSubjects();
+            return;
+          }
+          loading = false;
+        },
+        shouldSyncInBackground: (foldersData) => {
+          // Don't sync if cached data has no active subjects
+          const testFolders = foldersData;
+          const testActiveFolders = testFolders.filter((f: Folder) => f.active === 1);
+          const testActiveSubjects = testActiveFolders.flatMap((f: Folder) => f.subjects || []);
+          return testActiveSubjects.length > 0;
+        },
+      });
+
+      if (!data) {
+        error = 'Failed to load subjects';
+      }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
-    } finally {
       loading = false;
     }
   }
@@ -144,7 +154,9 @@
           try {
             parsedDocument = JSON.parse(payload.document);
           } catch (e) {
-            logger.error('courses', 'loadCourseContent', 'Failed to parse document JSON', { error: e });
+            logger.error('courses', 'loadCourseContent', 'Failed to parse document JSON', {
+              error: e,
+            });
           }
         }
         loadingCourse = false;
