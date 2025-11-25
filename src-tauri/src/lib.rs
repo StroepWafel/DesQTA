@@ -33,6 +33,8 @@ mod database;
 mod assessments;
 #[path = "utils/courses.rs"]
 mod courses;
+#[path = "utils/messages.rs"]
+mod messages;
 #[path = "services/seqta_mentions.rs"]
 mod seqta_mentions;
 mod global_search;
@@ -338,6 +340,11 @@ pub fn run() {
             assessments::get_processed_assessments,
             courses::get_courses_subjects,
             courses::get_course_content,
+            messages::fetch_messages,
+            messages::fetch_message_content,
+            messages::star_messages,
+            messages::delete_messages,
+            messages::restore_messages,
             seqta_mentions::search_seqta_mentions,
             seqta_mentions::search_seqta_mentions_with_context,
             seqta_mentions::update_seqta_mention_data,

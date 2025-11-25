@@ -1,10 +1,7 @@
 <script lang="ts">
   // Svelte imports
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { page } from '$app/stores';
-
-  // External libraries
-  import dayjs from 'dayjs';
 
   // Tauri imports
   import { invoke } from '@tauri-apps/api/core';
@@ -17,7 +14,6 @@
   import { _ } from '$lib/i18n';
 
   // Relative imports
-  import { seqtaFetch, getRSS } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { logger } from '../../utils/logger';
   import Sidebar from './components/Sidebar.svelte';
@@ -80,7 +76,16 @@
       context: 'direqt-messages',
       functionName: 'fetchMessages',
       fetcher: async () => {
-        await fetchFreshMessages(folderLabel, rssname, cacheKey);
+        let rssUrl = null;
+        if (folderLabel.includes('rss-')) {
+          rssUrl = rssname;
+        }
+        const msgs = await invoke<Message[]>('fetch_messages', {
+          folder: folderLabel,
+          rssUrl: rssUrl,
+        });
+        // Update messages state directly
+        messages = msgs;
         return messages;
       },
       onDataLoaded: (data) => {
@@ -91,158 +96,15 @@
     });
 
     if (!data || data.length === 0) {
-      error = $_('messages.failed_to_load') || 'Failed to load messages.';
-      messages = [];
-      seqtaLoadFailed = true;
-      loading = false;
-    }
-  }
-
-  async function fetchFreshMessages(
-    folderLabel: string = 'inbox',
-    rssname: string = '',
-    cacheKey: string,
-  ) {
-    try {
-      if (folderLabel === 'sent') {
-        // Fetch both sent and outbox, then combine
-        const [sentRes, outboxRes] = await Promise.all([
-          seqtaFetch('/seqta/student/load/message?', {
-            method: 'POST',
-            body: {
-              searchValue: '',
-              sortBy: 'date',
-              sortOrder: 'desc',
-              action: 'list',
-              label: 'sent',
-              offset: 0,
-              limit: 100,
-              datetimeUntil: null,
-            },
-          }),
-          seqtaFetch('/seqta/student/load/message?', {
-            method: 'POST',
-            body: {
-              searchValue: '',
-              sortBy: 'date',
-              sortOrder: 'desc',
-              action: 'list',
-              label: 'outbox',
-              offset: 0,
-              limit: 100,
-              datetimeUntil: null,
-            },
-          }),
-        ]);
-        const sentData = typeof sentRes === 'string' ? JSON.parse(sentRes) : sentRes;
-        const outboxData = typeof outboxRes === 'string' ? JSON.parse(outboxRes) : outboxRes;
-        const sentMsgs = (sentData?.payload?.messages || []).map((msg: any) => ({
-          id: msg.id,
-          folder: 'Sent',
-          sender: msg.sender,
-          senderPhoto: msg.sender_photo,
-          to: msg.participants?.[0]?.name || '',
-          subject: msg.subject,
-          preview: msg.subject + (msg.attachments ? ' (Attachment)' : ''),
-          body: '',
-          date: msg.date?.replace('T', ' ').slice(0, 16) || '',
-          unread: !msg.read,
-        }));
-        const outboxMsgs = (outboxData?.payload?.messages || []).map((msg: any) => ({
-          id: msg.id,
-          folder: 'Sent',
-          sender: msg.sender,
-          senderPhoto: msg.sender_photo,
-          to: msg.participants?.[0]?.name || '',
-          subject: msg.subject,
-          preview: msg.subject + (msg.attachments ? ' (Attachment)' : ''),
-          body: '',
-          date: msg.date?.replace('T', ' ').slice(0, 16) || '',
-          unread: !msg.read,
-        }));
-        messages = [...sentMsgs, ...outboxMsgs].sort((a, b) => b.date.localeCompare(a.date));
-
-        // Cache the messages list
-        cache.set(cacheKey, messages, 10); // 10 min TTL
-        await setIdb(cacheKey, messages);
-      } else if (folderLabel.includes('rss-')) {
-        let rssfeeddata: any = [];
-        let rss = await getRSS(folderLabel.replace('rss-', ''));
-        logger.debug('messages', 'fetchFreshMessages', 'RSS feed loaded', { feed: folderLabel });
-        rssfeeddata = rss.feeds
-          ?.map((msg: any) => {
-            let date;
-            let description;
-            if (msg.description === undefined) {
-              description = 'No description available';
-            } else {
-              description = msg.description;
-            }
-            if (msg.pubDate === null) {
-              date = '';
-            } else {
-              date = dayjs(msg.pubDate).format('YYYY-MM-DD HH:mm:ss');
-            }
-            return {
-              id: Math.floor(Math.random() * 10000000) + 1,
-              folder: rssname,
-              sender: rss.channel.title,
-              to: '',
-              subject: msg.title,
-              preview: `${msg.title} from ${rss.title}`,
-              date: date,
-              body: `<a href="${msg.link}">View the RSS feed link.</a> <br> ${description}`,
-            };
-          })
-          .sort((a: any, b: any) => b.date.localeCompare(a.date));
-        messages = rssfeeddata;
-
-        // Cache RSS messages
-        cache.set(cacheKey, messages, 10); // 10 min TTL
-        await setIdb(cacheKey, messages);
-      } else {
-        const response = await seqtaFetch('/seqta/student/load/message?', {
-          method: 'POST',
-          body: {
-            searchValue: '',
-            sortBy: 'date',
-            sortOrder: 'desc',
-            action: 'list',
-            label: folderLabel,
-            offset: 0,
-            limit: 100,
-            datetimeUntil: null,
-          },
-        });
-
-        const data = typeof response === 'string' ? JSON.parse(response) : response;
-        if (data?.payload?.messages) {
-          messages = data.payload.messages.map((msg: any) => ({
-            id: msg.id,
-            folder: folderLabel.charAt(0).toUpperCase() + folderLabel.slice(1),
-            sender: msg.sender,
-            senderPhoto: msg.sender_photo,
-            to: msg.participants?.[0]?.name || '',
-            subject: msg.subject,
-            preview: msg.subject + (msg.attachments ? ' (Attachment)' : ''),
-            body: '',
-            date: msg.date?.replace('T', ' ').slice(0, 16) || '',
-            unread: !msg.read,
-            starred: !!msg.starred,
-          }));
-
-          // Cache the messages list
-          cache.set(cacheKey, messages, 10); // 10 min TTL
-          await setIdb(cacheKey, messages);
-        } else {
-          messages = [];
-        }
+      // Only consider failure if we didn't get data and expected some (e.g. inbox usually has mail)
+      // But empty folders are valid. The backend returns empty array on success.
+      // Only show error if something actually threw.
+      // Since invoke throws on Err, useDataLoader catches it.
+      if (messages.length === 0 && folderLabel === 'inbox') {
+        // maybe empty inbox
       }
-    } catch (e) {
-      throw e; // Re-throw to be handled by caller
-    } finally {
-      loading = false;
     }
+    loading = false;
   }
 
   $effect(() => {
@@ -273,51 +135,20 @@
       context: 'direqt-messages',
       functionName: 'openMessage',
       fetcher: async () => {
-        await fetchFreshMessageContent(msg, cacheKey);
-        return msg.body;
+        if (msg.folder.includes('RSS') || selectedFolder.includes('RSS')) {
+          return msg.body; // RSS body is already loaded
+        }
+        const content = await invoke<string>('fetch_message_content', { id: msg.id });
+        return content;
       },
       onDataLoaded: (content) => {
         msg.body = content;
       },
     });
 
-    if (!content) {
-      // Content will be set by fetchFreshMessageContent if fetch succeeds
-      await fetchFreshMessageContent(msg, cacheKey);
-    }
-  }
-
-  async function fetchFreshMessageContent(msg: Message, cacheKey: string) {
-    detailLoading = true;
-    detailError = null;
-    try {
-      const response = await seqtaFetch('/seqta/student/load/message?', {
-        method: 'POST',
-        body: {
-          action: 'message',
-          id: msg.id,
-        },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (data?.payload?.contents) {
-        msg.body = data.payload.contents;
-        // Cache the message content for 24 hours (memory + SQLite)
-        cache.set(cacheKey, msg.body, 1440); // 24 hours TTL
-        await setIdb(cacheKey, msg.body);
-      } else if (selectedFolder.includes('RSS')) {
-        msg.body = msg.body;
-      } else {
-        msg.body = `<em>${$_('messages.no_content') || 'No content.'}</em>`;
-      }
-      // If the API returns starred in the detail, update it
-      if (typeof data?.payload?.starred !== 'undefined') {
-        msg.starred = !!data.payload.starred;
-      }
-    } catch (e) {
-      detailError = $_('messages.failed_to_load_message') || 'Failed to load message.';
-      msg.body = '';
-    } finally {
-      detailLoading = false;
+    if (!content && !msg.body) {
+      // Fetch failed or no content
+      msg.body = `<em>${$_('messages.no_content') || 'No content.'}</em>`;
     }
   }
 
@@ -348,31 +179,21 @@
     starring = true;
     try {
       let newStarred = true;
-      // If in Starred folder and already starred, unstar
       if (selectedFolder === 'Starred' && msg.starred) {
         newStarred = false;
       }
-      const response = await seqtaFetch('/seqta/student/save/message?', {
-        method: 'POST',
-        body: {
-          mode: 'x-star',
-          starred: newStarred,
-          items: [msg.id],
-        },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (typeof data?.payload?.starred !== 'undefined') {
-        msg.starred = !!data.payload.starred;
-        // If unstarred in Starred folder, remove from list
-        if (!msg.starred && selectedFolder === 'Starred') {
-          messages = messages.filter((m) => m.id !== msg.id);
-          if (selectedMessage && selectedMessage.id === msg.id) {
-            selectedMessage = null;
-          }
+
+      await invoke('star_messages', { items: [msg.id], star: newStarred });
+
+      msg.starred = newStarred;
+      if (!newStarred && selectedFolder === 'Starred') {
+        messages = messages.filter((m) => m.id !== msg.id);
+        if (selectedMessage && selectedMessage.id === msg.id) {
+          selectedMessage = null;
         }
       }
     } catch (e) {
-      // Optionally show error
+      logger.error('messages', 'starMessage', 'Failed to star message', { error: e });
     } finally {
       starring = false;
     }
@@ -382,25 +203,14 @@
     if (deleting) return;
     deleting = true;
     try {
-      const response = await seqtaFetch('/seqta/student/save/message?', {
-        method: 'POST',
-        body: {
-          mode: 'x-label',
-          label: 'trash',
-          items: [msg.id],
-        },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (data?.payload?.label === 'trash') {
-        // Remove from messages list
-        messages = messages.filter((m) => m.id !== msg.id);
-        // If this was the open message, clear detail
-        if (selectedMessage && selectedMessage.id === msg.id) {
-          selectedMessage = null;
-        }
+      await invoke('delete_messages', { items: [msg.id] });
+
+      messages = messages.filter((m) => m.id !== msg.id);
+      if (selectedMessage && selectedMessage.id === msg.id) {
+        selectedMessage = null;
       }
     } catch (e) {
-      // Optionally show error
+      logger.error('messages', 'deleteMessage', 'Failed to delete message', { error: e });
     } finally {
       deleting = false;
     }
@@ -410,25 +220,14 @@
     if (restoring) return;
     restoring = true;
     try {
-      const response = await seqtaFetch('/seqta/student/save/message?', {
-        method: 'POST',
-        body: {
-          mode: 'x-label',
-          label: 'inbox',
-          items: [msg.id],
-        },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (data?.payload?.label === 'inbox') {
-        // Remove from messages list
-        messages = messages.filter((m) => m.id !== msg.id);
-        // If this was the open message, clear detail
-        if (selectedMessage && selectedMessage.id === msg.id) {
-          selectedMessage = null;
-        }
+      await invoke('restore_messages', { items: [msg.id] });
+
+      messages = messages.filter((m) => m.id !== msg.id);
+      if (selectedMessage && selectedMessage.id === msg.id) {
+        selectedMessage = null;
       }
     } catch (e) {
-      // Optionally show error
+      logger.error('messages', 'restoreMessage', 'Failed to restore message', { error: e });
     } finally {
       restoring = false;
     }

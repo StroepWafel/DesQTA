@@ -4,7 +4,7 @@
   import type { Message } from '../types';
   import { sanitizeHtml } from '../../../utils/sanitization';
   import { onMount } from 'svelte';
-  import { seqtaFetch } from '../../../utils/netUtil';
+  import { invoke } from '@tauri-apps/api/core';
 
   let {
     selectedMessage,
@@ -46,9 +46,9 @@
     const uuid = selectedMessage?.senderPhoto?.trim();
     if (!uuid) return;
     try {
-      const imgBase64 = await seqtaFetch(`/seqta/student/photo/get`, {
-        params: { uuid, format: 'low' },
-        is_image: true,
+      const imgBase64 = await invoke<string>('get_seqta_file', {
+        fileType: 'photo',
+        uuid: uuid,
       });
       if (imgBase64) {
         detailAvatarUrl = `data:image/png;base64,${imgBase64}`;
@@ -183,8 +183,10 @@
                     class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover bg-zinc-200 dark:bg-zinc-800"
                     onerror={() => (detailAvatarFailed = true)} />
                 {:else}
-                  <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
-                    <span class="text-lg font-bold sm:text-lg">{initial(selectedMessage.sender)}</span>
+                  <div
+                    class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
+                    <span class="text-lg font-bold sm:text-lg"
+                      >{initial(selectedMessage.sender)}</span>
                   </div>
                 {/if}
               </div>
@@ -195,8 +197,8 @@
                 <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
                   To: <span class="font-medium text-zinc-700 dark:text-zinc-300"
                     >{selectedMessage.to}</span>
+                </div>
               </div>
-            </div>
             </div>
 
             <div class="flex gap-2 items-center sm:gap-3">
