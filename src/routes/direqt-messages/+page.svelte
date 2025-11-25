@@ -245,7 +245,6 @@
     }
   }
 
-
   $effect(() => {
     fetchMessages('inbox');
   });
@@ -322,11 +321,12 @@
     }
   }
 
-
   function openFolder(folder: any) {
     selectedFolder = folder.name;
     selectedMessage = null;
-    logger.debug('messages', 'openFolder', `Opening folder: ${folder.name}`, { folderId: folder.id });
+    logger.debug('messages', 'openFolder', `Opening folder: ${folder.name}`, {
+      folderId: folder.id,
+    });
     if (folder.id.includes('rss-')) {
       selectedRSS = folder.id;
       fetchMessages(folder.id, folder.name);
