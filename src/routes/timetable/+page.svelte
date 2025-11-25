@@ -88,37 +88,39 @@
       // Temporal.PlainDateTime.from('2023-01-01T10:00') works
 
       // @ts-ignore
-      const start = Temporal.PlainDateTime.from(`${lesson.date}T${lesson.from}`)
+      const start = Temporal.PlainDateTime.from(`${lessonObj.date}T${lessonObj.from}`)
         .toZonedDateTime(timeZone)
         .toString(); // Schedule-X might want the object or string?
       // Docs example: start: Temporal.ZonedDateTime.from(...)
       // The error said "needs to be a Temporal.ZonedDateTime" object.
 
       // @ts-ignore
-      const startObj = Temporal.PlainDateTime.from(`${lesson.date}T${lesson.from}`).toZonedDateTime(
+      const startObj = Temporal.PlainDateTime.from(`${lessonObj.date}T${lessonObj.from}`).toZonedDateTime(
         timeZone,
       );
       // @ts-ignore
-      const endObj = Temporal.PlainDateTime.from(`${lesson.date}T${lesson.until}`).toZonedDateTime(
+      const endObj = Temporal.PlainDateTime.from(`${lessonObj.date}T${lessonObj.until}`).toZonedDateTime(
         timeZone,
       );
 
       // Sanitize ID for DOM selector compatibility
-      const rawId = lesson.uid || `${lesson.date}-${lesson.from}-${lesson.code}`;
+      const rawId =
+        (lessonObj.uid as string | undefined) ||
+        `${lessonObj.date}-${lessonObj.from}-${lessonObj.code}`;
       // Replace invalid chars with underscore or just use a hash/clean string
       // Schedule-X needs simple chars: a-z, A-Z, 0-9, -, _
       // Colons and dots are problematic in querySelector without escaping
-      const id = rawId.replace(/[^a-zA-Z0-9-_]/g, '_');
+      const id = String(rawId).replace(/[^a-zA-Z0-9-_]/g, '_');
 
       return {
         id: id,
-        title: lesson.description || lesson.code || 'Lesson',
+        title: (lessonObj.description as string) || (lessonObj.code as string) || 'Lesson',
         start: startObj,
         end: endObj,
-        location: lesson.room,
-        staff: lesson.staff,
+        location: lessonObj.room,
+        staff: lessonObj.staff,
         color: color,
-        description: lesson.staff ? `Teacher: ${lesson.staff}` : undefined,
+        description: lessonObj.staff ? `Teacher: ${lessonObj.staff}` : undefined,
       };
     });
   }
