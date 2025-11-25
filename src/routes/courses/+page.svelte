@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
 
   // $lib/ imports
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import { setIdb } from '$lib/services/idbCache';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
 
@@ -11,6 +11,7 @@
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { logger } from '../../utils/logger';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
   import CourseContent from './components/CourseContent.svelte';
 
   // Types
