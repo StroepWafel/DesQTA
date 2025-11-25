@@ -112,7 +112,9 @@
         const { isOfflineMode } = await import('../../lib/utils/offlineMode');
         const offline = await isOfflineMode();
         if (!offline) {
-          syncAssessmentsInBackground().catch(() => {});
+          syncAssessmentsInBackground().catch((e) => {
+            logger.debug('assessments', 'loadAssessments', 'Background sync failed silently', { error: e });
+          });
         }
         return;
       }
