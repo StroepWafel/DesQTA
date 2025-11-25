@@ -13,6 +13,7 @@
   import RecentNews from '$lib/components/RecentNews.svelte';
   import MessagesPreview from '$lib/components/MessagesPreview.svelte';
   import T from '$lib/components/T.svelte';
+  import { logger } from '../utils/logger';
 
   interface Shortcut {
     name: string;
@@ -36,7 +37,7 @@
         homepageShortcuts = subset.shortcuts as Shortcut[];
       }
     } catch (e) {
-      console.error('Failed to load homepage shortcuts:', e);
+      logger.error('dashboard', 'loadHomepageShortcuts', `Failed to load homepage shortcuts: ${e}`, { error: e });
     }
   }
 

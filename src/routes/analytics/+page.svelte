@@ -14,6 +14,7 @@
   import { Icon, MagnifyingGlass, Trash } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import { logger } from '../../utils/logger';
 
   let analyticsData: AnalyticsData | null = $state(null);
   let loading = $state(true);
@@ -107,10 +108,10 @@
       }
 
       return assessment;
-    } catch (e) {
-      console.error('Error parsing assessment:', e);
-      return null;
-    }
+        } catch (e) {
+          logger.error('analytics', 'loadAnalyticsData', 'Error parsing assessment', { error: e });
+          return null;
+        }
   }
 
   async function loadAnalyticsData() {
@@ -128,7 +129,7 @@
       lastUpdated = new Date();
       error = null;
     } catch (e) {
-      console.warn('Analytics: no local analytics file found or failed to parse:', e);
+      logger.warn('analytics', 'loadAnalyticsData', 'no local analytics file found or failed to parse', { error: e });
       analyticsData = [];
       error = null; // Don't show error, just show empty state
     }
@@ -166,7 +167,7 @@
     try {
       await loadAnalyticsData();
     } catch (e) {
-      console.warn('Failed to load existing analytics data:', e);
+      logger.warn('analytics', 'loadAnalyticsData', 'Failed to load existing analytics data', { error: e });
     } finally {
       loading = false;
     }

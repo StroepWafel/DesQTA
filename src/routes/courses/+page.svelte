@@ -279,7 +279,7 @@
             try {
               parsedDocument = JSON.parse(coursePayload.document);
             } catch (e) {
-              console.error('Failed to parse document JSON:', e);
+              logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', { error: e });
             }
           }
         }

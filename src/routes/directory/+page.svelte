@@ -13,6 +13,7 @@
   import * as Select from "$lib/components/ui/select/index.js";
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import { logger } from '../../utils/logger';
 
   interface Student {
     id: number;
@@ -72,7 +73,7 @@
       // Step 1: Check memory cache first (respects TTL)
       const memCached = cache.get<Student[]>(cacheKey);
       if (memCached) {
-        console.info('[CACHE] directory hit (memory)', { count: memCached.length });
+        logger.debug('directory', 'loadStudents', 'directory hit (memory)', { count: memCached.length });
         students = memCached;
         // hydrate filters from cached too
         const uniqueYears = [...new Set(students.map(s => s.year))].sort();
@@ -87,7 +88,7 @@
       // Step 2: Check DB if memory cache expired/missing
       const idbCached = await getWithIdbFallback<Student[]>(cacheKey, cacheKey, () => null);
       if (idbCached) {
-        console.info('[CACHE] directory hit (IndexedDB)', { count: idbCached.length });
+        logger.debug('directory', 'loadStudents', 'directory hit (IndexedDB)', { count: idbCached.length });
         students = idbCached;
         // Restore to memory cache with TTL
         cache.set(cacheKey, idbCached, TTL_MINUTES);
@@ -102,7 +103,7 @@
       }
 
       // Step 3: Cache expired/missing - fetch from API
-      console.info('[API] fetching directory from API (cache expired/missing)');
+      logger.debug('directory', 'loadStudents', 'fetching directory from API (cache expired/missing)');
       const res = await seqtaFetch('/seqta/student/load/message/people', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -150,12 +151,12 @@
 
       // Always cache the data (for offline use), even when online
       cache.set(cacheKey, students, TTL_MINUTES);
-      console.info('[IDB] directory cached (mem+idb)', { count: students.length });
+      logger.debug('directory', 'loadStudents', 'directory cached (mem+idb)', { count: students.length });
       await setIdb(cacheKey, students);
       
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
-      console.error('Failed to load students:', e);
+      logger.error('directory', 'loadStudents', `Failed to load students: ${e}`, { error: e });
     } finally {
       loading = false;
     }

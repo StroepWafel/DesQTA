@@ -17,6 +17,7 @@
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import TimeGridEvent from '$lib/components/timetable/TimeGridEvent.svelte';
   import { _ } from '../../lib/i18n';
+  import { logger } from '../../utils/logger';
   import 'temporal-polyfill/global';
 
   const studentId = 69;
@@ -45,7 +46,7 @@
       cache.set('lesson_colours', lessonColours, 30);
       return lessonColours;
     } catch (e) {
-      console.error('Failed to load lesson colours', e);
+      logger.error('timetable', 'loadLessonColours', `Failed to load lesson colours: ${e}`, { error: e });
       return [];
     }
   }
@@ -142,7 +143,7 @@
 
       initCalendar(events);
     } catch (e) {
-      console.error('Error loading timetable:', e);
+      logger.error('timetable', 'loadLessons', `Error loading timetable: ${e}`, { error: e });
     } finally {
       loadingLessons = false;
     }
