@@ -245,16 +245,6 @@
     }
   }
 
-  async function syncMessagesInBackground(folderLabel: string, rssname: string, cacheKey: string) {
-    // Background sync - updates data without blocking UI
-    try {
-      await fetchFreshMessages(folderLabel, rssname, cacheKey);
-      // Data is already updated in state by fetchFreshMessages
-    } catch (e) {
-      // Silently fail - cached data is already shown
-      logger.debug('messages', 'syncMessagesInBackground', 'Background sync failed', { error: e });
-    }
-  }
 
   $effect(() => {
     fetchMessages('inbox');
@@ -332,16 +322,6 @@
     }
   }
 
-  async function syncMessageContentInBackground(msg: Message, cacheKey: string) {
-    // Background sync - updates message content without blocking UI
-    try {
-      await fetchFreshMessageContent(msg, cacheKey);
-      // Data is already updated in state by fetchFreshMessageContent
-    } catch (e) {
-      // Silently fail - cached content is already shown
-      logger.debug('messages', 'syncMessageContentInBackground', 'Background sync failed', { error: e });
-    }
-  }
 
   function openFolder(folder: any) {
     selectedFolder = folder.name;
