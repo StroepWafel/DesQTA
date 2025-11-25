@@ -10,10 +10,12 @@
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import { authService, type UserInfo } from '../lib/services/authService';
-  import { weatherService, type WeatherData } from '../lib/services/weatherService';
   import { warmUpCommonData } from '../lib/services/warmupService';
   import { logger } from '../utils/logger';
   import { seqtaFetch } from '../utils/netUtil';
+  import { useWeather } from '../lib/composables/useWeather';
+  import { useSidebar } from '../lib/composables/useSidebar';
+  import { usePlatform } from '../lib/composables/usePlatform';
   import '../app.css';
   import {
     accentColor,
@@ -55,27 +57,29 @@
   let seqtaConfig: any = $state(null);
   let shellReady = $state(false);
   let contentLoading = $state(true);
-  let isMobile = $state(false);
 
   // UI state
   let sidebarOpen = $state(true);
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
 
-  // Weather state
-  let weatherEnabled = $state(false);
-  let forceUseLocation = $state(true);
-  let weatherCity = $state('');
-  let weatherCountry = $state('');
-  let weatherData = $state<WeatherData | null>(null);
-  let loadingWeather = $state(false);
-  let weatherError = $state('');
+  // Composables
+  const weather = useWeather();
+  const sidebar = useSidebar();
+  const platform = usePlatform();
+
+  // Sync composable state with component state
+  let weatherEnabled = $derived(weather.state.enabled);
+  let weatherData = $derived(weather.state.data);
+  let loadingWeather = $derived(weather.state.loading);
+  let weatherError = $derived(weather.state.error);
+  let autoCollapseSidebar = $derived(sidebar.state.autoCollapse);
+  let autoExpandSidebarHover = $derived(sidebar.state.autoExpandOnHover);
+  let isMobile = $derived(platform.state.isMobile);
 
   // Settings state
   let disableSchoolPicture = $state(false);
   let enhancedAnimations = $state(true);
-  let autoCollapseSidebar = $state(false);
-  let autoExpandSidebarHover = $state(false);
   // Menu configuration with translation keys
   const DEFAULT_MENU = [
     { labelKey: 'navigation.dashboard', icon: Home, path: '/' },
@@ -97,31 +101,8 @@
   let devMockEnabled = false;
 
   onMount(() => {
-    // Platform detection - similar to LoginScreen
-    const checkPlatform = () => {
-      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
-      return {
-        isWindows: tauri_platform === 'windows',
-        isMobile: tauri_platform === 'ios' || tauri_platform === 'android',
-      };
-    };
-
-    const { isWindows, isMobile } = checkPlatform();
-
-    // Only run window corner rounding on Windows desktop
-    if (isWindows && !isMobile) {
-      async function updateCorners() {
-        const isMaximized = await appWindow.isMaximized();
-        if (isMaximized) {
-          document.body.classList.remove('rounded-xl');
-        } else {
-          document.body.classList.add('rounded-xl');
-        }
-      }
-      updateCorners();
-      appWindow.onResized(updateCorners);
-      appWindow.onMoved(updateCorners);
-    }
+    platform.checkPlatform();
+    platform.setupWindowCorners();
   });
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -225,19 +206,19 @@
   };
 
   const reloadSidebarSettings = async () => {
-    const settings = await loadSettings(['auto_collapse_sidebar', 'auto_expand_sidebar_hover']);
-    autoCollapseSidebar = settings.auto_collapse_sidebar ?? false;
-    autoExpandSidebarHover = settings.auto_expand_sidebar_hover ?? false;
+    await sidebar.loadSettings();
   };
 
   const handlePageNavigation = () => {
     if (autoCollapseSidebar || isMobile) {
       sidebarOpen = false;
     }
+    sidebar.handlePageNavigation();
   };
 
   const handleMouseMove = (event: MouseEvent) => {
     if (autoExpandSidebarHover && !isMobile) {
+      sidebar.handleMouseMove(event);
       const x = event.clientX;
       if (!sidebarOpen && x <= 20) {
         sidebarOpen = true;
@@ -322,31 +303,11 @@
   };
 
   const loadWeatherSettings = async () => {
-    const settings = await weatherService.loadWeatherSettings();
-    weatherEnabled = settings.weather_enabled;
-    weatherCity = settings.weather_city;
-    weatherCountry = settings.weather_country ?? '';
-    forceUseLocation = settings.force_use_location;
+    await weather.loadSettings();
   };
 
   const fetchWeather = async (useIP = false) => {
-    if (!weatherEnabled || (!useIP && !weatherCity)) {
-      weatherData = null;
-      return;
-    }
-
-    loadingWeather = true;
-    weatherError = '';
-    try {
-      weatherData = useIP
-        ? await weatherService.fetchWeatherWithIP()
-        : await weatherService.fetchWeather(weatherCity, weatherCountry);
-    } catch (e) {
-      weatherError = `Failed to load weather: ${e}`;
-      weatherData = null;
-    } finally {
-      loadingWeather = false;
-    }
+    await weather.fetchWeather(useIP);
   };
 
   $effect(() => {
@@ -473,16 +434,18 @@
     const mql = window.matchMedia('(max-width: 640px)');
 
     const checkMobile = () => {
-      const platform = import.meta.env.TAURI_ENV_PLATFORM;
-      const isNativeMobile = platform === 'ios' || platform === 'android';
+      const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
+      const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
       const isSmallViewport = mql.matches;
       const nextIsMobile = isNativeMobile || isSmallViewport;
+
+      // Update platform state
+      platform.state.isMobile = nextIsMobile;
 
       // If switching from non-mobile to mobile, ensure sidebar is closed
       if (!isMobile && nextIsMobile) {
         sidebarOpen = false;
       }
-      isMobile = nextIsMobile;
     };
 
     checkMobile();
