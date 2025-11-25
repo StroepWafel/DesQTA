@@ -40,7 +40,14 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
         await onDataLoaded(memCached);
       }
       // Trigger background sync if online
-      await triggerBackgroundSync(context, functionName, cacheKey, fetcher, shouldSyncInBackground, memCached);
+      await triggerBackgroundSync(
+        context,
+        functionName,
+        cacheKey,
+        fetcher,
+        shouldSyncInBackground,
+        memCached,
+      );
       return memCached;
     }
 
@@ -54,14 +61,21 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
         await onDataLoaded(idbCached);
       }
       // Trigger background sync if online
-      await triggerBackgroundSync(context, functionName, cacheKey, fetcher, shouldSyncInBackground, idbCached);
+      await triggerBackgroundSync(
+        context,
+        functionName,
+        cacheKey,
+        fetcher,
+        shouldSyncInBackground,
+        idbCached,
+      );
       return idbCached;
     }
 
     // Step 3: No cache - fetch fresh data
     logger.debug(context, functionName, `Cache miss - fetching fresh data`, { key: cacheKey });
     const freshData = await fetcher();
-    
+
     // Cache the fresh data
     cache.set(cacheKey, freshData, ttlMinutes);
     await setIdb(cacheKey, freshData);
@@ -96,12 +110,16 @@ async function triggerBackgroundSync<T>(
     .then((freshData) => {
       cache.set(cacheKey, freshData, 10); // Use default TTL for background sync
       setIdb(cacheKey, freshData).catch((e) => {
-        logger.debug(context, functionName, 'Failed to update IndexedDB in background sync', { error: e });
+        logger.debug(context, functionName, 'Failed to update IndexedDB in background sync', {
+          error: e,
+        });
       });
       logger.debug(context, functionName, 'Background sync completed', { key: cacheKey });
     })
     .catch((e) => {
-      logger.debug(context, functionName, 'Background sync failed silently', { key: cacheKey, error: e });
+      logger.debug(context, functionName, 'Background sync failed silently', {
+        key: cacheKey,
+        error: e,
+      });
     });
 }
-
