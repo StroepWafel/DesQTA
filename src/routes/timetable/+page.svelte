@@ -18,7 +18,8 @@
   import 'temporal-polyfill/global';
 
   // $lib/ imports
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import { setIdb } from '$lib/services/idbCache';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
   import TimeGridEvent from '$lib/components/timetable/TimeGridEvent.svelte';
   import { _ } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
@@ -129,12 +130,8 @@
     loadingLessons = true;
 
     // Load a wide range (e.g., +/- 2 months from now) to populate the calendar
-    // or rely on month change events if Schedule-X supports them (it might fetch on demand? No, usually client side)
-    // For now, let's load current month + prev/next
     const now = new Date();
-    // Start of last month
     const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    // End of next month
     const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
 
     const fromStr = start.toISOString().split('T')[0];
@@ -142,23 +139,21 @@
     const cacheKey = `timetable_${fromStr}_${untilStr}`;
 
     try {
-      let items =
-        cache.get<unknown[]>(cacheKey) ||
-        (await getWithIdbFallback<unknown[]>(cacheKey, cacheKey, () =>
-          cache.get<unknown[]>(cacheKey),
-        ));
+      const items = await useDataLoader<unknown[]>({
+        cacheKey,
+        ttlMinutes: 30,
+        context: 'timetable',
+        functionName: 'loadLessons',
+        fetcher: async () => {
+          return await fetchLessons(fromStr, untilStr);
+        },
+      });
 
-      if (!items) {
-        items = await fetchLessons(fromStr, untilStr);
-        // Cache
-        cache.set(cacheKey, items, 30);
-        await setIdb(cacheKey, items);
+      if (items) {
+        const colours = await loadLessonColours();
+        const events = transformLessonsToEvents(items || [], colours || []);
+        initCalendar(events);
       }
-
-      const colours = await loadLessonColours();
-      const events = transformLessonsToEvents(items || [], colours || []);
-
-      initCalendar(events);
     } catch (e) {
       logger.error('timetable', 'loadLessons', `Error loading timetable: ${e}`, { error: e });
     } finally {
