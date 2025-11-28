@@ -9,6 +9,9 @@
   import LoginScreen from '../lib/components/LoginScreen.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
+  import { cloudAuthService } from '../lib/services/cloudAuthService';
+  import { cloudSettingsService } from '../lib/services/cloudSettingsService';
+  import { saveSettingsWithQueue, flushSettingsQueue } from '../lib/services/settingsSync';
   import { authService, type UserInfo } from '../lib/services/authService';
   import { warmUpCommonData } from '../lib/services/warmupService';
   import { logger } from '../utils/logger';
@@ -44,7 +47,7 @@
     XMark,
     PencilSquare,
   } from 'svelte-hero-icons';
-  import { writable } from 'svelte/store';
+  import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
   export const needsSetup = writable(false);
@@ -73,6 +76,7 @@
   let weatherData = $derived(weather.state.data);
   let loadingWeather = $derived(weather.state.loading);
   let weatherError = $derived(weather.state.error);
+  let forceUseLocation = $derived(weather.state.forceUseLocation);
   let autoCollapseSidebar = $derived(sidebar.state.autoCollapse);
   let autoExpandSidebarHover = $derived(sidebar.state.autoExpandOnHover);
   let isMobile = $derived(platform.state.isMobile);
@@ -283,6 +287,39 @@
     }
   };
 
+  const syncCloudSettings = async () => {
+    try {
+      // Initialize cloud auth from local storage
+      const cloudUser = cloudAuthService.init();
+      if (cloudUser) {
+        logger.info('layout', 'syncCloudSettings', 'Cloud user found, fetching settings');
+        const settings = await cloudSettingsService.getSettings();
+        if (settings) {
+          logger.info('layout', 'syncCloudSettings', 'Applying cloud settings');
+          // Save merged settings
+          await invoke('save_settings_merge', { patch: settings });
+
+          // Reload settings relevant to layout immediately
+          await Promise.all([
+            loadAccentColor(),
+            loadTheme(),
+            loadCurrentTheme(),
+            (async () => {
+              if (settings.language && settings.language !== get(locale)) {
+                locale.set(settings.language);
+              }
+            })(),
+            loadWeatherSettings(),
+            loadEnhancedAnimationsSetting(),
+            reloadSidebarSettings(),
+          ]);
+        }
+      }
+    } catch (e) {
+      logger.error('layout', 'syncCloudSettings', 'Failed to sync cloud settings', { error: e });
+    }
+  };
+
   // Language change handler
   const changeLanguage = async (languageCode: string) => {
     try {
@@ -369,6 +406,7 @@
         loadWeatherSettings(),
         loadEnhancedAnimationsSetting(),
         reloadSidebarSettings(),
+        syncCloudSettings(),
       ]);
 
       // Load cached data from SQLite immediately for instant UI
