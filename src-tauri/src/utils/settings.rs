@@ -354,7 +354,7 @@ impl Settings {
 }
 
 fn default_base_url() -> String {
-    "https://accounts.betterseqta.adenmgb.com".to_string()
+    "https://accounts.betterseqta.org".to_string()
 }
 
 fn get_base_api_url() -> String {

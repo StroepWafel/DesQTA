@@ -124,7 +124,7 @@ The Company reserves the right to terminate your access to the Service at any ti
   let cloudUserLoading = true;
 
   // Set the API URL for cloud sync
-  const CLOUD_API_URL = 'https://betterseqta-account.lindsaya542.workers.dev';
+  const CLOUD_API_URL = 'https://accounts.betterseqta.org';
 
   // Profile picture state
   let customProfilePicture: string | null = null;
@@ -252,7 +252,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
     // If it's a relative path, prepend the base domain
     if (pfpUrl.startsWith('/api/files/public/')) {
-      return `https://accounts.betterseqta.adenmgb.com${pfpUrl}`;
+      return `https://accounts.betterseqta.org${pfpUrl}`;
     }
 
     // Fallback to DiceBear if it's not a recognized format

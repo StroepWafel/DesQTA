@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-const API_URL = 'https://betterseqta-account.lindsaya542.workers.dev';
+const API_URL = 'https://accounts.betterseqta.org';
 
 export interface CloudUser {
   id: string;
