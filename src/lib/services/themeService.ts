@@ -446,7 +446,8 @@ class ThemeService {
 
   private async saveThemePreference(themeName: string): Promise<void> {
     try {
-      await invoke('save_settings_merge', { patch: { current_theme: themeName } });
+      const { saveSettingsWithQueue } = await import('./settingsSync');
+      await saveSettingsWithQueue({ current_theme: themeName });
     } catch (error) {
       console.error('Failed to save theme preference:', error);
     }

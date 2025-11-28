@@ -15,7 +15,8 @@
   const changeLanguage = async (languageCode: string) => {
     try {
       locale.set(languageCode);
-      await invoke('save_settings_merge', { patch: { language: languageCode } });
+      const { saveSettingsWithQueue } = await import('../services/settingsSync');
+      await saveSettingsWithQueue({ language: languageCode });
       logger.info('LanguageSelector', 'changeLanguage', `Language changed to ${languageCode}`);
     } catch (e) {
       logger.error('LanguageSelector', 'changeLanguage', `Failed to save language preference: ${e}`, { error: e });

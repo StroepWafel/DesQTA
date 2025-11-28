@@ -99,7 +99,8 @@ export async function loadTheme() {
 // Function to update the accent color
 export async function updateAccentColor(color: string) {
   try {
-    await invoke('save_settings_merge', { patch: { accent_color: color } });
+    const { saveSettingsWithQueue } = await import('../services/settingsSync');
+    await saveSettingsWithQueue({ accent_color: color });
     accentColor.set(color);
     logger.debug('themeStore', 'updateAccentColor', 'Accent color updated successfully', { color });
   } catch (e) {
@@ -110,7 +111,8 @@ export async function updateAccentColor(color: string) {
 // Function to update the theme
 export async function updateTheme(newTheme: 'light' | 'dark' | 'system') {
   try {
-    await invoke('save_settings_merge', { patch: { theme: newTheme } });
+    const { saveSettingsWithQueue } = await import('../services/settingsSync');
+    await saveSettingsWithQueue({ theme: newTheme });
     theme.set(newTheme);
     applyTheme(newTheme);
 
@@ -155,7 +157,8 @@ export async function loadAndApplyTheme(themeName: string) {
       const defaultTheme: 'light' | 'dark' | 'system' = 'dark';
       accentColor.set(defaultAccent);
       theme.set(defaultTheme);
-      await invoke('save_settings_merge', { patch: { current_theme: 'default', accent_color: defaultAccent, theme: defaultTheme } });
+      const { saveSettingsWithQueue } = await import('../services/settingsSync');
+      await saveSettingsWithQueue({ current_theme: 'default', accent_color: defaultAccent, theme: defaultTheme });
       applyTheme(defaultTheme);
       return;
     }
@@ -166,7 +169,8 @@ export async function loadAndApplyTheme(themeName: string) {
       const nextTheme = manifest.settings.defaultTheme;
       accentColor.set(nextAccent);
       theme.set(nextTheme);
-      await invoke('save_settings_merge', { patch: { current_theme: themeName, accent_color: nextAccent, theme: nextTheme } });
+      const { saveSettingsWithQueue } = await import('../services/settingsSync');
+      await saveSettingsWithQueue({ current_theme: themeName, accent_color: nextAccent, theme: nextTheme });
 
       // Apply theme visually after stores updated and settings persisted
       applyTheme(nextTheme);
@@ -256,13 +260,15 @@ export async function applyPreviewTheme() {
       const defaultTheme: 'light' | 'dark' | 'system' = 'dark';
       accentColor.set(defaultAccent);
       theme.set(defaultTheme);
-      await invoke('save_settings_merge', { patch: { current_theme: 'default', accent_color: defaultAccent, theme: defaultTheme } });
+      const { saveSettingsWithQueue } = await import('../services/settingsSync');
+      await saveSettingsWithQueue({ current_theme: 'default', accent_color: defaultAccent, theme: defaultTheme });
     } else if (manifest) {
       const nextAccent = manifest.settings.defaultAccentColor;
       const nextTheme = manifest.settings.defaultTheme;
       accentColor.set(nextAccent);
       theme.set(nextTheme);
-      await invoke('save_settings_merge', { patch: { current_theme: name, accent_color: nextAccent, theme: nextTheme } });
+      const { saveSettingsWithQueue } = await import('../services/settingsSync');
+      await saveSettingsWithQueue({ current_theme: name, accent_color: nextAccent, theme: nextTheme });
     }
   } catch (error) {
     console.error('Failed to apply preview theme:', error);
@@ -335,7 +341,8 @@ export async function resetToDefault() {
     currentTheme.set('default');
     themeManifest.set(null);
     // Save current_theme to settings
-    await invoke('save_settings_merge', { patch: { current_theme: 'default' } });
+    const { saveSettingsWithQueue } = await import('../services/settingsSync');
+    await saveSettingsWithQueue({ current_theme: 'default' });
   } catch (error) {
     console.error('Failed to reset to default theme:', error);
   }

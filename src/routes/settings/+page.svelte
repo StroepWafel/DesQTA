@@ -301,47 +301,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
 
-      // Auto-sync to cloud if logged in
-      if (cloudUser) {
-        // We need to fetch the full settings again or construct them,
-        // but 'patch' only contains changed/UI-bound settings.
-        // Ideally we sync what we have.
-        // But the patch object in saveSettings covers almost everything.
-        try {
-          // We can just sync the patch, or the full settings.
-          // cloudSettingsService.syncSettings expects a record.
-          // Let's sync the patch for now, or maybe we should sync the FULL settings state.
-          // The variables shortcuts, feeds, etc. hold the current state.
-          const fullSettings = {
-            shortcuts,
-            feeds,
-            weather_enabled: weatherEnabled,
-            weather_city: weatherCity,
-            weather_country: weatherCountry,
-            reminders_enabled: remindersEnabled,
-            force_use_location: forceUseLocation,
-            accent_color: $accentColor,
-            theme: $theme,
-            disable_school_picture: disableSchoolPicture,
-            enhanced_animations: enhancedAnimations,
-            gemini_api_key: geminiApiKey,
-            ai_integrations_enabled: aiIntegrationsEnabled,
-            grade_analyser_enabled: gradeAnalyserEnabled,
-            lesson_summary_analyser_enabled: lessonSummaryAnalyserEnabled,
-            auto_collapse_sidebar: autoCollapseSidebar,
-            auto_expand_sidebar_hover: autoExpandSidebarHover,
-            global_search_enabled: globalSearchEnabled,
-            dev_sensitive_info_hider: devSensitiveInfoHider,
-            dev_force_offline_mode: devForceOfflineMode,
-            accepted_cloud_eula: acceptedCloudEula,
-          };
-          await cloudSettingsService.syncSettings(fullSettings);
-          console.log('Auto-synced settings to cloud');
-        } catch (e) {
-          console.error('Failed to auto-sync to cloud:', e);
-          // Don't fail the whole save operation if cloud sync fails
-        }
-      }
+      // Auto-sync to cloud is now handled automatically by saveSettingsWithQueue
 
       // Invalidate offline mode cache if setting changed
       if (patch.dev_force_offline_mode !== undefined) {
