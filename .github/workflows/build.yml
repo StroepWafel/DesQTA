@@ -2,9 +2,9 @@ name: Build DesQTA
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   build-desktop:
@@ -31,6 +31,9 @@ jobs:
         run: npm i
 
       - name: Build desktop app
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri build
 
       - name: Upload desktop build artifacts
@@ -41,7 +44,7 @@ jobs:
 
   build-android:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -84,7 +87,7 @@ jobs:
           echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
           echo "GRADLE_OPTS=-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" >> $GITHUB_ENV
           echo "PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_NDK_HOME" >> $GITHUB_ENV
-          
+
           # Debug: Print environment variables
           echo "ANDROID_HOME: $ANDROID_HOME"
           echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
@@ -114,11 +117,11 @@ jobs:
       - name: Fix Gradle Java home
         run: |
           echo "Fixing Gradle Java home for Linux..."
-          
+
           # Check if gradle.properties exists and show current content
           echo "Current gradle.properties content:"
           cat src-tauri/gen/android/gradle.properties || echo "gradle.properties not found"
-          
+
           # Create gradle.properties with all necessary properties
           cat > src-tauri/gen/android/gradle.properties << EOF
           org.gradle.java.home=$JAVA_HOME
@@ -129,14 +132,14 @@ jobs:
           org.gradle.parallel=true
           org.gradle.configureondemand=true
           EOF
-          
+
           # Also check and fix gradle-wrapper.properties if needed
           echo "Current gradle-wrapper.properties content:"
           cat src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties || echo "gradle-wrapper.properties not found"
-          
+
           echo "Fixed gradle.properties:"
           cat src-tauri/gen/android/gradle.properties
-          
+
           echo "JAVA_HOME value: $JAVA_HOME"
 
       - name: Build Android APK
@@ -154,4 +157,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-build-outputs
-          path: src-tauri/gen/android/app/build/outputs.zip 
+          path: src-tauri/gen/android/app/build/outputs.zip
