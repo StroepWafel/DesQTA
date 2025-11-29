@@ -1,9 +1,9 @@
+use super::netgrab;
+use super::netgrab::RequestMethod;
+use crate::logger;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use crate::logger;
-use super::netgrab;
-use super::netgrab::RequestMethod;
 
 // --- Struct Definitions ---
 
@@ -50,10 +50,10 @@ pub struct Lesson {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TermSchedule {
-    pub t: i32, // Term number
-    pub w: i32, // Week number
+    pub t: i32,         // Term number
+    pub w: i32,         // Week number
     pub l: Vec<Lesson>, // Lessons
-    pub n: i32, // Index
+    pub n: i32,         // Index
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -93,13 +93,13 @@ pub struct WeeklyLessonContent {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CoursePayload {
-    pub c: String, // Course code
-    pub cf: Vec<FileItem>, // Course files
-    pub t: String, // Title
-    pub im: Option<String>, // Image UUID
-    pub d: Vec<TermSchedule>, // Schedule
-    pub u: Option<String>, // Unique ID
-    pub document: Option<String>, // JSON string for main content
+    pub c: String,                        // Course code
+    pub cf: Vec<FileItem>,                // Course files
+    pub t: String,                        // Title
+    pub im: Option<String>,               // Image UUID
+    pub d: Vec<TermSchedule>,             // Schedule
+    pub u: Option<String>,                // Unique ID
+    pub document: Option<String>,         // JSON string for main content
     pub w: Vec<Vec<WeeklyLessonContent>>, // Weekly lesson content
 }
 
@@ -167,7 +167,10 @@ pub async fn get_courses_subjects() -> Result<Vec<Folder>, String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -190,7 +193,7 @@ pub async fn get_courses_subjects() -> Result<Vec<Folder>, String> {
     };
 
     let payload = data_value.get("payload").ok_or("No payload in response")?;
-    
+
     let folders: Vec<Folder> = serde_json::from_value(payload.clone())
         .map_err(|e| format!("Failed to deserialize folders: {}", e))?;
 
@@ -204,7 +207,10 @@ pub async fn get_course_content(programme: i32, metaclass: i32) -> Result<Course
             logger::LogLevel::INFO,
             "courses",
             "get_course_content",
-            &format!("Fetching course content for p:{} m:{}", programme, metaclass),
+            &format!(
+                "Fetching course content for p:{} m:{}",
+                programme, metaclass
+            ),
             json!({ "programme": programme, "metaclass": metaclass }),
         );
     }
@@ -219,7 +225,10 @@ pub async fn get_course_content(programme: i32, metaclass: i32) -> Result<Course
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -229,9 +238,9 @@ pub async fn get_course_content(programme: i32, metaclass: i32) -> Result<Course
     )
     .await?;
 
-    let data_value: Value = serde_json::from_str(&response)
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
-    
+    let data_value: Value =
+        serde_json::from_str(&response).map_err(|e| format!("Failed to parse response: {}", e))?;
+
     let payload = data_value.get("payload").ok_or("No payload in response")?;
 
     let course_payload: CoursePayload = serde_json::from_value(payload.clone())
@@ -239,4 +248,3 @@ pub async fn get_course_content(programme: i32, metaclass: i32) -> Result<Course
 
     Ok(course_payload)
 }
-

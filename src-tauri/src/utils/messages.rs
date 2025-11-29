@@ -1,9 +1,9 @@
+use super::netgrab;
+use super::netgrab::RequestMethod;
+use crate::logger;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use crate::logger;
-use super::netgrab;
-use super::netgrab::RequestMethod;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Message {
@@ -23,14 +23,29 @@ pub struct Message {
 
 fn parse_message_json(msg: &Value, folder_label: &str) -> Option<Message> {
     let id = msg.get("id")?.as_i64()?;
-    let subject = msg.get("subject").and_then(|v| v.as_str()).unwrap_or("(No Subject)").to_string();
-    let sender = msg.get("sender").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string();
-    let sender_photo = msg.get("sender_photo").and_then(|v| v.as_str()).map(|s| s.to_string());
-    
+    let subject = msg
+        .get("subject")
+        .and_then(|v| v.as_str())
+        .unwrap_or("(No Subject)")
+        .to_string();
+    let sender = msg
+        .get("sender")
+        .and_then(|v| v.as_str())
+        .unwrap_or("Unknown")
+        .to_string();
+    let sender_photo = msg
+        .get("sender_photo")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
     let participants = msg.get("participants").and_then(|v| v.as_array());
     let to = if let Some(parts) = participants {
         if let Some(first) = parts.first() {
-            first.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string()
+            first
+                .get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string()
         } else {
             "".to_string()
         }
@@ -38,15 +53,26 @@ fn parse_message_json(msg: &Value, folder_label: &str) -> Option<Message> {
         "".to_string()
     };
 
-    let attachments = msg.get("attachments").and_then(|v| v.as_array()).map(|a| !a.is_empty()).unwrap_or(false);
-    let preview = format!("{}{}", subject, if attachments { " (Attachment)" } else { "" });
-    
+    let attachments = msg
+        .get("attachments")
+        .and_then(|v| v.as_array())
+        .map(|a| !a.is_empty())
+        .unwrap_or(false);
+    let preview = format!(
+        "{}{}",
+        subject,
+        if attachments { " (Attachment)" } else { "" }
+    );
+
     let date_raw = msg.get("date").and_then(|v| v.as_str()).unwrap_or("");
     // Format: "2023-10-27T10:30:00" -> "2023-10-27 10:30"
     let date = date_raw.replace("T", " ").chars().take(16).collect();
 
     let read = msg.get("read").and_then(|v| v.as_bool()).unwrap_or(true); // Default to read if missing
-    let starred = msg.get("starred").and_then(|v| v.as_bool()).unwrap_or(false);
+    let starred = msg
+        .get("starred")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
 
     // Capitalize folder label for display
     let folder_display = if folder_label.len() > 0 {
@@ -75,7 +101,10 @@ fn parse_message_json(msg: &Value, folder_label: &str) -> Option<Message> {
 }
 
 #[tauri::command]
-pub async fn fetch_messages(folder: String, rss_url: Option<String>) -> Result<Vec<Message>, String> {
+pub async fn fetch_messages(
+    folder: String,
+    rss_url: Option<String>,
+) -> Result<Vec<Message>, String> {
     if let Some(logger) = logger::get_logger() {
         let _ = logger.log(
             logger::LogLevel::INFO,
@@ -93,7 +122,7 @@ pub async fn fetch_messages(folder: String, rss_url: Option<String>) -> Result<V
         let outbox_future = fetch_seqta_messages("outbox", Some("Sent"));
 
         let (sent_res, outbox_res) = tokio::join!(sent_future, outbox_future);
-        
+
         let mut messages = Vec::new();
         if let Ok(sent) = sent_res {
             messages.extend(sent);
@@ -104,18 +133,19 @@ pub async fn fetch_messages(folder: String, rss_url: Option<String>) -> Result<V
 
         // Sort by date descending
         messages.sort_by(|a, b| b.date.cmp(&a.date));
-        
+
         Ok(messages)
     } else if folder.starts_with("rss-") {
         // Handle RSS feeds
         // For now, if rss_url is provided or embedded in folder name, fetch it
-        // The frontend passes `rssname` as `rss_url` (which is actually the name/title), 
+        // The frontend passes `rssname` as `rss_url` (which is actually the name/title),
         // and `folder` as the ID e.g., "rss-http://..."
-        
+
         let url = folder.trim_start_matches("rss-");
         match netgrab::get_rss_feed(url).await {
             Ok(json_val) => {
-                let channel_title = json_val.get("channel")
+                let channel_title = json_val
+                    .get("channel")
                     .and_then(|c| c.get("title"))
                     .and_then(|t| t.get("text").or(Some(t)))
                     .and_then(|t| t.as_str())
@@ -123,14 +153,30 @@ pub async fn fetch_messages(folder: String, rss_url: Option<String>) -> Result<V
 
                 let items = json_val.get("feeds").and_then(|v| v.as_array());
                 let mut messages = Vec::new();
-                
+
                 if let Some(items) = items {
                     for (i, item) in items.iter().enumerate() {
-                        let title = item.get("title").and_then(|t| t.get("text").or(Some(t))).and_then(|v| v.as_str()).unwrap_or("No Title");
-                        let link = item.get("link").and_then(|t| t.get("text").or(Some(t))).and_then(|v| v.as_str()).unwrap_or("");
-                        let description = item.get("description").and_then(|t| t.get("text").or(Some(t))).and_then(|v| v.as_str()).unwrap_or("No description");
-                        let pub_date = item.get("pubDate").and_then(|t| t.get("text").or(Some(t))).and_then(|v| v.as_str()).unwrap_or("");
-                        
+                        let title = item
+                            .get("title")
+                            .and_then(|t| t.get("text").or(Some(t)))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("No Title");
+                        let link = item
+                            .get("link")
+                            .and_then(|t| t.get("text").or(Some(t)))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+                        let description = item
+                            .get("description")
+                            .and_then(|t| t.get("text").or(Some(t)))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("No description");
+                        let pub_date = item
+                            .get("pubDate")
+                            .and_then(|t| t.get("text").or(Some(t)))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+
                         // Try to parse date, otherwise use raw
                         // RSS dates are usually RFC2822: "Tue, 10 Jun 2003 04:00:00 GMT"
                         // We want "YYYY-MM-DD HH:mm:ss" for sorting
@@ -139,7 +185,10 @@ pub async fn fetch_messages(folder: String, rss_url: Option<String>) -> Result<V
                             Err(_) => pub_date.to_string(), // Fallback
                         };
 
-                        let body = format!(r#"<a href="{}" target="_blank">View the RSS feed link.</a><br><br>{}"#, link, description);
+                        let body = format!(
+                            r#"<a href="{}" target="_blank">View the RSS feed link.</a><br><br>{}"#,
+                            link, description
+                        );
 
                         messages.push(Message {
                             id: (i as i64) + 1000000, // Fake ID
@@ -159,7 +208,7 @@ pub async fn fetch_messages(folder: String, rss_url: Option<String>) -> Result<V
                 // Sort by date descending
                 messages.sort_by(|a, b| b.date.cmp(&a.date));
                 Ok(messages)
-            },
+            }
             Err(e) => Err(format!("Failed to fetch RSS feed: {}", e)),
         }
     } else {
@@ -169,7 +218,10 @@ pub async fn fetch_messages(folder: String, rss_url: Option<String>) -> Result<V
     }
 }
 
-async fn fetch_seqta_messages(label: &str, folder_override: Option<&str>) -> Result<Vec<Message>, String> {
+async fn fetch_seqta_messages(
+    label: &str,
+    folder_override: Option<&str>,
+) -> Result<Vec<Message>, String> {
     let body = json!({
         "searchValue": "",
         "sortBy": "date",
@@ -186,7 +238,10 @@ async fn fetch_seqta_messages(label: &str, folder_override: Option<&str>) -> Res
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -196,13 +251,17 @@ async fn fetch_seqta_messages(label: &str, folder_override: Option<&str>) -> Res
     )
     .await?;
 
-    let data: Value = serde_json::from_str(&response)
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
+    let data: Value =
+        serde_json::from_str(&response).map_err(|e| format!("Failed to parse response: {}", e))?;
 
     let mut messages = Vec::new();
     let folder_name = folder_override.unwrap_or(label);
 
-    if let Some(msgs_array) = data.get("payload").and_then(|p| p.get("messages")).and_then(|m| m.as_array()) {
+    if let Some(msgs_array) = data
+        .get("payload")
+        .and_then(|p| p.get("messages"))
+        .and_then(|m| m.as_array())
+    {
         for msg_val in msgs_array {
             if let Some(msg) = parse_message_json(msg_val, folder_name) {
                 messages.push(msg);
@@ -225,7 +284,10 @@ pub async fn fetch_message_content(id: i64) -> Result<String, String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -235,10 +297,11 @@ pub async fn fetch_message_content(id: i64) -> Result<String, String> {
     )
     .await?;
 
-    let data: Value = serde_json::from_str(&response)
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
+    let data: Value =
+        serde_json::from_str(&response).map_err(|e| format!("Failed to parse response: {}", e))?;
 
-    let content = data.get("payload")
+    let content = data
+        .get("payload")
         .and_then(|p| p.get("contents"))
         .and_then(|c| c.as_str())
         .unwrap_or("No content")
@@ -260,14 +323,18 @@ pub async fn star_messages(items: Vec<i64>, star: bool) -> Result<(), String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
         None,
         false,
         false,
-    ).await?;
+    )
+    .await?;
 
     Ok(())
 }
@@ -285,14 +352,18 @@ pub async fn delete_messages(items: Vec<i64>) -> Result<(), String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
         None,
         false,
         false,
-    ).await?;
+    )
+    .await?;
 
     Ok(())
 }
@@ -310,14 +381,18 @@ pub async fn restore_messages(items: Vec<i64>) -> Result<(), String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
         None,
         false,
         false,
-    ).await?;
+    )
+    .await?;
 
     Ok(())
 }

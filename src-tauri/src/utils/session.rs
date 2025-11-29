@@ -1,17 +1,17 @@
+use crate::logger;
+use base64::{engine::general_purpose, Engine as _};
+use ring::{
+    aead::{Aad, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_256_GCM},
+    error::Unspecified,
+    rand::{SecureRandom, SystemRandom},
+};
 use serde::{Deserialize, Serialize};
 use std::{
     fs,
     io::{self, Read, Write},
     path::PathBuf,
 };
-use crate::logger;
-use ring::{
-    aead::{Aad, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_256_GCM},
-    error::Unspecified,
-    rand::{SecureRandom, SystemRandom},
-};
 use zeroize::Zeroize;
-use base64::{Engine as _, engine::general_purpose};
 
 /// Custom nonce sequence for AES-GCM
 struct CounterNonceSequence(u32);
@@ -39,7 +39,8 @@ impl SessionEncryption {
         match entry.get_password() {
             Ok(key_b64) => {
                 // Decode from base64
-                general_purpose::STANDARD.decode(&key_b64)
+                general_purpose::STANDARD
+                    .decode(&key_b64)
                     .map_err(|e| format!("Failed to decode encryption key: {}", e))
             }
             Err(_) => {
@@ -172,7 +173,7 @@ impl Session {
     /// Load from disk with decryption (desktop) or plain JSON (mobile); returns empty/default if none.
     pub fn load() -> Self {
         let path = session_file();
-        
+
         #[cfg(any(target_os = "android", target_os = "ios"))]
         {
             // On mobile platforms, load plain JSON
@@ -182,7 +183,7 @@ impl Session {
                     "session",
                     "load",
                     "Loading plain JSON session from disk",
-                    serde_json::json!({})
+                    serde_json::json!({}),
                 );
             }
 
@@ -193,14 +194,14 @@ impl Session {
                         if let Ok(sess) = serde_json::from_str::<Session>(&contents) {
                             // Clear sensitive data from memory
                             contents.zeroize();
-                            
+
                             if let Some(logger) = logger::get_logger() {
                                 let _ = logger.log(
                                     logger::LogLevel::DEBUG,
                                     "session",
                                     "load",
                                     "Plain JSON session loaded successfully",
-                                    serde_json::json!({"has_base_url": !sess.base_url.is_empty()})
+                                    serde_json::json!({"has_base_url": !sess.base_url.is_empty()}),
                                 );
                             }
                             return sess;
@@ -219,7 +220,7 @@ impl Session {
                     "session",
                     "load",
                     "Loading encrypted session from disk",
-                    serde_json::json!({})
+                    serde_json::json!({}),
                 );
             }
 
@@ -231,7 +232,7 @@ impl Session {
                             if let Ok(sess) = serde_json::from_str::<Session>(&json_str) {
                                 // Clear sensitive data from memory
                                 json_str.zeroize();
-                                
+
                                 if let Some(logger) = logger::get_logger() {
                                     let _ = logger.log(
                                         logger::LogLevel::DEBUG,
@@ -266,7 +267,7 @@ impl Session {
                                     "session",
                                     "load",
                                     "Migrating old unencrypted session to encrypted format",
-                                    serde_json::json!({})
+                                    serde_json::json!({}),
                                 );
                             }
 
@@ -292,7 +293,7 @@ impl Session {
                 "session",
                 "load",
                 "No existing session found, creating default",
-                serde_json::json!({})
+                serde_json::json!({}),
             );
         }
 
@@ -306,7 +307,7 @@ impl Session {
     /// Persist to disk with encryption (desktop) or plain JSON (mobile).
     pub fn save(&self) -> io::Result<()> {
         let path = session_file();
-        
+
         #[cfg(any(target_os = "android", target_os = "ios"))]
         {
             // On mobile platforms, save as plain JSON
@@ -321,7 +322,7 @@ impl Session {
                     "session",
                     "save",
                     "Session saved as plain JSON",
-                    serde_json::json!({})
+                    serde_json::json!({}),
                 );
             }
         }
@@ -350,7 +351,7 @@ impl Session {
                     "session",
                     "save",
                     "Session saved with encryption",
-                    serde_json::json!({})
+                    serde_json::json!({}),
                 );
             }
         }
@@ -391,7 +392,7 @@ impl Session {
                         "session",
                         "clear_file",
                         "Failed to clear encryption key from keychain",
-                        serde_json::json!({"error": e})
+                        serde_json::json!({"error": e}),
                     );
                 }
             }
@@ -402,7 +403,7 @@ impl Session {
                     "session",
                     "clear_file",
                     "Session cleared and encryption key removed",
-                    serde_json::json!({})
+                    serde_json::json!({}),
                 );
             }
         }
@@ -415,7 +416,7 @@ impl Session {
                     "session",
                     "clear_file",
                     "Session cleared",
-                    serde_json::json!({})
+                    serde_json::json!({}),
                 );
             }
         }

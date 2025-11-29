@@ -1,8 +1,8 @@
+use crate::sanitization;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::command;
-use crate::sanitization;
 
 #[cfg(not(target_os = "android"))]
 use dirs_next;
@@ -119,31 +119,33 @@ fn get_search_data_path() -> PathBuf {
 #[command]
 pub fn get_global_search_data() -> Result<GlobalSearchData, String> {
     let path = get_search_data_path();
-    
+
     if !path.exists() {
         return Ok(GlobalSearchData::default());
     }
-    
+
     let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let data: GlobalSearchData = serde_json::from_str(&content)
-        .unwrap_or_else(|_| GlobalSearchData::default());
-    
+    let data: GlobalSearchData =
+        serde_json::from_str(&content).unwrap_or_else(|_| GlobalSearchData::default());
+
     Ok(data)
 }
 
 #[command]
 pub fn save_global_search_data(mut data: GlobalSearchData) -> Result<(), String> {
     let path = get_search_data_path();
-    
+
     // Sanitize search history
-    data.search_history = data.search_history
+    data.search_history = data
+        .search_history
         .into_iter()
         .map(|query| sanitization::sanitize_search_query(&query))
         .filter(|query| !query.is_empty())
         .collect();
-    
+
     // Sanitize recent items
-    data.recent_items = data.recent_items
+    data.recent_items = data
+        .recent_items
         .into_iter()
         .map(|mut item| {
             item.name = sanitization::sanitize_text(&item.name);
@@ -151,15 +153,15 @@ pub fn save_global_search_data(mut data: GlobalSearchData) -> Result<(), String>
             item
         })
         .collect();
-    
+
     // Ensure the directory exists
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    
+
     let json = serde_json::to_string_pretty(&data).map_err(|e| e.to_string())?;
     fs::write(&path, json).map_err(|e| e.to_string())?;
-    
+
     Ok(())
 }
 
@@ -182,13 +184,13 @@ pub fn clear_recent_items() -> Result<(), String> {
 #[command]
 pub fn add_custom_shortcut(shortcut: SearchItem) -> Result<(), String> {
     let mut data = get_global_search_data()?;
-    
+
     // Remove existing shortcut with same id if it exists
     data.custom_shortcuts.retain(|s| s.id != shortcut.id);
-    
+
     // Add new shortcut
     data.custom_shortcuts.push(shortcut);
-    
+
     save_global_search_data(data)?;
     Ok(())
 }
@@ -218,22 +220,22 @@ pub fn get_search_analytics() -> Result<SearchStats, String> {
 #[command]
 pub fn increment_search_usage(item_id: String, category: String) -> Result<(), String> {
     let mut data = get_global_search_data()?;
-    
+
     // Update search stats
     data.search_stats.total_searches += 1;
     data.search_stats.last_search_time = Some(chrono::Utc::now().to_rfc3339());
-    
+
     // Update most used categories
     if !data.search_stats.most_used_categories.contains(&category) {
         data.search_stats.most_used_categories.push(category);
     }
-    
+
     // Update recent items usage
     if let Some(item) = data.recent_items.iter_mut().find(|i| i.id == item_id) {
         item.use_count = Some(item.use_count.unwrap_or(0) + 1);
         item.last_used = Some(chrono::Utc::now().to_rfc3339());
     }
-    
+
     save_global_search_data(data)?;
     Ok(())
 }
@@ -246,9 +248,9 @@ pub fn export_search_data() -> Result<String, String> {
 
 #[command]
 pub fn import_search_data(json_data: String) -> Result<(), String> {
-    let data: GlobalSearchData = serde_json::from_str(&json_data)
-        .map_err(|e| format!("Invalid JSON format: {}", e))?;
-    
+    let data: GlobalSearchData =
+        serde_json::from_str(&json_data).map_err(|e| format!("Invalid JSON format: {}", e))?;
+
     save_global_search_data(data)?;
     Ok(())
 }
@@ -390,12 +392,8 @@ pub async fn zoom_reset(_window: tauri::Window) -> Result<(), String> {
 #[command]
 pub async fn clear_cache() -> Result<(), String> {
     // Clear application cache
-    let cache_dirs = [
-        "cache",
-        "temp",
-        "logs"
-    ];
-    
+    let cache_dirs = ["cache", "temp", "logs"];
+
     for cache_dir in &cache_dirs {
         let cache_path = get_cache_path(cache_dir);
         if cache_path.exists() {
@@ -404,13 +402,12 @@ pub async fn clear_cache() -> Result<(), String> {
                     format!("Failed to remove cache directory {}: {}", cache_dir, e)
                 })?;
             } else {
-                fs::remove_file(&cache_path).map_err(|e| {
-                    format!("Failed to remove cache file {}: {}", cache_dir, e)
-                })?;
+                fs::remove_file(&cache_path)
+                    .map_err(|e| format!("Failed to remove cache file {}: {}", cache_dir, e))?;
             }
         }
     }
-    
+
     Ok(())
 }
 
@@ -504,7 +501,7 @@ pub async fn open_file_explorer(path: Option<String>) -> Result<(), String> {
                 .to_string_lossy()
                 .to_string()
         });
-        
+
         #[cfg(target_os = "windows")]
         {
             std::process::Command::new("explorer")
@@ -512,7 +509,7 @@ pub async fn open_file_explorer(path: Option<String>) -> Result<(), String> {
                 .spawn()
                 .map_err(|e| e.to_string())?;
         }
-        
+
         #[cfg(target_os = "macos")]
         {
             std::process::Command::new("open")
@@ -520,7 +517,7 @@ pub async fn open_file_explorer(path: Option<String>) -> Result<(), String> {
                 .spawn()
                 .map_err(|e| e.to_string())?;
         }
-        
+
         #[cfg(target_os = "linux")]
         {
             std::process::Command::new("xdg-open")
@@ -528,7 +525,7 @@ pub async fn open_file_explorer(path: Option<String>) -> Result<(), String> {
                 .spawn()
                 .map_err(|e| e.to_string())?;
         }
-        
+
         Ok(())
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -542,4 +539,4 @@ pub async fn get_app_data_dir() -> Result<String, String> {
     let path = get_search_data_path();
     let parent = path.parent().unwrap_or(&path);
     Ok(parent.to_string_lossy().to_string())
-} 
+}

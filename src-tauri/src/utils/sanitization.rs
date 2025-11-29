@@ -1,6 +1,6 @@
+use once_cell::sync::Lazy;
 /// Input sanitization utilities for the Rust backend
 use regex::Regex;
-use once_cell::sync::Lazy;
 
 /// Maximum allowed length for search queries
 const MAX_SEARCH_QUERY_LENGTH: usize = 500;
@@ -67,9 +67,7 @@ pub fn sanitize_text(text: &str) -> String {
     sanitized = EVENT_HANDLER.replace_all(&sanitized, "").to_string();
 
     // Remove dangerous characters
-    sanitized = sanitized
-        .replace('<', "")
-        .replace('>', "");
+    sanitized = sanitized.replace('<', "").replace('>', "");
 
     sanitized
 }
@@ -93,10 +91,7 @@ pub fn sanitize_filename(filename: &str) -> String {
     }
 
     // Remove control characters (ASCII 0-31)
-    sanitized = sanitized
-        .chars()
-        .filter(|&c| c as u32 >= 32)
-        .collect();
+    sanitized = sanitized.chars().filter(|&c| c as u32 >= 32).collect();
 
     // Remove leading dots
     sanitized = sanitized.trim_start_matches('.').to_string();
@@ -137,7 +132,10 @@ pub fn validate_url(url: &str) -> Result<String, String> {
             // Only allow http, https, and mailto protocols
             let allowed_protocols = ["http", "https", "mailto"];
             if !allowed_protocols.contains(&parsed_url.scheme()) {
-                return Err(format!("Blocked dangerous URL protocol: {}", parsed_url.scheme()));
+                return Err(format!(
+                    "Blocked dangerous URL protocol: {}",
+                    parsed_url.scheme()
+                ));
             }
 
             Ok(parsed_url.to_string())
@@ -153,11 +151,7 @@ pub fn validate_file_extension(filename: &str, allowed_extensions: &[&str]) -> R
         return Err("Empty filename".to_string());
     }
 
-    let extension = filename
-        .split('.')
-        .last()
-        .unwrap_or("")
-        .to_lowercase();
+    let extension = filename.split('.').last().unwrap_or("").to_lowercase();
 
     if !allowed_extensions.iter().any(|&ext| ext == extension) {
         return Err(format!("File extension '{}' not allowed", extension));
@@ -170,7 +164,7 @@ pub fn validate_file_extension(filename: &str, allowed_extensions: &[&str]) -> R
 #[allow(dead_code)]
 pub fn validate_file_size(size_bytes: usize, max_size_mb: usize) -> Result<(), String> {
     let max_bytes = max_size_mb * 1024 * 1024;
-    
+
     if size_bytes > max_bytes {
         return Err(format!(
             "File size ({} bytes) exceeds maximum allowed size ({} MB)",
@@ -195,7 +189,7 @@ pub fn escape_html(text: &str) -> String {
 #[allow(dead_code)]
 pub fn sanitize_json_key(key: &str) -> Result<String, String> {
     let dangerous_keys = ["__proto__", "constructor", "prototype"];
-    
+
     if dangerous_keys.contains(&key.to_lowercase().as_str()) {
         return Err(format!("Dangerous JSON key blocked: {}", key));
     }
@@ -209,7 +203,10 @@ mod tests {
 
     #[test]
     fn test_sanitize_search_query() {
-        assert_eq!(sanitize_search_query("<script>alert('xss')</script>"), "alert('xss')");
+        assert_eq!(
+            sanitize_search_query("<script>alert('xss')</script>"),
+            "alert('xss')"
+        );
         assert_eq!(sanitize_search_query("javascript:alert(1)"), "alert(1)");
         assert_eq!(sanitize_search_query("onclick=\"alert(1)\""), "");
         assert_eq!(sanitize_search_query("  test query  "), "test query");
@@ -247,8 +244,10 @@ mod tests {
 
     #[test]
     fn test_escape_html() {
-        assert_eq!(escape_html("<div>test</div>"), "&lt;div&gt;test&lt;/div&gt;");
+        assert_eq!(
+            escape_html("<div>test</div>"),
+            "&lt;div&gt;test&lt;/div&gt;"
+        );
         assert_eq!(escape_html("\"quoted\""), "&quot;quoted&quot;");
     }
 }
-

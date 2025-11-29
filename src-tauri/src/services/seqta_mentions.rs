@@ -1,12 +1,12 @@
+use crate::netgrab;
+use crate::netgrab::RequestMethod;
+use anyhow::{anyhow, Result};
+use chrono::Datelike;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
-use anyhow::{Result, anyhow};
-use chrono::Datelike;
-use crate::netgrab;
-use crate::netgrab::RequestMethod;
 
 /// Static empty array slice for use as default value
 static EMPTY_ARRAY: &[Value] = &[];
@@ -91,10 +91,13 @@ fn get_cached(key: &str) -> Option<Vec<SeqtaMentionItem>> {
 fn set_cache(key: String, data: Vec<SeqtaMentionItem>) {
     init_caches();
     let mut cache = MENTION_CACHE.get().unwrap().lock().unwrap();
-    cache.insert(key, CacheEntry {
-        data,
-        timestamp: current_timestamp_ms(),
-    });
+    cache.insert(
+        key,
+        CacheEntry {
+            data,
+            timestamp: current_timestamp_ms(),
+        },
+    );
 }
 
 /// Format date for subtitle
@@ -103,22 +106,22 @@ fn format_date(date_str: &str) -> String {
     date_str.to_string()
 }
 
-
 /// Fetch assignments from SEQTA
 async fn fetch_assignments(
     query: &str,
     category_filter: Option<&str>,
 ) -> Result<Vec<SeqtaMentionItem>> {
     let student_id = 69; // TODO: Get from session
-    
+
     let body = json!({
         "student": student_id
     });
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json; charset=utf-8".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([(
+        "Content-Type".to_string(),
+        "application/json; charset=utf-8".to_string(),
+    )]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/assessment/list/upcoming?",
         RequestMethod::POST,
@@ -127,22 +130,24 @@ async fn fetch_assignments(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch assignments: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch assignments: {}", e))?;
+
     let json_response: Value = serde_json::from_str(&response)
         .map_err(|e| anyhow!("Failed to parse assignments response: {}", e))?;
-    
+
     let assignments = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
+
     let limit = if category_filter == Some("assignment") || category_filter == Some("assessment") {
         100
     } else {
         10
     };
-    
+
     let query_lower = query.to_lowercase();
     let filtered: Vec<SeqtaMentionItem> = assignments
         .iter()
@@ -151,7 +156,8 @@ async fn fetch_assignments(
                 return true;
             }
             let title = a["title"].as_str().unwrap_or("").to_lowercase();
-            let subject = a["subject"].as_str()
+            let subject = a["subject"]
+                .as_str()
                 .or_else(|| a["code"].as_str())
                 .unwrap_or("")
                 .to_lowercase();
@@ -160,12 +166,16 @@ async fn fetch_assignments(
         .take(limit)
         .map(|assignment| {
             let id_val = assignment["id"].as_i64().unwrap_or(0);
-            let title = assignment["title"].as_str().unwrap_or("Assignment").to_string();
-            let subject = assignment["subject"].as_str()
+            let title = assignment["title"]
+                .as_str()
+                .unwrap_or("Assignment")
+                .to_string();
+            let subject = assignment["subject"]
+                .as_str()
                 .or_else(|| assignment["code"].as_str())
                 .unwrap_or("Unknown");
             let due = assignment["due"].as_str().unwrap_or("");
-            
+
             SeqtaMentionItem {
                 id: format!("assignment-{}", id_val),
                 mention_type: MentionType::Assignment,
@@ -183,7 +193,7 @@ async fn fetch_assignments(
             }
         })
         .collect();
-    
+
     Ok(filtered)
 }
 
@@ -193,11 +203,12 @@ async fn fetch_classes(
     category_filter: Option<&str>,
 ) -> Result<Vec<SeqtaMentionItem>> {
     let body = json!({});
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json; charset=utf-8".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([(
+        "Content-Type".to_string(),
+        "application/json; charset=utf-8".to_string(),
+    )]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/subjects?",
         RequestMethod::POST,
@@ -206,16 +217,18 @@ async fn fetch_classes(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch classes: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch classes: {}", e))?;
+
     let json_response: Value = serde_json::from_str(&response)
         .map_err(|e| anyhow!("Failed to parse classes response: {}", e))?;
-    
+
     let folders = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
+
     let all_subjects: Vec<&Value> = folders
         .iter()
         .flat_map(|folder| {
@@ -225,37 +238,43 @@ async fn fetch_classes(
                 .unwrap_or(EMPTY_ARRAY)
         })
         .collect();
-    
-    let limit = if category_filter == Some("class") { 100 } else { 10 };
+
+    let limit = if category_filter == Some("class") {
+        100
+    } else {
+        10
+    };
     let query_lower = query.to_lowercase();
-    
+
     let mut results = Vec::new();
     for subject in all_subjects.iter().take(limit) {
-        let title = subject["title"].as_str()
+        let title = subject["title"]
+            .as_str()
             .or_else(|| subject["code"].as_str())
             .unwrap_or("Unknown");
         let code = subject["code"].as_str().unwrap_or("");
-        
+
         if !query.is_empty() {
-            if !title.to_lowercase().contains(&query_lower) 
-                && !code.to_lowercase().contains(&query_lower) {
+            if !title.to_lowercase().contains(&query_lower)
+                && !code.to_lowercase().contains(&query_lower)
+            {
                 continue;
             }
         }
-        
+
         let programme = subject["programme"].as_i64();
         let metaclass = subject["metaclass"].as_i64();
         let teacher = subject["teacher"].as_str().unwrap_or("Teacher TBA");
-        
+
         // Try to get teacher from timetable (async, but we'll simplify for now)
         let final_teacher = teacher.to_string();
-        
+
         let id = if let (Some(p), Some(m)) = (programme, metaclass) {
             format!("{}-{}", p, m)
         } else {
             format!("class-{}", code)
         };
-        
+
         results.push(SeqtaMentionItem {
             id: id.clone(),
             mention_type: MentionType::Class,
@@ -274,7 +293,7 @@ async fn fetch_classes(
             last_updated: Some(chrono::Utc::now().to_rfc3339()),
         });
     }
-    
+
     Ok(results)
 }
 
@@ -285,13 +304,14 @@ async fn fetch_subjects(
 ) -> Result<Vec<SeqtaMentionItem>> {
     // Subjects are essentially the same as classes, just formatted differently
     let classes = fetch_classes(query, category_filter).await?;
-    
+
     Ok(classes
         .into_iter()
         .map(|mut item| {
             item.id = format!("subject-{}", item.id);
             item.mention_type = MentionType::Subject;
-            item.subtitle = format!("{} • {} • Active", 
+            item.subtitle = format!(
+                "{} • {} • Active",
                 item.data["code"].as_str().unwrap_or(""),
                 item.data["teacher"].as_str().unwrap_or("Teacher TBA")
             );
@@ -306,22 +326,20 @@ async fn fetch_timetable_slots(
     category_filter: Option<&str>,
 ) -> Result<Vec<SeqtaMentionItem>> {
     let student_id = 69; // TODO: Get from session
-    
+
     let start = chrono::Utc::now();
     let end = start + chrono::Duration::days(14);
     let from = start.format("%Y-%m-%d").to_string();
     let until = end.format("%Y-%m-%d").to_string();
-    
+
     let body = json!({
         "from": from,
         "until": until,
         "student": student_id
     });
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/timetable?",
         RequestMethod::POST,
@@ -330,19 +348,25 @@ async fn fetch_timetable_slots(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch timetable: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch timetable: {}", e))?;
+
     let json_response: Value = serde_json::from_str(&response)
         .map_err(|e| anyhow!("Failed to parse timetable response: {}", e))?;
-    
+
     let items = json_response["payload"]["items"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
-    let limit = if category_filter == Some("timetable_slot") { 100 } else { 20 };
+
+    let limit = if category_filter == Some("timetable_slot") {
+        100
+    } else {
+        20
+    };
     let query_lower = query.to_lowercase();
-    
+
     let results: Vec<SeqtaMentionItem> = items
         .iter()
         .filter(|lesson| {
@@ -352,18 +376,19 @@ async fn fetch_timetable_slots(
             let code = lesson["code"].as_str().unwrap_or("").to_lowercase();
             let title = lesson["title"].as_str().unwrap_or("").to_lowercase();
             let desc = lesson["description"].as_str().unwrap_or("").to_lowercase();
-            code.contains(&query_lower) || title.contains(&query_lower) || desc.contains(&query_lower)
+            code.contains(&query_lower)
+                || title.contains(&query_lower)
+                || desc.contains(&query_lower)
         })
         .take(limit)
         .map(|lesson| {
-            let date = lesson["date"].as_str()
-                .or_else(|| {
-                    lesson["from"].as_str()
-                        .and_then(|s| s.split('T').next())
-                })
+            let date = lesson["date"]
+                .as_str()
+                .or_else(|| lesson["from"].as_str().and_then(|s| s.split('T').next()))
                 .unwrap_or("");
-            
-            let from_time = lesson["from"].as_str()
+
+            let from_time = lesson["from"]
+                .as_str()
                 .and_then(|s| {
                     if s.len() >= 5 {
                         Some(s[..5].to_string())
@@ -374,8 +399,9 @@ async fn fetch_timetable_slots(
                     }
                 })
                 .unwrap_or_else(|| "".to_string());
-            
-            let until_time = lesson["until"].as_str()
+
+            let until_time = lesson["until"]
+                .as_str()
                 .and_then(|s| {
                     if s.len() >= 5 {
                         Some(s[..5].to_string())
@@ -386,24 +412,28 @@ async fn fetch_timetable_slots(
                     }
                 })
                 .unwrap_or_else(|| "".to_string());
-            
+
             let day_name = chrono::NaiveDate::parse_from_str(date, "%Y-%m-%d")
                 .ok()
                 .map(|d| d.format("%a").to_string())
                 .unwrap_or_else(|| "".to_string());
-            
+
             let code = lesson["code"].as_str().unwrap_or("");
-            let title = lesson["title"].as_str()
+            let title = lesson["title"]
+                .as_str()
                 .or_else(|| lesson["description"].as_str())
                 .unwrap_or("Lesson");
             let room = lesson["room"].as_str().unwrap_or("TBA");
-            let id_val = lesson["id"].as_i64()
-                .or_else(|| Some(0))
-                .unwrap_or(0);
-            
+            let id_val = lesson["id"].as_i64().or_else(|| Some(0)).unwrap_or(0);
+
             SeqtaMentionItem {
-                id: format!("timetable-slot-{}", 
-                    if id_val > 0 { id_val.to_string() } else { format!("{}-{}", date, from_time) }
+                id: format!(
+                    "timetable-slot-{}",
+                    if id_val > 0 {
+                        id_val.to_string()
+                    } else {
+                        format!("{}-{}", date, from_time)
+                    }
                 ),
                 mention_type: MentionType::TimetableSlot,
                 title: format!("{} {}-{}", code, from_time, until_time),
@@ -426,7 +456,7 @@ async fn fetch_timetable_slots(
             }
         })
         .collect();
-    
+
     Ok(results)
 }
 
@@ -436,15 +466,13 @@ async fn fetch_notices(
     category_filter: Option<&str>,
 ) -> Result<Vec<SeqtaMentionItem>> {
     let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
-    
+
     let body = json!({
         "date": today
     });
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/notices?",
         RequestMethod::POST,
@@ -453,19 +481,25 @@ async fn fetch_notices(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch notices: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch notices: {}", e))?;
+
     let json_response: Value = serde_json::from_str(&response)
         .map_err(|e| anyhow!("Failed to parse notices response: {}", e))?;
-    
+
     let notices = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
-    let limit = if category_filter == Some("notice") { 100 } else { 20 };
+
+    let limit = if category_filter == Some("notice") {
+        100
+    } else {
+        20
+    };
     let query_lower = query.to_lowercase();
-    
+
     let results: Vec<SeqtaMentionItem> = notices
         .iter()
         .enumerate()
@@ -476,7 +510,9 @@ async fn fetch_notices(
             let title = notice["title"].as_str().unwrap_or("").to_lowercase();
             let label = notice["label_title"].as_str().unwrap_or("").to_lowercase();
             let staff = notice["staff"].as_str().unwrap_or("").to_lowercase();
-            title.contains(&query_lower) || label.contains(&query_lower) || staff.contains(&query_lower)
+            title.contains(&query_lower)
+                || label.contains(&query_lower)
+                || staff.contains(&query_lower)
         })
         .take(limit)
         .map(|(index, notice)| {
@@ -484,7 +520,7 @@ async fn fetch_notices(
             let title = notice["title"].as_str().unwrap_or("Notice").to_string();
             let label = notice["label_title"].as_str().unwrap_or("Notice");
             let staff = notice["staff"].as_str().unwrap_or("Staff");
-            
+
             SeqtaMentionItem {
                 id: format!("notice-{}", id_val),
                 mention_type: MentionType::Notice,
@@ -504,7 +540,7 @@ async fn fetch_notices(
             }
         })
         .collect();
-    
+
     Ok(results)
 }
 
@@ -514,14 +550,12 @@ async fn fetch_homework(
     category_filter: Option<&str>,
 ) -> Result<Vec<SeqtaMentionItem>> {
     let body = json!({});
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
     let mut params = HashMap::new();
     params.insert("majhvjju".to_string(), "".to_string());
-    
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/dashlet/summary/homework",
         RequestMethod::POST,
@@ -530,19 +564,25 @@ async fn fetch_homework(
         Some(params),
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch homework: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch homework: {}", e))?;
+
     let json_response: Value = serde_json::from_str(&response)
         .map_err(|e| anyhow!("Failed to parse homework response: {}", e))?;
-    
+
     let homework_items = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(&[]);
-    
-    let limit = if category_filter == Some("homework") { 100 } else { 20 };
+
+    let limit = if category_filter == Some("homework") {
+        100
+    } else {
+        20
+    };
     let query_lower = query.to_lowercase();
-    
+
     let results: Vec<SeqtaMentionItem> = homework_items
         .iter()
         .filter(|homework| {
@@ -555,13 +595,17 @@ async fn fetch_homework(
                 .map(|v| v.as_slice())
                 .unwrap_or(EMPTY_ARRAY);
             let items_match = items.iter().any(|item| {
-                item.as_str().unwrap_or("").to_lowercase().contains(&query_lower)
+                item.as_str()
+                    .unwrap_or("")
+                    .to_lowercase()
+                    .contains(&query_lower)
             });
             title.contains(&query_lower) || items_match
         })
         .take(limit)
         .map(|homework| {
-            let id_val = homework["id"].as_i64()
+            let id_val = homework["id"]
+                .as_i64()
                 .or_else(|| homework["meta"].as_i64())
                 .unwrap_or(0);
             let title = homework["title"].as_str().unwrap_or("Homework").to_string();
@@ -570,12 +614,16 @@ async fn fetch_homework(
                 .map(|v| v.as_slice())
                 .unwrap_or(EMPTY_ARRAY);
             let item_count = items.len();
-            
+
             SeqtaMentionItem {
                 id: format!("homework-{}", id_val),
                 mention_type: MentionType::Homework,
                 title: title.clone(),
-                subtitle: format!("{} {}", item_count, if item_count == 1 { "item" } else { "items" }),
+                subtitle: format!(
+                    "{} {}",
+                    item_count,
+                    if item_count == 1 { "item" } else { "items" }
+                ),
                 data: json!({
                     "id": id_val,
                     "meta": homework["meta"],
@@ -586,23 +634,18 @@ async fn fetch_homework(
             }
         })
         .collect();
-    
+
     Ok(results)
 }
 
 /// Fetch staff/teachers
-async fn fetch_staff(
-    query: &str,
-    category_filter: Option<&str>,
-) -> Result<Vec<SeqtaMentionItem>> {
+async fn fetch_staff(query: &str, category_filter: Option<&str>) -> Result<Vec<SeqtaMentionItem>> {
     let body = json!({
         "mode": "staff"
     });
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/message/people",
         RequestMethod::POST,
@@ -611,23 +654,29 @@ async fn fetch_staff(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch staff: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch staff: {}", e))?;
+
     let json_response: Value = if response.starts_with('{') {
         serde_json::from_str(&response)
             .map_err(|e| anyhow!("Failed to parse staff response: {}", e))?
     } else {
         json!({})
     };
-    
+
     let staff = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
-    let limit = if category_filter == Some("teacher") { 100 } else { 20 };
+
+    let limit = if category_filter == Some("teacher") {
+        100
+    } else {
+        20
+    };
     let query_lower = query.to_lowercase();
-    
+
     let results: Vec<SeqtaMentionItem> = staff
         .iter()
         .filter(|teacher| {
@@ -643,7 +692,7 @@ async fn fetch_staff(
             let id_val = teacher["id"].as_i64().unwrap_or(0);
             let name = teacher["name"].as_str().unwrap_or("Teacher").to_string();
             let email = teacher["email"].as_str().unwrap_or("");
-            
+
             SeqtaMentionItem {
                 id: format!("teacher-{}", id_val),
                 mention_type: MentionType::Teacher,
@@ -658,7 +707,7 @@ async fn fetch_staff(
             }
         })
         .collect();
-    
+
     Ok(results)
 }
 
@@ -677,22 +726,30 @@ fn sort_by_relevance(items: &mut [SeqtaMentionItem], query: &str) {
     if query.is_empty() {
         return;
     }
-    
+
     let query_lower = query.to_lowercase();
-    
+
     items.sort_by(|a, b| {
         // Exact match priority
         let a_exact = a.title.to_lowercase() == query_lower;
         let b_exact = b.title.to_lowercase() == query_lower;
-        if a_exact && !b_exact { return std::cmp::Ordering::Less; }
-        if !a_exact && b_exact { return std::cmp::Ordering::Greater; }
-        
+        if a_exact && !b_exact {
+            return std::cmp::Ordering::Less;
+        }
+        if !a_exact && b_exact {
+            return std::cmp::Ordering::Greater;
+        }
+
         // Starts with priority
         let a_starts = a.title.to_lowercase().starts_with(&query_lower);
         let b_starts = b.title.to_lowercase().starts_with(&query_lower);
-        if a_starts && !b_starts { return std::cmp::Ordering::Less; }
-        if !a_starts && b_starts { return std::cmp::Ordering::Greater; }
-        
+        if a_starts && !b_starts {
+            return std::cmp::Ordering::Less;
+        }
+        if !a_starts && b_starts {
+            return std::cmp::Ordering::Greater;
+        }
+
         // Type priority
         let type_priority = |t: &MentionType| -> i32 {
             match t {
@@ -708,7 +765,7 @@ fn sort_by_relevance(items: &mut [SeqtaMentionItem], query: &str) {
                 _ => 99,
             }
         };
-        
+
         type_priority(&a.mention_type).cmp(&type_priority(&b.mention_type))
     });
 }
@@ -718,13 +775,17 @@ pub async fn search_mentions(
     query: String,
     category_filter: Option<String>,
 ) -> Result<Vec<SeqtaMentionItem>> {
-    let cache_key = format!("search_{}_{}", query, category_filter.as_deref().unwrap_or("all"));
-    
+    let cache_key = format!(
+        "search_{}_{}",
+        query,
+        category_filter.as_deref().unwrap_or("all")
+    );
+
     // Check cache
     if let Some(cached) = get_cached(&cache_key) {
         return Ok(cached);
     }
-    
+
     // Fetch from all sources in parallel
     let (assignments, classes, subjects, timetables, timetable_slots, notices, homework, staff) = tokio::try_join!(
         fetch_assignments(&query, category_filter.as_deref()),
@@ -736,7 +797,7 @@ pub async fn search_mentions(
         fetch_homework(&query, category_filter.as_deref()),
         fetch_staff(&query, category_filter.as_deref()),
     )?;
-    
+
     // Combine all items
     let mut all_items = Vec::new();
     all_items.extend(assignments);
@@ -747,27 +808,29 @@ pub async fn search_mentions(
     all_items.extend(notices);
     all_items.extend(homework);
     all_items.extend(staff);
-    
+
     // Filter by query if provided
     if !query.trim().is_empty() {
         let query_lower = query.to_lowercase();
         all_items.retain(|item| {
-            item.title.to_lowercase().contains(&query_lower) ||
-            item.subtitle.to_lowercase().contains(&query_lower) ||
-            format!("{:?}", item.mention_type).to_lowercase().contains(&query_lower)
+            item.title.to_lowercase().contains(&query_lower)
+                || item.subtitle.to_lowercase().contains(&query_lower)
+                || format!("{:?}", item.mention_type)
+                    .to_lowercase()
+                    .contains(&query_lower)
         });
     }
-    
+
     // Sort by relevance
     sort_by_relevance(&mut all_items, &query);
-    
+
     // Limit results
     let limit = if category_filter.is_some() { 100 } else { 50 };
     all_items.truncate(limit);
-    
+
     // Cache results
     set_cache(cache_key, all_items.clone());
-    
+
     Ok(all_items)
 }
 
@@ -788,26 +851,33 @@ async fn fetch_assignment_by_id(
     meta: Option<Value>,
 ) -> Result<Option<SeqtaMentionItem>> {
     let student_id = 69; // TODO: Get from session
-    let clean_id = id
-        .replace("assessment-", "")
-        .replace("assignment-", "");
-    
+    let clean_id = id.replace("assessment-", "").replace("assignment-", "");
+
     // Try to get programme/metaclass from meta
-    let programme = meta.as_ref()
+    let programme = meta
+        .as_ref()
         .and_then(|m| m.get("data").and_then(|d| d.get("programme")))
-        .or_else(|| meta.as_ref().and_then(|m| m.get("lookup").and_then(|l| l.get("programme"))))
+        .or_else(|| {
+            meta.as_ref()
+                .and_then(|m| m.get("lookup").and_then(|l| l.get("programme")))
+        })
         .and_then(|v| v.as_i64());
-    let metaclass = meta.as_ref()
+    let metaclass = meta
+        .as_ref()
         .and_then(|m| m.get("data").and_then(|d| d.get("metaclass")))
-        .or_else(|| meta.as_ref().and_then(|m| m.get("lookup").and_then(|l| l.get("metaclass"))))
+        .or_else(|| {
+            meta.as_ref()
+                .and_then(|m| m.get("lookup").and_then(|l| l.get("metaclass")))
+        })
         .and_then(|v| v.as_i64());
-    
+
     // Check upcoming first
     let body = json!({ "student": student_id });
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json; charset=utf-8".to_string())
-    ]);
-    
+    let headers = HashMap::from([(
+        "Content-Type".to_string(),
+        "application/json; charset=utf-8".to_string(),
+    )]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/assessment/list/upcoming?",
         netgrab::RequestMethod::POST,
@@ -816,22 +886,24 @@ async fn fetch_assignment_by_id(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch upcoming assessments: {}", e))?;
-    
-    let json_response: Value = serde_json::from_str(&response)
-        .map_err(|e| anyhow!("Failed to parse response: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch upcoming assessments: {}", e))?;
+
+    let json_response: Value =
+        serde_json::from_str(&response).map_err(|e| anyhow!("Failed to parse response: {}", e))?;
+
     let upcoming = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
+
     let found = upcoming.iter().find(|a| {
         let a_id = a["id"].as_i64().map(|i| i.to_string());
-        a_id.as_deref() == Some(&clean_id) || 
-        a_id.as_deref() == Some(&id.replace("assessment-", "").replace("assignment-", ""))
+        a_id.as_deref() == Some(&clean_id)
+            || a_id.as_deref() == Some(&id.replace("assessment-", "").replace("assignment-", ""))
     });
-    
+
     // If not found, try past assessments
     if found.is_none() && programme.is_some() && metaclass.is_some() {
         let past_body = json!({
@@ -839,7 +911,7 @@ async fn fetch_assignment_by_id(
             "metaclass": metaclass.unwrap(),
             "student": student_id
         });
-        
+
         if let Ok(past_response) = netgrab::fetch_api_data(
             "/seqta/student/assessment/list/past?",
             netgrab::RequestMethod::POST,
@@ -848,20 +920,24 @@ async fn fetch_assignment_by_id(
             None,
             false,
             false,
-        ).await {
+        )
+        .await
+        {
             if let Ok(past_json) = serde_json::from_str::<Value>(&past_response) {
                 if let Some(tasks) = past_json["payload"]["tasks"].as_array() {
                     for task in tasks {
                         let task_id = task["id"].as_i64().map(|i| i.to_string());
                         if task_id.as_deref() == Some(&clean_id) {
                             // Create a SeqtaMentionItem from this task
-                            let due = task["due"].as_str()
+                            let due = task["due"]
+                                .as_str()
                                 .or_else(|| task["dueDate"].as_str())
                                 .unwrap_or("");
-                            let subject = task["subject"].as_str()
+                            let subject = task["subject"]
+                                .as_str()
                                 .or_else(|| task["code"].as_str())
                                 .unwrap_or("");
-                            
+
                             let status = if !due.is_empty() {
                                 if let Ok(due_dt) = chrono::DateTime::parse_from_rfc3339(due) {
                                     if due_dt.with_timezone(&chrono::Utc) > chrono::Utc::now() {
@@ -875,7 +951,7 @@ async fn fetch_assignment_by_id(
                             } else {
                                 task["status"].as_str().unwrap_or("unknown")
                             };
-                            
+
                             return Ok(Some(SeqtaMentionItem {
                                 id: format!("assessment-{}", task["id"].as_i64().unwrap_or(0)),
                                 mention_type: MentionType::Assessment,
@@ -900,7 +976,7 @@ async fn fetch_assignment_by_id(
             }
         }
     }
-    
+
     // If still not found and we have metaclass, try detail endpoint
     if found.is_none() && metaclass.is_some() {
         if let Ok(clean_id_num) = clean_id.parse::<i64>() {
@@ -909,7 +985,7 @@ async fn fetch_assignment_by_id(
                 "student": student_id,
                 "metaclass": metaclass.unwrap()
             });
-            
+
             if let Ok(detail_response) = netgrab::fetch_api_data(
                 "/seqta/student/assessment/get?",
                 netgrab::RequestMethod::POST,
@@ -918,17 +994,21 @@ async fn fetch_assignment_by_id(
                 None,
                 false,
                 false,
-            ).await {
+            )
+            .await
+            {
                 if let Ok(detail_json) = serde_json::from_str::<Value>(&detail_response) {
                     if detail_json["payload"]["id"].is_number() {
                         let payload = detail_json["payload"].clone();
-                        let due = payload["due"].as_str()
+                        let due = payload["due"]
+                            .as_str()
                             .or_else(|| payload["dueDate"].as_str())
                             .unwrap_or("");
-                        let subject = payload["subject"].as_str()
+                        let subject = payload["subject"]
+                            .as_str()
                             .or_else(|| payload["code"].as_str())
                             .unwrap_or("");
-                        
+
                         let status = if !due.is_empty() {
                             if let Ok(due_dt) = chrono::DateTime::parse_from_rfc3339(due) {
                                 if due_dt.with_timezone(&chrono::Utc) > chrono::Utc::now() {
@@ -942,11 +1022,14 @@ async fn fetch_assignment_by_id(
                         } else {
                             payload["status"].as_str().unwrap_or("unknown")
                         };
-                        
+
                         return Ok(Some(SeqtaMentionItem {
                             id: format!("assessment-{}", payload["id"].as_i64().unwrap_or(0)),
                             mention_type: MentionType::Assessment,
-                            title: payload["title"].as_str().unwrap_or("Assessment").to_string(),
+                            title: payload["title"]
+                                .as_str()
+                                .unwrap_or("Assessment")
+                                .to_string(),
                             subtitle: format!("{} • {}", subject, format_date(due)),
                             data: json!({
                                 "id": payload["id"],
@@ -966,29 +1049,45 @@ async fn fetch_assignment_by_id(
             }
         }
     }
-    
+
     if let Some(assignment) = found {
-        let due = assignment["due"].as_str()
+        let due = assignment["due"]
+            .as_str()
             .or_else(|| assignment["dueDate"].as_str())
             .unwrap_or("");
-        let subject = assignment["subject"].as_str()
+        let subject = assignment["subject"]
+            .as_str()
             .or_else(|| assignment["code"].as_str())
             .unwrap_or("");
-        
+
         let due_date = if !due.is_empty() {
             chrono::DateTime::parse_from_rfc3339(due)
                 .ok()
                 .map(|dt| dt.with_timezone(&chrono::Utc))
-                .or_else(|| chrono::NaiveDateTime::parse_from_str(due, "%Y-%m-%dT%H:%M:%S").ok()
-                    .map(|dt| chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(dt, chrono::Utc)))
-                .or_else(|| chrono::NaiveDate::parse_from_str(due, "%Y-%m-%d").ok()
-                    .map(|d| chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
-                        d.and_hms_opt(0, 0, 0).unwrap(),
-                        chrono::Utc)))
+                .or_else(|| {
+                    chrono::NaiveDateTime::parse_from_str(due, "%Y-%m-%dT%H:%M:%S")
+                        .ok()
+                        .map(|dt| {
+                            chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
+                                dt,
+                                chrono::Utc,
+                            )
+                        })
+                })
+                .or_else(|| {
+                    chrono::NaiveDate::parse_from_str(due, "%Y-%m-%d")
+                        .ok()
+                        .map(|d| {
+                            chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
+                                d.and_hms_opt(0, 0, 0).unwrap(),
+                                chrono::Utc,
+                            )
+                        })
+                })
         } else {
             None
         };
-        
+
         let status = if let Some(due_dt) = due_date {
             if due_dt > chrono::Utc::now() {
                 "pending"
@@ -998,11 +1097,14 @@ async fn fetch_assignment_by_id(
         } else {
             assignment["status"].as_str().unwrap_or("unknown")
         };
-        
+
         return Ok(Some(SeqtaMentionItem {
             id: format!("assessment-{}", assignment["id"].as_i64().unwrap_or(0)),
             mention_type: MentionType::Assessment,
-            title: assignment["title"].as_str().unwrap_or("Assessment").to_string(),
+            title: assignment["title"]
+                .as_str()
+                .unwrap_or("Assessment")
+                .to_string(),
             subtitle: format!("{} • {}", subject, format_date(due)),
             data: json!({
                 "id": assignment["id"],
@@ -1018,17 +1120,18 @@ async fn fetch_assignment_by_id(
             last_updated: Some(chrono::Utc::now().to_rfc3339()),
         }));
     }
-    
+
     Ok(None)
 }
 
 /// Fetch class by ID (programme-metaclass format)
 async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
     let body = json!({});
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json; charset=utf-8".to_string())
-    ]);
-    
+    let headers = HashMap::from([(
+        "Content-Type".to_string(),
+        "application/json; charset=utf-8".to_string(),
+    )]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/subjects?",
         netgrab::RequestMethod::POST,
@@ -1037,16 +1140,18 @@ async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch classes: {}", e))?;
-    
-    let json_response: Value = serde_json::from_str(&response)
-        .map_err(|e| anyhow!("Failed to parse response: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch classes: {}", e))?;
+
+    let json_response: Value =
+        serde_json::from_str(&response).map_err(|e| anyhow!("Failed to parse response: {}", e))?;
+
     let folders = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
+
     let all_subjects: Vec<&Value> = folders
         .iter()
         .flat_map(|folder| {
@@ -1056,7 +1161,7 @@ async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
                 .unwrap_or(EMPTY_ARRAY)
         })
         .collect();
-    
+
     let match_subject = all_subjects.iter().find(|s| {
         let p = s["programme"].as_i64();
         let m = s["metaclass"].as_i64();
@@ -1066,57 +1171,65 @@ async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
             false
         }
     });
-    
+
     if let Some(subject) = match_subject {
         let code = subject["code"].as_str().unwrap_or("");
         let programme = subject["programme"].as_i64();
         let metaclass = subject["metaclass"].as_i64();
-        
+
         // Fetch timetable for next 14 days
         let start = chrono::Utc::now();
         let end = start + chrono::Duration::days(14);
         let from = start.format("%Y-%m-%d").to_string();
         let until = end.format("%Y-%m-%d").to_string();
-        
+
         let tt_body = json!({
             "from": from,
             "until": until,
             "student": 69
         });
-        
+
         let mut lessons = Vec::new();
         if let Ok(tt_response) = netgrab::fetch_api_data(
             "/seqta/student/load/timetable?",
             netgrab::RequestMethod::POST,
-            Some(HashMap::from([
-                ("Content-Type".to_string(), "application/json".to_string())
-            ])),
+            Some(HashMap::from([(
+                "Content-Type".to_string(),
+                "application/json".to_string(),
+            )])),
             Some(tt_body),
             None,
             false,
             false,
-        ).await {
+        )
+        .await
+        {
             if let Ok(tt_json) = serde_json::from_str::<Value>(&tt_response) {
                 if let Some(items) = tt_json["payload"]["items"].as_array() {
                     for item in items {
-                        let meta_ok = metaclass.map(|m| {
-                            item["metaID"].as_i64().map(|mi| mi == m).unwrap_or(false)
-                        }).unwrap_or(false);
-                        let prog_ok = programme.map(|p| {
-                            item["programmeID"].as_i64().map(|pi| pi == p).unwrap_or(false)
-                        }).unwrap_or(false);
-                        let code_ok = item["code"].as_str()
+                        let meta_ok = metaclass
+                            .map(|m| item["metaID"].as_i64().map(|mi| mi == m).unwrap_or(false))
+                            .unwrap_or(false);
+                        let prog_ok = programme
+                            .map(|p| {
+                                item["programmeID"]
+                                    .as_i64()
+                                    .map(|pi| pi == p)
+                                    .unwrap_or(false)
+                            })
+                            .unwrap_or(false);
+                        let code_ok = item["code"]
+                            .as_str()
                             .map(|c| c.to_lowercase() == code.to_lowercase())
                             .unwrap_or(false);
-                        
+
                         if (meta_ok && prog_ok) || code_ok {
-                            let date = item["date"].as_str()
-                                .or_else(|| {
-                                    item["from"].as_str()
-                                        .and_then(|s| s.split('T').next())
-                                })
+                            let date = item["date"]
+                                .as_str()
+                                .or_else(|| item["from"].as_str().and_then(|s| s.split('T').next()))
                                 .unwrap_or("");
-                            let from_time = item["from"].as_str()
+                            let from_time = item["from"]
+                                .as_str()
                                 .and_then(|s| {
                                     if s.len() >= 5 {
                                         Some(s[..5].to_string())
@@ -1127,7 +1240,8 @@ async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
                                     }
                                 })
                                 .unwrap_or_else(|| "".to_string());
-                            let until_time = item["until"].as_str()
+                            let until_time = item["until"]
+                                .as_str()
                                 .and_then(|s| {
                                     if s.len() >= 5 {
                                         Some(s[..5].to_string())
@@ -1138,7 +1252,7 @@ async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
                                     }
                                 })
                                 .unwrap_or_else(|| "".to_string());
-                            
+
                             lessons.push(json!({
                                 "date": date,
                                 "from": from_time,
@@ -1153,13 +1267,14 @@ async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
                 }
             }
         }
-        
+
         let teacher = subject["teacher"].as_str().unwrap_or("Teacher TBA");
-        
+
         return Ok(Some(SeqtaMentionItem {
             id: id.clone(),
             mention_type: MentionType::Class,
-            title: subject["title"].as_str()
+            title: subject["title"]
+                .as_str()
                 .or_else(|| subject["code"].as_str())
                 .unwrap_or("Class")
                 .to_string(),
@@ -1176,17 +1291,18 @@ async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
             last_updated: Some(chrono::Utc::now().to_rfc3339()),
         }));
     }
-    
+
     Ok(None)
 }
 
 /// Fetch subject by ID or code
 async fn fetch_subject_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
     let body = json!({});
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json; charset=utf-8".to_string())
-    ]);
-    
+    let headers = HashMap::from([(
+        "Content-Type".to_string(),
+        "application/json; charset=utf-8".to_string(),
+    )]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/subjects?",
         netgrab::RequestMethod::POST,
@@ -1195,16 +1311,18 @@ async fn fetch_subject_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch subjects: {}", e))?;
-    
-    let json_response: Value = serde_json::from_str(&response)
-        .map_err(|e| anyhow!("Failed to parse response: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch subjects: {}", e))?;
+
+    let json_response: Value =
+        serde_json::from_str(&response).map_err(|e| anyhow!("Failed to parse response: {}", e))?;
+
     let folders = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
+
     let all_subjects: Vec<&Value> = folders
         .iter()
         .flat_map(|folder| {
@@ -1214,25 +1332,30 @@ async fn fetch_subject_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
                 .unwrap_or(EMPTY_ARRAY)
         })
         .collect();
-    
+
     let match_subject = all_subjects.iter().find(|s| {
         let p = s["programme"].as_i64();
         let m = s["metaclass"].as_i64();
         let code = s["code"].as_str().unwrap_or("");
-        (p.is_some() && m.is_some() && format!("subject-{}-{}", p.unwrap(), m.unwrap()) == id) ||
-        code == id
+        (p.is_some() && m.is_some() && format!("subject-{}-{}", p.unwrap(), m.unwrap()) == id)
+            || code == id
     });
-    
+
     if let Some(subject) = match_subject {
         let code = subject["code"].as_str().unwrap_or("");
         let programme = subject["programme"].as_i64();
         let metaclass = subject["metaclass"].as_i64();
         let teacher = subject["teacher"].as_str().unwrap_or("Teacher TBA");
-        
+
         return Ok(Some(SeqtaMentionItem {
-            id: format!("subject-{}-{}", programme.unwrap_or(0), metaclass.unwrap_or(0)),
+            id: format!(
+                "subject-{}-{}",
+                programme.unwrap_or(0),
+                metaclass.unwrap_or(0)
+            ),
             mention_type: MentionType::Subject,
-            title: subject["title"].as_str()
+            title: subject["title"]
+                .as_str()
                 .or_else(|| subject["code"].as_str())
                 .unwrap_or("Subject")
                 .to_string(),
@@ -1246,7 +1369,7 @@ async fn fetch_subject_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
             last_updated: Some(chrono::Utc::now().to_rfc3339()),
         }));
     }
-    
+
     Ok(None)
 }
 
@@ -1256,40 +1379,39 @@ async fn fetch_timetable_slot_by_id(
     meta: Option<Value>,
 ) -> Result<Option<SeqtaMentionItem>> {
     // Extract date/time from meta or ID
-    let date = meta.as_ref()
+    let date = meta
+        .as_ref()
         .and_then(|m| m.get("data"))
         .and_then(|d| d.get("date"))
         .and_then(|v| v.as_str());
-    let from_time = meta.as_ref()
+    let from_time = meta
+        .as_ref()
         .and_then(|m| m.get("data"))
         .and_then(|d| d.get("from"))
         .and_then(|v| v.as_str());
-    let lesson_id = meta.as_ref()
+    let lesson_id = meta
+        .as_ref()
         .and_then(|m| m.get("data"))
         .and_then(|d| d.get("id"))
         .and_then(|v| v.as_i64());
-    
+
     let start_date = date
         .map(|s| s.to_string())
         .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
-    let end_date = date
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| {
-            (chrono::Utc::now() + chrono::Duration::days(14))
-                .format("%Y-%m-%d")
-                .to_string()
-        });
-    
+    let end_date = date.map(|s| s.to_string()).unwrap_or_else(|| {
+        (chrono::Utc::now() + chrono::Duration::days(14))
+            .format("%Y-%m-%d")
+            .to_string()
+    });
+
     let body = json!({
         "from": start_date,
         "until": end_date,
         "student": 69
     });
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/timetable?",
         netgrab::RequestMethod::POST,
@@ -1298,26 +1420,28 @@ async fn fetch_timetable_slot_by_id(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch timetable: {}", e))?;
-    
-    let json_response: Value = serde_json::from_str(&response)
-        .map_err(|e| anyhow!("Failed to parse response: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch timetable: {}", e))?;
+
+    let json_response: Value =
+        serde_json::from_str(&response).map_err(|e| anyhow!("Failed to parse response: {}", e))?;
+
     let items = json_response["payload"]["items"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
+
     let lesson = items.iter().find(|l| {
         if let Some(lid) = lesson_id {
             l["id"].as_i64().map(|i| i == lid).unwrap_or(false)
         } else if let Some(date_val) = date {
-            let lesson_date = l["date"].as_str()
-                .or_else(|| {
-                    l["from"].as_str().and_then(|s| s.split('T').next())
-                })
+            let lesson_date = l["date"]
+                .as_str()
+                .or_else(|| l["from"].as_str().and_then(|s| s.split('T').next()))
                 .unwrap_or("");
-            let lesson_from = l["from"].as_str()
+            let lesson_from = l["from"]
+                .as_str()
                 .and_then(|s| {
                     if s.len() >= 5 {
                         Some(&s[..5])
@@ -1333,14 +1457,18 @@ async fn fetch_timetable_slot_by_id(
             false
         }
     });
-    
+
     if let Some(lesson_val) = lesson {
-        let lesson_date = lesson_val["date"].as_str()
+        let lesson_date = lesson_val["date"]
+            .as_str()
             .or_else(|| {
-                lesson_val["from"].as_str().and_then(|s| s.split('T').next())
+                lesson_val["from"]
+                    .as_str()
+                    .and_then(|s| s.split('T').next())
             })
             .unwrap_or("");
-        let from_time_str = lesson_val["from"].as_str()
+        let from_time_str = lesson_val["from"]
+            .as_str()
             .and_then(|s| {
                 if s.len() >= 5 {
                     Some(s[..5].to_string())
@@ -1351,7 +1479,8 @@ async fn fetch_timetable_slot_by_id(
                 }
             })
             .unwrap_or_else(|| "".to_string());
-        let until_time_str = lesson_val["until"].as_str()
+        let until_time_str = lesson_val["until"]
+            .as_str()
             .and_then(|s| {
                 if s.len() >= 5 {
                     Some(s[..5].to_string())
@@ -1362,15 +1491,19 @@ async fn fetch_timetable_slot_by_id(
                 }
             })
             .unwrap_or_else(|| "".to_string());
-        
+
         let code = lesson_val["code"].as_str().unwrap_or("");
         let subject_name = code.to_string(); // Could fetch from subjects API but keeping simple
-        
+
         return Ok(Some(SeqtaMentionItem {
             id: format!("timetable-slot-{}", lesson_val["id"].as_i64().unwrap_or(0)),
             mention_type: MentionType::TimetableSlot,
             title: format!("{} {}-{}", subject_name, from_time_str, until_time_str),
-            subtitle: format!("{} • Room {}", lesson_date, lesson_val["room"].as_str().unwrap_or("TBA")),
+            subtitle: format!(
+                "{} • Room {}",
+                lesson_date,
+                lesson_val["room"].as_str().unwrap_or("TBA")
+            ),
             data: json!({
                 "id": lesson_val["id"],
                 "date": lesson_date,
@@ -1386,29 +1519,25 @@ async fn fetch_timetable_slot_by_id(
             last_updated: Some(chrono::Utc::now().to_rfc3339()),
         }));
     }
-    
+
     Ok(None)
 }
 
 /// Fetch notice by ID
-async fn fetch_notice_by_id(
-    id: String,
-    meta: Option<Value>,
-) -> Result<Option<SeqtaMentionItem>> {
+async fn fetch_notice_by_id(id: String, meta: Option<Value>) -> Result<Option<SeqtaMentionItem>> {
     let notice_id = id.replace("notice-", "");
-    let date_str = meta.as_ref()
+    let date_str = meta
+        .as_ref()
         .and_then(|m| m.get("data"))
         .and_then(|d| d.get("date"))
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
         .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
     let date = date_str.as_str();
-    
+
     let body = json!({ "date": date });
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json".to_string())
-    ]);
-    
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/notices?",
         netgrab::RequestMethod::POST,
@@ -1417,28 +1546,34 @@ async fn fetch_notice_by_id(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch notices: {}", e))?;
-    
-    let json_response: Value = serde_json::from_str(&response)
-        .map_err(|e| anyhow!("Failed to parse response: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch notices: {}", e))?;
+
+    let json_response: Value =
+        serde_json::from_str(&response).map_err(|e| anyhow!("Failed to parse response: {}", e))?;
+
     let notices = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
+
     let notice = notices.iter().enumerate().find(|(i, n)| {
-        n["id"].as_i64().map(|ni| ni.to_string() == notice_id).unwrap_or(false) ||
-        (i + 1).to_string() == notice_id ||
-        i.to_string() == notice_id
+        n["id"]
+            .as_i64()
+            .map(|ni| ni.to_string() == notice_id)
+            .unwrap_or(false)
+            || (i + 1).to_string() == notice_id
+            || i.to_string() == notice_id
     });
-    
+
     if let Some((_, notice_val)) = notice {
         return Ok(Some(SeqtaMentionItem {
             id: format!("notice-{}", notice_val["id"].as_i64().unwrap_or(0)),
             mention_type: MentionType::Notice,
             title: notice_val["title"].as_str().unwrap_or("Notice").to_string(),
-            subtitle: format!("{} • {}", 
+            subtitle: format!(
+                "{} • {}",
                 notice_val["label_title"].as_str().unwrap_or("Notice"),
                 notice_val["staff"].as_str().unwrap_or("Staff")
             ),
@@ -1455,7 +1590,7 @@ async fn fetch_notice_by_id(
             last_updated: Some(chrono::Utc::now().to_rfc3339()),
         }));
     }
-    
+
     Ok(None)
 }
 
@@ -1465,15 +1600,13 @@ async fn fetch_homework_by_id(
     _meta: Option<Value>,
 ) -> Result<Option<SeqtaMentionItem>> {
     let homework_id = id.replace("homework-", "");
-    
+
     let body = json!({});
     let mut params = HashMap::new();
     params.insert("majhvjju".to_string(), "".to_string());
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/dashlet/summary/homework",
         netgrab::RequestMethod::POST,
@@ -1482,30 +1615,51 @@ async fn fetch_homework_by_id(
         Some(params),
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch homework: {}", e))?;
-    
-    let json_response: Value = serde_json::from_str(&response)
-        .map_err(|e| anyhow!("Failed to parse response: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch homework: {}", e))?;
+
+    let json_response: Value =
+        serde_json::from_str(&response).map_err(|e| anyhow!("Failed to parse response: {}", e))?;
+
     let homework_items = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
+
     let homework = homework_items.iter().find(|h| {
-        h["id"].as_i64().map(|hi| hi.to_string() == homework_id).unwrap_or(false) ||
-        h["meta"].as_i64().map(|m| m.to_string() == homework_id).unwrap_or(false)
+        h["id"]
+            .as_i64()
+            .map(|hi| hi.to_string() == homework_id)
+            .unwrap_or(false)
+            || h["meta"]
+                .as_i64()
+                .map(|m| m.to_string() == homework_id)
+                .unwrap_or(false)
     });
-    
+
     if let Some(hw) = homework {
-        let items = hw["items"].as_array().map(|v| v.as_slice()).unwrap_or(EMPTY_ARRAY);
+        let items = hw["items"]
+            .as_array()
+            .map(|v| v.as_slice())
+            .unwrap_or(EMPTY_ARRAY);
         let item_count = items.len();
-        
+
         return Ok(Some(SeqtaMentionItem {
-            id: format!("homework-{}", hw["id"].as_i64().or_else(|| hw["meta"].as_i64()).unwrap_or(0)),
+            id: format!(
+                "homework-{}",
+                hw["id"]
+                    .as_i64()
+                    .or_else(|| hw["meta"].as_i64())
+                    .unwrap_or(0)
+            ),
             mention_type: MentionType::Homework,
             title: hw["title"].as_str().unwrap_or("Homework").to_string(),
-            subtitle: format!("{} {}", item_count, if item_count == 1 { "item" } else { "items" }),
+            subtitle: format!(
+                "{} {}",
+                item_count,
+                if item_count == 1 { "item" } else { "items" }
+            ),
             data: json!({
                 "id": hw["id"],
                 "meta": hw["meta"],
@@ -1515,22 +1669,17 @@ async fn fetch_homework_by_id(
             last_updated: Some(chrono::Utc::now().to_rfc3339()),
         }));
     }
-    
+
     Ok(None)
 }
 
 /// Fetch teacher by ID
-async fn fetch_teacher_by_id(
-    id: String,
-    _meta: Option<Value>,
-) -> Result<Option<SeqtaMentionItem>> {
+async fn fetch_teacher_by_id(id: String, _meta: Option<Value>) -> Result<Option<SeqtaMentionItem>> {
     let teacher_id = id.replace("teacher-", "");
-    
+
     let body = json!({ "mode": "staff" });
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json".to_string())
-    ]);
-    
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/message/people",
         netgrab::RequestMethod::POST,
@@ -1539,26 +1688,31 @@ async fn fetch_teacher_by_id(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch staff: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch staff: {}", e))?;
+
     let json_response: Value = if response.starts_with('{') {
-        serde_json::from_str(&response)
-            .map_err(|e| anyhow!("Failed to parse response: {}", e))?
+        serde_json::from_str(&response).map_err(|e| anyhow!("Failed to parse response: {}", e))?
     } else {
         json!({})
     };
-    
+
     let staff = json_response["payload"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
+
     let teacher = staff.iter().find(|t| {
-        t["id"].as_i64().map(|ti| ti.to_string() == teacher_id).unwrap_or(false)
+        t["id"]
+            .as_i64()
+            .map(|ti| ti.to_string() == teacher_id)
+            .unwrap_or(false)
     });
-    
+
     if let Some(t) = teacher {
-        let display_name = t["xx_display"].as_str()
+        let display_name = t["xx_display"]
+            .as_str()
             .map(|s| s.to_string())
             .or_else(|| {
                 let first = t["firstname"].as_str().unwrap_or("");
@@ -1570,7 +1724,7 @@ async fn fetch_teacher_by_id(
                 }
             })
             .unwrap_or_else(|| "Teacher".to_string());
-        
+
         return Ok(Some(SeqtaMentionItem {
             id: format!("teacher-{}", t["id"].as_i64().unwrap_or(0)),
             mention_type: MentionType::Teacher,
@@ -1585,7 +1739,7 @@ async fn fetch_teacher_by_id(
             last_updated: Some(chrono::Utc::now().to_rfc3339()),
         }));
     }
-    
+
     Ok(None)
 }
 
@@ -1605,17 +1759,15 @@ async fn fetch_timetable_by_id(
     } else {
         date_str
     };
-    
+
     let body = json!({
         "from": date.as_str(),
         "until": date.as_str(),
         "student": 69
     });
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/timetable?",
         netgrab::RequestMethod::POST,
@@ -1624,40 +1776,47 @@ async fn fetch_timetable_by_id(
         None,
         false,
         false,
-    ).await.map_err(|e| anyhow!("Failed to fetch timetable: {}", e))?;
-    
-    let json_response: Value = serde_json::from_str(&response)
-        .map_err(|e| anyhow!("Failed to parse response: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| anyhow!("Failed to fetch timetable: {}", e))?;
+
+    let json_response: Value =
+        serde_json::from_str(&response).map_err(|e| anyhow!("Failed to parse response: {}", e))?;
+
     let items = json_response["payload"]["items"]
         .as_array()
         .map(|v| v.as_slice())
         .unwrap_or(EMPTY_ARRAY);
-    
-    let classes: Vec<Value> = items.iter().map(|lesson| {
-        let subject = lesson.get("title")
-            .or_else(|| lesson.get("code"))
-            .cloned()
-            .unwrap_or(json!(""));
-        let teacher = lesson.get("staff")
-            .or_else(|| lesson.get("teacher"))
-            .cloned()
-            .unwrap_or(json!(""));
-        json!({
-            "subject": subject,
-            "time": format!("{} - {}", 
-                lesson["from"].as_str()
-                    .and_then(|s| if s.len() >= 5 { Some(&s[..5]) } else { None })
-                    .unwrap_or(""),
-                lesson["until"].as_str()
-                    .and_then(|s| if s.len() >= 5 { Some(&s[..5]) } else { None })
-                    .unwrap_or("")
-            ),
-            "room": lesson["room"].as_str().unwrap_or("TBA"),
-            "teacher": teacher,
+
+    let classes: Vec<Value> = items
+        .iter()
+        .map(|lesson| {
+            let subject = lesson
+                .get("title")
+                .or_else(|| lesson.get("code"))
+                .cloned()
+                .unwrap_or(json!(""));
+            let teacher = lesson
+                .get("staff")
+                .or_else(|| lesson.get("teacher"))
+                .cloned()
+                .unwrap_or(json!(""));
+            json!({
+                "subject": subject,
+                "time": format!("{} - {}",
+                    lesson["from"].as_str()
+                        .and_then(|s| if s.len() >= 5 { Some(&s[..5]) } else { None })
+                        .unwrap_or(""),
+                    lesson["until"].as_str()
+                        .and_then(|s| if s.len() >= 5 { Some(&s[..5]) } else { None })
+                        .unwrap_or("")
+                ),
+                "room": lesson["room"].as_str().unwrap_or("TBA"),
+                "teacher": teacher,
+            })
         })
-    }).collect();
-    
+        .collect();
+
     Ok(Some(SeqtaMentionItem {
         id: format!("timetable-{}", date),
         mention_type: MentionType::Timetable,
@@ -1683,10 +1842,11 @@ pub async fn update_mention_data(
     if mention_type == "class" {
         normalized_id = normalized_id.replace("class:", "");
     }
-    
+
     match mention_type.as_str() {
         "assignment" | "assessment" => {
-            let clean_id = meta.as_ref()
+            let clean_id = meta
+                .as_ref()
                 .and_then(|m| m.get("lookup"))
                 .and_then(|l| l.get("id"))
                 .and_then(|v| v.as_str())
@@ -1698,7 +1858,8 @@ pub async fn update_mention_data(
             fetch_assignment_by_id(clean_id_str, meta).await
         }
         "class" => {
-            let class_id = meta.as_ref()
+            let class_id = meta
+                .as_ref()
                 .and_then(|m| m.get("lookup"))
                 .and_then(|l| {
                     let p = l.get("programme")?.as_i64()?;
@@ -1709,7 +1870,8 @@ pub async fn update_mention_data(
             fetch_class_by_id(class_id).await
         }
         "subject" => {
-            let subject_id = meta.as_ref()
+            let subject_id = meta
+                .as_ref()
                 .and_then(|m| m.get("lookup"))
                 .and_then(|l| l.get("code"))
                 .and_then(|v| v.as_str())
@@ -1769,30 +1931,28 @@ pub async fn get_weekly_schedule_for_class(
 ) -> Result<Vec<serde_json::Map<String, Value>>, String> {
     let student_id = 69; // TODO: Get from session
     let mut collected: Vec<serde_json::Map<String, Value>> = Vec::new();
-    
+
     // Go back 6 steps (~2 months each, up to ~1 year)
     for i in 0..6 {
         let anchor = chrono::Utc::now() - chrono::Duration::days(i * 60);
         let day = anchor.weekday().num_days_from_sunday();
-        
+
         // Find Monday of the anchor week
         let delta_to_monday = if day == 0 { -6 } else { 1 - day as i64 };
         let monday = anchor + chrono::Duration::days(delta_to_monday);
         let friday = monday + chrono::Duration::days(4);
-        
+
         let from = monday.format("%Y-%m-%d").to_string();
         let until = friday.format("%Y-%m-%d").to_string();
-        
+
         let body = json!({
             "from": from,
             "until": until,
             "student": student_id
         });
-        
-        let headers = HashMap::from([
-            ("Content-Type".to_string(), "application/json".to_string())
-        ]);
-        
+
+        let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+
         if let Ok(response) = netgrab::fetch_api_data(
             "/seqta/student/load/timetable?",
             netgrab::RequestMethod::POST,
@@ -1801,29 +1961,40 @@ pub async fn get_weekly_schedule_for_class(
             None,
             false,
             false,
-        ).await {
+        )
+        .await
+        {
             if let Ok(json_response) = serde_json::from_str::<Value>(&response) {
                 if let Some(items) = json_response["payload"]["items"].as_array() {
                     for item in items {
-                        let meta_ok = metaclass.map(|m| {
-                            item["metaID"].as_i64().map(|mi| mi == m).unwrap_or(false)
-                        }).unwrap_or(false);
-                        let prog_ok = programme.map(|p| {
-                            item["programmeID"].as_i64().map(|pi| pi == p).unwrap_or(false)
-                        }).unwrap_or(false);
-                        let code_ok = code.as_ref().map(|c| {
-                            item["code"].as_str()
-                                .map(|ic| ic.to_lowercase() == c.to_lowercase())
-                                .unwrap_or(false)
-                        }).unwrap_or(false);
-                        
+                        let meta_ok = metaclass
+                            .map(|m| item["metaID"].as_i64().map(|mi| mi == m).unwrap_or(false))
+                            .unwrap_or(false);
+                        let prog_ok = programme
+                            .map(|p| {
+                                item["programmeID"]
+                                    .as_i64()
+                                    .map(|pi| pi == p)
+                                    .unwrap_or(false)
+                            })
+                            .unwrap_or(false);
+                        let code_ok = code
+                            .as_ref()
+                            .map(|c| {
+                                item["code"]
+                                    .as_str()
+                                    .map(|ic| ic.to_lowercase() == c.to_lowercase())
+                                    .unwrap_or(false)
+                            })
+                            .unwrap_or(false);
+
                         if (meta_ok && prog_ok) || code_ok {
-                            let date = item["date"].as_str()
-                                .or_else(|| {
-                                    item["from"].as_str().and_then(|s| s.split('T').next())
-                                })
+                            let date = item["date"]
+                                .as_str()
+                                .or_else(|| item["from"].as_str().and_then(|s| s.split('T').next()))
                                 .unwrap_or("");
-                            let from_time = item["from"].as_str()
+                            let from_time = item["from"]
+                                .as_str()
                                 .and_then(|s| {
                                     if s.len() >= 5 {
                                         Some(s[..5].to_string())
@@ -1834,7 +2005,8 @@ pub async fn get_weekly_schedule_for_class(
                                     }
                                 })
                                 .unwrap_or_else(|| "".to_string());
-                            let until_time = item["until"].as_str()
+                            let until_time = item["until"]
+                                .as_str()
                                 .and_then(|s| {
                                     if s.len() >= 5 {
                                         Some(s[..5].to_string())
@@ -1845,7 +2017,7 @@ pub async fn get_weekly_schedule_for_class(
                                     }
                                 })
                                 .unwrap_or_else(|| "".to_string());
-                            
+
                             let mut entry = serde_json::Map::new();
                             entry.insert("date".to_string(), json!(date));
                             entry.insert("from".to_string(), json!(from_time));
@@ -1860,11 +2032,11 @@ pub async fn get_weekly_schedule_for_class(
             }
         }
     }
-    
+
     // Deduplicate by weekday and time range
     let mut seen = std::collections::HashSet::new();
     let mut deduped = Vec::new();
-    
+
     for entry in collected {
         if let (Some(date_val), Some(from_val), Some(until_val)) = (
             entry.get("date").and_then(|v| v.as_str()),
@@ -1882,14 +2054,14 @@ pub async fn get_weekly_schedule_for_class(
                     chrono::Weekday::Sat => "Sat",
                     chrono::Weekday::Sun => "Sun",
                 };
-                
+
                 if weekday_str == "Sat" || weekday_str == "Sun" {
                     continue; // Skip weekends
                 }
-                
+
                 let room = entry.get("room").and_then(|v| v.as_str()).unwrap_or("");
                 let sig = format!("{}-{}-{}-{}", weekday_str, from_val, until_val, room);
-                
+
                 if !seen.contains(&sig) {
                     seen.insert(sig);
                     deduped.push(entry);
@@ -1897,7 +2069,7 @@ pub async fn get_weekly_schedule_for_class(
             }
         }
     }
-    
+
     Ok(deduped)
 }
 
@@ -1912,11 +2084,12 @@ pub async fn fetch_lesson_content(
         "programme": programme.to_string(),
         "metaclass": metaclass.to_string(),
     });
-    
-    let headers = HashMap::from([
-        ("Content-Type".to_string(), "application/json; charset=utf-8".to_string())
-    ]);
-    
+
+    let headers = HashMap::from([(
+        "Content-Type".to_string(),
+        "application/json; charset=utf-8".to_string(),
+    )]);
+
     let response = netgrab::fetch_api_data(
         "/seqta/student/load/courses",
         netgrab::RequestMethod::POST,
@@ -1925,11 +2098,13 @@ pub async fn fetch_lesson_content(
         None,
         false,
         false,
-    ).await.map_err(|e| format!("Failed to fetch lesson content: {}", e))?;
-    
-    let json_response: Value = serde_json::from_str(&response)
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
-    
+    )
+    .await
+    .map_err(|e| format!("Failed to fetch lesson content: {}", e))?;
+
+    let json_response: Value =
+        serde_json::from_str(&response).map_err(|e| format!("Failed to parse response: {}", e))?;
+
     let course_payload = json_response.get("payload");
     if let Some(w) = course_payload.and_then(|p| p.get("w")) {
         // If lessonIndex and termIndex provided, return specific lesson
@@ -1941,11 +2116,11 @@ pub async fn fetch_lesson_content(
             }
             return Ok(None);
         }
-        
+
         // Otherwise return all lessons
         return Ok(Some(w.clone()));
     }
-    
+
     Ok(None)
 }
 
@@ -1969,4 +2144,3 @@ pub async fn fetch_lesson_content_cmd(
 ) -> Result<Option<Value>, String> {
     fetch_lesson_content(programme, metaclass, lesson_index, term_index).await
 }
-

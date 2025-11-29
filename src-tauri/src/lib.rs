@@ -1,63 +1,63 @@
 #[path = "auth/login.rs"]
 mod login;
 
-#[path = "utils/netgrab.rs"]
-mod netgrab;
-#[path = "utils/settings.rs"]
-mod settings;
 #[path = "utils/analytics.rs"]
 mod analytics;
-#[path = "utils/session.rs"]
-mod session;
-#[path = "utils/seqta_config.rs"]
-mod seqta_config;
-#[path = "utils/logger.rs"]
-mod logger;
-#[path = "utils/theme_manager.rs"]
-mod theme_manager;
-#[path = "utils/news.rs"]
-mod news;
-#[path = "utils/todolist.rs"]
-mod todolist;
-#[path = "utils/notes_filesystem.rs"]
-mod notes_filesystem;
-#[path = "utils/profile_picture.rs"]
-mod profile_picture;
-#[path = "utils/performance_testing.rs"]
-mod performance_testing;
-#[path = "utils/sanitization.rs"]
-mod sanitization;
-#[path = "utils/database.rs"]
-mod database;
 #[path = "utils/assessments.rs"]
 mod assessments;
 #[path = "utils/courses.rs"]
 mod courses;
+#[path = "utils/database.rs"]
+mod database;
+mod global_search;
+#[path = "utils/logger.rs"]
+mod logger;
 #[path = "utils/messages.rs"]
 mod messages;
+#[path = "utils/netgrab.rs"]
+mod netgrab;
+#[path = "utils/news.rs"]
+mod news;
+#[path = "utils/notes_filesystem.rs"]
+mod notes_filesystem;
+#[path = "utils/performance_testing.rs"]
+mod performance_testing;
+#[path = "utils/profile_picture.rs"]
+mod profile_picture;
+#[path = "utils/sanitization.rs"]
+mod sanitization;
+#[path = "utils/seqta_config.rs"]
+mod seqta_config;
 #[path = "services/seqta_mentions.rs"]
 mod seqta_mentions;
-mod global_search;
+#[path = "utils/session.rs"]
+mod session;
+#[path = "utils/settings.rs"]
+mod settings;
+#[path = "utils/theme_manager.rs"]
+mod theme_manager;
+#[path = "utils/todolist.rs"]
+mod todolist;
 
-use std::cell::Cell;
-use tauri::{Manager, Emitter};
 #[cfg(any(target_os = "android", target_os = "ios"))]
-use tauri::Listener;
+use serde_json;
+use std::cell::Cell;
 #[cfg(desktop)]
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 #[cfg(desktop)]
 use tauri::tray::TrayIconBuilder;
-use tauri::{AppHandle, WindowEvent, Window};
-use tauri_plugin_notification;
-#[cfg(desktop)]
-use tauri_plugin_single_instance;
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use tauri::Listener;
+use tauri::{AppHandle, Window, WindowEvent};
+use tauri::{Emitter, Manager};
 #[cfg(desktop)]
 use tauri_plugin_autostart;
 #[cfg(desktop)]
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_dialog;
-#[cfg(any(target_os = "android", target_os = "ios"))]
-use serde_json;
+use tauri_plugin_notification;
+#[cfg(desktop)]
+use tauri_plugin_single_instance;
 
 #[cfg(desktop)]
 use url::form_urlencoded::parse;
@@ -122,10 +122,12 @@ pub fn run() {
 
     #[cfg(desktop)]
     {
-        builder = builder.plugin(tauri_plugin_autostart::init(
-            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec!["--minimize"]),
-        ));
+        builder = builder
+            .plugin(tauri_plugin_updater::Builder::new().build())
+            .plugin(tauri_plugin_autostart::init(
+                tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+                Some(vec!["--minimize"]),
+            ));
     }
 
     #[cfg(not(any(target_os = "ios", target_os = "android")))]

@@ -80,15 +80,15 @@ fn get_performance_tests_dir(app: &AppHandle) -> Result<PathBuf, String> {
         .path()
         .app_data_dir()
         .map_err(|e| format!("Failed to get app data directory: {}", e))?;
-    
+
     let performance_dir = app_data_dir.join("performance-tests");
-    
+
     // Create directory if it doesn't exist
     if !performance_dir.exists() {
         fs::create_dir_all(&performance_dir)
             .map_err(|e| format!("Failed to create performance tests directory: {}", e))?;
     }
-    
+
     Ok(performance_dir)
 }
 
@@ -97,47 +97,53 @@ pub fn save_performance_test_results(
     app: AppHandle,
     results: TestResults,
 ) -> Result<String, String> {
-    println!("[DesQTA] Saving performance test results with {} pages", results.pages.len());
-    
+    println!(
+        "[DesQTA] Saving performance test results with {} pages",
+        results.pages.len()
+    );
+
     let performance_dir = get_performance_tests_dir(&app)?;
-    
+
     // Generate filename with timestamp
     let timestamp = chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S").to_string();
     let filename = format!("performance-test-{}.json", timestamp);
     let file_path = performance_dir.join(&filename);
-    
+
     // Add metadata to results
     let mut results_with_metadata = results;
     results_with_metadata.timestamp = timestamp.clone();
     results_with_metadata.version = env!("CARGO_PKG_VERSION").to_string();
-    
+
     // Serialize and save to file
     let json_content = serde_json::to_string_pretty(&results_with_metadata)
         .map_err(|e| format!("Failed to serialize results: {}", e))?;
-    
+
     fs::write(&file_path, json_content)
         .map_err(|e| format!("Failed to write performance test file: {}", e))?;
-    
+
     let file_path_str = file_path.to_string_lossy().to_string();
-    println!("[DesQTA] Performance test results saved to: {}", file_path_str);
-    
+    println!(
+        "[DesQTA] Performance test results saved to: {}",
+        file_path_str
+    );
+
     Ok(file_path_str)
 }
 
 #[tauri::command]
 pub fn get_performance_test_results(app: AppHandle) -> Result<Vec<String>, String> {
     let performance_dir = get_performance_tests_dir(&app)?;
-    
+
     let mut results = Vec::new();
-    
+
     if performance_dir.exists() {
         let entries = fs::read_dir(&performance_dir)
             .map_err(|e| format!("Failed to read performance tests directory: {}", e))?;
-        
+
         for entry in entries {
             let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
             let path = entry.path();
-            
+
             if path.is_file() && path.extension().map_or(false, |ext| ext == "json") {
                 if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
                     results.push(filename.to_string());
@@ -145,11 +151,11 @@ pub fn get_performance_test_results(app: AppHandle) -> Result<Vec<String>, Strin
             }
         }
     }
-    
+
     // Sort by filename (which includes timestamp)
     results.sort();
     results.reverse(); // Most recent first
-    
+
     Ok(results)
 }
 
@@ -160,37 +166,34 @@ pub fn load_performance_test_result(
 ) -> Result<TestResults, String> {
     let performance_dir = get_performance_tests_dir(&app)?;
     let file_path = performance_dir.join(&filename);
-    
+
     if !file_path.exists() {
         return Err(format!("Performance test file not found: {}", filename));
     }
-    
+
     let content = fs::read_to_string(&file_path)
         .map_err(|e| format!("Failed to read performance test file: {}", e))?;
-    
+
     let results: TestResults = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse performance test results: {}", e))?;
-    
+
     Ok(results)
 }
 
 #[tauri::command]
-pub fn delete_performance_test_result(
-    app: AppHandle,
-    filename: String,
-) -> Result<(), String> {
+pub fn delete_performance_test_result(app: AppHandle, filename: String) -> Result<(), String> {
     let performance_dir = get_performance_tests_dir(&app)?;
     let file_path = performance_dir.join(&filename);
-    
+
     if !file_path.exists() {
         return Err(format!("Performance test file not found: {}", filename));
     }
-    
+
     fs::remove_file(&file_path)
         .map_err(|e| format!("Failed to delete performance test file: {}", e))?;
-    
+
     println!("[DesQTA] Deleted performance test file: {}", filename);
-    
+
     Ok(())
 }
 
@@ -203,28 +206,27 @@ pub fn get_performance_tests_directory(app: AppHandle) -> Result<String, String>
 #[tauri::command]
 pub fn clear_all_performance_tests(app: AppHandle) -> Result<u32, String> {
     let performance_dir = get_performance_tests_dir(&app)?;
-    
+
     if !performance_dir.exists() {
         return Ok(0);
     }
-    
+
     let entries = fs::read_dir(&performance_dir)
         .map_err(|e| format!("Failed to read performance tests directory: {}", e))?;
-    
+
     let mut deleted_count = 0;
-    
+
     for entry in entries {
         let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
         let path = entry.path();
-        
+
         if path.is_file() && path.extension().map_or(false, |ext| ext == "json") {
-            fs::remove_file(&path)
-                .map_err(|e| format!("Failed to delete file: {}", e))?;
+            fs::remove_file(&path).map_err(|e| format!("Failed to delete file: {}", e))?;
             deleted_count += 1;
         }
     }
-    
+
     println!("[DesQTA] Cleared {} performance test files", deleted_count);
-    
+
     Ok(deleted_count)
 }

@@ -161,3 +161,4 @@ pnpm-lock.yaml
 src/lib/generated/themes.ts
 
 GEMINI.md
+.tauri/myapp.key

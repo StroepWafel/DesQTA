@@ -1,9 +1,9 @@
+use super::netgrab;
+use super::netgrab::RequestMethod;
+use crate::logger;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
-use crate::logger;
-use super::netgrab;
-use super::netgrab::RequestMethod;
 
 const STUDENT_ID: i32 = 69;
 
@@ -99,7 +99,10 @@ async fn fetch_lesson_colours() -> Result<Vec<Value>, String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -112,10 +115,7 @@ async fn fetch_lesson_colours() -> Result<Vec<Value>, String> {
     let data: Value = serde_json::from_str(&response)
         .map_err(|e| format!("Failed to parse lesson colours: {}", e))?;
 
-    Ok(data["payload"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default())
+    Ok(data["payload"].as_array().cloned().unwrap_or_default())
 }
 
 /// Fetch subjects from SEQTA API
@@ -127,7 +127,10 @@ async fn fetch_subjects() -> Result<Vec<Folder>, String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -137,8 +140,8 @@ async fn fetch_subjects() -> Result<Vec<Folder>, String> {
     )
     .await?;
 
-    let data: Value = serde_json::from_str(&response)
-        .map_err(|e| format!("Failed to parse subjects: {}", e))?;
+    let data: Value =
+        serde_json::from_str(&response).map_err(|e| format!("Failed to parse subjects: {}", e))?;
 
     let folders: Vec<Folder> = serde_json::from_value(data["payload"].clone())
         .map_err(|e| format!("Failed to deserialize folders: {}", e))?;
@@ -157,7 +160,10 @@ async fn fetch_upcoming_assessments() -> Result<Vec<Value>, String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -170,10 +176,7 @@ async fn fetch_upcoming_assessments() -> Result<Vec<Value>, String> {
     let data: Value = serde_json::from_str(&response)
         .map_err(|e| format!("Failed to parse upcoming assessments: {}", e))?;
 
-    Ok(data["payload"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default())
+    Ok(data["payload"].as_array().cloned().unwrap_or_default())
 }
 
 /// Fetch past assessments for a specific subject
@@ -189,7 +192,10 @@ async fn fetch_past_assessments(programme: i32, metaclass: i32) -> Result<Vec<Va
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -205,15 +211,15 @@ async fn fetch_past_assessments(programme: i32, metaclass: i32) -> Result<Vec<Va
     // The API returns assessments in payload.pending (for pending/past assessments)
     // and payload.tasks (for completed tasks). Check both.
     let mut result = Vec::new();
-    
+
     if let Some(pending) = data["payload"]["pending"].as_array() {
         result.extend(pending.iter().cloned());
     }
-    
+
     if let Some(tasks) = data["payload"]["tasks"].as_array() {
         result.extend(tasks.iter().cloned());
     }
-    
+
     Ok(result)
 }
 
@@ -231,19 +237,13 @@ pub async fn get_processed_assessments() -> Result<ProcessedAssessmentsResponse,
     }
 
     // Step 1: Fetch subjects and lesson colours in parallel
-    let (folders_result, colours_result) = tokio::join!(
-        fetch_subjects(),
-        fetch_lesson_colours()
-    );
+    let (folders_result, colours_result) = tokio::join!(fetch_subjects(), fetch_lesson_colours());
 
     let folders = folders_result?;
     let colours = colours_result?;
 
     // Step 2: Process subjects
-    let all_subjects: Vec<Subject> = folders
-        .iter()
-        .flat_map(|f| f.subjects.clone())
-        .collect();
+    let all_subjects: Vec<Subject> = folders.iter().flat_map(|f| f.subjects.clone()).collect();
 
     // Remove duplicates by programme+metaclass
     let mut unique_subjects_map: HashMap<String, Subject> = HashMap::new();
@@ -264,7 +264,9 @@ pub async fn get_processed_assessments() -> Result<ProcessedAssessmentsResponse,
     // Initialize subject filters
     let mut filters: HashMap<String, bool> = HashMap::new();
     for subject in &all_subjects {
-        let is_active = active_subjects.iter().any(|as_subj| as_subj.code == subject.code);
+        let is_active = active_subjects
+            .iter()
+            .any(|as_subj| as_subj.code == subject.code);
         filters.insert(subject.code.clone(), is_active);
     }
 
@@ -303,7 +305,7 @@ pub async fn get_processed_assessments() -> Result<ProcessedAssessmentsResponse,
     let mut processed_assessments: Vec<Assessment> = Vec::new();
     for (_, assessment_value) in unique_assessments_map {
         let assessment_obj = assessment_value.as_object().cloned().unwrap_or_default();
-        
+
         // Get assessment code
         let code = assessment_obj
             .get("code")
@@ -360,16 +362,18 @@ pub async fn get_processed_assessments() -> Result<ProcessedAssessmentsResponse,
     processed_assessments.sort_by(|a, b| {
         // Parse dates - format is typically "YYYY-MM-DDTHH:mm:ss" or "YYYY-MM-DD HH:mm:ss"
         // Extract date part and compare as strings (ISO format sorts correctly)
-        let date_a_str = if let Some(date_part) = a.due.split('T').next().or_else(|| a.due.split(' ').next()) {
-            date_part
-        } else {
-            &a.due
-        };
-        let date_b_str = if let Some(date_part) = b.due.split('T').next().or_else(|| b.due.split(' ').next()) {
-            date_part
-        } else {
-            &b.due
-        };
+        let date_a_str =
+            if let Some(date_part) = a.due.split('T').next().or_else(|| a.due.split(' ').next()) {
+                date_part
+            } else {
+                &a.due
+            };
+        let date_b_str =
+            if let Some(date_part) = b.due.split('T').next().or_else(|| b.due.split(' ').next()) {
+                date_part
+            } else {
+                &b.due
+            };
         // Compare dates (ISO format YYYY-MM-DD sorts correctly as strings)
         date_b_str.cmp(date_a_str)
     });
@@ -378,7 +382,12 @@ pub async fn get_processed_assessments() -> Result<ProcessedAssessmentsResponse,
     let mut years_set: HashSet<i32> = HashSet::new();
     for assessment in &processed_assessments {
         // Parse date string (format: "YYYY-MM-DDTHH:mm:ss" or "YYYY-MM-DD HH:mm:ss")
-        if let Some(date_part) = assessment.due.split('T').next().or_else(|| assessment.due.split(' ').next()) {
+        if let Some(date_part) = assessment
+            .due
+            .split('T')
+            .next()
+            .or_else(|| assessment.due.split(' ').next())
+        {
             if let Some(year_str) = date_part.split('-').next() {
                 if let Ok(year) = year_str.parse::<i32>() {
                     years_set.insert(year);
@@ -412,4 +421,3 @@ pub async fn get_processed_assessments() -> Result<ProcessedAssessmentsResponse,
         years,
     })
 }
-

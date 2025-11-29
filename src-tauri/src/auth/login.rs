@@ -1,14 +1,14 @@
+use base64::{engine::general_purpose, Engine as _};
 use reqwest::header;
+use serde::Deserialize;
+use serde_json::json;
 use tauri::{Emitter, Manager};
 use time::OffsetDateTime;
 use url::Url;
-use serde::Deserialize;
-use serde_json::json;
-use base64::{Engine as _, engine::general_purpose};
 
 use std::sync::Arc;
 
-use reqwest::{cookie::Jar};
+use reqwest::cookie::Jar;
 
 use crate::netgrab;
 use crate::session;
@@ -22,9 +22,8 @@ struct SeqtaSSOPayload {
 
 #[derive(Debug, Deserialize)]
 struct SeqtaJWT {
-    exp: i64,       // Expiration timestamp
+    exp: i64, // Expiration timestamp
 }
-
 
 #[tauri::command]
 pub fn force_reload(app: tauri::AppHandle) {
@@ -53,18 +52,24 @@ pub fn save_session(base_url: String, jsessionid: String) -> Result<(), String> 
 pub async fn logout(app: tauri::AppHandle) -> bool {
     // Clear webview data first (cache, cookies, etc.)
     if let Err(e) = clear_webview_data(app).await {
-        println!("[AUTH] Warning: Failed to clear webview data during logout: {}", e);
+        println!(
+            "[AUTH] Warning: Failed to clear webview data during logout: {}",
+            e
+        );
         // Continue with logout even if cache clearing fails
     }
-    
+
     // Clear analytics data
     if let Err(e) = crate::analytics::delete_analytics() {
-        println!("[AUTH] Warning: Failed to clear analytics data during logout: {}", e);
+        println!(
+            "[AUTH] Warning: Failed to clear analytics data during logout: {}",
+            e
+        );
         // Continue with logout even if analytics clearing fails
     } else {
         println!("[AUTH] Successfully cleared analytics data during logout");
     }
-    
+
     if let Ok(_) = netgrab::clear_session().await {
         true
     } else {
@@ -77,16 +82,16 @@ pub async fn logout(app: tauri::AppHandle) -> bool {
 #[tauri::command]
 pub async fn clear_webview_data(app: tauri::AppHandle) -> Result<(), String> {
     use tauri::{WebviewUrl, WebviewWindowBuilder};
-    
+
     // Create a temporary webview window to clear its data
     // This ensures we can clear data even if no login window is currently open
     let temp_window_id = "temp_clear_data_window";
-    
+
     // Try to create a temporary hidden webview to clear data from
     match WebviewWindowBuilder::new(&app, temp_window_id, WebviewUrl::App("about:blank".into()))
         .title("Clearing Data")
-        .inner_size(1.0, 1.0)  // Minimal size
-        .visible(false)  // Keep it hidden
+        .inner_size(1.0, 1.0) // Minimal size
+        .visible(false) // Keep it hidden
         .build()
     {
         Ok(webview) => {
@@ -97,16 +102,19 @@ pub async fn clear_webview_data(app: tauri::AppHandle) -> Result<(), String> {
                     // Clean up the temporary window
                     let _ = webview.destroy();
                     Ok(())
-                },
+                }
                 Err(e) => {
                     println!("[AUTH] Failed to clear webview browsing data: {}", e);
                     let _ = webview.destroy();
                     Err(format!("Failed to clear browsing data: {}", e))
                 }
             }
-        },
+        }
         Err(e) => {
-            println!("[AUTH] Failed to create temporary webview for clearing data: {}", e);
+            println!(
+                "[AUTH] Failed to create temporary webview for clearing data: {}",
+                e
+            );
             Err(format!("Failed to create temporary webview: {}", e))
         }
     }
@@ -128,7 +136,7 @@ pub fn cleanup_login_windows(app: tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("seqta_login") {
         let _ = window.destroy();
     }
-    
+
     // Clean up any numbered login windows (in case of multiple attempts)
     for i in 0..10 {
         let window_id = format!("seqta_login_{}", i);
@@ -147,28 +155,28 @@ pub fn cleanup_login_windows(_app: tauri::AppHandle) {
 /// Parse and validate a Seqta Learn SSO deeplink
 fn parse_deeplink(deeplink: &str) -> Result<SeqtaSSOPayload, String> {
     const DEEPLINK_PREFIX: &str = "seqtalearn://sso/";
-    
+
     if !deeplink.starts_with(DEEPLINK_PREFIX) {
         return Err("Invalid Seqta Learn deeplink format".to_string());
     }
 
     let encoded_payload = &deeplink[DEEPLINK_PREFIX.len()..];
-    
+
     // First decode the URL encoding
-    let url_decoded = urlencoding::decode(encoded_payload)
-        .map_err(|e| format!("Failed to URL decode: {}", e))?;
-    
+    let url_decoded =
+        urlencoding::decode(encoded_payload).map_err(|e| format!("Failed to URL decode: {}", e))?;
+
     // Then decode the base64
     let decoded_payload = general_purpose::STANDARD
         .decode(url_decoded.as_bytes())
         .map_err(|e| format!("Failed to base64 decode: {}", e))?;
-    
+
     let payload_str = String::from_utf8(decoded_payload)
         .map_err(|e| format!("Failed to convert to string: {}", e))?;
-    
-    let result = serde_json::from_str(&payload_str)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-    
+
+    let result =
+        serde_json::from_str(&payload_str).map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
     Ok(result)
 }
 
@@ -182,23 +190,23 @@ fn decode_jwt(token: &str) -> Result<SeqtaJWT, String> {
     }
 
     let payload = parts[1];
-    
+
     // Fix base64 padding if needed
     let mut padded_payload = payload.to_string();
     while padded_payload.len() % 4 != 0 {
         padded_payload.push('=');
     }
-    
+
     let decoded_payload = general_purpose::STANDARD
         .decode(&padded_payload)
         .map_err(|e| format!("Failed to decode JWT payload: {}", e))?;
-    
+
     let payload_str = String::from_utf8(decoded_payload)
         .map_err(|e| format!("Failed to convert JWT payload to string: {}", e))?;
-    
+
     let result = serde_json::from_str(&payload_str)
         .map_err(|e| format!("Failed to parse JWT payload: {}", e))?;
-    
+
     Ok(result)
 }
 
@@ -207,14 +215,13 @@ fn validate_token(token: &str) -> Result<bool, String> {
     let decoded = decode_jwt(token)?;
     let now = chrono::Utc::now().timestamp();
     let is_valid = decoded.exp > now;
-    
+
     if !is_valid {
         return Err("JWT token has expired".to_string());
     }
-    
+
     Ok(is_valid)
 }
-
 
 /// Perform the QR code authentication flow
 async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Session, String> {
@@ -222,13 +229,28 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
     let token = sso_payload.t;
 
     let jar = Arc::new(Jar::default());
-    jar.add_cookie_str(&format!("JSESSIONID={}", &token), &base_url.parse::<Url>().unwrap());
-    
+    jar.add_cookie_str(
+        &format!("JSESSIONID={}", &token),
+        &base_url.parse::<Url>().unwrap(),
+    );
+
     let mut headers = header::HeaderMap::new();
-    headers.insert("Content-Type", header::HeaderValue::from_static("application/json"));
-    headers.insert("X-User-Number", header::HeaderValue::from_str(&sso_payload.n.clone()).unwrap());
-    headers.insert("Accept", header::HeaderValue::from_static("application/json"));
-    headers.insert("Authorization", header::HeaderValue::from_str(&format!("Bearer {}", &token)).unwrap());
+    headers.insert(
+        "Content-Type",
+        header::HeaderValue::from_static("application/json"),
+    );
+    headers.insert(
+        "X-User-Number",
+        header::HeaderValue::from_str(&sso_payload.n.clone()).unwrap(),
+    );
+    headers.insert(
+        "Accept",
+        header::HeaderValue::from_static("application/json"),
+    );
+    headers.insert(
+        "Authorization",
+        header::HeaderValue::from_str(&format!("Bearer {}", &token)).unwrap(),
+    );
 
     let client = reqwest::Client::builder()
         .cookie_provider(jar.clone())
@@ -236,15 +258,16 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         .default_headers(headers)
         .build()
         .unwrap();
-    
+
     // Step 1: First login request (empty body)
     let first_login_url = format!("{}/seqta/student/login", base_url);
 
     let first_login_body = json!({
         "token": &token
     });
-    
-    let first_response = client.post(&first_login_url)
+
+    let first_response = client
+        .post(&first_login_url)
         .json(&first_login_body)
         .send()
         .await
@@ -255,33 +278,41 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         return Err(format!("First login failed with status: {}", status));
     }
 
-
     // Step 2: Second login request with JWT (this is where we get the user data and JSESSIONID)
     let second_login_body = json!({
         "jwt": &token
     });
-    
-    let second_response = client.post(&first_login_url)
+
+    let second_response = client
+        .post(&first_login_url)
         .json(&second_login_body)
         .send()
         .await
         .map_err(|e| format!("Second login request failed: {}", e))?;
-    
+
     if !second_response.status().is_success() {
         let status = second_response.status();
         return Err(format!("Second login failed with status: {}", status));
     }
 
     // Step 3 - get cookie (which should be stored here)
-    let jsessionid = second_response.headers().get("Set-Cookie")
+    let jsessionid = second_response
+        .headers()
+        .get("Set-Cookie")
         .and_then(|v| v.to_str().ok())
         .and_then(|cookie_str| {
             // Extract just the JSESSIONID value from "JSESSIONID=value; Path=/; HttpOnly"
-            cookie_str.split(';')
+            cookie_str
+                .split(';')
                 .find(|part| part.trim().starts_with("JSESSIONID="))
-                .map(|jsession_part| jsession_part.trim().strip_prefix("JSESSIONID=").unwrap_or("").to_string())
+                .map(|jsession_part| {
+                    jsession_part
+                        .trim()
+                        .strip_prefix("JSESSIONID=")
+                        .unwrap_or("")
+                        .to_string()
+                })
         });
-
 
     // Step 4: Send a heartbeat - Defib. Check if the JSESSIONID/JWT is valid
     let heartbeat_url = format!("{}/seqta/student/heartbeat", base_url);
@@ -290,7 +321,8 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         "heartbeat": true
     });
 
-    let heartbeat_response = client.post(&heartbeat_url)
+    let heartbeat_response = client
+        .post(&heartbeat_url)
         .json(&heartbeat_body)
         .send()
         .await
@@ -311,9 +343,6 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
     Ok(session)
 }
 
-
-
-
 /// Open a login window and harvest the cookie once the user signs in.
 #[tauri::command]
 pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(), String> {
@@ -321,16 +350,18 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
     if url.starts_with("seqtalearn://") {
         // Parse the deeplink
         let sso_payload = parse_deeplink(&url)?;
-        
+
         // Validate the JWT token
         validate_token(&sso_payload.t)?;
-        
+
         // Perform the QR authentication flow
         let session = perform_qr_auth(sso_payload).await?;
-        
+
         // Save the session
-        session.save().map_err(|e| format!("Failed to save session: {}", e))?;
-        
+        session
+            .save()
+            .map_err(|e| format!("Failed to save session: {}", e))?;
+
         // Force reload the app
         force_reload(app);
         return Ok(());
@@ -339,13 +370,16 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
     // For regular URL-based login, handle differently for desktop vs mobile
     #[cfg(desktop)]
     {
+        use std::sync::atomic::{AtomicU64, Ordering};
         use tauri::{WebviewUrl, WebviewWindowBuilder};
         use tokio::time::{sleep, Duration};
-        use std::sync::atomic::{AtomicU64, Ordering};
-        
+
         // Generate unique window ID to prevent conflicts
         static WINDOW_COUNTER: AtomicU64 = AtomicU64::new(0);
-        let window_id = format!("seqta_login_{}", WINDOW_COUNTER.fetch_add(1, Ordering::SeqCst));
+        let window_id = format!(
+            "seqta_login_{}",
+            WINDOW_COUNTER.fetch_add(1, Ordering::SeqCst)
+        );
 
         let http_url = if url.starts_with("https://") {
             url.clone()
@@ -373,11 +407,12 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
         }
 
         // Spawn the login window with unique ID
-        let _webview_window = WebviewWindowBuilder::new(&app, &window_id, WebviewUrl::External(full_url.clone()))
-            .title("SEQTA Login")
-            .inner_size(900.0, 700.0)
-            .build()
-            .map_err(|e| format!("Failed to build window: {}", e))?;
+        let _webview_window =
+            WebviewWindowBuilder::new(&app, &window_id, WebviewUrl::External(full_url.clone()))
+                .title("SEQTA Login")
+                .inner_size(900.0, 700.0)
+                .build()
+                .map_err(|e| format!("Failed to build window: {}", e))?;
 
         // Clone handles for async block
         let app_handle_clone = app.clone();
@@ -417,12 +452,12 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                             Ok(cookies) => {
                                 for cookie in cookies.clone() {
                                     if cookie.name() == "JSESSIONID"
-                                        && cookie.domain().unwrap_or("None") == parsed_url.host_str().unwrap_or("None")
+                                        && cookie.domain().unwrap_or("None")
+                                            == parsed_url.host_str().unwrap_or("None")
                                     {
                                         if let Some(expire_time) = cookie.expires_datetime() {
                                             let now = OffsetDateTime::now_utc();
                                             if expire_time > now {
-
                                                 let value = cookie.value().to_string();
                                                 let base_url = http_url.clone();
 
@@ -432,7 +467,9 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                                                     .filter(|c| c.name() != "JSESSIONID") // Skip JSESSIONID as it's stored separately
                                                     .filter(|c| {
                                                         if let Some(cookie_domain) = c.domain() {
-                                                            if let Some(host) = parsed_url.host_str() {
+                                                            if let Some(host) =
+                                                                parsed_url.host_str()
+                                                            {
                                                                 host.ends_with(
                                                                     cookie_domain
                                                                         .trim_start_matches('.'),
@@ -463,10 +500,10 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
 
                                                 // Properly destroy the window to ensure complete cleanup
                                                 destroy_login_window();
-                                                
+
                                                 // Small delay to ensure window is fully destroyed before reload
                                                 sleep(Duration::from_millis(100)).await;
-                                                
+
                                                 force_reload(app_handle_clone);
                                                 return; // Stop polling once found
                                             }
@@ -519,7 +556,7 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
         // This is a simplified approach - in a real app, you might want to
         // implement a more sophisticated mobile authentication flow
         println!("Opening URL in system browser: {}", full_url);
-        
+
         // For now, we'll return an error indicating that manual authentication is needed
         // In a production app, you might want to implement deep linking back to the app
         return Err("Mobile authentication requires manual login through the system browser. Please implement a proper mobile authentication flow.".to_string());

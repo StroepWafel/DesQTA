@@ -1,6 +1,10 @@
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Mutex, time::{Duration, Instant}};
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::HashMap,
+    sync::Mutex,
+    time::{Duration, Instant},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Article {
@@ -27,7 +31,8 @@ struct CacheItem {
     data: NewsApiResponse,
 }
 
-static NEWS_CACHE: Lazy<Mutex<HashMap<String, CacheItem>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+static NEWS_CACHE: Lazy<Mutex<HashMap<String, CacheItem>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
 
 fn cache_key(from: &str, domains: &str) -> String {
     format!("from={}|domains={}", from, domains)
@@ -56,10 +61,20 @@ pub async fn get_news_australia(from: String, domains: String) -> Result<NewsApi
 
     let client = reqwest::Client::new();
 
-    async fn do_request(client: &reqwest::Client, url: &str) -> Result<(reqwest::StatusCode, String), String> {
-        let resp = client.get(url).send().await.map_err(|e| format!("request error: {}", e))?;
+    async fn do_request(
+        client: &reqwest::Client,
+        url: &str,
+    ) -> Result<(reqwest::StatusCode, String), String> {
+        let resp = client
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| format!("request error: {}", e))?;
         let status = resp.status();
-        let text = resp.text().await.map_err(|e| format!("read body error: {}", e))?;
+        let text = resp
+            .text()
+            .await
+            .map_err(|e| format!("read body error: {}", e))?;
         Ok((status, text))
     }
 
@@ -72,20 +87,34 @@ pub async fn get_news_australia(from: String, domains: String) -> Result<NewsApi
         match parsed {
             Ok(data) => {
                 // If explicit rate limit in body or HTTP 429, try cache-busting like TS code
-                let is_rate_limited = data.status.as_deref() == Some("error") && data.code.as_deref() == Some("rateLimited") || status.as_u16() == 429;
+                let is_rate_limited = data.status.as_deref() == Some("error")
+                    && data.code.as_deref() == Some("rateLimited")
+                    || status.as_u16() == 429;
                 if is_rate_limited {
                     if attempts < MAX_RATE_LIMIT_CACHEBUST_RETRIES {
                         attempts += 1;
                         url.push_str("%00");
                         continue; // retry with cache-busted URL
                     } else {
-                        return Err(format!("rate_limited: {}", data.message.unwrap_or_else(|| "You have made too many requests recently. Try again later.".to_string())));
+                        return Err(format!(
+                            "rate_limited: {}",
+                            data.message.unwrap_or_else(|| {
+                                "You have made too many requests recently. Try again later."
+                                    .to_string()
+                            })
+                        ));
                     }
                 }
 
                 // Success path: cache and return
                 if let Ok(mut map) = NEWS_CACHE.lock() {
-                    map.insert(key, CacheItem { inserted: Instant::now(), data: data.clone() });
+                    map.insert(
+                        key,
+                        CacheItem {
+                            inserted: Instant::now(),
+                            data: data.clone(),
+                        },
+                    );
                 }
                 return Ok(data);
             }

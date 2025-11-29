@@ -1,20 +1,19 @@
-use std::path::PathBuf;
+use base64::{engine::general_purpose, Engine as _};
 use std::fs;
-use base64::{Engine as _, engine::general_purpose};
+use std::path::PathBuf;
 
 /// Get the profile picture directory path
 fn get_profile_picture_dir() -> Result<PathBuf, String> {
-    let app_data_dir = dirs_next::data_dir()
-        .ok_or("Failed to get app data directory")?;
-    
+    let app_data_dir = dirs_next::data_dir().ok_or("Failed to get app data directory")?;
+
     let profile_dir = app_data_dir.join("DesQTA").join("profile");
-    
+
     // Create directory if it doesn't exist
     if !profile_dir.exists() {
         fs::create_dir_all(&profile_dir)
             .map_err(|e| format!("Failed to create profile directory: {}", e))?;
     }
-    
+
     Ok(profile_dir)
 }
 
@@ -33,19 +32,19 @@ pub async fn save_profile_picture(base64_data: String) -> Result<String, String>
     } else {
         &base64_data
     };
-    
+
     // Decode base64 data
     let image_data = general_purpose::STANDARD
         .decode(base64_clean)
         .map_err(|e| format!("Failed to decode base64 image: {}", e))?;
-    
+
     // Get the profile picture path
     let profile_path = get_profile_picture_path()?;
-    
+
     // Save the image data to file
     fs::write(&profile_path, image_data)
         .map_err(|e| format!("Failed to save profile picture: {}", e))?;
-    
+
     // Return the file path as a string
     profile_path
         .to_str()
@@ -57,13 +56,13 @@ pub async fn save_profile_picture(base64_data: String) -> Result<String, String>
 #[tauri::command]
 pub async fn get_profile_picture_path_cmd() -> Result<Option<String>, String> {
     let profile_path = get_profile_picture_path()?;
-    
+
     if profile_path.exists() {
         Ok(Some(
             profile_path
                 .to_str()
                 .ok_or("Failed to convert path to string")?
-                .to_string()
+                .to_string(),
         ))
     } else {
         Ok(None)
@@ -74,12 +73,12 @@ pub async fn get_profile_picture_path_cmd() -> Result<Option<String>, String> {
 #[tauri::command]
 pub async fn delete_profile_picture() -> Result<(), String> {
     let profile_path = get_profile_picture_path()?;
-    
+
     if profile_path.exists() {
         fs::remove_file(profile_path)
             .map_err(|e| format!("Failed to delete profile picture: {}", e))?;
     }
-    
+
     Ok(())
 }
 
@@ -94,20 +93,20 @@ pub async fn has_custom_profile_picture() -> Result<bool, String> {
 #[tauri::command]
 pub async fn get_profile_picture_data_url() -> Result<Option<String>, String> {
     let profile_path = get_profile_picture_path()?;
-    
+
     if !profile_path.exists() {
         return Ok(None);
     }
-    
+
     // Read the image file
-    let image_data = fs::read(profile_path)
-        .map_err(|e| format!("Failed to read profile picture: {}", e))?;
-    
+    let image_data =
+        fs::read(profile_path).map_err(|e| format!("Failed to read profile picture: {}", e))?;
+
     // Convert to base64
     let base64_data = general_purpose::STANDARD.encode(&image_data);
-    
+
     // Create data URL (assuming PNG format)
     let data_url = format!("data:image/png;base64,{}", base64_data);
-    
+
     Ok(Some(data_url))
 }

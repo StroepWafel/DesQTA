@@ -1,5 +1,5 @@
 use serde_json::Value;
-use std::{fs, io::{Read}, path::PathBuf};
+use std::{fs, io::Read, path::PathBuf};
 use tauri::command;
 
 /// Returns the path to seqtaConfig.json in the app data directory.
@@ -41,14 +41,11 @@ pub fn load_seqta_config() -> Option<Value> {
     None
 }
 
-
-
 /// Saves the given serde_json::Value to seqtaConfig.json.
 #[command]
 pub fn save_seqta_config(config: Value) -> Result<(), String> {
     let path = config_file();
-    fs::write(path, serde_json::to_string(&config).unwrap())
-        .map_err(|e| e.to_string())
+    fs::write(path, serde_json::to_string(&config).unwrap()).map_err(|e| e.to_string())
 }
 
 /// Checks if the current config is different from the given value.
@@ -59,4 +56,4 @@ pub fn is_seqta_config_different(new_config: Value) -> bool {
         Some(existing) => existing != new_config,
         None => true,
     }
-} 
+}

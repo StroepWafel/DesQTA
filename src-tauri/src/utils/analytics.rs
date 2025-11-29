@@ -1,10 +1,10 @@
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-use std::{fs, path::PathBuf};
-use std::collections::HashMap;
 use super::netgrab;
 use super::netgrab::RequestMethod;
 use crate::logger;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use std::collections::HashMap;
+use std::{fs, path::PathBuf};
 
 const STUDENT_ID: i32 = 69;
 
@@ -121,7 +121,10 @@ async fn fetch_subjects() -> Result<Vec<Folder>, String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -131,8 +134,8 @@ async fn fetch_subjects() -> Result<Vec<Folder>, String> {
     )
     .await?;
 
-    let data: Value = serde_json::from_str(&response)
-        .map_err(|e| format!("Failed to parse subjects: {}", e))?;
+    let data: Value =
+        serde_json::from_str(&response).map_err(|e| format!("Failed to parse subjects: {}", e))?;
 
     let folders: Vec<Folder> = serde_json::from_value(data["payload"].clone())
         .map_err(|e| format!("Failed to deserialize folders: {}", e))?;
@@ -151,7 +154,10 @@ async fn fetch_upcoming_assessments() -> Result<Vec<Value>, String> {
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -164,10 +170,7 @@ async fn fetch_upcoming_assessments() -> Result<Vec<Value>, String> {
     let data: Value = serde_json::from_str(&response)
         .map_err(|e| format!("Failed to parse upcoming assessments: {}", e))?;
 
-    Ok(data["payload"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default())
+    Ok(data["payload"].as_array().cloned().unwrap_or_default())
 }
 
 /// Fetch past assessments for a specific subject
@@ -183,7 +186,10 @@ async fn fetch_past_assessments(programme: i32, metaclass: i32) -> Result<Vec<Va
         RequestMethod::POST,
         Some({
             let mut headers = HashMap::new();
-            headers.insert("Content-Type".to_string(), "application/json; charset=utf-8".to_string());
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
             headers
         }),
         Some(body),
@@ -198,15 +204,15 @@ async fn fetch_past_assessments(programme: i32, metaclass: i32) -> Result<Vec<Va
 
     // Check both pending and tasks arrays
     let mut result = Vec::new();
-    
+
     if let Some(pending) = data["payload"]["pending"].as_array() {
         result.extend(pending.iter().cloned());
     }
-    
+
     if let Some(tasks) = data["payload"]["tasks"].as_array() {
         result.extend(tasks.iter().cloned());
     }
-    
+
     Ok(result)
 }
 
@@ -317,7 +323,7 @@ pub async fn sync_analytics_data() -> Result<String, String> {
 
     // Fetch subjects
     let folders = fetch_subjects().await?;
-    
+
     // Extract all unique subjects
     let mut unique_subjects_map: HashMap<String, Subject> = HashMap::new();
     for folder in &folders {
@@ -372,7 +378,7 @@ pub async fn sync_analytics_data() -> Result<String, String> {
         if let Some(existing) = existing_map.get(&id) {
             let existing_has_grade = existing.get("finalGrade").is_some();
             let new_has_grade = assessment.get("finalGrade").is_some();
-            
+
             // If existing has grade and new doesn't, keep existing
             if existing_has_grade && !new_has_grade {
                 continue; // Skip this assessment, keep existing
@@ -394,9 +400,8 @@ pub async fn sync_analytics_data() -> Result<String, String> {
     // Save to file
     let json_data = serde_json::to_string_pretty(&final_assessments)
         .map_err(|e| format!("Failed to serialize analytics data: {}", e))?;
-    
-    fs::write(&path, json_data)
-        .map_err(|e| format!("Failed to write analytics file: {}", e))?;
+
+    fs::write(&path, json_data).map_err(|e| format!("Failed to write analytics file: {}", e))?;
 
     if let Some(logger) = logger::get_logger() {
         let _ = logger.log(
@@ -411,4 +416,4 @@ pub async fn sync_analytics_data() -> Result<String, String> {
     }
 
     Ok("Analytics data synced successfully".to_string())
-} 
+}
