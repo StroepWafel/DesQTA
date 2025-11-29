@@ -5,8 +5,16 @@
   import { MagnifyingGlass, Funnel, User, AcademicCap, MapPin } from 'svelte-hero-icons';
   import { invoke } from '@tauri-apps/api/core';
   import { cache } from '../../utils/cache';
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import { setIdb } from '$lib/services/idbCache';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
   import { AsyncWrapper, SearchInput, Badge } from '$lib/components/ui';
+  import Input from '$lib/components/ui/Input.svelte';
+  import * as Popover from "$lib/components/ui/popover/index.js";
+  import * as Pagination from "$lib/components/ui/pagination/index.js";
+  import * as Select from "$lib/components/ui/select/index.js";
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
+  import { logger } from '../../utils/logger';
 
   interface Student {
     id: number;
@@ -29,7 +37,6 @@
   let selectedSubSchool = $state('all');
   let selectedHouse = $state('all');
   let selectedCampus = $state('all');
-  let showFilters = $state(false);
   let devSensitiveInfoHider = $state(false);
   let currentPage = $state(1);
   let itemsPerPage = $state(24); // 6 rows of 4 cards on large screens
@@ -57,82 +64,79 @@
     }
   }
 
+  const hydrateFilters = (studentsData: Student[]) => {
+    const uniqueYears = [...new Set(studentsData.map((s) => s.year))].sort();
+    const uniqueSubSchools = [...new Set(studentsData.map((s) => s.sub_school))].sort();
+    const uniqueHouses = [...new Set(studentsData.map((s) => s.house))].sort();
+    const uniqueCampuses = [...new Set(studentsData.map((s) => s.campus))].sort();
+    years = uniqueYears;
+    subSchools = uniqueSubSchools;
+    houses = uniqueHouses;
+    campuses = uniqueCampuses;
+  };
+
   async function loadStudents() {
     loading = true;
     error = null;
-    try {
-      const cacheKey = 'directory_students_all';
-      const cached = cache.get<Student[]>(cacheKey) || await getWithIdbFallback<Student[]>(cacheKey, cacheKey, () => cache.get<Student[]>(cacheKey));
-      if (cached) {
-        students = cached;
-        // hydrate filters from cached too
-        const uniqueYears = [...new Set(students.map(s => s.year))].sort();
-        const uniqueSubSchools = [...new Set(students.map(s => s.sub_school))].sort();
-        const uniqueHouses = [...new Set(students.map(s => s.house))].sort();
-        const uniqueCampuses = [...new Set(students.map(s => s.campus))].sort();
-        years = uniqueYears; subSchools = uniqueSubSchools; houses = uniqueHouses; campuses = uniqueCampuses;
-        loading = false;
-        return;
-      }
 
-      const res = await seqtaFetch('/seqta/student/load/message/people', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {
-          mode: 'student'
+    const cacheKey = 'directory_students_all';
+
+    try {
+      const data = await useDataLoader<Student[]>({
+        cacheKey,
+        ttlMinutes: 60,
+        context: 'directory',
+        functionName: 'loadStudents',
+        fetcher: async () => {
+          logger.debug('directory', 'loadStudents', 'fetching directory from API (cache expired/missing)');
+          const res = await seqtaFetch('/seqta/student/load/message/people', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: {
+              mode: 'student'
+            },
+          });
+          
+          // Parse the response - it might be a string that needs parsing
+          const parsedData = typeof res === 'string' ? JSON.parse(res) : res;
+          
+          // Handle different possible response structures
+          let studentArray: Student[] = [];
+          if (Array.isArray(parsedData)) {
+            studentArray = parsedData;
+          } else if (parsedData && typeof parsedData === 'object') {
+            // Check if it's wrapped in a payload or other property
+            if (parsedData.payload && Array.isArray(parsedData.payload)) {
+              studentArray = parsedData.payload;
+            } else if (parsedData.data && Array.isArray(parsedData.data)) {
+              studentArray = parsedData.data;
+            } else if (parsedData.students && Array.isArray(parsedData.students)) {
+              studentArray = parsedData.students;
+            } else {
+              // Try to find any array property
+              const arrayProps = Object.values(parsedData).filter(val => Array.isArray(val));
+              if (arrayProps.length > 0) {
+                studentArray = arrayProps[0];
+              }
+            }
+          }
+          
+          return studentArray;
+        },
+        onDataLoaded: (studentArray) => {
+          students = studentArray;
+          hydrateFilters(studentArray);
+          loading = false;
         },
       });
-      
-      // Parse the response - it might be a string that needs parsing
-      const data = typeof res === 'string' ? JSON.parse(res) : res;
-      
-      // Handle different possible response structures
-      let studentArray: Student[] = [];
-      if (Array.isArray(data)) {
-        studentArray = data;
-      } else if (data && typeof data === 'object') {
-        // Check if it's wrapped in a payload or other property
-        if (data.payload && Array.isArray(data.payload)) {
-          studentArray = data.payload;
-        } else if (data.data && Array.isArray(data.data)) {
-          studentArray = data.data;
-        } else if (data.students && Array.isArray(data.students)) {
-          studentArray = data.students;
-        } else {
-          // Try to find any array property
-          const arrayProps = Object.values(data).filter(val => Array.isArray(val));
-          if (arrayProps.length > 0) {
-            studentArray = arrayProps[0];
-          }
-        }
-      }
-      
-      students = studentArray;
-      
-      // Extract unique values for filters
-      const uniqueYears = [...new Set(students.map(s => s.year))].sort();
-      const uniqueSubSchools = [...new Set(students.map(s => s.sub_school))].sort();
-      const uniqueHouses = [...new Set(students.map(s => s.house))].sort();
-      const uniqueCampuses = [...new Set(students.map(s => s.campus))].sort();
-      
-      years = uniqueYears;
-      subSchools = uniqueSubSchools;
-      houses = uniqueHouses;
-      campuses = uniqueCampuses;
 
-      // Cache mem + IDB
-      cache.set(cacheKey, students, 60);
-      console.info('[IDB] directory cached (mem+idb)', { count: students.length });
-      await setIdb(cacheKey, students);
-      
-      console.log('Loaded students:', students.length, 'students');
-      console.log('Sample student:', students[0]);
-      console.log('Response structure:', typeof res, res);
-      
+      if (!data) {
+        error = 'Failed to load students';
+        loading = false;
+      }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
-      console.error('Failed to load students:', e);
-    } finally {
+      logger.error('directory', 'loadStudents', `Failed to load students: ${e}`, { error: e });
       loading = false;
     }
   }
@@ -177,19 +181,20 @@
     return Math.ceil(getFilteredStudents().length / itemsPerPage);
   }
 
-  function goToPage(page: number) {
-    currentPage = Math.max(1, Math.min(page, getTotalPages()));
-  }
-
-  function nextPage() {
-    if (currentPage < getTotalPages()) {
-      currentPage++;
-    }
-  }
-
-  function prevPage() {
-    if (currentPage > 1) {
-      currentPage--;
+  // Handle scroll wheel navigation through pages (only when hovering over pagination)
+  function handlePaginationWheel(event: WheelEvent) {
+    const totalPages = getTotalPages();
+    
+    if (totalPages <= 1) return; // No pagination needed
+    
+    event.preventDefault();
+    
+    if (event.deltaY > 0 && currentPage < totalPages) {
+      // Scroll down - next page
+      currentPage = Math.min(currentPage + 1, totalPages);
+    } else if (event.deltaY < 0 && currentPage > 1) {
+      // Scroll up - previous page
+      currentPage = Math.max(currentPage - 1, 1);
     }
   }
 
@@ -206,35 +211,123 @@
   });
 </script>
 
-<div class="p-6 space-y-6">
+<div class="px-6 py-7 space-y-6">
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <div class="p-2 rounded-lg accent-bg">
-        <Icon src={User} class="w-6 h-6 text-white" />
-      </div>
-      <div>
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">School Directory</h1>
-        <p class="text-sm text-gray-600 dark:text-gray-400">
-          Browse and search through all students
-        </p>
-      </div>
+  <div class="flex justify-between items-start">
+    <div>
+      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
+        <T key="navigation.directory" fallback="Directory" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="directory.description" fallback="Browse and search through all students" />
+      </p>
     </div>
     
     <div class="flex items-center gap-2">
-      <button
-        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
-        onclick={() => (showFilters = !showFilters)}
-      >
-        <Icon src={Funnel} class="w-4 h-4" />
-        Filters
-      </button>
+      <Popover.Root>
+        <Popover.Trigger class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2">
+          <Icon src={Funnel} class="w-4 h-4" />
+          <T key="directory.filters" fallback="Filters" />
+        </Popover.Trigger>
+        
+        <Popover.Content class="w-96 p-4 space-y-4">
+          <h3 class="font-medium text-zinc-900 dark:text-white">
+            <T key="directory.filter_students" fallback="Filter Students" />
+          </h3>
+          
+          <div class="grid grid-cols-1 gap-4">
+            <!-- Year Filter -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <T key="directory.year_level" fallback="Year Level" />
+              </label>
+              <Select.Root type="single" bind:value={selectedYear}>
+                <Select.Trigger class="w-full">
+                  <span class="truncate">{selectedYear === 'all' ? $_('directory.all_years') || 'All Years' : `${$_('directory.year') || 'Year'} ${selectedYear}`}</span>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="all">
+                    <T key="directory.all_years" fallback="All Years" />
+                  </Select.Item>
+                  {#each years as year}
+                    <Select.Item value={year}>
+                      <T key="directory.year_number" fallback="Year" values={{ number: year }} />
+                    </Select.Item>
+                  {/each}
+                </Select.Content>
+              </Select.Root>
+            </div>
+
+            <!-- Sub School Filter -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <T key="directory.sub_school" fallback="Sub School" />
+              </label>
+              <Select.Root type="single" bind:value={selectedSubSchool}>
+                <Select.Trigger class="w-full">
+                  <span class="truncate">{selectedSubSchool === 'all' ? $_('directory.all_sub_schools') || 'All Sub Schools' : selectedSubSchool}</span>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="all">
+                    <T key="directory.all_sub_schools" fallback="All Sub Schools" />
+                  </Select.Item>
+                  {#each subSchools as subSchool}
+                    <Select.Item value={subSchool}>{subSchool}</Select.Item>
+                  {/each}
+                </Select.Content>
+              </Select.Root>
+            </div>
+
+            <!-- House Filter -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <T key="directory.house" fallback="House" />
+              </label>
+              <Select.Root type="single" bind:value={selectedHouse}>
+                <Select.Trigger class="w-full">
+                  <span class="truncate">{selectedHouse === 'all' ? $_('directory.all_houses') || 'All Houses' : selectedHouse}</span>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="all">
+                    <T key="directory.all_houses" fallback="All Houses" />
+                  </Select.Item>
+                  {#each houses as house}
+                    <Select.Item value={house}>{house}</Select.Item>
+                  {/each}
+                </Select.Content>
+              </Select.Root>
+            </div>
+
+            <!-- Campus Filter -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <T key="directory.campus" fallback="Campus" />
+              </label>
+              <Select.Root type="single" bind:value={selectedCampus}>
+                <Select.Trigger class="w-full">
+                  <span class="truncate">{selectedCampus === 'all' ? $_('directory.all_campuses') || 'All Campuses' : `${$_('directory.campus') || 'Campus'} ${selectedCampus}`}</span>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="all">
+                    <T key="directory.all_campuses" fallback="All Campuses" />
+                  </Select.Item>
+                  {#each campuses as campus}
+                    <Select.Item value={campus}>
+                      <T key="directory.campus_name" fallback="Campus {name}" values={{ name: campus }} />
+                    </Select.Item>
+                  {/each}
+                </Select.Content>
+              </Select.Root>
+            </div>
+          </div>
+        </Popover.Content>
+      </Popover.Root>
       
       <button
-        class="px-4 py-2 text-sm font-medium text-white accent-bg rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="px-4 py-2 text-sm font-medium text-white accent-bg rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         onclick={clearFilters}
       >
-        Clear All
+        <T key="directory.clear_all" fallback="Clear All" />
       </button>
     </div>
   </div>
@@ -243,97 +336,24 @@
   <div class="space-y-4">
     <!-- Search Bar -->
     <div class="relative">
-      <Icon src={MagnifyingGlass} class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-      <input
-        type="text"
+      <Icon src={MagnifyingGlass} class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-zinc-400 z-10" />
+      <Input
         bind:value={search}
-        placeholder="Search by name, display name, or roll group..."
-        class="w-full pl-10 pr-4 py-3 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors duration-200"
+        placeholder={$_('directory.search_placeholder') || 'Search by name, display name, or roll group...'}
+        fullWidth
+        leftIcon
+        size="lg"
       />
     </div>
 
-    <!-- Filters Panel -->
-    {#if showFilters}
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Year Filter -->
-          <div>
-            <label for="year-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Year Level
-            </label>
-            <select
-              id="year-filter"
-              bind:value={selectedYear}
-              class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors duration-200"
-            >
-              <option value="all">All Years</option>
-              {#each years as year}
-                <option value={year}>Year {year}</option>
-              {/each}
-            </select>
-          </div>
-
-          <!-- Sub School Filter -->
-          <div>
-            <label for="subschool-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Sub School
-            </label>
-            <select
-              id="subschool-filter"
-              bind:value={selectedSubSchool}
-              class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors duration-200"
-            >
-              <option value="all">All Sub Schools</option>
-              {#each subSchools as subSchool}
-                <option value={subSchool}>{subSchool}</option>
-              {/each}
-            </select>
-          </div>
-
-          <!-- House Filter -->
-          <div>
-            <label for="house-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              House
-            </label>
-            <select
-              id="house-filter"
-              bind:value={selectedHouse}
-              class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors duration-200"
-            >
-              <option value="all">All Houses</option>
-              {#each houses as house}
-                <option value={house}>{house}</option>
-              {/each}
-            </select>
-          </div>
-
-          <!-- Campus Filter -->
-          <div>
-            <label for="campus-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Campus
-            </label>
-            <select
-              id="campus-filter"
-              bind:value={selectedCampus}
-              class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors duration-200"
-            >
-              <option value="all">All Campuses</option>
-              {#each campuses as campus}
-                <option value={campus}>Campus {campus}</option>
-              {/each}
-            </select>
-          </div>
-        </div>
-      </div>
-    {/if}
   </div>
 
   <!-- Results -->
   <div class="space-y-4">
     <!-- Results Summary -->
     <div class="flex items-center justify-between">
-      <p class="text-sm text-gray-600 dark:text-gray-400">
-        Showing {getPaginatedStudents().length} of {getFilteredStudents().length} students (Page {currentPage} of {getTotalPages()})
+      <p class="text-sm text-zinc-600 dark:text-zinc-400">
+        <T key="directory.showing_students" fallback="Showing students" values={{ showing: getPaginatedStudents().length, total: getFilteredStudents().length, currentPage, totalPages: getTotalPages() }} />
       </p>
     </div>
 
@@ -342,23 +362,23 @@
       error={error}
       data={getFilteredStudents()}
       empty={getFilteredStudents().length === 0}
-      emptyTitle="No students found"
-      emptyMessage="Try adjusting your search or filters to find what you're looking for."
+      emptyTitle={$_('directory.no_students_found') || 'No students found'}
+      emptyMessage={$_('directory.no_students_message') || 'Try adjusting your search or filters to find what you\'re looking for.'}
       emptyIcon="👥"
       componentName="Directory"
     >
-      {#snippet children(students)}
+      {#snippet children()}
         <!-- Students Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {#each getPaginatedStudents() as student (student.id)}
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-all duration-200 transform hover:scale-[1.02]">
+          <div class="bg-white dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-700/50 rounded-lg p-4 transition-all duration-200 transform hover:scale-[1.02]">
             <!-- Student Avatar -->
             <div class="flex items-center gap-3 mb-3">
               {#if devSensitiveInfoHider}
                 <img
                   src={getStudentAvatar(student)}
-                  alt="Student avatar"
-                  class="w-10 h-10 rounded-full object-cover border-2 border-white/60 dark:border-slate-600/60"
+                  alt={$_('directory.student_avatar') || 'Student avatar'}
+                  class="w-10 h-10 rounded-full object-cover border-2 border-white/60 dark:border-zinc-600/60"
                 />
               {:else}
                 <div 
@@ -369,10 +389,10 @@
                 </div>
               {/if}
               <div class="flex-1 min-w-0">
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <h3 class="text-sm font-medium text-zinc-900 dark:text-white truncate">
                   {student.xx_display}
                 </h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                   {student.firstname} {student.surname}
                 </p>
               </div>
@@ -381,14 +401,16 @@
             <!-- Student Details -->
             <div class="space-y-2">
               <div class="flex items-center gap-2 text-xs">
-                <Icon src={AcademicCap} class="w-3 h-3 text-gray-400" />
-                <span class="text-gray-600 dark:text-gray-400">Year {student.year}</span>
+                <Icon src={AcademicCap} class="w-3 h-3 text-zinc-400" />
+                <span class="text-zinc-600 dark:text-zinc-400">
+                  <T key="directory.year_number" fallback="Year" values={{ number: student.year }} />
+                </span>
               </div>
               
                {#if student.sub_school && student.sub_school.trim() !== ""}
                  <div class="flex items-center gap-2 text-xs">
-                 <Icon src={MapPin} class="w-3 h-3 text-gray-400" />
-                  <span class="text-gray-600 dark:text-gray-400">{student.sub_school}</span>
+                 <Icon src={MapPin} class="w-3 h-3 text-zinc-400" />
+                  <span class="text-zinc-600 dark:text-zinc-400">{student.sub_school}</span>
                  </div>
                 {/if}
 
@@ -397,10 +419,10 @@
                   class="w-3 h-3 rounded-full"
                   style="background-color: {student.house_colour}"
                 ></div>
-                <span class="text-gray-600 dark:text-gray-400">{student.house}</span>
+                <span class="text-zinc-600 dark:text-zinc-400">{student.house}</span>
               </div>
 
-              <div class="text-xs text-gray-500 dark:text-gray-400">
+              <div class="text-xs text-zinc-500 dark:text-zinc-400">
                 {student.rollgroup}
               </div>
             </div>
@@ -410,40 +432,32 @@
 
       <!-- Pagination -->
       {#if getTotalPages() > 1}
-        <div class="flex items-center justify-center gap-2 mt-6">
-          <button
-            class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={currentPage === 1}
-            onclick={prevPage}
-          >
-            Previous
-          </button>
-          
-          <div class="flex items-center gap-1 overflow-hidden">
-            {#each Array.from({ length: getTotalPages() }, (_, i) => {
-              const pageNum = i + 1;
-              const isActive = pageNum === currentPage;
-              const isVisible = pageNum >= Math.max(1, currentPage - 2) && pageNum <= Math.min(getTotalPages(), currentPage + 2);
-              return { pageNum, isActive, isVisible };
-            }) as pageInfo}
-              {#if pageInfo.isVisible}
-                <button
-                  class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 {pageInfo.isActive ? 'text-white accent-bg' : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600'}"
-                  onclick={() => goToPage(pageInfo.pageNum)}
-                >
-                  {pageInfo.pageNum}
-                </button>
-              {/if}
-            {/each}
-          </div>
-          
-          <button
-            class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={currentPage === getTotalPages()}
-            onclick={nextPage}
-          >
-            Next
-          </button>
+        <div class="mt-6" onwheel={handlePaginationWheel}>
+          <Pagination.Root count={getFilteredStudents().length} perPage={itemsPerPage} bind:page={currentPage}>
+            {#snippet children({ pages, currentPage: paginationCurrentPage })}
+              <Pagination.Content>
+                <Pagination.Item>
+                  <Pagination.PrevButton />
+                </Pagination.Item>
+                {#each pages as page (page.key)}
+                  {#if page.type === "ellipsis"}
+                    <Pagination.Item>
+                      <Pagination.Ellipsis />
+                    </Pagination.Item>
+                  {:else}
+                    <Pagination.Item>
+                      <Pagination.Link {page} isActive={paginationCurrentPage === page.value}>
+                        {page.value}
+                      </Pagination.Link>
+                    </Pagination.Item>
+                  {/if}
+                {/each}
+                <Pagination.Item>
+                  <Pagination.NextButton />
+                </Pagination.Item>
+              </Pagination.Content>
+            {/snippet}
+          </Pagination.Root>
         </div>
       {/if}
       {/snippet}

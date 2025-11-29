@@ -69,10 +69,10 @@
           <Icon src={ExclamationTriangle} size="24" />
         </div>
         <div class="text-center">
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
             Something went wrong
           </h3>
-          <p class="text-sm text-slate-600 dark:text-slate-400 max-w-sm">
+          <p class="text-sm text-zinc-600 dark:text-zinc-400 max-w-sm">
             {errorMessage}
           </p>
         </div>

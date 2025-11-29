@@ -3,6 +3,8 @@
   import TimetableExport from './TimetableExport.svelte';
   import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui';
+  import T from './T.svelte';
+  import { _ } from '../i18n';
 
   const {
     weekStart,
@@ -52,7 +54,7 @@
   });
 </script>
 
-<div class="flex justify-between items-center px-6 py-4 shadow-lg border-b border-slate-200 dark:border-slate-700" style="background: var(--background-color);">
+<div class="flex justify-between items-center px-6 py-4 shadow-lg border-b border-zinc-200 dark:border-zinc-700" style="background: var(--background-color);">
   <div class="flex gap-4 items-center">
     <Button
       variant="ghost"
@@ -60,13 +62,15 @@
       icon={ChevronLeft}
       onclick={onPrevWeek}
       disabled={loadingLessons}
-      ariaLabel="Previous week"
-      class="w-10 h-10 rounded-xl bg-white/80 hover:bg-white dark:bg-slate-700/80 dark:hover:bg-slate-600 shadow-md hover:shadow-lg"
+      ariaLabel={$_('timetable.previous_week') || 'Previous week'}
+      class="w-10 h-10 rounded-xl bg-white/80 hover:bg-white dark:bg-zinc-700/80 dark:hover:bg-zinc-600 shadow-md hover:shadow-lg"
     />
     
     <div class="text-center">
-      <h1 class="text-xl font-bold text-slate-900 dark:text-white">{weekRangeLabel()}</h1>
-      <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Weekly Schedule</p>
+      <h1 class="text-xl font-bold text-zinc-900 dark:text-white">{weekRangeLabel()}</h1>
+      <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+        <T key="timetable.weekly_schedule" fallback="Weekly Schedule" />
+      </p>
     </div>
     
     <Button
@@ -75,8 +79,8 @@
       icon={ChevronRight}
       onclick={onNextWeek}
       disabled={loadingLessons}
-      ariaLabel="Next week"
-      class="w-10 h-10 rounded-xl bg-white/80 hover:bg-white dark:bg-slate-700/80 dark:hover:bg-slate-600 shadow-md hover:shadow-lg"
+      ariaLabel={$_('timetable.next_week') || 'Next week'}
+      class="w-10 h-10 rounded-xl bg-white/80 hover:bg-white dark:bg-zinc-700/80 dark:hover:bg-zinc-600 shadow-md hover:shadow-lg"
     />
   </div>
   

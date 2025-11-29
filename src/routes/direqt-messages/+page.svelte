@@ -1,20 +1,29 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import { seqtaFetch, getRSS } from '../../utils/netUtil';
-  import { type Message } from './types';
-  import { cache } from '../../utils/cache';
+  // Svelte imports
+  import { onMount } from 'svelte';
+  import { page } from '$app/stores';
+
+  // Tauri imports
   import { invoke } from '@tauri-apps/api/core';
 
-  // Components
+  // $lib/ imports
+  import { setIdb } from '$lib/services/idbCache';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
+  import Modal from '$lib/components/Modal.svelte';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '$lib/i18n';
+
+  // Relative imports
+  import { cache } from '../../utils/cache';
+  import { logger } from '../../utils/logger';
   import Sidebar from './components/Sidebar.svelte';
   import MessageList from './components/MessageList.svelte';
   import MessageDetail from './components/Message.svelte';
   import ComposeModal from './components/ComposeModal.svelte';
-  import Modal from '$lib/components/Modal.svelte';
-  import BetterSeqtaChat from './components/BetterSeqtaChat.svelte';
+  import MobileFolderTabs from './components/MobileFolderTabs.svelte';
 
-  // External Libraries
-  import dayjs from 'dayjs';
+  // Types
+  import { type Message } from './types';
 
   let messages = $state<Message[]>([]);
   let loading = $state(true);
@@ -34,158 +43,83 @@
   let deleting = $state(false);
   let restoring = $state(false);
 
+  // Deep-link target from notifications
+  let pendingMessageId = $state<number | null>(null);
+
   // Derived state for mobile modal
   let showMobileModal = $derived(!!selectedMessage);
-  let selectedTab = $state('SEQTA'); // 'SEQTA' or 'BetterSEQTA'
   let seqtaLoadFailed = $state(false);
   let seqtaMessagesEnabled = $state<boolean | null>(null);
-  const showCloudMessaging = false; // hide BetterSEQTA Cloud Messaging UI
 
   onMount(async () => {
     // Always enable both tabs regardless of SEQTA config
     seqtaMessagesEnabled = true;
   });
 
+  // Watch URL for messageID parameter and store it until messages load
+  $effect(() => {
+    const idParam = $page.url.searchParams.get('messageID');
+    pendingMessageId = idParam ? Number(idParam) : null;
+  });
+
   async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '') {
     loading = true;
     error = null;
     seqtaLoadFailed = false;
-    console.log(folderLabel);
-    try {
-      if (folderLabel === 'sent') {
-        // Fetch both sent and outbox, then combine
-        const [sentRes, outboxRes] = await Promise.all([
-          seqtaFetch('/seqta/student/load/message?', {
-            method: 'POST',
-            body: {
-              searchValue: '',
-              sortBy: 'date',
-              sortOrder: 'desc',
-              action: 'list',
-              label: 'sent',
-              offset: 0,
-              limit: 100,
-              datetimeUntil: null,
-            },
-          }),
-          seqtaFetch('/seqta/student/load/message?', {
-            method: 'POST',
-            body: {
-              searchValue: '',
-              sortBy: 'date',
-              sortOrder: 'desc',
-              action: 'list',
-              label: 'outbox',
-              offset: 0,
-              limit: 100,
-              datetimeUntil: null,
-            },
-          }),
-        ]);
-        const sentData = typeof sentRes === 'string' ? JSON.parse(sentRes) : sentRes;
-        const outboxData = typeof outboxRes === 'string' ? JSON.parse(outboxRes) : outboxRes;
-        const sentMsgs = (sentData?.payload?.messages || []).map((msg: any) => ({
-          id: msg.id,
-          folder: 'Sent',
-          sender: msg.sender,
-          to: msg.participants?.[0]?.name || '',
-          subject: msg.subject,
-          preview: msg.subject + (msg.attachments ? ' (Attachment)' : ''),
-          body: '',
-          date: msg.date?.replace('T', ' ').slice(0, 16) || '',
-          unread: !msg.read,
-        }));
-        const outboxMsgs = (outboxData?.payload?.messages || []).map((msg: any) => ({
-          id: msg.id,
-          folder: 'Sent',
-          sender: msg.sender,
-          to: msg.participants?.[0]?.name || '',
-          subject: msg.subject,
-          preview: msg.subject + (msg.attachments ? ' (Attachment)' : ''),
-          body: '',
-          date: msg.date?.replace('T', ' ').slice(0, 16) || '',
-          unread: !msg.read,
-        }));
-        messages = [...sentMsgs, ...outboxMsgs].sort((a, b) => b.date.localeCompare(a.date));
-      } else if (folderLabel.includes('rss-')) {
-        let rssfeeddata: any = [];
-        console.log();
-        let rss = await getRSS(folderLabel.replace('rss-', ''));
-        console.log(rss);
-        rssfeeddata = rss.feeds
-          ?.map((msg: any) => {
-            let date;
-            let description;
-            if (msg.description === undefined) {
-              description = 'No description available';
-            } else {
-              description = msg.description;
-            }
-            if (msg.pubDate === null) {
-              date = '';
-            } else {
-              date = dayjs(msg.pubDate).format('YYYY-MM-DD HH:mm:ss');
-            }
-            console.log(date);
-            return {
-              id: Math.floor(Math.random() * 10000000) + 1,
-              folder: rssname,
-              sender: rss.channel.title,
-              to: '',
-              subject: msg.title,
-              preview: `${msg.title} from ${rss.title}`,
-              date: date,
-              body: `<a href="${msg.link}">View the RSS feed link.</a> <br> ${description}`,
-            };
-          })
-          .sort((a: any, b: any) => b.date.localeCompare(a.date));
-        // console.log(rssfeeddata)
-        messages = rssfeeddata;
-      } else {
-        const response = await seqtaFetch('/seqta/student/load/message?', {
-          method: 'POST',
-          body: {
-            searchValue: '',
-            sortBy: 'date',
-            sortOrder: 'desc',
-            action: 'list',
-            label: folderLabel,
-            offset: 0,
-            limit: 100,
-            datetimeUntil: null,
-          },
-        });
+    logger.debug('messages', 'fetchMessages', `Fetching messages for folder: ${folderLabel}`);
 
-        const data = typeof response === 'string' ? JSON.parse(response) : response;
-        if (data?.payload?.messages) {
-          messages = data.payload.messages.map((msg: any) => ({
-            id: msg.id,
-            folder: folderLabel.charAt(0).toUpperCase() + folderLabel.slice(1),
-            sender: msg.sender,
-            to: msg.participants?.[0]?.name || '',
-            subject: msg.subject,
-            preview: msg.subject + (msg.attachments ? ' (Attachment)' : ''),
-            body: '',
-            date: msg.date?.replace('T', ' ').slice(0, 16) || '',
-            unread: !msg.read,
-            starred: !!msg.starred,
-          }));
-        } else {
-          messages = [];
+    const cacheKey = `messages_${folderLabel}`;
+
+    const data = await useDataLoader<Message[]>({
+      cacheKey,
+      ttlMinutes: 10,
+      context: 'direqt-messages',
+      functionName: 'fetchMessages',
+      fetcher: async () => {
+        let rssUrl = null;
+        if (folderLabel.includes('rss-')) {
+          rssUrl = rssname;
         }
+        const msgs = await invoke<Message[]>('fetch_messages', {
+          folder: folderLabel,
+          rssUrl: rssUrl,
+        });
+        // Update messages state directly
+        messages = msgs;
+        return messages;
+      },
+      onDataLoaded: (data) => {
+        messages = data;
+        loading = false;
+      },
+      shouldSyncInBackground: (data) => data.length > 0,
+    });
+
+    if (!data || data.length === 0) {
+      // Only consider failure if we didn't get data and expected some (e.g. inbox usually has mail)
+      // But empty folders are valid. The backend returns empty array on success.
+      // Only show error if something actually threw.
+      // Since invoke throws on Err, useDataLoader catches it.
+      if (messages.length === 0 && folderLabel === 'inbox') {
+        // maybe empty inbox
       }
-    } catch (e) {
-      error = 'Failed to load messages.';
-      messages = [];
-      seqtaLoadFailed = true;
-    } finally {
-      loading = false;
     }
+    loading = false;
   }
 
   $effect(() => {
-    if (selectedTab === 'SEQTA') {
     fetchMessages('inbox');
+  });
+
+  // When messages are loaded and a target ID exists, open it
+  $effect(() => {
+    if (!loading && pendingMessageId) {
+      const target = messages.find((m) => m.id === pendingMessageId!);
+      if (target) {
+        selectedFolder = target.folder;
+        openMessage(target);
+        pendingMessageId = null;
+      }
     }
   });
 
@@ -193,51 +127,37 @@
     selectedMessage = msg;
     msg.unread = false;
 
-    // Check cache first
     const cacheKey = `message_${msg.id}`;
-    const cachedContent = cache.get<string>(cacheKey);
 
-    if (cachedContent) {
-      msg.body = cachedContent;
-      return;
-    }
+    const content = await useDataLoader<string>({
+      cacheKey,
+      ttlMinutes: 1440, // 24 hours
+      context: 'direqt-messages',
+      functionName: 'openMessage',
+      fetcher: async () => {
+        if (msg.folder.includes('RSS') || selectedFolder.includes('RSS')) {
+          return msg.body; // RSS body is already loaded
+        }
+        const content = await invoke<string>('fetch_message_content', { id: msg.id });
+        return content;
+      },
+      onDataLoaded: (content) => {
+        msg.body = content;
+      },
+    });
 
-    detailLoading = true;
-    detailError = null;
-    try {
-      const response = await seqtaFetch('/seqta/student/load/message?', {
-        method: 'POST',
-        body: {
-          action: 'message',
-          id: msg.id,
-        },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (data?.payload?.contents) {
-        msg.body = data.payload.contents;
-        // Cache the message content for 24 hours
-        cache.set(cacheKey, msg.body, 1440); // 24 hours TTL
-      } else if (selectedFolder.includes('RSS')) {
-        msg.body = msg.body;
-      } else {
-        msg.body = '<em>No content.</em>';
-      }
-      // If the API returns starred in the detail, update it
-      if (typeof data?.payload?.starred !== 'undefined') {
-        msg.starred = !!data.payload.starred;
-      }
-    } catch (e) {
-      detailError = 'Failed to load message.';
-      msg.body = '';
-    } finally {
-      detailLoading = false;
+    if (!content && !msg.body) {
+      // Fetch failed or no content
+      msg.body = `<em>${$_('messages.no_content') || 'No content.'}</em>`;
     }
   }
 
   function openFolder(folder: any) {
     selectedFolder = folder.name;
     selectedMessage = null;
-    console.log(folder.id);
+    logger.debug('messages', 'openFolder', `Opening folder: ${folder.name}`, {
+      folderId: folder.id,
+    });
     if (folder.id.includes('rss-')) {
       selectedRSS = folder.id;
       fetchMessages(folder.id, folder.name);
@@ -259,31 +179,21 @@
     starring = true;
     try {
       let newStarred = true;
-      // If in Starred folder and already starred, unstar
       if (selectedFolder === 'Starred' && msg.starred) {
         newStarred = false;
       }
-      const response = await seqtaFetch('/seqta/student/save/message?', {
-        method: 'POST',
-        body: {
-          mode: 'x-star',
-          starred: newStarred,
-          items: [msg.id],
-        },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (typeof data?.payload?.starred !== 'undefined') {
-        msg.starred = !!data.payload.starred;
-        // If unstarred in Starred folder, remove from list
-        if (!msg.starred && selectedFolder === 'Starred') {
-          messages = messages.filter((m) => m.id !== msg.id);
-          if (selectedMessage && selectedMessage.id === msg.id) {
-            selectedMessage = null;
-          }
+
+      await invoke('star_messages', { items: [msg.id], star: newStarred });
+
+      msg.starred = newStarred;
+      if (!newStarred && selectedFolder === 'Starred') {
+        messages = messages.filter((m) => m.id !== msg.id);
+        if (selectedMessage && selectedMessage.id === msg.id) {
+          selectedMessage = null;
         }
       }
     } catch (e) {
-      // Optionally show error
+      logger.error('messages', 'starMessage', 'Failed to star message', { error: e });
     } finally {
       starring = false;
     }
@@ -293,25 +203,14 @@
     if (deleting) return;
     deleting = true;
     try {
-      const response = await seqtaFetch('/seqta/student/save/message?', {
-        method: 'POST',
-        body: {
-          mode: 'x-label',
-          label: 'trash',
-          items: [msg.id],
-        },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (data?.payload?.label === 'trash') {
-        // Remove from messages list
-        messages = messages.filter((m) => m.id !== msg.id);
-        // If this was the open message, clear detail
-        if (selectedMessage && selectedMessage.id === msg.id) {
-          selectedMessage = null;
-        }
+      await invoke('delete_messages', { items: [msg.id] });
+
+      messages = messages.filter((m) => m.id !== msg.id);
+      if (selectedMessage && selectedMessage.id === msg.id) {
+        selectedMessage = null;
       }
     } catch (e) {
-      // Optionally show error
+      logger.error('messages', 'deleteMessage', 'Failed to delete message', { error: e });
     } finally {
       deleting = false;
     }
@@ -321,107 +220,69 @@
     if (restoring) return;
     restoring = true;
     try {
-      const response = await seqtaFetch('/seqta/student/save/message?', {
-        method: 'POST',
-        body: {
-          mode: 'x-label',
-          label: 'inbox',
-          items: [msg.id],
-        },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (data?.payload?.label === 'inbox') {
-        // Remove from messages list
-        messages = messages.filter((m) => m.id !== msg.id);
-        // If this was the open message, clear detail
-        if (selectedMessage && selectedMessage.id === msg.id) {
-          selectedMessage = null;
-        }
+      await invoke('restore_messages', { items: [msg.id] });
+
+      messages = messages.filter((m) => m.id !== msg.id);
+      if (selectedMessage && selectedMessage.id === msg.id) {
+        selectedMessage = null;
       }
     } catch (e) {
-      // Optionally show error
+      logger.error('messages', 'restoreMessage', 'Failed to restore message', { error: e });
     } finally {
       restoring = false;
     }
   }
-
-  function openTab(tab: string) {
-    selectedTab = tab;
-    selectedMessage = null;
-  }
 </script>
-
-<!-- Tab Switcher (hidden when showCloudMessaging is false) -->
-{#if showCloudMessaging}
-<div class="flex gap-2 p-4 border-b border-slate-300/50 dark:border-slate-800/50 bg-white dark:bg-slate-900">
-  <button
-    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
-      {selectedTab === 'SEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
-    onclick={() => openTab('SEQTA')}
-    disabled={selectedTab === 'SEQTA'}>
-    SEQTA Messages
-  </button>
-  <button
-    class="px-4 py-2 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 accent-ring text-base
-      {selectedTab === 'BetterSEQTA' ? 'accent-bg text-white' : 'text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700'}"
-    onclick={() => openTab('BetterSEQTA')}
-    disabled={selectedTab === 'BetterSEQTA'}>
-    Cloud Messaging
-  </button>
-</div>
-{/if}
 
 <div class="flex h-full">
   <div class="flex w-full h-full max-xl:flex-col">
-    {#if selectedTab === 'SEQTA'}
-      {#if seqtaLoadFailed}
-        <div class="flex flex-col items-center justify-center w-full h-full p-8 text-center">
-          <div class="text-red-500 dark:text-red-400 text-lg font-semibold mb-4">SEQTA messaging failed to load.</div>
-          {#if showCloudMessaging}
-            <div class="text-slate-500 dark:text-slate-300 mb-4">You can still use Cloud Messaging by switching tabs above.</div>
-          {/if}
+    {#if seqtaLoadFailed}
+      <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
+        <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">
+          <T key="messages.seqta_failed_to_load" fallback="SEQTA messaging failed to load." />
         </div>
-      {:else}
+      </div>
+    {:else}
+      <div class="hidden xl:block">
         <Sidebar {selectedFolder} {openFolder} {openCompose} />
-        <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
-        <!-- Message detail view - full screen on mobile -->
-        <div class="hidden flex-1 xl:block">
-          <MessageDetail
-            {selectedMessage}
-            {selectedFolder}
-            {detailLoading}
-            {detailError}
-            {openCompose}
-            {starMessage}
-            {deleteMessage}
-            {restoreMessage}
-            {starring}
-            {deleting}
-            {restoring} />
-        </div>
-      {/if}
-    {:else if showCloudMessaging && selectedTab === 'BetterSEQTA'}
-      <BetterSeqtaChat />
+      </div>
+      <MobileFolderTabs {selectedFolder} {openFolder} {openCompose} />
+      <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
+      <!-- Message detail view - full screen on mobile -->
+      <div class="hidden flex-1 xl:block">
+        <MessageDetail
+          {selectedMessage}
+          {selectedFolder}
+          {detailLoading}
+          {detailError}
+          {openCompose}
+          {starMessage}
+          {deleteMessage}
+          {restoreMessage}
+          {starring}
+          {deleting}
+          {restoring} />
+      </div>
     {/if}
   </div>
 
   <!-- Mobile message detail modal -->
-  {#if selectedTab === 'SEQTA' && !seqtaLoadFailed}
+  {#if !seqtaLoadFailed}
     <div class="xl:hidden">
       <Modal
         open={showMobileModal}
         onclose={() => (selectedMessage = null)}
         maxWidth="w-full"
         maxHeight="h-full"
-        customClasses="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-none"
+        className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xs rounded-none"
         showCloseButton={false}
         closeOnBackdrop={false}
         ariaLabel="Message Detail">
         <div class="flex flex-col h-full">
           <div
-            class="flex justify-between items-center p-4 border-b border-slate-300/50 dark:border-slate-800/50">
+            class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
             <button
-              class="flex gap-2 items-center transition-colors text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              class="flex gap-2 items-center transition-colors text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               onclick={() => (selectedMessage = null)}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -433,9 +294,13 @@
                   d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
                   clip-rule="evenodd" />
               </svg>
-              <span class="text-sm font-medium">Back</span>
+              <span class="text-sm font-medium">
+                <T key="common.back" fallback="Back" />
+              </span>
             </button>
-            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Message</span>
+            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <T key="messages.message" fallback="Message" />
+            </span>
             <div class="w-8"></div>
             <!-- Spacer for alignment -->
           </div>

@@ -12,7 +12,7 @@ export interface Folder {
   code: string;
   subjects: Subject[];
   description: string;
-  active?: number;
+  active?: boolean;
   id: number;
 }
 

@@ -25,7 +25,7 @@ interface Props {
   closeOnBackdrop?: boolean;        // Close when clicking backdrop (default: true)
   closeOnEscape?: boolean;          // Close on Escape key (default: true)
   ariaLabel?: string;               // Accessibility label (default: 'Modal')
-  customClasses?: string;           // Additional CSS classes
+  className?: string;           // Additional CSS classes
   onclose?: () => void;             // Close callback function
   children: Snippet;                // Modal content
 }
@@ -53,7 +53,7 @@ interface Props {
   bind:open={showModal}
   title="Large Modal"
   maxWidth="max-w-6xl"
-  customClasses="min-h-96"
+  className="min-h-96"
   closeOnBackdrop={false}>
   <div class="p-8">
     <p>This modal won't close when clicking the backdrop</p>
@@ -163,14 +163,14 @@ const checkMobile = async () => {
 The header uses consistent theming with the application:
 ```svelte
 <header 
-  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-[999999]" 
+  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999" 
   data-tauri-drag-region 
   style="background: var(--background-color);">
 ```
 
 **Key Classes:**
 - `data-tauri-drag-region`: Enables window dragging on desktop
-- `z-[999999]`: Ensures header stays above all other elements
+- `z-999999`: Ensures header stays above all other elements
 - `playful`: Custom animation class for interactive elements
 
 ## 🧭 AppSidebar Component
@@ -239,7 +239,7 @@ class="{(
     : $page.url.pathname.startsWith(item.path)
 )
   ? 'bg-accent text-white'
-  : 'text-slate-900 dark:text-slate-300'}"
+  : 'text-zinc-900 dark:text-zinc-300'}"
 ```
 
 **Active State Features:**
@@ -251,7 +251,7 @@ class="{(
 ### Animation & Interactions
 
 ```svelte
-class="transition-all duration-200 hover:bg-accent-100 hover:text-slate-900 
+class="transition-all duration-200 hover:bg-accent-100 hover:text-zinc-900 
        dark:hover:bg-accent-600 dark:hover:text-white playful"
 ```
 
@@ -279,7 +279,7 @@ style="background: var(--background-color);"
 ### Dark Mode Support
 Components automatically adapt to dark mode using Tailwind's `dark:` prefix:
 ```svelte
-class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+class="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
 ```
 
 ## 🔧 Best Practices

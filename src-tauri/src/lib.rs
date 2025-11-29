@@ -1,45 +1,63 @@
 #[path = "auth/login.rs"]
 mod login;
 
-#[path = "utils/netgrab.rs"]
-mod netgrab;
-#[path = "utils/settings.rs"]
-mod settings;
 #[path = "utils/analytics.rs"]
 mod analytics;
-#[path = "utils/session.rs"]
-mod session;
-#[path = "utils/seqta_config.rs"]
-mod seqta_config;
-#[path = "utils/cloudmessaging.rs"]
-mod cloudmessaging;
+#[path = "utils/assessments.rs"]
+mod assessments;
+#[path = "utils/courses.rs"]
+mod courses;
+#[path = "utils/database.rs"]
+mod database;
+mod global_search;
 #[path = "utils/logger.rs"]
 mod logger;
-#[path = "utils/theme_manager.rs"]
-mod theme_manager;
+#[path = "utils/messages.rs"]
+mod messages;
+#[path = "utils/netgrab.rs"]
+mod netgrab;
 #[path = "utils/news.rs"]
 mod news;
+#[path = "utils/notes_filesystem.rs"]
+mod notes_filesystem;
+#[path = "utils/performance_testing.rs"]
+mod performance_testing;
+#[path = "utils/profile_picture.rs"]
+mod profile_picture;
+#[path = "utils/sanitization.rs"]
+mod sanitization;
+#[path = "utils/seqta_config.rs"]
+mod seqta_config;
+#[path = "services/seqta_mentions.rs"]
+mod seqta_mentions;
+#[path = "utils/session.rs"]
+mod session;
+#[path = "utils/settings.rs"]
+mod settings;
+#[path = "utils/theme_manager.rs"]
+mod theme_manager;
 #[path = "utils/todolist.rs"]
 mod todolist;
-#[path = "utils/notes.rs"]
-mod notes;
-mod global_search;
 
-
-use tauri::Manager;
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use serde_json;
+use std::cell::Cell;
 #[cfg(desktop)]
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 #[cfg(desktop)]
 use tauri::tray::TrayIconBuilder;
-use tauri::{AppHandle, WindowEvent, Window};
-use tauri_plugin_notification;
-#[cfg(desktop)]
-use tauri_plugin_single_instance;
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use tauri::Listener;
+use tauri::{AppHandle, Window, WindowEvent};
+use tauri::{Emitter, Manager};
 #[cfg(desktop)]
 use tauri_plugin_autostart;
 #[cfg(desktop)]
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_dialog;
+use tauri_plugin_notification;
+#[cfg(desktop)]
+use tauri_plugin_single_instance;
 
 #[cfg(desktop)]
 use url::form_urlencoded::parse;
@@ -104,10 +122,12 @@ pub fn run() {
 
     #[cfg(desktop)]
     {
-        builder = builder.plugin(tauri_plugin_autostart::init(
-            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec!["--minimize"]),
-        ));
+        builder = builder
+            .plugin(tauri_plugin_updater::Builder::new().build())
+            .plugin(tauri_plugin_autostart::init(
+                tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+                Some(vec!["--minimize"]),
+            ));
     }
 
     #[cfg(not(any(target_os = "ios", target_os = "android")))]
@@ -208,6 +228,7 @@ pub fn run() {
             login::logout,
             login::force_reload,
             login::cleanup_login_windows,
+            login::clear_webview_data,
             settings::get_settings,
             settings::save_settings,
             settings::get_settings_json,
@@ -225,17 +246,10 @@ pub fn run() {
             analytics::save_analytics,
             analytics::load_analytics,
             analytics::delete_analytics,
+            analytics::sync_analytics_data,
             seqta_config::load_seqta_config,
             seqta_config::save_seqta_config,
             seqta_config::is_seqta_config_different,
-            cloudmessaging::get_friends,
-            cloudmessaging::send_message,
-            cloudmessaging::get_messages,
-            cloudmessaging::list_groups,
-            cloudmessaging::create_group,
-            cloudmessaging::upload_attachment,
-            cloudmessaging::write_temp_file,
-            cloudmessaging::delete_temp_file,
             global_search::get_global_search_data,
             global_search::save_global_search_data,
             global_search::clear_search_history,
@@ -284,29 +298,110 @@ pub fn run() {
             news::get_news_australia,
             todolist::load_todos,
             todolist::save_todos,
-            notes::load_notes,
-            notes::save_note,
-            notes::delete_note,
-            notes::get_note,
-            notes::search_notes,
-            notes::search_notes_advanced,
-            notes::load_folders,
-            notes::create_folder,
-            notes::delete_folder,
-            notes::move_note_to_folder,
-            notes::get_notes_stats,
-            notes::backup_notes,
-            notes::restore_notes_from_backup,
-            notes::save_image_from_base64,
-            notes::get_image_path,
-            notes::get_image_as_base64,
-            notes::delete_note_images,
-            notes::cleanup_unused_images
+            notes_filesystem::load_notes_filesystem,
+            notes_filesystem::save_note_filesystem,
+            notes_filesystem::delete_note_filesystem,
+            notes_filesystem::get_note_filesystem,
+            notes_filesystem::search_notes_filesystem,
+            notes_filesystem::search_notes_advanced_filesystem,
+            notes_filesystem::load_folders_filesystem,
+            notes_filesystem::create_folder_filesystem,
+            notes_filesystem::delete_folder_filesystem,
+            notes_filesystem::rename_folder_filesystem,
+            notes_filesystem::move_note_filesystem,
+            notes_filesystem::get_notes_stats_filesystem,
+            notes_filesystem::backup_notes_filesystem,
+            notes_filesystem::restore_notes_from_backup_filesystem,
+            notes_filesystem::save_image_from_base64_filesystem,
+            notes_filesystem::get_image_path_filesystem,
+            notes_filesystem::get_image_as_base64_filesystem,
+            notes_filesystem::delete_note_images_filesystem,
+            notes_filesystem::cleanup_unused_images_filesystem,
+            notes_filesystem::get_file_tree,
+            profile_picture::save_profile_picture,
+            profile_picture::get_profile_picture_path_cmd,
+            profile_picture::delete_profile_picture,
+            profile_picture::has_custom_profile_picture,
+            profile_picture::get_profile_picture_data_url,
+            performance_testing::save_performance_test_results,
+            performance_testing::get_performance_test_results,
+            performance_testing::load_performance_test_result,
+            performance_testing::delete_performance_test_result,
+            performance_testing::get_performance_tests_directory,
+            performance_testing::clear_all_performance_tests,
+            database::db_cache_get,
+            database::db_cache_set,
+            database::db_cache_delete,
+            database::db_cache_clear,
+            database::db_cache_cleanup_expired,
+            database::db_queue_add,
+            database::db_queue_all,
+            database::db_queue_delete,
+            database::db_queue_clear,
+            database::db_get_assessments_by_year,
+            assessments::get_processed_assessments,
+            courses::get_courses_subjects,
+            courses::get_course_content,
+            messages::fetch_messages,
+            messages::fetch_message_content,
+            messages::star_messages,
+            messages::delete_messages,
+            messages::restore_messages,
+            seqta_mentions::search_seqta_mentions,
+            seqta_mentions::search_seqta_mentions_with_context,
+            seqta_mentions::update_seqta_mention_data,
+            seqta_mentions::get_weekly_schedule_for_class_cmd,
+            seqta_mentions::fetch_lesson_content_cmd
         ])
         .setup(|app| {
             // Initialize logger first
             if let Err(e) = logger::init_logger() {
                 eprintln!("Failed to initialize logger: {}", e);
+            }
+            
+            // Initialize database
+            if let Err(e) = database::init_database(app.app_handle()) {
+                eprintln!("Failed to initialize database: {}", e);
+            }
+
+            // Listen for deep link events (mobile only - desktop uses single instance handler)
+            #[cfg(any(target_os = "android", target_os = "ios"))]
+            {
+                let app_handle = app.app_handle().clone();
+                let app_handle_for_listener = app_handle.clone();
+                app_handle_for_listener.listen("deep-link://new-url", move |event| {
+                    println!("[Desqta] Deep link event received: {:?}", event);
+                    
+                    // Extract URL from event - the data field contains a JSON array string
+                    // Based on logs: Event { id: 0, data: "[\"seqtalearn://sso/...\"]" }
+                    // event.payload() returns &str directly
+                    let payload_str = event.payload();
+                    println!("[Desqta] Event payload: {}", payload_str);
+                    
+                    // Try to parse as JSON array
+                    if let Ok(urls) = serde_json::from_str::<Vec<String>>(payload_str) {
+                        for url in urls {
+                            println!("[Desqta] Processing URL from deep link: {}", url);
+                            
+                            if url.starts_with("seqtalearn://") {
+                                println!("[Desqta] Processing SEQTA Learn SSO deeplink: {}", url);
+                                let app_handle_clone = app_handle.clone();
+                                tauri::async_runtime::spawn(async move {
+                                    match login::create_login_window(app_handle_clone, url.clone()).await {
+                                        Ok(_) => {
+                                            println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink");
+                                        },
+                                        Err(e) => {
+                                            eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    } else {
+                        println!("[Desqta] Failed to parse event payload as JSON array: {}", payload_str);
+                    }
+                });
             }
 
             #[cfg(desktop)]
@@ -318,8 +413,25 @@ pub fn run() {
                     let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(900.0, 700.0)));
                     let _ = window.set_decorations(false);
                     let _ = window.center();
+                    
+                    let window_clone = window.clone();
+                    let current_fullscreen = Cell::new(window.is_fullscreen().unwrap_or(false));
+                    window.on_window_event(move |event| {
+                        match event {
+                            WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
+                                if let Ok(is_fullscreen) = window_clone.is_fullscreen() {
+                                    if is_fullscreen != current_fullscreen.get() {
+                                        println!("[DesQTA] Fullscreen state changed: {}", is_fullscreen);
+                                        let _ = window_clone.emit("fullscreen-changed", is_fullscreen);
+                                        current_fullscreen.set(is_fullscreen);
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    });
                 }
-
+                
                 // Create tray menu
                 let menu = Menu::with_items(
                     app,

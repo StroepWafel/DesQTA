@@ -2,9 +2,9 @@
   import { Icon } from 'svelte-hero-icons';
   import { PencilSquare, Trash, Star, ArrowUturnLeft } from 'svelte-hero-icons';
   import type { Message } from '../types';
-  import { openURL } from '../../../utils/netUtil';
-  import DOMPurify from 'dompurify';
+  import { sanitizeHtml } from '../../../utils/sanitization';
   import { onMount } from 'svelte';
+  import { invoke } from '@tauri-apps/api/core';
 
   let {
     selectedMessage,
@@ -33,17 +33,37 @@
   }>();
 
   let iframe: HTMLIFrameElement | null = $state(null);
+  let detailAvatarUrl: string | null = $state(null);
+  let detailAvatarFailed: boolean = $state(false);
 
-  DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-    if (node.tagName === 'A' && node.getAttribute('href')) {
-      node.setAttribute('target', '_blank');
-      node.setAttribute('rel', 'noopener noreferrer');
+  function initial(name: string): string {
+    return (name?.trim()?.charAt(0) || '?').toUpperCase();
+  }
+
+  async function loadDetailAvatar() {
+    detailAvatarUrl = null;
+    detailAvatarFailed = false;
+    const uuid = selectedMessage?.senderPhoto?.trim();
+    if (!uuid) return;
+    try {
+      const imgBase64 = await invoke<string>('get_seqta_file', {
+        fileType: 'photo',
+        uuid: uuid,
+      });
+      if (imgBase64) {
+        detailAvatarUrl = `data:image/png;base64,${imgBase64}`;
+      } else {
+        detailAvatarFailed = true;
+      }
+    } catch (e) {
+      detailAvatarFailed = true;
     }
-  });
+  }
+
   function updateIframeContent() {
     if (!selectedMessage || !iframe || !iframe.contentWindow) return;
 
-    const sanitizedContent = DOMPurify.sanitize(selectedMessage.body);
+    const sanitizedContent = sanitizeHtml(selectedMessage.body);
 
     const html = /* html */ `<!DOCTYPE html>
 <html>
@@ -119,6 +139,8 @@
     if (selectedMessage && iframe) {
       updateIframeContent();
     }
+    // Load avatar whenever selectedMessage changes
+    void loadDetailAvatar();
   });
 
   onMount(() => {
@@ -141,31 +163,48 @@
   });
 </script>
 
-<main class="flex flex-col flex-1 p-4 sm:p-6 md:p-8">
+<main class="flex flex-col flex-1 py-2 overflow-y-scroll h-full">
   {#if selectedMessage}
     <div class="mx-auto w-full max-w-4xl animate-fadeIn">
       <div
-        class="overflow-hidden rounded-xl border shadow-lg backdrop-blur-sm border-slate-300/50 dark:border-slate-800/50 bg-white/40 dark:bg-slate-900/40">
-        <div class="p-4 pb-3 border-b sm:p-6 border-slate-300/50 dark:border-slate-800/50">
-          <div class="mb-4 text-xl font-bold text-indigo-400 sm:text-2xl">
+        class="overflow-hidden rounded-xl border shadow-lg backdrop-blur-xs border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/40">
+        <div class="p-4 pb-3 border-b sm:p-6 border-zinc-300/50 dark:border-zinc-800/50">
+          <div class="mb-4 text-xl font-bold text-zinc-800 dark:text-zinc-100 sm:text-2xl">
             {selectedMessage.subject}
           </div>
 
           <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-end">
-            <div class="space-y-1">
-              <div class="text-sm sm:text-base text-slate-700 dark:text-slate-200">
-                <span class="font-medium">{selectedMessage.sender}</span>
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0">
+                {#if detailAvatarUrl && !detailAvatarFailed}
+                  <img
+                    src={detailAvatarUrl}
+                    alt={`Avatar of ${selectedMessage.sender}`}
+                    class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover bg-zinc-200 dark:bg-zinc-800"
+                    onerror={() => (detailAvatarFailed = true)} />
+                {:else}
+                  <div
+                    class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
+                    <span class="text-lg font-bold sm:text-lg"
+                      >{initial(selectedMessage.sender)}</span>
+                  </div>
+                {/if}
               </div>
-              <div class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                To: <span class="font-medium text-slate-700 dark:text-slate-300"
-                  >{selectedMessage.to}</span>
+              <div class="space-y-1">
+                <div class="text-sm sm:text-base text-zinc-700 dark:text-zinc-200">
+                  <span class="font-medium">{selectedMessage.sender}</span>
+                </div>
+                <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+                  To: <span class="font-medium text-zinc-700 dark:text-zinc-300"
+                    >{selectedMessage.to}</span>
+                </div>
               </div>
             </div>
 
             <div class="flex gap-2 items-center sm:gap-3">
               {#if selectedFolder === 'Trash'}
                 <button
-                  class="flex flex-col justify-center items-center p-1.5 rounded-lg transition-all duration-200 hover:bg-green-400/20 focus:bg-green-400/30 focus:ring-2 focus:ring-green-400/30 focus:outline-none"
+                  class="flex flex-col justify-center items-center p-1.5 rounded-lg transition-all duration-200 hover:bg-green-400/20 focus:bg-green-400/30 focus:ring-2 focus:ring-green-400/30 focus:outline-hidden"
                   title="Restore"
                   onclick={() => selectedMessage && restoreMessage(selectedMessage)}
                   disabled={restoring}>
@@ -180,7 +219,7 @@
                 </button>
               {:else if selectedFolder === 'Starred'}
                 <button
-                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-none"
+                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
                   title="Unstar"
                   onclick={() => selectedMessage && starMessage(selectedMessage)}
                   disabled={starring || !selectedMessage.starred}>
@@ -194,7 +233,7 @@
                 </button>
               {:else}
                 <button
-                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-none"
+                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
                   title="Star"
                   onclick={() => selectedMessage && starMessage(selectedMessage)}
                   disabled={starring || selectedMessage.starred}>
@@ -209,7 +248,7 @@
               {/if}
 
               <button
-                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-red-400/20 focus:bg-red-400/30 focus:ring-2 focus:ring-red-400/30 focus:outline-none"
+                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-red-400/20 focus:bg-red-400/30 focus:ring-2 focus:ring-red-400/30 focus:outline-hidden"
                 title="Delete"
                 onclick={() => selectedMessage && deleteMessage(selectedMessage)}
                 disabled={deleting}>
@@ -223,10 +262,10 @@
               </button>
 
               <button
-                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-indigo-400/20 focus:bg-indigo-400/30 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none"
+                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-accent-400/20 focus:bg-accent-400/30 focus:ring-2 focus:ring-accent-400/30 focus:outline-hidden"
                 title="Reply"
                 onclick={openCompose}>
-                <Icon src={PencilSquare} class="w-5 h-5 text-indigo-400" />
+                <Icon src={PencilSquare} class="w-5 h-5 text-accent-400" />
               </button>
             </div>
           </div>
@@ -236,7 +275,7 @@
           {#if detailLoading}
             <div class="flex justify-center items-center py-12">
               <div
-                class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-indigo-500/30 border-t-indigo-500">
+                class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-accent-500/30 border-t-accent-500">
               </div>
             </div>
           {:else if detailError}
@@ -267,9 +306,9 @@
     </div>
   {:else}
     <div
-      class="flex flex-col justify-center items-center h-full text-center text-slate-600 dark:text-slate-400">
+      class="flex flex-col justify-center items-center h-full text-center text-zinc-600 dark:text-zinc-400">
       <div
-        class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
+        class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-gradient-to-br from-accent-500 to-accent-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="w-8 h-8 sm:w-10 sm:h-10"

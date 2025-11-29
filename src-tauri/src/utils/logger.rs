@@ -1,10 +1,10 @@
+use chrono::Local;
+use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
-use std::io::{Write, BufWriter};
+use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Serialize};
-use chrono::Local;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LogLevel {
@@ -52,7 +52,7 @@ pub struct Logger {
 impl Logger {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let log_path = get_log_file_path()?;
-        
+
         // Ensure directory exists
         if let Some(parent) = log_path.parent() {
             std::fs::create_dir_all(parent)?;
@@ -64,13 +64,13 @@ impl Logger {
             .write(true)
             .truncate(true) // This clears the file content
             .open(&log_path)?;
-        
+
         // Now open for appending during the session
         let file = OpenOptions::new()
             .create(true)
             .append(true)
             .open(&log_path)?;
-        
+
         let writer = Arc::new(Mutex::new(BufWriter::new(file)));
         let session_id = generate_session_id();
 
@@ -94,11 +94,27 @@ impl Logger {
         Ok(logger)
     }
 
-    pub fn log(&self, level: LogLevel, module: &str, function: &str, message: &str, metadata: serde_json::Value) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn log(
+        &self,
+        level: LogLevel,
+        module: &str,
+        function: &str,
+        message: &str,
+        metadata: serde_json::Value,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         self.log_internal(level, module, function, message, "", 0, metadata)
     }
 
-    fn log_internal(&self, level: LogLevel, module: &str, function: &str, message: &str, file: &str, line: u32, metadata: serde_json::Value) -> Result<(), Box<dyn std::error::Error>> {
+    fn log_internal(
+        &self,
+        level: LogLevel,
+        module: &str,
+        function: &str,
+        message: &str,
+        file: &str,
+        line: u32,
+        metadata: serde_json::Value,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Check if we should log this level
         if !self.should_log(&level) {
             return Ok(());
@@ -131,7 +147,11 @@ impl Logger {
             entry.line,
             entry.thread_id,
             entry.message,
-            if entry.metadata.is_null() { String::new() } else { entry.metadata.to_string() }
+            if entry.metadata.is_null() {
+                String::new()
+            } else {
+                entry.metadata.to_string()
+            }
         );
 
         // Write to file
@@ -187,21 +207,19 @@ static mut LOGGER: Option<Logger> = None;
 static INIT: std::sync::Once = std::sync::Once::new();
 
 pub fn init_logger() -> Result<(), Box<dyn std::error::Error>> {
-    INIT.call_once(|| {
-        unsafe {
-            match Logger::new() {
-                Ok(logger) => LOGGER = Some(logger),
-                Err(e) => eprintln!("Failed to initialize logger: {}", e),
-            }
+    INIT.call_once(|| unsafe {
+        match Logger::new() {
+            Ok(logger) => LOGGER = Some(logger),
+            Err(e) => eprintln!("Failed to initialize logger: {}", e),
         }
     });
     Ok(())
 }
 
 pub fn get_logger() -> Option<&'static Logger> {
-    unsafe { 
+    unsafe {
         #[allow(static_mut_refs)]
-        LOGGER.as_ref() 
+        LOGGER.as_ref()
     }
 }
 
@@ -387,7 +405,7 @@ pub fn get_log_file_path_command() -> Result<String, String> {
 #[tauri::command]
 pub fn get_logs_for_troubleshooting() -> Result<String, String> {
     let log_path = get_log_file_path().map_err(|e| e.to_string())?;
-    
+
     if !log_path.exists() {
         return Ok("No log file found".to_string());
     }
@@ -395,10 +413,14 @@ pub fn get_logs_for_troubleshooting() -> Result<String, String> {
     // Read last 1000 lines or 1MB, whichever is smaller
     let content = std::fs::read_to_string(&log_path).map_err(|e| e.to_string())?;
     let lines: Vec<&str> = content.lines().collect();
-    
-    let start = if lines.len() > 1000 { lines.len() - 1000 } else { 0 };
+
+    let start = if lines.len() > 1000 {
+        lines.len() - 1000
+    } else {
+        0
+    };
     let recent_logs = lines[start..].join("\n");
-    
+
     // Limit to 1MB
     if recent_logs.len() > 1024 * 1024 {
         let truncated = &recent_logs[recent_logs.len() - 1024 * 1024..];
@@ -411,14 +433,14 @@ pub fn get_logs_for_troubleshooting() -> Result<String, String> {
 #[tauri::command]
 pub fn clear_logs() -> Result<(), String> {
     let log_path = get_log_file_path().map_err(|e| e.to_string())?;
-    
+
     if log_path.exists() {
         std::fs::remove_file(&log_path).map_err(|e| e.to_string())?;
     }
-    
+
     // Reinitialize logger
     init_logger().map_err(|e| e.to_string())?;
-    
+
     Ok(())
 }
 
@@ -436,8 +458,12 @@ pub fn set_log_level_command(level: String) -> Result<(), String> {
 
     // Note: This would require making the logger mutable, which is complex with the current design
     // For now, we'll just log the change request
-    log_info!("logger", "set_log_level_command", &format!("Log level change requested: {}", level));
-    
+    log_info!(
+        "logger",
+        "set_log_level_command",
+        &format!("Log level change requested: {}", level)
+    );
+
     Ok(())
 }
 
@@ -463,7 +489,7 @@ pub fn logger_log_from_frontend(
     if let Some(logger) = get_logger() {
         let metadata_json: serde_json::Value = serde_json::from_str(&metadata)
             .unwrap_or_else(|_| serde_json::json!({"raw_metadata": metadata}));
-        
+
         let _ = logger.log(log_level, &module, &function, &message, metadata_json);
     }
 
@@ -473,29 +499,30 @@ pub fn logger_log_from_frontend(
 // Export log file for troubleshooting
 #[tauri::command]
 pub async fn export_logs_for_support() -> Result<String, String> {
-
-    
     let log_path = get_log_file_path().map_err(|e| e.to_string())?;
-    
+
     if !log_path.exists() {
         return Err("No log file found".to_string());
     }
 
     // Create a comprehensive support package
     let mut support_data = String::new();
-    
+
     // Add system info
     support_data.push_str("=== DESQTA SUPPORT LOG EXPORT ===\n");
-    support_data.push_str(&format!("Export Time: {}\n", Local::now().format("%Y-%m-%d %H:%M:%S")));
+    support_data.push_str(&format!(
+        "Export Time: {}\n",
+        Local::now().format("%Y-%m-%d %H:%M:%S")
+    ));
     support_data.push_str(&format!("App Version: {}\n", env!("CARGO_PKG_VERSION")));
     support_data.push_str(&format!("OS: {}\n", std::env::consts::OS));
     support_data.push_str(&format!("Arch: {}\n", std::env::consts::ARCH));
     support_data.push_str("=====================================\n\n");
-    
+
     // Add recent logs
     let log_content = std::fs::read_to_string(&log_path).map_err(|e| e.to_string())?;
     support_data.push_str("=== APPLICATION LOGS ===\n");
     support_data.push_str(&log_content);
-    
+
     Ok(support_data)
-} 
+}

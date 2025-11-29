@@ -154,7 +154,7 @@ function formatTime(time: string): string {
 ```
 
 #### Header Design
-- **Gradient Background**: `bg-gradient-to-r from-slate-50 to-slate-100`
+- **Gradient Background**: `bg-linear-to-r from-zinc-50 to-zinc-100`
 - **Today Highlighting**: Blue background for current day
 - **Responsive Typography**: Scales with screen size
 
@@ -618,7 +618,7 @@ lessons = lessonsData.map((lesson: any) => {
   - Accent: Interactive elements
 
 #### Glass Morphism
-- **Backdrop Blur**: `backdrop-blur-sm` for modern appearance
+- **Backdrop Blur**: `backdrop-blur-xs` for modern appearance
 - **Transparency**: Semi-transparent backgrounds
 - **Borders**: Subtle border colors for definition
 

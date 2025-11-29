@@ -32,7 +32,7 @@ export interface LessonSummary {
   steps: string[];
 }
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 
 export class GeminiService {
   static async getApiKey(): Promise<string | null> {
@@ -188,22 +188,31 @@ Be realistic and consider that the prediction should be based on demonstrated pe
     if (!apiKey) {
       throw new Error('No Gemini API key set. Please add your API key in Settings.');
     }
-    const attachmentList = lesson.attachments.map(a => `- ${a.name}`).join('\n');
-    const prompt = `You are an AI assistant for students. Given the following lesson content, provide:
-1. A concise summary of the lesson (2-3 sentences)
-2. A step-by-step list of what a student should do to complete the lesson (as bullet points)
+    const attachmentList = lesson.attachments.length > 0 
+      ? lesson.attachments.map(a => `- ${a.name}`).join('\n')
+      : 'No attachments';
+    
+    const prompt = `You are an AI assistant for students. Analyze the following lesson content and provide a personalized summary and action steps based on the ACTUAL content provided. Do NOT use placeholders like [Topic of the lesson] or [Key concept 1]. Use the specific information from the lesson content.
 
 Lesson Title: ${lesson.title}
-Lesson Content:
-${lesson.content}
 
-Attachments (names only):
+Lesson Content:
+${lesson.content || 'No content provided'}
+
+Attachments:
 ${attachmentList}
 
-Respond ONLY in this JSON format:
+IMPORTANT: 
+- Base your summary on the ACTUAL content provided above
+- Use specific details, topics, and concepts mentioned in the lesson
+- Do NOT use generic placeholders or template text
+- If the content is minimal, provide a brief summary based on what is available
+- Make the steps specific to the actual lesson content
+
+Respond ONLY in this JSON format (no markdown, no code blocks):
 {
-  "summary": "[concise summary]",
-  "steps": ["step 1", "step 2", ...]
+  "summary": "A concise 2-3 sentence summary based on the actual lesson content",
+  "steps": ["Specific step 1 based on the content", "Specific step 2 based on the content", ...]
 }`;
     try {
       const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {

@@ -14,7 +14,7 @@ export class NotesService {
    */
   static async loadNotes(): Promise<Note[]> {
     try {
-      return await invoke<Note[]>('load_notes');
+      return await invoke<Note[]>('load_notes_filesystem');
     } catch (error) {
       console.error('Failed to load notes:', error);
       throw new Error(`Failed to load notes: ${error}`);
@@ -26,7 +26,7 @@ export class NotesService {
    */
   static async saveNote(note: Note): Promise<void> {
     try {
-      await invoke('save_note', { note });
+      await invoke('save_note_filesystem', { note });
     } catch (error) {
       console.error('Failed to save note:', error);
       throw new Error(`Failed to save note: ${error}`);
@@ -36,7 +36,7 @@ export class NotesService {
   /**
    * Create a new note with default values
    */
-  static async createNote(title: string = 'Untitled Note', folderId: string = 'default'): Promise<Note> {
+  static async createNote(folderPath: string[] = ['default'], title: string = 'Untitled Note'): Promise<Note> {
     const now = new Date().toISOString();
     const noteId = crypto.randomUUID();
 
@@ -44,7 +44,7 @@ export class NotesService {
       id: noteId,
       title,
       content: '<p><br></p>', // Simple HTML content
-      folder_path: [folderId],
+      folder_path: folderPath,
       tags: [],
       seqta_references: [],
       created_at: now,
@@ -106,7 +106,7 @@ export class NotesService {
    */
   static async deleteNote(noteId: string): Promise<void> {
     try {
-      await invoke('delete_note', { noteId });
+      await invoke('delete_note_filesystem', { noteId });
     } catch (error) {
       console.error('Failed to delete note:', error);
       throw new Error(`Failed to delete note: ${error}`);
@@ -118,7 +118,7 @@ export class NotesService {
    */
   static async getNote(noteId: string): Promise<Note | null> {
     try {
-      return await invoke<Note | null>('get_note', { noteId });
+      return await invoke<Note | null>('get_note_filesystem', { noteId });
     } catch (error) {
       console.error('Failed to get note:', error);
       throw new Error(`Failed to get note: ${error}`);
@@ -130,7 +130,7 @@ export class NotesService {
    */
   static async searchNotes(query: string): Promise<Note[]> {
     try {
-      return await invoke<Note[]>('search_notes', { query });
+      return await invoke<Note[]>('search_notes_filesystem', { query });
     } catch (error) {
       console.error('Failed to search notes:', error);
       throw new Error(`Failed to search notes: ${error}`);
@@ -142,7 +142,7 @@ export class NotesService {
    */
   static async searchNotesAdvanced(query: string, filters?: SearchFilters): Promise<SearchResult[]> {
     try {
-      return await invoke<SearchResult[]>('search_notes_advanced', { query, filters });
+      return await invoke<SearchResult[]>('search_notes_advanced_filesystem', { query, filters });
     } catch (error) {
       console.error('Failed to perform advanced search:', error);
       throw new Error(`Failed to perform advanced search: ${error}`);
@@ -154,7 +154,7 @@ export class NotesService {
    */
   static async saveImageFromBase64(noteId: string, imageData: string, filename: string): Promise<string> {
     try {
-      return await invoke<string>('save_image_from_base64', { noteId, imageData, filename });
+      return await invoke<string>('save_image_from_base64_filesystem', { noteId, imageData, filename });
     } catch (error) {
       console.error('Failed to save image:', error);
       throw new Error(`Failed to save image: ${error}`);
@@ -166,7 +166,7 @@ export class NotesService {
    */
   static async getImagePath(relativePath: string): Promise<string> {
     try {
-      return await invoke<string>('get_image_path', { relativePath });
+      return await invoke<string>('get_image_path_filesystem', { relativePath });
     } catch (error) {
       console.error('Failed to get image path:', error);
       throw new Error(`Failed to get image path: ${error}`);
@@ -178,7 +178,7 @@ export class NotesService {
    */
   static async deleteNoteImages(noteId: string): Promise<void> {
     try {
-      await invoke('delete_note_images', { noteId });
+      await invoke('delete_note_images_filesystem', { noteId });
     } catch (error) {
       console.error('Failed to delete note images:', error);
       throw new Error(`Failed to delete note images: ${error}`);
@@ -190,7 +190,7 @@ export class NotesService {
    */
   static async cleanupUnusedImages(): Promise<number> {
     try {
-      return await invoke<number>('cleanup_unused_images');
+      return await invoke<number>('cleanup_unused_images_filesystem');
     } catch (error) {
       console.error('Failed to cleanup unused images:', error);
       throw new Error(`Failed to cleanup unused images: ${error}`);
@@ -202,7 +202,7 @@ export class NotesService {
    */
   static async loadFolders(): Promise<NoteFolder[]> {
     try {
-      return await invoke<NoteFolder[]>('load_folders');
+      return await invoke<NoteFolder[]>('load_folders_filesystem');
     } catch (error) {
       console.error('Failed to load folders:', error);
       throw new Error(`Failed to load folders: ${error}`);
@@ -224,7 +224,7 @@ export class NotesService {
         updated_at: now
       };
 
-      return await invoke<string>('create_folder', { folder });
+      return await invoke<string>('create_folder_filesystem', { name, parentPath: parentId });
     } catch (error) {
       console.error('Failed to create folder:', error);
       throw new Error(`Failed to create folder: ${error}`);
@@ -236,7 +236,7 @@ export class NotesService {
    */
   static async deleteFolder(folderId: string): Promise<void> {
     try {
-      await invoke('delete_folder', { folderId });
+      await invoke('delete_folder_filesystem', { folderPath: folderId });
     } catch (error) {
       console.error('Failed to delete folder:', error);
       throw new Error(`Failed to delete folder: ${error}`);
@@ -248,7 +248,7 @@ export class NotesService {
    */
   static async moveNoteToFolder(noteId: string, folderId: string): Promise<void> {
     try {
-      await invoke('move_note_to_folder', { noteId, folderId });
+      await invoke('move_note_filesystem', { noteId, newFolderPath: [folderId] });
     } catch (error) {
       console.error('Failed to move note to folder:', error);
       throw new Error(`Failed to move note to folder: ${error}`);
@@ -265,7 +265,7 @@ export class NotesService {
     database_version: string;
   }> {
     try {
-      return await invoke('get_notes_stats');
+      return await invoke('get_notes_stats_filesystem');
     } catch (error) {
       console.error('Failed to get notes stats:', error);
       throw new Error(`Failed to get notes stats: ${error}`);
@@ -277,7 +277,7 @@ export class NotesService {
    */
   static async backupNotes(): Promise<string> {
     try {
-      return await invoke<string>('backup_notes');
+      return await invoke<string>('backup_notes_filesystem');
     } catch (error) {
       console.error('Failed to backup notes:', error);
       throw new Error(`Failed to backup notes: ${error}`);
@@ -289,7 +289,7 @@ export class NotesService {
    */
   static async restoreFromBackup(backupPath: string): Promise<void> {
     try {
-      await invoke('restore_notes_from_backup', { backupPath });
+      await invoke('restore_notes_from_backup_filesystem', { backupPath });
     } catch (error) {
       console.error('Failed to restore from backup:', error);
       throw new Error(`Failed to restore from backup: ${error}`);

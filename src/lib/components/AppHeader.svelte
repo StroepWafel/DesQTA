@@ -9,18 +9,22 @@
     Minus,
     Square2Stack,
     XMark,
-    Squares2x2
+    ChatBubbleLeftRight,
+    ClipboardDocumentList,
+    DocumentText,
   } from 'svelte-hero-icons';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { derived, writable } from 'svelte/store';
-  import { fade, scale } from 'svelte/transition';
+  import { fly } from 'svelte/transition';
   import PagesMenu from './PagesMenu.svelte';
   import GlobalSearch from './search/GlobalSearchOptimized.svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
   import { flushAll } from '../services/syncService';
+  import { _ } from '../i18n';
+  import T from './T.svelte';
 
   interface Props {
     sidebarOpen: boolean;
@@ -83,6 +87,11 @@
       assessmentID: number;
       subjectCode: string;
     };
+    message?: {
+      messageID: number;
+      title: string;
+      subtitle: string;
+    };
   }
 
   interface HeartbeatResponse {
@@ -106,37 +115,39 @@
     onLogout,
     onShowAbout,
     onClickOutside,
-    disableSchoolPicture = false
+    disableSchoolPicture = false,
   }: Props = $props();
 
   const appWindow = Window.getCurrent();
 
   const pages = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Analytics', path: '/analytics' },
-    { name: 'Assessments', path: '/assessments' },
-    { name: 'Courses', path: '/courses' },
-    { name: 'Directory', path: '/directory' },
-    { name: 'Direqt Messages', path: '/direqt-messages' },
-    { name: 'News', path: '/news' },
-    { name: 'Notices', path: '/notices' },
-    { name: 'QR Sign In', path: '/qrsignin' },
-    { name: 'Reports', path: '/reports' },
-    { name: 'Settings', path: '/settings' },
-    { name: 'Timetable', path: '/timetable' },
-    { name: 'Welcome', path: '/welcome' },
+    { nameKey: 'navigation.dashboard', path: '/dashboard' },
+    { nameKey: 'navigation.analytics', path: '/analytics' },
+    { nameKey: 'navigation.assessments', path: '/assessments' },
+    { nameKey: 'navigation.courses', path: '/courses' },
+    { nameKey: 'navigation.directory', path: '/directory' },
+    { nameKey: 'navigation.messages', path: '/direqt-messages' },
+    { nameKey: 'navigation.news', path: '/news' },
+    { nameKey: 'navigation.notices', path: '/notices' },
+    { nameKey: 'navigation.qr_signin', path: '/qrsignin' },
+    { nameKey: 'navigation.reports', path: '/reports' },
+    { nameKey: 'navigation.settings', path: '/settings' },
+    { nameKey: 'navigation.timetable', path: '/timetable' },
+    { nameKey: 'navigation.welcome', path: '/welcome' },
   ];
 
   const searchStore = writable('');
   const showDropdownStore = writable(false);
   const filteredPages = derived(searchStore, ($search) =>
-    $search ? pages.filter((p) => p.name.toLowerCase().includes($search.toLowerCase())) : pages
+    $search ? pages.filter((p) => {
+      const translatedName = $_(`${p.nameKey}`, { default: p.nameKey });
+      return translatedName.toLowerCase().includes($search.toLowerCase());
+    }) : pages,
   );
 
-  let searchInput: HTMLInputElement | null = null;
   let selectedIndex = $state(-1);
   let showPagesMenu = $state(false);
-  let globalSearchEnabled = $state(true);
+  let globalSearchEnabled = $state(false);
   let showNotifications = $state(false);
   let loadingNotifications = $state(false);
   let notifications = $state<Notification[]>([]);
@@ -144,18 +155,10 @@
   let isMobile = $state(false);
   let showNotificationsModal = $state(false);
 
-  function handleSelect(page: { name: string; path: string }) {
+  function handleSelect(page: { nameKey: string; path: string }) {
     searchStore.set('');
     showDropdownStore.set(false);
     goto(page.path);
-  }
-
-  function handleFocus() {
-    showDropdownStore.set(true);
-  }
-
-  function handleBlur() {
-    setTimeout(() => showDropdownStore.set(false), 100);
   }
 
   function handleKeydown(e: KeyboardEvent) {
@@ -172,42 +175,43 @@
     }
   }
 
-  function openPagesMenu() {
-    showPagesMenu = true;
-    setTimeout(() => {
-      const input = document.getElementById('pages-search-input');
-      if (input) input.focus();
-    }, 10);
-  }
-
   function closePagesMenu() {
     showPagesMenu = false;
   }
 
   async function loadGlobalSearchSetting() {
     logger.debug('AppHeader', 'loadGlobalSearchSetting', 'Loading global search setting');
-    
+
     try {
       const subset = await invoke<any>('get_settings_subset', { keys: ['global_search_enabled'] });
-      globalSearchEnabled = subset?.global_search_enabled ?? true;
-      logger.info('AppHeader', 'loadGlobalSearchSetting', `Global search enabled: ${globalSearchEnabled}`);
+      globalSearchEnabled = false; // Temporarily disabled
+      logger.info(
+        'AppHeader',
+        'loadGlobalSearchSetting',
+        `Global search enabled: ${globalSearchEnabled}`,
+      );
     } catch (error) {
-      logger.error('AppHeader', 'loadGlobalSearchSetting', `Failed to load global search setting: ${error}`, { error });
-      globalSearchEnabled = true; // Default to enabled if loading fails
+      logger.error(
+        'AppHeader',
+        'loadGlobalSearchSetting',
+        `Failed to load global search setting: ${error}`,
+        { error },
+      );
+      globalSearchEnabled = false; // Temporarily disabled
     }
   }
 
   async function fetchNotifications() {
     if (loadingNotifications) return;
-    
+
     loadingNotifications = true;
     try {
       const response = await seqtaFetch('/seqta/student/heartbeat', {
         method: 'POST',
         body: {
           timestamp: '1970-01-01 00:00:00.0',
-          hash: '#?page=/home'
-        }
+          hash: '#?page=/home',
+        },
       });
 
       // Parse response if it's a string
@@ -223,7 +227,7 @@
 
       // Handle different possible response structures
       let notificationsData: Notification[] = [];
-      
+
       if (parsedResponse.payload?.notifications) {
         notificationsData = parsedResponse.payload.notifications;
       } else if (parsedResponse.notifications) {
@@ -231,7 +235,7 @@
       } else if (Array.isArray(parsedResponse)) {
         notificationsData = parsedResponse;
       }
-      
+
       if (notificationsData.length > 0) {
         notifications = notificationsData;
         unreadNotifications = notificationsData.length;
@@ -245,7 +249,7 @@
 
   function toggleNotifications() {
     logger.debug('AppHeader', 'toggleNotifications', 'Toggling notifications panel', { isMobile });
-    
+
     if (isMobile) {
       showNotificationsModal = !showNotificationsModal;
       if (showNotificationsModal && notifications.length === 0) {
@@ -290,6 +294,8 @@
       return notification.report.title;
     } else if (notification.coneqtAssessments) {
       return notification.coneqtAssessments.title;
+    } else if (notification.message) {
+      return notification.message.title;
     }
     return 'Notification';
   }
@@ -297,16 +303,35 @@
   function getNotificationSubtitle(notification: Notification): string {
     if (notification.coneqtAssessments) {
       return `${notification.coneqtAssessments.subjectCode} - ${notification.coneqtAssessments.subtitle}`;
+    } else if (notification.message) {
+      return notification.message.subtitle;
     }
     return '';
+  }
+
+  function getNotificationIcon(notification: Notification) {
+    if (notification.type === 'message' || notification.message) return ChatBubbleLeftRight;
+    if (notification.type === 'coneqtassessments' || notification.coneqtAssessments)
+      return ClipboardDocumentList;
+    if (notification.type === 'report' || notification.report) return DocumentText;
+    return Bell;
   }
 
   function handleNotificationClick(notification: Notification) {
     if (notification.type === 'coneqtassessments' && notification.coneqtAssessments) {
       const { assessmentID, metaclassID } = notification.coneqtAssessments;
+      showNotifications = false;
+      showNotificationsModal = false;
       goto(`/assessments/${assessmentID}/${metaclassID}`);
     } else if (notification.type === 'report') {
+      showNotifications = false;
+      showNotificationsModal = false;
       goto('/reports');
+    } else if (notification.type === 'message' && notification.message) {
+      const id = notification.message.messageID;
+      showNotifications = false;
+      showNotificationsModal = false;
+      goto(`/direqt-messages?messageID=${id}`);
     }
   }
 
@@ -315,20 +340,20 @@
     fetchNotifications();
     // Attempt to flush any queued offline changes on header mount
     flushAll().catch(() => {});
-    
+
     // Check for mobile on mount and resize
     const checkMobile = async () => {
-      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM
-      if (tauri_platform == "ios" || tauri_platform == "android") {
-        isMobile = true
+      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
+      if (tauri_platform == 'ios' || tauri_platform == 'android') {
+        isMobile = true;
       } else {
-        isMobile = false
+        isMobile = false;
       }
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
+
     // Add click outside handler for notifications
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -336,9 +361,9 @@
         showNotifications = false;
       }
     };
-    
+
     document.addEventListener('click', handleClickOutside);
-    
+
     return () => {
       window.removeEventListener('resize', checkMobile);
       document.removeEventListener('click', handleClickOutside);
@@ -354,96 +379,124 @@
 
   // Sort notifications by timestamp descending (latest first)
   let sortedNotifications = $state<Notification[]>([]);
-  
+
   $effect(() => {
-    sortedNotifications = [...notifications].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    sortedNotifications = [...notifications].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
   });
 </script>
 
-<header class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-[999999]" data-tauri-drag-region style="background: var(--background-color);">
+<header
+  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999"
+  data-tauri-drag-region>
   <div class="flex items-center space-x-4">
     <button
-      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 bg-slate-100 hover:accent-bg dark:bg-slate-800 focus:outline-none focus:ring-2 accent-ring playful"
+      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
       onclick={onToggleSidebar}
-      aria-label="Toggle sidebar">
-      <Icon src={Bars3} class="w-5 h-5 text-slate-700 dark:text-slate-300 hover:text-white" />
+      aria-label={$_('header.toggle_sidebar', { default: 'Toggle sidebar' })}>
+      <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
     </button>
     <div class="flex items-center space-x-3">
       <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0" />
       <h1
-        class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
+        class="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300">
         DesQTA
       </h1>
-    {#if weatherEnabled && weatherData}
-      <WeatherWidget {weatherData} />
-    {/if}
-  </div>
-  </div>
-  <div class="flex-1 flex justify-center">
-    {#if globalSearchEnabled}
-    <GlobalSearch />
-    {/if}
-  </div>
-  <div class="flex items-center space-x-2">
-    <div class="relative notification-dropdown">
-    <button
-      class="flex relative justify-center items-center rounded-xl border transition-all duration-200 size-12 bg-white/60 border-slate-200/40 hover:accent-bg dark:bg-slate-800/60 dark:border-slate-700/40 focus:outline-none focus:ring-2 accent-ring playful"
-        onclick={toggleNotifications}>
-      <Icon src={Bell} class="w-5 h-5 text-slate-700 dark:text-slate-300 hover:text-white" />
-      {#if unreadNotifications > 0}
-        <span
-          class="flex absolute -top-1 -right-1 justify-center items-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
-          {unreadNotifications}
-        </span>
+      {#if weatherEnabled && weatherData}
+        <WeatherWidget {weatherData} />
       {/if}
-    </button>
+    </div>
+  </div>
+  <div class="flex flex-1 justify-center">
+    {#if globalSearchEnabled}
+      <GlobalSearch />
+    {/if}
+  </div>
+  
+  <div class="flex items-center space-x-2">
+    {#if userInfo}
+      <UserDropdown
+        {userInfo}
+        {showUserDropdown}
+        {onToggleUserDropdown}
+        {onLogout}
+        {onShowAbout}
+        {onClickOutside}
+        {disableSchoolPicture} />
+    {/if}
+
+    <div class="relative notification-dropdown">
+      <button
+        class="flex relative justify-center items-center rounded-xl border transition-all duration-200 size-12 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-hidden focus:ring-2 accent-ring playful"
+        onclick={toggleNotifications}>
+        <Icon src={Bell} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 hover:text-white" />
+        {#if unreadNotifications > 0}
+          <span
+            class="flex absolute -top-1 -right-1 justify-center items-center px-1 translate-x-[calc(50%-3px)] h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+            {unreadNotifications}
+          </span>
+        {/if}
+      </button>
 
       {#if showNotifications}
         <div
-          class="absolute right-0 mt-2 w-96 max-h-96 overflow-y-auto bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50"
-          transition:scale={{ duration: 200 }}
+          class="overflow-y-auto absolute right-0 z-50 mt-2 w-96 max-h-96 rounded-xl border shadow-2xl backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 border-white/20 dark:border-zinc-700/40"
+          transition:fly={{ y: -8, duration: 180 }}
           style="transform-origin: top right;">
-          <div class="p-4 border-b border-slate-200 dark:border-slate-700">
+          <div class="p-4 border-b border-zinc-200 dark:border-zinc-700">
             <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Notifications</h3>
+              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+                <Icon src={Bell} class="w-5 h-5 opacity-80" />
+                Notifications
+              </h3>
               <button
-                class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                class="transition-colors text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1"
                 onclick={clearNotifications}>
+                <Icon src={XMark} class="w-4 h-4" />
                 Clear all
               </button>
             </div>
           </div>
-          
+
           <div class="p-2">
             {#if loadingNotifications}
               <div class="flex justify-center items-center py-8">
-                <div class="w-6 h-6 rounded-full border-2 animate-spin border-accent/30 border-t-accent"></div>
+                <div
+                  class="w-6 h-6 rounded-full border-2 animate-spin border-accent/30 border-t-accent">
+                </div>
               </div>
             {:else if notifications.length === 0}
-              <div class="text-center py-8 text-slate-500 dark:text-slate-400">
-                <Icon src={Bell} class="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <div class="py-8 text-center text-zinc-500 dark:text-zinc-400">
+                <Icon src={Bell} class="mx-auto mb-2 w-12 h-12 opacity-50" />
                 <p>No notifications</p>
               </div>
             {:else}
               {#each notifications as notification (notification.notificationID)}
-                <button type="button"
-                  class="p-3 w-full text-left rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
-
+                <button
+                  type="button"
+                  class="p-3 w-full text-left rounded-lg transition-all cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01]"
                   aria-label={getNotificationTitle(notification)}
                   onclick={() => handleNotificationClick(notification)}
-                  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleNotificationClick(notification); } }}>
+                  onkeydown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleNotificationClick(notification);
+                    }
+                  }}>
                   <div class="flex gap-3">
-                    <div class="flex-shrink-0 w-2 h-2 bg-accent rounded-full mt-2"></div>
+                    <div class="shrink-0 mt-1.5">
+                      <Icon src={getNotificationIcon(notification)} class="w-4 h-4 text-accent" />
+                    </div>
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      <p class="text-sm font-medium truncate text-zinc-900 dark:text-white">
                         {getNotificationTitle(notification)}
                       </p>
                       {#if getNotificationSubtitle(notification)}
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate">
+                        <p class="mt-1 text-xs truncate text-zinc-600 dark:text-zinc-400">
                           {getNotificationSubtitle(notification)}
                         </p>
                       {/if}
-                      <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                      <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
                         {formatNotificationTime(notification.timestamp)}
                       </p>
                     </div>
@@ -456,38 +509,28 @@
       {/if}
     </div>
 
-    {#if userInfo}
-      <UserDropdown
-        {userInfo}
-        {showUserDropdown}
-        {onToggleUserDropdown}
-        {onLogout}
-        {onShowAbout}
-        {onClickOutside}
-        disableSchoolPicture={disableSchoolPicture}
-      />
-    {/if}
-
     <!-- Window Controls - Desktop Only -->
     {#if !isMobile}
       <div class="flex items-center ml-4 space-x-2">
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 accent-ring playful"
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
           onclick={() => appWindow.minimize()}
-          aria-label="Minimize">
-          <Icon src={Minus} class="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          aria-label={$_('header.minimize', { default: 'Minimize' })}>
+          <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 accent-ring playful"
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
           onclick={() => appWindow.toggleMaximize()}
-          aria-label="Maximize">
-          <Icon src={Square2Stack} class="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          aria-label={$_('header.maximize', { default: 'Maximize' })}>
+          <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 group hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 playful"
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 group hover:bg-red-500 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 playful"
           onclick={() => appWindow.close()}
-          aria-label="Close">
-          <Icon src={XMark} class="w-4 h-4 transition duration-200 text-slate-600 dark:text-slate-400 group-hover:text-white" />
+          aria-label={$_('header.close', { default: 'Close' })}>
+          <Icon
+            src={XMark}
+            class="w-4 h-4 transition duration-200 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
         </button>
       </div>
     {/if}
@@ -497,53 +540,69 @@
   {/if}
   {#if showNotificationsModal}
     <div
-      class="fixed inset-0 z-[9999999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       aria-label="Notifications"
       tabindex="0"
-      onclick={() => { showNotificationsModal = false; }}
-      onkeydown={e => { if (e.key === 'Escape') showNotificationsModal = false; }}
-    >
-      <div class="relative w-full max-w-xl mx-auto rounded-2xl bg-white/70 dark:bg-gray-900/80 shadow-2xl border border-white/20 dark:border-gray-700/40 backdrop-blur-xl p-0 flex flex-col animate-in pointer-events-auto" role="document">
-        <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Notifications</h3>
+      onclick={() => {
+        showNotificationsModal = false;
+      }}
+      onkeydown={(e) => {
+        if (e.key === 'Escape') showNotificationsModal = false;
+      }}>
+      <div
+        class="flex relative flex-col p-0 mx-auto w-full max-w-xl rounded-2xl border shadow-2xl backdrop-blur-xl pointer-events-auto bg-white/70 dark:bg-zinc-900/80 border-white/20 dark:border-zinc-700/40 animate-in"
+        role="document">
+        <div
+          class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Notifications</h3>
           <button
-            class="ml-2 px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold text-base"
-            onclick={() => { showNotificationsModal = false; }}>
+            class="px-3 py-1 ml-2 text-base font-semibold rounded-lg transition-colors bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600"
+            onclick={() => {
+              showNotificationsModal = false;
+            }}>
             Close
           </button>
         </div>
         <div class="p-2 max-h-[70vh] overflow-y-auto">
           {#if loadingNotifications}
             <div class="flex justify-center items-center py-8">
-              <div class="w-6 h-6 rounded-full border-2 animate-spin border-accent/30 border-t-accent"></div>
+              <div
+                class="w-6 h-6 rounded-full border-2 animate-spin border-accent/30 border-t-accent">
+              </div>
             </div>
           {:else if sortedNotifications.length === 0}
-            <div class="text-center py-8 text-slate-500 dark:text-slate-400">
-              <Icon src={Bell} class="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <div class="py-8 text-center text-zinc-500 dark:text-zinc-400">
+              <Icon src={Bell} class="mx-auto mb-2 w-12 h-12 opacity-50" />
               <p>No notifications</p>
             </div>
           {:else}
             {#each sortedNotifications as notification (notification.notificationID)}
-              <button type="button"
-                class="p-3 w-full text-left rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
-
+              <button
+                type="button"
+                class="p-3 w-full text-left rounded-lg transition-all cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01]"
                 aria-label={getNotificationTitle(notification)}
                 onclick={() => handleNotificationClick(notification)}
-                onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleNotificationClick(notification); } }}>
+                onkeydown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleNotificationClick(notification);
+                  }
+                }}>
                 <div class="flex gap-3">
-                  <div class="flex-shrink-0 w-2 h-2 bg-accent rounded-full mt-2"></div>
+                  <div class="shrink-0 mt-1.5">
+                    <Icon src={getNotificationIcon(notification)} class="w-4 h-4 text-accent" />
+                  </div>
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">
+                    <p class="text-sm font-medium truncate text-zinc-900 dark:text-white">
                       {getNotificationTitle(notification)}
                     </p>
                     {#if getNotificationSubtitle(notification)}
-                      <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate">
+                      <p class="mt-1 text-xs truncate text-zinc-600 dark:text-zinc-400">
                         {getNotificationSubtitle(notification)}
                       </p>
                     {/if}
-                    <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
                       {formatNotificationTime(notification.timestamp)}
                     </p>
                   </div>

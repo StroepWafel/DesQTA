@@ -151,6 +151,14 @@ build/
 .svelte-kit/
 
 .cursor
+bun.lockb
+package-lock.json
 pnpm-lock.yaml
 
 .DS_Store
+
+
+src/lib/generated/themes.ts
+
+GEMINI.md
+.tauri/myapp.key

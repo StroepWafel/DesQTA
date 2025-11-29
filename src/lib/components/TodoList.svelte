@@ -49,7 +49,7 @@
       case 'low':
         return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-700';
+        return 'bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-900/30 dark:text-zinc-300 dark:border-zinc-700';
     }
   }
 
@@ -183,14 +183,14 @@
   }
 </style>
 
-<div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md" 
+<div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md" 
      in:fade={{ duration: 400, easing: quintOut }}>
   <!-- Header -->
-  <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700"
+  <div class="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-700"
        in:fly={{ y: -20, duration: 300, easing: quintOut }}>
     <div>
-      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Quick Tasks</h3>
-      <p class="text-sm text-slate-600 dark:text-slate-300">{todos.filter(t => !t.completed).length} active tasks</p>
+      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Quick Tasks</h3>
+      <p class="text-sm text-zinc-600 dark:text-zinc-300">{todos.filter(t => !t.completed).length} active tasks</p>
     </div>
   </div>
 
@@ -208,10 +208,10 @@
           type="text"
           bind:value={newTodoText}
           placeholder="Add a quick task..."
-          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-sm" />
+          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" />
         <button
           type="submit"
-          class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring text-sm font-medium">
+          class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium">
           Add
         </button>
       </div>
@@ -219,10 +219,10 @@
         <input
           type="date"
           bind:value={newTodoDueDate}
-          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" />
+          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" />
         <select
           bind:value={newTodoPriority}
-          class="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm">
+          class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm">
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
@@ -232,26 +232,26 @@
         type="text"
         bind:value={newTodoTags}
         placeholder="Tags (comma separated)"
-        class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-sm" />
+        class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" />
     </form>
 
     <!-- Tasks List -->
     {#if loading}
       <div class="flex items-center justify-center py-8">
-        <div class="w-8 h-8 rounded-full border-4 border-slate-300 dark:border-slate-700 border-t-transparent animate-spin"></div>
+        <div class="w-8 h-8 rounded-full border-4 border-zinc-300 dark:border-zinc-700 border-t-transparent animate-spin"></div>
       </div>
     {:else if error}
       <div class="text-center py-8 text-red-600 dark:text-red-400">{error}</div>
     {:else}
       <div class="space-y-3">
         {#if todos.length === 0}
-          <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+          <div class="text-center py-8 text-zinc-500 dark:text-zinc-400">
             No tasks yet. Add one above to get started!
           </div>
         {/if}
         
         {#each todos.filter(t => !t.completed).slice(0, 5) as todo (todo.id)}
-          <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 enhanced-hover {completingTasks.has(todo.id) ? 'completion-animation' : ''} {deletingTasks.has(todo.id) ? 'opacity-50 scale-95' : ''}"
+          <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 enhanced-hover {completingTasks.has(todo.id) ? 'completion-animation' : ''} {deletingTasks.has(todo.id) ? 'opacity-50 scale-95' : ''}"
                in:fly={{ y: 20, duration: 300, delay: todos.indexOf(todo) * 50, easing: quintOut }}
                out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
             <div class="flex items-start gap-3">
@@ -259,15 +259,15 @@
                 type="checkbox" 
                 checked={todo.completed} 
                 onchange={() => toggleTodo(todo.id)} 
-                class="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" 
+                class="mt-0.5 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" 
                 aria-label="Toggle complete" />
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
-                  <div class="truncate text-slate-900 dark:text-white font-medium text-sm">{todo.title || 'Untitled task'}</div>
-                  <div class="flex items-center gap-1 flex-shrink-0">
+                  <div class="truncate text-zinc-900 dark:text-white font-medium text-sm">{todo.title || 'Untitled task'}</div>
+                  <div class="flex items-center gap-1 shrink-0">
                     <span class="text-xs px-1.5 py-0.5 rounded-full border priority-indicator {getPriorityStyles(todo.priority)}">{todo.priority ?? 'medium'}</span>
                     <button 
-                      class="p-1 text-slate-400 hover:text-red-600 transition-colors" 
+                      class="p-1 text-zinc-400 hover:text-red-600 transition-colors" 
                       onclick={() => deleteTodo(todo.id)}
                       aria-label="Delete task">
                       <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
@@ -280,12 +280,12 @@
                 {#if todo.due_date || (todo.tags ?? []).length}
                   <div class="mt-1 flex flex-wrap items-center gap-2 text-xs">
                     {#if todo.due_date}
-                      <span class="text-slate-600 dark:text-slate-300">
+                      <span class="text-zinc-600 dark:text-zinc-300">
                         Due: {new Date(todo.due_date).toLocaleDateString()}
                       </span>
                     {/if}
                     {#if (todo.tags ?? []).length}
-                      <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">
+                      <span class="px-2 py-0.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200">
                         {(todo.tags ?? []).join(', ')}
                       </span>
                     {/if}
@@ -300,9 +300,9 @@
                           type="checkbox" 
                           checked={sub.completed} 
                           onchange={() => toggleSubtask(todo.id, sub.id)} 
-                          class="w-3 h-3 rounded border-slate-300 dark:border-slate-700 focus:ring-1 accent-ring" 
+                          class="w-3 h-3 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-1 accent-ring" 
                           aria-label="Toggle subtask" />
-                        <span class="text-xs text-slate-600 dark:text-slate-300 {sub.completed ? 'line-through' : ''}">{sub.title}</span>
+                        <span class="text-xs text-zinc-600 dark:text-zinc-300 {sub.completed ? 'line-through' : ''}">{sub.title}</span>
                       </div>
                     {/each}
                   </div>
@@ -314,7 +314,7 @@
         
         {#if todos.filter(t => !t.completed).length > 5}
           <div class="text-center py-2">
-            <span class="text-sm text-slate-500 dark:text-slate-400">
+            <span class="text-sm text-zinc-500 dark:text-zinc-400">
               Showing 5 of {todos.filter(t => !t.completed).length} active tasks
             </span>
           </div>

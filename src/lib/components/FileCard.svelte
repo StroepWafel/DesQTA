@@ -59,7 +59,7 @@
 </script>
 
 <div
-  class="flex items-center gap-4 p-4 rounded-xl dark:bg-slate-800 bg-slate-200 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-accent-500/5">
+  class="flex items-center gap-4 p-4 rounded-xl dark:bg-zinc-800 bg-zinc-200 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-accent-500/5">
   <Icon
     src={getFileIcon(file.mimetype)}
     class="w-6 h-6 text-accent-400" />
@@ -68,7 +68,7 @@
       {fileName}
     </div>
     {#if showMetadata}
-      <div class="flex gap-2 items-center text-xs text-slate-400">
+      <div class="flex gap-2 items-center text-xs text-zinc-400">
         <span>{formatFileSize(file.size)}</span>
         {#if file.created_date}
           <span>•</span>

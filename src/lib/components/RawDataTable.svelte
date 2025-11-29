@@ -1,23 +1,41 @@
 <script lang="ts">
-  import { fade, slide } from 'svelte/transition';
-  import { Icon, ChevronDown, ChevronRight } from 'svelte-hero-icons';
   import type { Assessment } from '$lib/types';
-  import { DataTable, SearchInput, Badge } from '$lib/components/ui';
+  import { Badge } from '$lib/components/ui';
+  import * as Table from "$lib/components/ui/table/index.js";
+  import { Button } from "$lib/components/ui/button/index.js";
+  import * as Select from "$lib/components/ui/select/index.js";
+  import { Icon, ChevronUp, ChevronDown } from 'svelte-hero-icons';
+  import T from './T.svelte';
+  import { _ } from '../i18n';
 
-  export let data: Assessment[] = [];
-  export let groupBySubject = true;
+  let { data }: { data: Assessment[] } = $props();
 
-  // Filter state
-  let filterSubject = '';
-  let filterStatus = '';
-  let filterMinGrade: number | null = null;
-  let filterMaxGrade: number | null = null;
-  let filterSearch = '';
+  // Pagination state
+  let currentPage = $state(0);
+  let itemsPerPage = $state(10);
+  let itemsPerPageValue = $state("10");
+  
+  // Items per page options
+  const itemsPerPageOptions = [5, 10, 20, 50, 100];
+  
+  function handleItemsPerPageChange(value: string) {
+    itemsPerPage = parseInt(value);
+    itemsPerPageValue = value;
+    currentPage = 0; // Reset to first page when changing page size
+  }
+  
+  // Sorting state
+  let sortColumn = $state<keyof Assessment | null>(null);
+  let sortDirection = $state<'asc' | 'desc'>('asc');
 
-  let expandedSubjects: Record<string, boolean> = {};
-  let expandedYears: Record<string, boolean> = {};
-
-  function getLetterGrade(percentage: number | undefined): string {
+  function getLetterGrade(assessment: Assessment): string {
+    // Use letter grade from assessment if available
+    if (assessment.letterGrade) {
+      return assessment.letterGrade;
+    }
+    
+    // Fallback to custom scale based on percentage
+    const percentage = assessment.finalGrade;
     if (percentage === undefined) return '';
     if (percentage >= 90) return 'A+';
     if (percentage >= 85) return 'A';
@@ -32,366 +50,214 @@
     return 'E';
   }
 
-  function toggleSubject(subject: string) {
-    expandedSubjects[subject] = !expandedSubjects[subject];
-  }
-
-  function toggleYear(year: string) {
-    expandedYears[year] = !expandedYears[year];
-  }
-
-  // Helper function to get year from due date
-  function getYearFromDue(due: string): string {
-    return new Date(due).getFullYear().toString();
-  }
-
-  // Helper function to group by year and subject
-  function groupByYearAndSubject(data: Assessment[]): Record<string, Record<string, Assessment[]>> {
-    const grouped: Record<string, Record<string, Assessment[]>> = {};
-    if (!data) return grouped;
-    
-    for (const a of data) {
-      const year = getYearFromDue(a.due);
-      if (!grouped[year]) grouped[year] = {};
-      if (!grouped[year][a.subject]) grouped[year][a.subject] = [];
-      grouped[year][a.subject].push(a);
+  function getStatusVariant(status: string) {
+    switch (status) {
+      case 'MARKS_RELEASED':
+        return 'success';
+      case 'OVERDUE':
+        return 'danger';
+      case 'PENDING':
+        return 'warning';
+      default:
+        return 'secondary';
     }
-    
-    // Sort years in descending order
-    return Object.fromEntries(
-      Object.entries(grouped).sort(([yearA], [yearB]) => parseInt(yearB) - parseInt(yearA))
-    );
   }
 
-  // Helper function to group by subject (keeping for backward compatibility)
-  function groupBySubjectData(data: Assessment[]): Record<string, Assessment[]> {
-    const grouped: Record<string, Assessment[]> = {};
-    if (!data) return grouped;
-    for (const a of data) {
-      if (!grouped[a.subject]) grouped[a.subject] = [];
-      grouped[a.subject].push(a);
+  function formatStatus(status: string): string {
+    return status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  function handleSort(column: keyof Assessment) {
+    if (sortColumn === column) {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortColumn = column;
+      sortDirection = 'asc';
     }
-    return grouped;
+    currentPage = 0; // Reset to first page when sorting
   }
 
-  function getFilteredAssessments(data: Assessment[]): Assessment[] {
-    if (!data) return [];
-    return data.filter((a) => {
-      if (filterSubject && a.subject !== filterSubject) return false;
-      if (filterStatus && a.status !== filterStatus) return false;
-      if (filterMinGrade !== null && (a.finalGrade ?? -1) < filterMinGrade) return false;
-      if (filterMaxGrade !== null && (a.finalGrade ?? 101) > filterMaxGrade) return false;
-      if (
-        filterSearch &&
-        !(
-          a.title.toLowerCase().includes(filterSearch.toLowerCase()) ||
-          a.subject.toLowerCase().includes(filterSearch.toLowerCase())
-        )
-      )
-        return false;
-      return true;
+  // Derived sorted and paginated data
+  const sortedData = $derived(() => {
+    if (!sortColumn) return data;
+    
+    return [...data].sort((a, b) => {
+      const aVal = a[sortColumn as keyof Assessment];
+      const bVal = b[sortColumn as keyof Assessment];
+      
+      if (aVal === undefined || aVal === null) return 1;
+      if (bVal === undefined || bVal === null) return -1;
+      
+      let comparison = 0;
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        comparison = aVal.localeCompare(bVal);
+      } else if (typeof aVal === 'number' && typeof bVal === 'number') {
+        comparison = aVal - bVal;
+      } else if (sortColumn === 'due') {
+        // Handle dates as strings
+        const dateA = new Date(aVal as string);
+        const dateB = new Date(bVal as string);
+        comparison = dateA.getTime() - dateB.getTime();
+      } else {
+        comparison = String(aVal).localeCompare(String(bVal));
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
     });
+  });
+
+  const paginatedData = $derived(() => {
+    const start = currentPage * itemsPerPage;
+    return sortedData().slice(start, start + itemsPerPage);
+  });
+
+  const totalPages = $derived(() => Math.ceil(data.length / itemsPerPage));
+  const canPreviousPage = $derived(() => currentPage > 0);
+  const canNextPage = $derived(() => currentPage < totalPages() - 1);
+
+  function previousPage() {
+    if (canPreviousPage()) currentPage--;
   }
 
-  function hasActiveFilters() {
-    return !!(
-      filterSubject ||
-      filterStatus ||
-      filterMinGrade !== null ||
-      filterMaxGrade !== null ||
-      filterSearch
-    );
+  function nextPage() {
+    if (canNextPage()) currentPage++;
+  }
+
+  function getSortIcon(column: keyof Assessment) {
+    if (sortColumn !== column) return null;
+    return sortDirection === 'asc' ? ChevronUp : ChevronDown;
   }
 </script>
 
-<div class="p-8 rounded-2xl border shadow-xl border-slate-200 bg-white/80 dark:bg-slate-900/80 dark:border-slate-700">
-  <h2 class="flex gap-2 items-center mb-6 text-2xl font-bold text-slate-900 dark:text-white">
-    <span
-      class="flex justify-center items-center w-6 h-6 text-white bg-gradient-to-tr from-indigo-500 to-blue-400 rounded-full shadow">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-        ><path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M4 6h16M4 12h16M4 18h16" /></svg>
-    </span>
-    Raw Data
-  </h2>
-  <div class="flex flex-wrap gap-4 items-end mb-6">
-    <div>
-      <label
-        for="filter-subject"
-        class="block mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
-        >Subject</label>
-      <select
-        id="filter-subject"
-        class="px-3 py-2 text-sm bg-white rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-        bind:value={filterSubject}>
-        <option value="">All</option>
-        {#each Array.from(new Set(data.map((a) => a.subject))) as subject}
-          <option value={subject}>{subject}</option>
-        {/each}
-      </select>
-    </div>
-    <div>
-      <label
-        for="filter-status"
-        class="block mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
-        >Status</label>
-      <select
-        id="filter-status"
-        class="px-3 py-2 text-sm bg-white rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-        bind:value={filterStatus}>
-        <option value="">All</option>
-        <option value="MARKS_RELEASED">Marks Released</option>
-        <option value="OVERDUE">Overdue</option>
-        <option value="PENDING">Pending</option>
-        <option value="UPCOMING">Upcoming</option>
-      </select>
-    </div>
-    <div>
-      <label
-        for="filter-min-grade"
-        class="block mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
-        >Min Grade</label>
-      <input
-        id="filter-min-grade"
-        type="number"
-        min="0"
-        max="100"
-        class="px-3 py-2 w-20 text-sm bg-white rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-        bind:value={filterMinGrade}
-        placeholder="0" />
-    </div>
-    <div>
-      <label
-        for="filter-max-grade"
-        class="block mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
-        >Max Grade</label>
-      <input
-        id="filter-max-grade"
-        type="number"
-        min="0"
-        max="100"
-        class="px-3 py-2 w-20 text-sm bg-white rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-        bind:value={filterMaxGrade}
-        placeholder="100" />
-    </div>
-    <div class="flex-1 min-w-[160px]">
-      <label
-        for="filter-search"
-        class="block mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
-        >Search</label>
-      <input
-        id="filter-search"
-        type="text"
-        class="px-3 py-2 w-full text-sm bg-white rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-        bind:value={filterSearch}
-        placeholder="Title or subject..." />
-    </div>
-    {#if hasActiveFilters()}
-      <button
-        class="px-4 py-2 ml-2 text-sm font-semibold rounded-lg transition-all duration-200 transform text-slate-800 bg-slate-200 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
-        on:click={() => {
-          filterSubject = '';
-          filterStatus = '';
-          filterMinGrade = null;
-          filterMaxGrade = null;
-          filterSearch = '';
-        }}>
-        Clear Filters
-      </button>
-    {/if}
-  </div>
-  <div class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-    Showing {hasActiveFilters()
-      ? getFilteredAssessments(data).length
-      : data.length} entr{(hasActiveFilters()
-      ? getFilteredAssessments(data).length
-      : data.length) === 1
-      ? 'y'
-      : 'ies'}
-  </div>
-  <div class="overflow-x-auto">
-    {#if hasActiveFilters()}
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-        <thead>
-          <tr>
-            <th
-              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-              >Subject</th>
-            <th
-              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-              >Title</th>
-            <th
-              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-              >Grade</th>
-            <th
-              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-              >Due Date</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-          {#each getFilteredAssessments(data) as assessment}
-            <tr>
-              <td class="px-6 py-4 text-sm whitespace-nowrap text-slate-900 dark:text-slate-100"
-                >{assessment.subject}</td>
-              <td class="px-6 py-4 text-sm whitespace-nowrap text-slate-900 dark:text-slate-100"
-                >{assessment.title}</td>
-              <td class="px-6 py-4 text-sm whitespace-nowrap">
-                {#if assessment.finalGrade !== undefined}
-                  <span
-                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {assessment.finalGrade >=
-                    80
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      : assessment.finalGrade >= 60
-                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
-                    {assessment.finalGrade}% {getLetterGrade(assessment.finalGrade)}
-                  </span>
-                {:else}
-                  <span class="text-slate-500">Not graded</span>
-                {/if}
-              </td>
-              <td class="px-6 py-4 text-sm whitespace-nowrap text-slate-900 dark:text-slate-100"
-                >{new Date(assessment.due).toLocaleDateString()}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    {:else if groupBySubject}
-      {#each Object.entries(groupByYearAndSubject(data)) as [year, subjects]}
-        <div
-          class="overflow-hidden mb-4 rounded-xl border border-slate-200 dark:border-slate-700"
-          in:slide={{ duration: 350 }}>
-          <button
-            class="w-full flex items-center justify-between px-6 py-3 bg-accent-700 text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 accent-ring font-semibold text-left text-lg"
-            on:click={() => toggleYear(year)}>
-            <span class="flex gap-2 items-center">
-              {#if expandedYears[year]}
-                <Icon src={ChevronDown} class="w-5 h-5 text-white" />
-              {:else}
-                <Icon src={ChevronRight} class="w-5 h-5 text-white" />
+<div class="w-full">
+  <div class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-clip">
+    <Table.Root>
+      <Table.Header>
+        <Table.Row>
+          <Table.Head class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4 border-tr-lg" onclick={() => handleSort('title')}>
+            <div class="flex items-center gap-2">
+              <T key="analytics.assessment" fallback="Assessment" />
+              {#if getSortIcon('title')}
+                <Icon size="16" src={getSortIcon('title')} class="text-zinc-400" />
               {/if}
-              <span>{year}</span>
-            </span>
-          </button>
-          {#if expandedYears[year]}
-            <div transition:fade={{ duration: 250 }} class="p-4 space-y-4">
-              {#each Object.entries(subjects) as [subject, assessments]}
-                <div
-                  class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
-                  in:slide={{ duration: 350 }}>
-                  <button
-                    class="w-full flex items-center justify-between px-6 py-3 bg-accent-600 text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 accent-ring font-semibold text-left text-lg"
-                    on:click={() => toggleSubject(subject)}>
-                    <span class="flex gap-2 items-center">
-                      {#if expandedSubjects[subject]}
-                        <Icon src={ChevronDown} class="w-5 h-5 text-white" />
-                      {:else}
-                        <Icon src={ChevronRight} class="w-5 h-5 text-white" />
-                      {/if}
-                      <span>{subject}</span>
-                    </span>
-                  </button>
-                  {#if expandedSubjects[subject]}
-                    <div transition:fade={{ duration: 250 }}>
-                      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                        <thead>
-                          <tr>
-                            <th
-                              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-                              >Title</th>
-                            <th
-                              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-                              >Grade</th>
-                            <th
-                              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-                              >Due Date</th>
-                          </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                          {#each assessments as assessment}
-                            <tr>
-                              <td
-                                class="px-6 py-4 text-sm whitespace-nowrap text-slate-900 dark:text-slate-100"
-                                >{assessment.title}</td>
-                              <td class="px-6 py-4 text-sm whitespace-nowrap">
-                                {#if assessment.finalGrade !== undefined}
-                                  <span
-                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {assessment.finalGrade >=
-                                    80
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                      : assessment.finalGrade >= 60
-                                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
-                                    {assessment.finalGrade}% {getLetterGrade(assessment.finalGrade)}
-                                  </span>
-                                {:else}
-                                  <span class="text-slate-500">Not graded</span>
-                                {/if}
-                              </td>
-                              <td
-                                class="px-6 py-4 text-sm whitespace-nowrap text-slate-900 dark:text-slate-100"
-                                >{new Date(assessment.due).toLocaleDateString()}</td>
-                            </tr>
-                          {/each}
-                        </tbody>
-                      </table>
-                    </div>
-                  {/if}
-                </div>
-              {/each}
             </div>
-          {/if}
-        </div>
-      {/each}
-    {:else}
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-        <thead>
-          <tr>
-            <th
-              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-              >Subject</th>
-            <th
-              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-              >Title</th>
-            <th
-              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-              >Grade</th>
-            <th
-              class="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-slate-500 dark:text-slate-400"
-              >Due Date</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-          {#each data as assessment}
-            <tr>
-              <td class="px-6 py-4 text-sm whitespace-nowrap text-slate-900 dark:text-slate-100"
-                >{assessment.subject}</td>
-              <td class="px-6 py-4 text-sm whitespace-nowrap text-slate-900 dark:text-slate-100"
-                >{assessment.title}</td>
-              <td class="px-6 py-4 text-sm whitespace-nowrap">
-                {#if assessment.finalGrade !== undefined}
-                  <span
-                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {assessment.finalGrade >=
-                    80
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      : assessment.finalGrade >= 60
-                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
-                    {assessment.finalGrade}% {getLetterGrade(assessment.finalGrade)}
-                  </span>
-                {:else}
-                  <span class="text-slate-500">Not graded</span>
-                {/if}
-              </td>
-              <td class="px-6 py-4 text-sm whitespace-nowrap text-slate-900 dark:text-slate-100"
-                >{new Date(assessment.due).toLocaleDateString()}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    {/if}
+          </Table.Head>
+          <Table.Head class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4" onclick={() => handleSort('subject')}>
+            <div class="flex items-center gap-2">
+              <T key="analytics.subject" fallback="Subject" />
+              {#if getSortIcon('subject')}
+                <Icon size="16" src={getSortIcon('subject')} class="text-zinc-400" />
+              {/if}
+            </div>
+          </Table.Head>
+          <Table.Head class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4" onclick={() => handleSort('due')}>
+            <div class="flex items-center gap-2">
+              <T key="analytics.due_date" fallback="Due Date" />
+              {#if getSortIcon('due')}
+                <Icon size="16" src={getSortIcon('due')} class="text-zinc-400" />
+              {/if}
+            </div>
+          </Table.Head>
+          <Table.Head class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4" onclick={() => handleSort('status')}>
+            <div class="flex items-center gap-2">
+              <T key="analytics.status" fallback="Status" />
+              {#if getSortIcon('status')}
+                <Icon size="16" src={getSortIcon('status')} class="text-zinc-400" />
+              {/if}
+            </div>
+          </Table.Head>
+          <Table.Head class="text-right cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4" onclick={() => handleSort('finalGrade')}>
+            <div class="flex items-center justify-end gap-2">
+              <T key="analytics.grade" fallback="Grade" />
+              {#if getSortIcon('finalGrade')}
+                <Icon size="16" src={getSortIcon('finalGrade')} class="text-zinc-400" />
+              {/if}
+            </div>
+          </Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {#each paginatedData() as assessment (assessment.id)}
+          <Table.Row class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+            <Table.Cell>
+              <div>
+                <div class="font-medium text-zinc-900 dark:text-zinc-100">{assessment.title}</div>
+                <div class="text-sm text-zinc-500 dark:text-zinc-400">{assessment.code}</div>
+              </div>
+            </Table.Cell>
+            <Table.Cell>
+              <div class="text-zinc-900 dark:text-zinc-100">{assessment.subject}</div>
+            </Table.Cell>
+            <Table.Cell>
+              <div class="text-zinc-900 dark:text-zinc-100">
+                {new Date(assessment.due).toLocaleDateString()}
+              </div>
+            </Table.Cell>
+            <Table.Cell>
+              <Badge variant={getStatusVariant(assessment.status)}>
+                {formatStatus(assessment.status)}
+              </Badge>
+            </Table.Cell>
+            <Table.Cell class="text-right pr-4">
+              {#if assessment.finalGrade !== undefined}
+                <div>
+                  <div class="font-medium text-zinc-900 dark:text-zinc-100">{assessment.finalGrade}%</div>
+                  <div class="text-xs text-zinc-500 dark:text-zinc-400">{getLetterGrade(assessment)}</div>
+                </div>
+              {:else}
+                <span class="text-zinc-500 dark:text-zinc-400">—</span>
+              {/if}
+            </Table.Cell>
+          </Table.Row>
+        {:else}
+          <Table.Row>
+            <Table.Cell colspan={5} class="h-24 text-center">
+              <T key="analytics.no_assessments_found" fallback="No assessments found." />
+            </Table.Cell>
+          </Table.Row>
+        {/each}
+      </Table.Body>
+    </Table.Root>
   </div>
-</div> 
+  
+  <!-- Pagination -->
+  <div class="flex items-center justify-between space-x-2 pt-4">
+    <div class="text-sm text-zinc-600 dark:text-zinc-400">
+      <T key="analytics.showing_assessments" fallback="Showing assessments" values={{ start: currentPage * itemsPerPage + 1, end: Math.min((currentPage + 1) * itemsPerPage, data.length), total: data.length }} />
+    </div>
+    <div class="space-x-2 flex place-items-center">
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-zinc-600 dark:text-zinc-400">
+          <T key="analytics.rows_per_page" fallback="Rows per page:" />
+        </span>
+        <Select.Root type="single" bind:value={itemsPerPageValue} onValueChange={handleItemsPerPageChange}>
+          <Select.Trigger>
+            <span>{itemsPerPage}</span>
+          </Select.Trigger>
+          <Select.Content>
+            {#each itemsPerPageOptions as option}
+              <Select.Item value={option.toString()} label={option.toString()}>{option}</Select.Item>
+            {/each}
+          </Select.Content>
+        </Select.Root>
+      </div>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={previousPage}
+        disabled={!canPreviousPage()}
+      >
+        <T key="analytics.previous" fallback="Previous" />
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={nextPage}
+        disabled={!canNextPage()}
+      >
+        <T key="analytics.next" fallback="Next" />
+      </Button>
+    </div>
+  </div>
+</div>

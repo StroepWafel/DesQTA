@@ -4,6 +4,8 @@
   import { getRSS } from '../../../utils/netUtil';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../../lib/i18n';
   let { selectedFolder, openFolder, openCompose } = $props<{
     selectedFolder: any;
     openFolder: (folder: any) => void;
@@ -16,15 +18,13 @@
   async function a() {
     // Folder definitions
     let folders = [
-      { name: 'Inbox', icon: Inbox, id: 'inbox' },
-      { name: 'Sent', icon: PaperAirplane, id: 'sent' },
-      { name: 'Starred', icon: Star, id: 'starred' },
-      { name: 'Trash', icon: Trash, id: 'trash' },
+      { name: $_('messages.inbox') || 'Inbox', icon: Inbox, id: 'inbox' },
+      { name: $_('messages.sent') || 'Sent', icon: PaperAirplane, id: 'sent' },
+      { name: $_('messages.starred') || 'Starred', icon: Star, id: 'starred' },
+      { name: $_('messages.trash') || 'Trash', icon: Trash, id: 'trash' },
     ];
     const subset = await invoke<any>('get_settings_subset', { keys: ['feeds'] });
-    console.log(subset?.feeds);
     for (let item of (subset?.feeds || [])) {
-      console.log(item.url);
       let title = await getRSS(item.url);
       folders.push({
         name: `RSS: ${title.channel.title}`,
@@ -38,38 +38,33 @@
 </script>
 
 <aside
-  class="flex flex-col border-r backdrop-blur-sm xl:w-64 border-slate-300/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 shadow-md rounded-xl m-2">
-  <div class="p-4 border-b border-slate-300/50 dark:border-slate-800/50">
+  class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs overflow-y-scroll xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900">
+  <div class="p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
     <button
-      class="flex gap-2 items-center px-4 py-2.5 w-full text-sm font-semibold text-white accent-bg rounded-xl shadow-lg transition-all duration-200 sm:text-base hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
+      class="flex gap-2 items-center px-4 py-3 w-full text-sm font-semibold text-white rounded-2xl shadow-md transition-all duration-200 bg-accent/80 border-accent sm:text-base hover:opacity-95 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
       onclick={openCompose}>
       <Icon src={Plus} class="w-5 h-5" />
-      <span>Compose</span>
+      <span><T key="messages.new_message" fallback="New message" /></span>
     </button>
   </div>
   {#await rssFeeds}
-    <p>Loading Data...</p>
+    <p><T key="messages.loading_data" fallback="Loading Data..." /></p>
   {:then folders}
     <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
       {#each folders as folder}
         <button
-          class="w-full flex items-center gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
+          class="w-full flex items-center border gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
             {selectedFolder === folder.name
-              ? 'accent-bg text-white border-l-4 accent-bg pl-[1.25rem] shadow-md'
-              : 'border-l-4 border-transparent text-slate-700 dark:text-white hover:bg-accent-100 dark:hover:bg-accent-700 hover:scale-[1.02]'}
-            focus:outline-none focus:ring-2 accent-ring"
+              ? 'bg-accent/10 border-accent dark:text-white pl-5 shadow-md'
+              : 'border-transparent text-zinc-700 dark:text-white hover:bg-accent-100/10 dark:hover:bg-accent/10 hover:scale-[1.02]'}
+            focus:outline-hidden focus:ring-2 accent-ring"
           onclick={() => openFolder(folder)}>
           <Icon src={folder.icon} class="w-5 h-5" />
           <span>{folder.name}</span>
-          {#if selectedFolder === folder.name}
-            <div
-              class="absolute right-2 top-1/2 w-1.5 h-1.5 accent-bg rounded-full -translate-y-1/2">
-            </div>
-          {/if}
         </button>
       {/each}
     </nav>
   {:catch error}
-    <p>Error! {error}</p>
+    <p><T key="messages.error" fallback="Error! {error}" values={{error}} /></p>
   {/await}
 </aside>

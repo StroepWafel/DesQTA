@@ -52,7 +52,7 @@ export const authService = {
   async checkSession(): Promise<boolean> {
     logger.logFunctionEntry('authService', 'checkSession');
     logger.info('authService', 'checkSession', 'Checking session existence');
-    
+
     try {
       const result = await invoke<boolean>('check_session_exists');
       logger.info('authService', 'checkSession', `Session exists: ${result}`, { result });
@@ -70,7 +70,7 @@ export const authService = {
       console.log('[AUTH_SERVICE] No URL provided, skipping login');
       return;
     }
-    
+
     // Clean up any existing login windows before starting new login
     try {
       await invoke('cleanup_login_windows');
@@ -78,7 +78,7 @@ export const authService = {
     } catch (e) {
       console.warn('[AUTH_SERVICE] Failed to cleanup login windows:', e);
     }
-    
+
     console.log('[AUTH_SERVICE] Calling create_login_window backend command');
     await invoke('create_login_window', { url: seqtaUrl });
     console.log('[AUTH_SERVICE] create_login_window command completed');
@@ -88,14 +88,14 @@ export const authService = {
     console.log('[AUTH_SERVICE] Logging out');
     // Clear user info cache on logout
     cache.delete('userInfo');
-    
+
     // Clean up any lingering login windows
     try {
       await invoke('cleanup_login_windows');
     } catch (e) {
       console.warn('[AUTH_SERVICE] Failed to cleanup login windows:', e);
     }
-    
+
     const result = await invoke<boolean>('logout');
     console.log('[AUTH_SERVICE] Logout result:', result);
     return result;
@@ -103,20 +103,53 @@ export const authService = {
 
   async loadUserInfo(options?: { disableSchoolPicture?: boolean }): Promise<UserInfo | undefined> {
     logger.logFunctionEntry('authService', 'loadUserInfo', { options });
-    
+
     try {
+      const cacheKey = 'userInfo';
+      const TTL_MINUTES = 60; // 1 hour TTL
+
       if (options?.disableSchoolPicture) {
         logger.debug('authService', 'loadUserInfo', 'Disabling school picture, clearing cache');
-        cache.delete('userInfo');
-      }
-      
-      const cachedUserInfo = cache.get<UserInfo>('userInfo');
-      if (cachedUserInfo) {
-        logger.debug('authService', 'loadUserInfo', 'Returning cached user info');
-        logger.logFunctionExit('authService', 'loadUserInfo', { cached: true });
-        return cachedUserInfo;
+        cache.delete(cacheKey);
       }
 
+      // Step 1: Check memory cache first (respects TTL)
+      const memCached = cache.get<UserInfo>(cacheKey);
+      if (memCached) {
+        logger.debug('authService', 'loadUserInfo', 'Returning cached user info (memory)');
+        logger.logFunctionExit('authService', 'loadUserInfo', { cached: true });
+        return memCached;
+      }
+
+      // Step 2: Check DB if memory cache expired/missing
+      const { getWithIdbFallback, setIdb } = await import('./idbCache');
+      const idbCached = await getWithIdbFallback<UserInfo>(cacheKey, cacheKey, () => null);
+      if (idbCached) {
+        // Validate cached data has required fields (handle schema changes)
+        if (!idbCached.userName || !idbCached.userCode || !idbCached.personUUID) {
+          logger.warn(
+            'authService',
+            'loadUserInfo',
+            'Cached userInfo missing required fields, fetching fresh data',
+          );
+          // Clear invalid cache entry
+          const { idbCacheDelete } = await import('./idb');
+          await idbCacheDelete(cacheKey);
+        } else {
+          logger.debug('authService', 'loadUserInfo', 'Returning cached user info (IndexedDB)');
+          // Restore to memory cache with TTL
+          cache.set(cacheKey, idbCached, TTL_MINUTES);
+          logger.logFunctionExit('authService', 'loadUserInfo', { cached: true });
+          return idbCached;
+        }
+      }
+
+      // Step 3: Cache expired/missing - fetch from API
+      logger.debug(
+        'authService',
+        'loadUserInfo',
+        'Fetching user info from API (cache expired/missing)',
+      );
       const res = await seqtaFetch('/seqta/student/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -136,7 +169,9 @@ export const authService = {
       // Check if sensitive content hider mode is enabled
       let devSensitiveInfoHider = false;
       try {
-        const subset = await invoke<any>('get_settings_subset', { keys: ['dev_sensitive_info_hider'] });
+        const subset = await invoke<any>('get_settings_subset', {
+          keys: ['dev_sensitive_info_hider'],
+        });
         devSensitiveInfoHider = subset?.dev_sensitive_info_hider ?? false;
       } catch (e) {
         devSensitiveInfoHider = false;
@@ -153,8 +188,10 @@ export const authService = {
         userInfo.profilePicture = `data:image/png;base64,${profileImage}`;
       }
 
-      logger.debug('authService', 'loadUserInfo', 'Caching user info');
-      cache.set('userInfo', userInfo);
+      // Always cache the data (for offline use), even when online
+      logger.debug('authService', 'loadUserInfo', 'Caching user info (mem+idb)');
+      cache.set(cacheKey, userInfo, TTL_MINUTES);
+      await setIdb(cacheKey, userInfo, TTL_MINUTES);
       logger.logFunctionExit('authService', 'loadUserInfo', { success: true });
       return userInfo;
     } catch (e) {

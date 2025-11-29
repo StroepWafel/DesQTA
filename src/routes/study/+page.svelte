@@ -9,6 +9,8 @@
   import { studyTips } from './studytips';
   import NotesContainer from '$lib/components/notes/NotesContainer.svelte';
   import { Button, Input, Badge } from '$lib/components/ui';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
 
   interface Subtask {
     id: string;
@@ -461,7 +463,7 @@
       case 'low':
         return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-700';
+        return 'bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-900/30 dark:text-zinc-300 dark:border-zinc-700';
     }
   }
 
@@ -509,13 +511,27 @@
 
   // Random study tip selection
   let currentStudyTip = '';
-  
-  function getRandomStudyTip() {
-    const randomIndex = Math.floor(Math.random() * studyTips.length);
+
+  const lastStudyIndexes: number[] = [];
+
+  function getRandomStudyTip(): string{
+    let randomIndex: number;
+    let studybuffer = 10; // how many previous tips to remember
+
+    //do {generate new index value} while {new value is in last studybuffer values and the length of study tips is > studybuffer}
+    do {
+      randomIndex = Math.floor(Math.random() * studyTips.length);
+    } while (lastStudyIndexes.includes(randomIndex) && studyTips.length > studybuffer);
+    // push new index
+    lastStudyIndexes.push(randomIndex);
+
+    // only keep last 10
+    if (lastStudyIndexes.length > studybuffer) {
+      lastStudyIndexes.shift();
+    }
+
     return studyTips[randomIndex];
   }
-
-
   onMount(async () => {
     currentStudyTip = getRandomStudyTip();
     await Promise.all([
@@ -556,43 +572,47 @@
 
 <div class="h-full flex flex-col" in:fade={{ duration: 400, easing: quintOut }}>
   <!-- Header -->
-  <div class="flex-shrink-0 px-4 sm:px-6 py-4 sm:py-6" in:fly={{ y: -30, duration: 500, easing: quintOut }}>
+  <div class="shrink-0 px-4 sm:px-6 py-4 sm:py-6" in:fly={{ y: -30, duration: 500, easing: quintOut }}>
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Study</h1>
-        <p class="mt-1 text-sm sm:text-base text-slate-600 dark:text-slate-300">Plan, track, and focus on your upcoming work.</p>
+        <h1 class="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
+          <T key="navigation.study" fallback="Study" />
+        </h1>
+        <p class="mt-1 text-sm sm:text-base text-zinc-600 dark:text-zinc-300">
+          <T key="study.page_description" fallback="Plan, track, and focus on your upcoming work." />
+        </p>
       </div>
       <div class="flex items-center gap-3">
         <button
-          class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-slate-300 text-slate-900 dark:text-white dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring text-sm sm:text-base"
+          class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-zinc-300 text-zinc-900 dark:text-white dark:border-zinc-700 bg-white dark:bg-zinc-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm sm:text-base"
           on:click={() => { /* timer */ }}
-          aria-label="Open Study Timer">
-          Open Timer
+          aria-label={$_('study.open_timer') || 'Open Study Timer'}>
+          <T key="study.open_timer" fallback="Open Timer" />
         </button>
       </div>
     </div>
 
     <!-- Tabs -->
-    <div class="mt-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="Study sections">
+    <div class="mt-4 flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-700" role="tablist" aria-label="Study sections">
       <button 
-        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-none focus:ring-2 accent-ring {activeTab==='tasks' ? 'accent-bg text-white' : 'bg-transparent text-slate-700 dark:text-slate-300'}" 
+        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab==='tasks' ? 'accent-bg text-white' : 'bg-transparent text-zinc-700 dark:text-zinc-300'}" 
         on:click={() => activeTab='tasks'} 
         role="tab" 
         aria-selected={activeTab==='tasks'} 
         aria-controls="tasks-panel"
         id="tasks-tab"
       >
-        Tasks
+        <T key="study.tasks" fallback="Tasks" />
       </button>
       <button 
-        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-none focus:ring-2 accent-ring {activeTab==='notes' ? 'accent-bg text-white' : 'bg-transparent text-slate-700 dark:text-slate-300'}" 
+        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab==='notes' ? 'accent-bg text-white' : 'bg-transparent text-zinc-700 dark:text-zinc-300'}" 
         on:click={() => activeTab='notes'} 
         role="tab" 
         aria-selected={activeTab==='notes'} 
         aria-controls="notes-panel"
         id="notes-tab"
       >
-        Notes
+        <T key="study.notes" fallback="Notes" />
       </button>
     </div>
   </div>
@@ -610,63 +630,82 @@
       >
         <!-- Left Column: Tasks content -->
         <div class="lg:col-span-2 flex flex-col min-h-0">
-          <div class="flex-1 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md overflow-y-auto" 
+          <div class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col" 
                in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }} 
                out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
-          <!-- Tasks Controls -->
-          <div class="mb-4 flex flex-col gap-3">
-            <!-- Filter buttons -->
-            <div class="flex flex-wrap gap-2 justify-center sm:justify-start">
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='all' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='all'} in:scale={{ duration: 300, delay: 100, easing: quintOut }}>All</button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='today' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='today'} in:scale={{ duration: 300, delay: 150, easing: quintOut }}>Today</button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='week' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='week'} in:scale={{ duration: 300, delay: 200, easing: quintOut }}>This Week</button>
-              <button class="px-2 py-1 sm:px-3 sm:py-1.5 text-sm rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring {filter==='completed' ? 'accent-bg text-white border-transparent' : 'bg-white dark:bg-slate-800'}" on:click={() => filter='completed'} in:scale={{ duration: 300, delay: 250, easing: quintOut }}>Completed</button>
-            </div>
-            <!-- Controls row -->
-            <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-              <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring text-sm sm:text-base" on:click={addTodo} aria-label="Add new task">+ New Task</button>
-              <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <div class="relative flex-1 sm:flex-initial">
-                  <input class="w-full pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-sm" placeholder="Search tasks..." bind:value={query} />
-                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                    <Icon src={MagnifyingGlass} class="w-4 h-4" />
-                  </span>
+            
+            <!-- Modern Header with inline controls -->
+            <div class="shrink-0 px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <!-- Left side: Title and New Task -->
+                <div class="flex items-center gap-4">
+                  <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                    <T key="study.tasks" fallback="Tasks" />
+                  </h2>
+                  <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium" on:click={addTodo} aria-label={$_('study.add_new_task') || 'Add new task'}>
+                    + <T key="study.new_task" fallback="New Task" />
+                  </button>
                 </div>
-                <select class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={sortBy}>
-                  <option value="due">Due Date</option>
-                  <option value="priority">Priority</option>
-                  <option value="updated">Updated</option>
-                </select>
+                
+                <!-- Right side: Inline controls -->
+                <div class="flex items-center gap-3">
+                  <!-- Filter Selector -->
+                  <select class="px-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90" bind:value={filter}>
+                    <option value="all"><T key="study.filter_all" fallback="All Tasks" /></option>
+                    <option value="today"><T key="study.filter_today" fallback="Due Today" /></option>
+                    <option value="week"><T key="study.filter_this_week" fallback="This Week" /></option>
+                    <option value="completed"><T key="study.filter_completed" fallback="Completed" /></option>
+                  </select>
+                  
+                  <!-- Search -->
+                  <div class="relative">
+                    <input class="w-48 pl-9 pr-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90" placeholder={$_('study.search_tasks') || 'Search tasks...'} bind:value={query} />
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400">
+                      <Icon src={MagnifyingGlass} class="w-4 h-4" />
+                    </span>
+                  </div>
+                  
+                  <!-- Sort Selector -->
+                  <select class="px-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90" bind:value={sortBy}>
+                    <option value="due">{$_('study.sort_due_date') || 'Due Date'}</option>
+                    <option value="priority">{$_('study.sort_priority') || 'Priority'}</option>
+                    <option value="updated">{$_('study.sort_updated') || 'Updated'}</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Task count -->
+              <div class="mt-2 flex items-center justify-between">
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                  <T key="study.task_count" fallback={`${filteredSortedTodos.length} tasks`} values={{count: filteredSortedTodos.length}} />
+                </span>
               </div>
             </div>
-          </div>
-
-          <!-- Tasks List -->
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Tasks</h2>
-            <span class="text-sm text-slate-500 dark:text-slate-400">{filteredSortedTodos.length} tasks</span>
-          </div>
-
-          <div class="space-y-4">
+            
+            <!-- Tasks List -->
+            <div class="flex-1 min-h-0 p-6 overflow-y-auto">
+              <div class="space-y-3">
             {#if filteredSortedTodos.length === 0}
-              <div class="text-center py-10 text-slate-500 dark:text-slate-400">No tasks match your filters.</div>
+              <div class="text-center py-10 text-zinc-500 dark:text-zinc-400">
+                <T key="study.no_tasks_match" fallback="No tasks match your filters." />
+              </div>
             {/if}
 
             {#each filteredSortedTodos as todo (todo.id)}
-              <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 enhanced-hover {completingTasks.has(todo.id) ? 'completion-animation' : ''} {deletingTasks.has(todo.id) ? 'opacity-50 scale-95' : ''}"
-                   in:fly={{ y: 30, duration: 400, delay: filteredSortedTodos.indexOf(todo) * 50, easing: quintOut }}
-                   out:fly={{ y: 30, duration: 300, easing: cubicOut }}>
+              <div class="rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-800/40 backdrop-blur-sm p-4 transition-all duration-200 hover:bg-white/80 dark:hover:bg-zinc-800/60 hover:border-zinc-300/60 dark:hover:border-zinc-600/60 hover:shadow-lg {completingTasks.has(todo.id) ? 'completion-animation' : ''} {deletingTasks.has(todo.id) ? 'opacity-50 scale-95' : ''}"
+                   in:fly={{ y: 20, duration: 300, delay: Math.min(filteredSortedTodos.indexOf(todo) * 30, 200), easing: quintOut }}
+                   out:fly={{ y: -10, duration: 200, easing: cubicOut }}>
                 {#if !editMode[todo.id]}
                   <!-- Condensed View -->
                   <div class="flex items-start gap-3">
-                    <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
+                    <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" aria-label={$_('study.toggle_complete') || 'Toggle complete'} />
                     <div class="flex-1 min-w-0">
                       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div class="truncate text-slate-900 dark:text-white font-medium pr-2">{todo.title || 'Untitled task'}</div>
-                        <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                        <div class="truncate text-zinc-900 dark:text-white font-medium pr-2">{todo.title || ($_('study.untitled_task') || 'Untitled task')}</div>
+                        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                           <span class="text-xs px-1.5 py-0.5 sm:px-2 rounded-full border priority-indicator {getPriorityStyles(todo.priority)}">{todo.priority ?? 'medium'}</span>
-                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => editMode[todo.id]=true}>Edit</button>
-                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}>Del</button>
+                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring" on:click={() => editMode[todo.id]=true}><T key="study.edit" fallback="Edit" /></button>
+                          <button class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-red-500" on:click={() => removeTodo(todo.id)}><T key="study.delete" fallback="Del" /></button>
                         </div>
                       </div>
                       <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
@@ -681,7 +720,7 @@
                           {/key}
                         {/if}
                         {#if todo.due_date || todo.due_time}
-                          <span class="inline-flex items-center gap-3 text-slate-600 dark:text-slate-300">
+                          <span class="inline-flex items-center gap-3 text-zinc-600 dark:text-zinc-300">
                             {#if todo.due_date}
                               <span class="inline-flex items-center gap-1">
                                 <Icon src={Calendar} class="w-4 h-4" />{formatDueDate(todo.due_date)}
@@ -695,53 +734,55 @@
                           </span>
                         {/if}
                         {#if (todo.tags ?? []).length}
-                          <span class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200">{(todo.tags ?? []).join(', ')}</span>
+                          <span class="px-2 py-0.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200">{(todo.tags ?? []).join(', ')}</span>
                         {/if}
                       </div>
-                      <div class="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">{todo.description}</div>
+                      <div class="mt-2 text-sm text-zinc-600 dark:text-zinc-300 line-clamp-2">{todo.description}</div>
                       {#if (todo.subtasks ?? []).length}
-                        <div class="mt-2 text-xs text-slate-500 dark:text-slate-400">{(todo.subtasks ?? []).filter(s=>s.completed).length}/{todo.subtasks?.length} subtasks done</div>
+                        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          <T key="study.subtasks_progress" fallback={`${(todo.subtasks ?? []).filter(s=>s.completed).length}/${todo.subtasks?.length || 0} subtasks done`} values={{completed: (todo.subtasks ?? []).filter(s=>s.completed).length, total: todo.subtasks?.length || 0}} />
+                        </div>
                       {/if}
                       <div class="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <Button variant="ghost" size="xs" onclick={() => markAllSubtasksDone(todo.id)}>✓ All subtasks</Button>
-                        <Button variant="ghost" size="xs" onclick={() => duplicateTodo(todo.id)}>Duplicate</Button>
+                        <Button variant="ghost" size="xs" onclick={() => markAllSubtasksDone(todo.id)}>✓ <T key="study.all_subtasks" fallback="All subtasks" /></Button>
+                        <Button variant="ghost" size="xs" onclick={() => duplicateTodo(todo.id)}><T key="study.duplicate" fallback="Duplicate" /></Button>
                       </div>
                     </div>
                   </div>
                 {:else}
                   <!-- Edit Mode -->
                   <div class="flex items-start gap-3">
-                    <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
+                    <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2">
-                        <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-base font-medium" placeholder="Task title" bind:value={todo.title} />
+                        <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-base font-medium" placeholder={$_('study.task_title') || 'Task title'} bind:value={todo.title} />
                         <div class="flex flex-col gap-1">
-                          <select class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={todo.priority} on:change={() => updateField(todo.id, 'priority', todo.priority)}>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
+                          <select class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" bind:value={todo.priority} on:change={() => updateField(todo.id, 'priority', todo.priority)}>
+                            <option value="low">{$_('study.priority_low') || 'Low'}</option>
+                            <option value="medium">{$_('study.priority_medium') || 'Medium'}</option>
+                            <option value="high">{$_('study.priority_high') || 'High'}</option>
                           </select>
                           <span class="text-xs px-2 py-0.5 rounded-full border priority-indicator {getPriorityStyles(todo.priority)} text-center">{todo.priority ?? 'medium'}</span>
                         </div>
                       </div>
                       <div class="mt-2 grid grid-cols-1 gap-2">
                         <div class="relative">
-                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related subject" bind:value={todo.related_subject} on:input={(e) => { subjectQuery[todo.id] = (e.target as HTMLInputElement).value; showSubjectDropdown[todo.id] = true; }} on:focus={() => showSubjectDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showSubjectDropdown[todo.id]=false, 150)} />
+                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring" placeholder={$_('study.related_subject') || 'Related subject'} bind:value={todo.related_subject} on:input={(e) => { subjectQuery[todo.id] = (e.target as HTMLInputElement).value; showSubjectDropdown[todo.id] = true; }} on:focus={() => showSubjectDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showSubjectDropdown[todo.id]=false, 150)} />
                           {#if showSubjectDropdown[todo.id]}
-                            <div class="absolute z-20 mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md max-h-56 overflow-auto">
+                            <div class="absolute z-20 mt-1 w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md max-h-56 overflow-auto">
                               {#each subjects.filter(s => (subjectQuery[todo.id] ?? todo.related_subject ?? '').toLowerCase().split(' ').every(q => s.title.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))) as s}
-                                <button class="flex items-center w-full px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" on:mousedown={() => { todo.related_subject = `${s.code} — ${s.title}`; subjectQuery[todo.id] = s.code; showSubjectDropdown[todo.id] = false; }}>
+                                <button class="flex items-center w-full px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" on:mousedown={() => { todo.related_subject = `${s.code} — ${s.title}`; subjectQuery[todo.id] = s.code; showSubjectDropdown[todo.id] = false; }}>
                                   <span class="mr-2 inline-block w-2 h-2 rounded-full" style="background-color: {subjectColours[s.code] || '#8e8e8e'}"></span>
-                                  <span class="flex-1 text-slate-900 dark:text-white">{s.code} — {s.title}</span>
+                                  <span class="flex-1 text-zinc-900 dark:text-white">{s.code} — {s.title}</span>
                                 </button>
                               {/each}
                             </div>
                           {/if}
                         </div>
                         <div class="relative">
-                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring" placeholder="Related assessment" bind:value={todo.related_assessment} on:input={(e) => { assessmentQuery[todo.id] = (e.target as HTMLInputElement).value; showAssessmentDropdown[todo.id] = true; }} on:focus={() => showAssessmentDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showAssessmentDropdown[todo.id]=false, 150)} />
+                          <input class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring" placeholder={$_('study.related_assessment') || 'Related assessment'} bind:value={todo.related_assessment} on:input={(e) => { assessmentQuery[todo.id] = (e.target as HTMLInputElement).value; showAssessmentDropdown[todo.id] = true; }} on:focus={() => showAssessmentDropdown[todo.id]=true} on:blur={() => setTimeout(()=>showAssessmentDropdown[todo.id]=false, 150)} />
                           {#if showAssessmentDropdown[todo.id]}
-                            <div class="absolute z-20 mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md max-h-64 overflow-auto">
+                            <div class="absolute z-20 mt-1 w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md max-h-64 overflow-auto">
                               {#each assessmentsAll.filter(a => {
                                 const q = (assessmentQuery[todo.id] ?? todo.related_assessment ?? '').toLowerCase();
                                 const subjectCode = (subjectQuery[todo.id] ?? todo.related_subject ?? '').split(' — ')[0]?.toLowerCase();
@@ -749,11 +790,11 @@
                                 const matchesSubject = subjectCode ? a.code.toLowerCase() === subjectCode : true;
                                 return matchesText && matchesSubject;
                               }).slice(0, 20) as a}
-                                <button class="flex items-center w-full px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" on:mousedown={() => { todo.related_assessment = a.title; if (!todo.related_subject) { const subj = subjects.find(s => s.code === a.code); if (subj) { todo.related_subject = `${subj.code} — ${subj.title}`; } } showAssessmentDropdown[todo.id] = false; }}>
+                                <button class="flex items-center w-full px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" on:mousedown={() => { todo.related_assessment = a.title; if (!todo.related_subject) { const subj = subjects.find(s => s.code === a.code); if (subj) { todo.related_subject = `${subj.code} — ${subj.title}`; } } showAssessmentDropdown[todo.id] = false; }}>
                                   <span class="mr-2 inline-block w-2 h-2 rounded-full" style="background-color: {subjectColours[a.code] || a.colour || '#8e8e8e'}"></span>
                                   <div class="flex-1 overflow-hidden">
-                                    <div class="text-slate-900 dark:text-white truncate">{a.title}</div>
-                                    <div class="text-xs text-slate-500 dark:text-slate-400 truncate">{a.code} • {new Date(a.due).toLocaleDateString()}</div>
+                                    <div class="text-zinc-900 dark:text-white truncate">{a.title}</div>
+                                    <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{a.code} • {new Date(a.due).toLocaleDateString()}</div>
                                   </div>
                                 </button>
                               {/each}
@@ -761,12 +802,12 @@
                           {/if}
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <input type="date" class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={todo.due_date} />
-                          <input type="time" class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={todo.due_time} />
+                          <input type="date" class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" bind:value={todo.due_date} />
+                          <input type="time" class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" bind:value={todo.due_time} />
                         </div>
                         <!-- Live preview for due date/time -->
                         {#if todo.due_date || todo.due_time}
-                          <div class="text-sm text-slate-600 dark:text-slate-300 inline-flex items-center gap-3">
+                          <div class="text-sm text-zinc-600 dark:text-zinc-300 inline-flex items-center gap-3">
                             {#if todo.due_date}
                               <span class="inline-flex items-center gap-1"><Icon src={Calendar} class="w-4 h-4" />{formatDueDate(todo.due_date)}</span>
                             {/if}
@@ -775,28 +816,32 @@
                             {/if}
                           </div>
                         {/if}
-                        <input class="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring text-sm" placeholder="Tags (comma separated)" value={(todo.tags ?? []).join(', ')} on:input={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); }} />
+                        <input class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" placeholder={$_('study.tags_comma_separated') || 'Tags (comma separated)'} value={(todo.tags ?? []).join(', ')} on:input={(e) => { const val = (e.target as HTMLInputElement).value; updateField(todo.id, 'tags', val ? val.split(',').map(t => t.trim()) : []); }} />
                       </div>
 
                       <!-- Description and Subtasks -->
                       <div class="mt-3">
-                        <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 accent-ring" placeholder="Description" bind:value={todo.description}></textarea>
+                        <textarea rows="3" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring" placeholder={$_('study.description') || 'Description'} bind:value={todo.description}></textarea>
                         <div class="mt-3 space-y-2">
                           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <h3 class="text-sm font-medium text-slate-900 dark:text-white">Subtasks</h3>
+                            <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
+                              <T key="study.subtasks" fallback="Subtasks" />
+                            </h3>
                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>+ Add</button>
-                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>✓ All</button>
+                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring" on:click={() => addSubtask(todo.id)}>+ <T key="study.add" fallback="Add" /></button>
+                              <button class="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring" on:click={() => markAllSubtasksDone(todo.id)}>✓ <T key="study.all" fallback="All" /></button>
                             </div>
                           </div>
                           {#if (todo.subtasks ?? []).length === 0}
-                            <div class="text-sm text-slate-500 dark:text-slate-400">No subtasks yet.</div>
+                            <div class="text-sm text-zinc-500 dark:text-zinc-400">
+                              <T key="study.no_subtasks_yet" fallback="No subtasks yet." />
+                            </div>
                           {:else}
                             <div class="space-y-2">
                               {#each todo.subtasks ?? [] as sub (sub.id)}
                                 <div class="flex items-center gap-2">
-                                  <input type="checkbox" checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 flex-shrink-0 rounded border-slate-300 dark:border-slate-700 focus:ring-2 accent-ring" aria-label="Toggle subtask" />
-                                  <input class="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 accent-ring text-sm" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); }} placeholder="Subtask title" />
+                                  <input type="checkbox" checked={sub.completed} on:change={() => toggleSubtask(todo.id, sub.id)} class="w-4 h-4 shrink-0 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" aria-label={$_('study.toggle_subtask') || 'Toggle subtask'} />
+                                  <input class="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" bind:value={sub.title} on:blur={() => { const list = (todo.subtasks ?? []).map(s => s.id === sub.id ? { ...s, title: sub.title } : s); updateField(todo.id, 'subtasks', list); }} placeholder={$_('study.subtask_title') || 'Subtask title'} />
                                 </div>
                               {/each}
                             </div>
@@ -805,40 +850,49 @@
                       </div>
 
                       <div class="mt-4 flex items-center justify-center sm:justify-end gap-2">
-                        <button class="px-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 accent-ring w-full sm:w-auto" on:click={() => { editMode[todo.id] = false; saveTodos(); }}>Save Task</button>
+                        <button class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring w-full sm:w-auto" on:click={() => { editMode[todo.id] = false; saveTodos(); }}><T key="study.save_task" fallback="Save Task" /></button>
                       </div>
                     </div>
                   </div>
                 {/if}
               </div>
-            {/each}
+                {/each}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
               <!-- Right Column: Upcoming Assessments Widget -->
-        <div class="flex flex-col space-y-6 min-h-0" in:fly={{ x: 50, duration: 500, delay: 200, easing: quintOut }}>
-          <div class="flex-1 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md overflow-y-auto">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">Upcoming Assessments</h2>
-            <span class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{upcomingAssessments.length}</span>
-          </div>
+        <div class="flex flex-col gap-6 min-h-0" in:fly={{ x: 50, duration: 500, delay: 200, easing: quintOut }}>
+          <div class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              <div class="flex items-center justify-between">
+                <h2 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
+                  <T key="study.upcoming_assessments" fallback="Upcoming Assessments" />
+                </h2>
+                <span class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">{upcomingAssessments.length}</span>
+              </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1 min-h-0 p-6 overflow-y-auto">
           {#if loadingAssessments}
             <div class="flex items-center justify-center py-6">
-              <div class="w-10 h-10 rounded-full border-4 border-slate-300 dark:border-slate-700 border-t-transparent animate-spin"></div>
+              <div class="w-10 h-10 rounded-full border-4 border-zinc-300 dark:border-zinc-700 border-t-transparent animate-spin"></div>
             </div>
           {:else}
             <div class="space-y-3">
               {#each upcomingAssessments as a (a.id)}
-                <div class="relative flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200 hover:scale-[1.02]"
-                     in:fly={{ x: 30, duration: 400, delay: upcomingAssessments.indexOf(a) * 100, easing: quintOut }}>
+                <div class="relative flex items-start gap-3 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-800/40 backdrop-blur-sm p-3 transition-all duration-200 hover:bg-white/80 dark:hover:bg-zinc-800/60 hover:shadow-lg"
+                     in:fly={{ x: 20, duration: 300, delay: Math.min(upcomingAssessments.indexOf(a) * 50, 200), easing: quintOut }}>
                   <!-- Left accent bar -->
                   <span class="absolute left-0 top-0 h-full w-1 rounded-l-lg" style="background-color: {a.colour || subjectColours[a.subject?.split(' — ')[0] || ''] || '#8e8e8e'}"></span>
                   <span class="mt-1 ml-1 inline-block w-2 h-2 rounded-full {a.status==='overdue' ? 'bg-red-500' : a.status==='soon' ? 'bg-yellow-500' : 'bg-emerald-500'}"></span>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between gap-2">
-                      <div class="truncate text-slate-900 dark:text-white font-medium">{a.title}</div>
-                      <div class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}</div>
+                      <div class="truncate text-zinc-900 dark:text-white font-medium">{a.title}</div>
+                      <div class="text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}</div>
                     </div>
                     <div class="mt-1 flex items-center gap-2">
                       <!-- Subject tinted chip -->
@@ -847,35 +901,49 @@
                       {/if}
                     </div>
                   </div>
-                  <button class="px-2 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring">Open</button>
+                  <button class="px-2 py-1 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring">
+                    <T key="study.open" fallback="Open" />
+                  </button>
                 </div>
               {/each}
               {#if upcomingAssessments.length === 0}
-                <div class="text-center py-6 text-slate-500 dark:text-slate-400">No upcoming assessments.</div>
+                <div class="text-center py-6 text-zinc-500 dark:text-zinc-400">
+                  <T key="study.no_upcoming_assessments" fallback="No upcoming assessments." />
+                </div>
               {/if}
             </div>
           {/if}
-        </div>
-
-                  <!-- Focus Tips / Placeholder Widget -->
-          <div class="flex-shrink-0 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md"
-               in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Study Tip</h2>
-            <button 
-              class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring"
-              on:click={() => currentStudyTip = getRandomStudyTip()}
-              aria-label="Get new study tip">
-              New Tip
-            </button>
           </div>
-          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
-            {currentStudyTip}
-          </p>
+
+          <!-- Study Tips -->
+          <div class="shrink-0 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden"
+               in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <T key="study.study_tip" fallback="Study Tip" />
+                </h2>
+                <button 
+                  class="px-3 py-1.5 text-xs rounded-lg bg-white/80 dark:bg-zinc-700/80 backdrop-blur-sm text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 transition-all duration-200 hover:scale-105 border border-zinc-200/50 dark:border-zinc-600/50"
+                  on:click={() => currentStudyTip = getRandomStudyTip()}
+                  aria-label={$_('study.get_new_tip') || 'Get new study tip'}>
+                  <T key="study.new_tip" fallback="New Tip" />
+                </button>
+              </div>
+            </div>
+            <!-- Content -->
+            <div class="p-6">
+              <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                {currentStudyTip}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-      {:else}
+    
+    {:else}
       <!-- Notes Tab: Full Width Layout -->
       <div 
         class="h-full flex flex-col min-h-0"

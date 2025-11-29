@@ -1,3 +1,55 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities; 
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-accent-50: color-mix(in srgb, var(--accent-color-value) 10%, white);
+  --color-accent-100: color-mix(in srgb, var(--accent-color-value) 20%, white);
+  --color-accent-200: color-mix(in srgb, var(--accent-color-value) 30%, white);
+  --color-accent-300: color-mix(in srgb, var(--accent-color-value) 40%, white);
+  --color-accent-400: color-mix(in srgb, var(--accent-color-value) 50%, white);
+  --color-accent-500: var(--accent-color-value);
+  --color-accent-600: color-mix(in srgb, var(--accent-color-value) 80%, black);
+  --color-accent-700: color-mix(in srgb, var(--accent-color-value) 60%, black);
+  --color-accent-800: color-mix(in srgb, var(--accent-color-value) 40%, black);
+  --color-accent-900: color-mix(in srgb, var(--accent-color-value) 20%, black);
+  --color-accent-950: color-mix(in srgb, var(--accent-color-value) 10%, black);
+  --color-accent: var(--accent-color-value);
+  --color-accent-text: var(--accent-color-value);
+  --color-accent-bg: var(--accent-color-value);
+  --color-accent-border: var(--accent-color-value);
+  --color-accent-ring: var(--accent-color-value);
+
+  --color-zinc-50: #f8fafc;
+  --color-zinc-100: #f1f5f9;
+  --color-zinc-200: #e2e8f0;
+  --color-zinc-300: #cbd5e1;
+  --color-zinc-400: #94a3b8;
+  --color-zinc-500: #64748b;
+  --color-zinc-600: #475569;
+  --color-zinc-700: #334155;
+  --color-zinc-800: #232428;
+  --color-zinc-850: #1e1f22;
+  --color-zinc-900: #18191c;
+  --color-zinc-950: #121212;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-zinc-200, currentcolor);
+  }
+} 

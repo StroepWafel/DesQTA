@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use tauri::{AppHandle};
+use tauri::AppHandle;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Subtask {
@@ -55,7 +55,8 @@ fn todos_file_path(_app: &AppHandle) -> Result<PathBuf, String> {
     }
     #[cfg(not(target_os = "android"))]
     {
-        let mut dir = dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
+        let mut dir =
+            dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
         dir.push("DesQTA");
         if !dir.exists() {
             fs::create_dir_all(&dir).map_err(|e| format!("Failed to create data dir: {}", e))?;
@@ -85,8 +86,8 @@ pub fn load_todos(app: AppHandle) -> Result<Vec<TodoItem>, String> {
     if contents.trim().is_empty() {
         return Ok(vec![]);
     }
-    let todos: Vec<TodoItem> = serde_json::from_str(&contents)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+    let todos: Vec<TodoItem> =
+        serde_json::from_str(&contents).map_err(|e| format!("Failed to parse JSON: {}", e))?;
     Ok(todos)
 }
 
@@ -100,4 +101,4 @@ pub fn save_todos(app: AppHandle, todos: Vec<TodoItem>) -> Result<(), String> {
     file.write_all(json.as_bytes())
         .map_err(|e| format!("Failed to write file: {}", e))?;
     Ok(())
-} 
+}

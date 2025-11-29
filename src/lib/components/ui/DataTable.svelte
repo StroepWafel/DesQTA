@@ -76,16 +76,16 @@
   }
 
   let tableClasses = $derived([
-    'min-w-full divide-y divide-slate-200 dark:divide-slate-700',
+    'min-w-full divide-y divide-zinc-200 dark:divide-zinc-700',
     className
   ].filter(Boolean).join(' '));
 
   let headerClasses = $derived([
-    'bg-slate-50 dark:bg-slate-800'
+    'bg-zinc-50 dark:bg-zinc-800'
   ].join(' '));
 
   let bodyClasses = $derived([
-    'bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700'
+    'bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-700'
   ].join(' '));
 </script>
 
@@ -107,7 +107,7 @@
               <th class="px-6 py-3 text-left">
                 <input
                   type="checkbox"
-                  class="rounded border-slate-300 dark:border-slate-600 text-accent-600 focus:ring-accent-500"
+                  class="rounded-sm border-zinc-300 dark:border-zinc-600 text-accent-600 focus:ring-accent-500"
                   checked={tableData.every((row: any) => isRowSelected(row))}
                   onchange={(e) => {
                     const checked = e.currentTarget.checked;
@@ -119,20 +119,20 @@
             
             {#each columns as column}
               <th 
-                class="px-6 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider {column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}"
+                class="px-6 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider {column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}"
                 style={column.width ? `width: ${column.width}` : ''}
               >
                 {#if column.sortable}
                   <button
                     onclick={() => handleSort(column)}
-                    class="group inline-flex items-center space-x-1 hover:text-slate-700 dark:hover:text-slate-300"
+                    class="group inline-flex items-center space-x-1 hover:text-zinc-700 dark:hover:text-zinc-300"
                   >
                     <span>{column.title}</span>
                     {#if getSortIcon(column)}
                       <Icon 
                         src={getSortIcon(column)} 
                         size="16" 
-                        class="group-hover:text-slate-500" 
+                        class="group-hover:text-zinc-500" 
                       />
                     {/if}
                   </button>
@@ -147,14 +147,14 @@
         <tbody class={bodyClasses}>
           {#each tableData as row, index}
             <tr 
-              class="{striped && index % 2 === 0 ? 'bg-slate-50 dark:bg-slate-800/50' : ''} {hoverable ? 'hover:bg-slate-100 dark:hover:bg-slate-700/50' : ''} {onRowClick ? 'cursor-pointer' : ''} transition-colors duration-150"
+              class="{striped && index % 2 === 0 ? 'bg-zinc-50 dark:bg-zinc-800/50' : ''} {hoverable ? 'hover:bg-zinc-100 dark:hover:bg-zinc-700/50' : ''} {onRowClick ? 'cursor-pointer' : ''} transition-colors duration-150"
               onclick={() => onRowClick?.(row)}
             >
               {#if selectable}
                 <td class="px-6 py-4 whitespace-nowrap">
                   <input
                     type="checkbox"
-                    class="rounded border-slate-300 dark:border-slate-600 text-accent-600 focus:ring-accent-500"
+                    class="rounded-sm border-zinc-300 dark:border-zinc-600 text-accent-600 focus:ring-accent-500"
                     checked={isRowSelected(row)}
                     onchange={(e) => handleRowSelect(row, e.currentTarget.checked)}
                   />
@@ -163,7 +163,7 @@
               
               {#each columns as column}
                 <td 
-                  class="px-6 {compact ? 'py-2' : 'py-4'} whitespace-nowrap text-sm text-slate-900 dark:text-slate-100 {column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}"
+                  class="px-6 {compact ? 'py-2' : 'py-4'} whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100 {column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}"
                 >
                   {#if column.cell}
                     {@render column.cell(row[column.key], row)}

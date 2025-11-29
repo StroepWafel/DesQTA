@@ -1,16 +1,18 @@
 <script lang="ts">
   import type { Assessment } from '$lib/types';
   import { Input, Button } from '$lib/components/ui';
+  import * as Select from "$lib/components/ui/select/index.js";
+  import * as Card from "$lib/components/ui/card/index.js";
 
   interface Props {
     data: Assessment[];
-    filterSubject: string;
+    filterSubjects: string[];
     filterStatus: string;
     filterMinGrade: number | null;
     filterMaxGrade: number | null;
     filterSearch: string;
     onFilter: (filters: {
-      subject: string;
+      subject: string[];
       status: string;
       minGrade: number | null;
       maxGrade: number | null;
@@ -20,7 +22,7 @@
 
   let {
     data,
-    filterSubject = $bindable(),
+    filterSubjects = $bindable([] as string[]),
     filterStatus = $bindable(),
     filterMinGrade = $bindable(),
     filterMaxGrade = $bindable(),
@@ -36,13 +38,13 @@
   const uniqueStatuses = $derived([...new Set(data.map(a => a.status))]);
 
   function clearFilters() {
-    filterSubject = '';
+    filterSubjects = [];
     filterStatus = '';
     filterMinGrade = null;
     filterMaxGrade = null;
     filterSearch = '';
     onFilter({
-      subject: '',
+      subject: [],
       status: '',
       minGrade: null,
       maxGrade: null,
@@ -52,7 +54,7 @@
 
   function applyFilters() {
     onFilter({
-      subject: filterSubject,
+      subject: filterSubjects,
       status: filterStatus,
       minGrade: filterMinGrade,
       maxGrade: filterMaxGrade,
@@ -61,40 +63,48 @@
   }
 </script>
 
-<div class="p-4 mb-6 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-  <h3 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Filters</h3>
-  
-  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+<Card.Root>
+  <Card.Header>
+    <Card.Title>Filters</Card.Title>
+    <Card.Description>Filter assessments by subject, status, grade range, or search term</Card.Description>
+  </Card.Header>
+  <Card.Content>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5">
     <!-- Subject Filter -->
     <div>
-      <label for="subject-filter" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject</label>
-      <select
-        id="subject-filter"
-        bind:value={filterSubject}
-        onchange={applyFilters}
-        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
-      >
-        <option value="">All Subjects</option>
-        {#each uniqueSubjects as subject}
-          <option value={subject}>{subject}</option>
-        {/each}
-      </select>
+      <label for="subject-filter" class="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">Subject</label>
+      <Select.Root type="multiple" bind:value={filterSubjects} onValueChange={applyFilters}>
+        <Select.Trigger id="subject-filter" class="w-full">
+          {#if filterSubjects.length === 0}
+            All Subjects
+          {:else if filterSubjects.length === 1}
+            {filterSubjects[0]}
+          {:else}
+            {filterSubjects.length} selected
+          {/if}
+        </Select.Trigger>
+        <Select.Content>
+          {#each uniqueSubjects as subject}
+            <Select.Item value={subject} label={subject} />
+          {/each}
+        </Select.Content>
+      </Select.Root>
     </div>
 
     <!-- Status Filter -->
     <div>
-      <label for="status-filter" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
-      <select
-        id="status-filter"
-        bind:value={filterStatus}
-        onchange={applyFilters}
-        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
-      >
-        <option value="">All Statuses</option>
-        {#each uniqueStatuses as status}
-          <option value={status}>{status}</option>
-        {/each}
-      </select>
+      <label for="status-filter" class="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">Status</label>
+      <Select.Root type="single" bind:value={filterStatus} onValueChange={applyFilters}>
+        <Select.Trigger id="status-filter" class="w-full">
+          {filterStatus || "All Statuses"}
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="" label="All Statuses" />
+          {#each uniqueStatuses as status}
+            <Select.Item value={status} label={status} />
+          {/each}
+        </Select.Content>
+      </Select.Root>
     </div>
 
     <!-- Min Grade -->
@@ -141,11 +151,12 @@
         oninput={applyFilters}
       />
     </div>
-  </div>
-
-  <div class="flex justify-end mt-4">
-    <Button variant="ghost" onclick={clearFilters}>
-      Clear Filters
-    </Button>
-  </div>
-</div>
+    </div>
+    
+    <div class="flex justify-end mt-4">
+      <Button variant="ghost" onclick={clearFilters}>
+        Clear Filters
+      </Button>
+    </div>
+  </Card.Content>
+</Card.Root>

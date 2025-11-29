@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "DesQTA",
-        "width": 900,
-        "height": 700,
+        "width": 1400,
+        "height": 900,
         "minWidth": 900,
         "minHeight": 700,
         "decorations": false,
@@ -25,36 +25,55 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://ipc.localhost http://tauri.localhost blob:http://tauri.localhost https://*.seqta.com https://*.seqta.com.au https://*.betterseqta.com https://*.betterseqta.org https://api.github.com https://github.com; media-src 'self' data:;"
     },
     "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "windows": {
       "nsis": {
         "installMode": "currentUser"
       }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.13"
     },
     "icon": [
       "icons/icon.ico",
       "icons/icon.icns",
       "icons/32x32.png",
       "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.png"
+      "icons/256x256.png",
+      "icons/512x512.png",
+      "icons/1024x1024.png"
     ],
-    "publisher": "BetterSEQTA+ Studios"
+    "publisher": "BetterSEQTA+"
   },
   "plugins": {
     "deep-link": {
       "desktop": {
-      "schemes": ["desqta"]
-      }
+        "schemes": ["desqta"]
+      },
+      "mobile": [
+        {
+          "scheme": ["seqtalearn"],
+          "appLink": false
+        }
+      ]
     },
     "shell": {
       "open": true
+    },
+    "updater": {
+      "active": true,
+      "endpoints": ["https://raw.githubusercontent.com/BetterSEQTA/DesQTA/releases/latest.json"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM5RkJCRjQzRkRCQzBCQTcKUldTbkM3ejlRNy83eWJCRFlPZG5INFRHRUFVUXRibnNXMXR6OVJja1dIbzJsNUloQ1NxMzZzM2EK",
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

@@ -12,7 +12,7 @@
 </script>
 
 <div
-  class="flex gap-3 items-center px-4 py-2 ml-4 text-sm font-medium rounded-xl border backdrop-blur-md bg-white/60 border-slate-200/40 dark:bg-slate-800/60 dark:border-slate-700/40">
+  class="flex gap-3 items-center px-4 py-2 ml-4 text-sm font-medium rounded-xl border backdrop-blur-md bg-white/60 border-zinc-200/40 dark:bg-zinc-800/60 dark:border-zinc-700/40">
   <div class="flex gap-2 items-center">
     <div
       class="flex justify-center items-center w-6 h-6 bg-yellow-100 rounded-lg dark:bg-yellow-900/30">
@@ -30,9 +30,9 @@
         {/if}
       </svg>
     </div>
-    <span class="font-semibold text-slate-900 dark:text-white"
+    <span class="font-semibold text-zinc-900 dark:text-white"
       >{Math.round(weatherData.temperature)}°C</span>
   </div>
-  <span class="hidden text-slate-600 sm:inline dark:text-slate-400"
+  <span class="hidden text-zinc-600 sm:inline dark:text-zinc-400"
     >{weatherData.location}</span>
 </div>

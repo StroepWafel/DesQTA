@@ -42,7 +42,7 @@
         element: element!,
         editorProps: {
           attributes: {
-            class: 'focus:outline-none px-3 md:px-0',
+            class: 'focus:outline-hidden px-3 md:px-0',
           },
           handleKeyDown: (view, event) => {
             // Handle keyboard events when slash menu is visible

@@ -869,7 +869,7 @@ Reply messages show the original content in a quoted format:
 
 ```svelte
 {#if msg.replyTo}
-  <div class="mb-1 p-2 rounded bg-slate-200/60 dark:bg-slate-800/60 text-xs text-slate-700 dark:text-slate-300">
+  <div class="mb-1 p-2 rounded-sm bg-zinc-200/60 dark:bg-zinc-800/60 text-xs text-zinc-700 dark:text-zinc-300">
     Replying to: {msg.replyTo.content}
   </div>
 {/if}
@@ -889,7 +889,7 @@ Reply messages show the original content in a quoted format:
 
 #### Glass Morphism Effects
 ```css
-.backdrop-blur-sm {
+.backdrop-blur-xs {
   backdrop-filter: blur(4px);
 }
 
@@ -897,7 +897,7 @@ Reply messages show the original content in a quoted format:
   background-color: rgb(255 255 255 / 0.4);
 }
 
-.dark:bg-slate-900/40 {
+.dark:bg-zinc-900/40 {
   background-color: rgb(15 23 42 / 0.4);
 }
 ```

@@ -7,6 +7,8 @@
   import AssessmentOverview from '../../../../lib/components/AssessmentOverview.svelte';
   import AssessmentDetails from '../../../../lib/components/AssessmentDetails.svelte';
   import AssessmentSubmissions from '../../../../lib/components/AssessmentSubmissions.svelte';
+  import T from '$lib/components/T.svelte';
+  import { _ } from '../../../../lib/i18n';
 
   let assessmentData: any = $state(null);
   let loading = $state(true);
@@ -16,9 +18,9 @@
 
   // Define available tabs based on assessment data
   const availableTabs = $derived([
-    { id: 'overview', label: 'Overview', icon: '📋' },
-    { id: 'details', label: 'Details', icon: '📊' },
-    { id: 'submissions', label: 'Submissions', icon: '📁' }
+    { id: 'overview', label: $_('assessments.overview') || 'Overview', icon: '📋' },
+    { id: 'details', label: $_('assessments.details') || 'Details', icon: '📊' },
+    { id: 'submissions', label: $_('assessments.submissions') || 'Submissions', icon: '📁' }
   ]);
 
   async function loadAssessmentDetails() {
@@ -27,9 +29,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: {
-          assessment: parseInt($page.params.id),
+          assessment: parseInt($page.params.id!),
           student: 69,
-          metaclass: parseInt($page.params.metaclass),
+          metaclass: parseInt($page.params.metaclass!),
         },
       });
       assessmentData = JSON.parse(res).payload;
@@ -39,16 +41,16 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: {
-          assessment: parseInt($page.params.id),
+          assessment: parseInt($page.params.id!),
           student: 69,
-          metaclass: parseInt($page.params.metaclass),
+          metaclass: parseInt($page.params.metaclass!),
         },
       });
       const submissions = JSON.parse(subRes).payload;
       allSubmissions = submissions;
     } catch (e) {
       console.error('Failed to load assessment details:', e);
-      error = 'Failed to load assessment details';
+      error = $_('assessments.failed_to_load') || 'Failed to load assessment details';
     } finally {
       loading = false;
     }
@@ -101,8 +103,8 @@
       {:else if tab === 'submissions'}
         <AssessmentSubmissions 
           submissions={allSubmissions}
-          assessmentId={parseInt($page.params.id)}
-          metaclassId={parseInt($page.params.metaclass)}
+          assessmentId={parseInt($page.params.id!)}
+          metaclassId={parseInt($page.params.metaclass!)}
           onUploadComplete={loadAssessmentDetails}
         />
       {/if}

@@ -14,6 +14,8 @@
     CalendarDays,
   } from 'svelte-hero-icons';
   import { Button } from '$lib/components/ui';
+  import T from './T.svelte';
+  import { _ } from '../i18n';
 
   const studentId = 69; //! literally changes nothing but was used in the original seqta code.
 
@@ -120,9 +122,9 @@
   function lessonsSubtitle() {
     const today = new Date();
     const diff = ~~((today.getTime() - currentSelectedDate.getTime()) / 86_400_000);
-    if (diff === 0) return "Today's Lessons";
-    if (diff === -1) return "Tomorrow's Lessons";
-    if (diff === 1) return "Yesterday's Lessons";
+    if (diff === 0) return $_('dashboard.todays_lessons') || "Today's Lessons";
+    if (diff === -1) return $_('dashboard.tomorrows_lessons') || "Tomorrow's Lessons";
+    if (diff === 1) return $_('dashboard.yesterdays_lessons') || "Yesterday's Lessons";
     return currentSelectedDate.toLocaleDateString('en-AU', {
       weekday: 'short',
       year: 'numeric',
@@ -141,10 +143,10 @@
 </script>
 
 <div
-  class="overflow-hidden rounded-2xl border shadow-xl backdrop-blur-sm bg-white/80 dark:bg-slate-800/30 border-slate-300/50 dark:border-slate-700/50">
+  class="overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
   <div
-    class="flex flex-col gap-4 justify-between items-start px-3 py-3 bg-gradient-to-r border-b sm:flex-row sm:items-center sm:px-4 border-slate-300/50 dark:border-slate-700/50 from-slate-100/70 dark:from-slate-800/70 to-slate-100/30 dark:to-slate-800/30">
-    <span class="text-xl font-semibold text-slate-900 dark:text-white">{lessonsSubtitle()}</span>
+    class="flex flex-col gap-4 justify-between items-start px-3 py-3 bg-linear-to-r border-b sm:flex-row sm:items-center sm:px-4 border-zinc-300/50 dark:border-zinc-700/50 from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30">
+    <span class="text-xl font-semibold text-zinc-900 dark:text-white">{lessonsSubtitle()}</span>
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
       <!-- Date Picker -->
       <div class="relative w-full sm:w-auto">
@@ -152,35 +154,35 @@
           type="date"
           value={formatDate(currentSelectedDate)}
           onchange={onDateChange}
-          class="w-full sm:w-auto px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white/80 dark:bg-slate-800/80 text-slate-900 dark:text-white border-slate-300/50 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 hover:border-accent-400 dark:hover:border-accent-400"
-          title="Select a date"
+          class="w-full sm:w-auto px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-accent-500 hover:border-accent-400 dark:hover:border-accent-400"
+          title={$_('dashboard.select_date') || 'Select a date'}
         />
         <Icon 
           src={CalendarDays} 
-          class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" 
+          class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" 
         />
       </div>
       
       <!-- Today Button -->
       <button
         onclick={goToToday}
-        class="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-200 text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800/70 hover:accent-bg-hover hover:text-white border-slate-300/50 dark:border-slate-700/50 hover:accent-border"
-        title="Go to today">
-        Today
+        class="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-200 text-zinc-700 dark:text-zinc-300 bg-zinc-200/70 dark:bg-zinc-800/70 hover:accent-bg-hover hover:text-white border-zinc-300/50 dark:border-zinc-700/50 hover:accent-border"
+        title={$_('dashboard.go_to_today') || 'Go to today'}>
+        <T key="dashboard.today" fallback="Today" />
       </button>
       
       <!-- Navigation Buttons -->
       <div class="flex gap-1 justify-center sm:justify-start">
         <button
           onclick={prevDay}
-          class="flex justify-center items-center w-8 h-8 rounded-lg border transition-all duration-300 text-slate-600 hover:accent-bg-hover dark:text-slate-400 hover:text-white border-slate-300/50 dark:border-slate-700/50 hover:accent-border hover:accent-shadow"
-          title="Previous day">
+          class="flex justify-center items-center w-8 h-8 rounded-lg border transition-all duration-300 text-zinc-600 hover:accent-bg-hover dark:text-zinc-400 hover:text-white border-zinc-300/50 dark:border-zinc-700/50 hover:accent-border hover:accent-shadow"
+          title={$_('dashboard.previous_day') || 'Previous day'}>
           <Icon src={ChevronLeft} class="w-4 h-4" />
         </button>
         <button
           onclick={nextDay}
-          class="flex justify-center items-center w-8 h-8 rounded-lg border transition-all duration-300 text-slate-600 hover:accent-bg-hover dark:text-slate-400 hover:text-white border-slate-300/50 dark:border-slate-700/50 hover:accent-border hover:accent-shadow"
-          title="Next day">
+          class="flex justify-center items-center w-8 h-8 rounded-lg border transition-all duration-300 text-zinc-600 hover:accent-bg-hover dark:text-zinc-400 hover:text-white border-zinc-300/50 dark:border-zinc-700/50 hover:accent-border hover:accent-shadow"
+          title={$_('dashboard.next_day') || 'Next day'}>
           <Icon src={ChevronRight} class="w-4 h-4" />
         </button>
       </div>
@@ -192,7 +194,9 @@
       <div
         class="w-16 h-16 rounded-full border-4 animate-spin border-indigo-500/30 border-t-indigo-500">
       </div>
-      <p class="mt-4 text-slate-600 dark:text-slate-400">Loading your schedule...</p>
+      <p class="mt-4 text-zinc-600 dark:text-zinc-400">
+        <T key="dashboard.loading_schedule" fallback="Loading your schedule..." />
+      </p>
     </div>
   {:else if lessons.length === 0}
     <div
@@ -202,11 +206,11 @@
         <span class="text-4xl sm:text-6xl">📚</span>
       </div>
       <div class="flex flex-col items-center">
-        <p class="mb-2 text-2xl font-bold text-center text-slate-800 dark:text-white">
-          No lessons today!
+        <p class="mb-2 text-2xl font-bold text-center text-zinc-800 dark:text-white">
+          <T key="dashboard.no_lessons_today" fallback="No lessons today!" />
         </p>
-        <p class="text-lg text-center text-slate-600 dark:text-slate-300">
-          Enjoy your free time or check your other tasks.
+        <p class="text-lg text-center text-zinc-600 dark:text-zinc-300">
+          <T key="dashboard.enjoy_free_time" fallback="Enjoy your free time or check your other tasks." />
         </p>
       </div>
     </div>
@@ -216,38 +220,38 @@
         <div
           class="flex relative flex-col w-full max-w-xs border-t-4 group"
           style="border-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
-          <div class="flex relative flex-col flex-1 gap-2 p-3 backdrop-blur-sm sm:p-4">
+          <div class="flex relative flex-col flex-1 gap-2 p-3 backdrop-blur-xs sm:p-4">
             <div class="flex justify-between items-center">
               <span
-                class="text-base font-bold truncate text-slate-900 sm:text-lg dark:text-white"
+                class="text-base font-bold truncate text-zinc-900 sm:text-lg dark:text-white"
                 >{lesson.description}</span>
               {#if lesson.active}
                 <span
-                  class="px-2.5 py-1 ml-2 text-xs font-medium text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-full shadow-sm animate-gradient"
+                  class="px-2.5 py-1 ml-2 text-xs font-medium text-white bg-linear-to-r from-green-500 to-emerald-600 rounded-full shadow-xs animate-gradient"
                   >Now</span>
               {/if}
             </div>
             <div
-              class="flex items-center mt-1 text-sm text-slate-700 sm:text-base dark:text-slate-300">
+              class="flex items-center mt-1 text-sm text-zinc-700 sm:text-base dark:text-zinc-300">
               <Icon
                 src={AcademicCap}
-                class="mr-1.5 w-4 h-4 text-slate-600 dark:text-slate-400" />
+                class="mr-1.5 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
               <span class="truncate">{lesson.staff}</span>
             </div>
             <div
-              class="flex items-center text-sm text-slate-700 sm:text-base dark:text-slate-300">
+              class="flex items-center text-sm text-zinc-700 sm:text-base dark:text-zinc-300">
               <Icon
                 src={BuildingOffice}
-                class="mr-1.5 w-4 h-4 text-slate-600 dark:text-slate-400" />
+                class="mr-1.5 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
               <span class="truncate">{lesson.room}</span>
             </div>
             <div
-              class="inline-flex items-center px-3 py-1.5 mt-3 mb-auto font-mono text-sm rounded-lg bg-slate-200/50 dark:bg-slate-800/50 w-fit">
+              class="inline-flex items-center px-3 py-1.5 mt-3 mb-auto font-mono text-sm rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 w-fit">
               <Icon src={Clock} class="mr-1.5 w-4 h-4 text-indigo-400" />
               {lesson.from} – {lesson.until}
             </div>
             {#if lesson.attendanceTitle && lesson.attendanceTitle.trim()}
-              <div class="text-xs text-slate-600 dark:text-slate-400">
+              <div class="text-xs text-zinc-600 dark:text-zinc-400">
                 {lesson.attendanceTitle}
               </div>
             {/if}
@@ -258,19 +262,19 @@
                   variant="ghost"
                   size="sm"
                   icon={DocumentText}
-                  ariaLabel="View Assessment"
+                  ariaLabel={$_('dashboard.view_assessment') || 'View Assessment'}
                   onclick={() =>
                     (location.href = `/assessments?code=${lesson.code}&date=${lesson.date}`)}
-                  class="w-9 h-9 p-0 bg-slate-200/70 dark:bg-slate-800/70 hover:bg-accent-500 hover:text-white border border-slate-300/50 dark:border-slate-700/50"
+                  class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"
                 />
                 <Button
                   variant="ghost"
                   size="sm"
                   icon={BookOpen}
-                  ariaLabel="View Course"
+                  ariaLabel={$_('dashboard.view_course') || 'View Course'}
                   onclick={() =>
                     (location.href = `/courses?code=${lesson.code}&date=${lesson.date}`)}
-                  class="w-9 h-9 p-0 bg-slate-200/70 dark:bg-slate-800/70 hover:bg-accent-500 hover:text-white border border-slate-300/50 dark:border-slate-700/50"
+                  class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"
                 />
               </div>
             {/if}

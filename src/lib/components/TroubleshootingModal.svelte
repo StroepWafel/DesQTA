@@ -173,7 +173,7 @@
       case 'fair': return { color: 'text-yellow-500', icon: ExclamationCircle };
       case 'poor': return { color: 'text-orange-500', icon: ExclamationCircle };
       case 'critical': return { color: 'text-red-500', icon: XCircle };
-      default: return { color: 'text-gray-500', icon: InformationCircle };
+      default: return { color: 'text-zinc-500', icon: InformationCircle };
     }
   }
 
@@ -213,7 +213,7 @@
     <div class="flex items-center justify-center min-h-screen p-4">
       <!-- Background overlay -->
       <div 
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
+        class="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity" 
         onclick={closeModal}
         role="button"
         tabindex="0"
@@ -222,17 +222,17 @@
       ></div>
 
       <!-- Modal panel -->
-      <div class="relative bg-white dark:bg-slate-900 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all w-full max-w-6xl max-h-[90vh]">
+      <div class="relative bg-white dark:bg-zinc-900 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all w-full max-w-6xl max-h-[90vh]">
     <!-- Header -->
-        <div class="bg-slate-50 dark:bg-slate-800 px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <div class="bg-zinc-50 dark:bg-zinc-800 px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <Icon src={Cog} size="24" class="text-slate-600 dark:text-slate-400" />
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Advanced Troubleshooting</h2>
+              <Icon src={Cog} size="24" class="text-zinc-600 dark:text-zinc-400" />
+              <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">Advanced Troubleshooting</h2>
             </div>
             <button
               onclick={closeModal}
-              class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200"
+              class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-200"
             >
               <Icon src={XMark} size="20" />
             </button>
@@ -240,7 +240,7 @@
     </div>
 
         <!-- Tabs -->
-        <div class="border-b border-slate-200 dark:border-slate-700">
+        <div class="border-b border-zinc-200 dark:border-zinc-700">
           <nav class="flex space-x-8 px-6">
             {#each [
               { id: 'diagnostics', label: 'System Diagnostics', icon: ComputerDesktop },
@@ -253,7 +253,7 @@
             ] as tab}
         <button 
                 onclick={() => activeTab = tab.id}
-                class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 flex items-center gap-2 {activeTab === tab.id ? 'border-accent-500 text-accent-600 dark:text-accent-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}"
+                class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 flex items-center gap-2 {activeTab === tab.id ? 'border-accent-500 text-accent-600 dark:text-accent-400' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'}"
               >
                 <Icon src={tab.icon} size="16" />
                 {tab.label}
@@ -269,91 +269,91 @@
             <div class="space-y-6">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- System Health -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                     <Icon src={ComputerDesktop} size="16" />
                     System Health
                   </h3>
                   <div class="space-y-2">
                     {#if errorReport?.diagnostics?.systemHealth}
                       <div class="flex items-center justify-between">
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Overall Health:</span>
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Overall Health:</span>
                         <div class="flex items-center gap-2">
                           <Icon src={getHealthStatus(errorReport.diagnostics.systemHealth.overallHealth).icon} size="16" class={getHealthStatus(errorReport.diagnostics.systemHealth.overallHealth).color} />
                           <span class="text-sm font-medium {getHealthStatus(errorReport.diagnostics.systemHealth.overallHealth).color}">{errorReport.diagnostics.systemHealth.overallHealth}</span>
                         </div>
                       </div>
                       <div class="flex items-center justify-between">
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Memory Usage:</span>
-                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Memory Usage:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                           {Math.round(errorReport.diagnostics.systemHealth.memoryUsage / 1024 / 1024)} MB
                         </span>
       </div>
                     {:else}
-                      <div class="text-sm text-slate-500 dark:text-slate-400">No health data available</div>
+                      <div class="text-sm text-zinc-500 dark:text-zinc-400">No health data available</div>
     {/if}
                   </div>
                 </div>
 
                 <!-- Network Status -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                     <Icon src={Wifi} size="16" />
                     Network Status
                   </h3>
                   <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Connection:</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Connection:</span>
                       <div class="flex items-center gap-2">
                         <Icon src={getNetworkStatus().icon} size="16" class={getNetworkStatus().color} />
                         <span class="text-sm font-medium {getNetworkStatus().color}">{getNetworkStatus().status}</span>
                       </div>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Type:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{systemInfo.connectionType}</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Type:</span>
+                      <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{systemInfo.connectionType}</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Storage Status -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                     <Icon src={CircleStack} size="16" />
                     Storage Status
                   </h3>
                   <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Local Storage:</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Local Storage:</span>
                       <div class="flex items-center gap-2">
                         <Icon src={getStorageStatus().icon} size="16" class={getStorageStatus().color} />
                         <span class="text-sm font-medium {getStorageStatus().color}">{getStorageStatus().status}</span>
                       </div>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Items:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{window.localStorage.length}</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Items:</span>
+                      <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{window.localStorage.length}</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Error Statistics -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                     <Icon src={ExclamationTriangle} size="16" />
                     Error Statistics
                   </h3>
                   <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Total Errors:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{errorStats.total}</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Total Errors:</span>
+                      <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{errorStats.total}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Resolved:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{errorStats.resolved}</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Resolved:</span>
+                      <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{errorStats.resolved}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Critical:</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Critical:</span>
                       <span class="text-sm font-medium text-red-500">{errorStats.critical}</span>
                     </div>
                   </div>
@@ -364,14 +364,14 @@
               <div class="flex gap-3">
                 <button
                   onclick={runSystemDiagnostics}
-                  class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
+                  class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
                 >
                   <Icon src={Beaker} size="16" class="inline mr-2" />
                   Run Diagnostics
                 </button>
         <button 
                   onclick={generateDiagnosticReport}
-                  class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
+                  class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                 >
                   <Icon src={ClipboardDocument} size="16" class="inline mr-2" />
                   {copiedToClipboard ? 'Copied!' : 'Copy Report'}
@@ -384,10 +384,10 @@
           {#if activeTab === 'errors'}
             <div class="space-y-4">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Recent Error Logs</h3>
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Recent Error Logs</h3>
           <button
                   onclick={clearErrorLogs}
-                  class="px-3 py-1 bg-red-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
+                  class="px-3 py-1 bg-red-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
                 >
             Clear Logs
           </button>
@@ -395,8 +395,8 @@
 
               <div class="space-y-3 max-h-64 overflow-y-auto">
                 <!-- Error history not available in new boundary-based system -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                  <div class="text-center text-slate-600 dark:text-slate-400">
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 border border-zinc-200 dark:border-zinc-700">
+                  <div class="text-center text-zinc-600 dark:text-zinc-400">
                     <Icon src={InformationCircle} size="24" class="mx-auto mb-2" />
                     <p class="text-sm">Error history is no longer centrally tracked.</p>
                     <p class="text-xs mt-1">Errors are now handled at the component level using Error Boundaries.</p>
@@ -410,37 +410,37 @@
           {#if activeTab === 'logs'}
             <div class="space-y-4">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">System Logs</h3>
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">System Logs</h3>
                 <div class="flex gap-2">
                   <button
                     onclick={loadSystemLogs}
                     disabled={loadingLogs}
-                    class="px-3 py-1 bg-blue-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="px-3 py-1 bg-blue-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loadingLogs ? 'Loading...' : 'Load Logs'}
                   </button>
                   <button
                     onclick={exportLogs}
-                    class="px-3 py-1 bg-green-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
+                    class="px-3 py-1 bg-green-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                   >
                     Export All
                   </button>
         </div>
       </div>
 
-              <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+              <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 border border-zinc-200 dark:border-zinc-700">
                 <div class="space-y-3 max-h-96 overflow-y-auto">
                   {#if logs.length > 0}
                     {#each logs as log, index}
-                      <div class="text-sm font-mono text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2 last:border-b-0">
+                      <div class="text-sm font-mono text-zinc-700 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-700 pb-2 last:border-b-0">
                         <div class="flex items-start gap-2">
-                          <span class="text-xs text-slate-500 dark:text-slate-400 min-w-[60px]">[{index + 1}]</span>
+                          <span class="text-xs text-zinc-500 dark:text-zinc-400 min-w-[60px]">[{index + 1}]</span>
                           <span class="flex-1 break-all">{log}</span>
                         </div>
                       </div>
                     {/each}
                   {:else}
-                    <div class="text-center text-slate-500 dark:text-slate-400 py-8">
+                    <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">
                       <Icon src={DocumentText} size="48" class="mx-auto mb-4 opacity-50" />
                       <p>No logs loaded</p>
                       <p class="text-xs mt-2">Click "Load Logs" to fetch recent system logs</p>
@@ -454,27 +454,27 @@
           <!-- Performance Tab -->
           {#if activeTab === 'performance'}
             <div class="space-y-6">
-              <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Performance Metrics</h3>
+              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Performance Metrics</h3>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Memory Usage -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Memory Usage</h4>
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Memory Usage</h4>
                   {#if systemInfo.memoryInfo}
                     <div class="space-y-2">
                       <div class="flex items-center justify-between">
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Used:</span>
-                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{systemInfo.memoryInfo.used} MB</span>
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Used:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{systemInfo.memoryInfo.used} MB</span>
                       </div>
                       <div class="flex items-center justify-between">
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Total:</span>
-                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{systemInfo.memoryInfo.total} MB</span>
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Total:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{systemInfo.memoryInfo.total} MB</span>
                       </div>
                       <div class="flex items-center justify-between">
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Limit:</span>
-                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{systemInfo.memoryInfo.limit} MB</span>
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Limit:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{systemInfo.memoryInfo.limit} MB</span>
                       </div>
-                      <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                      <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
                         <div 
                           class="bg-blue-500 h-2 rounded-full transition-all duration-300"
                           style="width: {(systemInfo.memoryInfo.used / systemInfo.memoryInfo.limit) * 100}%"
@@ -482,30 +482,30 @@
                       </div>
                     </div>
                   {:else}
-                    <div class="text-sm text-slate-500 dark:text-slate-400">Memory information not available</div>
+                    <div class="text-sm text-zinc-500 dark:text-zinc-400">Memory information not available</div>
                   {/if}
                 </div>
 
                 <!-- Load Times -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Load Times</h4>
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Load Times</h4>
                   {#if systemInfo.performanceInfo.navigationStart}
                     <div class="space-y-2">
                       <div class="flex items-center justify-between">
-                        <span class="text-sm text-slate-600 dark:text-slate-400">DOM Ready:</span>
-                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">DOM Ready:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                           {Math.round((performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart) / 1000)}s
           </span>
                       </div>
                       <div class="flex items-center justify-between">
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Page Load:</span>
-                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Page Load:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                           {Math.round((performance.timing.loadEventEnd - performance.timing.navigationStart) / 1000)}s
           </span>
                       </div>
                     </div>
                   {:else}
-                    <div class="text-sm text-slate-500 dark:text-slate-400">Performance timing not available</div>
+                    <div class="text-sm text-zinc-500 dark:text-zinc-400">Performance timing not available</div>
                   {/if}
                 </div>
               </div>
@@ -533,27 +533,27 @@
           <!-- Network Tab -->
           {#if activeTab === 'network'}
             <div class="space-y-6">
-              <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Network Information</h3>
+              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Network Information</h3>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Connection Info -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Connection Details</h4>
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Connection Details</h4>
                   <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Status:</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Status:</span>
                       <span class="text-sm font-medium {navigator.onLine ? 'text-green-500' : 'text-red-500'}">
                         {navigator.onLine ? 'Online' : 'Offline'}
           </span>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Type:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{systemInfo.connectionType}</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Type:</span>
+                      <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{systemInfo.connectionType}</span>
                     </div>
                     {#if errorReport?.diagnostics?.networkStatus}
                       <div class="flex items-center justify-between">
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Latency:</span>
-                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Latency:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                           {Math.round(errorReport.diagnostics.networkStatus.latency)}ms
           </span>
                       </div>
@@ -562,18 +562,18 @@
                 </div>
 
                 <!-- Network Tests -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Network Tests</h4>
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Network Tests</h4>
                   <div class="space-y-3">
                     <button
                       onclick={testApiConnection}
-                      class="w-full px-3 py-2 bg-blue-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
+                      class="w-full px-3 py-2 bg-blue-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
                     >
                       Test API Connection
                     </button>
                     <button
                       onclick={() => window.open('https://www.google.com', '_blank')}
-                      class="w-full px-3 py-2 bg-green-500 text-white rounded text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
+                      class="w-full px-3 py-2 bg-green-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                     >
                       Test Internet Connection
                     </button>
@@ -583,13 +583,13 @@
 
               <!-- API Test Result -->
               {#if apiTestResult}
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                  <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 border border-zinc-200 dark:border-zinc-700">
+                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                     <Icon src={apiTestResult.success ? CheckCircle : XCircle} size="16" class={apiTestResult.success ? 'text-green-500' : 'text-red-500'} />
                     API Test Result
                   </h4>
                   <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-600 dark:text-slate-400">Status:</span>
+                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Status:</span>
                     <span class="text-sm font-medium {apiTestResult.success ? 'text-green-500' : 'text-red-500'}">
                       {apiTestResult.message}
           </span>
@@ -602,20 +602,20 @@
           <!-- Storage Tab -->
           {#if activeTab === 'storage'}
             <div class="space-y-6">
-              <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Storage Information</h3>
+              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Storage Information</h3>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Local Storage -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Local Storage</h4>
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Local Storage</h4>
                   <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Items:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{localStorage.length}</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Items:</span>
+                      <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{localStorage.length}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Size:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Size:</span>
+                      <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         {JSON.stringify(localStorage).length} bytes
                       </span>
                     </div>
@@ -623,16 +623,16 @@
                 </div>
 
                 <!-- Session Storage -->
-                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Session Storage</h4>
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Session Storage</h4>
                   <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Items:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{sessionStorage.length}</span>
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Items:</span>
+                      <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{sessionStorage.length}</span>
         </div>
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-600 dark:text-slate-400">Size:</span>
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <span class="text-sm text-zinc-600 dark:text-zinc-400">Size:</span>
+                      <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         {JSON.stringify(sessionStorage).length} bytes
             </span>
                     </div>
@@ -644,13 +644,13 @@
               <div class="flex gap-3">
                 <button
                   onclick={() => localStorage.clear()}
-                  class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
+                  class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
                 >
                   Clear Local Storage
                 </button>
                 <button
                   onclick={() => sessionStorage.clear()}
-                  class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 hover:bg-orange-600"
+                  class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 hover:bg-orange-600"
                 >
                   Clear Session Storage
                 </button>
@@ -661,7 +661,7 @@
           <!-- Troubleshooting Tab -->
           {#if activeTab === 'troubleshooting'}
             <div class="space-y-6">
-              <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Troubleshooting Steps</h3>
+              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Troubleshooting Steps</h3>
               
               <div class="space-y-4">
                 <!-- Common Solutions -->

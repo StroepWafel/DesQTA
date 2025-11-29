@@ -151,7 +151,6 @@ rustup target add x86_64-linux-android
     "@tauri-apps/plugin-opener": "^2.2.6",
     "@tiptap/core": "^2.12.0",
     "@tiptap/starter-kit": "^2.12.0",
-    "chart.js": "^4.4.9",
     "dayjs": "^1.11.13",
     "dompurify": "^3.2.5",
     "html5-qrcode": "^2.3.8",
@@ -285,7 +284,7 @@ export default config;
       "center": true,
       "visible": true,
       "transparent": true,   // Transparent background
-      "shadow": false
+      "shadow-xs": false
     }],
     "security": {
       "csp": null           // No CSP restrictions
@@ -309,7 +308,7 @@ export default config;
       "icons/128x128@2x.png",
       "icons/icon.png"
     ],
-    "publisher": "BetterSEQTA+ Studios"
+    "publisher": "BetterSEQTA+"
   },
   
   "plugins": {
