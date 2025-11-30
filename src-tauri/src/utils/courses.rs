@@ -23,7 +23,7 @@ pub struct Folder {
     pub code: String,
     pub subjects: Vec<Subject>,
     pub description: Option<String>,
-    #[serde(deserialize_with = "deserialize_bool_from_int_or_bool")]
+    #[serde(default, deserialize_with = "deserialize_bool_from_int_or_bool")]
     pub active: bool,
     pub id: Option<i32>,
 }
