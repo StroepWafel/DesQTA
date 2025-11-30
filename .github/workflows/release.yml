@@ -149,9 +149,17 @@ jobs:
       - name: Find artifact files
         id: find-files
         run: |
-          echo "windows_file=$(find artifacts/windows-x86_64 -name '*.exe' -o -name '*.sig' | head -1 | xargs basename)" >> $GITHUB_OUTPUT
-          echo "macos_intel_file=$(find artifacts/darwin-x86_64 -name '*.tar.gz' -o -name '*.sig' | head -1 | xargs basename)" >> $GITHUB_OUTPUT
-          echo "macos_arm_file=$(find artifacts/darwin-aarch64 -name '*.tar.gz' -o -name '*.sig' | head -1 | xargs basename)" >> $GITHUB_OUTPUT
+          windows_exe=$(find artifacts/windows-x86_64 -name '*.exe' -not -name '*.sig' | head -1)
+          windows_file=$(basename "$windows_exe")
+          echo "windows_file=$windows_file" >> $GITHUB_OUTPUT
+
+          macos_intel_tar=$(find artifacts/darwin-x86_64 -name '*.tar.gz' -not -name '*.sig' | head -1)
+          macos_intel_file=$(basename "$macos_intel_tar")
+          echo "macos_intel_file=$macos_intel_file" >> $GITHUB_OUTPUT
+
+          macos_arm_tar=$(find artifacts/darwin-aarch64 -name '*.tar.gz' -not -name '*.sig' | head -1)
+          macos_arm_file=$(basename "$macos_arm_tar")
+          echo "macos_arm_file=$macos_arm_file" >> $GITHUB_OUTPUT
 
       - name: Get release asset URLs
         id: get-urls
@@ -163,9 +171,26 @@ jobs:
       - name: Read signature files
         id: read-sigs
         run: |
-          windows_sig=$(find artifacts/windows-x86_64 -name '*.sig' -exec cat {} \; | head -1)
-          macos_intel_sig=$(find artifacts/darwin-x86_64 -name '*.sig' -exec cat {} \; | head -1)
-          macos_arm_sig=$(find artifacts/darwin-aarch64 -name '*.sig' -exec cat {} \; | head -1)
+          # Find Windows signature (for .exe file)
+          windows_sig_file=$(find artifacts/windows-x86_64 -name '*.exe.sig' -o -name '*setup.exe.sig' | head -1)
+          if [ -z "$windows_sig_file" ]; then
+            windows_sig_file=$(find artifacts/windows-x86_64 -name '*.sig' | grep -E '(exe|setup)' | head -1)
+          fi
+          windows_sig=$(cat "$windows_sig_file" | tr -d '\n')
+
+          # Find macOS Intel signature (for .tar.gz file)
+          macos_intel_sig_file=$(find artifacts/darwin-x86_64 -name '*.tar.gz.sig' | head -1)
+          if [ -z "$macos_intel_sig_file" ]; then
+            macos_intel_sig_file=$(find artifacts/darwin-x86_64 -name '*.sig' | grep -i 'tar\|app' | head -1)
+          fi
+          macos_intel_sig=$(cat "$macos_intel_sig_file" | tr -d '\n')
+
+          # Find macOS ARM signature (for .tar.gz file)
+          macos_arm_sig_file=$(find artifacts/darwin-aarch64 -name '*.tar.gz.sig' | head -1)
+          if [ -z "$macos_arm_sig_file" ]; then
+            macos_arm_sig_file=$(find artifacts/darwin-aarch64 -name '*.sig' | grep -i 'tar\|app' | head -1)
+          fi
+          macos_arm_sig=$(cat "$macos_arm_sig_file" | tr -d '\n')
           echo "windows_sig<<EOF" >> $GITHUB_OUTPUT
           echo "$windows_sig" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -215,11 +240,16 @@ jobs:
             - **macOS (Apple Silicon)**: `DesQTA.app.tar.gz`
           draft: true
           files: |
-            artifacts/**/*.exe
-            artifacts/**/*.msi
-            artifacts/**/*.dmg
-            artifacts/**/*.tar.gz
-            artifacts/**/*.sig
+            artifacts/windows-x86_64/**/*.exe
+            artifacts/windows-x86_64/**/*.msi
+            artifacts/windows-x86_64/**/*.exe.sig
+            artifacts/windows-x86_64/**/*.msi.sig
+            artifacts/darwin-x86_64/**/*.dmg
+            artifacts/darwin-x86_64/**/*.tar.gz
+            artifacts/darwin-x86_64/**/*.sig
+            artifacts/darwin-aarch64/**/*.dmg
+            artifacts/darwin-aarch64/**/*.tar.gz
+            artifacts/darwin-aarch64/**/*.sig
             update-manifest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
