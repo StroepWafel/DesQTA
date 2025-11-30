@@ -134,8 +134,117 @@ jobs:
             src-tauri/target/aarch64-apple-darwin/release/bundle/**
             src-tauri/target/aarch64-apple-darwin/release/*.sig
 
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Rust Android targets
+        run: |
+          rustup target add aarch64-linux-android
+          rustup target add armv7-linux-androideabi
+          rustup target add i686-linux-android
+          rustup target add x86_64-linux-android
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          sdk-platform: '34'
+          sdk-build-tools: '34.0.0'
+          ndk-version: '25.2.9519653'
+          cmake-version: '3.22.1'
+
+      - name: Set up Android environment
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_HOME" >> $GITHUB_ENV
+          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+          echo "GRADLE_OPTS=-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" >> $GITHUB_ENV
+          echo "PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_NDK_HOME" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Accept Android licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Verify NDK installation
+        run: |
+          echo "Checking NDK installation..."
+          ls -la $ANDROID_NDK_HOME
+          echo "NDK version:"
+          $ANDROID_NDK_HOME/ndk-build --version || echo "ndk-build not found"
+          echo "Available NDK tools:"
+          ls -la $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/ | head -10
+
+      - name: Fix Gradle Java home
+        run: |
+          echo "Fixing Gradle Java home for Linux..."
+
+          # Check if gradle.properties exists and show current content
+          echo "Current gradle.properties content:"
+          cat src-tauri/gen/android/gradle.properties || echo "gradle.properties not found"
+
+          # Create gradle.properties with all necessary properties
+          cat > src-tauri/gen/android/gradle.properties << EOF
+          org.gradle.java.home=$JAVA_HOME
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+          org.gradle.daemon=false
+          org.gradle.parallel=true
+          org.gradle.configureondemand=true
+          EOF
+
+          # Also check and fix gradle-wrapper.properties if needed
+          echo "Current gradle-wrapper.properties content:"
+          cat src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties || echo "gradle-wrapper.properties not found"
+
+          echo "Fixed gradle.properties:"
+          cat src-tauri/gen/android/gradle.properties
+
+          echo "JAVA_HOME value: $JAVA_HOME"
+
+      - name: Build Android APK
+        run: |
+          echo "Building with JAVA_HOME: $JAVA_HOME"
+          echo "Building with GRADLE_OPTS: $GRADLE_OPTS"
+          JAVA_HOME=$JAVA_HOME GRADLE_OPTS="-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" pnpm tauri android build
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-builds
+          path: |
+            src-tauri/gen/android/app/build/outputs/**
+
   create-release:
-    needs: [build-windows, build-macos-intel, build-macos-arm]
+    needs: [build-windows, build-macos-intel, build-macos-arm, build-android]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -202,6 +311,7 @@ jobs:
             - **Windows (x64)**: `DesQTA_Setup.exe`
             - **macOS (Intel)**: `DesQTA_1.0.0-3_x64.dmg`
             - **macOS (Apple Silicon)**: `DesQTA_1.0.0-3_aarch64.dmg`
+            - **Android**: APK files available in release assets
           draft: true
           files: |
             artifacts/windows-x86_64/**/*.exe
@@ -210,6 +320,7 @@ jobs:
             artifacts/windows-x86_64/**/*.msi.sig
             artifacts/darwin-x86_64/**/*.dmg
             artifacts/darwin-aarch64/**/*.dmg
+            artifacts/android-builds/**/*
             update-manifest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
