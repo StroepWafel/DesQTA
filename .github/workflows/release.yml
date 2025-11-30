@@ -215,7 +215,11 @@ jobs:
             - **macOS (Apple Silicon)**: `DesQTA.app.tar.gz`
           draft: true
           files: |
-            artifacts/**/*
+            artifacts/**/*.exe
+            artifacts/**/*.msi
+            artifacts/**/*.dmg
+            artifacts/**/*.tar.gz
+            artifacts/**/*.sig
             update-manifest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
