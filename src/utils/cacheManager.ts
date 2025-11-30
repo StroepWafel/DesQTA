@@ -7,16 +7,14 @@ import { invoke } from '@tauri-apps/api/core';
 
 export class CacheManager {
   /**
-   * Clear all browser caches including service worker cache
+   * Clear all browser caches
    */
   static async clearAllCaches(): Promise<void> {
     try {
       // Clear all cache storage
       if ('caches' in window) {
         const cacheNames = await caches.keys();
-        await Promise.all(
-          cacheNames.map(cacheName => caches.delete(cacheName))
-        );
+        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
         console.log('Cleared all cache storage');
       }
 
@@ -34,27 +32,8 @@ export class CacheManager {
 
       // Clear SQLite cache (via Rust backend)
       await this.clearIndexedDBCaches();
-
     } catch (error) {
       console.error('Failed to clear caches:', error);
-    }
-  }
-
-  /**
-   * Clear only the service worker cache
-   */
-  static async clearServiceWorkerCache(): Promise<void> {
-    try {
-      if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        const swCaches = cacheNames.filter(name => name.includes('desqta-static'));
-        await Promise.all(
-          swCaches.map(cacheName => caches.delete(cacheName))
-        );
-        console.log('Cleared service worker caches:', swCaches);
-      }
-    } catch (error) {
-      console.error('Failed to clear service worker cache:', error);
     }
   }
 
@@ -66,7 +45,7 @@ export class CacheManager {
       // Clear SQLite cache via Rust backend
       await invoke('db_cache_clear');
       console.log('Cleared SQLite cache');
-      
+
       // Also cleanup expired entries
       await invoke('db_cache_cleanup_expired');
     } catch (error) {
@@ -79,15 +58,6 @@ export class CacheManager {
    */
   static async clearCachesAndRefresh(): Promise<void> {
     await this.clearAllCaches();
-    
-    // Unregister service worker to force re-registration
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(
-        registrations.map(registration => registration.unregister())
-      );
-      console.log('Unregistered all service workers');
-    }
 
     // Force hard refresh
     window.location.reload();
@@ -99,14 +69,12 @@ export class CacheManager {
   static async diagnoseCache(): Promise<{
     hasCaches: boolean;
     cacheNames: string[];
-    hasServiceWorker: boolean;
     recommendations: string[];
   }> {
     const diagnosis = {
       hasCaches: false,
       cacheNames: [] as string[],
-      hasServiceWorker: false,
-      recommendations: [] as string[]
+      recommendations: [] as string[],
     };
 
     try {
@@ -116,23 +84,10 @@ export class CacheManager {
         diagnosis.hasCaches = diagnosis.cacheNames.length > 0;
       }
 
-      // Check service worker
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        diagnosis.hasServiceWorker = registrations.length > 0;
-      }
-
       // Generate recommendations
       if (diagnosis.hasCaches) {
         diagnosis.recommendations.push('Clear browser cache to resolve potential routing issues');
       }
-      if (diagnosis.hasServiceWorker) {
-        diagnosis.recommendations.push('Service worker detected - may be caching stale content');
-      }
-      if (diagnosis.cacheNames.some(name => name.includes('desqta-static-v1'))) {
-        diagnosis.recommendations.push('Old service worker cache detected - clear cache to update');
-      }
-
     } catch (error) {
       console.error('Failed to diagnose cache:', error);
     }

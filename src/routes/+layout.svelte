@@ -144,13 +144,7 @@
 
   let unlisten: (() => void) | undefined;
 
-  const setupServiceWorkerAndListeners = async () => {
-    // Register service worker for offline static assets
-    if ('serviceWorker' in navigator) {
-      try {
-        await navigator.serviceWorker.register('/sw.js');
-      } catch {}
-    }
+  const setupListeners = async () => {
     logger.debug('layout', 'onMount', 'Setting up reload listener');
     unlisten = await listen<string>('reload', () => {
       logger.info('layout', 'reload_listener', 'Received reload event');
@@ -377,7 +371,7 @@
 
   onMount(async () => {
     logger.logComponentMount('layout');
-    setupServiceWorkerAndListeners();
+    setupListeners();
 
     // Initialize theme and i18n first
     await Promise.all([loadAccentColor(), loadTheme(), loadCurrentTheme(), initI18n()]);
