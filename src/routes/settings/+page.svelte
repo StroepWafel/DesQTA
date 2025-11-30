@@ -25,6 +25,7 @@
     User,
     BookOpen,
   } from 'svelte-hero-icons';
+  import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
   import LanguageSelector from '../../lib/components/LanguageSelector.svelte';
@@ -84,6 +85,11 @@
   let cloudBaseUrlError: string | null = null;
   let cloudBaseUrlChanged = false;
   let performanceTestRunning = false;
+  let checkingUpdates = false;
+  let updateAvailable = false;
+  let updateVersion = '';
+  let updateNotes = '';
+  let isDesktop = false;
 
   // Inline EULA text (can be updated here)
   const CLOUD_EULA_TEXT = `
@@ -432,6 +438,10 @@ The Company reserves the right to terminate your access to the Service at any ti
   }
 
   onMount(async () => {
+    // Check if running on desktop (updater only works on desktop)
+    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
+    isDesktop = tauriPlatform !== 'ios' && tauriPlatform !== 'android';
+    
     await Promise.all([loadSettings(), loadTheme(), loadCloudUser(), loadProfilePicture()]);
     window.addEventListener('keydown', handleKeydown);
   });
@@ -447,6 +457,62 @@ The Company reserves the right to terminate your access to the Service at any ti
     } catch (error) {
       console.error('Failed to clear cache:', error);
       clearingCache = false;
+    }
+  }
+
+  // Check for updates
+  async function checkForUpdates() {
+    checkingUpdates = true;
+    updateAvailable = false;
+    updateVersion = '';
+    updateNotes = '';
+
+    try {
+      const update = await check();
+      
+      if (update?.available) {
+        updateAvailable = true;
+        updateVersion = update.version;
+        updateNotes = update.body || 'Bug fixes and improvements';
+        
+        notify({
+          title: 'Update Available',
+          body: `Version ${update.version} is available! Click "Install Update" to download and install.`,
+        });
+      } else {
+        notify({
+          title: 'Up to Date',
+          body: 'You are running the latest version of DesQTA.',
+        });
+      }
+    } catch (error) {
+      logger.error('settings', 'checkForUpdates', 'Failed to check for updates', error);
+      notify({
+        title: 'Update Check Failed',
+        body: 'Unable to check for updates. Please try again later.',
+      });
+    } finally {
+      checkingUpdates = false;
+    }
+  }
+
+  // Install update
+  async function installUpdate() {
+    try {
+      const update = await check();
+      if (update?.available) {
+        await update.downloadAndInstall();
+        notify({
+          title: 'Update Downloaded',
+          body: 'The update will be installed when you restart the application.',
+        });
+      }
+    } catch (error) {
+      logger.error('settings', 'installUpdate', 'Failed to install update', error);
+      notify({
+        title: 'Update Installation Failed',
+        body: 'Unable to install the update. Please try again later.',
+      });
     }
   }
 
@@ -1651,6 +1717,57 @@ The Company reserves the right to terminate your access to the Service at any ti
           </div>
         </div>
       </section>
+
+      <!-- Check for Updates (Desktop only) -->
+      {#if isDesktop}
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-green-700/50 animate-fade-in-up">
+        <div class="p-4 sm:p-6">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h2 class="text-base font-semibold sm:text-lg">Updates</h2>
+              <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+                Check for the latest version of DesQTA.
+              </p>
+            </div>
+            <button
+              type="button"
+              onclick={checkForUpdates}
+              disabled={checkingUpdates}
+              class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-green-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+              {#if checkingUpdates}
+                <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white"></div>
+                <span>Checking...</span>
+              {:else}
+                <Icon src={ArrowPath} class="w-4 h-4" />
+                <span>Check for Updates</span>
+              {/if}
+            </button>
+          </div>
+          {#if updateAvailable}
+            <div class="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50">
+              <div class="flex gap-3 items-start">
+                <div class="flex-1">
+                  <h3 class="text-sm font-semibold text-green-800 dark:text-green-200 mb-1">
+                    Update Available: v{updateVersion}
+                  </h3>
+                  <p class="text-xs text-green-700 dark:text-green-300 mb-3 whitespace-pre-line">
+                    {updateNotes}
+                  </p>
+                  <button
+                    type="button"
+                    onclick={installUpdate}
+                    class="flex gap-2 items-center px-4 py-2 text-white bg-green-600 rounded-lg shadow-xs transition-all duration-200 hover:bg-green-700 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105">
+                    <Icon src={CloudArrowUp} class="w-4 h-4" />
+                    <span>Install Update</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          {/if}
+        </div>
+      </section>
+      {/if}
 
       <!-- Troubleshooting button -->
       <section
