@@ -20,7 +20,7 @@
   }
 
   let { open = $bindable(false), onclose }: Props = $props();
-  let appVersion: string = '1.0.0-rc2';
+  let appVersion: string = '1.0.0-rc.4';
 
   function closeModal() {
     onclose?.();
