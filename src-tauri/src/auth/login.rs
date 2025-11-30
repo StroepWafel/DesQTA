@@ -394,13 +394,6 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
             }
         };
 
-        let full_url: Url = match Url::parse(&format!("{}/#?page=/welcome", parsed_url)) {
-            Ok(u) => u,
-            Err(e) => {
-                return Err(format!("Parsing error: {}", e));
-            }
-        };
-
         // Close any existing login windows first
         if let Some(existing_window) = app.get_webview_window("seqta_login") {
             let _ = existing_window.destroy();
@@ -413,7 +406,6 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                 .inner_size(900.0, 700.0)
                 .on_page_load({
                     // Clear session ID cookie, so that we can detect a login based on the creation of it.
-                    let parsed_url = parsed_url.clone();
                     move |window, _event| {
                         if let Ok(cookies) = window.cookies() {
                             for cookie in cookies {
