@@ -118,7 +118,64 @@ export async function triggerBackgroundSync(): Promise<void> {
 }
 
 /**
- * Initialize startup sequence: load cached data → show UI → sync in background
+ * Check for app updates and install automatically in the background (desktop only)
+ */
+async function checkForUpdatesOnStartup(): Promise<void> {
+  try {
+    // Only check on desktop (updater plugin is desktop-only)
+    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
+    const isDesktop = tauriPlatform !== 'ios' && tauriPlatform !== 'android';
+
+    if (!isDesktop) {
+      return;
+    }
+
+    // Check if offline mode is forced
+    const offline = await isOfflineMode();
+    if (offline) {
+      logger.debug('startup', 'checkForUpdatesOnStartup', 'Skipping update check (offline mode)');
+      return;
+    }
+
+    logger.info('startup', 'checkForUpdatesOnStartup', 'Checking for updates...');
+
+    // Dynamically import updater to avoid issues on mobile
+    const { check } = await import('@tauri-apps/plugin-updater');
+    const update = await check();
+
+    if (update?.available) {
+      logger.info(
+        'startup',
+        'checkForUpdatesOnStartup',
+        `Update available: ${update.version}, downloading and installing...`,
+      );
+
+      // Automatically download and install the update
+      await update.downloadAndInstall();
+
+      logger.info(
+        'startup',
+        'checkForUpdatesOnStartup',
+        'Update downloaded and installed. App will restart on next launch.',
+      );
+    } else {
+      logger.debug('startup', 'checkForUpdatesOnStartup', 'App is up to date');
+    }
+  } catch (error) {
+    // Silently fail - don't annoy users with update check errors
+    logger.debug(
+      'startup',
+      'checkForUpdatesOnStartup',
+      'Update check/install failed (non-critical)',
+      {
+        error,
+      },
+    );
+  }
+}
+
+/**
+ * Initialize startup sequence: load cached data → show UI → sync in background → check for updates
  */
 export async function initializeApp(): Promise<void> {
   // Step 1: Load cached data from SQLite immediately (blocks until loaded)
@@ -126,4 +183,9 @@ export async function initializeApp(): Promise<void> {
 
   // Step 2: Trigger background sync (non-blocking)
   triggerBackgroundSync();
+
+  // Step 3: Check for updates silently in background (non-blocking, desktop only)
+  checkForUpdatesOnStartup().catch((e) => {
+    logger.debug('startup', 'initializeApp', 'Update check error (non-critical)', { error: e });
+  });
 }
