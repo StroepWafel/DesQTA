@@ -164,8 +164,6 @@ jobs:
         run: |
           rustup target add aarch64-linux-android
           rustup target add armv7-linux-androideabi
-          rustup target add i686-linux-android
-          rustup target add x86_64-linux-android
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
@@ -236,12 +234,16 @@ jobs:
           echo "Building with GRADLE_OPTS: $GRADLE_OPTS"
           JAVA_HOME=$JAVA_HOME GRADLE_OPTS="-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" pnpm tauri android build
 
+          # Verify only the APK exists (not AAB or other files)
+          echo "Built Android artifacts:"
+          find src-tauri/gen/android/app/build/outputs -type f -name "*.apk" | head -10
+
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-builds
           path: |
-            src-tauri/gen/android/app/build/outputs/**
+            src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
 
   create-release:
     needs: [build-windows, build-macos-intel, build-macos-arm, build-android]
@@ -320,7 +322,7 @@ jobs:
             artifacts/windows-x86_64/**/*.msi.sig
             artifacts/darwin-x86_64/**/*.dmg
             artifacts/darwin-aarch64/**/*.dmg
-            artifacts/android-builds/**/*
+            artifacts/android-builds/**/*.apk
             update-manifest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
