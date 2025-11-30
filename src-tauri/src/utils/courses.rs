@@ -23,7 +23,7 @@ pub struct Folder {
     pub code: String,
     pub subjects: Vec<Subject>,
     pub description: Option<String>,
-    #[serde(deserialize_with = "deserialize_bool_from_int_or_bool")]
+    #[serde(default, deserialize_with = "deserialize_bool_from_int_or_bool")]
     pub active: bool,
     pub id: Option<i32>,
 }
@@ -42,7 +42,7 @@ pub struct FileItem {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Lesson {
-    pub p: String, // Period
+    pub p: Option<String>, // Period
     pub s: String, // Start time
     pub d: String, // Date
     pub e: String, // End time
@@ -97,9 +97,11 @@ pub struct CoursePayload {
     pub cf: Vec<FileItem>,                // Course files
     pub t: String,                        // Title
     pub im: Option<String>,               // Image UUID
+    #[serde(default)]
     pub d: Vec<TermSchedule>,             // Schedule
     pub u: Option<String>,                // Unique ID
     pub document: Option<String>,         // JSON string for main content
+    #[serde(default)]
     pub w: Vec<Vec<WeeklyLessonContent>>, // Weekly lesson content
 }
 
