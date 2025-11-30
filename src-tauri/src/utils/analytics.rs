@@ -19,7 +19,7 @@ struct Subject {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Folder {
-    #[serde(deserialize_with = "deserialize_bool_from_int_or_bool")]
+    #[serde(default, deserialize_with = "deserialize_bool_from_int_or_bool")]
     active: bool,
     subjects: Vec<Subject>,
 }
