@@ -342,6 +342,18 @@
     await weather.fetchWeather(useIP);
   };
 
+  const sendAnalytics = async () => {
+    try {
+      await fetch('https://betterseqta.org/api/analytics/desqta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+    } catch (e) {
+      logger.debug('layout', 'sendAnalytics', 'Failed to send analytics', { error: e });
+    }
+  };
+
   $effect(() => {
     document.documentElement.setAttribute('data-accent-color', '');
     document.documentElement.style.setProperty('--accent-color-value', $accentColor);
@@ -441,6 +453,9 @@
 
       // Run a one-time heartbeat health check on app open
       await healthCheck();
+
+      // Send startup analytics
+      sendAnalytics();
 
       // Check and apply initial fullscreen styling
       try {
