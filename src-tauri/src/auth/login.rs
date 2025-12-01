@@ -400,24 +400,25 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
         }
 
         // Spawn the login window with unique ID
-        let _webview_window =
-            WebviewWindowBuilder::new(&app, &window_id, WebviewUrl::External(parsed_url.clone()))
+        // Start with about:blank to allow clearing data before loading the actual login page
+        let webview_window =
+            WebviewWindowBuilder::new(&app, &window_id, WebviewUrl::App("about:blank".into()))
                 .title("SEQTA Login")
                 .inner_size(900.0, 700.0)
-                .on_page_load({
-                    // Clear session ID cookie, so that we can detect a login based on the creation of it.
-                    move |window, _event| {
-                        if let Ok(cookies) = window.cookies() {
-                            for cookie in cookies {
-                                if cookie.name() == "JSESSIONID" {
-                                    let _ = window.delete_cookie(cookie);
-                                }
-                            }
-                        }
-                    }
-                })
                 .build()
                 .map_err(|e| format!("Failed to build window: {}", e))?;
+
+        // Clear all browsing data (cookies, cache, etc.) to ensure a fresh login session
+        // This effectively logs the user out if they were previously logged in
+        if let Err(e) = webview_window.clear_all_browsing_data() {
+            println!("[AUTH] Warning: Failed to clear browsing data: {}", e);
+        }
+
+        // Navigate to the login URL
+        let url_string = parsed_url.to_string();
+        webview_window
+            .eval(&format!("window.location.href = '{}'", url_string))
+            .map_err(|e| format!("Failed to navigate: {}", e))?;
 
         // Clone handles for async block
         let app_handle_clone = app.clone();
@@ -454,6 +455,52 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                                             if expire_time > now {
                                                 let value = cookie.value().to_string();
                                                 let base_url = http_url.clone();
+
+                                                // Validate the session with a subjects request before accepting it
+                                                // This prevents capturing invalid/pre-login sessions
+                                                let subjects_url = format!("{}/seqta/student/load/subjects", base_url);
+                                                let client = reqwest::Client::builder()
+                                                    .cookie_store(true)
+                                                    .build()
+                                                    .unwrap_or_default();
+
+                                                // Manually construct the cookie header since we're not using a jar here for this quick check
+                                                let cookie_header = format!("JSESSIONID={}", value);
+                                                
+                                                let check_res = client
+                                                    .post(&subjects_url)
+                                                    .header("Cookie", cookie_header)
+                                                    .header("Content-Type", "application/json; charset=utf-8")
+                                                    .json(&serde_json::json!({}))
+                                                    .send()
+                                                    .await;
+
+                                                // Check for both HTTP success and API payload success
+                                                let is_valid_session = match check_res {
+                                                    Ok(res) => {
+                                                        if res.status().is_success() {
+                                                            // Check the body for application-level errors (like status: "failed")
+                                                            match res.json::<serde_json::Value>().await {
+                                                                Ok(json) => {
+                                                                    // SEQTA APIs might return 200 OK but with { "status": "failed" } or similar
+                                                                    // Only accept if payload exists or status is not explicitly failed/401
+                                                                    let status_str = json.get("status").and_then(|s| s.as_str());
+                                                                    status_str != Some("failed") && status_str != Some("401")
+                                                                },
+                                                                Err(_) => false // Failed to parse JSON
+                                                            }
+                                                        } else {
+                                                            false
+                                                        }
+                                                    },
+                                                    Err(_) => false,
+                                                };
+
+                                                if !is_valid_session {
+                                                    // Session exists but is not valid (e.g. pre-login or expired)
+                                                    // Continue polling...
+                                                    continue;
+                                                }
 
                                                 // Convert all cookies to our storage format
                                                 let additional_cookies = cookies
