@@ -4,14 +4,13 @@
   import type { AnalyticsData, Assessment } from '$lib/types';
   import { fade } from 'svelte/transition';
   import { Button } from '$lib/components/ui';
-  import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
   import RawDataTable from '$lib/components/RawDataTable.svelte';
   import AnalyticsAreaChart from '$lib/components/analytics/AnalyticsAreaChart.svelte';
   import AnalyticsBarChart from '$lib/components/analytics/AnalyticsBarChart.svelte';
   import * as Card from '$lib/components/ui/card/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
   import { Slider } from '$lib/components/ui/slider/index.js';
-  import { Icon, MagnifyingGlass, Trash } from 'svelte-hero-icons';
+  import { Icon, MagnifyingGlass } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
@@ -22,9 +21,6 @@
   let lastUpdated: Date | null = $state(null);
   let timestampRefresh = $state(0); // Used to trigger reactive updates
   let error: string | null = $state(null);
-  let showDeleteModal = $state(false);
-  let deleteLoading = $state(false);
-  let deleteError: string | null = $state(null);
 
   // Update timestamp display every minute
   let timestampInterval: ReturnType<typeof setInterval> | null = null;
@@ -108,10 +104,10 @@
       }
 
       return assessment;
-        } catch (e) {
-          logger.error('analytics', 'loadAnalyticsData', 'Error parsing assessment', { error: e });
-          return null;
-        }
+    } catch (e) {
+      logger.error('analytics', 'loadAnalyticsData', 'Error parsing assessment', { error: e });
+      return null;
+    }
   }
 
   async function loadAnalyticsData() {
@@ -129,7 +125,12 @@
       lastUpdated = new Date();
       error = null;
     } catch (e) {
-      logger.warn('analytics', 'loadAnalyticsData', 'no local analytics file found or failed to parse', { error: e });
+      logger.warn(
+        'analytics',
+        'loadAnalyticsData',
+        'no local analytics file found or failed to parse',
+        { error: e },
+      );
       analyticsData = [];
       error = null; // Don't show error, just show empty state
     }
@@ -167,7 +168,9 @@
     try {
       await loadAnalyticsData();
     } catch (e) {
-      logger.warn('analytics', 'loadAnalyticsData', 'Failed to load existing analytics data', { error: e });
+      logger.warn('analytics', 'loadAnalyticsData', 'Failed to load existing analytics data', {
+        error: e,
+      });
     } finally {
       loading = false;
     }
@@ -195,35 +198,6 @@
       clearInterval(timestampInterval);
     }
   });
-
-  function openDeleteModal() {
-    showDeleteModal = true;
-    deleteError = null;
-  }
-
-  function closeDeleteModal() {
-    showDeleteModal = false;
-    deleteError = null;
-  }
-
-  async function confirmDeleteAnalytics() {
-    deleteLoading = true;
-    deleteError = null;
-    try {
-      await invoke('delete_analytics');
-      analyticsData = [];
-      showDeleteModal = false;
-      // Sync and reload data after deletion
-      loading = true;
-      await invoke<string>('sync_analytics_data');
-      await loadAnalyticsData();
-    } catch (e) {
-      deleteError = $_('analytics.failed_to_delete_data') || 'Failed to delete analytics data';
-    } finally {
-      deleteLoading = false;
-      loading = false;
-    }
-  }
 
   // Derived unique values for filter options
   const uniqueSubjects = $derived(() => {
@@ -353,15 +327,6 @@
         </p>
       {/if}
     </div>
-
-    {#if analyticsData}
-      <div class="flex items-center gap-3">
-        <Button class="flex items-center gap-2" variant="ghost" onclick={openDeleteModal}>
-          <Icon size="20" src={Trash} />
-          <T key="analytics.delete_data" fallback="Delete Data" />
-        </Button>
-      </div>
-    {/if}
   </div>
 
   {#if loading}
@@ -466,35 +431,4 @@
       {/if}
     </div>
   {/if}
-
-  <AlertDialog.Root bind:open={showDeleteModal}>
-    <AlertDialog.Content>
-      <AlertDialog.Header>
-        <AlertDialog.Title>
-          <T key="analytics.delete_confirmation_title" fallback="Delete Analytics Data?" />
-        </AlertDialog.Title>
-        <AlertDialog.Description>
-          <T
-            key="analytics.delete_confirmation_description"
-            fallback="Are you sure you want to delete all analytics data? This action cannot be undone." />
-        </AlertDialog.Description>
-      </AlertDialog.Header>
-      {#if deleteError}
-        <div class="mb-4 text-red-600 dark:text-red-400">{deleteError}</div>
-      {/if}
-      <AlertDialog.Footer>
-        <AlertDialog.Cancel onclick={closeDeleteModal} disabled={deleteLoading}>
-          <T key="common.cancel" fallback="Cancel" />
-        </AlertDialog.Cancel>
-        <AlertDialog.Action onclick={confirmDeleteAnalytics} disabled={deleteLoading}>
-          {#if deleteLoading}
-            <span
-              class="inline-block w-5 h-5 mr-2 align-middle rounded-full border-2 border-white animate-spin border-t-transparent"
-            ></span>
-          {/if}
-          <T key="common.delete" fallback="Delete" />
-        </AlertDialog.Action>
-      </AlertDialog.Footer>
-    </AlertDialog.Content>
-  </AlertDialog.Root>
 </div>
