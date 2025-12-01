@@ -69,15 +69,17 @@
     logger.debug('messages', 'fetchMessages', `Fetching messages for folder: ${folderLabel}`);
 
     const cacheKey = `messages_${folderLabel}`;
+    const isRSSFeed = folderLabel.includes('rss-');
 
     const data = await useDataLoader<Message[]>({
       cacheKey,
       ttlMinutes: 10,
       context: 'direqt-messages',
       functionName: 'fetchMessages',
+      skipCache: isRSSFeed, // Skip caching for RSS feeds to always get fresh content
       fetcher: async () => {
         let rssUrl = null;
-        if (folderLabel.includes('rss-')) {
+        if (isRSSFeed) {
           rssUrl = rssname;
         }
         const msgs = await invoke<Message[]>('fetch_messages', {
@@ -127,15 +129,18 @@
     selectedMessage = msg;
     msg.unread = false;
 
-    const cacheKey = `message_${msg.id}`;
+    const isRSSMessage =
+      msg.folder.includes('RSS') || selectedFolder.includes('RSS') || msg.folder.includes('rss-');
+    const cacheKey = isRSSMessage ? `rss_${msg.id}` : `message_${msg.id}`;
 
     const content = await useDataLoader<string>({
       cacheKey,
       ttlMinutes: 1440, // 24 hours
       context: 'direqt-messages',
       functionName: 'openMessage',
+      skipCache: isRSSMessage, // Skip caching for RSS feeds to always get fresh content
       fetcher: async () => {
-        if (msg.folder.includes('RSS') || selectedFolder.includes('RSS')) {
+        if (isRSSMessage) {
           return msg.body; // RSS body is already loaded
         }
         const content = await invoke<string>('fetch_message_content', { id: msg.id });

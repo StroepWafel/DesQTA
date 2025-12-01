@@ -11,6 +11,7 @@ export interface DataLoaderOptions<T> {
   fetcher: () => Promise<T>;
   onDataLoaded?: (data: T) => void | Promise<void>;
   shouldSyncInBackground?: (data: T) => boolean; // Default: always sync if online
+  skipCache?: boolean; // If true, bypass all caching and always fetch fresh data
 }
 
 /**
@@ -29,9 +30,20 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
     fetcher,
     onDataLoaded,
     shouldSyncInBackground = () => true,
+    skipCache = false,
   } = options;
 
   try {
+    // If skipCache is true, bypass all caching and always fetch fresh
+    if (skipCache) {
+      logger.debug(context, functionName, `Skipping cache - fetching fresh data`, { key: cacheKey });
+      const freshData = await fetcher();
+      if (onDataLoaded) {
+        await onDataLoaded(freshData);
+      }
+      return freshData;
+    }
+
     // Step 1: Check memory cache first
     const memCached = cache.get<T>(cacheKey);
     if (memCached) {
