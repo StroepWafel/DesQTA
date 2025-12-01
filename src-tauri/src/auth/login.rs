@@ -394,13 +394,6 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
             }
         };
 
-        let full_url: Url = match Url::parse(&format!("{}/#?page=/welcome", parsed_url)) {
-            Ok(u) => u,
-            Err(e) => {
-                return Err(format!("Parsing error: {}", e));
-            }
-        };
-
         // Close any existing login windows first
         if let Some(existing_window) = app.get_webview_window("seqta_login") {
             let _ = existing_window.destroy();
@@ -408,9 +401,21 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
 
         // Spawn the login window with unique ID
         let _webview_window =
-            WebviewWindowBuilder::new(&app, &window_id, WebviewUrl::External(full_url.clone()))
+            WebviewWindowBuilder::new(&app, &window_id, WebviewUrl::External(parsed_url.clone()))
                 .title("SEQTA Login")
                 .inner_size(900.0, 700.0)
+                .on_page_load({
+                    // Clear session ID cookie, so that we can detect a login based on the creation of it.
+                    move |window, _event| {
+                        if let Ok(cookies) = window.cookies() {
+                            for cookie in cookies {
+                                if cookie.name() == "JSESSIONID" {
+                                    let _ = window.delete_cookie(cookie);
+                                }
+                            }
+                        }
+                    }
+                })
                 .build()
                 .map_err(|e| format!("Failed to build window: {}", e))?;
 
@@ -436,17 +441,6 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                 // Try to get cookies from the login window
                 if let Some(webview) = app_handle_clone.get_webview_window(&window_id_clone) {
                     if counter > 5 {
-                        // Check if the auth has finished through url
-                        match webview.url() {
-                            Ok(current_url) => {
-                                if !(current_url.to_string().contains("#?page=/welcome")) {
-                                    continue;
-                                }
-                            }
-                            Err(_) => {
-                                // URL retrieval failed, continue polling
-                            }
-                        }
 
                         match webview.cookies() {
                             Ok(cookies) => {
