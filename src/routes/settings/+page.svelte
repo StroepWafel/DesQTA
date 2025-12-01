@@ -257,6 +257,11 @@ The Company reserves the right to terminate your access to the Service at any ti
     }
 
     // If it's a relative path, prepend the base domain
+    if (pfpUrl.startsWith('/pfp/')) {
+      return `https://accounts.betterseqta.org${pfpUrl}`;
+    }
+
+    // If it's a relative path, prepend the base domain
     if (pfpUrl.startsWith('/api/files/public/')) {
       return `https://accounts.betterseqta.org${pfpUrl}`;
     }
