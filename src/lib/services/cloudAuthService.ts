@@ -23,11 +23,11 @@ export const cloudAuthService = {
   /**
    * Logs in the user and saves the session token to the current profile.
    */
-  async login(email: string, password: string) {
+  async login(login: string, password: string) {
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ login, password }),
     });
 
     if (!response.ok) {
