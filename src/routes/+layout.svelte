@@ -344,10 +344,11 @@
 
   const sendAnalytics = async () => {
     try {
-      await fetch('https://betterseqta.org/api/analytics/desqta', {
-        method: 'POST',
+      await invoke('proxy_request', {
+        url: 'https://betterseqta.org/api/analytics/desqta',
+        method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: {},
       });
     } catch (e) {
       logger.debug('layout', 'sendAnalytics', 'Failed to send analytics', { error: e });

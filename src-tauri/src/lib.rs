@@ -224,6 +224,7 @@ pub fn run() {
             netgrab::get_rss_feed,
             netgrab::post_api_data,
             netgrab::fetch_api_data,
+            netgrab::proxy_request,
             netgrab::get_seqta_file,
             netgrab::upload_seqta_file,
             login::check_session_exists,

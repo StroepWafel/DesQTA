@@ -640,6 +640,52 @@ pub async fn post_api_data(
 
 /// Clear the session data with API call and remove the session file
 #[tauri::command]
+pub async fn proxy_request(
+    url: &str,
+    method: String,
+    headers: Option<HashMap<String, String>>,
+    body: Option<Value>,
+) -> Result<Value, String> {
+    let client = create_client();
+    
+    let mut request = match method.as_str() {
+        "GET" => client.get(url),
+        "POST" => client.post(url),
+        "PUT" => client.put(url),
+        "DELETE" => client.delete(url),
+        "PATCH" => client.patch(url),
+        _ => return Err(format!("Unsupported method: {}", method)),
+    };
+
+    if let Some(headers) = headers {
+        for (key, value) in headers {
+            request = request.header(&key, value);
+        }
+    }
+
+    if let Some(body) = body {
+        request = request.json(&body);
+    }
+
+    match request.send().await {
+        Ok(resp) => {
+            let status = resp.status();
+            let text = resp.text().await.map_err(|e| e.to_string())?;
+            
+            // Try to parse as JSON, fallback to string if fails
+            let json_body = serde_json::from_str(&text).unwrap_or(Value::String(text));
+
+            Ok(json!({
+                "status": status.as_u16(),
+                "statusText": status.canonical_reason().unwrap_or(""),
+                "data": json_body
+            }))
+        }
+        Err(e) => Err(format!("Request failed: {}", e)),
+    }
+}
+
+#[tauri::command]
 pub async fn clear_session() -> Result<(), String> {
     // Send logout request first
     let _ = get_api_data("/saml2?logout", HashMap::new()).await;
