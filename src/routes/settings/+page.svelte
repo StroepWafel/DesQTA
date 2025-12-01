@@ -189,6 +189,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'language',
         ],
       });
+      shortcuts = settings.shortcuts || [];
       feeds = settings.feeds || [];
       weatherEnabled = settings.weather_enabled ?? false;
       forceUseLocation = settings.force_use_location ?? false;

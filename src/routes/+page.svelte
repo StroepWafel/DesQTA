@@ -35,7 +35,7 @@
       const subset = await invoke<{ shortcuts?: Shortcut[] }>('get_settings_subset', {
         keys: ['shortcuts'],
       });
-      if (subset?.shortcuts && Array.isArray(subset.shortcuts) && subset.shortcuts.length > 0) {
+      if (subset?.shortcuts && Array.isArray(subset.shortcuts)) {
         homepageShortcuts = subset.shortcuts;
       }
     } catch (e) {
