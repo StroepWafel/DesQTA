@@ -283,8 +283,8 @@
 
   const syncCloudSettings = async () => {
     try {
-      // Initialize cloud auth from local storage
-      const cloudUser = cloudAuthService.init();
+      // Initialize cloud auth from current profile
+      const cloudUser = await cloudAuthService.init();
       if (cloudUser) {
         logger.info('layout', 'syncCloudSettings', 'Cloud user found, fetching settings');
         const settings = await cloudSettingsService.getSettings();

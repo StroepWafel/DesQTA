@@ -139,8 +139,8 @@ The Company reserves the right to terminate your access to the Service at any ti
   async function loadCloudUser() {
     cloudUserLoading = true;
     try {
-      // Initialize from local storage first
-      const user = cloudAuthService.init();
+      // Initialize from current profile
+      const user = await cloudAuthService.init();
       cloudUser = user;
 
       // If we have a user, verify session in background
@@ -148,9 +148,9 @@ The Company reserves the right to terminate your access to the Service at any ti
         cloudAuthService
           .getProfile()
           .then((u) => (cloudUser = u))
-          .catch(() => {
+          .catch(async () => {
             // Token likely expired
-            cloudAuthService.logout();
+            await cloudAuthService.logout();
             cloudUser = null;
           });
       }
@@ -430,7 +430,10 @@ The Company reserves the right to terminate your access to the Service at any ti
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    keyBuffer += event.key.toLowerCase();
+    if (!event.key || event.key.length !== 1) return;
+    const char = event.key.toLowerCase();
+    if (!/[a-z]/.test(char)) return;
+    keyBuffer += char;
     if (keyBuffer.length > 3) keyBuffer = keyBuffer.slice(-3);
     if (keyBuffer === 'dev') {
       showDevSettings = true;

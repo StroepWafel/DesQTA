@@ -5,6 +5,7 @@
   import { goto } from '$app/navigation';
   import { getRandomDicebearAvatar } from '../../utils/netUtil';
   import { onMount } from 'svelte';
+  import ProfileSwitcher from './ProfileSwitcher.svelte';
 
   interface UserInfo {
     clientIP: string;
@@ -178,6 +179,15 @@
             <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80">User guide & FAQ</div>
           </div>
         </button>
+
+        <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
+
+        <ProfileSwitcher
+          onProfileSwitch={() => {
+            onToggleUserDropdown();
+            // Reload the app to switch profiles
+            window.location.reload();
+          }} />
 
         <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
 

@@ -12,6 +12,7 @@ use std::{
     path::PathBuf,
 };
 use zeroize::Zeroize;
+use crate::profiles;
 
 /// Custom nonce sequence for AES-GCM
 struct CounterNonceSequence(u32);
@@ -114,42 +115,24 @@ impl SessionEncryption {
     }
 }
 
-/// Location: `$DATA_DIR/DesQTA/session.enc` (desktop) or `session.json` (mobile)
+/// Location: `$DATA_DIR/DesQTA/profiles/{profile_id}/session.enc` (desktop) or `session.json` (mobile)
 #[allow(dead_code)]
 pub fn session_file() -> PathBuf {
-    #[cfg(target_os = "android")]
+    let profile_id = profiles::ProfileManager::get_current_profile()
+        .map(|p| p.id)
+        .unwrap_or_else(|| "default".to_string());
+    
+    let mut dir = profiles::get_profile_dir(&profile_id);
+    
+    #[cfg(any(target_os = "android", target_os = "ios"))]
     {
-        // On Android, use the app's internal storage directory
-        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("session.json"); // Plain JSON on Android
-        dir
-    }
-    #[cfg(target_os = "ios")]
-    {
-        // On iOS, use the Documents directory
-        let mut dir = dirs_next::document_dir().expect("Unable to determine documents dir");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("session.json"); // Plain JSON on iOS
-        dir
+        dir.push("session.json"); // Plain JSON on mobile
     }
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        // e.g. %APPDATA%/DesQTA on Windows, ~/.local/share/DesQTA on Linux/macOS
-        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
         dir.push("session.enc"); // Encrypted on desktop platforms
-        dir
     }
+    dir
 }
 
 /// Saved session state.

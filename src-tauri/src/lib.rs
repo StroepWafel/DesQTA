@@ -34,6 +34,10 @@ mod seqta_mentions;
 mod session;
 #[path = "utils/settings.rs"]
 mod settings;
+#[path = "utils/profiles.rs"]
+mod profiles;
+#[path = "utils/migration.rs"]
+mod migration;
 #[path = "utils/theme_manager.rs"]
 mod theme_manager;
 #[path = "utils/todolist.rs"]
@@ -229,6 +233,10 @@ pub fn run() {
             login::force_reload,
             login::cleanup_login_windows,
             login::clear_webview_data,
+            profiles::get_current_profile,
+            profiles::list_profiles,
+            profiles::switch_profile,
+            profiles::delete_profile,
             settings::get_settings,
             settings::save_settings,
             settings::get_settings_json,
@@ -359,7 +367,12 @@ pub fn run() {
                 eprintln!("Failed to initialize logger: {}", e);
             }
             
-            // Initialize database
+            // Run migration before database initialization
+            if let Err(e) = migration::migrate_to_profiles_system() {
+                eprintln!("Failed to run migration: {}", e);
+            }
+            
+            // Initialize database (after migration and profile setup)
             if let Err(e) = database::init_database(app.app_handle()) {
                 eprintln!("Failed to initialize database: {}", e);
             }

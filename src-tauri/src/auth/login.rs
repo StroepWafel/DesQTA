@@ -12,12 +12,29 @@ use reqwest::cookie::Jar;
 
 use crate::netgrab;
 use crate::session;
+use crate::profiles;
 
 #[derive(Debug, Deserialize, Clone)]
 struct SeqtaSSOPayload {
     t: String, // JWT token
     u: String, // Server URL
     n: String, // User number
+}
+
+#[derive(Debug, Deserialize)]
+struct UserInfoResponse {
+    payload: UserInfoPayload,
+}
+
+#[derive(Debug, Deserialize)]
+struct UserInfoPayload {
+    id: i32,
+    #[serde(rename = "userName")]
+    user_name: String,
+    #[serde(rename = "displayName")]
+    display_name: Option<String>,
+    #[serde(rename = "userDesc")]
+    user_desc: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -59,17 +76,10 @@ pub async fn logout(app: tauri::AppHandle) -> bool {
         // Continue with logout even if cache clearing fails
     }
 
-    // Clear analytics data
-    if let Err(e) = crate::analytics::delete_analytics() {
-        println!(
-            "[AUTH] Warning: Failed to clear analytics data during logout: {}",
-            e
-        );
-        // Continue with logout even if analytics clearing fails
-    } else {
-        println!("[AUTH] Successfully cleared analytics data during logout");
-    }
+    // Note: We no longer delete analytics or other files on logout
+    // Files are preserved per profile for data retention
 
+    // Clear session (but keep files)
     if let Ok(_) = netgrab::clear_session().await {
         true
     } else {
@@ -208,6 +218,37 @@ fn decode_jwt(token: &str) -> Result<SeqtaJWT, String> {
         .map_err(|e| format!("Failed to parse JWT payload: {}", e))?;
 
     Ok(result)
+}
+
+/// Fetch user info from SEQTA API
+async fn fetch_user_info(base_url: &str, jsessionid: &str) -> Result<UserInfoPayload, String> {
+    let login_url = format!("{}/seqta/student/login", base_url);
+    let client = reqwest::Client::builder()
+        .cookie_store(true)
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+    
+    let cookie_header = format!("JSESSIONID={}", jsessionid);
+    let response = client
+        .post(&login_url)
+        .header("Cookie", cookie_header)
+        .header("Content-Type", "application/json; charset=utf-8")
+        .json(&serde_json::json!({}))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch user info: {}", e))?;
+    
+    if !response.status().is_success() {
+        return Err(format!("Failed to fetch user info: HTTP {}", response.status()));
+    }
+    
+    let response_text = response.text().await
+        .map_err(|e| format!("Failed to read response: {}", e))?;
+    
+    let user_response: UserInfoResponse = serde_json::from_str(&response_text)
+        .map_err(|e| format!("Failed to parse user info: {}", e))?;
+    
+    Ok(user_response.payload)
 }
 
 /// Validate a JWT token
@@ -357,7 +398,21 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
         // Perform the QR authentication flow
         let session = perform_qr_auth(sso_payload).await?;
 
-        // Save the session
+        // Fetch user info to create/get profile
+        let user_info = fetch_user_info(&session.base_url, &session.jsessionid).await?;
+        
+        // Create or get profile
+        let profile = profiles::ProfileManager::get_or_create_profile(
+            session.base_url.clone(),
+            user_info.id,
+            user_info.user_desc.or(user_info.display_name).or(Some(user_info.user_name.clone())),
+        ).map_err(|e| format!("Failed to create/get profile: {}", e))?;
+        
+        // Set as current profile
+        profiles::ProfileManager::set_current_profile(profile.id.clone())
+            .map_err(|e| format!("Failed to set current profile: {}", e))?;
+
+        // Save the session (now in profile directory)
         session
             .save()
             .map_err(|e| format!("Failed to save session: {}", e))?;
@@ -532,10 +587,29 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
 
                                                 // Save session with all cookies
                                                 let session = session::Session {
-                                                    base_url,
-                                                    jsessionid: value,
+                                                    base_url: base_url.clone(),
+                                                    jsessionid: value.clone(),
                                                     additional_cookies,
                                                 };
+
+                                                // Fetch user info to create/get profile
+                                                match fetch_user_info(&base_url, &value).await {
+                                                    Ok(user_info) => {
+                                                        // Create or get profile
+                                                        if let Ok(profile) = profiles::ProfileManager::get_or_create_profile(
+                                                            base_url.clone(),
+                                                            user_info.id,
+                                                            user_info.user_desc.or(user_info.display_name).or(Some(user_info.user_name.clone())),
+                                                        ) {
+                                                            // Set as current profile
+                                                            let _ = profiles::ProfileManager::set_current_profile(profile.id.clone());
+                                                        }
+                                                    }
+                                                    Err(e) => {
+                                                        println!("[AUTH] Warning: Failed to fetch user info for profile creation: {}", e);
+                                                        // Continue anyway - profile will be created on next login
+                                                    }
+                                                }
 
                                                 let _ = session.save();
 
