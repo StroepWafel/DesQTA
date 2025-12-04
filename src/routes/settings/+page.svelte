@@ -23,10 +23,24 @@
     Cog,
     Squares2x2,
     User,
+    Bars3,
+    Home,
+    Newspaper,
+    ClipboardDocumentList,
+    BookOpen,
+    ChatBubbleLeftRight,
+    DocumentText,
+    AcademicCap,
+    ChartBar,
+    Cog6Tooth,
+    CalendarDays,
+    GlobeAlt,
+    PencilSquare,
   } from 'svelte-hero-icons';
   import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
+  import MenuOrderDialog from '../../lib/components/MenuOrderDialog.svelte';
   import LanguageSelector from '../../lib/components/LanguageSelector.svelte';
   import Card from '../../lib/components/ui/Card.svelte';
   import T from '../../lib/components/T.svelte';
@@ -89,6 +103,24 @@
   let updateVersion = '';
   let updateNotes = '';
   let isDesktop = false;
+  let showMenuOrderDialog = false;
+
+  // Menu configuration (same as in layout)
+  const DEFAULT_MENU = [
+    { labelKey: 'navigation.dashboard', icon: Home, path: '/' },
+    { labelKey: 'navigation.courses', icon: BookOpen, path: '/courses' },
+    { labelKey: 'navigation.assessments', icon: ClipboardDocumentList, path: '/assessments' },
+    { labelKey: 'navigation.timetable', icon: CalendarDays, path: '/timetable' },
+    { labelKey: 'navigation.study', icon: PencilSquare, path: '/study' },
+    { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
+    { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },
+    { labelKey: 'navigation.news', icon: Newspaper, path: '/news' },
+    { labelKey: 'navigation.directory', icon: User, path: '/directory' },
+    { labelKey: 'navigation.reports', icon: ChartBar, path: '/reports' },
+    { labelKey: 'navigation.analytics', icon: AcademicCap, path: '/analytics' },
+    { labelKey: 'navigation.settings', icon: Cog6Tooth, path: '/settings' },
+  ];
 
   // Inline EULA text (can be updated here)
   const CLOUD_EULA_TEXT = `
@@ -1317,6 +1349,17 @@ The Company reserves the right to terminate your access to the Service at any ti
                 When enabled and the sidebar is collapsed, hovering near the left edge will
                 temporarily expand the sidebar for easy navigation.
               </p>
+              <div class="mt-4">
+                <button
+                  onclick={() => (showMenuOrderDialog = true)}
+                  class="flex gap-2 items-center px-4 py-2 text-sm font-medium text-white rounded-lg transition-all duration-200 transform accent-bg hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+                  <Icon src={Bars3} class="w-5 h-5" />
+                  <T key="settings.reorder_pages" fallback="Reorder Pages" />
+                </button>
+                <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  Customize the order of pages in the sidebar navigation.
+                </p>
+              </div>
               <div class="flex gap-4 items-center mt-4 mb-4">
                 <input
                   id="global-search-enabled"
@@ -1881,6 +1924,19 @@ The Company reserves the right to terminate your access to the Service at any ti
 
 <!-- Troubleshooting Modal -->
 <TroubleshootingModal open={showTroubleshootingModal} onclose={closeTroubleshootingModal} />
+
+<!-- Menu Order Dialog -->
+<MenuOrderDialog
+  open={showMenuOrderDialog}
+  menu={DEFAULT_MENU}
+  onClose={() => (showMenuOrderDialog = false)}
+  onSave={async (orderedMenu) => {
+    const menuOrder = orderedMenu.map(item => item.path);
+    await saveSettingsWithQueue({ menu_order: menuOrder });
+    await flushSettingsQueue();
+    notify.success('Menu order saved. Page will reload to apply changes.');
+    setTimeout(() => location.reload(), 1500);
+  }} />
 
 {#if showEulaModal}
   <div class="flex fixed inset-0 z-50 justify-center items-center">

@@ -92,6 +92,8 @@ pub struct Settings {
     pub dev_force_offline_mode: bool,
     pub accepted_cloud_eula: bool,
     pub language: String,
+    #[serde(default)]
+    pub menu_order: Option<Vec<String>>,
 }
 
 impl Default for Settings {
@@ -120,6 +122,7 @@ impl Default for Settings {
             dev_force_offline_mode: false,
             accepted_cloud_eula: false,
             language: "en".to_string(), // Default to English
+            menu_order: None,
         }
     }
 }
@@ -252,6 +255,16 @@ impl Settings {
         let get_opt_bool =
             |json: &serde_json::Value, key: &str| json.get(key).and_then(|v| v.as_bool());
 
+        let get_opt_string_array = |json: &serde_json::Value, key: &str| -> Option<Vec<String>> {
+            json.get(key)
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .collect()
+                })
+        };
+
         // Merge shortcuts
         let shortcuts_json = get_array(&existing_json, "shortcuts");
         let mut shortcuts = Vec::new();
@@ -364,6 +377,7 @@ impl Settings {
         );
         default_settings.language =
             get_string(&existing_json, "language", &default_settings.language);
+        default_settings.menu_order = get_opt_string_array(&existing_json, "menu_order");
 
         default_settings
     }

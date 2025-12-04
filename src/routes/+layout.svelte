@@ -573,10 +573,52 @@
       }
 
       menu = [...DEFAULT_MENU]; // Use default menu configuration
+      
+      // Apply menu order from settings
+      await applyMenuOrder();
     } catch (e) {
       logger.error('layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', { error: e });
     } finally {
       menuLoading = false;
+    }
+  };
+
+  const applyMenuOrder = async () => {
+    try {
+      const settings = await loadSettings(['menu_order']);
+      const menuOrder = settings.menu_order as string[] | undefined;
+      
+      if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
+        // Create a map of paths to menu items for quick lookup
+        const menuMap = new Map(DEFAULT_MENU.map(item => [item.path, item]));
+        
+        // Reorder menu based on saved order, keeping any new items at the end
+        const orderedMenu: typeof DEFAULT_MENU = [];
+        const addedPaths = new Set<string>();
+        
+        // Add items in saved order
+        for (const path of menuOrder) {
+          const item = menuMap.get(path);
+          if (item) {
+            orderedMenu.push(item);
+            addedPaths.add(path);
+          }
+        }
+        
+        // Add any items not in saved order (new items)
+        for (const item of DEFAULT_MENU) {
+          if (!addedPaths.has(item.path)) {
+            orderedMenu.push(item);
+          }
+        }
+        
+        menu = orderedMenu;
+      } else {
+        menu = [...DEFAULT_MENU];
+      }
+    } catch (e) {
+      logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
+      menu = [...DEFAULT_MENU];
     }
   };
 
