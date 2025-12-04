@@ -4,6 +4,17 @@
 
   // $lib/ imports
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
+  import { SearchInput, LoadingSpinner, EmptyState, Button } from '$lib/components/ui';
+  import {
+    Icon,
+    ChevronLeft,
+    ChevronRight,
+    ExclamationTriangle,
+    DocumentText,
+    Clock,
+    BookOpen,
+    AcademicCap,
+  } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
 
@@ -339,17 +350,10 @@
             selectedLessonContent = null;
             showingOverview = true;
           }}
-          class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+          class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
           title={$_('courses.back_to_subjects') || 'Back to subjects'}
           aria-label={$_('courses.back_to_subjects') || 'Back to subjects'}>
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <Icon src={ChevronLeft} class="w-5 h-5" />
         </button>
       {/if}
     </div>
@@ -364,39 +368,29 @@
         <div class="flex flex-col h-full">
           <!-- Search Bar -->
           <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
-            <div class="relative">
-              <input
-                type="text"
-                placeholder={$_('courses.search_subjects') || 'Search subjects...'}
-                class="px-4 py-2 w-full bg-white rounded-lg border border-zinc-200 transition-all duration-200 dark:bg-zinc-800 dark:border-zinc-700 focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent"
-                bind:value={search} />
-              <svg
-                class="absolute right-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
+            <SearchInput
+              bind:value={search}
+              placeholder={$_('courses.search_subjects') || 'Search subjects...'}
+              size="sm"
+              class="w-full" />
           </div>
 
           <!-- Subject List -->
           <div class="overflow-y-auto flex-1">
             {#if loading}
               <div class="flex justify-center items-center p-8">
-                <div
-                  class="w-8 h-8 rounded-full border-4 animate-spin border-accent/30 border-t-accent">
-                </div>
-                <span class="ml-3 text-zinc-600 dark:text-zinc-400">
-                  <T key="courses.loading_subjects" fallback="Loading subjects..." />
-                </span>
+                <LoadingSpinner
+                  size="sm"
+                  message={$_('courses.loading_subjects') || 'Loading subjects...'} />
               </div>
             {:else if error}
-              <div class="p-6 text-center text-red-500">⚠️ {error}</div>
+              <div class="p-6">
+                <EmptyState
+                  title={$_('courses.error_loading_subjects') || 'Error loading subjects'}
+                  message={error}
+                  icon={ExclamationTriangle}
+                  size="sm" />
+              </div>
             {:else}
               <!-- Active Subjects -->
               <div class="px-4 py-3">
@@ -406,8 +400,13 @@
                 </h3>
                 <div class="mt-2 space-y-1">
                   {#if activeSubjects.length === 0}
-                    <div class="py-2 text-sm text-zinc-500 dark:text-zinc-400">
-                      No subjects available
+                    <div class="py-4">
+                      <EmptyState
+                        title={$_('courses.no_subjects_available') || 'No subjects available'}
+                        message={$_('courses.no_subjects_message') ||
+                          'There are no active subjects to display.'}
+                        icon={BookOpen}
+                        size="sm" />
                     </div>
                   {:else}
                     {#each activeSubjects.filter(subjectMatches) as subject}
@@ -439,18 +438,10 @@
                           onclick={() =>
                             (expandedFolders[folder.code] = !expandedFolders[folder.code])}>
                           <span>{folder.code}</span>
-                          <svg
+                          <Icon
+                            src={ChevronRight}
                             class="w-4 h-4 transition-transform duration-200"
-                            style="transform: rotate({expandedFolders[folder.code] ? 90 : 0}deg)"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M9 5l7 7-7 7" />
-                          </svg>
+                            style="transform: rotate({expandedFolders[folder.code] ? 90 : 0}deg)" />
                         </button>
                         {#if expandedFolders[folder.code]}
                           <div class="mt-2 ml-4 space-y-2">
@@ -486,16 +477,17 @@
         <div class="flex flex-col h-full">
           {#if loadingCourse}
             <div class="flex flex-1 justify-center items-center">
-              <div
-                class="w-8 h-8 rounded-full border-4 animate-spin border-accent/30 border-t-accent">
-              </div>
-              <span class="ml-3 text-zinc-600 dark:text-zinc-400">
-                <T key="courses.loading_course" fallback="Loading course..." />
-              </span>
+              <LoadingSpinner
+                size="sm"
+                message={$_('courses.loading_course') || 'Loading course...'} />
             </div>
           {:else if courseError}
-            <div class="flex flex-1 justify-center items-center text-red-500">
-              ⚠️ {courseError}
+            <div class="flex flex-1 justify-center items-center p-6">
+              <EmptyState
+                title={$_('courses.error_loading_course') || 'Error loading course'}
+                message={courseError}
+                icon={ExclamationTriangle}
+                size="sm" />
             </div>
           {:else if coursePayload}
             <!-- Quick Actions -->
@@ -506,8 +498,9 @@
                     ? 'bg-accent text-white border-accent'
                     : 'bg-accent/10 border-accent/20 hover:bg-accent/20'}"
                   onclick={() => selectOverview()}>
-                  <div class="font-semibold">
-                    📚 <T key="courses.course_overview" fallback="Course Overview" />
+                  <div class="flex items-center gap-2 font-semibold">
+                    <Icon src={BookOpen} class="w-5 h-5" />
+                    <T key="courses.course_overview" fallback="Course Overview" />
                   </div>
                   <div class="mt-1 text-sm opacity-80">
                     <T
@@ -553,8 +546,10 @@
                           jumpTarget.lesson,
                           jumpTarget.lessonIndex,
                         )}>
-                      <div class="font-semibold text-green-800 dark:text-green-300">
-                        🕐 {jumpTarget.type === 'today'
+                      <div
+                        class="flex items-center gap-2 font-semibold text-green-800 dark:text-green-300">
+                        <Icon src={Clock} class="w-5 h-5" />
+                        {jumpTarget.type === 'today'
                           ? $_('courses.todays_lesson') || "Today's Lesson"
                           : $_('courses.latest_lesson') || 'Latest Lesson'}
                       </div>
@@ -620,26 +615,17 @@
   <div class="overflow-y-auto flex-1" bind:this={contentScrollContainer}>
     {#if loadingCourse}
       <div class="flex justify-center items-center h-full">
-        <div class="text-center">
-          <div
-            class="mx-auto mb-4 w-12 h-12 rounded-full border-4 animate-spin border-accent/30 border-t-accent">
-          </div>
-          <div class="text-lg text-zinc-600 dark:text-zinc-300">
-            <T key="courses.loading_content" fallback="Loading course content..." />
-          </div>
-        </div>
+        <LoadingSpinner
+          size="md"
+          message={$_('courses.loading_content') || 'Loading course content...'} />
       </div>
     {:else if courseError}
-      <div class="flex justify-center items-center h-full">
-        <div class="text-center text-red-500">
-          <div class="mb-4 text-6xl">⚠️</div>
-          <div class="text-lg">
-            <T
-              key="courses.error_loading"
-              fallback="Error loading course: {error}"
-              values={{ error: courseError }} />
-          </div>
-        </div>
+      <div class="flex justify-center items-center h-full p-6">
+        <EmptyState
+          title={$_('courses.error_loading_title') || 'Error loading course'}
+          message={courseError}
+          icon={ExclamationTriangle}
+          size="md" />
       </div>
     {:else if coursePayload}
       <div class="h-full">
@@ -652,18 +638,13 @@
         </div>
       </div>
     {:else}
-      <div class="flex justify-center items-center h-full">
-        <div class="text-center text-zinc-500 dark:text-zinc-400">
-          <div class="mb-4 text-6xl">🎓</div>
-          <div class="mb-2 text-xl">
-            <T key="courses.welcome" fallback="Welcome to Courses" />
-          </div>
-          <div class="text-lg">
-            <T
-              key="courses.select_subject"
-              fallback="Select a subject from the sidebar to get started" />
-          </div>
-        </div>
+      <div class="flex justify-center items-center h-full p-6">
+        <EmptyState
+          title={$_('courses.welcome') || 'Welcome to Courses'}
+          message={$_('courses.select_subject') ||
+            'Select a subject from the sidebar to get started'}
+          icon={AcademicCap}
+          size="lg" />
       </div>
     {/if}
   </div>

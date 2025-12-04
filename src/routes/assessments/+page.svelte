@@ -15,6 +15,7 @@
   import AssessmentGanttView from '$lib/components/AssessmentGanttView.svelte';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
+  import { ClipboardDocumentList } from 'svelte-hero-icons';
   import { _ } from '$lib/i18n';
 
   // Relative imports
@@ -337,7 +338,7 @@
             selectedYear.toString(),
           ) || `No assessments for ${selectedYear}!`}
           message={$_('assessments.try_different_year') || 'Try selecting a different year.'}
-          icon="🎉" />
+          icon={ClipboardDocumentList} />
       </div>
     {:else}
       <!-- Board View Options -->

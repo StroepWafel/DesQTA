@@ -3,14 +3,16 @@
   import { invoke } from '@tauri-apps/api/core';
   import type { AnalyticsData, Assessment } from '$lib/types';
   import { fade } from 'svelte/transition';
-  import { Button } from '$lib/components/ui';
+  import { Button, Badge, SearchInput, EmptyState } from '$lib/components/ui';
+  import { ExclamationTriangle, ChartBar } from 'svelte-hero-icons';
   import RawDataTable from '$lib/components/RawDataTable.svelte';
   import AnalyticsAreaChart from '$lib/components/analytics/AnalyticsAreaChart.svelte';
   import AnalyticsBarChart from '$lib/components/analytics/AnalyticsBarChart.svelte';
   import * as Card from '$lib/components/ui/card/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
+  import * as Label from '$lib/components/ui/label/index.js';
   import { Slider } from '$lib/components/ui/slider/index.js';
-  import { Icon, MagnifyingGlass } from 'svelte-hero-icons';
+  import { Icon } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
@@ -307,13 +309,10 @@
           <T key="navigation.analytics" fallback="Analytics" />
         </h1>
         {#if syncing}
-          <div
-            class="flex items-center gap-2 px-3 py-1 text-sm text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-950/30 rounded-lg">
-            <div
-              class="w-4 h-4 rounded-full border-2 border-accent-600 dark:border-accent-400 border-t-transparent animate-spin">
-            </div>
-            <span><T key="analytics.syncing" fallback="Syncing..." /></span>
-          </div>
+          <Badge variant="primary" size="sm" class="animate-pulse">
+            <div class="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin mr-1"></div>
+            <T key="analytics.syncing" fallback="Syncing..." />
+          </Badge>
         {/if}
       </div>
       <p class="text-zinc-600 dark:text-zinc-400">
@@ -331,7 +330,7 @@
 
   {#if loading}
     <div class="flex justify-center items-center h-64">
-      <div class="w-12 h-12 rounded-full border-b-2 border-accent-600 animate-spin"></div>
+      <div class="w-12 h-12 rounded-full border-4 border-accent-600/30 border-t-accent-600 animate-spin"></div>
     </div>
   {:else if analyticsData && analyticsData.length > 0}
     <!-- Compact filters near heading -->
@@ -358,10 +357,10 @@
         </Select.Content>
       </Select.Root>
 
-      <div class="flex items-center gap-2 pl-2">
-        <span class="text-xs text-zinc-500 dark:text-zinc-400">
+      <div class="flex items-center gap-2">
+        <Label.Root class="text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
           <T key="analytics.grade_range" fallback="Grade Range" />
-        </span>
+        </Label.Root>
         <div class="flex items-center gap-2 w-48">
           <Slider
             type="multiple"
@@ -376,15 +375,12 @@
         </div>
       </div>
 
-      <div class="relative ml-auto">
-        <Icon
-          src={MagnifyingGlass}
-          class="absolute left-2 top-1/2 size-4 transform -translate-y-1/2 text-zinc-500 dark:text-zinc-400" />
-        <input
-          type="text"
-          placeholder={$_('analytics.search_placeholder') || 'Search assessments...'}
+      <div class="ml-auto">
+        <SearchInput
           bind:value={filterSearch}
-          class="flex pl-7 h-9 w-56 rounded-md border border-zinc-200 bg-white dark:bg-zinc-900 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 dark:border-zinc-700 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300" />
+          placeholder={$_('analytics.search_placeholder') || 'Search assessments...'}
+          size="sm"
+          class="w-56" />
       </div>
     </div>
 
@@ -413,22 +409,18 @@
       {/if}
     </div>
   {:else}
-    <div class="flex flex-col items-center justify-center py-12 text-center">
-      <div class="mb-4 text-zinc-500 dark:text-zinc-400">
-        <T key="analytics.no_data_available" fallback="No analytics data available" />
-      </div>
-      {#if error}
-        <div
-          class="px-4 py-2 text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-          {error}
-        </div>
-      {:else}
-        <p class="text-sm text-zinc-400 dark:text-zinc-500">
-          <T
-            key="analytics.syncing_automatically"
-            fallback="Data syncs automatically when you visit this page. If you have assessments with released marks, they will appear here." />
-        </p>
-      {/if}
-    </div>
+    {#if error}
+      <EmptyState
+        title={$_('analytics.no_data_available') || 'No analytics data available'}
+        message={error}
+        icon={ExclamationTriangle}
+        size="md" />
+    {:else}
+      <EmptyState
+        title={$_('analytics.no_data_available') || 'No analytics data available'}
+        message={$_('analytics.syncing_automatically') || 'Data syncs automatically when you visit this page. If you have assessments with released marks, they will appear here.'}
+        icon={ChartBar}
+        size="md" />
+    {/if}
   {/if}
 </div>

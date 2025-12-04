@@ -1,41 +1,52 @@
 <script lang="ts">
+  import { Icon } from 'svelte-hero-icons';
+  import { DocumentText } from 'svelte-hero-icons';
+
   interface Props {
     title: string;
     message: string;
-    icon?: string;
+    icon?: any;
     size?: 'sm' | 'md' | 'lg';
   }
 
-  let { title, message, icon = '🎉', size = 'md' }: Props = $props();
+  let { title, message, icon = DocumentText, size = 'md' }: Props = $props();
 
   const iconSizes = {
-    sm: 'text-xl',
-    md: 'text-2xl',
-    lg: 'text-3xl'
+    sm: 'w-6 h-6',
+    md: 'w-8 h-8',
+    lg: 'w-10 h-10',
+  };
+
+  const iconContainerSizes = {
+    sm: 'w-16 h-16',
+    md: 'w-20 h-20',
+    lg: 'w-24 h-24',
   };
 
   const titleSizes = {
     sm: 'text-base',
     md: 'text-lg',
-    lg: 'text-xl'
+    lg: 'text-xl',
   };
 
   const messageSizes = {
     sm: 'text-sm',
     md: 'text-base',
-    lg: 'text-lg'
+    lg: 'text-lg',
   };
 </script>
 
 <div class="flex flex-col justify-center items-center py-12 sm:py-16">
   <div
-    class="flex items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-purple-600 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient {iconSizes[size]}">
-    {icon}
+    class="flex items-center justify-center rounded-full {iconContainerSizes[
+      size
+    ]} bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400 shadow-lg accent-shadow transition-all duration-200">
+    <Icon src={icon} class={iconSizes[size]} />
   </div>
-  <p class="mt-4 {titleSizes[size]} text-zinc-700 dark:text-zinc-300">
+  <p class="mt-4 {titleSizes[size]} font-semibold text-zinc-900 dark:text-white">
     {title}
   </p>
-  <p class="mt-2 {messageSizes[size]} text-zinc-600 dark:text-zinc-400">
+  <p class="mt-2 {messageSizes[size]} text-zinc-600 dark:text-zinc-400 text-center max-w-md">
     {message}
   </p>
-</div> 
+</div>

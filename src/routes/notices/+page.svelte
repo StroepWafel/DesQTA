@@ -5,6 +5,10 @@
   // $lib/ imports
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import { useDataLoader } from '$lib/utils/useDataLoader';
+  import { EmptyState, LoadingSpinner } from '$lib/components/ui';
+  import { ExclamationTriangle, DocumentText } from 'svelte-hero-icons';
+  import * as Select from '$lib/components/ui/select/index.js';
+  import * as Label from '$lib/components/ui/label/index.js';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
 
@@ -32,10 +36,11 @@
   let notices: Notice[] = $state([]);
   let labels: Label[] = $state([]);
   let selectedLabel: number | null = $state(null);
+  let selectedLabelString = $state<string | undefined>(undefined);
   let loading = $state(true);
   let error = $state<string | null>(null);
   let selectedDate = $state(new Date());
-  
+
   // Notice row height for virtual scrolling (estimated)
   const NOTICE_ROW_HEIGHT = 420; // h-96 + gap-6
 
@@ -102,7 +107,9 @@
         return;
       }
 
-      error = $_('notices.offline_no_cache') || 'No cached notices available. Please go online to fetch notices.';
+      error =
+        $_('notices.offline_no_cache') ||
+        'No cached notices available. Please go online to fetch notices.';
       notices = [];
       loading = false;
       return;
@@ -111,7 +118,8 @@
     // Online: Use useDataLoader but always fetch fresh (skip cache for fresh data)
     try {
       // First check cache for instant display
-      const cached = cache.get<Notice[]>(key) || (await getWithIdbFallback<Notice[]>(key, key, () => null));
+      const cached =
+        cache.get<Notice[]>(key) || (await getWithIdbFallback<Notice[]>(key, key, () => null));
       if (cached) {
         notices = cached;
         loading = false;
@@ -182,7 +190,9 @@
   }
 
   // Filter notices based on selected label
-  const filteredNotices = $derived(notices.filter((n) => !selectedLabel || n.labelId === selectedLabel));
+  const filteredNotices = $derived(
+    notices.filter((n) => !selectedLabel || n.labelId === selectedLabel),
+  );
 </script>
 
 <div class="p-6">
@@ -195,44 +205,62 @@
         type="date"
         value={formatDate(selectedDate)}
         onchange={updateDate}
-        class="px-4 py-2 bg-white rounded-lg border text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
+        class="px-4 py-2 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors duration-200" />
     </div>
   </div>
 
   <!-- Label filter dropdown -->
   {#if labels.length > 0}
     <div class="flex gap-2 items-center mb-6">
-      <label for="label-select" class="font-semibold text-sm mr-2">
+      <Label.Root class="font-semibold text-sm">
         <T key="notices.label" fallback="Label:" />
-      </label>
-      <select
-        id="label-select"
-        class="px-4 py-2 rounded-lg border text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-        bind:value={selectedLabel}
-        onchange={(e) => {
-          const target = e.target as HTMLSelectElement;
-          selectedLabel = target.value === '' ? null : +target.value;
+      </Label.Root>
+      <Select.Root
+        type="single"
+        bind:value={selectedLabelString}
+        onValueChange={(value) => {
+          selectedLabelString = value;
+          selectedLabel = value === undefined || value === 'all' ? null : +value;
         }}>
-        <option value="">
-          <T key="notices.all" fallback="All" />
-        </option>
-        {#each labels as label}
-          <option value={label.id}>{label.title}</option>
-        {/each}
-      </select>
+        <Select.Trigger class="w-44">
+          <span class="truncate">
+            {#if selectedLabelString === undefined}
+              <T key="notices.all" fallback="All" />
+            {:else}
+              {labels.find((l) => l.id.toString() === selectedLabelString)?.title || ''}
+            {/if}
+          </span>
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="all" label={$_('notices.all') || 'All'}>
+            <T key="notices.all" fallback="All" />
+          </Select.Item>
+          {#each labels as label}
+            <Select.Item value={label.id.toString()} label={label.title}>
+              {label.title}
+            </Select.Item>
+          {/each}
+        </Select.Content>
+      </Select.Root>
     </div>
   {/if}
 
   {#if loading}
-    <div class="p-8 text-center text-(--text-muted)">
-      <T key="notices.loading" fallback="Loading notices..." />
+    <div class="flex justify-center items-center py-12">
+      <LoadingSpinner size="md" message={$_('notices.loading') || 'Loading notices...'} />
     </div>
   {:else if error}
-    <div class="p-8 text-center text-red-500">{error}</div>
+    <EmptyState
+      title={$_('notices.error_title') || 'Error loading notices'}
+      message={error}
+      icon={ExclamationTriangle}
+      size="md" />
   {:else if filteredNotices.length === 0}
-    <div class="p-8 text-center text-(--text-muted)">
-      <T key="notices.no_notices_found" fallback="No notices found for the selected criteria." />
-    </div>
+    <EmptyState
+      title={$_('notices.no_notices_found') || 'No notices found'}
+      message={$_('notices.no_notices_message') || 'No notices found for the selected criteria.'}
+      icon={DocumentText}
+      size="md" />
   {:else}
     <!-- Use regular grid -->
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

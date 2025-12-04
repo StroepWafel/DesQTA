@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
-  import { ArrowPath, ExclamationTriangle } from 'svelte-hero-icons';
+  import { ArrowPath, ExclamationTriangle, Inbox } from 'svelte-hero-icons';
   import LoadingSpinner from '../LoadingSpinner.svelte';
   import EmptyState from '../EmptyState.svelte';
   import ErrorBoundary from '../ErrorBoundary.svelte';
@@ -13,7 +13,7 @@
     empty?: boolean;
     emptyTitle?: string;
     emptyMessage?: string;
-    emptyIcon?: string;
+    emptyIcon?: any;
     loadingMessage?: string;
     retryable?: boolean;
     componentName?: string;
@@ -31,7 +31,7 @@
     empty = false,
     emptyTitle = 'No data found',
     emptyMessage = 'There is no data to display at the moment.',
-    emptyIcon = '📭',
+    emptyIcon = Inbox,
     loadingMessage = 'Loading...',
     retryable = true,
     componentName = 'AsyncWrapper',
