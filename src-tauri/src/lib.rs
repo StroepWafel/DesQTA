@@ -46,6 +46,7 @@ mod todolist;
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use serde_json;
 use std::cell::Cell;
+use std::fs;
 #[cfg(desktop)]
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 #[cfg(desktop)]
@@ -363,6 +364,55 @@ pub fn run() {
             seqta_mentions::fetch_lesson_content_cmd
         ])
         .setup(|app| {
+            // --- START: Auto-Clear Cache on Update ---
+            use dirs_next;
+            use std::path::PathBuf;
+
+            // Get the app data directory (consistent with rest of codebase: AppData/Roaming/DesQTA)
+            let app_data_dir = if cfg!(target_os = "android") {
+                let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+                dir.push("DesQTA");
+                dir
+            } else {
+                let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
+                dir.push("DesQTA");
+                dir
+            };
+
+            let version_file = app_data_dir.join("last_run_version");
+            let current_version = app.package_info().version.to_string();
+
+            // Ensure app data directory exists
+            if !app_data_dir.exists() {
+                let _ = fs::create_dir_all(&app_data_dir);
+            }
+
+            // Read the previous version
+            let last_version = fs::read_to_string(&version_file).unwrap_or_default();
+
+            // If versions differ, clear the cache
+            if current_version != last_version {
+                println!(
+                    "[DesQTA] Version changed from '{}' to '{}'. Clearing webview cache...",
+                    last_version, current_version
+                );
+
+                // Get the main window and clear data
+                if let Some(window) = app.webview_windows().get("main") {
+                    // clear_all_browsing_data() is available in Tauri v2
+                    // This wipes cache, cookies, and localStorage to ensure clean loading
+                    if let Err(e) = window.clear_all_browsing_data() {
+                        eprintln!("[DesQTA] Failed to clear webview data: {}", e);
+                    } else {
+                        println!("[DesQTA] Webview data cleared successfully.");
+                    }
+                }
+
+                // Update the version file
+                let _ = fs::write(&version_file, &current_version);
+            }
+            // --- END: Auto-Clear Cache on Update ---
+
             // Initialize logger first
             if let Err(e) = logger::init_logger() {
                 eprintln!("Failed to initialize logger: {}", e);
