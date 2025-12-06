@@ -144,13 +144,7 @@
 
   let unlisten: (() => void) | undefined;
 
-  const setupServiceWorkerAndListeners = async () => {
-    // Register service worker for offline static assets
-    if ('serviceWorker' in navigator) {
-      try {
-        await navigator.serviceWorker.register('/sw.js');
-      } catch {}
-    }
+  const setupListeners = async () => {
     logger.debug('layout', 'onMount', 'Setting up reload listener');
     unlisten = await listen<string>('reload', () => {
       logger.info('layout', 'reload_listener', 'Received reload event');
@@ -289,8 +283,8 @@
 
   const syncCloudSettings = async () => {
     try {
-      // Initialize cloud auth from local storage
-      const cloudUser = cloudAuthService.init();
+      // Initialize cloud auth from current profile
+      const cloudUser = await cloudAuthService.init();
       if (cloudUser) {
         logger.info('layout', 'syncCloudSettings', 'Cloud user found, fetching settings');
         const settings = await cloudSettingsService.getSettings();
@@ -348,6 +342,19 @@
     await weather.fetchWeather(useIP);
   };
 
+  const sendAnalytics = async () => {
+    try {
+      await invoke('proxy_request', {
+        url: 'https://betterseqta.org/api/analytics/desqta',
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: {},
+      });
+    } catch (e) {
+      logger.debug('layout', 'sendAnalytics', 'Failed to send analytics', { error: e });
+    }
+  };
+
   $effect(() => {
     document.documentElement.setAttribute('data-accent-color', '');
     document.documentElement.style.setProperty('--accent-color-value', $accentColor);
@@ -377,7 +384,7 @@
 
   onMount(async () => {
     logger.logComponentMount('layout');
-    setupServiceWorkerAndListeners();
+    setupListeners();
 
     // Initialize theme and i18n first
     await Promise.all([loadAccentColor(), loadTheme(), loadCurrentTheme(), initI18n()]);
@@ -447,6 +454,9 @@
 
       // Run a one-time heartbeat health check on app open
       await healthCheck();
+
+      // Send startup analytics
+      sendAnalytics();
 
       // Check and apply initial fullscreen styling
       try {
@@ -563,10 +573,52 @@
       }
 
       menu = [...DEFAULT_MENU]; // Use default menu configuration
+      
+      // Apply menu order from settings
+      await applyMenuOrder();
     } catch (e) {
       logger.error('layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', { error: e });
     } finally {
       menuLoading = false;
+    }
+  };
+
+  const applyMenuOrder = async () => {
+    try {
+      const settings = await loadSettings(['menu_order']);
+      const menuOrder = settings.menu_order as string[] | undefined;
+      
+      if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
+        // Create a map of paths to menu items for quick lookup
+        const menuMap = new Map(DEFAULT_MENU.map(item => [item.path, item]));
+        
+        // Reorder menu based on saved order, keeping any new items at the end
+        const orderedMenu: typeof DEFAULT_MENU = [];
+        const addedPaths = new Set<string>();
+        
+        // Add items in saved order
+        for (const path of menuOrder) {
+          const item = menuMap.get(path);
+          if (item) {
+            orderedMenu.push(item);
+            addedPaths.add(path);
+          }
+        }
+        
+        // Add any items not in saved order (new items)
+        for (const item of DEFAULT_MENU) {
+          if (!addedPaths.has(item.path)) {
+            orderedMenu.push(item);
+          }
+        }
+        
+        menu = orderedMenu;
+      } else {
+        menu = [...DEFAULT_MENU];
+      }
+    } catch (e) {
+      logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
+      menu = [...DEFAULT_MENU];
     }
   };
 

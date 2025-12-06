@@ -34,6 +34,10 @@ mod seqta_mentions;
 mod session;
 #[path = "utils/settings.rs"]
 mod settings;
+#[path = "utils/profiles.rs"]
+mod profiles;
+#[path = "utils/migration.rs"]
+mod migration;
 #[path = "utils/theme_manager.rs"]
 mod theme_manager;
 #[path = "utils/todolist.rs"]
@@ -42,6 +46,7 @@ mod todolist;
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use serde_json;
 use std::cell::Cell;
+use std::fs;
 #[cfg(desktop)]
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 #[cfg(desktop)]
@@ -220,6 +225,7 @@ pub fn run() {
             netgrab::get_rss_feed,
             netgrab::post_api_data,
             netgrab::fetch_api_data,
+            netgrab::proxy_request,
             netgrab::get_seqta_file,
             netgrab::upload_seqta_file,
             login::check_session_exists,
@@ -229,6 +235,10 @@ pub fn run() {
             login::force_reload,
             login::cleanup_login_windows,
             login::clear_webview_data,
+            profiles::get_current_profile,
+            profiles::list_profiles,
+            profiles::switch_profile,
+            profiles::delete_profile,
             settings::get_settings,
             settings::save_settings,
             settings::get_settings_json,
@@ -354,12 +364,66 @@ pub fn run() {
             seqta_mentions::fetch_lesson_content_cmd
         ])
         .setup(|app| {
+            // --- START: Auto-Clear Cache on Update ---
+            use dirs_next;
+            use std::path::PathBuf;
+
+            // Get the app data directory (consistent with rest of codebase: AppData/Roaming/DesQTA)
+            let app_data_dir = if cfg!(target_os = "android") {
+                let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+                dir.push("DesQTA");
+                dir
+            } else {
+                let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
+                dir.push("DesQTA");
+                dir
+            };
+
+            let version_file = app_data_dir.join("last_run_version");
+            let current_version = app.package_info().version.to_string();
+
+            // Ensure app data directory exists
+            if !app_data_dir.exists() {
+                let _ = fs::create_dir_all(&app_data_dir);
+            }
+
+            // Read the previous version
+            let last_version = fs::read_to_string(&version_file).unwrap_or_default();
+
+            // If versions differ, clear the cache
+            if current_version != last_version {
+                println!(
+                    "[DesQTA] Version changed from '{}' to '{}'. Clearing webview cache...",
+                    last_version, current_version
+                );
+
+                // Get the main window and clear data
+                if let Some(window) = app.webview_windows().get("main") {
+                    // clear_all_browsing_data() is available in Tauri v2
+                    // This wipes cache, cookies, and localStorage to ensure clean loading
+                    if let Err(e) = window.clear_all_browsing_data() {
+                        eprintln!("[DesQTA] Failed to clear webview data: {}", e);
+                    } else {
+                        println!("[DesQTA] Webview data cleared successfully.");
+                    }
+                }
+
+                // Update the version file
+                let _ = fs::write(&version_file, &current_version);
+            }
+            // --- END: Auto-Clear Cache on Update ---
+
             // Initialize logger first
             if let Err(e) = logger::init_logger() {
                 eprintln!("Failed to initialize logger: {}", e);
             }
             
-            // Initialize database
+            // Run migration before database initialization
+            if let Err(e) = migration::migrate_to_profiles_system() {
+                eprintln!("Failed to run migration: {}", e);
+            }
+            
+            // Initialize database (after migration and profile setup)
             if let Err(e) = database::init_database(app.app_handle()) {
                 eprintln!("Failed to initialize database: {}", e);
             }

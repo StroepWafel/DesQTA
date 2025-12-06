@@ -1,29 +1,17 @@
 use serde_json::Value;
 use std::{fs, io::Read, path::PathBuf};
 use tauri::command;
+use crate::profiles;
 
-/// Returns the path to seqtaConfig.json in the app data directory.
+/// Returns the path to seqtaConfig.json in the profile directory.
 fn config_file() -> PathBuf {
-    #[cfg(target_os = "android")]
-    {
-        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("seqtaConfig.json");
-        dir
-    }
-    #[cfg(not(target_os = "android"))]
-    {
-        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("seqtaConfig.json");
-        dir
-    }
+    let mut dir = profiles::get_profile_dir(
+        &profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string())
+    );
+    dir.push("seqtaConfig.json");
+    dir
 }
 
 /// Loads the seqtaConfig.json as serde_json::Value. Returns None if not found.

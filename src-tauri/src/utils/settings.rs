@@ -10,54 +10,27 @@ use std::{
 
 #[path = "session.rs"]
 mod session;
+use crate::profiles;
 
-/// Location: `$DATA_DIR/DesQTA/settings.json`
+/// Location: `$DATA_DIR/DesQTA/profiles/{profile_id}/settings.json`
 fn settings_file() -> PathBuf {
-    #[cfg(target_os = "android")]
-    {
-        // On Android, use the app's internal storage directory
-        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("settings.json");
-        dir
-    }
-    #[cfg(not(target_os = "android"))]
-    {
-        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("settings.json");
-        dir
-    }
+    let mut dir = profiles::get_profile_dir(
+        &profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string())
+    );
+    dir.push("settings.json");
+    dir
 }
 
 fn cloud_token_file() -> PathBuf {
-    #[cfg(target_os = "android")]
-    {
-        // On Android, use the app's internal storage directory
-        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("cloud_token.json");
-        dir
-    }
-    #[cfg(not(target_os = "android"))]
-    {
-        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("cloud_token.json");
-        dir
-    }
+    let mut dir = profiles::get_profile_dir(
+        &profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string())
+    );
+    dir.push("cloud_token.json");
+    dir
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -119,6 +92,8 @@ pub struct Settings {
     pub dev_force_offline_mode: bool,
     pub accepted_cloud_eula: bool,
     pub language: String,
+    #[serde(default)]
+    pub menu_order: Option<Vec<String>>,
 }
 
 impl Default for Settings {
@@ -147,6 +122,7 @@ impl Default for Settings {
             dev_force_offline_mode: false,
             accepted_cloud_eula: false,
             language: "en".to_string(), // Default to English
+            menu_order: None,
         }
     }
 }
@@ -171,9 +147,11 @@ pub struct CloudUser {
     #[serde(rename = "displayName")]
     pub display_name: String,
     #[serde(rename = "pfpUrl")]
-    pub pfp_url: String,
-    #[serde(rename = "createdAt")]
-    pub created_at: String,
+    pub pfp_url: Option<String>,
+    #[serde(rename = "createdAt", default)]
+    pub created_at: Option<String>,
+    #[serde(rename = "is_admin", default)]
+    pub is_admin: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -276,6 +254,16 @@ impl Settings {
 
         let get_opt_bool =
             |json: &serde_json::Value, key: &str| json.get(key).and_then(|v| v.as_bool());
+
+        let get_opt_string_array = |json: &serde_json::Value, key: &str| -> Option<Vec<String>> {
+            json.get(key)
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .collect()
+                })
+        };
 
         // Merge shortcuts
         let shortcuts_json = get_array(&existing_json, "shortcuts");
@@ -389,6 +377,7 @@ impl Settings {
         );
         default_settings.language =
             get_string(&existing_json, "language", &default_settings.language);
+        default_settings.menu_order = get_opt_string_array(&existing_json, "menu_order");
 
         default_settings
     }

@@ -11,7 +11,7 @@ import { cloudSettingsService } from './cloudSettingsService';
  */
 async function autoSyncToCloud(patch: Record<string, any>): Promise<void> {
   try {
-    const cloudUser = cloudAuthService.getUser();
+    const cloudUser = await cloudAuthService.getUser();
     if (cloudUser) {
       // Get current full settings to sync complete state
       const currentSettings = await invoke<any>('get_settings_subset', {

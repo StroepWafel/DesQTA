@@ -26,6 +26,14 @@
   import { onMount, tick } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
+  import { LoadingSpinner, Button, Badge } from '$lib/components/ui';
+  import {
+    Icon,
+    ArrowsPointingOut,
+    Sparkles,
+    DocumentText,
+    ClipboardDocumentCheck,
+  } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import { fade, scale, fly } from 'svelte/transition';
@@ -377,24 +385,10 @@
                         <T key="courses.generating" fallback="Generating..." />
                       </div>
                     {:else if contentCollapsed && aiSummary}
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-                        ></path>
-                      </svg>
+                      <Icon src={ArrowsPointingOut} class="w-5 h-5" />
                       <T key="courses.expand_content" fallback="Expand Content" />
                     {:else}
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        ></path>
-                      </svg>
+                      <Icon src={Sparkles} class="w-5 h-5" />
                       <T key="courses.summarize" fallback="Summarize" />
                     {/if}
                   </span>
@@ -443,18 +437,15 @@
                     <div
                       class="flex flex-col items-center gap-4"
                       transition:fade={{ duration: 200 }}>
-                      <div
-                        class="w-12 h-12 border-4 border-accent-500 border-t-transparent rounded-full animate-spin">
-                      </div>
-                      <p class="text-base font-medium text-zinc-700 dark:text-zinc-300">
-                        <T key="courses.generating_summary" fallback="Generating summary..." />
-                      </p>
+                      <LoadingSpinner
+                        size="md"
+                        message={$_('courses.generating_summary') || 'Generating summary...'} />
                     </div>
                   {:else if aiSummaryError}
-                    <div
-                      class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
-                      transition:fade={{ duration: 200 }}>
-                      <p class="text-sm text-red-700 dark:text-red-400">{aiSummaryError}</p>
+                    <div transition:fade={{ duration: 200 }}>
+                      <Badge variant="danger" size="md" class="w-full justify-center py-2">
+                        {aiSummaryError}
+                      </Badge>
                     </div>
                   {:else if aiSummary}
                     <div class="space-y-6" transition:fade={{ duration: 600 }}>
@@ -465,18 +456,7 @@
                         <div class="flex items-center gap-3 mb-4">
                           <div
                             class="flex items-center justify-center w-10 h-10 rounded-xl accent-bg">
-                            <svg
-                              class="w-5 h-5 text-white"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24">
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                              ></path>
-                            </svg>
+                            <Icon src={DocumentText} class="w-5 h-5 text-white" />
                           </div>
                           <h3 class="text-2xl font-bold text-zinc-900 dark:text-white">
                             <T key="courses.summary" fallback="Summary" />
@@ -496,18 +476,7 @@
                         <div class="flex items-center gap-3 mb-5">
                           <div
                             class="flex items-center justify-center w-10 h-10 rounded-xl accent-bg">
-                            <svg
-                              class="w-5 h-5 text-white"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24">
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                              ></path>
-                            </svg>
+                            <Icon src={ClipboardDocumentCheck} class="w-5 h-5 text-white" />
                           </div>
                           <h3 class="text-2xl font-bold text-zinc-900 dark:text-white">
                             <T key="courses.steps" fallback="Action Steps" />

@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { invoke } from '@tauri-apps/api/core';
 
 const API_URL = 'https://accounts.betterseqta.org';
 
@@ -7,19 +8,26 @@ export interface CloudUser {
   email: string;
   username: string;
   displayName: string;
+  pfpUrl?: string | null;
+  is_admin?: number | null;
+}
+
+interface CloudUserWithToken {
+  user: CloudUser | null;
+  token: string | null;
 }
 
 export const cloudUserStore = writable<CloudUser | null>(null);
 
 export const cloudAuthService = {
   /**
-   * Logs in the user and saves the session token.
+   * Logs in the user and saves the session token to the current profile.
    */
-  async login(email: string, password: string) {
+  async login(login: string, password: string) {
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ login, password }),
     });
 
     if (!response.ok) {
@@ -29,13 +37,12 @@ export const cloudAuthService = {
 
     const data = await response.json();
 
-    // Save token securely.
-    localStorage.setItem('bs_token', data.token);
-    localStorage.setItem('bs_user', JSON.stringify(data.user));
+    // Save token to backend (profile-specific)
+    const user = await invoke<CloudUser>('save_cloud_token', { token: data.token });
+    
+    cloudUserStore.set(user);
 
-    cloudUserStore.set(data.user);
-
-    return data;
+    return { ...data, user };
   },
 
   /**
@@ -57,47 +64,43 @@ export const cloudAuthService = {
   },
 
   /**
-   * Logs out the user.
+   * Logs out the user from the current profile.
    */
-  logout() {
-    localStorage.removeItem('bs_token');
-    localStorage.removeItem('bs_user');
+  async logout() {
+    await invoke('clear_cloud_token');
     cloudUserStore.set(null);
   },
 
   /**
-   * Gets the stored JWT token.
+   * Gets the stored JWT token for the current profile.
    */
-  getToken() {
-    return localStorage.getItem('bs_token');
+  async getToken(): Promise<string | null> {
+    const result = await invoke<CloudUserWithToken>('get_cloud_user');
+    return result.token;
   },
 
   /**
-   * Gets the stored user info.
+   * Gets the stored user info for the current profile.
    */
-  getUser() {
-    const user = localStorage.getItem('bs_user');
-    try {
-      return user ? JSON.parse(user) : null;
-    } catch {
-      return null;
-    }
+  async getUser(): Promise<CloudUser | null> {
+    const result = await invoke<CloudUserWithToken>('get_cloud_user');
+    return result.user;
   },
 
   /**
-   * Initializes the store from local storage
+   * Initializes the store from the current profile's cloud token.
    */
-  init() {
-    const user = this.getUser();
+  async init(): Promise<CloudUser | null> {
+    const user = await this.getUser();
     cloudUserStore.set(user);
     return user;
   },
 
   /**
-   * Fetches the latest user profile from the server.
+   * Fetches the latest user profile from the server and updates the current profile.
    */
-  async getProfile() {
-    const token = this.getToken();
+  async getProfile(): Promise<CloudUser> {
+    const token = await this.getToken();
     if (!token) throw new Error('Not authenticated');
 
     const response = await fetch(`${API_URL}/api/auth/me`, {
@@ -110,8 +113,9 @@ export const cloudAuthService = {
     if (!response.ok) throw new Error('Failed to fetch profile');
     const data = await response.json();
 
-    // Update local storage and store
-    localStorage.setItem('bs_user', JSON.stringify(data));
+    // Update backend (profile-specific) with latest user data
+    await invoke<CloudUser>('save_cloud_token', { token });
+    
     cloudUserStore.set(data);
 
     return data;

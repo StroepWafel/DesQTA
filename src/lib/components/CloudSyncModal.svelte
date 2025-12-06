@@ -37,7 +37,7 @@
   });
 
   async function checkAuthentication() {
-    const user = cloudAuthService.init();
+    const user = await cloudAuthService.init();
     if (user) {
       cloudUser = user;
       isAuthenticated = true;
@@ -60,7 +60,7 @@
 
     try {
       await cloudAuthService.login(email, password);
-      cloudUser = cloudAuthService.getUser();
+      cloudUser = await cloudAuthService.getUser();
       isAuthenticated = true;
       success = 'Successfully authenticated with BetterSEQTA Plus account';
       password = ''; // Clear password
@@ -74,7 +74,7 @@
 
   async function logout() {
     try {
-      cloudAuthService.logout();
+      await cloudAuthService.logout();
       cloudUser = null;
       isAuthenticated = false;
       success = 'Successfully logged out';

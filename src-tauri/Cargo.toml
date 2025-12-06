@@ -1,6 +1,6 @@
 [package]
 name = "desqta"
-version = "1.0.0-rc.4"
+version = "1.0.0-rc.5"
 description = "DesQTA, a port of SEQTA to the Desktop"
 authors = ["BetterSEQTA+ Project"]
 edition = "2021"

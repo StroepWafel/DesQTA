@@ -7,8 +7,8 @@ export const cloudSettingsService = {
    * Fetches the user's settings from the cloud.
    */
   async getSettings() {
-    const token = cloudAuthService.getToken();
-    const user = cloudAuthService.getUser();
+    const token = await cloudAuthService.getToken();
+    const user = await cloudAuthService.getUser();
 
     // Return null or throw if not logged in
     if (!token || !user) return null;
@@ -37,8 +37,8 @@ export const cloudSettingsService = {
    * @param settings The settings object to save.
    */
   async syncSettings(settings: Record<string, any>) {
-    const token = cloudAuthService.getToken();
-    const user = cloudAuthService.getUser();
+    const token = await cloudAuthService.getToken();
+    const user = await cloudAuthService.getUser();
     if (!token || !user) return;
 
     try {

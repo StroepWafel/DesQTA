@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Icon, VideoCamera, DocumentText, PuzzlePiece, Link } from 'svelte-hero-icons';
   import { isEmbeddableUrl, getEmbedUrl, getEmbedType } from '../utils';
   import type { LinkPreview } from '../types';
 
@@ -17,16 +18,16 @@
     }
   }
 
-  function getEmbedIcon(type: string): string {
+  function getEmbedIcon(type: string) {
     switch (type) {
       case 'video':
-        return '🎥';
+        return VideoCamera;
       case 'document':
-        return '📄';
+        return DocumentText;
       case 'interactive':
-        return '🎮';
+        return PuzzlePiece;
       default:
-        return '🔗';
+        return Link;
     }
   }
 </script>
@@ -36,7 +37,9 @@
     class="p-4 mb-6 max-w-xl bg-white rounded-xl border dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 animate-slide-in">
     <div class="flex justify-between items-center mb-4">
       <div class="flex items-center">
-        <span class="mr-3 text-2xl animate-bounce">{getEmbedIcon(embedType)}</span>
+        <div class="mr-3 text-accent-600 dark:text-accent-400 animate-bounce">
+          <Icon src={getEmbedIcon(embedType)} class="w-6 h-6" />
+        </div>
         <h4 class="font-semibold text-zinc-900 dark:text-white">
           {getDomainName(url)}
         </h4>
@@ -46,17 +49,7 @@
         target="_blank"
         rel="noopener noreferrer"
         class="flex items-center text-sm font-medium transition-all duration-200 accent-text hover:accent-bg-hover hover:scale-105">
-        <svg
-          class="mr-1 w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-        </svg>
+        <Icon src={Link} class="mr-1 w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
         Open
       </a>
     </div>
@@ -133,17 +126,7 @@
             >{getDomainName(url)}</span>
           <span
             class="inline-flex items-center text-sm font-medium transition-all duration-300 accent-text group-hover:accent-bg-hover group-hover:translate-x-1">
-            <svg
-              class="mr-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
+            <Icon src={Link} class="mr-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             Visit Link
           </span>
         </div>
@@ -179,17 +162,7 @@
         </div>
         <span
           class="inline-flex items-center text-sm font-medium transition-all duration-300 accent-text group-hover:accent-bg-hover group-hover:translate-x-1">
-          <svg
-            class="mr-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
+          <Icon src={Link} class="mr-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           Visit Link
         </span>
       </div>

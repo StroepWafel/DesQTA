@@ -91,29 +91,17 @@ impl Default for GlobalSearchData {
     }
 }
 
-/// Location: `$DATA_DIR/DesQTA/global_search.json`
+use crate::profiles;
+
+/// Location: `$DATA_DIR/DesQTA/profiles/{profile_id}/global_search.json`
 fn get_search_data_path() -> PathBuf {
-    #[cfg(target_os = "android")]
-    {
-        // On Android, use the app's internal storage directory
-        let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("global_search.json");
-        dir
-    }
-    #[cfg(not(target_os = "android"))]
-    {
-        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).expect("Unable to create data dir");
-        }
-        dir.push("global_search.json");
-        dir
-    }
+    let mut dir = profiles::get_profile_dir(
+        &profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string())
+    );
+    dir.push("global_search.json");
+    dir
 }
 
 #[command]

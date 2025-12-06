@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Window } from '@tauri-apps/api/window';
   import { Icon } from 'svelte-hero-icons';
-  import { Minus, Square2Stack, XMark, QrCode, Camera, ArrowUpTray, QuestionMarkCircle } from 'svelte-hero-icons';
+  import { Minus, Square2Stack, XMark, QrCode, Camera, ArrowUpTray, QuestionMarkCircle, UserCircle, ArrowRight } from 'svelte-hero-icons';
   import { authService } from '$lib/services/authService';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
@@ -47,6 +47,8 @@
   let showDevToggle = $state(false);
   let devSensitiveInfoHider = $state(false);
   let devKeyBuffer = '';
+  let profiles = $state<Array<{ id: string; base_url: string; user_id: number; display_name: string | null; created_at: number }>>([]);
+  let loadingProfiles = $state(false);
   
   // Typewriter animation state
   let currentFeatureIndex = $state(0);
@@ -66,6 +68,45 @@
     'features.predictions'
   ];
 
+  async function loadProfiles() {
+    try {
+      loadingProfiles = true;
+      const profilesList = await invoke<Array<{ id: string; base_url: string; user_id: number; display_name: string | null; created_at: number }>>('list_profiles');
+      profiles = profilesList;
+    } catch (e) {
+      console.error('Failed to load profiles:', e);
+      profiles = [];
+    } finally {
+      loadingProfiles = false;
+    }
+  }
+
+  async function selectProfile(profile: { id: string; base_url: string; user_id: number; display_name: string | null; created_at: number }) {
+    try {
+      // Note: app handle is passed automatically by Tauri
+      await invoke('switch_profile', { profileId: profile.id });
+      // Set the URL to the profile's base_url
+      onUrlChange(profile.base_url);
+      // Start login with this profile's URL
+      onStartLogin();
+    } catch (e) {
+      console.error('Failed to switch profile:', e);
+      alert(`Failed to switch profile: ${e}`);
+    }
+  }
+
+  function formatProfileName(profile: { base_url: string; display_name: string | null }): string {
+    if (profile.display_name) {
+      return profile.display_name;
+    }
+    try {
+      const url = new URL(profile.base_url);
+      return url.hostname.replace('www.', '');
+    } catch {
+      return profile.base_url;
+    }
+  }
+
   onMount(() => {
     (async () => {
       try {
@@ -73,6 +114,7 @@
         devSensitiveInfoHider = subset?.dev_sensitive_info_hider ?? false;
       } catch {}
     })();
+    loadProfiles();
     const checkMobile = () => {
       const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
       if (tauri_platform == "ios" || tauri_platform == "android") {
@@ -635,6 +677,46 @@
             </div>
             {/if}
             <div class="space-y-8">
+              <!-- Available Profiles List -->
+              {#if profiles.length > 0}
+                <div class="space-y-4">
+                  <div class="text-center space-y-1">
+                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                      <T key="login.available_profiles" fallback="Available Profiles" />
+                    </h3>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                      <T key="login.select_profile_to_login" fallback="Select a profile to continue" />
+                    </p>
+                  </div>
+                  <div class="space-y-2 max-h-64 overflow-y-auto">
+                    {#each profiles as profile (profile.id)}
+                      <button
+                        type="button"
+                        class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 hover:bg-white/20 dark:hover:bg-zinc-800/20 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 group"
+                        onclick={() => selectProfile(profile)}>
+                        <div class="flex justify-center items-center w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900/50 transition-colors">
+                          <Icon src={UserCircle} class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <div class="font-medium text-zinc-900 dark:text-white truncate">
+                            {formatProfileName(profile)}
+                          </div>
+                          <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                            {profile.base_url}
+                          </div>
+                        </div>
+                        <Icon src={ArrowRight} class="w-5 h-5 text-zinc-400 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
+                      </button>
+                    {/each}
+                  </div>
+                  <div class="flex items-center">
+                    <div class="flex-1 h-px bg-linear-to-r from-transparent via-zinc-300 dark:via-zinc-600 to-transparent"></div>
+                    <span class="px-2 text-sm text-zinc-500 dark:text-zinc-400 font-medium"><T key="login.or" fallback="or" /></span>
+                    <div class="flex-1 h-px bg-linear-to-r from-transparent via-zinc-300 dark:via-zinc-600 to-transparent"></div>
+                  </div>
+                </div>
+              {/if}
+              
               <!-- Login method toggle -->
               {#if !isMobile}
               <div class="flex items-center justify-center">

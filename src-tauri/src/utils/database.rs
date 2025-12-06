@@ -2,51 +2,66 @@ use anyhow::{Context, Result};
 use chrono::Utc;
 use rusqlite::{params, Connection, Result as SqlResult};
 use serde_json::Value;
-use std::fs;
-use std::sync::{Mutex, OnceLock};
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::AppHandle;
+use crate::profiles;
+use crate::logger;
 
-// Global database connection pool (single connection for now)
-static DB: OnceLock<Mutex<Connection>> = OnceLock::new();
+// Global database connection (allows reinitialization for profile switching)
+static DB: Mutex<Option<Connection>> = Mutex::new(None);
+static DB_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 /// Initialize the database connection
 pub fn init_database(_app: &AppHandle) -> Result<()> {
-    // Use the same data directory logic as other modules
-    #[cfg(target_os = "android")]
-    {
-        let mut dir =
-            dirs_next::data_dir().ok_or_else(|| anyhow::anyhow!("Unable to determine data dir"))?;
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).context("Failed to create DesQTA data directory")?;
-        }
-        let db_path = dir.join("desqta.db");
+    // Get current profile ID or use "default"
+    let profile_id = profiles::ProfileManager::get_current_profile()
+        .map(|p| p.id)
+        .unwrap_or_else(|| "default".to_string());
+    
+    // Get profile directory
+    let profile_dir = profiles::get_profile_dir(&profile_id);
+    let db_path = profile_dir.join("desqta.db");
 
-        let conn = Connection::open(&db_path).context("Failed to open database")?;
+    let conn = Connection::open(&db_path).context("Failed to open database")?;
 
-        init_schema(&conn)?;
-        DB.set(Mutex::new(conn))
-            .map_err(|_| anyhow::anyhow!("Database already initialized"))?;
+    init_schema(&conn)?;
+    
+    // Close old connection if exists and set new one
+    let mut db_guard = DB.lock().unwrap();
+    if let Some(old_conn) = db_guard.take() {
+        // Old connection will be dropped here
+        drop(old_conn);
     }
+    *db_guard = Some(conn);
+    DB_INITIALIZED.store(true, Ordering::Release);
 
-    #[cfg(not(target_os = "android"))]
-    {
-        let mut dir =
-            dirs_next::data_dir().ok_or_else(|| anyhow::anyhow!("Unable to determine data dir"))?;
-        dir.push("DesQTA");
-        if !dir.exists() {
-            fs::create_dir_all(&dir).context("Failed to create DesQTA data directory")?;
-        }
-        let db_path = dir.join("desqta.db");
-
-        let conn = Connection::open(&db_path).context("Failed to open database")?;
-
-        init_schema(&conn)?;
-        DB.set(Mutex::new(conn))
-            .map_err(|_| anyhow::anyhow!("Database already initialized"))?;
+    if let Some(logger) = logger::get_logger() {
+        let _ = logger.log(
+            logger::LogLevel::INFO,
+            "database",
+            "init_database",
+            "Database initialized for profile",
+            serde_json::json!({"profile_id": profile_id, "db_path": db_path.to_string_lossy()}),
+        );
     }
 
     Ok(())
+}
+
+/// Reinitialize database connection (for profile switching)
+pub fn reinit_database(app: &AppHandle) -> Result<()> {
+    // Close current connection
+    {
+        let mut db_guard = DB.lock().unwrap();
+        if let Some(conn) = db_guard.take() {
+            drop(conn);
+        }
+        DB_INITIALIZED.store(false, Ordering::Release);
+    }
+    
+    // Reinitialize with new profile
+    init_database(app)
 }
 
 /// Initialize database schema
@@ -200,90 +215,90 @@ fn cleanup_expired_cache(conn: &Connection) -> SqlResult<()> {
     Ok(())
 }
 
-/// Get database connection
-fn get_conn() -> Result<std::sync::MutexGuard<'static, Connection>> {
-    let db = DB
-        .get()
-        .ok_or_else(|| anyhow::anyhow!("Database not initialized"))?;
-    Ok(db.lock().unwrap())
+/// Get database connection (helper to access the connection)
+fn with_conn<F, R>(f: F) -> Result<R>
+where
+    F: FnOnce(&mut Connection) -> Result<R>,
+{
+    if !DB_INITIALIZED.load(Ordering::Acquire) {
+        return Err(anyhow::anyhow!("Database not initialized"));
+    }
+    
+    let mut db_guard = DB.lock().unwrap();
+    let conn = db_guard.as_mut()
+        .ok_or_else(|| anyhow::anyhow!("Database connection is None"))?;
+    
+    f(conn)
 }
 
 // ========== Cache Operations ==========
 
 #[tauri::command]
 pub fn db_cache_get(key: String) -> Result<Option<Value>, String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
-
     let now = Utc::now().timestamp();
+    
+    with_conn(|conn| {
+        let mut stmt = conn
+            .prepare("SELECT value FROM cache WHERE key = ? AND (expires_at IS NULL OR expires_at > ?)")
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
 
-    let mut stmt = conn
-        .prepare("SELECT value FROM cache WHERE key = ? AND (expires_at IS NULL OR expires_at > ?)")
-        .map_err(|e| e.to_string())?;
+        let result: SqlResult<String> = stmt.query_row(params![key, now], |row| row.get(0));
 
-    let result: SqlResult<String> = stmt.query_row(params![key, now], |row| row.get(0));
-
-    match result {
-        Ok(value_str) => {
-            let value: Value = serde_json::from_str(&value_str)
-                .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-            Ok(Some(value))
+        match result {
+            Ok(value_str) => {
+                let value: Value = serde_json::from_str(&value_str)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse JSON: {}", e))?;
+                Ok(Some(value))
+            }
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(anyhow::anyhow!("Query error: {}", e)),
         }
-        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-        Err(e) => Err(e.to_string()),
-    }
+    }).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn db_cache_set(key: String, value: Value, ttl_minutes: Option<i64>) -> Result<(), String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
-
     let value_str =
         serde_json::to_string(&value).map_err(|e| format!("Failed to serialize JSON: {}", e))?;
 
     let now = Utc::now().timestamp();
     let expires_at = ttl_minutes.map(|ttl| now + (ttl * 60));
 
-    conn.execute(
-        "INSERT OR REPLACE INTO cache (key, value, created_at, expires_at) VALUES (?1, ?2, ?3, ?4)",
-        params![key, value_str, now, expires_at],
-    )
-    .map_err(|e| e.to_string())?;
-
-    Ok(())
+    with_conn(|conn| {
+        conn.execute(
+            "INSERT OR REPLACE INTO cache (key, value, created_at, expires_at) VALUES (?1, ?2, ?3, ?4)",
+            params![key, value_str, now, expires_at],
+        )
+        .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn db_cache_delete(key: String) -> Result<(), String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
-
-    conn.execute("DELETE FROM cache WHERE key = ?", params![key])
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
+    with_conn(|conn| {
+        conn.execute("DELETE FROM cache WHERE key = ?", params![key])
+            .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn db_cache_clear() -> Result<(), String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
-
-    conn.execute("DELETE FROM cache", [])
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
+    with_conn(|conn| {
+        conn.execute("DELETE FROM cache", [])
+            .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn db_cache_cleanup_expired() -> Result<(), String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
-
-    cleanup_expired_cache(conn).map_err(|e| e.to_string())?;
-
-    Ok(())
+    with_conn(|conn| {
+        cleanup_expired_cache(conn)
+            .map_err(|e| anyhow::anyhow!("Failed to cleanup: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
 }
 
 // ========== Sync Queue Operations ==========
@@ -299,133 +314,126 @@ pub struct QueueItem {
 
 #[tauri::command]
 pub fn db_queue_add(item_type: String, payload: Value) -> Result<i64, String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
-
     let payload_str =
         serde_json::to_string(&payload).map_err(|e| format!("Failed to serialize JSON: {}", e))?;
 
     let now = Utc::now().timestamp();
 
-    conn.execute(
-        "INSERT INTO sync_queue (type, payload, created_at) VALUES (?1, ?2, ?3)",
-        params![item_type, payload_str, now],
-    )
-    .map_err(|e| e.to_string())?;
+    with_conn(|conn| {
+        conn.execute(
+            "INSERT INTO sync_queue (type, payload, created_at) VALUES (?1, ?2, ?3)",
+            params![item_type, payload_str, now],
+        )
+        .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
 
-    let id = conn.last_insert_rowid();
-    Ok(id)
+        let id = conn.last_insert_rowid();
+        Ok(id)
+    }).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn db_queue_all() -> Result<Vec<QueueItem>, String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
+    with_conn(|conn| {
+        let mut stmt = conn
+            .prepare("SELECT id, type, payload, created_at FROM sync_queue ORDER BY created_at ASC")
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
 
-    let mut stmt = conn
-        .prepare("SELECT id, type, payload, created_at FROM sync_queue ORDER BY created_at ASC")
-        .map_err(|e| e.to_string())?;
-
-    let rows = stmt
-        .query_map([], |row| {
-            Ok(QueueItem {
-                id: Some(row.get(0)?),
-                item_type: row.get(1)?,
-                payload: {
-                    let payload_str: String = row.get(2)?;
-                    serde_json::from_str(&payload_str).map_err(|_| {
-                        rusqlite::Error::InvalidColumnType(
-                            2,
-                            "TEXT".to_string(),
-                            rusqlite::types::Type::Text,
-                        )
-                    })
-                }?,
-                created_at: row.get(3)?,
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(QueueItem {
+                    id: Some(row.get(0)?),
+                    item_type: row.get(1)?,
+                    payload: {
+                        let payload_str: String = row.get(2)?;
+                        serde_json::from_str(&payload_str).map_err(|_| {
+                            rusqlite::Error::InvalidColumnType(
+                                2,
+                                "TEXT".to_string(),
+                                rusqlite::types::Type::Text,
+                            )
+                        })
+                    }?,
+                    created_at: row.get(3)?,
+                })
             })
-        })
-        .map_err(|e| e.to_string())?;
+            .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
 
-    let mut items = Vec::new();
-    for row in rows {
-        items.push(row.map_err(|e| e.to_string())?);
-    }
+        let mut items = Vec::new();
+        for row in rows {
+            items.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+        }
 
-    Ok(items)
+        Ok(items)
+    }).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn db_queue_delete(id: i64) -> Result<(), String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
-
-    conn.execute("DELETE FROM sync_queue WHERE id = ?", params![id])
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
+    with_conn(|conn| {
+        conn.execute("DELETE FROM sync_queue WHERE id = ?", params![id])
+            .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn db_queue_clear() -> Result<(), String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
-
-    conn.execute("DELETE FROM sync_queue", [])
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
+    with_conn(|conn| {
+        conn.execute("DELETE FROM sync_queue", [])
+            .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
 }
 
 // ========== Structured Data Operations (for future use) ==========
 
 #[tauri::command]
 pub fn db_get_assessments_by_year(year: Option<i32>) -> Result<Vec<Value>, String> {
-    let mut conn_guard = get_conn().map_err(|e| e.to_string())?;
-    let conn = &mut *conn_guard;
+    with_conn(|conn| {
+        let mut results = Vec::new();
 
-    let mut results = Vec::new();
-
-    if let Some(y) = year {
-        let mut stmt = conn
-            .prepare("SELECT data FROM assessments WHERE year = ? ORDER BY due DESC")
-            .map_err(|e| e.to_string())?;
-        let rows = stmt
-            .query_map(params![y], |row| {
-                let data_str: String = row.get(0)?;
-                serde_json::from_str::<Value>(&data_str).map_err(|_| {
-                    rusqlite::Error::InvalidColumnType(
-                        0,
-                        "TEXT".to_string(),
-                        rusqlite::types::Type::Text,
-                    )
+        if let Some(y) = year {
+            let mut stmt = conn
+                .prepare("SELECT data FROM assessments WHERE year = ? ORDER BY due DESC")
+                .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+            let rows = stmt
+                .query_map(params![y], |row| {
+                    let data_str: String = row.get(0)?;
+                    serde_json::from_str::<Value>(&data_str).map_err(|_| {
+                        rusqlite::Error::InvalidColumnType(
+                            0,
+                            "TEXT".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })
                 })
-            })
-            .map_err(|e| e.to_string())?;
+                .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
 
-        for row in rows {
-            results.push(row.map_err(|e| e.to_string())?);
-        }
-    } else {
-        let mut stmt = conn
-            .prepare("SELECT data FROM assessments ORDER BY due DESC")
-            .map_err(|e| e.to_string())?;
-        let rows = stmt
-            .query_map([], |row| {
-                let data_str: String = row.get(0)?;
-                serde_json::from_str::<Value>(&data_str).map_err(|_| {
-                    rusqlite::Error::InvalidColumnType(
-                        0,
-                        "TEXT".to_string(),
-                        rusqlite::types::Type::Text,
-                    )
+            for row in rows {
+                results.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+            }
+        } else {
+            let mut stmt = conn
+                .prepare("SELECT data FROM assessments ORDER BY due DESC")
+                .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+            let rows = stmt
+                .query_map([], |row| {
+                    let data_str: String = row.get(0)?;
+                    serde_json::from_str::<Value>(&data_str).map_err(|_| {
+                        rusqlite::Error::InvalidColumnType(
+                            0,
+                            "TEXT".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })
                 })
-            })
-            .map_err(|e| e.to_string())?;
+                .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
 
-        for row in rows {
-            results.push(row.map_err(|e| e.to_string())?);
+            for row in rows {
+                results.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+            }
         }
-    }
 
-    Ok(results)
+        Ok(results)
+    }).map_err(|e| e.to_string())
 }
