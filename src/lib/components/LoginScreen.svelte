@@ -50,23 +50,6 @@
   let profiles = $state<Array<{ id: string; base_url: string; user_id: number; display_name: string | null; created_at: number }>>([]);
   let loadingProfiles = $state(false);
   
-  // Typewriter animation state
-  let currentFeatureIndex = $state(0);
-  let currentText = $state('');
-  let isTyping = $state(true);
-  
-  const features = [
-    'features.lightning_fast',
-    'features.qr_login', 
-    'features.beautiful_ui',
-    'features.analytics',
-    'features.notifications',
-    'features.offline',
-    'features.cross_platform',
-    'features.security',
-    'features.themes',
-    'features.predictions'
-  ];
 
   async function loadProfiles() {
     try {
@@ -157,63 +140,6 @@
           console.error('Failed to maximize window:', err);
         }
       }, 300);
-    }
-    
-    // Typewriter animation (only on desktop)
-    if (!isMobile) {
-      let typewriterInterval: number;
-      let pauseTimeout: number;
-      
-      const startTypewriter = () => {
-        const currentFeatureKey = features[currentFeatureIndex];
-        const currentFeature = $_(currentFeatureKey) || currentFeatureKey;
-        let charIndex = 0;
-        
-        // Typing phase
-        if (isTyping) {
-          typewriterInterval = setInterval(() => {
-            if (charIndex <= currentFeature.length) {
-              currentText = currentFeature.slice(0, charIndex);
-              charIndex++;
-            } else {
-              clearInterval(typewriterInterval);
-              // Pause before erasing
-              pauseTimeout = setTimeout(() => {
-                isTyping = false;
-                startTypewriter();
-              }, 2000);
-            }
-          }, 80);
-        } else {
-          // Erasing phase
-          charIndex = currentText.length;
-          typewriterInterval = setInterval(() => {
-            if (charIndex >= 0) {
-              currentText = currentFeature.slice(0, charIndex);
-              charIndex--;
-            } else {
-              clearInterval(typewriterInterval);
-              // Move to next feature
-              currentFeatureIndex = (currentFeatureIndex + 1) % features.length;
-              isTyping = true;
-              // Pause before typing next
-              pauseTimeout = setTimeout(() => {
-                startTypewriter();
-              }, 500);
-            }
-          }, 50);
-        }
-      };
-      
-      // Start the animation
-      startTypewriter();
-      
-      return () => {
-        window.removeEventListener('resize', checkMobile);
-        window.removeEventListener('keydown', handleKeydown);
-        if (typewriterInterval) clearInterval(typewriterInterval);
-        if (pauseTimeout) clearTimeout(pauseTimeout);
-      };
     }
     
     return () => {
@@ -377,7 +303,7 @@
   }
 </script>
 
-<div class="flex flex-col h-full relative {isMobile ? 'overflow-y-auto' : 'overflow-hidden'} bg-zinc-100 dark:bg-zinc-950">
+<div class="flex flex-col h-full relative {isMobile ? 'overflow-y-auto' : 'overflow-hidden'} bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-800">
   <!-- Window Controls Bar -->
   <div 
     class="relative flex justify-between items-center px-6 py-3 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-b border-white/20 dark:border-zinc-700/30 z-10 {isMobile ? 'shrink-0' : ''}"
@@ -422,219 +348,26 @@
 
   <!-- Login Content -->
   <div class="relative flex justify-center items-center {isMobile ? 'p-4 min-h-0 flex-1' : 'p-8 flex-1'} z-10 {isMobile ? 'overflow-y-auto' : ''}">
+    <!-- Static geometric background pattern -->
     {#if !isMobile}
-    <!-- Preview Components Around Login -->
-    <!-- Top Left - Mini Header Preview -->
-    <button 
-      type="button"
-      class="absolute top-8 left-8 w-80 h-16 bg-white/10 dark:bg-zinc-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-zinc-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-1 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-      onclick={() => openPreviewModal('header')}
-      aria-label="Preview application header">
-      <div class="flex items-center justify-between h-full px-6 pointer-events-none">
-        <div class="flex items-center space-x-3">
-          <div class="w-3 h-3 bg-indigo-400 rounded-full"></div>
-          <div class="w-16 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-        </div>
-        <div class="flex space-x-2">
-          <div class="w-8 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-          <div class="w-8 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-        </div>
-      </div>
-    </button>
-
-    <!-- Top Right - Mini Sidebar Preview -->
-    <button 
-      type="button"
-      class="absolute top-8 right-8 w-64 h-52 bg-white/10 dark:bg-zinc-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-zinc-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-      onclick={() => openPreviewModal('sidebar')}
-      aria-label="Preview navigation sidebar">
-      <div class="p-4 space-y-3 pointer-events-none">
-        <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-indigo-400 rounded-sm"></div>
-          <div class="w-20 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-purple-400 rounded-sm"></div>
-          <div class="w-24 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-pink-400 rounded-sm"></div>
-          <div class="w-18 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-blue-400 rounded-sm"></div>
-          <div class="w-22 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-4 h-4 bg-green-400 rounded-sm"></div>
-          <div class="w-16 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-        </div>
-      </div>
-    </button>
-
-        <!-- Bottom Left - Mini Assessment Card -->
-    <button 
-      type="button"
-      class="absolute bottom-8 left-8 w-72 h-40 bg-white/10 dark:bg-zinc-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-zinc-700/20 border-l-4 border-l-green-400 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-3 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-      onclick={() => openPreviewModal('assessment')}
-      aria-label="Preview assessment card">
-      <div class="p-5 pointer-events-none">
-        <div class="flex items-center justify-between mb-3">
-          <div class="w-20 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-          <div class="w-16 h-5 bg-green-400/80 rounded-sm text-xs"></div>
-        </div>
-        <div class="w-40 h-4 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm mb-2"></div>
-        <div class="w-24 h-3 bg-zinc-300/30 dark:bg-zinc-600/30 rounded-sm mb-2"></div>
-        <div class="w-32 h-2 bg-zinc-300/20 dark:bg-zinc-600/20 rounded-sm"></div>
-      </div>
-    </button>
-
-    <!-- Bottom Right - Mini Timetable Preview -->
-    <button 
-      type="button"
-      class="absolute bottom-8 right-8 w-72 h-40 bg-white/10 dark:bg-zinc-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-zinc-700/20 opacity-60 cursor-pointer transition-all duration-300 hover:opacity-80 hover:scale-105 animate-float-4 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-      onclick={() => openPreviewModal('timetable')}
-      aria-label="Preview weekly timetable">
-      <div class="p-3 pointer-events-none">
-        <!-- Timetable Header -->
-        <div class="grid grid-cols-6 gap-px mb-2 bg-linear-to-r from-zinc-100/50 to-zinc-200/50 dark:from-zinc-700/50 dark:to-zinc-800/50 rounded-lg p-1">
-          <div class="w-8 h-4 bg-zinc-300/30 dark:bg-zinc-600/30 rounded-xs"></div>
-          <div class="h-4 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-xs flex items-center justify-center">
-            <div class="w-3 h-1 bg-zinc-400/60 rounded-sm"></div>
-          </div>
-          <div class="h-4 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-xs flex items-center justify-center">
-            <div class="w-3 h-1 bg-zinc-400/60 rounded-sm"></div>
-          </div>
-          <div class="h-4 bg-indigo-400/80 rounded-xs flex items-center justify-center">
-            <div class="w-3 h-1 bg-white/80 rounded-sm"></div>
-          </div>
-          <div class="h-4 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-xs flex items-center justify-center">
-            <div class="w-3 h-1 bg-zinc-400/60 rounded-sm"></div>
-          </div>
-          <div class="h-4 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-xs flex items-center justify-center">
-            <div class="w-3 h-1 bg-zinc-400/60 rounded-sm"></div>
-          </div>
-        </div>
-
-        <!-- Timetable Grid with Time Labels -->
-              <div class="relative">
-          <!-- Time labels -->
-          <div class="absolute left-0 top-0 w-8 h-24 flex flex-col justify-between text-xs">
-            <div class="w-6 h-1 bg-zinc-300/40 dark:bg-zinc-600/40 rounded-sm"></div>
-            <div class="w-6 h-1 bg-zinc-300/40 dark:bg-zinc-600/40 rounded-sm"></div>
-            <div class="w-6 h-1 bg-zinc-300/40 dark:bg-zinc-600/40 rounded-sm"></div>
-            <div class="w-6 h-1 bg-zinc-300/40 dark:bg-zinc-600/40 rounded-sm"></div>
-                </div>
-          
-          <!-- Lesson blocks -->
-          <div class="ml-8 grid grid-cols-5 gap-px h-24">
-            <!-- Monday -->
-            <div class="relative">
-              <div class="absolute top-1 left-0 right-0 h-5 bg-white/80 dark:bg-zinc-700/80 rounded-sm border-l-2 border-purple-400 p-1">
-                <div class="w-full h-1 bg-purple-400/60 rounded-sm mb-0.5"></div>
-                <div class="w-2/3 h-0.5 bg-zinc-400/40 rounded-sm"></div>
-              </div>
-              <div class="absolute top-8 left-0 right-0 h-6 bg-white/80 dark:bg-zinc-700/80 rounded-sm border-l-2 border-green-400 p-1">
-                <div class="w-full h-1 bg-green-400/60 rounded-sm mb-0.5"></div>
-                <div class="w-3/4 h-0.5 bg-zinc-400/40 rounded-sm"></div>
-              </div>
-            </div>
-            
-            <!-- Tuesday -->
-            <div class="relative">
-              <div class="absolute top-2 left-0 right-0 h-8 bg-white/80 dark:bg-zinc-700/80 rounded-sm border-l-2 border-blue-400 p-1">
-                <div class="w-full h-1 bg-blue-400/60 rounded-sm mb-0.5"></div>
-                <div class="w-1/2 h-0.5 bg-zinc-400/40 rounded-sm"></div>
-              </div>
-            </div>
-            
-            <!-- Wednesday (Today - highlighted) -->
-            <div class="relative bg-indigo-400/10 rounded-sm">
-              <div class="absolute top-0 left-0 right-0 h-4 bg-white/90 dark:bg-zinc-700/90 rounded-sm border-l-2 border-indigo-500 p-1 shadow-xs">
-                <div class="w-full h-1 bg-indigo-500/80 rounded-sm mb-0.5"></div>
-                <div class="w-3/4 h-0.5 bg-zinc-500/60 rounded-sm"></div>
-              </div>
-              <div class="absolute top-6 left-0 right-0 h-5 bg-white/90 dark:bg-zinc-700/90 rounded-sm border-l-2 border-pink-400 p-1 shadow-xs">
-                <div class="w-full h-1 bg-pink-400/80 rounded-sm mb-0.5"></div>
-                <div class="w-2/3 h-0.5 bg-zinc-500/60 rounded-sm"></div>
-              </div>
-            </div>
-            
-            <!-- Thursday -->
-            <div class="relative">
-              <div class="absolute top-3 left-0 right-0 h-6 bg-white/80 dark:bg-zinc-700/80 rounded-sm border-l-2 border-orange-400 p-1">
-                <div class="w-full h-1 bg-orange-400/60 rounded-sm mb-0.5"></div>
-                <div class="w-4/5 h-0.5 bg-zinc-400/40 rounded-sm"></div>
-              </div>
-            </div>
-            
-            <!-- Friday -->
-            <div class="relative">
-              <div class="absolute top-1 left-0 right-0 h-7 bg-white/80 dark:bg-zinc-700/80 rounded-sm border-l-2 border-red-400 p-1">
-                <div class="w-full h-1 bg-red-400/60 rounded-sm mb-0.5"></div>
-                <div class="w-3/5 h-0.5 bg-zinc-400/40 rounded-sm"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </button>
-
-    <!-- Left Side - Mini Dashboard Widget -->
-    <button 
-      type="button"
-      class="absolute left-8 top-1/2 -translate-y-1/2 w-56 h-36 bg-white/10 dark:bg-zinc-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-zinc-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-5 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-      onclick={() => openPreviewModal('dashboard')}
-      aria-label="Preview dashboard widget">
-      <div class="p-4 pointer-events-none">
-        <div class="flex items-center space-x-3 mb-4">
-          <div class="w-5 h-5 bg-linear-to-r from-indigo-400 to-purple-400 rounded-full"></div>
-          <div class="w-24 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
-        </div>
-        <div class="space-y-3">
-          <div class="w-full h-3 bg-zinc-300/40 dark:bg-zinc-600/40 rounded-sm"></div>
-          <div class="w-4/5 h-3 bg-zinc-300/40 dark:bg-zinc-600/40 rounded-sm"></div>
-          <div class="w-3/5 h-3 bg-zinc-300/40 dark:bg-zinc-600/40 rounded-sm"></div>
-          <div class="w-2/3 h-2 bg-zinc-300/30 dark:bg-zinc-600/30 rounded-sm"></div>
-        </div>
-      </div>
-    </button>
-
-    <!-- Right Side - Mini Analytics Chart -->
-    <button 
-      type="button"
-      class="absolute right-8 top-1/2 -translate-y-1/2 w-64 h-40 bg-white/10 dark:bg-zinc-800/20 backdrop-blur-xl rounded-xl border border-white/20 dark:border-zinc-700/20 opacity-50 cursor-pointer transition-all duration-300 hover:opacity-70 hover:scale-105 animate-float-6 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-      onclick={() => openPreviewModal('analytics')}
-      aria-label="Preview analytics dashboard">
-      <div class="p-4 pointer-events-none">
-        <div class="w-20 h-3 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm mb-4"></div>
-        <div class="flex items-end justify-between h-20 space-x-1">
-          <div class="w-4 h-10 bg-indigo-400/60 rounded-sm"></div>
-          <div class="w-4 h-16 bg-purple-400/60 rounded-sm"></div>
-          <div class="w-4 h-8 bg-pink-400/60 rounded-sm"></div>
-          <div class="w-4 h-12 bg-blue-400/60 rounded-sm"></div>
-          <div class="w-4 h-18 bg-green-400/60 rounded-sm"></div>
-          <div class="w-4 h-6 bg-orange-400/60 rounded-sm"></div>
-          <div class="w-4 h-11 bg-red-400/60 rounded-sm"></div>
-          <div class="w-4 h-14 bg-teal-400/60 rounded-sm"></div>
-        </div>
-      </div>
-    </button>
+    <div class="absolute inset-0 opacity-5 dark:opacity-10 pointer-events-none">
+      <div class="absolute top-0 left-0 w-full h-full" style="background-image: radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0); background-size: 40px 40px;"></div>
+    </div>
     {/if}
 
     <div class="w-full {isMobile ? 'max-w-md' : 'max-w-5xl'}">
       <!-- Main Login Card -->
-      <div class="relative overflow-hidden {isMobile ? 'rounded-2xl' : 'rounded-3xl'} bg-white/5 dark:bg-zinc-900/5 backdrop-blur-3xl border border-white/20 dark:border-zinc-700/15 shadow-2xl">
-        <!-- Animated Background Behind Card -->
-        <div class="absolute inset-0 bg-linear-to-br from-zinc-50 via-orange-50 to-pink-50 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-700 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
+      <div class="relative overflow-hidden {isMobile ? 'rounded-2xl' : 'rounded-3xl'} bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/40 dark:border-zinc-700/40 shadow-2xl">
+        <!-- Static Background -->
+        <div class="absolute inset-0 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-800 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
         
-        <!-- Animated Pastel Gradient Overlay -->
-        <div class="absolute inset-0 opacity-15 dark:opacity-25 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}">
-          <div class="absolute inset-0 bg-linear-to-br from-orange-200/8 via-rose-200/10 to-pink-200/8 dark:from-orange-300/15 dark:via-rose-300/18 dark:to-pink-300/15 animate-gradient-shift {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
+        <!-- Subtle accent overlay -->
+        <div class="absolute inset-0 opacity-5 dark:opacity-10 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}">
+          <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
         </div>
         
-        <!-- Glass effect overlay -->
-        <div class="absolute inset-0 bg-linear-to-br from-white/20 via-white/10 to-white/5 dark:from-zinc-800/20 dark:via-zinc-800/10 dark:to-zinc-800/5 {isMobile ? 'rounded-2xl' : 'rounded-3xl'}"></div>
+        <!-- Subtle border highlight -->
+        <div class="absolute inset-0 border-2 border-indigo-200/30 dark:border-indigo-800/30 {isMobile ? 'rounded-2xl' : 'rounded-3xl'} pointer-events-none"></div>
         
         <div class="relative flex flex-col {isMobile ? '' : 'lg:flex-row'}">
           <!-- Left side - Hero Section -->
@@ -642,20 +375,20 @@
           <div class="lg:w-1/2 p-12 flex flex-col justify-center relative overflow-hidden">
             <div class="space-y-8">
               <div class="space-y-4">
-                                 <h1 class="text-5xl lg:text-6xl font-bold text-zinc-900 dark:text-white leading-tight">
-                   <T key="login.welcome_to" fallback="Welcome to" /><br><span class="text-indigo-600 dark:text-indigo-400"><T key="login.app_name" fallback="DesQTA" /></span>
-                 </h1>
+                <h1 class="text-5xl lg:text-6xl font-bold text-zinc-900 dark:text-white leading-tight">
+                  <T key="login.welcome_to" fallback="Welcome to" /><br><span class="text-indigo-600 dark:text-indigo-400"><T key="login.app_name" fallback="DesQTA" /></span>
+                </h1>
                 <p class="text-xl text-zinc-600 dark:text-zinc-300 leading-relaxed">
                   <T key="login.subtitle" fallback="Experience SEQTA Learn like never before with our powerful, modern desktop application" />
                 </p>
               </div>
               
-              <!-- Animated feature highlight -->
-              <div class="h-16 flex items-center">
-                <div class="flex items-center space-x-4 text-zinc-600 dark:text-zinc-300">
-                  <div class="w-2 h-2 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-pulse"></div>
-                  <span class="text-lg font-medium min-h-7 flex items-center">
-                    {currentText}<span class="animate-blink text-indigo-500 ml-1">|</span>
+              <!-- Static feature highlight -->
+              <div class="flex items-center space-x-3 pt-4">
+                <div class="flex items-center space-x-2 text-zinc-600 dark:text-zinc-300">
+                  <div class="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                  <span class="text-base font-medium">
+                    <T key="login.secure_login" fallback="Secure • Fast • Modern" />
                   </span>
                 </div>
               </div>
@@ -1372,151 +1105,3 @@
 </div>
 
 <div id="qr-reader-temp" style="display:none;"></div>
-
-<style>
-  @keyframes gradient-shift {
-    0% {
-      background-size: 200% 200%;
-      background-position: 0% 50%;
-    }
-    50% {
-      background-size: 300% 300%;
-      background-position: 100% 50%;
-    }
-    100% {
-      background-size: 200% 200%;
-      background-position: 0% 50%;
-    }
-  }
-
-  @keyframes float-1 {
-    0%, 100% {
-      transform: translateY(0px) translateX(0px) scale(1);
-    }
-    25% {
-      transform: translateY(-8px) translateX(4px) scale(1.02);
-    }
-    50% {
-      transform: translateY(-4px) translateX(-2px) scale(0.98);
-    }
-    75% {
-      transform: translateY(6px) translateX(3px) scale(1.01);
-    }
-  }
-
-  @keyframes float-2 {
-    0%, 100% {
-      transform: translateY(0px) translateX(0px) scale(1);
-    }
-    30% {
-      transform: translateY(6px) translateX(-3px) scale(0.99);
-    }
-    60% {
-      transform: translateY(-5px) translateX(4px) scale(1.02);
-    }
-    80% {
-      transform: translateY(2px) translateX(-1px) scale(0.98);
-    }
-  }
-
-  @keyframes float-3 {
-    0%, 100% {
-      transform: translateY(0px) translateX(0px) scale(1);
-    }
-    20% {
-      transform: translateY(-6px) translateX(2px) scale(1.01);
-    }
-    45% {
-      transform: translateY(4px) translateX(-4px) scale(0.99);
-    }
-    70% {
-      transform: translateY(-2px) translateX(3px) scale(1.02);
-    }
-  }
-
-  @keyframes float-4 {
-    0%, 100% {
-      transform: translateY(0px) translateX(0px) scale(1);
-    }
-    35% {
-      transform: translateY(7px) translateX(2px) scale(0.98);
-    }
-    55% {
-      transform: translateY(-3px) translateX(-3px) scale(1.01);
-    }
-    85% {
-      transform: translateY(4px) translateX(1px) scale(0.99);
-    }
-  }
-
-  @keyframes float-5 {
-    0%, 100% {
-      transform: translateY(0px) translateX(0px) scale(1);
-    }
-    25% {
-      transform: translateY(5px) translateX(-2px) scale(1.02);
-    }
-    50% {
-      transform: translateY(-7px) translateX(3px) scale(0.98);
-    }
-    75% {
-      transform: translateY(3px) translateX(-1px) scale(1.01);
-    }
-  }
-
-  @keyframes float-6 {
-    0%, 100% {
-      transform: translateY(0px) translateX(0px) scale(1);
-    }
-    40% {
-      transform: translateY(-4px) translateX(-3px) scale(0.99);
-    }
-    65% {
-      transform: translateY(6px) translateX(2px) scale(1.02);
-    }
-    90% {
-      transform: translateY(-2px) translateX(4px) scale(0.98);
-    }
-  }
-
-  :global(.animate-gradient-shift) {
-    animation: gradient-shift 8s ease-in-out infinite;
-  }
-
-  :global(.animate-float-1) {
-    animation: float-1 12s ease-in-out infinite;
-  }
-
-  :global(.animate-float-2) {
-    animation: float-2 14s ease-in-out infinite;
-  }
-
-  :global(.animate-float-3) {
-    animation: float-3 11s ease-in-out infinite;
-  }
-
-  :global(.animate-float-4) {
-    animation: float-4 13s ease-in-out infinite;
-  }
-
-  :global(.animate-float-5) {
-    animation: float-5 15s ease-in-out infinite;
-  }
-
-  :global(.animate-float-6) {
-    animation: float-6 16s ease-in-out infinite;
-  }
-
-  @keyframes blink {
-    0%, 50% {
-      opacity: 1;
-    }
-    51%, 100% {
-      opacity: 0;
-    }
-  }
-
-  :global(.animate-blink) {
-    animation: blink 1s infinite;
-  }
-</style>
