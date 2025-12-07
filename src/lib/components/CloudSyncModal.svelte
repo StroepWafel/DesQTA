@@ -177,6 +177,11 @@
 
       success = 'Settings successfully downloaded from cloud';
       onSettingsDownload(cloudSettings);
+      
+      // Reload the page to apply the new settings
+      setTimeout(() => {
+        location.reload();
+      }, 500);
     } catch (err) {
       error = `Failed to download settings: ${err instanceof Error ? err.message : 'Unknown error'}`;
     } finally {
