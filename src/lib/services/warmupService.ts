@@ -152,6 +152,7 @@ export async function warmUpCommonData(): Promise<void> {
     prefetchAssessmentsOverview(),
     prefetchNoticesLabels(),
     prefetchTodayNotices(),
+    prefetchAnalyticsSync(),
   ]);
 }
 
@@ -250,6 +251,17 @@ async function prefetchTodayNotices(): Promise<void> {
         count: notices?.length,
       });
     }
+  } catch {
+    // ignore warmup errors
+  }
+}
+
+// Analytics sync warm-up: syncs analytics data in background
+async function prefetchAnalyticsSync(): Promise<void> {
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke<string>('sync_analytics_data');
+    logger.info('warmup', 'prefetchAnalyticsSync', 'Analytics data synced successfully');
   } catch {
     // ignore warmup errors
   }
