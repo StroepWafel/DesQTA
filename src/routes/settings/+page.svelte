@@ -46,12 +46,13 @@
   import T from '../../lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
-  import { goto } from '$app/navigation';
+  import { goto, beforeNavigate } from '$app/navigation';
   import { cloudAuthService } from '../../lib/services/cloudAuthService';
   import { cloudSettingsService } from '../../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
   import { CacheManager } from '../../utils/cacheManager';
   import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
+  import Modal from '../../lib/components/Modal.svelte';
 
   interface Shortcut {
     name: string;
@@ -104,6 +105,33 @@
   let updateNotes = '';
   let isDesktop = false;
   let showMenuOrderDialog = false;
+  let showUnsavedChangesModal = false;
+  let pendingNavigationUrl: string | null = null;
+  
+  // Store initial settings state for comparison
+  let initialSettings: {
+    shortcuts: Shortcut[];
+    feeds: Feed[];
+    weatherEnabled: boolean;
+    weatherCity: string;
+    weatherCountry: string;
+    remindersEnabled: boolean;
+    forceUseLocation: boolean;
+    accentColor: string;
+    theme: string;
+    disableSchoolPicture: boolean;
+    enhancedAnimations: boolean;
+    geminiApiKey: string;
+    aiIntegrationsEnabled: boolean;
+    gradeAnalyserEnabled: boolean;
+    lessonSummaryAnalyserEnabled: boolean;
+    autoCollapseSidebar: boolean;
+    autoExpandSidebarHover: boolean;
+    globalSearchEnabled: boolean;
+    devSensitiveInfoHider: boolean;
+    devForceOfflineMode: boolean;
+    acceptedCloudEula: boolean;
+  } | null = null;
 
   // Menu configuration (same as in layout)
   const DEFAULT_MENU = [
@@ -242,6 +270,31 @@ The Company reserves the right to terminate your access to the Service at any ti
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
+      
+      // Store initial state for comparison
+      initialSettings = {
+        shortcuts: JSON.parse(JSON.stringify(shortcuts)),
+        feeds: JSON.parse(JSON.stringify(feeds)),
+        weatherEnabled,
+        weatherCity,
+        weatherCountry,
+        remindersEnabled,
+        forceUseLocation,
+        accentColor: settings.accent_color ?? '#3b82f6',
+        theme: settings.theme ?? 'dark',
+        disableSchoolPicture,
+        enhancedAnimations,
+        geminiApiKey,
+        aiIntegrationsEnabled,
+        gradeAnalyserEnabled,
+        lessonSummaryAnalyserEnabled,
+        autoCollapseSidebar,
+        autoExpandSidebarHover,
+        globalSearchEnabled,
+        devSensitiveInfoHider,
+        devForceOfflineMode,
+        acceptedCloudEula,
+      };
 
       console.log('Loading settings', {
         shortcuts,
@@ -353,6 +406,32 @@ The Company reserves the right to terminate your access to the Service at any ti
       }
 
       saveSuccess = true;
+      
+      // Update initial settings after successful save
+      if (initialSettings) {
+        initialSettings.shortcuts = JSON.parse(JSON.stringify(shortcuts));
+        initialSettings.feeds = JSON.parse(JSON.stringify(feeds));
+        initialSettings.weatherEnabled = weatherEnabled;
+        initialSettings.weatherCity = weatherCity;
+        initialSettings.weatherCountry = weatherCountry;
+        initialSettings.remindersEnabled = remindersEnabled;
+        initialSettings.forceUseLocation = forceUseLocation;
+        initialSettings.accentColor = $accentColor;
+        initialSettings.theme = $theme;
+        initialSettings.disableSchoolPicture = disableSchoolPicture;
+        initialSettings.enhancedAnimations = enhancedAnimations;
+        initialSettings.geminiApiKey = geminiApiKey;
+        initialSettings.aiIntegrationsEnabled = aiIntegrationsEnabled;
+        initialSettings.gradeAnalyserEnabled = gradeAnalyserEnabled;
+        initialSettings.lessonSummaryAnalyserEnabled = lessonSummaryAnalyserEnabled;
+        initialSettings.autoCollapseSidebar = autoCollapseSidebar;
+        initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
+        initialSettings.globalSearchEnabled = globalSearchEnabled;
+        initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
+        initialSettings.devForceOfflineMode = devForceOfflineMode;
+        initialSettings.acceptedCloudEula = acceptedCloudEula;
+      }
+      
       if (!options.skipReload) {
         setTimeout(() => location.reload(), 1500);
       }
@@ -464,6 +543,31 @@ The Company reserves the right to terminate your access to the Service at any ti
 
     // Reload settings
     await loadSettings();
+    
+    // Reset initial settings after download to match current state
+    if (initialSettings) {
+      initialSettings.shortcuts = JSON.parse(JSON.stringify(shortcuts));
+      initialSettings.feeds = JSON.parse(JSON.stringify(feeds));
+      initialSettings.weatherEnabled = weatherEnabled;
+      initialSettings.weatherCity = weatherCity;
+      initialSettings.weatherCountry = weatherCountry;
+      initialSettings.remindersEnabled = remindersEnabled;
+      initialSettings.forceUseLocation = forceUseLocation;
+      initialSettings.accentColor = $accentColor;
+      initialSettings.theme = $theme;
+      initialSettings.disableSchoolPicture = disableSchoolPicture;
+      initialSettings.enhancedAnimations = enhancedAnimations;
+      initialSettings.geminiApiKey = geminiApiKey;
+      initialSettings.aiIntegrationsEnabled = aiIntegrationsEnabled;
+      initialSettings.gradeAnalyserEnabled = gradeAnalyserEnabled;
+      initialSettings.lessonSummaryAnalyserEnabled = lessonSummaryAnalyserEnabled;
+      initialSettings.autoCollapseSidebar = autoCollapseSidebar;
+      initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
+      initialSettings.globalSearchEnabled = globalSearchEnabled;
+      initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
+      initialSettings.devForceOfflineMode = devForceOfflineMode;
+      initialSettings.acceptedCloudEula = acceptedCloudEula;
+    }
   }
 
   function handleKeydown(event: KeyboardEvent) {
@@ -475,6 +579,75 @@ The Company reserves the right to terminate your access to the Service at any ti
     if (keyBuffer === 'dev') {
       showDevSettings = true;
     }
+  }
+
+  // Check if there are unsaved changes
+  function hasUnsavedChanges(): boolean {
+    if (!initialSettings) return false;
+    
+    // Deep compare arrays
+    const shortcutsChanged = JSON.stringify(shortcuts) !== JSON.stringify(initialSettings.shortcuts);
+    const feedsChanged = JSON.stringify(feeds) !== JSON.stringify(initialSettings.feeds);
+    
+    return (
+      shortcutsChanged ||
+      feedsChanged ||
+      weatherEnabled !== initialSettings.weatherEnabled ||
+      weatherCity !== initialSettings.weatherCity ||
+      weatherCountry !== initialSettings.weatherCountry ||
+      remindersEnabled !== initialSettings.remindersEnabled ||
+      forceUseLocation !== initialSettings.forceUseLocation ||
+      $accentColor !== initialSettings.accentColor ||
+      $theme !== initialSettings.theme ||
+      disableSchoolPicture !== initialSettings.disableSchoolPicture ||
+      enhancedAnimations !== initialSettings.enhancedAnimations ||
+      geminiApiKey !== initialSettings.geminiApiKey ||
+      aiIntegrationsEnabled !== initialSettings.aiIntegrationsEnabled ||
+      gradeAnalyserEnabled !== initialSettings.gradeAnalyserEnabled ||
+      lessonSummaryAnalyserEnabled !== initialSettings.lessonSummaryAnalyserEnabled ||
+      autoCollapseSidebar !== initialSettings.autoCollapseSidebar ||
+      autoExpandSidebarHover !== initialSettings.autoExpandSidebarHover ||
+      globalSearchEnabled !== initialSettings.globalSearchEnabled ||
+      devSensitiveInfoHider !== initialSettings.devSensitiveInfoHider ||
+      devForceOfflineMode !== initialSettings.devForceOfflineMode ||
+      acceptedCloudEula !== initialSettings.acceptedCloudEula
+    );
+  }
+  
+  // Handle navigation with unsaved changes check
+  beforeNavigate(({ to, cancel }) => {
+    // Don't block navigation if we're already on the settings page or if there are no unsaved changes
+    if (!to || to.url.pathname === '/settings' || !hasUnsavedChanges()) {
+      return;
+    }
+    
+    // Cancel the navigation
+    cancel();
+    
+    // Store the URL to navigate to later if user confirms
+    pendingNavigationUrl = to.url.pathname + (to.url.search || '');
+    
+    // Show the confirmation modal
+    showUnsavedChangesModal = true;
+  });
+  
+  async function handleSaveAndLeave() {
+    showUnsavedChangesModal = false;
+    const urlToNavigate = pendingNavigationUrl;
+    pendingNavigationUrl = null;
+    
+    // Save settings first (with reload enabled like normal save)
+    await saveSettings();
+    
+    // Navigate to the new page (reload will happen after 1500ms on the new page)
+    if (urlToNavigate) {
+      goto(urlToNavigate);
+    }
+  }
+  
+  function handleCancelLeave() {
+    showUnsavedChangesModal = false;
+    pendingNavigationUrl = null;
   }
 
   onMount(async () => {
@@ -1974,6 +2147,42 @@ The Company reserves the right to terminate your access to the Service at any ti
     </div>
   </div>
 {/if}
+
+<!-- Unsaved Changes Confirmation Modal -->
+<Modal
+  bind:open={showUnsavedChangesModal}
+  title="Unsaved Changes"
+  closeOnBackdrop={false}
+  closeOnEscape={true}
+  onclose={handleCancelLeave}>
+  <div class="px-8 pb-8">
+    <p class="mb-6 text-zinc-600 dark:text-zinc-400">
+      <T
+        key="settings.unsaved_changes_message"
+        fallback="You have unsaved changes. Are you sure you want to leave? Your changes will be lost." />
+    </p>
+    <div class="flex gap-3 justify-end">
+      <button
+        class="px-4 py-2 rounded-lg transition-all duration-200 bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2"
+        onclick={handleCancelLeave}>
+        <T key="common.cancel" fallback="Cancel" />
+      </button>
+      <button
+        class="px-4 py-2 text-white rounded-lg transition-all duration-200 transform accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring focus:ring-offset-2"
+        onclick={handleSaveAndLeave}
+        disabled={saving}>
+        {#if saving}
+          <div class="flex gap-2 items-center">
+            <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white"></div>
+            <span><T key="settings.saving" fallback="Saving..." /></span>
+          </div>
+        {:else}
+          <T key="settings.save_and_leave" fallback="Save Changes" />
+        {/if}
+      </button>
+    </div>
+  </div>
+</Modal>
 
 <style>
   @keyframes fade-in-up {
