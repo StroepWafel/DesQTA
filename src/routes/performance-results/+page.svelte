@@ -15,7 +15,8 @@
   import * as Card from '$lib/components/ui/card/index.js';
   import { Button } from '$lib/components/ui';
   import PerformanceLineChart from '../../lib/components/performance/PerformanceLineChart.svelte';
-  import type { TestResults, PerformanceMetrics } from '../../lib/services/performanceTesting';
+  import PerformanceGraph from '../../lib/components/PerformanceGraph.svelte';
+  import type { TestResults, PerformanceMetrics, SystemMetrics } from '../../lib/services/performanceTesting';
 
   let results: TestResults | null = null;
   let loading = true;
@@ -107,6 +108,24 @@
     value: page.domContentLoaded,
     time: index
   })) : [];
+
+  // System metrics chart data
+  $: cpuChartData = results?.systemMetricsHistory ? results.systemMetricsHistory.map(m => ({
+    timestamp: m.timestamp,
+    value: m.cpu.usage_percent
+  })) : [];
+
+  $: memoryChartDataSystem = results?.systemMetricsHistory ? results.systemMetricsHistory.map(m => ({
+    timestamp: m.timestamp,
+    value: m.memory.usage_percent
+  })) : [];
+
+  $: gpuChartData = results?.systemMetricsHistory ? results.systemMetricsHistory
+    .filter(m => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined)
+    .map(m => ({
+      timestamp: m.timestamp,
+      value: m.gpu.usage_percent!
+    })) : [];
 </script>
 
 <svelte:head>
@@ -211,6 +230,22 @@
           </div>
         </Card.Content>
       </Card.Root>
+
+      {#if results.summary.averageCpuUsage !== undefined}
+        <Card.Root class="justify-between">
+          <Card.Content class="flex items-center gap-3 p-6">
+            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Icon src={ComputerDesktop} class="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">Avg CPU Usage</p>
+              <p class="text-2xl font-bold text-zinc-900 dark:text-white">
+                {results.summary.averageCpuUsage.toFixed(1)}%
+              </p>
+            </div>
+          </Card.Content>
+        </Card.Root>
+      {/if}
     </div>
 
     <!-- Performance Charts -->
@@ -261,6 +296,78 @@
         </Card.Content>
       </Card.Root>
     </div>
+
+    <!-- System Metrics Graphs -->
+    {#if results.systemMetricsHistory && results.systemMetricsHistory.length > 0}
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" in:fade={{ duration: 400, delay: 150 }}>
+        <Card.Root class="justify-between">
+          <Card.Header>
+            <Card.Title>CPU Usage Over Time</Card.Title>
+            <Card.Description>
+              {#if results.summary.averageCpuUsage !== undefined}
+                Average: {results.summary.averageCpuUsage.toFixed(1)}% • Peak: {results.summary.peakCpuUsage?.toFixed(1) ?? 'N/A'}%
+              {:else}
+                Real-time CPU usage during performance test
+              {/if}
+            </Card.Description>
+          </Card.Header>
+          <Card.Content class="p-6">
+            {#if cpuChartData.length > 0}
+              <PerformanceGraph 
+                data={cpuChartData} 
+                label="CPU Usage (%)" 
+                color="#3b82f6"
+                maxValue={100}
+              />
+            {:else}
+              <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">No CPU data available</div>
+            {/if}
+          </Card.Content>
+        </Card.Root>
+
+        <Card.Root class="justify-between">
+          <Card.Header>
+            <Card.Title>Memory Usage Over Time</Card.Title>
+            <Card.Description>
+              {#if results.summary.averageMemoryUsage !== undefined}
+                Average: {results.summary.averageMemoryUsage.toFixed(1)}% • Peak: {results.summary.peakMemoryUsage?.toFixed(1) ?? 'N/A'}%
+              {:else}
+                Real-time memory usage during performance test
+              {/if}
+            </Card.Description>
+          </Card.Header>
+          <Card.Content class="p-6">
+            {#if memoryChartDataSystem.length > 0}
+              <PerformanceGraph 
+                data={memoryChartDataSystem} 
+                label="Memory Usage (%)" 
+                color="#8b5cf6"
+                maxValue={100}
+              />
+            {:else}
+              <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">No memory data available</div>
+            {/if}
+          </Card.Content>
+        </Card.Root>
+
+        {#if gpuChartData.length > 0}
+          <Card.Root class="justify-between">
+            <Card.Header>
+              <Card.Title>GPU Usage Over Time</Card.Title>
+              <Card.Description>Real-time GPU usage during performance test</Card.Description>
+            </Card.Header>
+            <Card.Content class="p-6">
+              <PerformanceGraph 
+                data={gpuChartData} 
+                label="GPU Usage (%)" 
+                color="#10b981"
+                maxValue={100}
+              />
+            </Card.Content>
+          </Card.Root>
+        {/if}
+      </div>
+    {/if}
 
     <!-- Performance Overview -->
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" in:fade={{ duration: 400, delay: 200 }}>
@@ -378,6 +485,45 @@
                             <p class="font-semibold text-zinc-700 dark:text-zinc-300">{formatTime(page.firstContentfulPaint)}</p>
                           </div>
                         {/if}
+                      </div>
+                    {/if}
+
+                    {#if page.systemMetrics && page.systemMetrics.length > 0}
+                      <div class="mt-4 pt-4 border-t border-zinc-300 dark:border-zinc-600">
+                        <h5 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">System Resource Usage</h5>
+                        {@const avgCpu = page.systemMetrics.reduce((sum, m) => sum + m.cpu.usage_percent, 0) / page.systemMetrics.length}
+                        {@const peakCpu = Math.max(...page.systemMetrics.map(m => m.cpu.usage_percent))}
+                        {@const avgMemory = page.systemMetrics.reduce((sum, m) => sum + m.memory.usage_percent, 0) / page.systemMetrics.length}
+                        {@const peakMemory = Math.max(...page.systemMetrics.map(m => m.memory.usage_percent))}
+                        {@const avgGpu = page.systemMetrics.filter(m => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined)
+                          .reduce((sum, m) => sum + (m.gpu.usage_percent || 0), 0) / page.systemMetrics.filter(m => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined).length}
+                        {@const peakGpu = Math.max(...page.systemMetrics.filter(m => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined).map(m => m.gpu.usage_percent || 0))}
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span class="text-zinc-500 dark:text-zinc-400">Avg CPU</span>
+                            <p class="font-semibold {avgCpu > 80 ? 'text-red-500' : avgCpu > 50 ? 'text-yellow-500' : 'text-green-500'}">
+                              {avgCpu.toFixed(1)}%
+                            </p>
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500">Peak: {peakCpu.toFixed(1)}%</p>
+                          </div>
+                          <div>
+                            <span class="text-zinc-500 dark:text-zinc-400">Avg Memory</span>
+                            <p class="font-semibold {avgMemory > 80 ? 'text-red-500' : avgMemory > 50 ? 'text-yellow-500' : 'text-green-500'}">
+                              {avgMemory.toFixed(1)}%
+                            </p>
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500">Peak: {peakMemory.toFixed(1)}%</p>
+                          </div>
+                          {#if !isNaN(avgGpu)}
+                            <div>
+                              <span class="text-zinc-500 dark:text-zinc-400">Avg GPU</span>
+                              <p class="font-semibold {avgGpu > 80 ? 'text-red-500' : avgGpu > 50 ? 'text-yellow-500' : 'text-green-500'}">
+                                {avgGpu.toFixed(1)}%
+                              </p>
+                              <p class="text-xs text-zinc-400 dark:text-zinc-500">Peak: {peakGpu.toFixed(1)}%</p>
+                            </div>
+                          {/if}
+                        </div>
                       </div>
                     {/if}
                   </div>

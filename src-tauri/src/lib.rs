@@ -22,6 +22,8 @@ mod news;
 mod notes_filesystem;
 #[path = "utils/performance_testing.rs"]
 mod performance_testing;
+#[path = "utils/system_monitor.rs"]
+mod system_monitor;
 #[path = "utils/profile_picture.rs"]
 mod profile_picture;
 #[path = "utils/sanitization.rs"]
@@ -339,6 +341,9 @@ pub fn run() {
             performance_testing::delete_performance_test_result,
             performance_testing::get_performance_tests_directory,
             performance_testing::clear_all_performance_tests,
+            system_monitor::get_system_metrics,
+            system_monitor::get_detailed_system_info,
+            system_monitor::start_system_monitoring,
             database::db_cache_get,
             database::db_cache_set,
             database::db_cache_delete,

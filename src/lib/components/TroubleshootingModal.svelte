@@ -35,8 +35,11 @@
   let logs = $state<any[]>([]);
   let loadingLogs = $state(false);
   let apiTestResult = $state<{ success: boolean; message: string } | null>(null);
+  let rustSystemInfo = $state<any>(null);
+  let systemMetrics = $state<any>(null);
+  let loadingSystemInfo = $state(false);
 
-  // System information
+  // System information (browser-based)
   let systemInfo = $derived({
     userAgent: navigator.userAgent,
     platform: navigator.platform,
@@ -60,10 +63,79 @@
   // Simplified error stats since we're not using the complex error service
   let errorStats = $derived({ total: 0, resolved: 0, critical: 0, byCategory: {}, bySeverity: {} });
 
+  // Initialize system monitoring when modal opens
+  $effect(() => {
+    if (open) {
+      import('@tauri-apps/api/core').then(({ invoke }) => {
+        invoke('start_system_monitoring').catch(() => {});
+      });
+    }
+  });
+
   // Auto-load logs when System Logs tab is opened
   $effect(() => {
-    if (activeTab === 'logs' && logs.length === 0) {
-      loadSystemLogs();
+    if (open) {
+      if (activeTab === 'logs' && logs.length === 0) {
+        loadSystemLogs();
+      }
+      if (activeTab === 'diagnostics' && !rustSystemInfo) {
+        loadRustSystemInfo();
+      }
+      if (activeTab === 'performance' && !systemMetrics) {
+        loadSystemMetrics();
+      }
+    }
+  });
+
+  async function loadRustSystemInfo() {
+    loadingSystemInfo = true;
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      rustSystemInfo = await invoke('get_detailed_system_info');
+    } catch (error) {
+      logger.error('troubleshootingModal', 'loadRustSystemInfo', 'Failed to load Rust system info', { error });
+    } finally {
+      loadingSystemInfo = false;
+    }
+  }
+
+  let metricsInterval: number | null = null;
+
+  async function loadSystemMetrics() {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      systemMetrics = await invoke('get_system_metrics');
+      
+      // Clear any existing interval
+      if (metricsInterval !== null) {
+        clearInterval(metricsInterval);
+      }
+      
+      // Refresh metrics every 2 seconds while on performance tab and modal is open
+      metricsInterval = window.setInterval(async () => {
+        if (activeTab === 'performance' && open) {
+          try {
+            systemMetrics = await invoke('get_system_metrics');
+          } catch (error) {
+            logger.error('troubleshootingModal', 'loadSystemMetrics', 'Failed to refresh metrics', { error });
+          }
+        } else {
+          if (metricsInterval !== null) {
+            clearInterval(metricsInterval);
+            metricsInterval = null;
+          }
+        }
+      }, 2000);
+    } catch (error) {
+      logger.error('troubleshootingModal', 'loadSystemMetrics', 'Failed to load system metrics', { error });
+    }
+  }
+
+  // Cleanup interval when modal closes
+  $effect(() => {
+    if (!open && metricsInterval !== null) {
+      clearInterval(metricsInterval);
+      metricsInterval = null;
     }
   });
 
@@ -267,6 +339,50 @@
           <!-- System Diagnostics Tab -->
           {#if activeTab === 'diagnostics'}
             <div class="space-y-6">
+              {#if loadingSystemInfo}
+                <div class="flex justify-center items-center py-8">
+                  <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent-500/30 border-t-accent-500"></div>
+                </div>
+              {:else if rustSystemInfo}
+                <!-- Rust System Information -->
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
+                  <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
+                    <Icon src={ComputerDesktop} size="16" />
+                    System Information (Rust)
+                  </h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Hostname:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{rustSystemInfo.hostname}</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">OS:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{rustSystemInfo.os_name} {rustSystemInfo.os_version}</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Kernel:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{rustSystemInfo.kernel_version}</span>
+                      </div>
+                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">CPU:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{rustSystemInfo.cpu_brand} ({rustSystemInfo.cpu_count} cores)</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Total Memory:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{(rustSystemInfo.total_memory / 1024 / 1024 / 1024).toFixed(2)} GB</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Uptime:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{Math.floor(rustSystemInfo.uptime_seconds / 3600)}h {Math.floor((rustSystemInfo.uptime_seconds % 3600) / 60)}m</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {/if}
+              
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- System Health -->
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
@@ -456,10 +572,77 @@
             <div class="space-y-6">
               <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Performance Metrics</h3>
               
+              {#if systemMetrics}
+                <!-- Real-time System Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <!-- CPU Usage -->
+                  <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">CPU Usage</h4>
+                    <div class="text-2xl font-bold text-accent-500">{systemMetrics.cpu.usage_percent.toFixed(1)}%</div>
+                    <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 mt-2">
+                      <div 
+                        class="bg-accent-500 h-2 rounded-full transition-all duration-300"
+                        style="width: {systemMetrics.cpu.usage_percent}%"
+                      ></div>
+                    </div>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{systemMetrics.cpu.frequency_mhz} MHz</div>
+                  </div>
+                  
+                  <!-- Memory Usage -->
+                  <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Memory Usage</h4>
+                    <div class="text-2xl font-bold text-blue-500">{systemMetrics.memory.usage_percent.toFixed(1)}%</div>
+                    <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 mt-2">
+                      <div 
+                        class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style="width: {systemMetrics.memory.usage_percent}%"
+                      ></div>
+                    </div>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      {(systemMetrics.memory.used_bytes / 1024 / 1024 / 1024).toFixed(2)} GB / {(systemMetrics.memory.total_bytes / 1024 / 1024 / 1024).toFixed(2)} GB
+                    </div>
+                  </div>
+                  
+                  <!-- Disk Usage -->
+                  <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Disk Usage</h4>
+                    <div class="text-2xl font-bold text-green-500">{systemMetrics.disk.usage_percent.toFixed(1)}%</div>
+                    <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 mt-2">
+                      <div 
+                        class="bg-green-500 h-2 rounded-full transition-all duration-300"
+                        style="width: {systemMetrics.disk.usage_percent}%"
+                      ></div>
+                    </div>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      {(systemMetrics.disk.used_bytes / 1024 / 1024 / 1024).toFixed(2)} GB / {(systemMetrics.disk.total_bytes / 1024 / 1024 / 1024).toFixed(2)} GB
+                    </div>
+                  </div>
+                  
+                  <!-- Network Activity -->
+                  <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Network</h4>
+                    <div class="space-y-1 text-xs">
+                      <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">Received:</span>
+                        <span class="text-zinc-700 dark:text-zinc-300">{(systemMetrics.network.received_bytes / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">Sent:</span>
+                        <span class="text-zinc-700 dark:text-zinc-300">{(systemMetrics.network.transmitted_bytes / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">Packets:</span>
+                        <span class="text-zinc-700 dark:text-zinc-300">{systemMetrics.network.received_packets + systemMetrics.network.transmitted_packets}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {/if}
+              
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Memory Usage -->
+                <!-- Memory Usage (Browser) -->
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
-                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Memory Usage</h4>
+                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Browser Memory Usage</h4>
                   {#if systemInfo.memoryInfo}
                     <div class="space-y-2">
                       <div class="flex items-center justify-between">
