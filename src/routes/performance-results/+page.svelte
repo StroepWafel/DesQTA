@@ -489,16 +489,16 @@
                     {/if}
 
                     {#if page.systemMetrics && page.systemMetrics.length > 0}
+                      {@const avgCpu = page.systemMetrics.reduce((sum, m) => sum + m.cpu.usage_percent, 0) / page.systemMetrics.length}
+                      {@const peakCpu = Math.max(...page.systemMetrics.map(m => m.cpu.usage_percent))}
+                      {@const avgMemory = page.systemMetrics.reduce((sum, m) => sum + m.memory.usage_percent, 0) / page.systemMetrics.length}
+                      {@const peakMemory = Math.max(...page.systemMetrics.map(m => m.memory.usage_percent))}
+                      {@const gpuMetrics = page.systemMetrics.filter(m => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined)}
+                      {@const avgGpu = gpuMetrics.length > 0 ? gpuMetrics.reduce((sum, m) => sum + (m.gpu.usage_percent || 0), 0) / gpuMetrics.length : NaN}
+                      {@const peakGpu = gpuMetrics.length > 0 ? Math.max(...gpuMetrics.map(m => m.gpu.usage_percent || 0)) : NaN}
+                      
                       <div class="mt-4 pt-4 border-t border-zinc-300 dark:border-zinc-600">
                         <h5 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">System Resource Usage</h5>
-                        {@const avgCpu = page.systemMetrics.reduce((sum, m) => sum + m.cpu.usage_percent, 0) / page.systemMetrics.length}
-                        {@const peakCpu = Math.max(...page.systemMetrics.map(m => m.cpu.usage_percent))}
-                        {@const avgMemory = page.systemMetrics.reduce((sum, m) => sum + m.memory.usage_percent, 0) / page.systemMetrics.length}
-                        {@const peakMemory = Math.max(...page.systemMetrics.map(m => m.memory.usage_percent))}
-                        {@const avgGpu = page.systemMetrics.filter(m => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined)
-                          .reduce((sum, m) => sum + (m.gpu.usage_percent || 0), 0) / page.systemMetrics.filter(m => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined).length}
-                        {@const peakGpu = Math.max(...page.systemMetrics.filter(m => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined).map(m => m.gpu.usage_percent || 0))}
-                        
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <span class="text-zinc-500 dark:text-zinc-400">Avg CPU</span>
