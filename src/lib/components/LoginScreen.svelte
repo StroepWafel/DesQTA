@@ -1284,10 +1284,10 @@
   <!-- Manual Auth Instructions Overlay -->
   {#if showManualAuthInstructions}
     <div
-      class="fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-sm bg-black/80"
+      class="fixed inset-0 z-[9999] flex items-center justify-end backdrop-blur-sm bg-black/80 pr-8"
       transition:fade={{ duration: 200 }}>
       <div
-        class="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-zinc-700/40 p-8 max-w-2xl mx-4"
+        class="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-zinc-700/40 p-8 max-w-2xl"
         transition:scale={{ duration: 200 }}>
         <div class="space-y-6">
           <div class="text-center space-y-2">
