@@ -48,6 +48,7 @@
   import { logger } from '../../utils/logger';
   import { goto, beforeNavigate } from '$app/navigation';
   import { cloudAuthService } from '../../lib/services/cloudAuthService';
+  import { toastStore } from '../../lib/stores/toast';
   import { cloudSettingsService } from '../../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
   import { CacheManager } from '../../utils/cacheManager';
@@ -407,6 +408,9 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       saveSuccess = true;
       
+      // Show success toast
+      toastStore.success('Settings saved successfully');
+      
       // Update initial settings after successful save
       if (initialSettings) {
         initialSettings.shortcuts = JSON.parse(JSON.stringify(shortcuts));
@@ -438,6 +442,8 @@ The Company reserves the right to terminate your access to the Service at any ti
     } catch (e) {
       saveError = 'Failed to save settings.';
       console.log(e);
+      // Show error toast
+      toastStore.error('Failed to save settings');
     }
     saving = false;
   }

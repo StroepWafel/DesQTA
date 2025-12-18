@@ -5,6 +5,7 @@
   import { uploadSeqtaFile, seqtaFetch } from '../../utils/netUtil';
   import { sanitizeFilename } from '../../utils/sanitization';
   import { logger } from '../../utils/logger';
+  import { toastStore } from '../../lib/stores/toast';
 
   interface Props {
     assessmentId: number;
@@ -88,6 +89,7 @@
             logger.info('FileUploadButton', 'handleFileUpload', 'File uploaded successfully', {
               fileName
             });
+            toastStore.success(`File "${fileName}" uploaded successfully`);
           } else {
             throw new Error('Failed to link file to assessment');
           }
@@ -98,6 +100,7 @@
     } catch (e) {
       logger.error('FileUploadButton', 'handleFileUpload', 'File upload failed', { error: e });
       uploadError = e instanceof Error ? e.message : 'Upload failed';
+      toastStore.error('File upload failed');
     } finally {
       uploading = false;
     }

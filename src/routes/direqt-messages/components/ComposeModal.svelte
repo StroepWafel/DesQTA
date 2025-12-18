@@ -10,6 +10,7 @@
   import { Label } from '$lib/components/ui/label';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
+  import { toastStore } from '../../../lib/stores/toast';
   
   function clickOutside(node: HTMLElement, onOutside: () => void) {
     const handler = (e: MouseEvent) => {
@@ -170,8 +171,10 @@
         composeSubject = '';
         composeBody = '';
         closeModal();
+        toastStore.success('Message sent successfully');
       } else {
         errorMessage = $_('messages.failed_to_send') || 'Failed to send message. Please try again.';
+        toastStore.error('Failed to send message');
       }
     } catch (err) {
       // Offline or failed: queue draft for later sync
@@ -187,6 +190,7 @@
       });
       closeModal();
       errorMessage = '';
+      toastStore.info('Message queued for sending when online');
     } finally {
       isSubmitting = false;
     }
