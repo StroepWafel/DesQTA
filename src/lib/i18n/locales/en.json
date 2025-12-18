@@ -40,6 +40,19 @@
     "qr_signin": "QR Sign In",
     "welcome": "Welcome"
   },
+  "forums": {
+    "loading": "Loading forums...",
+    "error_loading": "Error loading forums",
+    "no_forums": "No forums available",
+    "no_forums_message": "There are no forums to display.",
+    "participants": "participants",
+    "opened": "Opened",
+    "closed": "Closed",
+    "read_comments": "read",
+    "unread_comments": "unread",
+    "open_forums": "Open Forums",
+    "closed_forums": "Closed Forums"
+  },
   "header": {
     "toggle_sidebar": "Toggle sidebar",
     "minimize": "Minimize",
