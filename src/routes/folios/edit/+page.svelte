@@ -78,7 +78,13 @@
       const response = await seqtaFetch('/seqta/student/folio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: { mode: 'create' },
+        body: {
+          mode: 'adminSave',
+          data: {
+            title: 'Untitled folio',
+            contents: '',
+          },
+        },
       });
 
       const data = typeof response === 'string' ? JSON.parse(response) : response;
