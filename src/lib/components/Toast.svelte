@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fly, fade } from 'svelte/transition';
+  import { fly } from 'svelte/transition';
   import { XMark, CheckCircle, ExclamationCircle, InformationCircle, ExclamationTriangle } from 'svelte-hero-icons';
   import type { Toast } from '../stores/toast';
 
