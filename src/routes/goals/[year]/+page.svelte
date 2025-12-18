@@ -4,7 +4,7 @@
   import { goto } from '$app/navigation';
   import { seqtaFetch } from '../../../utils/netUtil';
   import { LoadingSpinner, EmptyState, Button } from '$lib/components/ui';
-  import { Icon, Flag, ExclamationTriangle, ChevronLeft, Plus } from 'svelte-hero-icons';
+  import { Icon, Flag, ExclamationTriangle, ChevronLeft, Plus, Check } from 'svelte-hero-icons';
   import Editor from '../../../components/Editor/Editor.svelte';
   import GoalsToolbar from '../components/GoalsToolbar.svelte';
   import { Editor as TipTapEditor } from '@tiptap/core';
@@ -22,6 +22,17 @@
     student_notes?: string;
   }
 
+  interface GoalItem {
+    goals?: string;
+    support?: string;
+    action?: string;
+    notes?: string;
+    done?: boolean;
+    id?: number;
+    uid?: string;
+    editable?: number;
+  }
+
   let goalsData: GoalsData | null = $state(null);
   let loading = $state(true);
   let error: string | null = $state(null);
@@ -29,8 +40,28 @@
   let saving = $state(false);
   let editorInstance: TipTapEditor | null = $state(null);
   let goalsEnabled = $state<boolean | null>(null);
+  let goalItems: GoalItem[] = $state([]);
 
   const year = $derived($page.params.year);
+
+  function generateUID(): string {
+    return Math.random().toString(36).substring(2, 9);
+  }
+
+  function addGoalItem() {
+    goalItems = [
+      ...goalItems,
+      { goals: '', support: '', action: '', notes: '', done: false, uid: generateUID() },
+    ];
+  }
+
+  function removeGoalItem(index: number) {
+    goalItems = goalItems.filter((_, i) => i !== index);
+  }
+
+  function updateGoalItem(index: number, field: keyof GoalItem, value: string | boolean) {
+    goalItems = goalItems.map((item, i) => (i === index ? { ...item, [field]: value } : item));
+  }
 
   async function checkGoalsEnabled() {
     try {
@@ -72,6 +103,21 @@
         } else {
           myNotes = '';
         }
+        // Load goal items
+        if (goalsData?.items && Array.isArray(goalsData.items)) {
+          goalItems = goalsData.items.map((item) => ({
+            goals: item.goals || '',
+            support: item.support || '',
+            action: item.action || '',
+            notes: item.notes || '',
+            done: false, // API doesn't return done status
+            id: item.id,
+            uid: item.uid || generateUID(),
+            editable: item.editable,
+          }));
+        } else {
+          goalItems = [];
+        }
       } else {
         error = 'Invalid response format';
         logger.error('goals', 'loadGoals', 'Invalid response format', { data });
@@ -92,6 +138,15 @@
       // Extract HTML content from editor (without wrapper div and styles)
       const studentNotes = editorInstance.getHTML();
 
+      // Prepare items for saving - include uid for new items, id for existing
+      const itemsToSave = goalItems.map((item) => ({
+        goals: item.goals || '',
+        support: item.support || '',
+        action: item.action || '',
+        notes: item.notes || '',
+        ...(item.id ? { id: item.id } : { uid: item.uid }),
+      }));
+
       const response = await seqtaFetch('/seqta/student/load/goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,7 +154,7 @@
           mode: 'save',
           goal: goalsData.goal,
           student_notes: studentNotes,
-          items: goalsData.items || [],
+          items: itemsToSave,
         },
       });
 
@@ -243,10 +298,20 @@
             <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
               <T key="goals.goals" fallback="Goals" />
             </h2>
-            <button
-              class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-              <Icon src={Plus} class="w-5 h-5" />
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                onclick={addGoalItem}
+                class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+                <Icon src={Plus} class="w-5 h-5" />
+              </button>
+              <Button
+                onclick={saveNotes}
+                disabled={saving || !goalsData}
+                class="flex items-center gap-2">
+                <Icon src={Check} class="w-4 h-4" />
+                {saving ? $_('common.saving') || 'Saving...' : $_('common.save') || 'Save'}
+              </Button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full">
@@ -275,17 +340,46 @@
                 </tr>
               </thead>
               <tbody>
-                {#if goalsData.items && goalsData.items.length > 0}
-                  {#each goalsData.items as item}
+                {#if goalItems.length > 0}
+                  {#each goalItems as item, index}
                     <tr class="border-b border-zinc-200 dark:border-zinc-700">
-                      <td class="px-4 py-3 text-zinc-900 dark:text-white">{item.goal || '-'}</td>
-                      <td class="px-4 py-3 text-zinc-900 dark:text-white">{item.support || '-'}</td>
-                      <td class="px-4 py-3 text-zinc-900 dark:text-white">{item.action || '-'}</td>
-                      <td class="px-4 py-3 text-zinc-900 dark:text-white">{item.notes || '-'}</td>
+                      <td class="px-4 py-3">
+                        <input
+                          type="text"
+                          value={item.goals || ''}
+                          oninput={(e) => updateGoalItem(index, 'goals', e.currentTarget.value)}
+                          placeholder={$_('goals.goal') || 'Goal'}
+                          class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                      </td>
+                      <td class="px-4 py-3">
+                        <input
+                          type="text"
+                          value={item.support || ''}
+                          oninput={(e) => updateGoalItem(index, 'support', e.currentTarget.value)}
+                          placeholder={$_('goals.support') || 'Support'}
+                          class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                      </td>
+                      <td class="px-4 py-3">
+                        <input
+                          type="text"
+                          value={item.action || ''}
+                          oninput={(e) => updateGoalItem(index, 'action', e.currentTarget.value)}
+                          placeholder={$_('goals.action') || 'Action'}
+                          class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                      </td>
+                      <td class="px-4 py-3">
+                        <input
+                          type="text"
+                          value={item.notes || ''}
+                          oninput={(e) => updateGoalItem(index, 'notes', e.currentTarget.value)}
+                          placeholder={$_('goals.my_notes') || 'My notes'}
+                          class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                      </td>
                       <td class="px-4 py-3 text-center">
                         <input
                           type="checkbox"
                           checked={item.done || false}
+                          onchange={(e) => updateGoalItem(index, 'done', e.currentTarget.checked)}
                           class="w-4 h-4 text-accent bg-white border-zinc-300 rounded focus:ring-accent dark:bg-zinc-700 dark:border-zinc-600" />
                       </td>
                     </tr>
