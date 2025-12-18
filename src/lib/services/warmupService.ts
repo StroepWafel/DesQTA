@@ -256,13 +256,36 @@ async function prefetchTodayNotices(): Promise<void> {
   }
 }
 
-// Analytics sync warm-up: syncs analytics data in background
+// Analytics sync warm-up: syncs analytics data in background only if no data exists
 async function prefetchAnalyticsSync(): Promise<void> {
   try {
     const { invoke } = await import('@tauri-apps/api/core');
+
+    // Check if analytics data already exists in cache
+    try {
+      const existingData = await invoke<string>('load_analytics');
+      if (existingData && existingData.trim() !== '' && existingData.trim() !== '[]') {
+        // Data exists, skip background sync - it will sync when user visits the page
+        logger.info(
+          'warmup',
+          'prefetchAnalyticsSync',
+          'Analytics data exists in cache, skipping background sync',
+        );
+        return;
+      }
+    } catch (e) {
+      // If load fails (file doesn't exist), continue with sync
+      logger.debug(
+        'warmup',
+        'prefetchAnalyticsSync',
+        'No existing analytics data found, proceeding with sync',
+      );
+    }
+
+    // Only sync if no data exists
     await invoke<string>('sync_analytics_data');
     logger.info('warmup', 'prefetchAnalyticsSync', 'Analytics data synced successfully');
-    
+
     // Show success toast notification
     const { toastStore } = await import('../stores/toast');
     toastStore.success('Analytics data synced');
