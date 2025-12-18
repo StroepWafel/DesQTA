@@ -94,6 +94,8 @@ pub struct Settings {
     pub language: String,
     #[serde(default)]
     pub menu_order: Option<Vec<String>>,
+    #[serde(default)]
+    pub has_been_through_onboarding: bool,
 }
 
 impl Default for Settings {
@@ -123,6 +125,7 @@ impl Default for Settings {
             accepted_cloud_eula: false,
             language: "en".to_string(), // Default to English
             menu_order: None,
+            has_been_through_onboarding: false,
         }
     }
 }
@@ -378,6 +381,11 @@ impl Settings {
         default_settings.language =
             get_string(&existing_json, "language", &default_settings.language);
         default_settings.menu_order = get_opt_string_array(&existing_json, "menu_order");
+        default_settings.has_been_through_onboarding = get_bool(
+            &existing_json,
+            "has_been_through_onboarding",
+            default_settings.has_been_through_onboarding,
+        );
 
         default_settings
     }

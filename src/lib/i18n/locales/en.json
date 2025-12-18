@@ -557,7 +557,10 @@
     "apply": "Apply",
     "no_themes_found": "No themes found",
     "try_adjusting_filters": "Try adjusting your search or filter criteria.",
-    "clear_filters": "Clear Filters"
+    "clear_filters": "Clear Filters",
+    "redo_onboarding": "Redo Walkthrough",
+    "redo_onboarding_description": "Restart the onboarding walkthrough to learn about DesQTA features.",
+    "resetting": "Resetting..."
   },
   "analytics": {
     "description": "Track your academic performance and progress over time",

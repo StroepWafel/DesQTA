@@ -102,6 +102,7 @@
 
 <div class="relative user-dropdown-container">
   <button
+    data-onboarding="user-dropdown"
     class="flex gap-3 items-center px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 dark:hover:bg-zinc-800/80 focus:outline-hidden focus:ring-2 focus:ring-zinc-500/50"
     onclick={onToggleUserDropdown}
     aria-label={$_('user.user_menu') || 'User menu'}

@@ -10,6 +10,7 @@
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import ToastContainer from '../lib/components/ToastContainer.svelte';
+  import Onboarding from '../lib/components/Onboarding.svelte';
   import { cloudAuthService } from '../lib/services/cloudAuthService';
   import { cloudSettingsService } from '../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../lib/services/settingsSync';
@@ -69,6 +70,7 @@
   let sidebarOpen = $state(true);
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
+  let showOnboarding = $state(false);
 
   // Composables
   const weather = useWeather();
@@ -187,6 +189,7 @@
       logger.debug('layout', 'onDestroy', 'Cleaning up reload listener');
       unlisten();
     }
+    window.removeEventListener('redo-onboarding', handleRedoOnboarding);
   });
 
   // Consolidated settings loader
@@ -389,9 +392,25 @@
     }
   });
 
+  // Listen for redo onboarding event
+  const handleRedoOnboarding = async () => {
+    try {
+      const settings = await loadSettings(['has_been_through_onboarding']);
+      if (!settings.has_been_through_onboarding) {
+        showOnboarding = true;
+        sidebarOpen = true;
+      }
+    } catch (e) {
+      logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', { error: e });
+    }
+  };
+
   onMount(async () => {
     logger.logComponentMount('layout');
     setupListeners();
+
+    // Set up redo onboarding listener
+    window.addEventListener('redo-onboarding', handleRedoOnboarding);
 
     // Initialize theme and i18n first
     await Promise.all([loadAccentColor(), loadTheme(), loadCurrentTheme(), initI18n()]);
@@ -423,6 +442,20 @@
         reloadSidebarSettings(),
         syncCloudSettings(),
       ]);
+
+      // Check if user needs onboarding
+      try {
+        const settings = await loadSettings(['has_been_through_onboarding']);
+        if (!settings.has_been_through_onboarding) {
+          // Wait a bit for UI to settle
+          setTimeout(() => {
+            showOnboarding = true;
+            sidebarOpen = true; // Ensure sidebar is open for first step
+          }, 1000);
+        }
+      } catch (e) {
+        logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
+      }
 
       // Load cached data from SQLite immediately for instant UI
       const { initializeApp } = await import('$lib/services/startupService');
@@ -726,3 +759,4 @@
 {/if}
 <ToastContainer />
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
+<Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />

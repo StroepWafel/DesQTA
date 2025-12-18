@@ -111,6 +111,7 @@
   let showMenuOrderDialog = false;
   let showUnsavedChangesModal = false;
   let pendingNavigationUrl: string | null = null;
+  let resettingOnboarding = false;
   
   // Store initial settings state for comparison
   let initialSettings: {
@@ -912,6 +913,32 @@ The Company reserves the right to terminate your access to the Service at any ti
       });
     }
   }
+
+  async function redoOnboarding() {
+    resettingOnboarding = true;
+    try {
+      await saveSettingsWithQueue({ has_been_through_onboarding: false });
+      await flushSettingsQueue();
+      
+      // Dispatch event to trigger onboarding in layout
+      window.dispatchEvent(new CustomEvent('redo-onboarding'));
+      
+      toastStore.add({
+        message: 'Onboarding walkthrough will start when you navigate away and back, or refresh the page.',
+        type: 'success',
+        duration: 5000,
+      });
+    } catch (error) {
+      console.error('Failed to reset onboarding:', error);
+      toastStore.add({
+        message: 'Failed to reset onboarding walkthrough.',
+        type: 'error',
+        duration: 5000,
+      });
+    } finally {
+      resettingOnboarding = false;
+    }
+  }
 </script>
 
 <div class="p-4 mx-auto max-w-4xl sm:p-6 md:p-8">
@@ -964,6 +991,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     <div class="space-y-6 sm:space-y-8">
       <!-- Cloud Sync Section -->
       <section
+        data-onboarding="cloud-sync"
         class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/30 dark:border-zinc-800/30">
           <h2 class="text-base font-semibold sm:text-lg text-zinc-500 dark:text-zinc-400">
@@ -1889,6 +1917,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Theme Store Link -->
       <section
+        data-onboarding="theme-store"
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
           <h2 class="text-base font-semibold sm:text-lg">Theme Store</h2>
@@ -1977,6 +2006,36 @@ The Company reserves the right to terminate your access to the Service at any ti
         </div>
       </section>
       {/if}
+
+      <!-- Redo Onboarding -->
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-purple-700/50 animate-fade-in-up">
+        <div class="flex justify-between items-center p-4 sm:p-6">
+          <div>
+            <h2 class="text-base font-semibold sm:text-lg">
+              <T key="settings.redo_onboarding" fallback="Redo Walkthrough" />
+            </h2>
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+              <T
+                key="settings.redo_onboarding_description"
+                fallback="Restart the onboarding walkthrough to learn about DesQTA features." />
+            </p>
+          </div>
+          <button
+            type="button"
+            onclick={redoOnboarding}
+            disabled={resettingOnboarding}
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-purple-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-purple-600 focus:ring-2 focus:ring-purple-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+            {#if resettingOnboarding}
+              <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white"></div>
+              <span><T key="settings.resetting" fallback="Resetting..." /></span>
+            {:else}
+              <Icon src={ArrowPath} class="w-4 h-4" />
+              <span><T key="settings.redo_onboarding" fallback="Redo Walkthrough" /></span>
+            {/if}
+          </button>
+        </div>
+      </section>
 
       <!-- Troubleshooting button -->
       <section
