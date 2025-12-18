@@ -149,7 +149,7 @@
 </script>
 
 <svelte:head>
-  <title><T key="performance.title" fallback="Performance Test Results - DesQTA" /></title>
+  <title>{$_('performance.title', { default: 'Performance Test Results - DesQTA' })}</title>
 </svelte:head>
 
 <div class="container px-6 py-7 mx-auto flex flex-col h-full gap-8">
