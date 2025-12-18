@@ -127,6 +127,7 @@
     { nameKey: 'navigation.courses', path: '/courses' },
     { nameKey: 'navigation.directory', path: '/directory' },
     { nameKey: 'navigation.goals', path: '/goals' },
+    { nameKey: 'navigation.forums', path: '/forums' },
     { nameKey: 'navigation.messages', path: '/direqt-messages' },
     { nameKey: 'navigation.news', path: '/news' },
     { nameKey: 'navigation.notices', path: '/notices' },

@@ -48,6 +48,7 @@
     XMark,
     PencilSquare,
     Flag,
+    ChatBubbleBottomCenterText,
   } from 'svelte-hero-icons';
   import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
@@ -94,6 +95,7 @@
     { labelKey: 'navigation.timetable', icon: CalendarDays, path: '/timetable' },
     { labelKey: 'navigation.study', icon: PencilSquare, path: '/study' },
     { labelKey: 'navigation.goals', icon: Flag, path: '/goals' },
+    { labelKey: 'navigation.forums', icon: ChatBubbleBottomCenterText, path: '/forums' },
     { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
     { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
     { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },
