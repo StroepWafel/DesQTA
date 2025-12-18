@@ -72,7 +72,16 @@
     "position_qr": "QRコードをフレーム内に配置してスキャン",
     "camera_error": "このデバイスでカメラが見つかりません。",
     "camera_permission": "カメラにアクセスできません。ブラウザの権限を確認してください。",
-    "live_scan_error": "ライブスキャンの開始に失敗しました。"
+    "live_scan_error": "ライブスキャンの開始に失敗しました。",
+    "manual_auth_instructions_title": "手動認証",
+    "manual_auth_step1": "1. 新しいウィンドウで通常通りログインしてください。",
+    "manual_auth_step2": "2. ウィンドウが自動的に閉じるまで待ってください。",
+    "manual_auth_note": "ログインウィンドウを手動で閉じないでください。認証が完了すると自動的に閉じます。",
+    "feature_dashboard_desc": "メイン概要",
+    "feature_assessments_desc": "課題を表示",
+    "feature_timetable_desc": "授業スケジュール",
+    "feature_analytics_desc": "パフォーマンスデータ",
+    "feature_settings_desc": "アプリ設定"
   },
   "about": {
     "title": "DesQTAについて",

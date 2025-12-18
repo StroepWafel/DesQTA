@@ -72,7 +72,16 @@
     "position_qr": "Posiciona el código QR dentro del marco para escanearlo",
     "camera_error": "No se encontró cámara en este dispositivo.",
     "camera_permission": "No se puede acceder a la cámara. Por favor, verifica los permisos del navegador.",
-    "live_scan_error": "Error al iniciar escáner en vivo."
+    "live_scan_error": "Error al iniciar escáner en vivo.",
+    "manual_auth_instructions_title": "Autenticación Manual",
+    "manual_auth_step1": "1. Inicia sesión normalmente en la nueva ventana.",
+    "manual_auth_step2": "2. Espera a que la ventana se cierre automáticamente.",
+    "manual_auth_note": "No cierres la ventana de inicio de sesión manualmente. Se cerrará automáticamente una vez completada la autenticación.",
+    "feature_dashboard_desc": "Vista general principal",
+    "feature_assessments_desc": "Ver tareas",
+    "feature_timetable_desc": "Horario de clases",
+    "feature_analytics_desc": "Datos de rendimiento",
+    "feature_settings_desc": "Preferencias de la aplicación"
   },
   "about": {
     "title": "Acerca de DesQTA",
