@@ -57,6 +57,7 @@
   let showDevToggle = $state(false);
   let devSensitiveInfoHider = $state(false);
   let devKeyBuffer = '';
+  let showManualAuthInstructions = $state(false);
   let profiles = $state<
     Array<{
       id: string;
@@ -131,6 +132,27 @@
       } catch {}
     })();
     loadProfiles();
+    
+    // Check for session completion to hide overlay
+    if (showManualAuthInstructions) {
+      const checkSessionInterval = setInterval(async () => {
+        try {
+          const sessionExists = await authService.checkSession();
+          if (sessionExists) {
+            showManualAuthInstructions = false;
+            clearInterval(checkSessionInterval);
+          }
+        } catch {
+          // Ignore errors
+        }
+      }, 1000);
+      
+      // Clean up after 5 minutes
+      setTimeout(() => {
+        clearInterval(checkSessionInterval);
+        showManualAuthInstructions = false;
+      }, 5 * 60 * 1000);
+    }
     const checkMobile = () => {
       const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
       if (tauri_platform == 'ios' || tauri_platform == 'android') {
@@ -916,6 +938,10 @@
                       // Use the manually entered SSO URL
                       onUrlChange(mobileSsoUrl.trim());
                     }
+                    // Show instructions overlay for manual auth
+                    if (loginMethod === 'url') {
+                      showManualAuthInstructions = true;
+                    }
                     onStartLogin();
                   }}
                   disabled={jwtExpiredError ||
@@ -1250,6 +1276,81 @@
               </p>
             </div>
           {/if}
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Manual Auth Instructions Overlay -->
+  {#if showManualAuthInstructions}
+    <div
+      class="fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-sm bg-black/80"
+      transition:fade={{ duration: 200 }}>
+      <div
+        class="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-zinc-700/40 p-8 max-w-2xl mx-4"
+        transition:scale={{ duration: 200 }}>
+        <div class="space-y-6">
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">
+              <T key="login.manual_auth_title" fallback="Manual Authentication" />
+            </h2>
+            <p class="text-zinc-600 dark:text-zinc-400">
+              <T
+                key="login.manual_auth_description"
+                fallback="A login window has been opened. Please follow the instructions below." />
+            </p>
+          </div>
+
+          <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-6">
+            <div class="flex items-start space-x-4">
+              <div
+                class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                1
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                  <T key="login.login_as_normal" fallback="Login as per normal" />
+                </h3>
+                <p class="text-zinc-600 dark:text-zinc-300">
+                  <T
+                    key="login.login_as_normal_desc"
+                    fallback="Use your usual SEQTA credentials to log in through the opened window." />
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-6">
+            <div class="flex items-start space-x-4">
+              <div
+                class="shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                2
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                  <T key="login.wait_for_close" fallback="Wait for the window to close automatically" />
+                </h3>
+                <p class="text-zinc-600 dark:text-zinc-300">
+                  <T
+                    key="login.wait_for_close_desc"
+                    fallback="Once you've successfully logged in, the window will close automatically and you'll be signed in to DesQTA." />
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4">
+            <div class="flex items-start space-x-3">
+              <Icon
+                src={QuestionMarkCircle}
+                class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <p class="text-sm text-amber-700 dark:text-amber-300">
+                <T
+                  key="login.manual_auth_note"
+                  fallback="Note: Do not close the login window manually. It will close automatically once authentication is complete." />
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
