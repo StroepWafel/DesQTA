@@ -102,6 +102,31 @@
       await invoke('switch_profile', { profileId: profile.id });
       // Set the URL to the profile's base_url
       onUrlChange(profile.base_url);
+      
+      // Show instructions overlay for manual auth when profile is selected
+      showManualAuthInstructions = true;
+      
+      // Check for session completion to hide overlay
+      const checkSessionInterval = setInterval(async () => {
+        try {
+          const sessionExists = await authService.checkSession();
+          if (sessionExists) {
+            showManualAuthInstructions = false;
+            clearInterval(checkSessionInterval);
+          }
+        } catch {
+          // Ignore errors
+        }
+      }, 1000);
+      
+      // Clean up after 5 minutes
+      setTimeout(() => {
+        clearInterval(checkSessionInterval);
+        if (showManualAuthInstructions) {
+          showManualAuthInstructions = false;
+        }
+      }, 5 * 60 * 1000);
+      
       // Start login with this profile's URL
       onStartLogin();
     } catch (e) {
