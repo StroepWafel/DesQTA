@@ -4,7 +4,7 @@
   import { goto } from '$app/navigation';
   import { seqtaFetch } from '../../../utils/netUtil';
   import { LoadingSpinner, EmptyState, Button } from '$lib/components/ui';
-  import { Icon, ChatBubbleBottomCenterText, ExclamationTriangle, ChevronLeft, PaperAirplane, Users } from 'svelte-hero-icons';
+  import { Icon, ChatBubbleBottomCenterText, ExclamationTriangle, ChevronLeft, PaperAirplane, Users, MagnifyingGlass, ChevronDown, ChevronUp } from 'svelte-hero-icons';
   import Editor from '../../../components/Editor/Editor.svelte';
   import GoalsToolbar from '../../goals/components/GoalsToolbar.svelte';
   import { Editor as TipTapEditor } from '@tiptap/core';
@@ -50,8 +50,34 @@
   let sending = $state(false);
   let scrollContainer: HTMLElement | null = $state(null);
   let replySection: HTMLElement | null = $state(null);
+  let sortBy = $state<'recent' | 'oldest' | 'author'>('recent');
+  let searchQuery = $state('');
 
   const forumId = $derived($page.params.id);
+
+  // Filtered and sorted messages
+  const filteredMessages = $derived(
+    (forumData?.messages || [])
+      .filter(msg => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        const matchesName = msg.name.toLowerCase().includes(query);
+        const matchesContent = msg.contents.toLowerCase().includes(query);
+        return matchesName || matchesContent;
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'recent':
+            return new Date(b.sent).getTime() - new Date(a.sent).getTime();
+          case 'oldest':
+            return new Date(a.sent).getTime() - new Date(b.sent).getTime();
+          case 'author':
+            return a.name.localeCompare(b.name);
+          default:
+            return 0;
+        }
+      })
+  );
 
   function initial(name: string): string {
     return (name?.trim()?.charAt(0) || '?').toUpperCase();
@@ -223,9 +249,39 @@
           </div>
         {/if}
 
+        <!-- Filters and Sort -->
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 mb-4">
+          <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
+            <!-- Search -->
+            <div class="relative flex-1 sm:flex-none sm:w-64">
+              <input
+                class="w-full pl-9 pr-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                placeholder={$_('forums.search_messages_placeholder') || 'Search messages...'}
+                bind:value={searchQuery} />
+              <Icon src={MagnifyingGlass} class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            </div>
+          </div>
+
+          <div class="flex gap-3 items-center w-full sm:w-auto">
+            <!-- Sort By -->
+            <select
+              bind:value={sortBy}
+              class="px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm">
+              <option value="recent">{$_('forums.sort_recent_first') || 'Most recent first'}</option>
+              <option value="oldest">{$_('forums.sort_oldest_first') || 'Oldest first'}</option>
+              <option value="author">{$_('forums.sort_by_author') || 'By author'}</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Messages -->
         <div class="space-y-4">
-          {#each forumData.messages as message}
+          {#if filteredMessages.length === 0}
+            <div class="text-center py-8 text-zinc-500 dark:text-zinc-400">
+              <T key="forums.no_messages_match" fallback="No messages match your search." />
+            </div>
+          {:else}
+            {#each filteredMessages as message}
             <div class="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
               <div class="flex gap-4">
                 <!-- Avatar -->
@@ -251,7 +307,8 @@
                 </div>
               </div>
             </div>
-          {/each}
+            {/each}
+          {/if}
         </div>
 
         <!-- Reply Section -->

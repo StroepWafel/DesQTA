@@ -56,7 +56,21 @@
     "send": "Send",
     "sending": "Sending...",
     "reply_sent": "Reply sent successfully",
-    "reply_error": "Failed to send reply"
+    "reply_error": "Failed to send reply",
+    "search_placeholder": "Search forums...",
+    "search_messages_placeholder": "Search messages...",
+    "show_unread_only": "Unread only",
+    "sort_opened": "Date Opened",
+    "sort_title": "Title",
+    "sort_owner": "Owner",
+    "sort_participants": "Participants",
+    "sort_unread": "Unread Count",
+    "sort_asc": "Sort ascending",
+    "sort_desc": "Sort descending",
+    "sort_recent_first": "Most recent first",
+    "sort_oldest_first": "Oldest first",
+    "sort_by_author": "By author",
+    "no_messages_match": "No messages match your search."
   },
   "header": {
     "toggle_sidebar": "Toggle sidebar",

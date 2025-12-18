@@ -3,7 +3,7 @@
   import { goto } from '$app/navigation';
   import { seqtaFetch } from '../../utils/netUtil';
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
-  import { Icon, ChatBubbleBottomCenterText, ExclamationTriangle, Users, Clock, CheckCircle, ChevronDown, ChevronUp, Folder } from 'svelte-hero-icons';
+  import { Icon, ChatBubbleBottomCenterText, ExclamationTriangle, Users, Clock, CheckCircle, ChevronDown, ChevronUp, Folder, MagnifyingGlass, Funnel } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
@@ -36,10 +36,87 @@
   let error: string | null = $state(null);
   let me: string = $state('');
   let closedForumsExpanded = $state(false);
+  let sortBy = $state<'title' | 'owner' | 'opened' | 'participants' | 'unread'>('opened');
+  let sortOrder = $state<'asc' | 'desc'>('desc');
+  let filterUnread = $state(false);
+  let searchQuery = $state('');
 
   // Separate forums into open and closed
-  const openForums = $derived(forums.filter(f => !f.closed));
-  const closedForums = $derived(forums.filter(f => f.closed));
+  let openForums = $derived(
+    forums
+      .filter(f => !f.closed)
+      .filter(f => {
+        // Search filter
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          const matchesTitle = f.title.toLowerCase().includes(query);
+          const matchesOwner = f.owner.toLowerCase().includes(query);
+          if (!matchesTitle && !matchesOwner) return false;
+        }
+        // Unread filter
+        if (filterUnread && f.unread === 0 && f.unread_comments === 0) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        let comparison = 0;
+        switch (sortBy) {
+          case 'title':
+            comparison = a.title.localeCompare(b.title);
+            break;
+          case 'owner':
+            comparison = a.owner.localeCompare(b.owner);
+            break;
+          case 'opened':
+            comparison = new Date(a.opened).getTime() - new Date(b.opened).getTime();
+            break;
+          case 'participants':
+            comparison = a.participants - b.participants;
+            break;
+          case 'unread':
+            comparison = (a.unread + a.unread_comments) - (b.unread + b.unread_comments);
+            break;
+        }
+        return sortOrder === 'asc' ? comparison : -comparison;
+      })
+  );
+
+  let closedForums = $derived(
+    forums
+      .filter(f => f.closed)
+      .filter(f => {
+        // Search filter
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          const matchesTitle = f.title.toLowerCase().includes(query);
+          const matchesOwner = f.owner.toLowerCase().includes(query);
+          if (!matchesTitle && !matchesOwner) return false;
+        }
+        // Unread filter
+        if (filterUnread && f.unread === 0 && f.unread_comments === 0) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        let comparison = 0;
+        switch (sortBy) {
+          case 'title':
+            comparison = a.title.localeCompare(b.title);
+            break;
+          case 'owner':
+            comparison = a.owner.localeCompare(b.owner);
+            break;
+          case 'opened':
+            comparison = new Date(a.opened).getTime() - new Date(b.opened).getTime();
+            break;
+          case 'participants':
+            comparison = a.participants - b.participants;
+            break;
+          case 'unread':
+            comparison = (a.unread + a.unread_comments) - (b.unread + b.unread_comments);
+            break;
+        }
+        return sortOrder === 'asc' ? comparison : -comparison;
+      })
+  );
 
   function formatDate(dateString: string | null): string {
     if (!dateString) return '';
@@ -118,6 +195,52 @@
     </div>
   {:else}
     <div class="space-y-6">
+      <!-- Filters and Sort -->
+      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
+          <!-- Search -->
+          <div class="relative flex-1 sm:flex-none sm:w-64">
+            <input
+              class="w-full pl-9 pr-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+              placeholder={$_('forums.search_placeholder') || 'Search forums...'}
+              bind:value={searchQuery} />
+            <Icon src={MagnifyingGlass} class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          </div>
+
+          <!-- Unread Filter -->
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              bind:checked={filterUnread}
+              class="w-4 h-4 text-accent bg-white border-zinc-300 rounded focus:ring-accent dark:bg-zinc-700 dark:border-zinc-600" />
+            <span class="text-sm text-zinc-700 dark:text-zinc-300">
+              <T key="forums.show_unread_only" fallback="Unread only" />
+            </span>
+          </label>
+        </div>
+
+        <div class="flex gap-3 items-center w-full sm:w-auto">
+          <!-- Sort By -->
+          <select
+            bind:value={sortBy}
+            class="px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm">
+            <option value="opened">{$_('forums.sort_opened') || 'Date Opened'}</option>
+            <option value="title">{$_('forums.sort_title') || 'Title'}</option>
+            <option value="owner">{$_('forums.sort_owner') || 'Owner'}</option>
+            <option value="participants">{$_('forums.sort_participants') || 'Participants'}</option>
+            <option value="unread">{$_('forums.sort_unread') || 'Unread Count'}</option>
+          </select>
+
+          <!-- Sort Order -->
+          <button
+            onclick={() => (sortOrder = sortOrder === 'asc' ? 'desc' : 'asc')}
+            class="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+            title={sortOrder === 'asc' ? ($_('forums.sort_desc') || 'Sort descending') : ($_('forums.sort_asc') || 'Sort ascending')}>
+            <Icon src={sortOrder === 'asc' ? ChevronUp : ChevronDown} class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
       <!-- Open Forums -->
       {#if openForums.length > 0}
         <div>
