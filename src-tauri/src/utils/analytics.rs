@@ -326,18 +326,73 @@ pub async fn sync_analytics_data() -> Result<String, String> {
     // Fetch upcoming assessments
     let upcoming_assessments = fetch_upcoming_assessments().await?;
 
-    // Fetch past assessments for all subjects in parallel
-    let mut past_futures = Vec::new();
-    for subject in unique_subjects_map.values() {
-        past_futures.push(fetch_past_assessments(subject.programme, subject.metaclass));
+    // Fetch past assessments for all subjects with rate limiting (10 per second)
+    let mut past_assessments = Vec::new();
+    let subjects: Vec<(i32, i32)> = unique_subjects_map
+        .values()
+        .map(|s| (s.programme, s.metaclass))
+        .collect();
+    
+    let total_subjects = subjects.len();
+    if let Some(logger) = logger::get_logger() {
+        let _ = logger.log(
+            logger::LogLevel::INFO,
+            "analytics",
+            "sync_analytics_data",
+            &format!("Fetching past assessments for {} subjects with rate limiting", total_subjects),
+            json!({
+                "total_subjects": total_subjects
+            }),
+        );
     }
 
-    let past_results = futures::future::join_all(past_futures).await;
-    let past_assessments: Vec<Value> = past_results
-        .into_iter()
-        .filter_map(|r| r.ok())
-        .flatten()
-        .collect();
+    // Process requests at rate of 10 per second (100ms delay between requests)
+    for (index, (programme, metaclass)) in subjects.iter().enumerate() {
+        // Fetch the assessment data
+        match fetch_past_assessments(*programme, *metaclass).await {
+            Ok(assessments) => {
+                past_assessments.extend(assessments);
+                
+                // Log progress every 10 subjects
+                if (index + 1) % 10 == 0 {
+                    if let Some(logger) = logger::get_logger() {
+                        let _ = logger.log(
+                            logger::LogLevel::DEBUG,
+                            "analytics",
+                            "sync_analytics_data",
+                            &format!("Progress: {}/{} subjects processed", index + 1, total_subjects),
+                            json!({
+                                "processed": index + 1,
+                                "total": total_subjects
+                            }),
+                        );
+                    }
+                }
+            }
+            Err(e) => {
+                // Log error but continue processing other subjects
+                if let Some(logger) = logger::get_logger() {
+                    let _ = logger.log(
+                        logger::LogLevel::WARN,
+                        "analytics",
+                        "sync_analytics_data",
+                        &format!("Failed to fetch past assessments for programme {}, metaclass {}: {}", programme, metaclass, e),
+                        json!({
+                            "programme": programme,
+                            "metaclass": metaclass,
+                            "error": e
+                        }),
+                    );
+                }
+            }
+        }
+
+        // Rate limiting: wait 100ms between requests (10 per second)
+        // Don't wait after the last request
+        if index < subjects.len() - 1 {
+            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        }
+    }
 
     // Combine all assessments
     let mut all_assessments = Vec::new();
