@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import { XMark, CheckCircle, ExclamationCircle, InformationCircle, ExclamationTriangle } from 'svelte-hero-icons';
+  import { Icon, XMark, CheckCircle, ExclamationCircle, InformationCircle, ExclamationTriangle } from 'svelte-hero-icons';
   import type { Toast } from '../stores/toast';
 
   let { toast, onClose }: { toast: Toast; onClose: () => void } = $props();
@@ -12,7 +12,7 @@
     warning: ExclamationTriangle,
   };
 
-  const Icon = icons[toast.type];
+  const IconComponent = icons[toast.type];
 </script>
 
 <div
@@ -21,6 +21,7 @@
   transition:fly={{ y: -20, duration: 200 }}
 >
   <Icon
+    src={IconComponent}
     class="w-5 h-5 flex-shrink-0 {toast.type === 'success'
       ? 'text-green-500'
       : toast.type === 'error'
@@ -36,7 +37,7 @@
     onclick={onClose}
     aria-label="Close notification"
   >
-    <XMark class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+    <Icon src={XMark} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
   </button>
 </div>
 
