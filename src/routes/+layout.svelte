@@ -585,6 +585,10 @@
         if (!goalsEnabled) {
           menu = menu.filter(item => item.path !== '/goals');
         }
+        const forumsEnabled = latestConfig.payload['coneqt-s.page.forums']?.value === 'enabled';
+        if (!forumsEnabled) {
+          menu = menu.filter(item => item.path !== '/forums');
+        }
       }
       
       // Apply menu order from settings

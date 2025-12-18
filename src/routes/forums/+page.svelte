@@ -36,6 +36,25 @@
   let error: string | null = $state(null);
   let me: string = $state('');
   let closedForumsExpanded = $state(false);
+  let forumsEnabled = $state<boolean | null>(null);
+
+  async function checkForumsEnabled() {
+    try {
+      const response = await seqtaFetch('/seqta/student/load/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: {},
+      });
+
+      const data = typeof response === 'string' ? JSON.parse(response) : response;
+      forumsEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+    } catch (e) {
+      logger.error('forums', 'checkForumsEnabled', `Failed to check if forums are enabled: ${e}`, {
+        error: e,
+      });
+      forumsEnabled = false; // Default to disabled on error
+    }
+  }
   let sortBy = $state<'title' | 'owner' | 'opened' | 'participants' | 'unread'>('opened');
   let sortOrder = $state<'asc' | 'desc'>('desc');
   let filterUnread = $state(false);
@@ -163,8 +182,13 @@
     }
   }
 
-  onMount(() => {
-    loadForums();
+  onMount(async () => {
+    await checkForumsEnabled();
+    if (forumsEnabled) {
+      loadForums();
+    } else {
+      loading = false;
+    }
   });
 </script>
 
@@ -173,7 +197,16 @@
     <T key="navigation.forums" fallback="Forums" />
   </h1>
 
-  {#if loading}
+  {#if forumsEnabled === false}
+    <div class="flex justify-center items-center h-64">
+      <EmptyState
+        title={$_('forums.not_enabled') || 'Forums not available'}
+        message={$_('forums.not_enabled_message') ||
+          'Forums are not enabled for your school. Please contact your administrator if you believe this is an error.'}
+        icon={ChatBubbleBottomCenterText}
+        size="md" />
+    </div>
+  {:else if loading}
     <div class="flex justify-center items-center h-64">
       <LoadingSpinner size="md" message={$_('forums.loading') || 'Loading forums...'} />
     </div>
