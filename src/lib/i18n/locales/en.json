@@ -54,7 +54,9 @@
     "closed_forums": "Closed Forums",
     "add_reply": "Add Reply",
     "send": "Send",
-    "sending": "Sending..."
+    "sending": "Sending...",
+    "reply_sent": "Reply sent successfully",
+    "reply_error": "Failed to send reply"
   },
   "header": {
     "toggle_sidebar": "Toggle sidebar",

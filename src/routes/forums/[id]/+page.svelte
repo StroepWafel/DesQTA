@@ -102,25 +102,67 @@
   async function sendReply() {
     if (!forumData || !editorInstance || sending) return;
 
+    const content = editorInstance.getHTML();
+    
+    // Don't send if content is empty or just contains empty paragraph
+    if (!content || content.trim() === '' || content.trim() === '<p></p>') {
+      return;
+    }
+
     sending = true;
     try {
-      const content = editorInstance.getHTML();
-      
-      // TODO: Implement send reply API call
-      // const response = await seqtaFetch('/seqta/student/load/forums', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: { mode: 'reply', id: forumId, content },
-      // });
+      const response = await seqtaFetch('/seqta/student/save/forums', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: {
+          mode: 'message',
+          forum: forumId,
+          contents: content,
+          resources: [],
+        },
+      });
 
-      // Clear editor after sending
-      editorInstance.commands.clearContent();
-      replyContent = '';
-      
-      // Reload forum to get updated messages
-      await loadForum();
+      const data = typeof response === 'string' ? JSON.parse(response) : response;
+
+      if (data.status === '200') {
+        // Clear editor after sending
+        editorInstance.commands.clearContent();
+        replyContent = '';
+        
+        // Show success toast if available
+        try {
+          const { toastStore } = await import('../../../lib/stores/toast');
+          toastStore.success($_('forums.reply_sent') || 'Reply sent successfully');
+        } catch {
+          // Toast store not available, skip
+        }
+        
+        // Reload forum to get updated messages
+        await loadForum();
+        
+        // Scroll to bottom after reload to show new message
+        setTimeout(() => {
+          replySection?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 200);
+      } else {
+        error = 'Failed to send reply';
+        logger.error('forums', 'sendReply', 'Failed to send reply', { data });
+        try {
+          const { toastStore } = await import('../../../lib/stores/toast');
+          toastStore.error($_('forums.reply_error') || 'Failed to send reply');
+        } catch {
+          // Toast store not available, skip
+        }
+      }
     } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
       logger.error('forums', 'sendReply', `Failed to send reply: ${e}`, { error: e });
+      try {
+        const { toastStore } = await import('../../../lib/stores/toast');
+        toastStore.error($_('forums.reply_error') || 'Failed to send reply');
+      } catch {
+        // Toast store not available, skip
+      }
     } finally {
       sending = false;
     }
