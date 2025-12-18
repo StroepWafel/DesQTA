@@ -219,7 +219,17 @@
     "loading_years": "Loading years...",
     "error_loading_years": "Error loading years",
     "no_years_available": "No years available",
-    "no_years_message": "There are no years to display."
+    "no_years_message": "There are no years to display.",
+    "loading_goals": "Loading goals...",
+    "error_loading_goals": "Error loading goals",
+    "my_notes": "My notes",
+    "overview": "Overview",
+    "goals": "Goals",
+    "goal": "Goal",
+    "support": "Support",
+    "action": "Action",
+    "done": "Done",
+    "no_goals": "No goals yet. Click the + button to add one."
   },
   "assessments": {
     "year": "Year:",

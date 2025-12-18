@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { seqtaFetch } from '../../utils/netUtil';
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import { Icon, Flag, ExclamationTriangle } from 'svelte-hero-icons';
@@ -73,6 +74,7 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {#each years as year}
         <button
+          onclick={() => goto(`/goals/${year}`)}
           class="px-6 py-4 text-left bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
           <div class="flex items-center gap-3">
             <Icon src={Flag} class="w-6 h-6 text-accent" />
