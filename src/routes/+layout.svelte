@@ -577,6 +577,14 @@
 
       menu = [...DEFAULT_MENU]; // Use default menu configuration
       
+      // Filter menu items based on SEQTA config
+      if (latestConfig?.payload) {
+        const goalsEnabled = latestConfig.payload['coneqt-s.page.goals']?.value === 'enabled';
+        if (!goalsEnabled) {
+          menu = menu.filter(item => item.path !== '/goals');
+        }
+      }
+      
       // Apply menu order from settings
       await applyMenuOrder();
     } catch (e) {

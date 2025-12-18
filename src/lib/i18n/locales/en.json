@@ -231,7 +231,9 @@
     "done": "Done",
     "no_goals": "No goals yet. Click the + button to add one.",
     "notes_saved": "Notes saved successfully",
-    "save_error": "Failed to save notes"
+    "save_error": "Failed to save notes",
+    "not_enabled": "Goals not available",
+    "not_enabled_message": "Goals are not enabled for your school. Please contact your administrator if you believe this is an error."
   },
   "assessments": {
     "year": "Year:",

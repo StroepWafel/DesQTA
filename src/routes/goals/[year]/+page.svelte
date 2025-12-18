@@ -28,8 +28,27 @@
   let myNotes = $state('');
   let saving = $state(false);
   let editorInstance: TipTapEditor | null = $state(null);
+  let goalsEnabled = $state<boolean | null>(null);
 
   const year = $derived($page.params.year);
+
+  async function checkGoalsEnabled() {
+    try {
+      const response = await seqtaFetch('/seqta/student/load/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: {},
+      });
+
+      const data = typeof response === 'string' ? JSON.parse(response) : response;
+      goalsEnabled = data?.payload?.['coneqt-s.page.goals']?.value === 'enabled';
+    } catch (e) {
+      logger.error('goals', 'checkGoalsEnabled', `Failed to check if goals are enabled: ${e}`, {
+        error: e,
+      });
+      goalsEnabled = false; // Default to disabled on error
+    }
+  }
 
   async function loadGoals() {
     loading = true;
@@ -129,8 +148,13 @@
     }
   });
 
-  onMount(() => {
-    loadGoals();
+  onMount(async () => {
+    await checkGoalsEnabled();
+    if (goalsEnabled) {
+      loadGoals();
+    } else {
+      loading = false;
+    }
   });
 </script>
 
@@ -153,7 +177,16 @@
 
   <!-- Main Content -->
   <div class="flex-1 overflow-y-auto">
-    {#if loading}
+    {#if goalsEnabled === false}
+      <div class="flex justify-center items-center h-64">
+        <EmptyState
+          title={$_('goals.not_enabled') || 'Goals not available'}
+          message={$_('goals.not_enabled_message') ||
+            'Goals are not enabled for your school. Please contact your administrator if you believe this is an error.'}
+          icon={Flag}
+          size="md" />
+      </div>
+    {:else if loading}
       <div class="flex justify-center items-center h-64">
         <LoadingSpinner size="md" message={$_('goals.loading_goals') || 'Loading goals...'} />
       </div>
