@@ -9,6 +9,7 @@
   import LoginScreen from '../lib/components/LoginScreen.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
+  import ToastContainer from '../lib/components/ToastContainer.svelte';
   import { cloudAuthService } from '../lib/services/cloudAuthService';
   import { cloudSettingsService } from '../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../lib/services/settingsSync';
@@ -701,4 +702,5 @@
     </div>
   </div>
 {/if}
+<ToastContainer />
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
