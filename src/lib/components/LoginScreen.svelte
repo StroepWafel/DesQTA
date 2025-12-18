@@ -132,27 +132,6 @@
       } catch {}
     })();
     loadProfiles();
-    
-    // Check for session completion to hide overlay
-    if (showManualAuthInstructions) {
-      const checkSessionInterval = setInterval(async () => {
-        try {
-          const sessionExists = await authService.checkSession();
-          if (sessionExists) {
-            showManualAuthInstructions = false;
-            clearInterval(checkSessionInterval);
-          }
-        } catch {
-          // Ignore errors
-        }
-      }, 1000);
-      
-      // Clean up after 5 minutes
-      setTimeout(() => {
-        clearInterval(checkSessionInterval);
-        showManualAuthInstructions = false;
-      }, 5 * 60 * 1000);
-    }
     const checkMobile = () => {
       const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
       if (tauri_platform == 'ios' || tauri_platform == 'android') {
@@ -941,6 +920,27 @@
                     // Show instructions overlay for manual auth
                     if (loginMethod === 'url') {
                       showManualAuthInstructions = true;
+                      
+                      // Check for session completion to hide overlay
+                      const checkSessionInterval = setInterval(async () => {
+                        try {
+                          const sessionExists = await authService.checkSession();
+                          if (sessionExists) {
+                            showManualAuthInstructions = false;
+                            clearInterval(checkSessionInterval);
+                          }
+                        } catch {
+                          // Ignore errors
+                        }
+                      }, 1000);
+                      
+                      // Clean up after 5 minutes
+                      setTimeout(() => {
+                        clearInterval(checkSessionInterval);
+                        if (showManualAuthInstructions) {
+                          showManualAuthInstructions = false;
+                        }
+                      }, 5 * 60 * 1000);
                     }
                     onStartLogin();
                   }}
