@@ -229,7 +229,9 @@
     "support": "Support",
     "action": "Action",
     "done": "Done",
-    "no_goals": "No goals yet. Click the + button to add one."
+    "no_goals": "No goals yet. Click the + button to add one.",
+    "notes_saved": "Notes saved successfully",
+    "save_error": "Failed to save notes"
   },
   "assessments": {
     "year": "Year:",

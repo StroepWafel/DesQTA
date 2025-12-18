@@ -6,6 +6,8 @@
   import { LoadingSpinner, EmptyState, Button } from '$lib/components/ui';
   import { Icon, Flag, ExclamationTriangle, ChevronLeft, Plus } from 'svelte-hero-icons';
   import Editor from '../../../components/Editor/Editor.svelte';
+  import GoalsToolbar from '../components/GoalsToolbar.svelte';
+  import { Editor as TipTapEditor } from '@tiptap/core';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import { logger } from '../../../utils/logger';
@@ -17,6 +19,7 @@
     name: string;
     id: number;
     items: any[];
+    student_notes?: string;
   }
 
   let goalsData: GoalsData | null = $state(null);
@@ -24,6 +27,7 @@
   let error: string | null = $state(null);
   let myNotes = $state('');
   let saving = $state(false);
+  let editorInstance: TipTapEditor | null = $state(null);
 
   const year = $derived($page.params.year);
 
@@ -43,8 +47,10 @@
 
       if (data.status === '200' && data.payload) {
         goalsData = data.payload;
-        // Initialize notes if empty
-        if (!myNotes && goalsData?.overview) {
+        // Load existing student notes if available
+        if (goalsData?.student_notes) {
+          myNotes = goalsData.student_notes;
+        } else {
           myNotes = '';
         }
       } else {
@@ -60,17 +66,68 @@
   }
 
   async function saveNotes() {
+    if (!goalsData || !editorInstance) return;
+
     saving = true;
     try {
-      // TODO: Implement save API call when available
-      logger.info('goals', 'saveNotes', 'Saving notes', { year, notes: myNotes });
-      // For now, just log - API endpoint may be different
+      // Extract HTML content from editor (without wrapper div and styles)
+      const studentNotes = editorInstance.getHTML();
+
+      const response = await seqtaFetch('/seqta/student/load/goals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: {
+          mode: 'save',
+          goal: goalsData.goal,
+          student_notes: studentNotes,
+          items: goalsData.items || [],
+        },
+      });
+
+      // Parse response - could be string or already parsed
+      const data = typeof response === 'string' ? JSON.parse(response) : response;
+
+      if (data.status === '200') {
+        logger.info('goals', 'saveNotes', 'Notes saved successfully', {
+          year,
+          goal: goalsData.goal,
+        });
+        // Show success toast if available
+        try {
+          const { toastStore } = await import('../../../lib/stores/toast');
+          toastStore.success($_('goals.notes_saved') || 'Notes saved successfully');
+        } catch {
+          // Toast store not available, skip
+        }
+      } else {
+        throw new Error('Failed to save notes');
+      }
     } catch (e) {
       logger.error('goals', 'saveNotes', `Failed to save notes: ${e}`, { error: e });
+      try {
+        const { toastStore } = await import('../../../lib/stores/toast');
+        toastStore.error($_('goals.save_error') || 'Failed to save notes');
+      } catch {
+        // Toast store not available, skip
+      }
     } finally {
       saving = false;
     }
   }
+
+  // Set editor content when both editor and goals data are ready
+  let contentInitialized = $state(false);
+
+  $effect(() => {
+    if (editorInstance && goalsData?.student_notes && !contentInitialized) {
+      const currentContent = editorInstance.getHTML();
+      // Only set if editor is empty or just has empty paragraph
+      if (!currentContent || currentContent === '<p></p>' || currentContent.trim() === '') {
+        editorInstance.commands.setContent(goalsData.student_notes, false);
+        contentInitialized = true;
+      }
+    }
+  });
 
   onMount(() => {
     loadGoals();
@@ -92,12 +149,6 @@
         <T key="navigation.goals" fallback="Goals" />
       </h1>
     </div>
-    <Button
-      onclick={saveNotes}
-      disabled={saving}
-      class="transition-all duration-200 transform hover:scale-105 active:scale-95">
-      {saving ? 'Saving...' : $_('common.save') || 'Save'}
-    </Button>
   </div>
 
   <!-- Main Content -->
@@ -124,8 +175,15 @@
               <T key="goals.my_notes" fallback="My notes" />
             </h2>
           </div>
+          <!-- Toolbar -->
+          {#if editorInstance}
+            <div class="border-b border-zinc-200 dark:border-zinc-700">
+              <GoalsToolbar editor={editorInstance} readonly={false} {saving} onSave={saveNotes} />
+            </div>
+          {/if}
+          <!-- Editor -->
           <div class="flex-1 overflow-y-auto min-h-[400px]">
-            <Editor bind:content={myNotes} />
+            <Editor bind:content={myNotes} bind:editorInstance />
           </div>
         </div>
 
