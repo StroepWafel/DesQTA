@@ -16,6 +16,8 @@
   import { Button } from '$lib/components/ui';
   import PerformanceLineChart from '../../lib/components/performance/PerformanceLineChart.svelte';
   import PerformanceGraph from '../../lib/components/PerformanceGraph.svelte';
+  import T from '../../lib/components/T.svelte';
+  import { _ } from '../../lib/i18n';
   import type {
     TestResults,
     PerformanceMetrics,
@@ -35,7 +37,7 @@
         results = JSON.parse(decodeURIComponent(resultsParam));
         loading = false;
       } catch (e) {
-        error = 'Failed to parse performance test results';
+        error = $_('performance.failed_to_parse_results', { default: 'Failed to parse performance test results' });
         loading = false;
       }
     } else {
@@ -46,11 +48,11 @@
           results = JSON.parse(storedResults);
           loading = false;
         } catch (e) {
-          error = 'Failed to parse stored performance test results';
+          error = $_('performance.failed_to_parse_stored', { default: 'Failed to parse stored performance test results' });
           loading = false;
         }
       } else {
-        error = 'No performance test results found';
+        error = $_('performance.no_results_found', { default: 'No performance test results found' });
         loading = false;
       }
     }
@@ -147,7 +149,7 @@
 </script>
 
 <svelte:head>
-  <title>Performance Test Results - DesQTA</title>
+  <title><T key="performance.title" fallback="Performance Test Results - DesQTA" /></title>
 </svelte:head>
 
 <div class="container px-6 py-7 mx-auto flex flex-col h-full gap-8">
@@ -155,14 +157,19 @@
   <div class="flex justify-between items-start">
     <div>
       <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
-        Performance Test Results
+        <T key="performance.title_main" fallback="Performance Test Results" />
       </h1>
       <p class="text-zinc-600 dark:text-zinc-400">
         {#if results}
-          Test completed on {new Date(results.startTime).toLocaleString()} • {results.pages.length} pages
-          analyzed
+          <T
+            key="performance.test_completed"
+            fallback="Test completed on {date} • {count} pages analyzed"
+            values={{
+              date: new Date(results.startTime).toLocaleString(),
+              count: results.pages.length,
+            }} />
         {:else}
-          Detailed performance analysis and metrics
+          <T key="performance.description" fallback="Detailed performance analysis and metrics" />
         {/if}
       </p>
     </div>
@@ -170,7 +177,7 @@
     <div class="flex items-center gap-3">
       <Button variant="ghost" onclick={goBack} class="flex items-center gap-2">
         <Icon src={ArrowLeft} class="w-4 h-4" />
-        Back to Settings
+        <T key="performance.back_to_settings" fallback="Back to Settings" />
       </Button>
     </div>
   </div>
@@ -184,9 +191,13 @@
       <div
         class="flex flex-col items-center p-8 w-full max-w-lg rounded-2xl border shadow-xl border-zinc-200 bg-white/90 dark:bg-zinc-900/90 dark:border-zinc-700 animate-fade-in-up">
         <Icon src={ExclamationTriangle} class="mb-4 w-12 h-12 text-red-500" />
-        <h2 class="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">Error Loading Results</h2>
+        <h2 class="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">
+          <T key="performance.error_loading_title" fallback="Error Loading Results" />
+        </h2>
         <p class="mb-4 text-center text-zinc-600 dark:text-zinc-300">{error}</p>
-        <Button onclick={goBack} class="mt-2">Go Back to Settings</Button>
+        <Button onclick={goBack} class="mt-2">
+          <T key="performance.go_back_to_settings" fallback="Go Back to Settings" />
+        </Button>
       </div>
     </div>
   {:else if results}
@@ -198,7 +209,9 @@
             <Icon src={Clock} class="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">Total Duration</p>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <T key="performance.total_duration" fallback="Total Duration" />
+            </p>
             <p class="text-2xl font-bold text-zinc-900 dark:text-white">
               {formatTime(results.totalDuration)}
             </p>
@@ -212,7 +225,9 @@
             <Icon src={ChartBar} class="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">Pages Tested</p>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <T key="performance.pages_tested" fallback="Pages Tested" />
+            </p>
             <p class="text-2xl font-bold text-zinc-900 dark:text-white">
               {results.pages.length}
             </p>
@@ -226,7 +241,9 @@
             <Icon src={Clock} class="w-6 h-6 text-yellow-600" />
           </div>
           <div>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">Avg Load Time</p>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <T key="performance.avg_load_time" fallback="Avg Load Time" />
+            </p>
             <p class="text-2xl font-bold text-zinc-900 dark:text-white">
               {formatTime(results.summary.averageLoadTime)}
             </p>
@@ -247,7 +264,9 @@
                 : 'text-green-600'}" />
           </div>
           <div>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">Total Errors</p>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <T key="performance.total_errors" fallback="Total Errors" />
+            </p>
             <p
               class="text-2xl font-bold {results.summary.totalErrors > 0
                 ? 'text-red-500'
@@ -265,7 +284,9 @@
               <Icon src={ComputerDesktop} class="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400">Avg CPU Usage</p>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                <T key="performance.avg_cpu_usage" fallback="Avg CPU Usage" />
+              </p>
               <p class="text-2xl font-bold text-zinc-900 dark:text-white">
                 {results.summary.averageCpuUsage.toFixed(1)}%
               </p>
@@ -281,8 +302,8 @@
         <Card.Content class="p-6">
           <PerformanceLineChart
             data={loadTimeChartData}
-            title="Load Time Analysis"
-            valueLabel="Load Time (ms)"
+            title={$_('performance.load_time_analysis', { default: 'Load Time Analysis' })}
+            valueLabel={$_('performance.load_time_ms', { default: 'Load Time (ms)' })}
             color="rgb(59 130 246)" />
         </Card.Content>
       </Card.Root>
@@ -291,8 +312,8 @@
         <Card.Content class="p-6">
           <PerformanceLineChart
             data={domContentLoadedChartData}
-            title="DOM Content Loaded"
-            valueLabel="Time (ms)"
+            title={$_('performance.dom_content_loaded', { default: 'DOM Content Loaded' })}
+            valueLabel={$_('performance.time_ms', { default: 'Time (ms)' })}
             color="rgb(34 197 94)" />
         </Card.Content>
       </Card.Root>
@@ -302,8 +323,8 @@
           <Card.Content class="p-6">
             <PerformanceLineChart
               data={memoryChartData}
-              title="Memory Usage"
-              valueLabel="Memory (MB)"
+              title={$_('performance.memory_usage', { default: 'Memory Usage' })}
+              valueLabel={$_('performance.memory_mb', { default: 'Memory (MB)' })}
               color="rgb(168 85 247)" />
           </Card.Content>
         </Card.Root>
@@ -313,8 +334,8 @@
         <Card.Content class="p-6">
           <PerformanceLineChart
             data={networkRequestsChartData}
-            title="Network Requests"
-            valueLabel="Request Count"
+            title={$_('performance.network_requests', { default: 'Network Requests' })}
+            valueLabel={$_('performance.request_count', { default: 'Request Count' })}
             color="rgb(249 115 22)" />
         </Card.Content>
       </Card.Root>
@@ -325,14 +346,20 @@
       <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" in:fade={{ duration: 400, delay: 150 }}>
         <Card.Root class="justify-between">
           <Card.Header>
-            <Card.Title>CPU Usage Over Time</Card.Title>
+            <Card.Title>
+              <T key="performance.cpu_usage_over_time" fallback="CPU Usage Over Time" />
+            </Card.Title>
             <Card.Description>
               {#if results.summary.averageCpuUsage !== undefined}
-                Average: {results.summary.averageCpuUsage.toFixed(1)}% • Peak: {results.summary.peakCpuUsage?.toFixed(
-                  1,
-                ) ?? 'N/A'}%
+                <T
+                  key="performance.cpu_average_peak"
+                  fallback="Average: {average}% • Peak: {peak}%"
+                  values={{
+                    average: results.summary.averageCpuUsage.toFixed(1),
+                    peak: results.summary.peakCpuUsage?.toFixed(1) ?? 'N/A',
+                  }} />
               {:else}
-                Real-time CPU usage during performance test
+                <T key="performance.cpu_realtime" fallback="Real-time CPU usage during performance test" />
               {/if}
             </Card.Description>
           </Card.Header>
@@ -340,12 +367,12 @@
             {#if cpuChartData.length > 0}
               <PerformanceGraph
                 data={cpuChartData}
-                label="CPU Usage (%)"
+                label={$_('performance.cpu_usage_percent', { default: 'CPU Usage (%)' })}
                 color="#3b82f6"
                 maxValue={100} />
             {:else}
               <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">
-                No CPU data available
+                <T key="performance.no_cpu_data" fallback="No CPU data available" />
               </div>
             {/if}
           </Card.Content>
@@ -353,14 +380,20 @@
 
         <Card.Root class="justify-between">
           <Card.Header>
-            <Card.Title>Memory Usage Over Time</Card.Title>
+            <Card.Title>
+              <T key="performance.memory_usage_over_time" fallback="Memory Usage Over Time" />
+            </Card.Title>
             <Card.Description>
               {#if results.summary.averageMemoryUsage !== undefined}
-                Average: {results.summary.averageMemoryUsage.toFixed(1)}% • Peak: {results.summary.peakMemoryUsage?.toFixed(
-                  1,
-                ) ?? 'N/A'}%
+                <T
+                  key="performance.memory_average_peak"
+                  fallback="Average: {average}% • Peak: {peak}%"
+                  values={{
+                    average: results.summary.averageMemoryUsage.toFixed(1),
+                    peak: results.summary.peakMemoryUsage?.toFixed(1) ?? 'N/A',
+                  }} />
               {:else}
-                Real-time memory usage during performance test
+                <T key="performance.memory_realtime" fallback="Real-time memory usage during performance test" />
               {/if}
             </Card.Description>
           </Card.Header>
@@ -368,12 +401,12 @@
             {#if memoryChartDataSystem.length > 0}
               <PerformanceGraph
                 data={memoryChartDataSystem}
-                label="Memory Usage (%)"
+                label={$_('performance.memory_usage_percent', { default: 'Memory Usage (%)' })}
                 color="#8b5cf6"
                 maxValue={100} />
             {:else}
               <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">
-                No memory data available
+                <T key="performance.no_memory_data" fallback="No memory data available" />
               </div>
             {/if}
           </Card.Content>
@@ -382,13 +415,17 @@
         {#if gpuChartData.length > 0}
           <Card.Root class="justify-between">
             <Card.Header>
-              <Card.Title>GPU Usage Over Time</Card.Title>
-              <Card.Description>Real-time GPU usage during performance test</Card.Description>
+              <Card.Title>
+                <T key="performance.gpu_usage_over_time" fallback="GPU Usage Over Time" />
+              </Card.Title>
+              <Card.Description>
+                <T key="performance.gpu_realtime" fallback="Real-time GPU usage during performance test" />
+              </Card.Description>
             </Card.Header>
             <Card.Content class="p-6">
               <PerformanceGraph
                 data={gpuChartData}
-                label="GPU Usage (%)"
+                label={$_('performance.gpu_usage_percent', { default: 'GPU Usage (%)' })}
                 color="#10b981"
                 maxValue={100} />
             </Card.Content>
@@ -401,15 +438,21 @@
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" in:fade={{ duration: 400, delay: 200 }}>
       <Card.Root class="justify-between">
         <Card.Header>
-          <Card.Title>Performance Range</Card.Title>
-          <Card.Description>Fastest and slowest page load times</Card.Description>
+          <Card.Title>
+            <T key="performance.performance_range" fallback="Performance Range" />
+          </Card.Title>
+          <Card.Description>
+            <T key="performance.range_description" fallback="Fastest and slowest page load times" />
+          </Card.Description>
         </Card.Header>
         <Card.Content>
           <div class="space-y-4">
             <div
               class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <div>
-                <p class="font-medium text-green-800 dark:text-green-200">Fastest Page</p>
+                <p class="font-medium text-green-800 dark:text-green-200">
+                  <T key="performance.fastest_page" fallback="Fastest Page" />
+                </p>
                 <p class="text-sm text-green-600 dark:text-green-400">
                   {results.summary.fastestPage.name}
                 </p>
@@ -424,7 +467,9 @@
             <div
               class="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
               <div>
-                <p class="font-medium text-red-800 dark:text-red-200">Slowest Page</p>
+                <p class="font-medium text-red-800 dark:text-red-200">
+                  <T key="performance.slowest_page" fallback="Slowest Page" />
+                </p>
                 <p class="text-sm text-red-600 dark:text-red-400">
                   {results.summary.slowestPage.name}
                 </p>
@@ -441,13 +486,19 @@
 
       <Card.Root class="justify-between">
         <Card.Header>
-          <Card.Title>Error Summary</Card.Title>
-          <Card.Description>JavaScript errors and warnings detected</Card.Description>
+          <Card.Title>
+            <T key="performance.error_summary" fallback="Error Summary" />
+          </Card.Title>
+          <Card.Description>
+            <T key="performance.error_description" fallback="JavaScript errors and warnings detected" />
+          </Card.Description>
         </Card.Header>
         <Card.Content>
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-zinc-600 dark:text-zinc-400">JavaScript Errors</span>
+              <span class="text-zinc-600 dark:text-zinc-400">
+                <T key="performance.js_errors" fallback="JavaScript Errors" />
+              </span>
               <span
                 class="font-semibold {results.summary.totalErrors > 0
                   ? 'text-red-500'
@@ -456,7 +507,9 @@
               </span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-zinc-600 dark:text-zinc-400">Warnings</span>
+              <span class="text-zinc-600 dark:text-zinc-400">
+                <T key="performance.warnings" fallback="Warnings" />
+              </span>
               <span
                 class="font-semibold {results.summary.totalWarnings > 0
                   ? 'text-yellow-500'
@@ -465,7 +518,9 @@
               </span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-zinc-600 dark:text-zinc-400">Overall Errors</span>
+              <span class="text-zinc-600 dark:text-zinc-400">
+                <T key="performance.overall_errors" fallback="Overall Errors" />
+              </span>
               <span
                 class="font-semibold {results.overallErrors.length > 0
                   ? 'text-red-500'
@@ -482,8 +537,12 @@
     <div in:fade={{ duration: 400, delay: 300 }}>
       <Card.Root class="justify-between">
         <Card.Header>
-          <Card.Title>Page Performance Details</Card.Title>
-          <Card.Description>Pages sorted by load time (slowest first)</Card.Description>
+          <Card.Title>
+            <T key="performance.page_details" fallback="Page Performance Details" />
+          </Card.Title>
+          <Card.Description>
+            <T key="performance.page_details_description" fallback="Pages sorted by load time (slowest first)" />
+          </Card.Description>
         </Card.Header>
         <Card.Content>
           <div class="space-y-4">
@@ -506,25 +565,33 @@
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span class="text-zinc-500 dark:text-zinc-400">Load Time</span>
+                        <span class="text-zinc-500 dark:text-zinc-400">
+                          <T key="performance.load_time" fallback="Load Time" />
+                        </span>
                         <p class="font-semibold {getPerformanceColor(page.loadTime)}">
                           {formatTime(page.loadTime)}
                         </p>
                       </div>
                       <div>
-                        <span class="text-zinc-500 dark:text-zinc-400">DOM Ready</span>
+                        <span class="text-zinc-500 dark:text-zinc-400">
+                          <T key="performance.dom_ready" fallback="DOM Ready" />
+                        </span>
                         <p class="font-semibold text-zinc-700 dark:text-zinc-300">
                           {formatTime(page.domContentLoaded)}
                         </p>
                       </div>
                       <div>
-                        <span class="text-zinc-500 dark:text-zinc-400">Memory</span>
+                        <span class="text-zinc-500 dark:text-zinc-400">
+                          <T key="performance.memory" fallback="Memory" />
+                        </span>
                         <p class="font-semibold text-zinc-700 dark:text-zinc-300">
                           {formatMemory(page.memoryUsage)}
                         </p>
                       </div>
                       <div>
-                        <span class="text-zinc-500 dark:text-zinc-400">Requests</span>
+                        <span class="text-zinc-500 dark:text-zinc-400">
+                          <T key="performance.requests" fallback="Requests" />
+                        </span>
                         <p class="font-semibold text-zinc-700 dark:text-zinc-300">
                           {page.networkRequests}
                         </p>
@@ -535,7 +602,9 @@
                       <div class="mt-3 grid grid-cols-2 gap-4 text-sm">
                         {#if page.firstPaint}
                           <div>
-                            <span class="text-zinc-500 dark:text-zinc-400">First Paint</span>
+                            <span class="text-zinc-500 dark:text-zinc-400">
+                              <T key="performance.first_paint" fallback="First Paint" />
+                            </span>
                             <p class="font-semibold text-zinc-700 dark:text-zinc-300">
                               {formatTime(page.firstPaint)}
                             </p>
@@ -543,8 +612,9 @@
                         {/if}
                         {#if page.firstContentfulPaint}
                           <div>
-                            <span class="text-zinc-500 dark:text-zinc-400"
-                              >First Contentful Paint</span>
+                            <span class="text-zinc-500 dark:text-zinc-400">
+                              <T key="performance.first_contentful_paint" fallback="First Contentful Paint" />
+                            </span>
                             <p class="font-semibold text-zinc-700 dark:text-zinc-300">
                               {formatTime(page.firstContentfulPaint)}
                             </p>
@@ -581,11 +651,13 @@
 
                       <div class="mt-4 pt-4 border-t border-zinc-300 dark:border-zinc-600">
                         <h5 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
-                          System Resource Usage
+                          <T key="performance.system_resource_usage" fallback="System Resource Usage" />
                         </h5>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                           <div>
-                            <span class="text-zinc-500 dark:text-zinc-400">Avg CPU</span>
+                            <span class="text-zinc-500 dark:text-zinc-400">
+                              <T key="performance.avg_cpu" fallback="Avg CPU" />
+                            </span>
                             <p
                               class="font-semibold {avgCpu > 80
                                 ? 'text-red-500'
@@ -595,11 +667,16 @@
                               {avgCpu.toFixed(1)}%
                             </p>
                             <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                              Peak: {peakCpu.toFixed(1)}%
+                              <T
+                                key="performance.peak"
+                                fallback="Peak: {value}%"
+                                values={{ value: peakCpu.toFixed(1) }} />
                             </p>
                           </div>
                           <div>
-                            <span class="text-zinc-500 dark:text-zinc-400">Avg Memory</span>
+                            <span class="text-zinc-500 dark:text-zinc-400">
+                              <T key="performance.avg_memory" fallback="Avg Memory" />
+                            </span>
                             <p
                               class="font-semibold {avgMemory > 80
                                 ? 'text-red-500'
@@ -609,12 +686,17 @@
                               {avgMemory.toFixed(1)}%
                             </p>
                             <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                              Peak: {peakMemory.toFixed(1)}%
+                              <T
+                                key="performance.peak"
+                                fallback="Peak: {value}%"
+                                values={{ value: peakMemory.toFixed(1) }} />
                             </p>
                           </div>
                           {#if !isNaN(avgGpu)}
                             <div>
-                              <span class="text-zinc-500 dark:text-zinc-400">Avg GPU</span>
+                              <span class="text-zinc-500 dark:text-zinc-400">
+                                <T key="performance.avg_gpu" fallback="Avg GPU" />
+                              </span>
                               <p
                                 class="font-semibold {avgGpu > 80
                                   ? 'text-red-500'
@@ -624,7 +706,10 @@
                                 {avgGpu.toFixed(1)}%
                               </p>
                               <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                                Peak: {peakGpu.toFixed(1)}%
+                                <T
+                                  key="performance.peak"
+                                  fallback="Peak: {value}%"
+                                  values={{ value: peakGpu.toFixed(1) }} />
                               </p>
                             </div>
                           {/if}
@@ -638,24 +723,33 @@
                       <div
                         class="flex items-center gap-2 px-3 py-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
                         <Icon src={ExclamationTriangle} class="w-4 h-4 text-red-500" />
-                        <span class="text-sm font-medium text-red-700 dark:text-red-300"
-                          >{page.errors.length} errors</span>
+                        <span class="text-sm font-medium text-red-700 dark:text-red-300">
+                          <T
+                            key="performance.errors_count"
+                            fallback="{count} errors"
+                            values={{ count: page.errors.length }} />
+                        </span>
                       </div>
                     {/if}
                     {#if page.warnings.length > 0}
                       <div
                         class="flex items-center gap-2 px-3 py-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
                         <Icon src={ExclamationTriangle} class="w-4 h-4 text-yellow-500" />
-                        <span class="text-sm font-medium text-yellow-700 dark:text-yellow-300"
-                          >{page.warnings.length} warnings</span>
+                        <span class="text-sm font-medium text-yellow-700 dark:text-yellow-300">
+                          <T
+                            key="performance.warnings_count"
+                            fallback="{count} warnings"
+                            values={{ count: page.warnings.length }} />
+                        </span>
                       </div>
                     {/if}
                     {#if page.errors.length === 0 && page.warnings.length === 0}
                       <div
                         class="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
                         <Icon src={CheckCircle} class="w-4 h-4 text-green-500" />
-                        <span class="text-sm font-medium text-green-700 dark:text-green-300"
-                          >No issues</span>
+                        <span class="text-sm font-medium text-green-700 dark:text-green-300">
+                          <T key="performance.no_issues" fallback="No issues" />
+                        </span>
                       </div>
                     {/if}
                   </div>

@@ -77,13 +77,13 @@
         plugin.id === pluginId ? { ...plugin, installed: true } : plugin,
       );
       await notify({
-        title: 'Plugin Installed',
-        body: 'The plugin has been successfully installed.',
+        title: $_('plugins.installed_title', { default: 'Plugin Installed' }),
+        body: $_('plugins.installed_body', { default: 'The plugin has been successfully installed.' }),
       });
     } catch (e) {
       await notify({
-        title: 'Installation Failed',
-        body: 'Failed to install the plugin. Please try again.',
+        title: $_('plugins.install_failed_title', { default: 'Installation Failed' }),
+        body: $_('plugins.install_failed_body', { default: 'Failed to install the plugin. Please try again.' }),
       });
     }
   }
@@ -95,13 +95,13 @@
         plugin.id === pluginId ? { ...plugin, installed: false } : plugin,
       );
       await notify({
-        title: 'Plugin Uninstalled',
-        body: 'The plugin has been successfully uninstalled.',
+        title: $_('plugins.uninstalled_title', { default: 'Plugin Uninstalled' }),
+        body: $_('plugins.uninstalled_body', { default: 'The plugin has been successfully uninstalled.' }),
       });
     } catch (e) {
       await notify({
-        title: 'Uninstallation Failed',
-        body: 'Failed to uninstall the plugin. Please try again.',
+        title: $_('plugins.uninstall_failed_title', { default: 'Uninstallation Failed' }),
+        body: $_('plugins.uninstall_failed_body', { default: 'Failed to uninstall the plugin. Please try again.' }),
       });
     }
   }
@@ -277,7 +277,10 @@
                   </h3>
                   <div class="grid grid-cols-2 gap-4">
                     {#each selectedPlugin.screenshots as screenshot}
-                      <img src={screenshot} alt="Plugin screenshot" class="rounded-lg shadow-lg" />
+                      <img
+                        src={screenshot}
+                        alt={$_('plugins.screenshot_alt', { default: 'Plugin screenshot' })}
+                        class="rounded-lg shadow-lg" />
                     {/each}
                   </div>
                 </div>

@@ -1143,7 +1143,13 @@
               <div
                 class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
                 <div class="space-y-4">
-                  {#each [{ icon: 'indigo-400', label: 'Dashboard', desc: 'Main overview' }, { icon: 'purple-400', label: 'Assessments', desc: 'View assignments' }, { icon: 'pink-400', label: 'Timetable', desc: 'Class schedule' }, { icon: 'blue-400', label: 'Analytics', desc: 'Performance data' }, { icon: 'green-400', label: 'Settings', desc: 'App preferences' }] as item}
+                  {#each [
+                    { icon: 'indigo-400', label: $_('navigation.dashboard'), desc: $_('login.feature_dashboard_desc', { default: 'Main overview' }) },
+                    { icon: 'purple-400', label: $_('navigation.assessments'), desc: $_('login.feature_assessments_desc', { default: 'View assignments' }) },
+                    { icon: 'pink-400', label: $_('navigation.timetable'), desc: $_('login.feature_timetable_desc', { default: 'Class schedule' }) },
+                    { icon: 'blue-400', label: $_('navigation.analytics'), desc: $_('login.feature_analytics_desc', { default: 'Performance data' }) },
+                    { icon: 'green-400', label: $_('navigation.settings'), desc: $_('login.feature_settings_desc', { default: 'App preferences' }) }
+                  ] as item}
                     <div class="flex items-center space-x-4">
                       <div class="w-8 h-8 bg-{item.icon} rounded-sm"></div>
                       <div class="flex-1">

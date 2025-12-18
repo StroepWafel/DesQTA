@@ -314,7 +314,7 @@
     const now = new Date().toISOString();
     const newTask: TodoItem = {
       id: crypto.randomUUID(),
-      title: 'New task',
+      title: $_('study.new_task', { default: 'New task' }),
       description: '',
       related_subject: '',
       related_assessment: '',
@@ -593,7 +593,10 @@
     </div>
 
     <!-- Tabs -->
-    <div class="mt-4 flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-700" role="tablist" aria-label="Study sections">
+    <div
+      class="mt-4 flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-700"
+      role="tablist"
+      aria-label={$_('study.tabs_label', { default: 'Study sections' })}>
       <button 
         class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab==='tasks' ? 'accent-bg text-white' : 'bg-transparent text-zinc-700 dark:text-zinc-300'}" 
         on:click={() => activeTab='tasks'} 
@@ -752,7 +755,12 @@
                 {:else}
                   <!-- Edit Mode -->
                   <div class="flex items-start gap-3">
-                    <input type="checkbox" checked={todo.completed} on:change={() => toggleTodo(todo.id)} class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring" aria-label="Toggle complete" />
+                    <input
+                      type="checkbox"
+                      checked={todo.completed}
+                      on:change={() => toggleTodo(todo.id)}
+                      class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring"
+                      aria-label={$_('study.toggle_complete', { default: 'Toggle complete' })} />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2">
                         <input class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-base font-medium" placeholder={$_('study.task_title') || 'Task title'} bind:value={todo.title} />
