@@ -19,7 +19,6 @@
   class="toast-item flex items-center gap-3 px-4 py-3 rounded-lg shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 min-w-[300px] max-w-[500px] transition-all duration-200"
   role="alert"
   transition:fly={{ y: -20, duration: 200 }}
-  transition:fade={{ duration: 200 }}
 >
   <Icon
     class="w-5 h-5 flex-shrink-0 {toast.type === 'success'
