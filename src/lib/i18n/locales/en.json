@@ -106,7 +106,16 @@
     "comments": "Comments",
     "loading_comments": "Loading comments...",
     "no_comments": "No comments yet. Be the first to comment!",
-    "add_comment": "Add Comment"
+    "add_comment": "Add Comment",
+    "comment_sent": "Comment sent successfully",
+    "comment_error": "Failed to send comment",
+    "delete": "Delete",
+    "delete_folio": "Delete Folio",
+    "delete_confirmation": "Are you sure you want to delete",
+    "delete_warning": "This action cannot be undone.",
+    "deleting": "Deleting...",
+    "deleted": "Folio deleted successfully",
+    "delete_error": "Failed to delete folio"
   },
   "header": {
     "toggle_sidebar": "Toggle sidebar",
