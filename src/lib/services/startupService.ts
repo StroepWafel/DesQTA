@@ -104,11 +104,17 @@ export async function triggerBackgroundSync(): Promise<void> {
 
     // Run sync in background (don't await - let it run async)
     warmUpCommonData()
-      .then(() => {
+      .then(async () => {
         logger.info('startup', 'triggerBackgroundSync', 'Background sync completed');
+        // Show success toast notification
+        const { toastStore } = await import('../stores/toast');
+        toastStore.success('Background sync completed');
       })
-      .catch((e) => {
+      .catch(async (e) => {
         logger.error('startup', 'triggerBackgroundSync', 'Background sync failed', { error: e });
+        // Show error toast notification
+        const { toastStore } = await import('../stores/toast');
+        toastStore.error('Background sync failed');
       });
   } catch (e) {
     logger.error('startup', 'triggerBackgroundSync', 'Failed to trigger background sync', {

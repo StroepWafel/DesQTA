@@ -262,7 +262,11 @@ async function prefetchAnalyticsSync(): Promise<void> {
     const { invoke } = await import('@tauri-apps/api/core');
     await invoke<string>('sync_analytics_data');
     logger.info('warmup', 'prefetchAnalyticsSync', 'Analytics data synced successfully');
+    
+    // Show success toast notification
+    const { toastStore } = await import('../stores/toast');
+    toastStore.success('Analytics data synced');
   } catch {
-    // ignore warmup errors
+    // ignore warmup errors - don't show toast for background warmup failures
   }
 }
