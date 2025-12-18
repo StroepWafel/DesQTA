@@ -28,6 +28,7 @@
   let loading = $state(true);
   let error: string | null = $state(null);
   let me: string = $state('');
+  let foliosEnabled = $state<boolean | null>(null);
 
   function initial(name: string): string {
     return (name?.trim()?.charAt(0) || '?').toUpperCase();
@@ -76,24 +77,52 @@
     }
   }
 
+  async function checkFoliosEnabled() {
+    try {
+      const response = await seqtaFetch('/seqta/student/load/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: {},
+      });
+
+      const data = typeof response === 'string' ? JSON.parse(response) : response;
+      foliosEnabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
+    } catch (e) {
+      logger.error('folios', 'checkFoliosEnabled', `Failed to check if folios are enabled: ${e}`, {
+        error: e,
+      });
+      foliosEnabled = false; // Default to disabled on error
+    }
+  }
+
   onMount(() => {
+    checkFoliosEnabled();
     loadFolios();
   });
 </script>
 
 <div class="container px-6 py-7 mx-auto">
-  <div class="flex items-center gap-4 mb-6">
-    <button
-      onclick={() => goto('/folios')}
-      class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-      <Icon src={ChevronLeft} class="w-5 h-5" />
-    </button>
-    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
-      <T key="folios.browse_folios" fallback="Browse Folios" />
-    </h1>
-  </div>
+  {#if foliosEnabled === false}
+    <div class="flex justify-center items-center h-64">
+      <EmptyState
+        title={$_('folios.not_enabled') || 'Folios Not Enabled'}
+        message={$_('folios.not_enabled_message') || 'Folios are not enabled for your account.'}
+        icon={ExclamationTriangle}
+        size="md" />
+    </div>
+  {:else}
+    <div class="flex items-center gap-4 mb-6">
+      <button
+        onclick={() => goto('/folios')}
+        class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+        <Icon src={ChevronLeft} class="w-5 h-5" />
+      </button>
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
+        <T key="folios.browse_folios" fallback="Browse Folios" />
+      </h1>
+    </div>
 
-  {#if loading}
+    {#if loading}
     <div class="flex justify-center items-center h-64">
       <LoadingSpinner size="md" message={$_('folios.loading') || 'Loading folios...'} />
     </div>
@@ -141,6 +170,7 @@
         </button>
       {/each}
     </div>
+  {/if}
   {/if}
 </div>
 

@@ -115,7 +115,9 @@
     "delete_warning": "This action cannot be undone.",
     "deleting": "Deleting...",
     "deleted": "Folio deleted successfully",
-    "delete_error": "Failed to delete folio"
+    "delete_error": "Failed to delete folio",
+    "not_enabled": "Folios Not Enabled",
+    "not_enabled_message": "Folios are not enabled for your account."
   },
   "header": {
     "toggle_sidebar": "Toggle sidebar",

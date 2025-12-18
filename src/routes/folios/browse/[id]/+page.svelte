@@ -240,12 +240,40 @@
     }
   }
 
+  async function checkFoliosEnabled() {
+    try {
+      const response = await seqtaFetch('/seqta/student/load/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: {},
+      });
+
+      const data = typeof response === 'string' ? JSON.parse(response) : response;
+      foliosEnabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
+    } catch (e) {
+      logger.error('folios', 'checkFoliosEnabled', `Failed to check if folios are enabled: ${e}`, {
+        error: e,
+      });
+      foliosEnabled = false; // Default to disabled on error
+    }
+  }
+
   onMount(() => {
+    checkFoliosEnabled();
     loadFolio();
   });
 </script>
 
 <div class="flex flex-col h-full">
+  {#if foliosEnabled === false}
+    <div class="flex justify-center items-center h-full">
+      <EmptyState
+        title={$_('folios.not_enabled') || 'Folios Not Enabled'}
+        message={$_('folios.not_enabled_message') || 'Folios are not enabled for your account.'}
+        icon={ExclamationTriangle}
+        size="md" />
+    </div>
+  {:else}
   <!-- Header -->
   <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
     <div class="flex items-center gap-4">
@@ -383,5 +411,6 @@
       </div>
     {/if}
   </div>
+  {/if}
 </div>
 

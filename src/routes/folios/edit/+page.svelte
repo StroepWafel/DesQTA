@@ -29,6 +29,7 @@
   let deleting = $state(false);
   let deleteModalOpen = $state(false);
   let folioToDelete: MyFolioItem | null = $state(null);
+  let foliosEnabled = $state<boolean | null>(null);
 
   function formatDate(dateString: string): string {
     try {
@@ -173,33 +174,61 @@
     }
   }
 
+  async function checkFoliosEnabled() {
+    try {
+      const response = await seqtaFetch('/seqta/student/load/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: {},
+      });
+
+      const data = typeof response === 'string' ? JSON.parse(response) : response;
+      foliosEnabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
+    } catch (e) {
+      logger.error('folios', 'checkFoliosEnabled', `Failed to check if folios are enabled: ${e}`, {
+        error: e,
+      });
+      foliosEnabled = false; // Default to disabled on error
+    }
+  }
+
   onMount(() => {
+    checkFoliosEnabled();
     loadMyFolios();
   });
 </script>
 
 <div class="container px-6 py-7 mx-auto">
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-4">
-      <button
-        onclick={() => goto('/folios')}
-        class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-        <Icon src={ChevronLeft} class="w-5 h-5" />
-      </button>
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
-        <T key="folios.edit_my_folios" fallback="Edit My Folios" />
-      </h1>
+  {#if foliosEnabled === false}
+    <div class="flex justify-center items-center h-64">
+      <EmptyState
+        title={$_('folios.not_enabled') || 'Folios Not Enabled'}
+        message={$_('folios.not_enabled_message') || 'Folios are not enabled for your account.'}
+        icon={ExclamationTriangle}
+        size="md" />
     </div>
-    <button
-      onclick={createNewFolio}
-      disabled={creating}
-      class="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white transition-all duration-200 hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-      <Icon src={Plus} class="w-5 h-5" />
-      {creating ? ($_('folios.creating') || 'Creating...') : ($_('folios.new_folio') || 'New Folio')}
-    </button>
-  </div>
+  {:else}
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4">
+        <button
+          onclick={() => goto('/folios')}
+          class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+          <Icon src={ChevronLeft} class="w-5 h-5" />
+        </button>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
+          <T key="folios.edit_my_folios" fallback="Edit My Folios" />
+        </h1>
+      </div>
+      <button
+        onclick={createNewFolio}
+        disabled={creating}
+        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white transition-all duration-200 hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+        <Icon src={Plus} class="w-5 h-5" />
+        {creating ? ($_('folios.creating') || 'Creating...') : ($_('folios.new_folio') || 'New Folio')}
+      </button>
+    </div>
 
-  {#if loading}
+    {#if loading}
     <div class="flex justify-center items-center h-64">
       <LoadingSpinner size="md" message={$_('folios.loading') || 'Loading folios...'} />
     </div>
@@ -303,6 +332,7 @@
         </div>
       {/if}
     </div>
+  {/if}
   {/if}
 </div>
 

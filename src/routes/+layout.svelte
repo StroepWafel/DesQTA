@@ -591,6 +591,10 @@
         if (!forumsEnabled) {
           menu = menu.filter(item => item.path !== '/forums');
         }
+        const foliosEnabled = latestConfig.payload['coneqt-s.page.folios']?.value === 'enabled';
+        if (!foliosEnabled) {
+          menu = menu.filter(item => item.path !== '/folios');
+        }
       }
       
       // Apply menu order from settings
