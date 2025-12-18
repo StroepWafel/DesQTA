@@ -51,7 +51,10 @@
     "read_comments": "read",
     "unread_comments": "unread",
     "open_forums": "Open Forums",
-    "closed_forums": "Closed Forums"
+    "closed_forums": "Closed Forums",
+    "add_reply": "Add Reply",
+    "send": "Send",
+    "sending": "Sending..."
   },
   "header": {
     "toggle_sidebar": "Toggle sidebar",

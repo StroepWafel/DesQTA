@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { seqtaFetch } from '../../utils/netUtil';
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import { Icon, ChatBubbleBottomCenterText, ExclamationTriangle, Users, Clock, CheckCircle, ChevronDown, ChevronUp, Folder } from 'svelte-hero-icons';
@@ -157,8 +158,9 @@
 </div>
 
 {#snippet forumCard(forum)}
-  <div
-    class="p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+  <button
+    onclick={() => goto(`/forums/${forum.id}`)}
+    class="w-full text-left p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
     <div class="flex items-start justify-between mb-3">
       <h3 class="text-lg font-semibold text-zinc-900 dark:text-white flex-1 pr-2">
         {forum.title}
@@ -213,6 +215,6 @@
         </div>
       </div>
     </div>
-  </div>
+  </button>
 {/snippet}
 
