@@ -36,6 +36,7 @@
     CalendarDays,
     GlobeAlt,
     PencilSquare,
+    Flag,
   } from 'svelte-hero-icons';
   import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
@@ -141,6 +142,7 @@
     { labelKey: 'navigation.assessments', icon: ClipboardDocumentList, path: '/assessments' },
     { labelKey: 'navigation.timetable', icon: CalendarDays, path: '/timetable' },
     { labelKey: 'navigation.study', icon: PencilSquare, path: '/study' },
+    { labelKey: 'navigation.goals', icon: Flag, path: '/goals' },
     { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
     { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
     { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },

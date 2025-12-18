@@ -47,6 +47,7 @@
     GlobeAlt,
     XMark,
     PencilSquare,
+    Flag,
   } from 'svelte-hero-icons';
   import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
@@ -92,6 +93,7 @@
     { labelKey: 'navigation.assessments', icon: ClipboardDocumentList, path: '/assessments' },
     { labelKey: 'navigation.timetable', icon: CalendarDays, path: '/timetable' },
     { labelKey: 'navigation.study', icon: PencilSquare, path: '/study' },
+    { labelKey: 'navigation.goals', icon: Flag, path: '/goals' },
     { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
     { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
     { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },

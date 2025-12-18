@@ -561,7 +561,7 @@
                     <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">
                       <Icon src={DocumentText} size="48" class="mx-auto mb-4 opacity-50" />
                       <p><T key="troubleshooting.no_logs_loaded" fallback="No logs loaded" /></p>
-                      <p class="text-xs mt-2"><T key="troubleshooting.click_load_logs" fallback="Click \"Load Logs\" to fetch recent system logs" /></p>
+                      <p class="text-xs mt-2"><T key="troubleshooting.click_load_logs" fallback='Click "Load Logs" to fetch recent system logs' /></p>
         </div>
       {/if}
     </div>

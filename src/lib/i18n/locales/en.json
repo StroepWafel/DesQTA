@@ -25,6 +25,7 @@
     "assessments": "Assessments",
     "timetable": "Timetable",
     "study": "Study",
+    "goals": "Goals",
     "messages": "Messages",
     "portals": "Portals",
     "notices": "Notices",
@@ -213,6 +214,12 @@
     "steps": "Steps",
     "homework_notes": "Homework/Notes",
     "lesson_resources": "Lesson Resources"
+  },
+  "goals": {
+    "loading_years": "Loading years...",
+    "error_loading_years": "Error loading years",
+    "no_years_available": "No years available",
+    "no_years_message": "There are no years to display."
   },
   "assessments": {
     "year": "Year:",

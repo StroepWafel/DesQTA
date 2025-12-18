@@ -13,7 +13,7 @@
   } from 'svelte-hero-icons';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import T from './T.svelte';
-  import { _ } from '../i18n';
+  import { _, locale } from '../i18n';
 
   interface Props {
     open: boolean;
@@ -26,9 +26,19 @@
   function closeModal() {
     onclose?.();
   }
+
+  // Safe i18n helper that handles uninitialized locale
+  const safeTranslate = $derived(() => {
+    if (!$locale) return 'About Modal';
+    try {
+      return $_('about.modal_aria_label') || 'About Modal';
+    } catch {
+      return 'About Modal';
+    }
+  });
 </script>
 
-<Modal bind:open onclose={closeModal} ariaLabel={$_('about.modal_aria_label') || 'About Modal'}>
+<Modal bind:open onclose={closeModal} ariaLabel={safeTranslate()}>
   <!-- Easter Egg Trigger Area -->
   <div
     class="absolute top-0 right-0 w-16 h-16 opacity-0 cursor-auto"
