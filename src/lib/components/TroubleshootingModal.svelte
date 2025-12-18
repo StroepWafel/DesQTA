@@ -23,6 +23,8 @@
   } from 'svelte-hero-icons';
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
+  import { _ } from '../i18n';
+  import T from './T.svelte';
 
   let { open, onclose, errorReport } = $props<{
     open: boolean;
@@ -300,7 +302,7 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <Icon src={Cog} size="24" class="text-zinc-600 dark:text-zinc-400" />
-              <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">Advanced Troubleshooting</h2>
+              <h2 class="text-xl font-semibold text-zinc-900 dark:text-white"><T key="troubleshooting.title" fallback="Advanced Troubleshooting" /></h2>
             </div>
             <button
               onclick={closeModal}
@@ -315,13 +317,13 @@
         <div class="border-b border-zinc-200 dark:border-zinc-700">
           <nav class="flex space-x-8 px-6">
             {#each [
-              { id: 'diagnostics', label: 'System Diagnostics', icon: ComputerDesktop },
-              { id: 'errors', label: 'Error Logs', icon: ExclamationTriangle },
-              { id: 'logs', label: 'System Logs', icon: DocumentText },
-              { id: 'performance', label: 'Performance', icon: ChartBar },
-              { id: 'network', label: 'Network', icon: Wifi },
-              { id: 'storage', label: 'Storage', icon: CircleStack },
-              { id: 'troubleshooting', label: 'Troubleshooting', icon: LightBulb }
+              { id: 'diagnostics', label: $_('troubleshooting.tab_diagnostics') || 'System Diagnostics', icon: ComputerDesktop },
+              { id: 'errors', label: $_('troubleshooting.tab_errors') || 'Error Logs', icon: ExclamationTriangle },
+              { id: 'logs', label: $_('troubleshooting.tab_logs') || 'System Logs', icon: DocumentText },
+              { id: 'performance', label: $_('troubleshooting.tab_performance') || 'Performance', icon: ChartBar },
+              { id: 'network', label: $_('troubleshooting.tab_network') || 'Network', icon: Wifi },
+              { id: 'storage', label: $_('troubleshooting.tab_storage') || 'Storage', icon: CircleStack },
+              { id: 'troubleshooting', label: $_('troubleshooting.tab_troubleshooting') || 'Troubleshooting', icon: LightBulb }
             ] as tab}
         <button 
                 onclick={() => activeTab = tab.id}
@@ -483,14 +485,14 @@
                   class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
                 >
                   <Icon src={Beaker} size="16" class="inline mr-2" />
-                  Run Diagnostics
+                  <T key="troubleshooting.run_diagnostics" fallback="Run Diagnostics" />
                 </button>
         <button 
                   onclick={generateDiagnosticReport}
                   class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                 >
                   <Icon src={ClipboardDocument} size="16" class="inline mr-2" />
-                  {copiedToClipboard ? 'Copied!' : 'Copy Report'}
+                  {copiedToClipboard ? ($_('troubleshooting.copied') || 'Copied!') : ($_('troubleshooting.copy_report') || 'Copy Report')}
         </button>
               </div>
       </div>
@@ -505,7 +507,7 @@
                   onclick={clearErrorLogs}
                   class="px-3 py-1 bg-red-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
                 >
-            Clear Logs
+            <T key="troubleshooting.clear_logs" fallback="Clear Logs" />
           </button>
         </div>
 
@@ -533,13 +535,13 @@
                     disabled={loadingLogs}
                     class="px-3 py-1 bg-blue-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loadingLogs ? 'Loading...' : 'Load Logs'}
+                    {loadingLogs ? ($_('troubleshooting.loading') || 'Loading...') : ($_('troubleshooting.load_logs') || 'Load Logs')}
                   </button>
                   <button
                     onclick={exportLogs}
                     class="px-3 py-1 bg-green-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                   >
-                    Export All
+                    <T key="troubleshooting.export_all" fallback="Export All" />
                   </button>
         </div>
       </div>
@@ -558,8 +560,8 @@
                   {:else}
                     <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">
                       <Icon src={DocumentText} size="48" class="mx-auto mb-4 opacity-50" />
-                      <p>No logs loaded</p>
-                      <p class="text-xs mt-2">Click "Load Logs" to fetch recent system logs</p>
+                      <p><T key="troubleshooting.no_logs_loaded" fallback="No logs loaded" /></p>
+                      <p class="text-xs mt-2"><T key="troubleshooting.click_load_logs" fallback="Click \"Load Logs\" to fetch recent system logs" /></p>
         </div>
       {/if}
     </div>
@@ -752,13 +754,13 @@
                       onclick={testApiConnection}
                       class="w-full px-3 py-2 bg-blue-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
                     >
-                      Test API Connection
+                      <T key="troubleshooting.test_api_connection" fallback="Test API Connection" />
                     </button>
                     <button
                       onclick={() => window.open('https://www.google.com', '_blank')}
                       class="w-full px-3 py-2 bg-green-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                     >
-                      Test Internet Connection
+                      <T key="troubleshooting.test_internet_connection" fallback="Test Internet Connection" />
                     </button>
                   </div>
                 </div>
@@ -829,13 +831,13 @@
                   onclick={() => localStorage.clear()}
                   class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
                 >
-                  Clear Local Storage
+                  <T key="troubleshooting.clear_local_storage" fallback="Clear Local Storage" />
                 </button>
                 <button
                   onclick={() => sessionStorage.clear()}
                   class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 hover:bg-orange-600"
                 >
-                  Clear Session Storage
+                  <T key="troubleshooting.clear_session_storage" fallback="Clear Session Storage" />
                 </button>
               </div>
             </div>

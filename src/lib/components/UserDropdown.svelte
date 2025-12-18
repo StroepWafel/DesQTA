@@ -6,6 +6,8 @@
   import { getRandomDicebearAvatar } from '../../utils/netUtil';
   import { onMount } from 'svelte';
   import ProfileSwitcher from './ProfileSwitcher.svelte';
+  import { _ } from '../i18n';
+  import T from './T.svelte';
 
   interface UserInfo {
     clientIP: string;
@@ -102,7 +104,7 @@
   <button
     class="flex gap-3 items-center px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 dark:hover:bg-zinc-800/80 focus:outline-hidden focus:ring-2 focus:ring-zinc-500/50"
     onclick={onToggleUserDropdown}
-    aria-label="User menu"
+    aria-label={$_('user.user_menu') || 'User menu'}
     tabindex="0">
     {#if customProfilePicture && !customProfilePictureError}
       <img
@@ -157,8 +159,8 @@
             </svg>
           </div>
           <div class="flex-1">
-            <div class="font-medium">About</div>
-            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80">App information</div>
+            <div class="font-medium"><T key="user.about" fallback="About" /></div>
+            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80"><T key="user.app_information" fallback="App information" /></div>
           </div>
         </button>
 
@@ -175,8 +177,8 @@
               class="w-4 h-4 text-accent-600 dark:text-accent-400 group-hover:text-accent-600 dark:group-hover:text-accent-400" />
           </div>
           <div class="flex-1">
-            <div class="font-medium">Get Help</div>
-            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80">User guide & FAQ</div>
+            <div class="font-medium"><T key="user.get_help" fallback="Get Help" /></div>
+            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80"><T key="user.user_guide_faq" fallback="User guide & FAQ" /></div>
           </div>
         </button>
 
@@ -204,8 +206,8 @@
               class="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
           </div>
           <div class="flex-1">
-            <div class="font-medium">Sign out</div>
-            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80">End your session</div>
+            <div class="font-medium"><T key="user.sign_out" fallback="Sign out" /></div>
+            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80"><T key="user.end_session" fallback="End your session" /></div>
           </div>
         </button>
 
@@ -233,8 +235,8 @@
             </svg>
           </div>
           <div class="flex-1">
-            <div class="font-medium">Quit DesQTA</div>
-            <div class="text-xs text-red-500 dark:text-red-400 group-hover:text-white/80">Close the application</div>
+            <div class="font-medium"><T key="user.quit_app" fallback="Quit DesQTA" /></div>
+            <div class="text-xs text-red-500 dark:text-red-400 group-hover:text-white/80"><T key="user.close_application" fallback="Close the application" /></div>
           </div>
         </button>
       </div>

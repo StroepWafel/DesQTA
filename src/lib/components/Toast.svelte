@@ -2,6 +2,7 @@
   import { fly } from 'svelte/transition';
   import { Icon, XMark, CheckCircle, ExclamationCircle, InformationCircle, ExclamationTriangle } from 'svelte-hero-icons';
   import type { Toast } from '../stores/toast';
+  import { _ } from '../i18n';
 
   let { toast, onClose }: { toast: Toast; onClose: () => void } = $props();
 
@@ -41,7 +42,7 @@
     type="button"
     class="flex-shrink-0 p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2"
     onclick={onClose}
-    aria-label="Close notification"
+    aria-label={$_('toast.close_notification') || 'Close notification'}
   >
     <Icon src={XMark} class="w-4 h-4 opacity-70 hover:opacity-100" />
   </button>

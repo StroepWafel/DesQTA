@@ -543,7 +543,7 @@
       class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
-      aria-label="Notifications"
+      aria-label={$_('header.notifications') || 'Notifications'}
       tabindex="0"
       onclick={() => {
         showNotificationsModal = false;
