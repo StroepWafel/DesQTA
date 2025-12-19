@@ -37,7 +37,9 @@
         results = JSON.parse(decodeURIComponent(resultsParam));
         loading = false;
       } catch (e) {
-        error = $_('performance.failed_to_parse_results', { default: 'Failed to parse performance test results' });
+        error = $_('performance.failed_to_parse_results', {
+          default: 'Failed to parse performance test results',
+        });
         loading = false;
       }
     } else {
@@ -48,11 +50,15 @@
           results = JSON.parse(storedResults);
           loading = false;
         } catch (e) {
-          error = $_('performance.failed_to_parse_stored', { default: 'Failed to parse stored performance test results' });
+          error = $_('performance.failed_to_parse_stored', {
+            default: 'Failed to parse stored performance test results',
+          });
           loading = false;
         }
       } else {
-        error = $_('performance.no_results_found', { default: 'No performance test results found' });
+        error = $_('performance.no_results_found', {
+          default: 'No performance test results found',
+        });
         loading = false;
       }
     }
@@ -359,7 +365,9 @@
                     peak: results.summary.peakCpuUsage?.toFixed(1) ?? 'N/A',
                   }} />
               {:else}
-                <T key="performance.cpu_realtime" fallback="Real-time CPU usage during performance test" />
+                <T
+                  key="performance.cpu_realtime"
+                  fallback="Real-time CPU usage during performance test" />
               {/if}
             </Card.Description>
           </Card.Header>
@@ -393,7 +401,9 @@
                     peak: results.summary.peakMemoryUsage?.toFixed(1) ?? 'N/A',
                   }} />
               {:else}
-                <T key="performance.memory_realtime" fallback="Real-time memory usage during performance test" />
+                <T
+                  key="performance.memory_realtime"
+                  fallback="Real-time memory usage during performance test" />
               {/if}
             </Card.Description>
           </Card.Header>
@@ -419,7 +429,9 @@
                 <T key="performance.gpu_usage_over_time" fallback="GPU Usage Over Time" />
               </Card.Title>
               <Card.Description>
-                <T key="performance.gpu_realtime" fallback="Real-time GPU usage during performance test" />
+                <T
+                  key="performance.gpu_realtime"
+                  fallback="Real-time GPU usage during performance test" />
               </Card.Description>
             </Card.Header>
             <Card.Content class="p-6">
@@ -490,7 +502,9 @@
             <T key="performance.error_summary" fallback="Error Summary" />
           </Card.Title>
           <Card.Description>
-            <T key="performance.error_description" fallback="JavaScript errors and warnings detected" />
+            <T
+              key="performance.error_description"
+              fallback="JavaScript errors and warnings detected" />
           </Card.Description>
         </Card.Header>
         <Card.Content>
@@ -541,7 +555,9 @@
             <T key="performance.page_details" fallback="Page Performance Details" />
           </Card.Title>
           <Card.Description>
-            <T key="performance.page_details_description" fallback="Pages sorted by load time (slowest first)" />
+            <T
+              key="performance.page_details_description"
+              fallback="Pages sorted by load time (slowest first)" />
           </Card.Description>
         </Card.Header>
         <Card.Content>
@@ -613,7 +629,9 @@
                         {#if page.firstContentfulPaint}
                           <div>
                             <span class="text-zinc-500 dark:text-zinc-400">
-                              <T key="performance.first_contentful_paint" fallback="First Contentful Paint" />
+                              <T
+                                key="performance.first_contentful_paint"
+                                fallback="First Contentful Paint" />
                             </span>
                             <p class="font-semibold text-zinc-700 dark:text-zinc-300">
                               {formatTime(page.firstContentfulPaint)}
@@ -651,7 +669,9 @@
 
                       <div class="mt-4 pt-4 border-t border-zinc-300 dark:border-zinc-600">
                         <h5 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
-                          <T key="performance.system_resource_usage" fallback="System Resource Usage" />
+                          <T
+                            key="performance.system_resource_usage"
+                            fallback="System Resource Usage" />
                         </h5>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                           <div>
