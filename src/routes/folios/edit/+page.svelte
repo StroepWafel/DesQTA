@@ -95,6 +95,13 @@
       const data = typeof response === 'string' ? JSON.parse(response) : response;
 
       if (data.status === '200' && data.payload?.id) {
+        // Show success toast
+        try {
+          const { toastStore } = await import('../../../lib/stores/toast');
+          toastStore.success($_('folios.created') || 'Folio created successfully');
+        } catch {
+          // Toast store not available, skip
+        }
         // Navigate to the new folio edit page
         goto(`/folios/edit/${data.payload.id}`);
       } else {

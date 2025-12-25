@@ -9,7 +9,7 @@
   import LoginScreen from '../lib/components/LoginScreen.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
-  import ToastContainer from '../lib/components/ToastContainer.svelte';
+  import { Toaster } from 'svelte-sonner';
   import Onboarding from '../lib/components/Onboarding.svelte';
   import { cloudAuthService } from '../lib/services/cloudAuthService';
   import { cloudSettingsService } from '../lib/services/cloudSettingsService';
@@ -757,6 +757,29 @@
     </div>
   </div>
 {/if}
-<ToastContainer />
+<Toaster 
+  position="bottom-right" 
+  theme={$theme === 'dark' ? 'dark' : 'light'}
+  richColors 
+  expand={true} 
+  closeButton
+  offset="20px"
+  visibleToasts={5}
+  toastOptions={{
+    unstyled: true,
+    classes: {
+      toast: 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-lg border rounded-lg px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-all duration-200',
+      title: 'text-sm font-semibold flex-1',
+      description: 'text-sm text-zinc-600 dark:text-zinc-400 mt-1',
+      success: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+      error: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+      info: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+      warning: 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+      closeButton: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0',
+      actionButton: 'bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-opacity',
+      cancelButton: 'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-colors'
+    }
+  }}
+/>
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />

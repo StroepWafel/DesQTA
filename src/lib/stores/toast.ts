@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { toast as sonnerToast } from 'svelte-sonner';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -9,45 +9,53 @@ export interface Toast {
   duration?: number; // Duration in ms, default 3000
 }
 
-const toasts = writable<Toast[]>([]);
-
+/**
+ * Toast store wrapper around svelte-sonner
+ * Maintains backward compatibility with existing toast API
+ */
 export const toastStore = {
-  subscribe: toasts.subscribe,
   add: (toast: Omit<Toast, 'id'>) => {
-    const id = crypto.randomUUID();
-    const newToast: Toast = {
-      id,
-      duration: 3000,
-      ...toast,
+    const duration = toast.duration ?? 3000;
+    const durationSeconds = duration > 0 ? duration / 1000 : undefined;
+
+    const options = {
+      duration: durationSeconds,
     };
-    toasts.update((current) => [...current, newToast]);
 
-    // Auto-remove after duration
-    if (newToast.duration && newToast.duration > 0) {
-      setTimeout(() => {
-        toastStore.remove(id);
-      }, newToast.duration);
+    switch (toast.type) {
+      case 'success':
+        return sonnerToast.success(toast.message, options);
+      case 'error':
+        return sonnerToast.error(toast.message, options);
+      case 'info':
+        return sonnerToast.info(toast.message, options);
+      case 'warning':
+        return sonnerToast.warning(toast.message, options);
+      default:
+        return sonnerToast(toast.message, options);
     }
-
-    return id;
   },
-  remove: (id: string) => {
-    toasts.update((current) => current.filter((t) => t.id !== id));
+  remove: (id: string | number) => {
+    sonnerToast.dismiss(id);
   },
   clear: () => {
-    toasts.set([]);
+    sonnerToast.dismiss();
   },
   success: (message: string, duration?: number) => {
-    return toastStore.add({ message, type: 'success', duration });
+    const durationSeconds = duration ? duration / 1000 : undefined;
+    return sonnerToast.success(message, { duration: durationSeconds });
   },
   error: (message: string, duration?: number) => {
-    return toastStore.add({ message, type: 'error', duration });
+    const durationSeconds = duration ? duration / 1000 : undefined;
+    return sonnerToast.error(message, { duration: durationSeconds });
   },
   info: (message: string, duration?: number) => {
-    return toastStore.add({ message, type: 'info', duration });
+    const durationSeconds = duration ? duration / 1000 : undefined;
+    return sonnerToast.info(message, { duration: durationSeconds });
   },
   warning: (message: string, duration?: number) => {
-    return toastStore.add({ message, type: 'warning', duration });
+    const durationSeconds = duration ? duration / 1000 : undefined;
+    return sonnerToast.warning(message, { duration: durationSeconds });
   },
 };
 

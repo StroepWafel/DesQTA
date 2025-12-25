@@ -52,9 +52,14 @@
       if (notesFileExplorer) {
         await notesFileExplorer.loadFileTree();
       }
+      
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.success('Note created successfully');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to create note';
       console.error('Failed to create note:', e);
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Failed to create note');
     } finally {
       loading = false;
     }
@@ -140,9 +145,14 @@
       if (notesFileExplorer) {
         await notesFileExplorer.loadFileTree();
       }
+      
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.success('Note saved successfully');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to save note';
       console.error('Failed to save note:', e);
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Failed to save note');
     } finally {
       isSaving = false;
     }

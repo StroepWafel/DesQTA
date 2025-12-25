@@ -473,6 +473,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
   async function sendTestNotification() {
     if (!remindersEnabled) {
+      toastStore.warning('Reminders are currently disabled. Enable them to receive notifications.');
       alert('Reminders are currently disabled. Enable them to receive notifications.');
       return;
     }
@@ -480,6 +481,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       title: 'Test Notification',
       body: 'This is a test notification from DesQTA settings.',
     });
+    toastStore.success('Test notification sent');
   }
 
   async function testFeed(url: string) {
@@ -680,8 +682,10 @@ The Company reserves the right to terminate your access to the Service at any ti
     clearingCache = true;
     try {
       await CacheManager.clearCachesAndRefresh();
+      toastStore.success('Cache cleared successfully. Page will refresh...');
     } catch (error) {
       console.error('Failed to clear cache:', error);
+      toastStore.error('Failed to clear cache');
       clearingCache = false;
     }
   }
@@ -701,11 +705,13 @@ The Company reserves the right to terminate your access to the Service at any ti
         updateVersion = update.version;
         updateNotes = update.body || 'Bug fixes and improvements';
         
+        toastStore.info(`Update available: Version ${update.version}`);
         notify({
           title: 'Update Available',
           body: `Version ${update.version} is available! Click "Install Update" to download and install.`,
         });
       } else {
+        toastStore.success('You are running the latest version');
         notify({
           title: 'Up to Date',
           body: 'You are running the latest version of DesQTA.',
@@ -713,6 +719,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       }
     } catch (error) {
       logger.error('settings', 'checkForUpdates', 'Failed to check for updates', error);
+      toastStore.error('Failed to check for updates');
       notify({
         title: 'Update Check Failed',
         body: 'Unable to check for updates. Please try again later.',
@@ -728,6 +735,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       const update = await check();
       if (update?.available) {
         await update.downloadAndInstall();
+        toastStore.success('Update downloaded. Restart to install');
         notify({
           title: 'Update Downloaded',
           body: 'The update will be installed when you restart the application.',
@@ -735,6 +743,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       }
     } catch (error) {
       logger.error('settings', 'installUpdate', 'Failed to install update', error);
+      toastStore.error('Failed to install update');
       notify({
         title: 'Update Installation Failed',
         body: 'Unable to install the update. Please try again later.',
@@ -809,6 +818,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       await invoke('delete_profile_picture');
       customProfilePicture = null;
 
+      toastStore.success('Profile picture removed successfully');
+
       notify({
         title: 'Profile Picture Removed',
         body: 'Your custom profile picture has been removed.',
@@ -820,6 +831,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       }, 1000);
     } catch (error) {
       console.error('Failed to remove profile picture:', error);
+      toastStore.error('Failed to remove profile picture');
       notify({
         title: 'Removal Failed',
         body: 'Failed to remove profile picture. Please try again.',
@@ -831,6 +843,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     if (performanceTestRunning) return;
 
     performanceTestRunning = true;
+    toastStore.info('Performance test started...');
 
     try {
       const results = await performanceTester.startPerformanceTest();
@@ -840,6 +853,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         const savedPath = await invoke('save_performance_test_results', { results });
         console.log('Performance test results saved to:', savedPath);
 
+        toastStore.success('Performance test completed successfully');
+
         // Store results in session storage for the results page
         sessionStorage.setItem('performance-test-results', JSON.stringify(results));
 
@@ -847,6 +862,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         goto('/performance-results');
       } catch (saveError) {
         console.error('Failed to save performance results:', saveError);
+        toastStore.warning('Test completed but failed to save results');
         notify({
           title: 'Save Failed',
           body: 'Performance test completed but failed to save results. Showing results anyway.',
@@ -858,6 +874,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       }
     } catch (error) {
       console.error('Performance test failed:', error);
+      toastStore.error('Performance test failed');
 
       // Still try to save error report to backend
       try {
@@ -902,12 +919,14 @@ The Company reserves the right to terminate your access to the Service at any ti
       const performanceDir = await invoke('get_performance_tests_directory');
       await invoke('open_url', { url: `file://${performanceDir}` });
 
+      toastStore.success('Performance tests folder opened');
       notify({
         title: 'Performance Tests Folder',
         body: 'Opened the folder containing all saved performance test results.',
       });
     } catch (error) {
       console.error('Failed to open performance tests folder:', error);
+      toastStore.error('Failed to open performance tests folder');
       notify({
         title: 'Error',
         body: 'Failed to open performance tests folder.',

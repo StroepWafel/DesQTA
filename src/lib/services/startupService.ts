@@ -73,7 +73,12 @@ export async function loadCachedDataOnStartup(): Promise<void> {
           else if (key.startsWith('timetable_')) ttl = 30;
           else if (key.startsWith('notices_')) ttl = 30;
           else if (key === 'assessments_overview_data') ttl = 10;
-          else if (key === 'folios_settings_enabled' || key === 'goals_settings_enabled' || key === 'forums_settings_enabled') ttl = 60;
+          else if (
+            key === 'folios_settings_enabled' ||
+            key === 'goals_settings_enabled' ||
+            key === 'forums_settings_enabled'
+          )
+            ttl = 60;
           else if (key === 'goals_years') ttl = 30;
           else if (key === 'forums_list') ttl = 15;
 

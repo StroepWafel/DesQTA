@@ -197,8 +197,12 @@
           selectedMessage = null;
         }
       }
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.success(newStarred ? 'Message starred' : 'Message unstarred');
     } catch (e) {
       logger.error('messages', 'starMessage', 'Failed to star message', { error: e });
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.error('Failed to update star status');
     } finally {
       starring = false;
     }
@@ -214,8 +218,12 @@
       if (selectedMessage && selectedMessage.id === msg.id) {
         selectedMessage = null;
       }
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.success('Message deleted successfully');
     } catch (e) {
       logger.error('messages', 'deleteMessage', 'Failed to delete message', { error: e });
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.error('Failed to delete message');
     } finally {
       deleting = false;
     }
@@ -231,8 +239,12 @@
       if (selectedMessage && selectedMessage.id === msg.id) {
         selectedMessage = null;
       }
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.success('Message restored successfully');
     } catch (e) {
       logger.error('messages', 'restoreMessage', 'Failed to restore message', { error: e });
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.error('Failed to restore message');
     } finally {
       restoring = false;
     }

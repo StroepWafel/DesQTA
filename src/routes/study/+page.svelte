@@ -305,8 +305,12 @@
   async function saveTodos() {
     try {
       await invoke('save_todos', { todos });
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.success('Todos saved successfully');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to save todos';
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.error('Failed to save todos');
     }
   }
 

@@ -215,6 +215,8 @@
     try {
       if (item.item_type === 'folder') {
         await invoke('delete_folder_filesystem', { folderPath: item.path });
+        const { toastStore } = await import('../../stores/toast');
+        toastStore.success('Folder deleted successfully');
       } else {
         // Find the note ID and delete
         const notes = await invoke<Note[]>('load_notes_filesystem');
@@ -222,6 +224,8 @@
         if (note) {
           await invoke('delete_note_filesystem', { noteId: note.id });
           dispatch('deleteNote', { noteId: note.id });
+          const { toastStore } = await import('../../stores/toast');
+          toastStore.success('Note deleted successfully');
         }
       }
       
@@ -229,6 +233,8 @@
       closeContextMenu();
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to delete item';
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Failed to delete item');
     }
   }
 
