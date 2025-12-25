@@ -1,0 +1,78 @@
+/* Nordic Theme - Global Styles */
+
+:root {
+  --accent-color-value: #64748b;
+  --accent-color-hover: #475569;
+  --background-color: #f8fafc;
+}
+
+html, body {
+  background: transparent !important;
+}
+
+/* Custom scrollbar for nordic theme */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #64748b, #94a3b8);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #475569, #64748b);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: #64748b transparent;
+}
+
+/* Enhanced nordic effects */
+.nordic-minimal {
+  background: rgba(100, 116, 139, 0.05) !important;
+  border: 1px solid rgba(100, 116, 139, 0.1);
+}
+
+/* Nordic accent colors for interactive elements */
+.accent-bg {
+  background: linear-gradient(135deg, #64748b, #94a3b8) !important;
+}
+
+.accent-bg-hover:hover {
+  background: linear-gradient(135deg, #475569, #64748b) !important;
+}
+
+.accent-text {
+  color: #64748b !important;
+}
+
+.accent-border {
+  border-color: #64748b !important;
+}
+
+.accent-ring {
+  --tw-ring-color: #64748b !important;
+}
+
+/* Nordic shadows - subtle */
+.accent-shadow {
+  box-shadow: 0 1px 3px rgba(100, 116, 139, 0.1) !important;
+}
+
+/* Enhanced hover effects */
+.hover\:accent-shadow:hover {
+  box-shadow: 0 2px 6px rgba(100, 116, 139, 0.15) !important;
+}
+
+/* Nordic theme specific button styles */
+.nordic-button {
+  background: linear-gradient(135deg, #64748b, #94a3b8);
+  color: #ffffff;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.nordic-button:hover {
+  background: linear-gradient(135deg, #475569, #64748b);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(100, 116, 139, 0.15);
+}
+

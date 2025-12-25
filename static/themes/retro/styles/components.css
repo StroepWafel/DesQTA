@@ -1,0 +1,26 @@
+/* Retro Theme - Component Styles */
+
+/* Card components */
+.retro-card {
+  background: rgba(255, 0, 255, 0.05);
+  border: 2px solid rgba(255, 0, 255, 0.5);
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+}
+
+/* Button components */
+.retro-btn {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #0a0a0a;
+  border: 2px solid #ff00ff;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+.retro-btn:hover {
+  background: linear-gradient(135deg, #cc00cc, #00cccc);
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
+  transform: scale(1.05);
+}
+

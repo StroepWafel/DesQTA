@@ -1,0 +1,84 @@
+/* Dracula Theme - Global Styles */
+
+:root {
+  --accent-color-value: #bd93f9;
+  --accent-color-hover: #a78bfa;
+  --background-color: #282a36;
+}
+
+html, body {
+  background: transparent !important;
+}
+
+/* Custom scrollbar for dracula theme */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #bd93f9, #ff79c6);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #a78bfa, #ff79c6);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: #bd93f9 transparent;
+}
+
+/* Enhanced dracula effects */
+.dracula-vampire {
+  background: rgba(189, 147, 249, 0.1) !important;
+  border: 1px solid rgba(189, 147, 249, 0.3);
+}
+
+/* Dracula accent colors for interactive elements */
+.accent-bg {
+  background: linear-gradient(135deg, #bd93f9, #ff79c6) !important;
+}
+
+.accent-bg-hover:hover {
+  background: linear-gradient(135deg, #a78bfa, #ff79c6) !important;
+}
+
+.accent-text {
+  color: #bd93f9 !important;
+}
+
+.accent-border {
+  border-color: #bd93f9 !important;
+}
+
+.accent-ring {
+  --tw-ring-color: #bd93f9 !important;
+}
+
+/* Dracula shadows */
+.accent-shadow {
+  box-shadow: 0 0 15px rgba(189, 147, 249, 0.3) !important;
+}
+
+/* Enhanced hover effects */
+.hover\:accent-shadow:hover {
+  box-shadow: 0 0 20px rgba(189, 147, 249, 0.4) !important;
+}
+
+/* Dracula gradients for cards and containers */
+.dracula-gradient {
+  background: linear-gradient(135deg, rgba(189, 147, 249, 0.1), rgba(255, 121, 198, 0.1));
+  border: 1px solid rgba(189, 147, 249, 0.3);
+}
+
+/* Dracula theme specific button styles */
+.dracula-button {
+  background: linear-gradient(135deg, #bd93f9, #ff79c6);
+  color: #282a36;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.dracula-button:hover {
+  background: linear-gradient(135deg, #a78bfa, #ff79c6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
+}
+

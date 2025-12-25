@@ -1,0 +1,22 @@
+/* Catppuccin Theme - Component Styles */
+
+/* Card components */
+.catppuccin-card {
+  background: rgba(137, 180, 250, 0.05);
+  border: 1px solid rgba(137, 180, 250, 0.2);
+}
+
+/* Button components */
+.catppuccin-btn {
+  background: linear-gradient(135deg, #89b4fa, #cba6f7);
+  color: #1e1e2e;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.catppuccin-btn:hover {
+  background: linear-gradient(135deg, #74a7e8, #b894f6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(137, 180, 250, 0.3);
+}
+

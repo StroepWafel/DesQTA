@@ -1,0 +1,14 @@
+/* Forest Theme - Light Mode Styles */
+
+:not(.dark) {
+  --background-color: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
+  --surface-color: rgba(255, 255, 255, 0.9);
+  --text-color: #0f1f0f;
+  --border-color: #16a34a;
+}
+
+:not(.dark) .forest-nature {
+  background: rgba(22, 163, 74, 0.1) !important;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+

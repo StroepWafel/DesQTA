@@ -1,0 +1,22 @@
+/* Tokyo Night Theme - Component Styles */
+
+/* Card components */
+.tokyo-night-card {
+  background: rgba(122, 162, 247, 0.05);
+  border: 1px solid rgba(122, 162, 247, 0.2);
+}
+
+/* Button components */
+.tokyo-night-btn {
+  background: linear-gradient(135deg, #7aa2f7, #9ece6a);
+  color: #1a1b26;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.tokyo-night-btn:hover {
+  background: linear-gradient(135deg, #6183c4, #8db573);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(122, 162, 247, 0.3);
+}
+

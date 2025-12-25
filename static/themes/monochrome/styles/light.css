@@ -1,0 +1,27 @@
+/* Monochrome Theme - Light Mode Styles */
+
+:not(.dark) {
+  --background-color: #ffffff;
+  --surface-color: rgba(255, 255, 255, 0.95);
+  --text-color: #000000;
+  --border-color: #000000;
+}
+
+:not(.dark) .monochrome-clean {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+:not(.dark) .accent-bg {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+:not(.dark) .accent-text {
+  color: #000000 !important;
+}
+
+:not(.dark) .accent-border {
+  border-color: #000000 !important;
+}
+

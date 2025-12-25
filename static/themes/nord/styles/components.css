@@ -1,0 +1,22 @@
+/* Nord Theme - Component Styles */
+
+/* Card components */
+.nord-card {
+  background: rgba(136, 192, 208, 0.05);
+  border: 1px solid rgba(136, 192, 208, 0.2);
+}
+
+/* Button components */
+.nord-btn {
+  background: linear-gradient(135deg, #88c0d0, #5e81ac);
+  color: #2e3440;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.nord-btn:hover {
+  background: linear-gradient(135deg, #81a1c1, #5e81ac);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(136, 192, 208, 0.3);
+}
+

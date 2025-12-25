@@ -1,0 +1,14 @@
+/* Nord Theme - Light Mode Styles */
+
+:not(.dark) {
+  --background-color: #eceff4;
+  --surface-color: rgba(255, 255, 255, 0.95);
+  --text-color: #2e3440;
+  --border-color: #88c0d0;
+}
+
+:not(.dark) .nord-arctic {
+  background: rgba(136, 192, 208, 0.1) !important;
+  border: 1px solid rgba(136, 192, 208, 0.2);
+}
+

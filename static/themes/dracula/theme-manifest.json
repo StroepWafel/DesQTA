@@ -1,0 +1,51 @@
+{
+  "name": "Dracula",
+  "version": "1.0.0",
+  "description": "A dark theme with purple and pink accents, inspired by the popular Dracula color scheme. Perfect for coding and late-night sessions.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/dracula/preview.png",
+    "screenshots": ["/themes/dracula/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#bd93f9",
+    "defaultTheme": "dark",
+    "supportsLightMode": false,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#bd93f9",
+    "secondaryColor": "#ff79c6",
+    "successColor": "#50fa7b",
+    "warningColor": "#f1fa8c",
+    "errorColor": "#ff5555",
+    "backgroundColor": "#282a36",
+    "surfaceColor": "#44475a",
+    "textColor": "#f8f8f2",
+    "borderColor": "#6272a4",
+    "shadowColor": "rgba(189, 147, 249, 0.3)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": true,
+    "shadows": true
+  }
+}
+

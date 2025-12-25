@@ -1,0 +1,51 @@
+{
+  "name": "Nordic",
+  "version": "1.0.0",
+  "description": "A minimalist Scandinavian-inspired theme with clean lines, soft grays, and subtle accents. Hygge vibes.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/nordic/preview.png",
+    "screenshots": ["/themes/nordic/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#64748b",
+    "defaultTheme": "light",
+    "supportsLightMode": true,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#64748b",
+    "secondaryColor": "#94a3b8",
+    "successColor": "#10b981",
+    "warningColor": "#f59e42",
+    "errorColor": "#ef4444",
+    "backgroundColor": "#f8fafc",
+    "surfaceColor": "#ffffff",
+    "textColor": "#1e293b",
+    "borderColor": "#e2e8f0",
+    "shadowColor": "rgba(100, 116, 139, 0.1)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": false
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": false,
+    "shadows": true
+  }
+}
+

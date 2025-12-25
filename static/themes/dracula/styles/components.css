@@ -1,0 +1,22 @@
+/* Dracula Theme - Component Styles */
+
+/* Card components */
+.dracula-card {
+  background: rgba(189, 147, 249, 0.05);
+  border: 1px solid rgba(189, 147, 249, 0.3);
+}
+
+/* Button components */
+.dracula-btn {
+  background: linear-gradient(135deg, #bd93f9, #ff79c6);
+  color: #282a36;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.dracula-btn:hover {
+  background: linear-gradient(135deg, #a78bfa, #ff79c6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
+}
+

@@ -1,0 +1,51 @@
+{
+  "name": "Gruvbox",
+  "version": "1.0.0",
+  "description": "A retro groove color scheme with warm, muted colors. Inspired by retro computer terminals.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/gruvbox/preview.png",
+    "screenshots": ["/themes/gruvbox/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#fe8019",
+    "defaultTheme": "dark",
+    "supportsLightMode": true,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#fe8019",
+    "secondaryColor": "#d65d0e",
+    "successColor": "#98971a",
+    "warningColor": "#d79921",
+    "errorColor": "#cc241d",
+    "backgroundColor": "#282828",
+    "surfaceColor": "#3c3836",
+    "textColor": "#ebdbb2",
+    "borderColor": "#504945",
+    "shadowColor": "rgba(254, 128, 25, 0.3)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": false,
+    "shadows": true
+  }
+}
+

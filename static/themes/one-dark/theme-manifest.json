@@ -1,0 +1,51 @@
+{
+  "name": "One Dark",
+  "version": "1.0.0",
+  "description": "A popular dark theme inspired by Atom editor's One Dark theme. Clean, modern, and easy on the eyes.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/one-dark/preview.png",
+    "screenshots": ["/themes/one-dark/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#61afef",
+    "defaultTheme": "dark",
+    "supportsLightMode": false,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#61afef",
+    "secondaryColor": "#56b6c2",
+    "successColor": "#98c379",
+    "warningColor": "#e5c07b",
+    "errorColor": "#e06c75",
+    "backgroundColor": "#282c34",
+    "surfaceColor": "#353b45",
+    "textColor": "#abb2bf",
+    "borderColor": "#5c6370",
+    "shadowColor": "rgba(97, 175, 239, 0.3)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": false,
+    "shadows": true
+  }
+}
+

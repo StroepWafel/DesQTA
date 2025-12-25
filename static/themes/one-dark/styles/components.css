@@ -1,0 +1,22 @@
+/* One Dark Theme - Component Styles */
+
+/* Card components */
+.one-dark-card {
+  background: rgba(97, 175, 239, 0.05);
+  border: 1px solid rgba(97, 175, 239, 0.2);
+}
+
+/* Button components */
+.one-dark-btn {
+  background: linear-gradient(135deg, #61afef, #56b6c2);
+  color: #282c34;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.one-dark-btn:hover {
+  background: linear-gradient(135deg, #528bcf, #4a9ba5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(97, 175, 239, 0.3);
+}
+

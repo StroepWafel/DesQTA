@@ -1,0 +1,14 @@
+/* Dracula Theme - Dark Mode Styles */
+
+.dark {
+  --background-color: #282a36;
+  --surface-color: rgba(68, 71, 90, 0.9);
+  --text-color: #f8f8f2;
+  --border-color: #6272a4;
+}
+
+.dark .dracula-vampire {
+  background: rgba(189, 147, 249, 0.15) !important;
+  border: 1px solid rgba(189, 147, 249, 0.4);
+}
+

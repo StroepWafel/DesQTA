@@ -1,0 +1,51 @@
+{
+  "name": "Material",
+  "version": "1.0.0",
+  "description": "A Material Design inspired theme with vibrant colors, elevation shadows, and smooth animations. Google's design language brought to DesQTA.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/material/preview.png",
+    "screenshots": ["/themes/material/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#2196f3",
+    "defaultTheme": "dark",
+    "supportsLightMode": true,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#2196f3",
+    "secondaryColor": "#03a9f4",
+    "successColor": "#4caf50",
+    "warningColor": "#ff9800",
+    "errorColor": "#f44336",
+    "backgroundColor": "#121212",
+    "surfaceColor": "#1e1e1e",
+    "textColor": "#ffffff",
+    "borderColor": "#333333",
+    "shadowColor": "rgba(33, 150, 243, 0.3)"
+  },
+  "fonts": {
+    "primary": "Roboto, Inter",
+    "secondary": "Roboto, SF Pro Display",
+    "monospace": "Roboto Mono, JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": false,
+    "shadows": true
+  }
+}
+

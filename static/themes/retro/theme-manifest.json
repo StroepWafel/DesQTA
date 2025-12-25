@@ -1,0 +1,52 @@
+{
+  "name": "Retro",
+  "version": "1.0.0",
+  "description": "An 80s retro theme with vibrant neon colors, synthwave aesthetics, and nostalgic vibes. Get ready to travel back in time!",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/retro/preview.png",
+    "screenshots": ["/themes/retro/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#ff00ff",
+    "defaultTheme": "dark",
+    "supportsLightMode": false,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#ff00ff",
+    "secondaryColor": "#00ffff",
+    "successColor": "#00ff00",
+    "warningColor": "#ffff00",
+    "errorColor": "#ff0000",
+    "backgroundColor": "#0a0a0a",
+    "surfaceColor": "#1a0a1a",
+    "textColor": "#ff00ff",
+    "borderColor": "#ff00ff",
+    "shadowColor": "rgba(255, 0, 255, 0.5)"
+  },
+  "fonts": {
+    "primary": "'Courier New', monospace",
+    "secondary": "'Arial Black', sans-serif",
+    "monospace": "'Courier New', monospace",
+    "display": "'Arial Black', 'Impact', sans-serif"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": true,
+    "shadows": true
+  }
+}
+

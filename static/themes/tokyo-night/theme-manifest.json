@@ -1,0 +1,51 @@
+{
+  "name": "Tokyo Night",
+  "version": "1.0.0",
+  "description": "A clean dark theme inspired by the colors of Tokyo at night. Elegant blue accents with a modern aesthetic.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/tokyo-night/preview.png",
+    "screenshots": ["/themes/tokyo-night/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#7aa2f7",
+    "defaultTheme": "dark",
+    "supportsLightMode": false,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#7aa2f7",
+    "secondaryColor": "#9ece6a",
+    "successColor": "#9ece6a",
+    "warningColor": "#e0af68",
+    "errorColor": "#f7768e",
+    "backgroundColor": "#1a1b26",
+    "surfaceColor": "#24283b",
+    "textColor": "#c0caf5",
+    "borderColor": "#565f89",
+    "shadowColor": "rgba(122, 162, 247, 0.3)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": false,
+    "shadows": true
+  }
+}
+

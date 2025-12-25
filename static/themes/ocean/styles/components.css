@@ -1,0 +1,23 @@
+/* Ocean Theme - Component Styles */
+
+/* Card components */
+.ocean-card {
+  background: rgba(6, 182, 212, 0.05);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+/* Button components */
+.ocean-btn {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.ocean-btn:hover {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+

@@ -1,0 +1,51 @@
+{
+  "name": "Space",
+  "version": "1.0.0",
+  "description": "A cosmic space theme with deep purples, starry backgrounds, and nebula gradients. Explore the universe!",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/space/preview.png",
+    "screenshots": ["/themes/space/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#8b5cf6",
+    "defaultTheme": "dark",
+    "supportsLightMode": false,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#8b5cf6",
+    "secondaryColor": "#a78bfa",
+    "successColor": "#10b981",
+    "warningColor": "#f59e42",
+    "errorColor": "#ef4444",
+    "backgroundColor": "#0a0a0f",
+    "surfaceColor": "#1a1a2e",
+    "textColor": "#e9d5ff",
+    "borderColor": "#7c3aed",
+    "shadowColor": "rgba(139, 92, 246, 0.4)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": true,
+    "gradients": true,
+    "shadows": true
+  }
+}
+
