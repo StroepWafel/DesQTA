@@ -2,7 +2,7 @@
   import { Icon } from 'svelte-hero-icons';
   import { PencilSquare, Trash, Star, ArrowUturnLeft } from 'svelte-hero-icons';
   import type { Message } from '../types';
-  import { sanitizeHtml } from '../../../utils/sanitization';
+  import { sanitizeHtmlAsync } from '../../../utils/sanitization';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
 
@@ -60,10 +60,11 @@
     }
   }
 
-  function updateIframeContent() {
+  async function updateIframeContent() {
     if (!selectedMessage || !iframe || !iframe.contentWindow) return;
 
-    const sanitizedContent = sanitizeHtml(selectedMessage.body);
+    // Use async Rust-side sanitization for better performance
+    const sanitizedContent = await sanitizeHtmlAsync(selectedMessage.body);
 
     const html = /* html */ `<!DOCTYPE html>
 <html>

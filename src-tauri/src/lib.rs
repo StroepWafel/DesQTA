@@ -28,6 +28,8 @@ mod system_monitor;
 mod profile_picture;
 #[path = "utils/sanitization.rs"]
 mod sanitization;
+#[path = "utils/html_parser.rs"]
+mod html_parser;
 #[path = "utils/seqta_config.rs"]
 mod seqta_config;
 #[path = "services/seqta_mentions.rs"]
@@ -366,7 +368,11 @@ pub fn run() {
             seqta_mentions::search_seqta_mentions_with_context,
             seqta_mentions::update_seqta_mention_data,
             seqta_mentions::get_weekly_schedule_for_class_cmd,
-            seqta_mentions::fetch_lesson_content_cmd
+            seqta_mentions::fetch_lesson_content_cmd,
+            html_parser::sanitize_html_command,
+            html_parser::parse_html_command,
+            html_parser::extract_iframe_src_command,
+            html_parser::extract_text_content_command
         ])
         .setup(|app| {
             // --- START: Auto-Clear Cache on Update ---

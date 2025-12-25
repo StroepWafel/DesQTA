@@ -179,6 +179,7 @@ pub async fn get_courses_subjects() -> Result<Vec<Folder>, String> {
         None,
         false,
         false,
+        None,
     )
     .await?;
 
@@ -237,6 +238,7 @@ pub async fn get_course_content(programme: i32, metaclass: i32) -> Result<Course
         None,
         false,
         false,
+        None,
     )
     .await?;
 

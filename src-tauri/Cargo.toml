@@ -56,6 +56,10 @@ keyring = "2.3"
 zeroize = "1.7"
 regex = "1.10"
 
+# HTML Parsing
+scraper = "0.20"
+ammonia = "4.0"
+
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.25"
 objc = "0.2"
