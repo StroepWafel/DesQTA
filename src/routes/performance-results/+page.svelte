@@ -167,11 +167,12 @@
       </h1>
       <p class="text-zinc-600 dark:text-zinc-400">
         {#if results}
+          {@const formattedDate = new Date(results.startTime).toLocaleString()}
           <T
             key="performance.test_completed"
-            fallback="Test completed on {date} • {count} pages analyzed"
+            fallback={`Test completed on ${formattedDate} • ${results.pages.length} pages analyzed`}
             values={{
-              date: new Date(results.startTime).toLocaleString(),
+              date: formattedDate,
               count: results.pages.length,
             }} />
         {:else}
@@ -357,12 +358,14 @@
             </Card.Title>
             <Card.Description>
               {#if results.summary.averageCpuUsage !== undefined}
+                {@const avgCpu = results.summary.averageCpuUsage.toFixed(1)}
+                {@const peakCpu = results.summary.peakCpuUsage?.toFixed(1) ?? 'N/A'}
                 <T
                   key="performance.cpu_average_peak"
-                  fallback="Average: {average}% • Peak: {peak}%"
+                  fallback={`Average: ${avgCpu}% • Peak: ${peakCpu}%`}
                   values={{
-                    average: results.summary.averageCpuUsage.toFixed(1),
-                    peak: results.summary.peakCpuUsage?.toFixed(1) ?? 'N/A',
+                    average: avgCpu,
+                    peak: peakCpu,
                   }} />
               {:else}
                 <T
@@ -393,12 +396,14 @@
             </Card.Title>
             <Card.Description>
               {#if results.summary.averageMemoryUsage !== undefined}
+                {@const avgMem = results.summary.averageMemoryUsage.toFixed(1)}
+                {@const peakMem = results.summary.peakMemoryUsage?.toFixed(1) ?? 'N/A'}
                 <T
                   key="performance.memory_average_peak"
-                  fallback="Average: {average}% • Peak: {peak}%"
+                  fallback={`Average: ${avgMem}% • Peak: ${peakMem}%`}
                   values={{
-                    average: results.summary.averageMemoryUsage.toFixed(1),
-                    peak: results.summary.peakMemoryUsage?.toFixed(1) ?? 'N/A',
+                    average: avgMem,
+                    peak: peakMem,
                   }} />
               {:else}
                 <T
@@ -687,10 +692,13 @@
                               {avgCpu.toFixed(1)}%
                             </p>
                             <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                              <T
-                                key="performance.peak"
-                                fallback="Peak: {value}%"
-                                values={{ value: peakCpu.toFixed(1) }} />
+                              {#if true}
+                                {@const peakCpuStr = peakCpu.toFixed(1)}
+                                <T
+                                  key="performance.peak"
+                                  fallback={`Peak: ${peakCpuStr}%`}
+                                  values={{ value: peakCpuStr }} />
+                              {/if}
                             </p>
                           </div>
                           <div>
@@ -706,10 +714,13 @@
                               {avgMemory.toFixed(1)}%
                             </p>
                             <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                              <T
-                                key="performance.peak"
-                                fallback="Peak: {value}%"
-                                values={{ value: peakMemory.toFixed(1) }} />
+                              {#if true}
+                                {@const peakMemStr = peakMemory.toFixed(1)}
+                                <T
+                                  key="performance.peak"
+                                  fallback={`Peak: ${peakMemStr}%`}
+                                  values={{ value: peakMemStr }} />
+                              {/if}
                             </p>
                           </div>
                           {#if !isNaN(avgGpu)}
@@ -726,10 +737,13 @@
                                 {avgGpu.toFixed(1)}%
                               </p>
                               <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                                <T
-                                  key="performance.peak"
-                                  fallback="Peak: {value}%"
-                                  values={{ value: peakGpu.toFixed(1) }} />
+                                {#if true}
+                                  {@const peakGpuStr = peakGpu.toFixed(1)}
+                                  <T
+                                    key="performance.peak"
+                                    fallback={`Peak: ${peakGpuStr}%`}
+                                    values={{ value: peakGpuStr }} />
+                                {/if}
                               </p>
                             </div>
                           {/if}
@@ -744,10 +758,13 @@
                         class="flex items-center gap-2 px-3 py-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
                         <Icon src={ExclamationTriangle} class="w-4 h-4 text-red-500" />
                         <span class="text-sm font-medium text-red-700 dark:text-red-300">
-                          <T
-                            key="performance.errors_count"
-                            fallback="{count} errors"
-                            values={{ count: page.errors.length }} />
+                          {#if true}
+                            {@const errorCount = page.errors.length}
+                            <T
+                              key="performance.errors_count"
+                              fallback={`${errorCount} errors`}
+                              values={{ count: errorCount }} />
+                          {/if}
                         </span>
                       </div>
                     {/if}
@@ -756,10 +773,13 @@
                         class="flex items-center gap-2 px-3 py-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
                         <Icon src={ExclamationTriangle} class="w-4 h-4 text-yellow-500" />
                         <span class="text-sm font-medium text-yellow-700 dark:text-yellow-300">
-                          <T
-                            key="performance.warnings_count"
-                            fallback="{count} warnings"
-                            values={{ count: page.warnings.length }} />
+                          {#if true}
+                            {@const warningCount = page.warnings.length}
+                            <T
+                              key="performance.warnings_count"
+                              fallback={`${warningCount} warnings`}
+                              values={{ count: warningCount }} />
+                          {/if}
                         </span>
                       </div>
                     {/if}

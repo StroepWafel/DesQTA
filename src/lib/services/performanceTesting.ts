@@ -77,6 +77,8 @@ export interface TestResults {
     averageMemoryUsage?: number;
     peakMemoryUsage?: number;
   };
+  timestamp?: string; // ISO timestamp string
+  version?: string; // App version
 }
 
 export class PerformanceTester {
@@ -204,7 +206,9 @@ export class PerformanceTester {
           peakCpuUsage,
           averageMemoryUsage,
           peakMemoryUsage,
-        }
+        },
+        timestamp: new Date().toISOString(),
+        version: '1.0.0-rc.5', // Match Cargo.toml version
       };
 
       logger.info('PerformanceTester', 'startPerformanceTest', 'Performance testing completed', {

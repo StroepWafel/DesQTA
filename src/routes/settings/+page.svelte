@@ -867,6 +867,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           totalDuration: 0,
           pages: [],
           overallErrors: [String(error)],
+          systemMetricsHistory: [],
           summary: {
             averageLoadTime: 0,
             slowestPage: { name: 'N/A', time: 0 },
@@ -875,7 +876,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             totalWarnings: 0,
           },
           timestamp: new Date().toISOString(),
-          version: '1.0.0',
+          version: '1.0.0-rc.5',
         };
 
         await invoke('save_performance_test_results', { results: errorResults });
