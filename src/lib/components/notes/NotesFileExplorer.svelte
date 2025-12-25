@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from 'svelte';
-  import { Icon, FolderOpen, Document, FolderPlus, Plus, EllipsisVertical, Trash, PencilSquare, ArrowRightOnRectangle, ChevronLeft } from 'svelte-hero-icons';
-  import { fly, slide } from 'svelte/transition';
+  import { createEventDispatcher, onMount, onDestroy, tick } from 'svelte';
+  import { Icon, FolderOpen, Document, FolderPlus, Plus, EllipsisVertical, Trash, PencilSquare, ArrowRightOnRectangle, ChevronLeft, XMark } from 'svelte-hero-icons';
+  import { fly, slide, scale } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
   import { invoke } from '@tauri-apps/api/core';
   import type { Note } from './types/editor';
@@ -38,9 +38,12 @@
   let contextMenu: { x: number; y: number; item: FileTreeItem } | null = null;
   let showCreateFolderModal = false;
   let showRenameModal = false;
+  let showMoveNoteModal: FileTreeItem | null = null;
+  let showDeleteModal: FileTreeItem | null = null;
   let newFolderName = '';
   let renamingItem: FileTreeItem | null = null;
   let newItemName = '';
+  let folders: FileTreeItem[] = [];
   
   // Drag and drop state
   let draggedItem: FileTreeItem | null = null;
@@ -50,6 +53,26 @@
   let currentFolderPath: string[] = []; // Path to current folder
   let currentFolderItems: FileTreeItem[] = []; // Items in current folder
   let folderHistory: string[][] = []; // History for back navigation
+  
+  // Context menu positioning
+  let contextMenuElement: HTMLElement | null = null;
+  let adjustedX = 0;
+  let adjustedY = 0;
+  let lastContextMenuVisible = false;
+
+  // Extract all folders from the file tree recursively
+  function extractFolders(items: FileTreeItem[]): FileTreeItem[] {
+    const result: FileTreeItem[] = [];
+    for (const item of items) {
+      if (item.item_type === 'folder') {
+        result.push(item);
+        if (item.children) {
+          result.push(...extractFolders(item.children));
+        }
+      }
+    }
+    return result;
+  }
 
   // Load file tree
   async function loadFileTreeInternal() {
@@ -57,6 +80,8 @@
       loading = true;
       error = null;
       fileTree = await invoke<FileTreeItem[]>('get_file_tree');
+      // Extract all folders from the tree for move modal
+      folders = extractFolders(fileTree);
       updateCurrentFolderItems(); // Initialize current folder items
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load file tree';
@@ -133,26 +158,103 @@
     }
   }
 
+  // Portal action to move context menu to body (bypasses transform contexts)
+  function portalAction(node: HTMLElement) {
+    if (node.parentNode !== document.body) {
+      document.body.appendChild(node);
+    }
+    return {
+      destroy() {
+        if (node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+      }
+    };
+  }
+
   // Handle context menu
   function handleContextMenu(event: MouseEvent, item: FileTreeItem) {
     event.preventDefault();
+    event.stopPropagation();
     contextMenu = {
       x: event.clientX,
       y: event.clientY,
       item
     };
+    adjustedX = event.clientX;
+    adjustedY = event.clientY;
   }
 
   // Close context menu
   function closeContextMenu() {
     contextMenu = null;
   }
+  
+  // Adjust context menu position to stay within viewport
+  $: if (contextMenu && !lastContextMenuVisible && contextMenuElement) {
+    lastContextMenuVisible = true;
+    tick().then(() => {
+      if (contextMenuElement && contextMenu) {
+        const rect = contextMenuElement.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        let newX = contextMenu.x;
+        let newY = contextMenu.y;
+        
+        // Adjust horizontal position
+        if (newX + rect.width > viewportWidth) {
+          newX = viewportWidth - rect.width - 10;
+        }
+        if (newX < 10) newX = 10;
+        
+        // Adjust vertical position
+        if (newY + rect.height > viewportHeight) {
+          newY = viewportHeight - rect.height - 10;
+        }
+        if (newY < 10) newY = 10;
+        
+        adjustedX = newX;
+        adjustedY = newY;
+      }
+    });
+  } else if (!contextMenu) {
+    lastContextMenuVisible = false;
+  }
+  
+  // Handle clicks outside context menu
+  function handleClickOutside(event: MouseEvent) {
+    if (contextMenu && contextMenuElement && !contextMenuElement.contains(event.target as Node)) {
+      closeContextMenu();
+    }
+  }
+  
+  $: if (contextMenu) {
+    setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+      document.addEventListener('contextmenu', handleClickOutside);
+    }, 10);
+  } else {
+    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('contextmenu', handleClickOutside);
+  }
+  
+  onDestroy(() => {
+    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('contextmenu', handleClickOutside);
+  });
 
   // Create new note in folder
-  function createNoteInFolder(folderPath: string) {
-    const pathParts = folderPath ? folderPath.split('/').filter(p => p) : [];
+  function createNoteInFolder(folderPath?: string) {
+    // If no folderPath provided, use current folder path
+    const pathParts = folderPath ? folderPath.split('/').filter(p => p) : currentFolderPath;
     dispatch('createNote', { folderPath: pathParts });
     closeContextMenu();
+  }
+  
+  // Export current folder path for parent component
+  export function getCurrentFolderPath(): string[] {
+    return currentFolderPath;
   }
 
   // Create new folder
@@ -186,6 +288,41 @@
     showRenameModal = true;
     closeContextMenu();
   }
+  
+  // Open move note modal
+  function openMoveNoteModal(item: FileTreeItem) {
+    if (item.item_type === 'file') {
+      showMoveNoteModal = item;
+      closeContextMenu();
+    }
+  }
+  
+  // Move note to folder
+  async function moveNoteToFolder(targetFolderPath: string[]) {
+    if (!showMoveNoteModal) return;
+    
+    try {
+      // Find the note by name
+      const notes = await invoke<Note[]>('load_notes_filesystem');
+      const note = notes.find(n => n.title === showMoveNoteModal.name);
+      
+      if (note) {
+        await invoke('move_note_filesystem', {
+          noteId: note.id,
+          newFolderPath: targetFolderPath
+        });
+        
+        await loadFileTreeInternal();
+        showMoveNoteModal = null;
+        const { toastStore } = await import('../../stores/toast');
+        toastStore.success('Note moved successfully');
+      }
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to move note';
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Failed to move note');
+    }
+  }
 
   async function renameItem() {
     if (!renamingItem || !newItemName.trim()) return;
@@ -208,9 +345,18 @@
     }
   }
 
-  // Delete item
-  async function deleteItem(item: FileTreeItem) {
-    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) return;
+  // Open delete confirmation modal
+  function openDeleteModal(item: FileTreeItem) {
+    showDeleteModal = item;
+    closeContextMenu();
+  }
+  
+  // Delete item (called after confirmation in modal)
+  async function confirmDelete() {
+    if (!showDeleteModal) return;
+
+    const item = showDeleteModal;
+    showDeleteModal = null; // Close modal immediately
 
     try {
       if (item.item_type === 'folder') {
@@ -230,7 +376,6 @@
       }
       
       await loadFileTreeInternal();
-      closeContextMenu();
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to delete item';
       const { toastStore } = await import('../../stores/toast');
@@ -312,19 +457,8 @@
     dragOverFolder = null;
   }
 
-  // Click outside handler
-  function handleClickOutside(event: MouseEvent) {
-    if (contextMenu && !(event.target as Element).closest('.context-menu')) {
-      closeContextMenu();
-    }
-  }
-
   onMount(() => {
     loadFileTreeInternal();
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
   });
 </script>
 
@@ -372,7 +506,7 @@
       <div class="flex items-center gap-2">
         <button
           class="p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
-          on:click={() => createNoteInFolder('')}
+          on:click={() => createNoteInFolder()}
           title="New Note"
         >
           <Icon src={Plus} class="w-4 h-4" />
@@ -422,7 +556,7 @@
         <p class="text-sm">No notes found</p>
         <button 
           class="mt-2 px-3 py-1.5 text-sm rounded-lg accent-bg text-white hover:scale-105 transition-all duration-200"
-          on:click={() => createNoteInFolder('')}
+          on:click={() => createNoteInFolder()}
         >
           Create your first note
         </button>
@@ -489,8 +623,10 @@
 <!-- Context Menu -->
 {#if contextMenu}
   <div 
+    bind:this={contextMenuElement}
+    use:portalAction
     class="fixed z-50 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-40 context-menu"
-    style="left: {contextMenu.x}px; top: {contextMenu.y}px"
+    style="left: {adjustedX}px; top: {adjustedY}px; pointer-events: auto;"
     in:fly={{ y: -10, duration: 200, easing: quintOut }}
   >
     {#if contextMenu?.item.item_type === 'folder'}
@@ -518,20 +654,165 @@
       </button>
       <button
         class="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-        on:click={() => contextMenu && deleteItem(contextMenu.item)}
+        on:click|stopPropagation={(e) => {
+          e.stopPropagation();
+          if (contextMenu) {
+            openDeleteModal(contextMenu.item);
+          }
+        }}
       >
         <Icon src={Trash} class="w-4 h-4" />
         Delete
       </button>
     {:else}
       <button
+        class="w-full px-3 py-2 text-left text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
+        on:click={() => contextMenu && openMoveNoteModal(contextMenu.item)}
+      >
+        <Icon src={FolderOpen} class="w-4 h-4" />
+        Move to folder
+      </button>
+      <div class="border-t border-zinc-200 dark:border-zinc-700 my-1"></div>
+      <button
         class="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-        on:click={() => contextMenu && deleteItem(contextMenu.item)}
+        on:click|stopPropagation={(e) => {
+          e.stopPropagation();
+          if (contextMenu) {
+            openDeleteModal(contextMenu.item);
+          }
+        }}
       >
         <Icon src={Trash} class="w-4 h-4" />
         Delete Note
       </button>
     {/if}
+  </div>
+{/if}
+
+<!-- Move Note Modal -->
+{#if showMoveNoteModal}
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    transition:fly={{ y: 50, duration: 200 }}
+    on:click|self={() => showMoveNoteModal = null}
+  >
+    <div
+      class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-md"
+      transition:scale={{ duration: 200, start: 0.95 }}
+      on:click|stopPropagation
+    >
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
+        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Move Note</h3>
+        <button
+          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-200 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+          on:click={() => showMoveNoteModal = null}
+        >
+          <Icon src={XMark} class="w-5 h-5" />
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 max-h-96 overflow-y-auto">
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+          Move "{showMoveNoteModal.name || 'Untitled Note'}" to:
+        </p>
+        
+        <div class="space-y-2">
+          <!-- Root folder option -->
+          <button
+            class="w-full flex items-center px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all duration-200 accent-ring"
+            on:click={() => moveNoteToFolder([])}
+          >
+            <Icon src={FolderOpen} class="w-4 h-4 mr-3" />
+            <span class="flex-1 text-left">Root</span>
+          </button>
+          
+          {#each folders as folder (folder.id)}
+            <button
+              class="w-full flex items-center px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all duration-200 accent-ring"
+              on:click={() => {
+                const folderPath = folder.path.split('/').filter(p => p.length > 0);
+                moveNoteToFolder(folderPath);
+              }}
+            >
+              <Icon src={FolderOpen} class="w-4 h-4 mr-3" />
+              <span class="flex-1 text-left">{folder.path}</span>
+            </button>
+          {/each}
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end p-6 border-t border-zinc-200 dark:border-zinc-700">
+        <button
+          class="px-4 py-2 text-sm rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors duration-200"
+          on:click={() => showMoveNoteModal = null}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Delete Confirmation Modal -->
+{#if showDeleteModal}
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    transition:fly={{ y: 50, duration: 200 }}
+    on:click|self={() => showDeleteModal = null}
+  >
+    <div
+      class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-md"
+      transition:scale={{ duration: 200, start: 0.95 }}
+      on:click|stopPropagation
+    >
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
+        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+          Delete {showDeleteModal.item_type === 'folder' ? 'Folder' : 'Note'}?
+        </h3>
+        <button
+          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-200 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+          on:click={() => showDeleteModal = null}
+        >
+          <Icon src={XMark} class="w-5 h-5" />
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6">
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
+          Are you sure you want to delete <strong class="text-zinc-900 dark:text-white">"{showDeleteModal.name}"</strong>?
+        </p>
+        {#if showDeleteModal.item_type === 'folder'}
+          <p class="text-xs text-zinc-500 dark:text-zinc-500 mt-2">
+            Notes in this folder will be moved to the root folder.
+          </p>
+        {:else}
+          <p class="text-xs text-red-600 dark:text-red-400 mt-2">
+            This action cannot be undone.
+          </p>
+        {/if}
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-3 p-6 border-t border-zinc-200 dark:border-zinc-700">
+        <button
+          class="px-4 py-2 text-sm rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors duration-200"
+          on:click={() => showDeleteModal = null}
+        >
+          Cancel
+        </button>
+        <button
+          class="px-4 py-2 text-sm rounded-lg bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-600 transition-colors duration-200"
+          on:click={confirmDelete}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
   </div>
 {/if}
 
