@@ -105,6 +105,9 @@ export class PerformanceTester {
     { name: 'Directory', path: '/directory' },
     { name: 'Reports', path: '/reports' },
     { name: 'Analytics', path: '/analytics' },
+    { name: 'Folios', path: '/folios' },
+    { name: 'Goals', path: '/goals' },
+    { name: 'Forums', path: '/forums' },
     { name: 'Settings', path: '/settings' },
   ];
 
