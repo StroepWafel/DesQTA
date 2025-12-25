@@ -7,6 +7,8 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
+  import { cache } from '../../utils/cache';
+  import { getWithIdbFallback } from '../../lib/services/idbCache';
 
   let years: string[] = $state([]);
   let loading = $state(true);
@@ -14,6 +16,38 @@
   let goalsEnabled = $state<boolean | null>(null);
 
   async function checkGoalsEnabled() {
+    const cacheKey = 'goals_settings_enabled';
+    const isOnline = navigator.onLine;
+    
+    // Load from cache first for instant UI
+    const cached = cache.get<boolean>(cacheKey) || 
+      await getWithIdbFallback<boolean>(cacheKey, cacheKey, () => cache.get<boolean>(cacheKey));
+    
+    if (cached !== null && cached !== undefined) {
+      goalsEnabled = cached;
+    }
+
+    // Always fetch fresh data when online (even if we have cache)
+    if (isOnline) {
+      try {
+        await fetchGoalsSettings();
+      } catch (e) {
+        logger.error('goals', 'checkGoalsEnabled', `Failed to fetch fresh settings: ${e}`, {
+          error: e,
+        });
+        // Don't update goalsEnabled if fetch fails and we have cached data
+        if (cached === null || cached === undefined) {
+          goalsEnabled = false;
+        }
+      }
+    } else if (cached === null || cached === undefined) {
+      // Offline and no cache - default to disabled
+      goalsEnabled = false;
+    }
+  }
+
+  async function fetchGoalsSettings() {
+    const cacheKey = 'goals_settings_enabled';
     try {
       const response = await seqtaFetch('/seqta/student/load/settings', {
         method: 'POST',
@@ -22,19 +56,53 @@
       });
 
       const data = typeof response === 'string' ? JSON.parse(response) : response;
-      goalsEnabled = data?.payload?.['coneqt-s.page.goals']?.value === 'enabled';
+      const enabled = data?.payload?.['coneqt-s.page.goals']?.value === 'enabled';
+      
+      goalsEnabled = enabled;
+      cache.set(cacheKey, enabled, 60);
+      const { setIdb } = await import('../../lib/services/idbCache');
+      await setIdb(cacheKey, enabled);
     } catch (e) {
-      logger.error('goals', 'checkGoalsEnabled', `Failed to check if goals are enabled: ${e}`, {
-        error: e,
-      });
-      goalsEnabled = false; // Default to disabled on error
+      throw e;
     }
   }
 
   async function loadYears() {
     loading = true;
     error = null;
+    const cacheKey = 'goals_years';
+    const isOnline = navigator.onLine;
 
+    // Load from cache first for instant UI
+    const cached = cache.get<string[]>(cacheKey) || 
+      await getWithIdbFallback<string[]>(cacheKey, cacheKey, () => cache.get<string[]>(cacheKey));
+    
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      years = cached;
+      loading = false;
+    }
+
+    // Always fetch fresh data when online (even if we have cache)
+    if (isOnline) {
+      try {
+        await fetchYears();
+      } catch (e) {
+        error = e instanceof Error ? e.message : String(e);
+        logger.error('goals', 'loadYears', `Failed to fetch fresh years: ${e}`, { error: e });
+        // Don't update years if fetch fails and we have cached data
+        if (!cached || cached.length === 0) {
+          loading = false;
+        }
+      }
+    } else if (!cached || cached.length === 0) {
+      // Offline and no cache
+      error = 'No cached data available';
+      loading = false;
+    }
+  }
+
+  async function fetchYears() {
+    const cacheKey = 'goals_years';
     try {
       const response = await seqtaFetch('/seqta/student/load/goals', {
         method: 'POST',
@@ -47,15 +115,18 @@
 
       if (data.status === '200' && Array.isArray(data.payload)) {
         years = data.payload;
+        cache.set(cacheKey, data.payload, 30);
+        const { setIdb } = await import('../../lib/services/idbCache');
+        await setIdb(cacheKey, data.payload);
+        loading = false;
       } else {
         error = 'Invalid response format';
-        logger.error('goals', 'loadYears', 'Invalid response format', { data });
+        logger.error('goals', 'fetchYears', 'Invalid response format', { data });
+        loading = false;
       }
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e);
-      logger.error('goals', 'loadYears', `Failed to load years: ${e}`, { error: e });
-    } finally {
       loading = false;
+      throw e;
     }
   }
 

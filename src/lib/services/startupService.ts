@@ -53,6 +53,15 @@ export async function loadCachedDataOnStartup(): Promise<void> {
 
     cacheKeys.push(timetableKey, noticesKey);
 
+    // Add folios, goals, and forums cache keys
+    cacheKeys.push(
+      'folios_settings_enabled',
+      'goals_settings_enabled',
+      'goals_years',
+      'forums_settings_enabled',
+      'forums_list',
+    );
+
     // Load all cached data in parallel
     const loadPromises = cacheKeys.map(async (key) => {
       try {
@@ -64,6 +73,9 @@ export async function loadCachedDataOnStartup(): Promise<void> {
           else if (key.startsWith('timetable_')) ttl = 30;
           else if (key.startsWith('notices_')) ttl = 30;
           else if (key === 'assessments_overview_data') ttl = 10;
+          else if (key === 'folios_settings_enabled' || key === 'goals_settings_enabled' || key === 'forums_settings_enabled') ttl = 60;
+          else if (key === 'goals_years') ttl = 30;
+          else if (key === 'forums_list') ttl = 15;
 
           cache.set(key, cached, ttl);
           logger.debug('startup', 'loadCachedDataOnStartup', `Loaded ${key} from SQLite`, {

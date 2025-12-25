@@ -7,6 +7,8 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
+  import { cache } from '../../utils/cache';
+  import { getWithIdbFallback } from '../../lib/services/idbCache';
 
   interface Forum {
     owner: string;
@@ -39,6 +41,38 @@
   let forumsEnabled = $state<boolean | null>(null);
 
   async function checkForumsEnabled() {
+    const cacheKey = 'forums_settings_enabled';
+    const isOnline = navigator.onLine;
+    
+    // Load from cache first for instant UI
+    const cached = cache.get<boolean>(cacheKey) || 
+      await getWithIdbFallback<boolean>(cacheKey, cacheKey, () => cache.get<boolean>(cacheKey));
+    
+    if (cached !== null && cached !== undefined) {
+      forumsEnabled = cached;
+    }
+
+    // Always fetch fresh data when online (even if we have cache)
+    if (isOnline) {
+      try {
+        await fetchForumsSettings();
+      } catch (e) {
+        logger.error('forums', 'checkForumsEnabled', `Failed to fetch fresh settings: ${e}`, {
+          error: e,
+        });
+        // Don't update forumsEnabled if fetch fails and we have cached data
+        if (cached === null || cached === undefined) {
+          forumsEnabled = false;
+        }
+      }
+    } else if (cached === null || cached === undefined) {
+      // Offline and no cache - default to disabled
+      forumsEnabled = false;
+    }
+  }
+
+  async function fetchForumsSettings() {
+    const cacheKey = 'forums_settings_enabled';
     try {
       const response = await seqtaFetch('/seqta/student/load/settings', {
         method: 'POST',
@@ -47,12 +81,14 @@
       });
 
       const data = typeof response === 'string' ? JSON.parse(response) : response;
-      forumsEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+      const enabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+      
+      forumsEnabled = enabled;
+      cache.set(cacheKey, enabled, 60);
+      const { setIdb } = await import('../../lib/services/idbCache');
+      await setIdb(cacheKey, enabled);
     } catch (e) {
-      logger.error('forums', 'checkForumsEnabled', `Failed to check if forums are enabled: ${e}`, {
-        error: e,
-      });
-      forumsEnabled = false; // Default to disabled on error
+      throw e;
     }
   }
   let sortBy = $state<'title' | 'owner' | 'opened' | 'participants' | 'unread'>('opened');
@@ -156,7 +192,40 @@
   async function loadForums() {
     loading = true;
     error = null;
+    const cacheKey = 'forums_list';
+    const isOnline = navigator.onLine;
 
+    // Load from cache first for instant UI
+    const cached = cache.get<ForumsResponse['payload']>(cacheKey) || 
+      await getWithIdbFallback<ForumsResponse['payload']>(cacheKey, cacheKey, () => cache.get<ForumsResponse['payload']>(cacheKey));
+    
+    if (cached && cached.forums) {
+      forums = cached.forums || [];
+      me = cached.me || '';
+      loading = false;
+    }
+
+    // Always fetch fresh data when online (even if we have cache)
+    if (isOnline) {
+      try {
+        await fetchForums();
+      } catch (e) {
+        error = e instanceof Error ? e.message : String(e);
+        logger.error('forums', 'loadForums', `Failed to fetch fresh forums: ${e}`, { error: e });
+        // Don't update forums if fetch fails and we have cached data
+        if (!cached || !cached.forums) {
+          loading = false;
+        }
+      }
+    } else if (!cached || !cached.forums) {
+      // Offline and no cache
+      error = 'No cached data available';
+      loading = false;
+    }
+  }
+
+  async function fetchForums() {
+    const cacheKey = 'forums_list';
     try {
       const response = await seqtaFetch('/seqta/student/load/forums', {
         method: 'POST',
@@ -170,15 +239,18 @@
       if (data.status === '200' && data.payload) {
         forums = data.payload.forums || [];
         me = data.payload.me || '';
+        cache.set(cacheKey, data.payload, 15);
+        const { setIdb } = await import('../../lib/services/idbCache');
+        await setIdb(cacheKey, data.payload);
+        loading = false;
       } else {
         error = 'Invalid response format';
-        logger.error('forums', 'loadForums', 'Invalid response format', { data });
+        logger.error('forums', 'fetchForums', 'Invalid response format', { data });
+        loading = false;
       }
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e);
-      logger.error('forums', 'loadForums', `Failed to load forums: ${e}`, { error: e });
-    } finally {
       loading = false;
+      throw e;
     }
   }
 

@@ -153,6 +153,10 @@ export async function warmUpCommonData(): Promise<void> {
     prefetchNoticesLabels(),
     prefetchTodayNotices(),
     prefetchAnalyticsSync(),
+    prefetchFoliosSettings(),
+    prefetchGoalsSettings(),
+    prefetchForumsSettings(),
+    prefetchForumsList(),
   ]);
 }
 
@@ -291,5 +295,129 @@ async function prefetchAnalyticsSync(): Promise<void> {
     toastStore.success('Analytics data synced');
   } catch {
     // ignore warmup errors - don't show toast for background warmup failures
+  }
+}
+
+// Folios settings warm-up
+async function prefetchFoliosSettings(): Promise<void> {
+  try {
+    const cacheKey = 'folios_settings_enabled';
+    if (cache.get(cacheKey)) return;
+
+    const response = await seqtaFetch('/seqta/student/load/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {},
+    });
+
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    const enabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
+    
+    cache.set(cacheKey, enabled, 60); // 60 min TTL
+    await setIdb(cacheKey, enabled);
+    logger.info('warmup', 'prefetchFoliosSettings', 'Cached folios settings (mem+idb)', {
+      ttlMin: 60,
+      enabled,
+    });
+  } catch {
+    // ignore warmup errors
+  }
+}
+
+// Goals settings and years warm-up
+async function prefetchGoalsSettings(): Promise<void> {
+  try {
+    const cacheKey = 'goals_settings_enabled';
+    if (cache.get(cacheKey)) return;
+
+    const response = await seqtaFetch('/seqta/student/load/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {},
+    });
+
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    const enabled = data?.payload?.['coneqt-s.page.goals']?.value === 'enabled';
+    
+    cache.set(cacheKey, enabled, 60); // 60 min TTL
+    await setIdb(cacheKey, enabled);
+    logger.info('warmup', 'prefetchGoalsSettings', 'Cached goals settings (mem+idb)', {
+      ttlMin: 60,
+      enabled,
+    });
+
+    // If enabled, also prefetch years list
+    if (enabled) {
+      const yearsResponse = await seqtaFetch('/seqta/student/load/goals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: { mode: 'years' },
+      });
+
+      const yearsData = typeof yearsResponse === 'string' ? JSON.parse(yearsResponse) : yearsResponse;
+      if (yearsData.status === '200' && Array.isArray(yearsData.payload)) {
+        const yearsKey = 'goals_years';
+        cache.set(yearsKey, yearsData.payload, 30); // 30 min TTL
+        await setIdb(yearsKey, yearsData.payload);
+        logger.info('warmup', 'prefetchGoalsSettings', 'Cached goals years (mem+idb)', {
+          ttlMin: 30,
+          count: yearsData.payload.length,
+        });
+      }
+    }
+  } catch {
+    // ignore warmup errors
+  }
+}
+
+// Forums settings warm-up
+async function prefetchForumsSettings(): Promise<void> {
+  try {
+    const cacheKey = 'forums_settings_enabled';
+    if (cache.get(cacheKey)) return;
+
+    const response = await seqtaFetch('/seqta/student/load/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {},
+    });
+
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    const enabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+    
+    cache.set(cacheKey, enabled, 60); // 60 min TTL
+    await setIdb(cacheKey, enabled);
+    logger.info('warmup', 'prefetchForumsSettings', 'Cached forums settings (mem+idb)', {
+      ttlMin: 60,
+      enabled,
+    });
+  } catch {
+    // ignore warmup errors
+  }
+}
+
+// Forums list warm-up
+async function prefetchForumsList(): Promise<void> {
+  try {
+    const cacheKey = 'forums_list';
+    if (cache.get(cacheKey)) return;
+
+    const response = await seqtaFetch('/seqta/student/load/forums', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { mode: 'list' },
+    });
+
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    if (data?.payload?.forums && Array.isArray(data.payload.forums)) {
+      cache.set(cacheKey, data.payload, 15); // 15 min TTL (forums change frequently)
+      await setIdb(cacheKey, data.payload);
+      logger.info('warmup', 'prefetchForumsList', 'Cached forums list (mem+idb)', {
+        ttlMin: 15,
+        count: data.payload.forums.length,
+      });
+    }
+  } catch {
+    // ignore warmup errors
   }
 }

@@ -7,12 +7,48 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
+  import { cache } from '../../utils/cache';
+  import { getWithIdbFallback } from '../../lib/services/idbCache';
 
   let foliosEnabled = $state<boolean | null>(null);
   let loading = $state(true);
 
   async function checkFoliosEnabled() {
     loading = true;
+    const cacheKey = 'folios_settings_enabled';
+    const isOnline = navigator.onLine;
+    
+    // Load from cache first for instant UI
+    const cached = cache.get<boolean>(cacheKey) || 
+      await getWithIdbFallback<boolean>(cacheKey, cacheKey, () => cache.get<boolean>(cacheKey));
+    
+    if (cached !== null && cached !== undefined) {
+      foliosEnabled = cached;
+      loading = false;
+    }
+
+    // Always fetch fresh data when online (even if we have cache)
+    if (isOnline) {
+      try {
+        await fetchFoliosSettings();
+      } catch (e) {
+        logger.error('folios', 'checkFoliosEnabled', `Failed to fetch fresh settings: ${e}`, {
+          error: e,
+        });
+        // Don't update foliosEnabled if fetch fails and we have cached data
+        if (cached === null || cached === undefined) {
+          foliosEnabled = false;
+        }
+      }
+    } else if (cached === null || cached === undefined) {
+      // Offline and no cache - default to disabled
+      foliosEnabled = false;
+      loading = false;
+    }
+  }
+
+  async function fetchFoliosSettings() {
+    const cacheKey = 'folios_settings_enabled';
     try {
       const response = await seqtaFetch('/seqta/student/load/settings', {
         method: 'POST',
@@ -21,14 +57,16 @@
       });
 
       const data = typeof response === 'string' ? JSON.parse(response) : response;
-      foliosEnabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
-    } catch (e) {
-      logger.error('folios', 'checkFoliosEnabled', `Failed to check if folios are enabled: ${e}`, {
-        error: e,
-      });
-      foliosEnabled = false; // Default to disabled on error
-    } finally {
+      const enabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
+      
+      foliosEnabled = enabled;
+      cache.set(cacheKey, enabled, 60);
+      const { setIdb } = await import('../../lib/services/idbCache');
+      await setIdb(cacheKey, enabled);
       loading = false;
+    } catch (e) {
+      loading = false;
+      throw e;
     }
   }
 
