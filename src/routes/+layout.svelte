@@ -443,19 +443,19 @@
         syncCloudSettings(),
       ]);
 
-      // Check if user needs onboarding
-      try {
-        const settings = await loadSettings(['has_been_through_onboarding']);
-        if (!settings.has_been_through_onboarding) {
-          // Wait a bit for UI to settle
-          setTimeout(() => {
-            showOnboarding = true;
-            sidebarOpen = true; // Ensure sidebar is open for first step
-          }, 1000);
-        }
-      } catch (e) {
-        logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
-      }
+      // Check if user needs onboarding - DISABLED: Only show when button is pressed in settings
+      // try {
+      //   const settings = await loadSettings(['has_been_through_onboarding']);
+      //   if (!settings.has_been_through_onboarding) {
+      //     // Wait a bit for UI to settle
+      //     setTimeout(() => {
+      //       showOnboarding = true;
+      //       sidebarOpen = true; // Ensure sidebar is open for first step
+      //     }, 1000);
+      //   }
+      // } catch (e) {
+      //   logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
+      // }
 
       // Load cached data from SQLite immediately for instant UI
       const { initializeApp } = await import('$lib/services/startupService');
