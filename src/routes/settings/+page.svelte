@@ -151,6 +151,7 @@
     { labelKey: 'navigation.forums', icon: ChatBubbleBottomCenterText, path: '/forums' },
     { labelKey: 'navigation.folios', icon: FolderOpen, path: '/folios' },
     { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { labelKey: 'navigation.rss_feeds', icon: Rss, path: '/rss-feeds' },
     { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
     { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },
     { labelKey: 'navigation.news', icon: Newspaper, path: '/news' },
@@ -2222,7 +2223,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     const menuOrder = orderedMenu.map(item => item.path);
     await saveSettingsWithQueue({ menu_order: menuOrder });
     await flushSettingsQueue();
-    notify.success('Menu order saved. Page will reload to apply changes.');
+    toastStore.success('Menu order saved. Page will reload to apply changes.');
     setTimeout(() => location.reload(), 1500);
   }} />
 

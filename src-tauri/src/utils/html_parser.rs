@@ -2,6 +2,7 @@ use ammonia::Builder;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use regex::Regex;
 
 /// Configuration for HTML sanitization
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -53,7 +54,8 @@ impl Default for SanitizeConfig {
                 "title".to_string(),
                 "class".to_string(),
                 "target".to_string(),
-                "rel".to_string(),
+                // Note: "rel" is not included here because ammonia manages it specially for <a> tags
+                // We'll handle rel attributes in post-processing
             ],
             text_only: false,
         }
@@ -125,25 +127,42 @@ pub fn sanitize_html(html: &str, config: Option<SanitizeConfig>) -> Result<Strin
     }
     cleaner.tag_attributes(tag_attributes);
 
-    // Clean the HTML
-    let cleaned = cleaner.clean(html).to_string();
+    // Pre-process: Strip existing rel attributes from links to avoid ammonia conflicts
+    // Ammonia manages rel attributes specially for <a> tags, so we remove them first
+    // This prevents the assertion failure when ammonia encounters pre-existing rel attributes
+    let html_without_rel = Regex::new(r#"(<a\s+[^>]*?)\s+rel=["'][^"']*["']"#)
+        .ok()
+        .map(|re| re.replace_all(html, "$1").to_string())
+        .unwrap_or_else(|| html.to_string());
 
-    // Post-process to add target="_blank" and rel="noopener noreferrer" to links
+    // Clean the HTML
+    let cleaned = cleaner.clean(&html_without_rel).to_string();
+
+    // Post-process to add target="_blank" and rel="noopener noreferrer" to all links
     let document = Html::parse_document(&cleaned);
     let link_selector = Selector::parse("a").map_err(|e| format!("Failed to parse link selector: {}", e))?;
     
     let mut result = cleaned.clone();
     for element in document.select(&link_selector) {
         let html_str = element.html();
-        if !html_str.contains("target=") {
-            // Replace link without target attribute
+        // Check if link already has target and rel
+        let has_target = html_str.contains("target=");
+        let has_rel = html_str.contains("rel=");
+        
+        if !has_target && !has_rel {
+            // Add both target and rel
             let new_link = html_str.replace("<a ", "<a target=\"_blank\" rel=\"noopener noreferrer\" ");
             result = result.replace(&html_str, &new_link);
-        } else if !html_str.contains("rel=") {
-            // Add rel if target exists but rel doesn't
-            let new_link = html_str.replace("target=", "target=\"_blank\" rel=\"noopener noreferrer\" ");
+        } else if has_target && !has_rel {
+            // Add rel after target
+            let new_link = html_str.replace("target=\"_blank\"", "target=\"_blank\" rel=\"noopener noreferrer\"");
+            result = result.replace(&html_str, &new_link);
+        } else if !has_target && has_rel {
+            // Add target before rel
+            let new_link = html_str.replace("<a ", "<a target=\"_blank\" ");
             result = result.replace(&html_str, &new_link);
         }
+        // If both exist, leave as is (ammonia may have added them)
     }
 
     Ok(result)
