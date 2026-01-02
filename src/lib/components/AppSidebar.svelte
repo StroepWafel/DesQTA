@@ -34,14 +34,26 @@
 
 <!-- Parent container that controls width animation -->
 <aside
-  class="relative transition-all duration-300 ease-in-out overflow-hidden"
+  class="transition-all duration-300 ease-in-out overflow-hidden sm:relative"
+  class:fixed={sidebarOpen}
+  class:top-0={sidebarOpen}
+  class:left-0={sidebarOpen}
+  class:h-full={sidebarOpen}
+  class:z-30={sidebarOpen}
   class:w-full={sidebarOpen}
   class:w-0={!sidebarOpen}
+  class:opacity-0={!sidebarOpen}
+  class:pointer-events-none={!sidebarOpen}
+  class:opacity-100={sidebarOpen}
+  class:pointer-events-auto={sidebarOpen}
+  class:sm:opacity-100={sidebarOpen}
+  class:sm:pointer-events-auto={sidebarOpen}
   class:sm:w-64={sidebarOpen}
   class:sm:w-0={!sidebarOpen}
+  class:sm:z-auto={sidebarOpen}
 >
   <!-- Nav with fixed width and absolute positioning -->
-  <nav class="absolute top-0 right-0 w-full sm:w-64 h-full overflow-y-auto p-3 py-px space-y-2 transition-transform duration-300 ease-in-out">
+  <nav class="absolute top-0 right-0 w-full sm:w-64 h-full overflow-y-auto p-3 py-px space-y-2 transition-transform duration-300 ease-in-out bg-white dark:bg-zinc-900 sm:bg-transparent">
     <!-- Mobile Close Button -->
     <div class="flex justify-end sm:hidden mb-4">
       <button
