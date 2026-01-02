@@ -96,6 +96,8 @@ pub struct Settings {
     pub menu_order: Option<Vec<String>>,
     #[serde(default)]
     pub has_been_through_onboarding: bool,
+    #[serde(default)]
+    pub separate_rss_feed: bool,
 }
 
 impl Default for Settings {
@@ -126,6 +128,7 @@ impl Default for Settings {
             language: "en".to_string(), // Default to English
             menu_order: None,
             has_been_through_onboarding: false,
+            separate_rss_feed: false,
         }
     }
 }
@@ -385,6 +388,11 @@ impl Settings {
             &existing_json,
             "has_been_through_onboarding",
             default_settings.has_been_through_onboarding,
+        );
+        default_settings.separate_rss_feed = get_bool(
+            &existing_json,
+            "separate_rss_feed",
+            default_settings.separate_rss_feed,
         );
 
         default_settings

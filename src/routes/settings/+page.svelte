@@ -95,6 +95,7 @@
   let devSensitiveInfoHider = false;
   let devForceOfflineMode = false;
   let showDevSettings = false;
+  let separateRssFeed = false;
   let keyBuffer = '';
   let acceptedCloudEula = false;
   let showEulaModal = false;
@@ -136,6 +137,7 @@
     devSensitiveInfoHider: boolean;
     devForceOfflineMode: boolean;
     acceptedCloudEula: boolean;
+    separateRssFeed: boolean;
   } | null = null;
 
   // Menu configuration (same as in layout)
@@ -255,6 +257,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'dev_force_offline_mode',
           'accepted_cloud_eula',
           'language',
+          'separate_rss_feed',
         ],
       });
       shortcuts = settings.shortcuts || [];
@@ -278,6 +281,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
+      separateRssFeed = settings.separate_rss_feed ?? false;
       
       // Store initial state for comparison
       initialSettings = {
@@ -302,6 +306,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         devSensitiveInfoHider,
         devForceOfflineMode,
         acceptedCloudEula,
+        separateRssFeed,
       };
 
       console.log('Loading settings', {
@@ -335,6 +340,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devSensitiveInfoHider = false;
       devForceOfflineMode = false;
       acceptedCloudEula = false;
+      separateRssFeed = false;
       showDevSettings = false;
     }
     loading = false;
@@ -401,6 +407,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         dev_sensitive_info_hider: devSensitiveInfoHider,
         dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
+        separate_rss_feed: separateRssFeed,
       };
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
@@ -1762,6 +1769,23 @@ The Company reserves the right to terminate your access to the Service at any ti
           </p>
         </div>
         <div class="p-4 space-y-6 sm:p-6">
+          <!-- Separate RSS Feed Setting -->
+          <div class="flex justify-between items-center p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50">
+            <div class="flex-1">
+              <h3 class="text-sm font-semibold sm:text-base">Separate RSS Feed Page</h3>
+              <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+                Show RSS feeds in a separate page instead of within messages
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                class="sr-only peer"
+                bind:checked={separateRssFeed} />
+              <div
+                class="w-11 h-6 bg-zinc-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
           <div>
             <div class="flex justify-between items-center mb-4">
               <div>

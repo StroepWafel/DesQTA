@@ -48,6 +48,7 @@
     GlobeAlt,
     XMark,
     PencilSquare,
+    Rss,
     Flag,
     ChatBubbleBottomCenterText,
     FolderOpen,
@@ -101,6 +102,7 @@
     { labelKey: 'navigation.forums', icon: ChatBubbleBottomCenterText, path: '/forums' },
     { labelKey: 'navigation.folios', icon: FolderOpen, path: '/folios' },
     { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { labelKey: 'navigation.rss_feeds', icon: Rss, path: '/rss-feeds' },
     { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
     { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },
     { labelKey: 'navigation.news', icon: Newspaper, path: '/news' },
@@ -632,6 +634,13 @@
       
       // Apply menu order from settings
       await applyMenuOrder();
+      
+      // Filter RSS feeds menu item based on setting (after menu order is applied)
+      const settings = await loadSettings(['separate_rss_feed']);
+      const separateRssFeed = settings.separate_rss_feed ?? false;
+      if (!separateRssFeed) {
+        menu = menu.filter(item => item.path !== '/rss-feeds');
+      }
     } catch (e) {
       logger.error('layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', { error: e });
     } finally {
@@ -644,37 +653,37 @@
       const settings = await loadSettings(['menu_order']);
       const menuOrder = settings.menu_order as string[] | undefined;
       
+      // Use current menu state instead of DEFAULT_MENU to preserve filters
+      const currentMenu = [...menu];
+      const currentMenuMap = new Map(currentMenu.map(item => [item.path, item]));
+      
       if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
-        // Create a map of paths to menu items for quick lookup
-        const menuMap = new Map(DEFAULT_MENU.map(item => [item.path, item]));
-        
         // Reorder menu based on saved order, keeping any new items at the end
         const orderedMenu: typeof DEFAULT_MENU = [];
         const addedPaths = new Set<string>();
         
-        // Add items in saved order
+        // Add items in saved order (only if they exist in current menu)
         for (const path of menuOrder) {
-          const item = menuMap.get(path);
+          const item = currentMenuMap.get(path);
           if (item) {
             orderedMenu.push(item);
             addedPaths.add(path);
           }
         }
         
-        // Add any items not in saved order (new items)
-        for (const item of DEFAULT_MENU) {
+        // Add any items not in saved order (new items that exist in current menu)
+        for (const item of currentMenu) {
           if (!addedPaths.has(item.path)) {
             orderedMenu.push(item);
           }
         }
         
         menu = orderedMenu;
-      } else {
-        menu = [...DEFAULT_MENU];
       }
+      // If no menu order, keep current menu (already filtered)
     } catch (e) {
       logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
-      menu = [...DEFAULT_MENU];
+      // Don't reset to DEFAULT_MENU on error, keep current filtered menu
     }
   };
 

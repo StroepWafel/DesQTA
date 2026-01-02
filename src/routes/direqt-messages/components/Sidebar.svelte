@@ -23,14 +23,25 @@
       { name: $_('messages.starred') || 'Starred', icon: Star, id: 'starred' },
       { name: $_('messages.trash') || 'Trash', icon: Trash, id: 'trash' },
     ];
-    const subset = await invoke<any>('get_settings_subset', { keys: ['feeds'] });
-    for (let item of (subset?.feeds || [])) {
-      let title = await getRSS(item.url);
-      folders.push({
-        name: `RSS: ${title.channel.title}`,
-        icon: Rss,
-        id: `rss-${item.url}`,
-      });
+    // Check if RSS feeds should be separated
+    const settingsSubset = await invoke<any>('get_settings_subset', { keys: ['feeds', 'separate_rss_feed'] });
+    const separateRssFeed = settingsSubset?.separate_rss_feed ?? false;
+    
+    // Only add RSS feeds to messages sidebar if the setting is disabled
+    if (!separateRssFeed) {
+      const feeds = settingsSubset?.feeds || [];
+      for (let item of feeds) {
+        try {
+          let title = await getRSS(item.url);
+          folders.push({
+            name: `RSS: ${title.channel.title}`,
+            icon: Rss,
+            id: `rss-${item.url}`,
+          });
+        } catch (e) {
+          // Skip failed RSS feeds
+        }
+      }
     }
     return folders;
   }

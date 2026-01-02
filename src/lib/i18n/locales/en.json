@@ -29,6 +29,7 @@
     "forums": "Forums",
     "folios": "Folios",
     "messages": "Messages",
+    "rss_feeds": "RSS Feeds",
     "portals": "Portals",
     "notices": "Notices",
     "news": "News",
@@ -417,6 +418,13 @@
     "new_tip": "New Tip",
     "get_new_tip": "Get new study tip",
     "tabs_label": "Study sections"
+  },
+  "rss_feeds": {
+    "title": "RSS Feeds",
+    "no_feeds": "No RSS Feeds",
+    "add_feeds_in_settings": "Add RSS feeds in Settings to get started.",
+    "error_loading": "Failed to load RSS feeds.",
+    "feed_item": "Feed Item"
   },
   "messages": {
     "failed_to_load": "Failed to load messages.",
