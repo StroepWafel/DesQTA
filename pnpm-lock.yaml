@@ -13,10 +13,10 @@ importers:
         version: 0.18.0
       '@preact/signals':
         specifier: ^2.5.1
-        version: 2.5.1(preact@10.27.2)
+        version: 2.5.1(preact@10.27.3)
       '@schedule-x/calendar':
         specifier: ^3.4.2
-        version: 3.4.2(@preact/signals@2.5.1(preact@10.27.2))(preact@10.27.2)(temporal-polyfill@0.3.0)
+        version: 3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0)
       '@schedule-x/calendar-controls':
         specifier: ^3.4.2
         version: 3.4.2
@@ -25,10 +25,10 @@ importers:
         version: 3.4.2
       '@schedule-x/event-modal':
         specifier: ^3.4.2
-        version: 3.4.2(@preact/signals@2.5.1(preact@10.27.2))(preact@10.27.2)
+        version: 3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)
       '@schedule-x/svelte':
         specifier: ^3.0.0
-        version: 3.0.0(@schedule-x/calendar@3.4.2(@preact/signals@2.5.1(preact@10.27.2))(preact@10.27.2)(temporal-polyfill@0.3.0))(@schedule-x/shared@3.4.2(@preact/signals@2.5.1(preact@10.27.2)))(svelte@5.43.3)
+        version: 3.0.0(@schedule-x/calendar@3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0))(@schedule-x/shared@3.4.2(@preact/signals@2.5.1(preact@10.27.3)))(svelte@5.43.3)
       '@schedule-x/theme-default':
         specifier: ^3.4.2
         version: 3.4.2
@@ -153,8 +153,8 @@ importers:
         specifier: ^5.3.31
         version: 5.4.394
       preact:
-        specifier: ^10.27.2
-        version: 10.27.2
+        specifier: ^10.27.3
+        version: 10.27.3
       prosemirror-state:
         specifier: ^1.4.3
         version: 1.4.4
@@ -1975,8 +1975,8 @@ packages:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
-  preact@10.27.2:
-    resolution: {integrity: sha512-5SYSgFKSyhCbk6SrXyMpqjb5+MQBgfvEKE/OC+PujcY34sOpqtr+0AZQtPYx5IA6VxynQ7rUPCtKzyovpj9Bpg==}
+  preact@10.27.3:
+    resolution: {integrity: sha512-ZieIP3zQHiQsNF3BA+SNVS8dcuRIg/nsxlkFbCMBLS2L1Ww4Bkxd9n6Md2A1crfTZsEbQPADV0neYmh/EElgeQ==}
 
   prettier-plugin-svelte@3.4.0:
     resolution: {integrity: sha512-pn1ra/0mPObzqoIQn/vUTR3ZZI6UuZ0sHqMK5x2jMLGrs53h0sXhkVuDcrlssHwIMk7FYrMjHBPoUSyyEEDlBQ==}
@@ -2643,10 +2643,10 @@ snapshots:
 
   '@preact/signals-core@1.12.1': {}
 
-  '@preact/signals@2.5.1(preact@10.27.2)':
+  '@preact/signals@2.5.1(preact@10.27.3)':
     dependencies:
       '@preact/signals-core': 1.12.1
-      preact: 10.27.2
+      preact: 10.27.3
 
   '@remirror/core-constants@3.0.0': {}
 
@@ -2718,27 +2718,27 @@ snapshots:
 
   '@schedule-x/calendar-controls@3.4.2': {}
 
-  '@schedule-x/calendar@3.4.2(@preact/signals@2.5.1(preact@10.27.2))(preact@10.27.2)(temporal-polyfill@0.3.0)':
+  '@schedule-x/calendar@3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0)':
     dependencies:
-      '@preact/signals': 2.5.1(preact@10.27.2)
-      preact: 10.27.2
+      '@preact/signals': 2.5.1(preact@10.27.3)
+      preact: 10.27.3
       temporal-polyfill: 0.3.0
 
   '@schedule-x/current-time@3.4.2': {}
 
-  '@schedule-x/event-modal@3.4.2(@preact/signals@2.5.1(preact@10.27.2))(preact@10.27.2)':
+  '@schedule-x/event-modal@3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)':
     dependencies:
-      '@preact/signals': 2.5.1(preact@10.27.2)
-      preact: 10.27.2
+      '@preact/signals': 2.5.1(preact@10.27.3)
+      preact: 10.27.3
 
-  '@schedule-x/shared@3.4.2(@preact/signals@2.5.1(preact@10.27.2))':
+  '@schedule-x/shared@3.4.2(@preact/signals@2.5.1(preact@10.27.3))':
     dependencies:
-      '@preact/signals': 2.5.1(preact@10.27.2)
+      '@preact/signals': 2.5.1(preact@10.27.3)
 
-  '@schedule-x/svelte@3.0.0(@schedule-x/calendar@3.4.2(@preact/signals@2.5.1(preact@10.27.2))(preact@10.27.2)(temporal-polyfill@0.3.0))(@schedule-x/shared@3.4.2(@preact/signals@2.5.1(preact@10.27.2)))(svelte@5.43.3)':
+  '@schedule-x/svelte@3.0.0(@schedule-x/calendar@3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0))(@schedule-x/shared@3.4.2(@preact/signals@2.5.1(preact@10.27.3)))(svelte@5.43.3)':
     dependencies:
-      '@schedule-x/calendar': 3.4.2(@preact/signals@2.5.1(preact@10.27.2))(preact@10.27.2)(temporal-polyfill@0.3.0)
-      '@schedule-x/shared': 3.4.2(@preact/signals@2.5.1(preact@10.27.2))
+      '@schedule-x/calendar': 3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0)
+      '@schedule-x/shared': 3.4.2(@preact/signals@2.5.1(preact@10.27.3))
       svelte: 5.43.3
 
   '@schedule-x/theme-default@3.4.2': {}
@@ -3886,7 +3886,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  preact@10.27.2: {}
+  preact@10.27.3: {}
 
   prettier-plugin-svelte@3.4.0(prettier@3.6.2)(svelte@5.43.3):
     dependencies:
