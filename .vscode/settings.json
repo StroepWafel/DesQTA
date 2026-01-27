@@ -29,5 +29,6 @@
 
   // TypeScript
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "i18n-ally.localesPaths": ["src/lib/i18n", "src/lib/i18n/locales"]
 }
