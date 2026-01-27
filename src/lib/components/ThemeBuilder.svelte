@@ -1143,6 +1143,19 @@
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {#each Object.entries(themeConfig.features) as [feature, enabled]}
+              {@const featureDescriptions: Record<string, string> = {
+                customScrollbars: 'Custom styled scrollbars',
+                glassmorphism: 'Translucent glass-like effects',
+                gradients: 'Gradient backgrounds and elements',
+                shadows: 'Drop shadows and depth effects',
+                animations: 'Smooth transitions and animations',
+                customFonts: 'Custom font family support',
+                darkMode: 'Dark mode compatibility',
+                colorSchemes: 'Multiple color scheme support',
+                accessibility: 'Enhanced accessibility features',
+                responsive: 'Responsive design support'
+              }}
+              {@const description = featureDescriptions[feature] || 'Theme feature'}
               <label class="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                 <input
                   type="checkbox"
@@ -1154,14 +1167,7 @@
                     {feature.charAt(0).toUpperCase() + feature.slice(1).replace(/([A-Z])/g, ' $1')}
                   </div>
                   <div class="text-sm text-zinc-600 dark:text-zinc-400">
-                    {feature === 'glassmorphism' && 'Translucent glass-like effects'}
-                    {feature === 'gradients' && 'Gradient backgrounds and elements'}
-                    {feature === 'animations' && 'Smooth transitions and animations'}
-                    {feature === 'customFonts' && 'Custom font family support'}
-                    {feature === 'darkMode' && 'Dark mode compatibility'}
-                    {feature === 'colorSchemes' && 'Multiple color scheme support'}
-                    {feature === 'accessibility' && 'Enhanced accessibility features'}
-                    {feature === 'responsive' && 'Responsive design support'}
+                    {description}
                   </div>
                 </div>
               </label>
