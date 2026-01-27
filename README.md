@@ -81,7 +81,6 @@ npm run tauri build
 > Do not run `npm run dev` as it starts the backend webui only; the pages loaded by DesQTA are built to be run by a framework not present in regular browsers. This is the same with `npm run build`; it will only build the webpage files, not the app.
 > 
 
-
 ## Folder Structure
 
 <details>
