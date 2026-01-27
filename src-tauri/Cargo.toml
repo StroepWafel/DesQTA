@@ -22,7 +22,7 @@ tauri = { version = "2.9.2", features = [ "macos-private-api", "devtools", "tray
 tauri-plugin-opener = "2.5.0"
 tauri-plugin-deep-link = "2"
 tauri-plugin-autostart = "2.0.0"
-tauri-plugin-dialog = "2"
+tauri-plugin-dialog = "2.4.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 dirs-next = "2.0"
@@ -37,7 +37,7 @@ tokio = { version = "1", features = ["full"] }
 futures = "0.3"
 time = "0.3"
 url = "2.5"
-tauri-plugin-notification = "2"
+tauri-plugin-notification = "2.3.1"
 tauri-plugin-single-instance = "2.3.4"
 anyhow = "1.0.98"
 xmltree = "0.11.0"
