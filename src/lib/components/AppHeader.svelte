@@ -209,24 +209,12 @@
 
     loadingNotifications = true;
     try {
-      // Import platformService to check platform
-      const { platformService } = await import('$lib/services/platformService');
-      const isTeachMode = await platformService.isTeachMode();
-      
-      // Teach heartbeat uses different payload format (empty hash)
-      const heartbeatBody = isTeachMode
-        ? {
-            timestamp: '1970-01-01 00:00:00.0',
-            hash: '',
-          }
-        : {
-            timestamp: '1970-01-01 00:00:00.0',
-            hash: '#?page=/home',
-          };
-      
       const response = await seqtaFetch('/seqta/student/heartbeat', {
         method: 'POST',
-        body: heartbeatBody,
+        body: {
+          timestamp: '1970-01-01 00:00:00.0',
+          hash: '#?page=/home',
+        },
       });
 
       // Parse response if it's a string

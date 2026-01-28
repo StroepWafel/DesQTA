@@ -98,8 +98,6 @@ pub struct Settings {
     pub has_been_through_onboarding: bool,
     #[serde(default)]
     pub separate_rss_feed: bool,
-    #[serde(default)]
-    pub seqta_platform: String,
 }
 
 impl Default for Settings {
@@ -131,7 +129,6 @@ impl Default for Settings {
             menu_order: None,
             has_been_through_onboarding: false,
             separate_rss_feed: false,
-            seqta_platform: "learn".to_string(), // Default to 'learn'
         }
     }
 }
@@ -396,11 +393,6 @@ impl Settings {
             &existing_json,
             "separate_rss_feed",
             default_settings.separate_rss_feed,
-        );
-        default_settings.seqta_platform = get_string(
-            &existing_json,
-            "seqta_platform",
-            &default_settings.seqta_platform,
         );
 
         default_settings

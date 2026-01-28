@@ -220,7 +220,7 @@ fn decode_jwt(token: &str) -> Result<SeqtaJWT, String> {
     Ok(result)
 }
 
-/// Fetch user info from SEQTA API (Learn)
+/// Fetch user info from SEQTA API
 async fn fetch_user_info(base_url: &str, jsessionid: &str) -> Result<UserInfoPayload, String> {
     let login_url = format!("{}/seqta/student/login", base_url);
     let client = reqwest::Client::builder()
@@ -247,45 +247,6 @@ async fn fetch_user_info(base_url: &str, jsessionid: &str) -> Result<UserInfoPay
     
     let user_response: UserInfoResponse = serde_json::from_str(&response_text)
         .map_err(|e| format!("Failed to parse user info: {}", e))?;
-    
-    Ok(user_response.payload)
-}
-
-/// Fetch user info from SEQTA Teach API
-async fn fetch_teach_user_info(base_url: &str, jsessionid: &str) -> Result<UserInfoPayload, String> {
-    let login_url = format!("{}/seqta/ta/login", base_url);
-    let client = reqwest::Client::builder()
-        .cookie_store(true)
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
-    
-    let cookie_header = format!("JSESSIONID={}", jsessionid);
-    
-    // Teach login API requires specific payload format
-    let login_payload = serde_json::json!({
-        "mode": "normal",
-        "query": null,
-        "redirect_url": format!("{}/help", base_url)
-    });
-    
-    let response = client
-        .post(&login_url)
-        .header("Cookie", cookie_header)
-        .header("Content-Type", "application/json; charset=utf-8")
-        .json(&login_payload)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to fetch Teach user info: {}", e))?;
-    
-    if !response.status().is_success() {
-        return Err(format!("Failed to fetch Teach user info: HTTP {}", response.status()));
-    }
-    
-    let response_text = response.text().await
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-    
-    let user_response: UserInfoResponse = serde_json::from_str(&response_text)
-        .map_err(|e| format!("Failed to parse Teach user info: {}", e))?;
     
     Ok(user_response.payload)
 }
@@ -528,10 +489,6 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                 }
             };
 
-            // Track if Teach mode has been detected
-            let mut is_teach_mode = false;
-            let mut teach_detected = false;
-
             for _ in 0..1920 {
                 // Poll for 1920 seconds max
                 // Wait 1 second between polls
@@ -539,14 +496,6 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
 
                 // Try to get cookies from the login window
                 if let Some(webview) = app_handle_clone.get_webview_window(&window_id_clone) {
-                    // Check URL to detect Teach mode (/welcome indicates Teach)
-                    // Use JavaScript evaluation with a callback to get the current URL
-                    if !teach_detected {
-                        // Use eval with a script that logs the URL - we'll check cookies/path instead
-                        // For now, we'll detect Teach mode by checking if Teach endpoints work
-                        // This is done later in the validation step
-                    }
-
                     if counter > 5 {
 
                         match webview.cookies() {
@@ -562,11 +511,9 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                                                 let value = cookie.value().to_string();
                                                 let base_url = http_url.clone();
 
-                                                // Try Learn endpoint first, then Teach if Learn fails
-                                                // This detects Teach mode by testing which endpoint works
-                                                let learn_validation_url = format!("{}/seqta/student/load/subjects", base_url);
-                                                let teach_validation_url = format!("{}/seqta/ta/heartbeat", base_url);
-                                                
+                                                // Validate the session with a subjects request before accepting it
+                                                // This prevents capturing invalid/pre-login sessions
+                                                let subjects_url = format!("{}/seqta/student/load/subjects", base_url);
                                                 let client = reqwest::Client::builder()
                                                     .cookie_store(true)
                                                     .build()
@@ -575,25 +522,27 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                                                 // Manually construct the cookie header since we're not using a jar here for this quick check
                                                 let cookie_header = format!("JSESSIONID={}", value);
                                                 
-                                                // Try Learn endpoint first
-                                                let learn_check_res = client
-                                                    .post(&learn_validation_url)
-                                                    .header("Cookie", cookie_header.clone())
+                                                let check_res = client
+                                                    .post(&subjects_url)
+                                                    .header("Cookie", cookie_header)
                                                     .header("Content-Type", "application/json; charset=utf-8")
                                                     .json(&serde_json::json!({}))
                                                     .send()
                                                     .await;
 
-                                                // Check if Learn endpoint worked
-                                                let is_learn_valid = match learn_check_res {
+                                                // Check for both HTTP success and API payload success
+                                                let is_valid_session = match check_res {
                                                     Ok(res) => {
                                                         if res.status().is_success() {
+                                                            // Check the body for application-level errors (like status: "failed")
                                                             match res.json::<serde_json::Value>().await {
                                                                 Ok(json) => {
+                                                                    // SEQTA APIs might return 200 OK but with { "status": "failed" } or similar
+                                                                    // Only accept if payload exists or status is not explicitly failed/401
                                                                     let status_str = json.get("status").and_then(|s| s.as_str());
                                                                     status_str != Some("failed") && status_str != Some("401")
                                                                 },
-                                                                Err(_) => false
+                                                                Err(_) => false // Failed to parse JSON
                                                             }
                                                         } else {
                                                             false
@@ -601,46 +550,6 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                                                     },
                                                     Err(_) => false,
                                                 };
-
-                                                // If Learn didn't work, try Teach endpoint
-                                                let mut is_valid_session = is_learn_valid;
-                                                
-                                                if !is_learn_valid && !teach_detected {
-                                                    let teach_check_res = client
-                                                        .post(&teach_validation_url)
-                                                        .header("Cookie", cookie_header.clone())
-                                                        .header("Content-Type", "application/json; charset=utf-8")
-                                                        .json(&serde_json::json!({
-                                                            "timestamp": "1970-01-01 00:00:00.0",
-                                                            "hash": ""
-                                                        }))
-                                                        .send()
-                                                        .await;
-
-                                                    let is_teach_valid = match teach_check_res {
-                                                        Ok(res) => {
-                                                            if res.status().is_success() {
-                                                                match res.json::<serde_json::Value>().await {
-                                                                    Ok(json) => {
-                                                                        let status_str = json.get("status").and_then(|s| s.as_str());
-                                                                        status_str != Some("failed") && status_str != Some("401")
-                                                                    },
-                                                                    Err(_) => false
-                                                                }
-                                                            } else {
-                                                                false
-                                                            }
-                                                        },
-                                                        Err(_) => false,
-                                                    };
-
-                                                    if is_teach_valid {
-                                                        is_teach_mode = true;
-                                                        teach_detected = true;
-                                                        is_valid_session = true;
-                                                        println!("[AUTH] Teach mode detected - Teach endpoint validated successfully");
-                                                    }
-                                                }
 
                                                 if !is_valid_session {
                                                     // Session exists but is not valid (e.g. pre-login or expired)
@@ -683,14 +592,8 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                                                     additional_cookies,
                                                 };
 
-                                                // Fetch user info to create/get profile (use Teach endpoint if Teach mode)
-                                                let user_info_result = if is_teach_mode {
-                                                    fetch_teach_user_info(&base_url, &value).await
-                                                } else {
-                                                    fetch_user_info(&base_url, &value).await
-                                                };
-                                                
-                                                match user_info_result {
+                                                // Fetch user info to create/get profile
+                                                match fetch_user_info(&base_url, &value).await {
                                                     Ok(user_info) => {
                                                         // Create or get profile
                                                         if let Ok(profile) = profiles::ProfileManager::get_or_create_profile(
@@ -700,19 +603,6 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                                                         ) {
                                                             // Set as current profile
                                                             let _ = profiles::ProfileManager::set_current_profile(profile.id.clone());
-                                                            
-                                                            // Set platform setting based on detected mode
-                                                            use crate::settings;
-                                                            let mut current_settings = settings::Settings::load();
-                                                            if is_teach_mode {
-                                                                current_settings.seqta_platform = "teach".to_string();
-                                                                println!("[AUTH] Set platform to 'teach' for profile: {}", profile.id);
-                                                            } else {
-                                                                // Explicitly set to 'learn' if Learn validation succeeded
-                                                                current_settings.seqta_platform = "learn".to_string();
-                                                                println!("[AUTH] Set platform to 'learn' for profile: {}", profile.id);
-                                                            }
-                                                            let _ = current_settings.save();
                                                         }
                                                     }
                                                     Err(e) => {
