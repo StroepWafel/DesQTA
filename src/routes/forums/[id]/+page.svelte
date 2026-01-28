@@ -284,14 +284,14 @@
 
 <div class="flex flex-col h-full">
   <!-- Header -->
-  <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
-    <div class="flex items-center gap-4">
+  <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5 border-b border-zinc-200 dark:border-zinc-700 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm">
+    <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
       <button
         onclick={() => goto('/forums')}
-        class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+        class="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
         <Icon src={ChevronLeft} class="w-5 h-5" />
       </button>
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
+      <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white truncate">
         {forumData?.title || $_('forums.loading') || 'Loading...'}
       </h1>
     </div>
@@ -321,26 +321,26 @@
           size="md" />
       </div>
     {:else if forumData}
-      <div class="max-w-4xl mx-auto p-6 space-y-6">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <!-- Forum Info -->
         {#if forumData.greeting}
-          <div class="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
-            <div class="prose prose-zinc dark:prose-invert max-w-none">
+          <div class="p-6 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <div class="prose prose-zinc dark:prose-invert max-w-none prose-headings:text-zinc-900 dark:prose-headings:text-white prose-p:text-zinc-700 dark:prose-p:text-zinc-300 prose-a:text-accent-600 dark:prose-a:text-accent-400 prose-a:break-words prose-p:break-words">
               {@html forumData.greeting}
             </div>
           </div>
         {/if}
 
         <!-- Filters and Sort -->
-        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 mb-4">
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-5 sm:p-6 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm">
           <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
             <!-- Search -->
-            <div class="relative flex-1 sm:flex-none sm:w-64">
+            <div class="relative flex-1 sm:flex-none sm:w-72">
               <input
-                class="w-full pl-9 pr-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 placeholder={$_('forums.search_messages_placeholder') || 'Search messages...'}
                 bind:value={searchQuery} />
-              <Icon src={MagnifyingGlass} class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Icon src={MagnifyingGlass} class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
             </div>
           </div>
 
@@ -348,7 +348,7 @@
             <!-- Sort By -->
             <select
               bind:value={sortBy}
-              class="px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm">
+              class="px-4 py-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm cursor-pointer">
               <option value="recent">{$_('forums.sort_recent_first') || 'Most recent first'}</option>
               <option value="oldest">{$_('forums.sort_oldest_first') || 'Oldest first'}</option>
               <option value="author">{$_('forums.sort_by_author') || 'By author'}</option>
@@ -364,8 +364,8 @@
             </div>
           {:else}
             {#each filteredMessages as message}
-            <div class="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
-              <div class="flex gap-4">
+            <div class="p-5 sm:p-6 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div class="flex gap-4 sm:gap-5">
                 <!-- Avatar -->
                 <div class="flex-shrink-0">
                   {#if message.uuid && photoUrls.has(message.uuid)}
@@ -374,38 +374,38 @@
                       <img
                         src={photoUrl}
                         alt={message.name}
-                        class="w-10 h-10 rounded-full object-cover border border-zinc-200 dark:border-zinc-700"
+                        class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-zinc-200 dark:border-zinc-700"
                         onerror={(e) => {
                           // Replace with fallback on error
                           const img = e.currentTarget;
                           const fallback = document.createElement('div');
-                          fallback.className = 'w-10 h-10 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300';
-                          fallback.innerHTML = `<span class="text-sm font-semibold">${initial(message.name)}</span>`;
+                          fallback.className = 'w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300 border-2 border-zinc-200 dark:border-zinc-700';
+                          fallback.innerHTML = `<span class="text-sm sm:text-base font-semibold">${initial(message.name)}</span>`;
                           img.parentNode?.replaceChild(fallback, img);
                         }} />
                     {:else}
-                      <div class="w-10 h-10 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
-                        <span class="text-sm font-semibold">{initial(message.name)}</span>
+                      <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300 border-2 border-zinc-200 dark:border-zinc-700">
+                        <span class="text-sm sm:text-base font-semibold">{initial(message.name)}</span>
                       </div>
                     {/if}
                   {:else}
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
-                      <span class="text-sm font-semibold">{initial(message.name)}</span>
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300 border-2 border-zinc-200 dark:border-zinc-700">
+                      <span class="text-sm sm:text-base font-semibold">{initial(message.name)}</span>
                     </div>
                   {/if}
                 </div>
 
                 <!-- Content -->
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="font-semibold text-zinc-900 dark:text-white">
+                <div class="flex-1 min-w-0 overflow-hidden">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <span class="font-semibold text-base sm:text-lg text-zinc-900 dark:text-white truncate">
                       {message.name}
                     </span>
-                    <span class="text-sm text-zinc-600 dark:text-zinc-400">
+                    <span class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                       {formatDate(message.sent)}
                     </span>
                   </div>
-                  <div class="prose prose-zinc dark:prose-invert max-w-none text-zinc-700 dark:text-zinc-300">
+                  <div class="prose prose-sm sm:prose-base prose-zinc dark:prose-invert max-w-none prose-headings:text-zinc-900 dark:prose-headings:text-white prose-p:text-zinc-700 dark:prose-p:text-zinc-300 prose-a:text-accent-600 dark:prose-a:text-accent-400 prose-a:break-all prose-p:break-words prose-li:break-words prose-strong:text-zinc-900 dark:prose-strong:text-white prose-code:text-zinc-900 dark:prose-code:text-white prose-pre:bg-zinc-100 dark:prose-pre:bg-zinc-900">
                     {@html message.contents}
                   </div>
                 </div>
@@ -416,13 +416,13 @@
         </div>
 
         <!-- Reply Section -->
-        <div class="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700" bind:this={replySection}>
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
+        <div class="p-5 sm:p-6 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm" bind:this={replySection}>
+          <h3 class="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white mb-4 sm:mb-5">
             <T key="forums.add_reply" fallback="Add Reply" />
           </h3>
           
           <div class="space-y-4">
-            <div class="min-h-[200px] border border-zinc-200 dark:border-zinc-700 rounded-lg">
+            <div class="min-h-[200px] sm:min-h-[250px] border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
               {#if editorInstance}
                 <GoalsToolbar bind:editor={editorInstance} onSave={sendReply} saving={sending} />
               {/if}
