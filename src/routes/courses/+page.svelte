@@ -329,7 +329,11 @@
     <div
       class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
       <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
-        {selectedSubject ? selectedSubject.title : $_('navigation.courses') || 'Courses'}
+        {#if selectedSubject}
+          {selectedSubject.title}
+        {:else}
+          <T key="navigation.courses" fallback="Courses" />
+        {/if}
       </h2>
       {#if selectedSubject}
         <button
