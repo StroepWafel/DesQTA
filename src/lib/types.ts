@@ -17,6 +17,7 @@ export interface Assessment {
   availability: string;
   finalGrade?: number; // Optional final grade percentage
   letterGrade?: string; // Optional letter grade from assessment (e.g., "A+", "B", "D")
+  weighting?: number; // Optional assessment weighting percentage
 }
 
 export type AnalyticsData = Assessment[];
@@ -39,4 +40,12 @@ export interface AssessmentsOverviewData {
   allSubjects: Subject[];
   filters: Record<string, boolean>;
   years: number[];
+}
+
+export interface WeightedGradePrediction {
+  subjectCode: string;
+  predictedGrade: number;
+  assessmentsCount: number;
+  totalWeight: number;
+  assessments: Array<{ id: number; title: string; grade: number; weighting: number }>;
 }

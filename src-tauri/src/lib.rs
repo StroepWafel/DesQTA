@@ -46,6 +46,8 @@ mod migration;
 mod theme_manager;
 #[path = "utils/todolist.rs"]
 mod todolist;
+#[path = "utils/pdf_extract.rs"]
+mod pdf_extract;
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use serde_json;
@@ -372,7 +374,8 @@ pub fn run() {
             html_parser::sanitize_html_command,
             html_parser::parse_html_command,
             html_parser::extract_iframe_src_command,
-            html_parser::extract_text_content_command
+            html_parser::extract_text_content_command,
+            pdf_extract::get_assessment_weighting
         ])
         .setup(|app| {
             // --- START: Auto-Clear Cache on Update ---

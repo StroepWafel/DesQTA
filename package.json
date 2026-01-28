@@ -64,7 +64,7 @@
     "jsqr": "^1.4.0",
     "marked": "^15.0.12",
     "motion": "^12.19.1",
-    "pdfjs-dist": "^5.3.31",
+    "pdfjs-dist": "^5.4.530",
     "preact": "^10.27.3",
     "prosemirror-state": "^1.4.3",
     "prosemirror-view": "^1.33.9",
