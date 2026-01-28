@@ -422,6 +422,26 @@
 
   onMount(async () => {
     logger.logComponentMount('teach-layout');
+
+    // Check if user is actually in Teach mode - redirect to Learn if not
+    try {
+      const { platformService } = await import('../../lib/services/platformService');
+      const isTeachMode = await platformService.isTeachMode();
+      if (!isTeachMode) {
+        // User is in Learn mode, redirect to Learn dashboard
+        const { goto } = await import('$app/navigation');
+        goto('/');
+        return; // Exit early, don't initialize Teach layout
+      }
+    } catch (e) {
+      logger.error('teach-layout', 'onMount', 'Failed to check platform, redirecting to Learn', {
+        error: e,
+      });
+      const { goto } = await import('$app/navigation');
+      goto('/');
+      return;
+    }
+
     setupListeners();
 
     // Initialize theme and i18n first

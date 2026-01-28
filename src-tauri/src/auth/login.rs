@@ -701,14 +701,18 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                                                             // Set as current profile
                                                             let _ = profiles::ProfileManager::set_current_profile(profile.id.clone());
                                                             
-                                                            // Set platform setting to "teach" if Teach mode detected
+                                                            // Set platform setting based on detected mode
+                                                            use crate::settings;
+                                                            let mut current_settings = settings::Settings::load();
                                                             if is_teach_mode {
-                                                                use crate::settings;
-                                                                let mut current_settings = settings::Settings::load();
                                                                 current_settings.seqta_platform = "teach".to_string();
-                                                                let _ = current_settings.save();
                                                                 println!("[AUTH] Set platform to 'teach' for profile: {}", profile.id);
+                                                            } else {
+                                                                // Explicitly set to 'learn' if Learn validation succeeded
+                                                                current_settings.seqta_platform = "learn".to_string();
+                                                                println!("[AUTH] Set platform to 'learn' for profile: {}", profile.id);
                                                             }
+                                                            let _ = current_settings.save();
                                                         }
                                                     }
                                                     Err(e) => {
