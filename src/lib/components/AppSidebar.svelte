@@ -53,7 +53,7 @@
   class:sm:z-auto={sidebarOpen}
 >
   <!-- Nav with fixed width and absolute positioning -->
-  <nav class="absolute top-0 right-0 w-full sm:w-64 h-full overflow-y-auto p-3 py-px space-y-2 transition-transform duration-300 ease-in-out bg-white dark:bg-zinc-900 sm:bg-transparent">
+  <nav class="absolute top-0 right-0 w-full sm:w-64 h-full overflow-y-auto p-3 py-px space-y-2 transition-transform duration-300 ease-in-out bg-transparent">
     <!-- Mobile Close Button -->
     <div class="flex justify-end sm:hidden mb-4">
       <button
