@@ -199,6 +199,21 @@ fn init_schema(conn: &Connection) -> SqlResult<()> {
         [],
     )?;
 
+    // Forum photos table: cache for forum user photos
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS forum_photos (
+            uuid TEXT PRIMARY KEY,
+            file_path TEXT NOT NULL,
+            cached_at INTEGER NOT NULL
+        )",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_forum_photos_cached_at ON forum_photos(cached_at)",
+        [],
+    )?;
+
     // Clean up expired cache entries
     cleanup_expired_cache(conn)?;
 
@@ -216,7 +231,7 @@ fn cleanup_expired_cache(conn: &Connection) -> SqlResult<()> {
 }
 
 /// Get database connection (helper to access the connection)
-fn with_conn<F, R>(f: F) -> Result<R>
+pub fn with_conn<F, R>(f: F) -> Result<R>
 where
     F: FnOnce(&mut Connection) -> Result<R>,
 {

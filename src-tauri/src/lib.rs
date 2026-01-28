@@ -48,6 +48,8 @@ mod theme_manager;
 mod todolist;
 #[path = "utils/pdf_extract.rs"]
 mod pdf_extract;
+#[path = "utils/forum_photos.rs"]
+mod forum_photos;
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use serde_json;
@@ -339,6 +341,9 @@ pub fn run() {
             profile_picture::delete_profile_picture,
             profile_picture::has_custom_profile_picture,
             profile_picture::get_profile_picture_data_url,
+            forum_photos::save_forum_photo,
+            forum_photos::get_forum_photo_path,
+            forum_photos::get_forum_photo_data_url,
             performance_testing::save_performance_test_results,
             performance_testing::get_performance_test_results,
             performance_testing::load_performance_test_result,

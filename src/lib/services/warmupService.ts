@@ -3,6 +3,7 @@ import { seqtaFetch } from '../../utils/netUtil';
 import { logger } from '../../utils/logger';
 import { setIdb } from './idbCache';
 import { isOfflineMode } from '../utils/offlineMode';
+import { forumPhotoSyncService } from './forumPhotoSyncService';
 
 // Centralized background warm-up of frequently used SEQTA endpoints.
 // This primes the in-memory cache so pages can render instantly.
@@ -158,6 +159,12 @@ export async function warmUpCommonData(): Promise<void> {
     prefetchForumsSettings(),
     prefetchForumsList(),
   ]);
+
+  // Run forum photo sync in background (non-blocking)
+  // This is a longer operation, so we don't wait for it
+  forumPhotoSyncService.syncAllPhotos().catch((e) => {
+    logger.error('warmup', 'warmUpCommonData', `Forum photo sync failed: ${e}`, { error: e });
+  });
 }
 
 // Assessments Overview warm-up: uses Rust backend for processing

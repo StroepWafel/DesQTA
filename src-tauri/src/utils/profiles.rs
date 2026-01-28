@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::{self, Read};
 use std::path::PathBuf;
-use tauri::AppHandle;
 
 /// Profile represents a unique SEQTA account + instance combination
 #[derive(Debug, Serialize, Deserialize, Clone)]
