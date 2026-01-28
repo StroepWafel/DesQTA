@@ -900,7 +900,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             totalWarnings: 0,
           },
           timestamp: new Date().toISOString(),
-          version: '1.0.0-rc.5',
+          version: '1.0.0-rc.6',
         };
 
         await invoke('save_performance_test_results', { results: errorResults });
