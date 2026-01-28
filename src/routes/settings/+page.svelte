@@ -1548,6 +1548,36 @@ The Company reserves the right to terminate your access to the Service at any ti
                     key="settings.theme_mode_description"
                     fallback="Choose between light mode, dark mode, or follow your system preference." />
                 </p>
+                <div class="mt-4 flex flex-col items-center">
+                  <button
+                    type="button"
+                    data-onboarding="theme-store"
+                    onclick={() => {
+                      console.log('Navigating to theme store...');
+                      console.log('Current URL:', window.location.href);
+
+                      // Try multiple navigation methods
+                      try {
+                        goto('/settings/theme-store');
+                      } catch (e) {
+                        console.warn('goto failed, trying window.location:', e);
+                        window.location.href = '/settings/theme-store';
+                      }
+
+                      setTimeout(() => {
+                        console.log('After navigation URL:', window.location.href);
+                        console.log('Page pathname:', window.location.pathname);
+                      }, 100);
+                    }}
+                    class="px-6 py-2 text-center text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
+                    <T key="settings.open_theme_store" fallback="Open Theme Store" />
+                  </button>
+                  <p class="mt-2 text-xs text-center text-zinc-600 dark:text-zinc-400">
+                    <T
+                      key="settings.theme_store_description"
+                      fallback="Browse and install custom themes for DesQTA" />
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -1955,47 +1985,6 @@ The Company reserves the right to terminate your access to the Service at any ti
               class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
               <T key="settings.open_plugin_store" fallback="Open Plugin Store" />
             </a>
-          </div>
-        </div>
-      </section>
-
-      <!-- Theme Store Link -->
-      <section
-        data-onboarding="theme-store"
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-base font-semibold sm:text-lg">Theme Store</h2>
-          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Browse and install custom themes for DesQTA
-          </p>
-        </div>
-        <div class="p-4 sm:p-6">
-          <div class="p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
-            <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Explore a collection of beautiful themes to customize your DesQTA experience.
-            </p>
-            <button
-              type="button"
-              onclick={() => {
-                console.log('Navigating to theme store...');
-                console.log('Current URL:', window.location.href);
-
-                // Try multiple navigation methods
-                try {
-                  goto('/settings/theme-store');
-                } catch (e) {
-                  console.warn('goto failed, trying window.location:', e);
-                  window.location.href = '/settings/theme-store';
-                }
-
-                setTimeout(() => {
-                  console.log('After navigation URL:', window.location.href);
-                  console.log('Page pathname:', window.location.pathname);
-                }, 100);
-              }}
-              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
-              Open Theme Store
-            </button>
           </div>
         </div>
       </section>
