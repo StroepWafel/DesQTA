@@ -7,7 +7,6 @@
     loadAccentColor,
     updateAccentColor,
     theme,
-    loadTheme,
     updateTheme,
   } from '../../lib/stores/theme';
   import { Icon } from 'svelte-hero-icons';
@@ -678,7 +677,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
     isDesktop = tauriPlatform !== 'ios' && tauriPlatform !== 'android';
     
-    await Promise.all([loadSettings(), loadTheme(), loadCloudUser(), loadProfilePicture()]);
+    await Promise.all([loadSettings(), loadCloudUser(), loadProfilePicture()]);
     window.addEventListener('keydown', handleKeydown);
   });
   onDestroy(() => {
