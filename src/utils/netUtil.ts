@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { platformService } from '../lib/services/platformService';
 
 export type SeqtaRequestInit = {
   method?: 'GET' | 'POST';
@@ -58,6 +59,33 @@ export function invalidateDevSensitiveInfoHiderCache(): void {
   devInfoHiderCache = null;
 }
 
+/**
+ * Normalize API URL based on current platform (Teach vs Learn)
+ * Replaces /seqta/student/ with /seqta/ta/ when in Teach mode
+ */
+async function normalizeApiUrl(url: string): Promise<string> {
+  const isTeachMode = await platformService.isTeachMode();
+  
+  // If already using Teach endpoints, keep as is
+  if (url.startsWith('/seqta/ta/') || url.startsWith('/seqta/teach/')) {
+    return url;
+  }
+  
+  // If using Learn endpoints and we're in Teach mode, replace with Teach endpoints
+  if (isTeachMode && url.startsWith('/seqta/student/')) {
+    // Replace /seqta/student/ with /seqta/ta/ for Teach
+    return url.replace('/seqta/student/', '/seqta/ta/');
+  }
+  
+  // If URL doesn't start with /seqta/, assume it's a relative path and prepend appropriate prefix
+  if (!url.startsWith('/seqta/')) {
+    const prefix = await platformService.getApiPrefix();
+    return prefix + url.replace(/^\//, ''); // Remove leading slash if present
+  }
+  
+  return url;
+}
+
 export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promise<any> {
   // Read once with memoization to prevent dozens of calls on startup
   const useMock = await getDevSensitiveInfoHider();
@@ -67,8 +95,11 @@ export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promis
   }
   
   try {
+    // Normalize URL based on current platform
+    const normalizedUrl = await normalizeApiUrl(input);
+    
     const response = await invoke('fetch_api_data', {
-      url: input,
+      url: normalizedUrl,
       method: init?.method || 'GET',
       headers: init?.headers || {},
       body: init?.body || {},

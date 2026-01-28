@@ -3,35 +3,33 @@
   import { invoke } from '@tauri-apps/api/core';
   import { Window } from '@tauri-apps/api/window';
   const appWindow = Window.getCurrent();
-  import AboutModal from '../lib/components/AboutModal.svelte';
-  import AppHeader from '../lib/components/AppHeader.svelte';
-  import AppSidebar from '../lib/components/AppSidebar.svelte';
-  import LoginScreen from '../lib/components/LoginScreen.svelte';
-  import LoadingScreen from '../lib/components/LoadingScreen.svelte';
-  import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
+  import AboutModal from '../../lib/components/AboutModal.svelte';
+  import AppHeader from '../../lib/components/AppHeader.svelte';
+  import AppSidebar from '../../lib/components/AppSidebar.svelte';
+  import LoginScreen from '../../lib/components/LoginScreen.svelte';
+  import LoadingScreen from '../../lib/components/LoadingScreen.svelte';
+  import ThemeBuilder from '../../lib/components/ThemeBuilder.svelte';
   import { Toaster } from 'svelte-sonner';
-  import Onboarding from '../lib/components/Onboarding.svelte';
-  import { cloudAuthService } from '../lib/services/cloudAuthService';
-  import { cloudSettingsService } from '../lib/services/cloudSettingsService';
-  import { saveSettingsWithQueue, flushSettingsQueue } from '../lib/services/settingsSync';
-  import { authService, type UserInfo } from '../lib/services/authService';
-  import { warmUpCommonData } from '../lib/services/warmupService';
-  import { logger } from '../utils/logger';
-  import { seqtaFetch } from '../utils/netUtil';
-  import { useWeather } from '../lib/composables/useWeather';
-  import { useSidebar } from '../lib/composables/useSidebar';
-  import { usePlatform } from '../lib/composables/usePlatform';
-  import '../app.css';
+  import { cloudAuthService } from '../../lib/services/cloudAuthService';
+  import { cloudSettingsService } from '../../lib/services/cloudSettingsService';
+  import { saveSettingsWithQueue } from '../../lib/services/settingsSync';
+  import { authService, type UserInfo } from '../../lib/services/authService';
+  import { warmUpCommonData } from '../../lib/services/warmupService';
+  import { logger } from '../../utils/logger';
+  import { seqtaFetch } from '../../utils/netUtil';
+  import { useWeather } from '../../lib/composables/useWeather';
+  import { useSidebar } from '../../lib/composables/useSidebar';
+  import { usePlatform } from '../../lib/composables/usePlatform';
+  import '../../app.css';
   import {
     accentColor,
     loadAccentColor,
     theme,
     loadTheme,
     loadCurrentTheme,
-  } from '../lib/stores/theme';
-  import { initI18n, locale, availableLocales, _ } from '../lib/i18n';
-  import T from '../lib/components/T.svelte';
-  import { themeBuilderSidebarOpen } from '../lib/stores/themeBuilderSidebar';
+  } from '../../lib/stores/theme';
+  import { initI18n, locale, availableLocales, _ } from '../../lib/i18n';
+  import { themeBuilderSidebarOpen } from '../../lib/stores/themeBuilderSidebar';
   import {
     Icon,
     Home,
@@ -47,11 +45,7 @@
     User,
     GlobeAlt,
     XMark,
-    PencilSquare,
     Rss,
-    Flag,
-    ChatBubbleBottomCenterText,
-    FolderOpen,
   } from 'svelte-hero-icons';
   import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
@@ -71,7 +65,6 @@
   let sidebarOpen = $state(true);
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
-  let showOnboarding = $state(false);
 
   // Composables
   const weather = useWeather();
@@ -91,27 +84,24 @@
   // Settings state
   let disableSchoolPicture = $state(false);
   let enhancedAnimations = $state(true);
-  // Menu configuration with translation keys
-  const DEFAULT_MENU = [
-    { labelKey: 'navigation.dashboard', icon: Home, path: '/' },
-    { labelKey: 'navigation.courses', icon: BookOpen, path: '/courses' },
-    { labelKey: 'navigation.assessments', icon: ClipboardDocumentList, path: '/assessments' },
-    { labelKey: 'navigation.timetable', icon: CalendarDays, path: '/timetable' },
-    { labelKey: 'navigation.study', icon: PencilSquare, path: '/study' },
-    { labelKey: 'navigation.goals', icon: Flag, path: '/goals' },
-    { labelKey: 'navigation.forums', icon: ChatBubbleBottomCenterText, path: '/forums' },
-    { labelKey: 'navigation.folios', icon: FolderOpen, path: '/folios' },
-    { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
-    { labelKey: 'navigation.rss_feeds', icon: Rss, path: '/rss-feeds' },
-    { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
-    { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },
-    { labelKey: 'navigation.news', icon: Newspaper, path: '/news' },
-    { labelKey: 'navigation.directory', icon: User, path: '/directory' },
-    { labelKey: 'navigation.reports', icon: ChartBar, path: '/reports' },
-    { labelKey: 'navigation.analytics', icon: AcademicCap, path: '/analytics' },
+
+  // Teach-specific menu configuration
+  const TEACH_MENU = [
+    { labelKey: 'navigation.dashboard', icon: Home, path: '/Teach' },
+    { labelKey: 'navigation.courses', icon: BookOpen, path: '/Teach/courses' },
+    { labelKey: 'navigation.assessments', icon: ClipboardDocumentList, path: '/Teach/assessments' },
+    { labelKey: 'navigation.timetable', icon: CalendarDays, path: '/Teach/timetable' },
+    { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/Teach/messages' },
+    { labelKey: 'navigation.rss_feeds', icon: Rss, path: '/Teach/rss-feeds' },
+    { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/Teach/portals' },
+    { labelKey: 'navigation.notices', icon: DocumentText, path: '/Teach/notices' },
+    { labelKey: 'navigation.news', icon: Newspaper, path: '/Teach/news' },
+    { labelKey: 'navigation.directory', icon: User, path: '/Teach/directory' },
+    { labelKey: 'navigation.reports', icon: ChartBar, path: '/Teach/reports' },
+    { labelKey: 'navigation.analytics', icon: AcademicCap, path: '/Teach/analytics' },
     { labelKey: 'navigation.settings', icon: Cog6Tooth, path: '/settings' },
   ];
-  let menu = $state([...DEFAULT_MENU]);
+  let menu = $state([...TEACH_MENU]);
   let menuLoading = $state(true);
   let devMockEnabled = false;
 
@@ -128,54 +118,50 @@
   };
 
   const checkSession = async () => {
-    logger.logFunctionEntry('layout', 'checkSession');
+    logger.logFunctionEntry('teach-layout', 'checkSession');
     try {
       if (devMockEnabled) {
         needsSetup.set(false);
-        logger.info('layout', 'checkSession', 'Dev mock enabled; bypassing login');
+        logger.info('teach-layout', 'checkSession', 'Dev mock enabled; bypassing login');
         await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
-        logger.logFunctionExit('layout', 'checkSession', { sessionExists: true });
+        logger.logFunctionExit('teach-layout', 'checkSession', { sessionExists: true });
       } else {
         const sessionExists = await authService.checkSession();
         needsSetup.set(!sessionExists);
-        logger.info('layout', 'checkSession', `Session exists: ${sessionExists}`, {
+        logger.info('teach-layout', 'checkSession', `Session exists: ${sessionExists}`, {
           sessionExists,
         });
         if (sessionExists) {
           await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
         }
-        logger.logFunctionExit('layout', 'checkSession', { sessionExists });
+        logger.logFunctionExit('teach-layout', 'checkSession', { sessionExists });
       }
     } catch (error) {
-      logger.error('layout', 'checkSession', `Failed to check session: ${error}`, { error });
+      logger.error('teach-layout', 'checkSession', `Failed to check session: ${error}`, { error });
     }
   };
-
-  // Remove duplicate onMount - consolidating below
 
   let unlisten: (() => void) | undefined;
 
   const setupListeners = async () => {
-    logger.debug('layout', 'onMount', 'Setting up reload listener');
+    logger.debug('teach-layout', 'onMount', 'Setting up reload listener');
     unlisten = await listen<string>('reload', () => {
-      logger.info('layout', 'reload_listener', 'Received reload event');
+      logger.info('teach-layout', 'reload_listener', 'Received reload event');
       location.reload();
     });
 
     // Listen for fullscreen changes from Tauri backend
     await listen<boolean>('fullscreen-changed', (event) => {
       const isFullscreen = event.payload;
-      logger.debug('layout', 'fullscreen_listener', `Fullscreen changed: ${isFullscreen}`);
+      logger.debug('teach-layout', 'fullscreen_listener', `Fullscreen changed: ${isFullscreen}`);
 
       if (isFullscreen) {
-        // Remove rounded corners when entering fullscreen
         document.body.classList.remove('rounded-xl');
         const contentDiv = document.querySelector('.overflow-clip.rounded-xl');
         if (contentDiv) {
           contentDiv.classList.remove('rounded-xl');
         }
       } else {
-        // Add rounded corners when exiting fullscreen
         document.body.classList.add('rounded-xl');
         const contentDiv = document.querySelector('.overflow-clip');
         if (contentDiv) {
@@ -186,12 +172,11 @@
   };
 
   onDestroy(() => {
-    logger.logComponentUnmount('layout');
+    logger.logComponentUnmount('teach-layout');
     if (unlisten) {
-      logger.debug('layout', 'onDestroy', 'Cleaning up reload listener');
+      logger.debug('teach-layout', 'onDestroy', 'Cleaning up reload listener');
       unlisten();
     }
-    window.removeEventListener('redo-onboarding', handleRedoOnboarding);
   });
 
   // Consolidated settings loader
@@ -200,7 +185,10 @@
       const subset = await invoke<any>('get_settings_subset', { keys });
       return subset || {};
     } catch (e) {
-      logger.error('layout', 'loadSettings', `Failed to load settings: ${e}`, { keys, error: e });
+      logger.error('teach-layout', 'loadSettings', `Failed to load settings: ${e}`, {
+        keys,
+        error: e,
+      });
       return {};
     }
   };
@@ -209,7 +197,7 @@
     const settings = await loadSettings(['enhanced_animations']);
     enhancedAnimations = settings.enhanced_animations ?? true;
     logger.debug(
-      'layout',
+      'teach-layout',
       'reloadEnhancedAnimationsSetting',
       `Enhanced animations: ${enhancedAnimations}`,
     );
@@ -243,7 +231,7 @@
       // Import platformService to check platform
       const { platformService } = await import('$lib/services/platformService');
       const isTeachMode = await platformService.isTeachMode();
-      
+
       // Teach heartbeat uses different payload format (empty hash)
       const heartbeatBody = isTeachMode
         ? {
@@ -254,7 +242,7 @@
             timestamp: '1970-01-01 00:00:00.0',
             hash: '#?page=/home',
           };
-      
+
       const response = await seqtaFetch('/seqta/student/heartbeat', {
         method: 'POST',
         body: heartbeatBody,
@@ -266,22 +254,22 @@
         responseStr.includes('"status":401') ||
         responseStr.toLowerCase().includes('unauthorized')
       ) {
-        logger.warn('layout', 'healthCheck', 'Heartbeat returned 401, logging out');
+        logger.warn('teach-layout', 'healthCheck', 'Heartbeat returned 401, logging out');
         await handleLogout();
       }
     } catch (e) {
       // Network errors should not auto-logout; log and continue
-      logger.debug('layout', 'healthCheck', 'Heartbeat check failed', { error: e });
+      logger.debug('teach-layout', 'healthCheck', 'Heartbeat check failed', { error: e });
     }
   };
 
   const startLogin = async () => {
     if (!seqtaUrl) {
-      logger.error('layout', 'startLogin', 'No valid SEQTA URL found');
+      logger.error('teach-layout', 'startLogin', 'No valid SEQTA URL found');
       return;
     }
 
-    logger.info('layout', 'startLogin', 'Starting authentication', { url: seqtaUrl });
+    logger.info('teach-layout', 'startLogin', 'Starting authentication', { url: seqtaUrl });
     await authService.startLogin(seqtaUrl);
 
     const timer = setInterval(async () => {
@@ -307,17 +295,14 @@
 
   const syncCloudSettings = async () => {
     try {
-      // Initialize cloud auth from current profile
       const cloudUser = await cloudAuthService.init();
       if (cloudUser) {
-        logger.info('layout', 'syncCloudSettings', 'Cloud user found, fetching settings');
+        logger.info('teach-layout', 'syncCloudSettings', 'Cloud user found, fetching settings');
         const settings = await cloudSettingsService.getSettings();
         if (settings) {
-          logger.info('layout', 'syncCloudSettings', 'Applying cloud settings');
-          // Save merged settings
+          logger.info('teach-layout', 'syncCloudSettings', 'Applying cloud settings');
           await invoke('save_settings_merge', { patch: settings });
 
-          // Reload settings relevant to layout immediately
           await Promise.all([
             loadAccentColor(),
             loadTheme(),
@@ -334,19 +319,19 @@
         }
       }
     } catch (e) {
-      logger.error('layout', 'syncCloudSettings', 'Failed to sync cloud settings', { error: e });
+      logger.error('teach-layout', 'syncCloudSettings', 'Failed to sync cloud settings', {
+        error: e,
+      });
     }
   };
 
-  // Language change handler
   const changeLanguage = async (languageCode: string) => {
     try {
       locale.set(languageCode);
-      const { saveSettingsWithQueue } = await import('$lib/services/settingsSync');
       await saveSettingsWithQueue({ language: languageCode });
-      logger.info('layout', 'changeLanguage', `Language changed to ${languageCode}`);
+      logger.info('teach-layout', 'changeLanguage', `Language changed to ${languageCode}`);
     } catch (e) {
-      logger.error('layout', 'changeLanguage', `Failed to save language preference: ${e}`, {
+      logger.error('teach-layout', 'changeLanguage', `Failed to save language preference: ${e}`, {
         error: e,
       });
     }
@@ -375,14 +360,14 @@
         body: {},
       });
     } catch (e) {
-      logger.debug('layout', 'sendAnalytics', 'Failed to send analytics', { error: e });
+      logger.debug('teach-layout', 'sendAnalytics', 'Failed to send analytics', { error: e });
     }
   };
 
   $effect(() => {
     document.documentElement.setAttribute('data-accent-color', '');
     document.documentElement.style.setProperty('--accent-color-value', $accentColor);
-    logger.debug('layout', '$effect', 'Applied accent color to root as CSS var', {
+    logger.debug('teach-layout', '$effect', 'Applied accent color to root as CSS var', {
       accent: $accentColor,
     });
   });
@@ -390,13 +375,13 @@
   const loadEnhancedAnimationsSetting = async () => {
     const settings = await loadSettings(['enhanced_animations']);
     enhancedAnimations = settings.enhanced_animations ?? true;
-    logger.info('layout', 'loadEnhancedAnimationsSetting', 'Setting loaded', {
+    logger.info('teach-layout', 'loadEnhancedAnimationsSetting', 'Setting loaded', {
       enhancedAnimations,
     });
   };
 
   $effect(() => {
-    logger.debug('layout', '$effect', 'Enhanced animations effect triggered', {
+    logger.debug('teach-layout', '$effect', 'Enhanced animations effect triggered', {
       enhancedAnimations,
     });
     if (enhancedAnimations) {
@@ -406,25 +391,38 @@
     }
   });
 
-  // Listen for redo onboarding event
-  const handleRedoOnboarding = async () => {
+  const loadSeqtaConfigAndMenu = async () => {
     try {
-      const settings = await loadSettings(['has_been_through_onboarding']);
-      if (!settings.has_been_through_onboarding) {
-        showOnboarding = true;
-        sidebarOpen = true;
+      if (!devMockEnabled) {
+        const sessionExists = await authService.checkSession();
+        if (!sessionExists) {
+          logger.debug('teach-layout', 'loadSeqtaConfigAndMenu', 'Skipping: not authenticated');
+          return;
+        }
+      }
+
+      // For Teach, we'll use a simplified config loading
+      // Teach may have different config endpoints, but for now we'll use the same structure
+      menu = [...TEACH_MENU];
+
+      // Filter menu items based on settings (similar to Learn)
+      const settings = await loadSettings(['separate_rss_feed']);
+      const separateRssFeed = settings.separate_rss_feed ?? false;
+      if (!separateRssFeed) {
+        menu = menu.filter((item) => item.path !== '/Teach/rss-feeds');
       }
     } catch (e) {
-      logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', { error: e });
+      logger.error('teach-layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', {
+        error: e,
+      });
+    } finally {
+      menuLoading = false;
     }
   };
 
   onMount(async () => {
-    logger.logComponentMount('layout');
+    logger.logComponentMount('teach-layout');
     setupListeners();
-
-    // Set up redo onboarding listener
-    window.addEventListener('redo-onboarding', handleRedoOnboarding);
 
     // Initialize theme and i18n first
     await Promise.all([loadAccentColor(), loadTheme(), loadCurrentTheme(), initI18n()]);
@@ -439,7 +437,7 @@
           locale.set(settings.language);
         }
       } catch (e) {
-        logger.debug('layout', 'onMount', 'Could not load language preference', { error: e });
+        logger.debug('teach-layout', 'onMount', 'Could not load language preference', { error: e });
       }
 
       // Load dev mock flag early to control session flow
@@ -457,25 +455,11 @@
         syncCloudSettings(),
       ]);
 
-      // Check if user needs onboarding - DISABLED: Only show when button is pressed in settings
-      // try {
-      //   const settings = await loadSettings(['has_been_through_onboarding']);
-      //   if (!settings.has_been_through_onboarding) {
-      //     // Wait a bit for UI to settle
-      //     setTimeout(() => {
-      //       showOnboarding = true;
-      //       sidebarOpen = true; // Ensure sidebar is open for first step
-      //     }, 1000);
-      //   }
-      // } catch (e) {
-      //   logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
-      // }
-
       // Load cached data from SQLite immediately for instant UI
-      const { initializeApp } = await import('$lib/services/startupService');
+      const { initializeApp } = await import('../../lib/services/startupService');
       await initializeApp();
 
-      // Background tasks (warmup already triggered by startupService)
+      // Background tasks
       if (weatherEnabled) {
         fetchWeather(!forceUseLocation);
       }
@@ -483,14 +467,32 @@
       // Validate SEQTA session on app launch
       if (!devMockEnabled && !$needsSetup) {
         try {
-          const response = await seqtaFetch('/seqta/student/login', {
+          // Import platformService to check platform
+          const { platformService } = await import('../../lib/services/platformService');
+          const isTeachMode = await platformService.isTeachMode();
+
+          const loginEndpoint = isTeachMode ? '/seqta/ta/login' : '/seqta/student/login';
+          const loginBody = isTeachMode
+            ? {
+                mode: 'normal',
+                query: null,
+                redirect_url: seqtaUrl ? `${seqtaUrl}/help` : '',
+              }
+            : {
+                mode: 'normal',
+                query: null,
+                redirect_url: seqtaUrl,
+              };
+
+          const response = await seqtaFetch(loginEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: { mode: 'normal', query: null, redirect_url: seqtaUrl },
+            body: loginBody,
           });
 
           const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
-          const isAuthenticated = responseStr.includes('site.name.abbrev');
+          const isAuthenticated =
+            responseStr.includes('personUUID') || responseStr.includes('userName');
 
           if (
             !isAuthenticated &&
@@ -498,11 +500,11 @@
               responseStr.includes('unauthorized') ||
               responseStr.includes('401'))
           ) {
-            logger.warn('layout', 'onMount', 'Session invalid, logging out');
+            logger.warn('teach-layout', 'onMount', 'Session invalid, logging out');
             await handleLogout();
           }
         } catch (e) {
-          logger.error('layout', 'onMount', 'SEQTA session check failed', { error: e });
+          logger.error('teach-layout', 'onMount', 'SEQTA session check failed', { error: e });
         }
       }
 
@@ -516,7 +518,9 @@
       try {
         await invoke('handle_fullscreen_change');
       } catch (e) {
-        logger.debug('layout', 'onMount', 'Failed to check initial fullscreen state', { error: e });
+        logger.debug('teach-layout', 'onMount', 'Failed to check initial fullscreen state', {
+          error: e,
+        });
       }
     } finally {
       contentLoading = false;
@@ -528,28 +532,10 @@
     if (autoCollapseSidebar) handlePageNavigation();
     if ($needsSetup) sidebarOpen = false;
     if ($page.url.pathname === '/settings') reloadSidebarSettings();
-    
-    // Redirect Teach users to /Teach when accessing root
-    if (!$needsSetup && $page.url.pathname === '/') {
-      (async () => {
-        try {
-          const { platformService } = await import('$lib/services/platformService');
-          const isTeachMode = await platformService.isTeachMode();
-          if (isTeachMode) {
-            const { goto } = await import('$app/navigation');
-            goto('/Teach');
-          }
-        } catch (e) {
-          // Silently fail - don't break navigation if platform check fails
-        }
-      })();
-    }
   });
 
   // Mobile detection and event listeners
   onMount(() => {
-    // Treat mobile either as a native mobile platform (Tauri)
-    // or when viewport is below the `sm` breakpoint (~640px)
     const mql = window.matchMedia('(max-width: 640px)');
 
     const checkMobile = () => {
@@ -558,10 +544,8 @@
       const isSmallViewport = mql.matches;
       const nextIsMobile = isNativeMobile || isSmallViewport;
 
-      // Update platform state
       platform.state.isMobile = nextIsMobile;
 
-      // If switching from non-mobile to mobile, ensure sidebar is closed
       if (!isMobile && nextIsMobile) {
         sidebarOpen = false;
       }
@@ -570,10 +554,8 @@
     checkMobile();
     const onMqlChange = () => checkMobile();
     try {
-      // Modern browsers
       mql.addEventListener('change', onMqlChange);
     } catch {
-      // Safari fallback
       // @ts-ignore
       mql.addListener(onMqlChange);
     }
@@ -600,128 +582,9 @@
       }
     };
   });
-
-  const loadSeqtaConfigAndMenu = async () => {
-    try {
-      if (!devMockEnabled) {
-        const sessionExists = await authService.checkSession();
-        if (!sessionExists) {
-          logger.debug('layout', 'loadSeqtaConfigAndMenu', 'Skipping: not authenticated');
-          return;
-        }
-      }
-
-      let config = await invoke('load_seqta_config');
-      let latestConfig = null;
-
-      if (!config) {
-        // Fetch latest config
-        const res = await seqtaFetch('/seqta/student/load/settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: {},
-        });
-        latestConfig = typeof res === 'string' ? JSON.parse(res) : res;
-        seqtaConfig = latestConfig;
-        await invoke('save_seqta_config', { config: latestConfig });
-      } else {
-        // Check if existing config is outdated
-        const res = await seqtaFetch('/seqta/student/load/settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: {},
-        });
-        latestConfig = typeof res === 'string' ? JSON.parse(res) : res;
-        const isDifferent = await invoke('is_seqta_config_different', { newConfig: latestConfig });
-
-        if (isDifferent) {
-          seqtaConfig = latestConfig;
-          await invoke('save_seqta_config', { config: latestConfig });
-        } else {
-          seqtaConfig = config;
-        }
-      }
-
-      menu = [...DEFAULT_MENU]; // Use default menu configuration
-      
-      // Filter menu items based on SEQTA config
-      if (latestConfig?.payload) {
-        const goalsEnabled = latestConfig.payload['coneqt-s.page.goals']?.value === 'enabled';
-        if (!goalsEnabled) {
-          menu = menu.filter(item => item.path !== '/goals');
-        }
-        const forumsEnabled = latestConfig.payload['coneqt-s.page.forums']?.value === 'enabled';
-        if (!forumsEnabled) {
-          menu = menu.filter(item => item.path !== '/forums');
-        }
-        const foliosEnabled = latestConfig.payload['coneqt-s.page.folios']?.value === 'enabled';
-        if (!foliosEnabled) {
-          menu = menu.filter(item => item.path !== '/folios');
-        }
-      }
-      
-      // Apply menu order from settings
-      await applyMenuOrder();
-      
-      // Filter RSS feeds menu item based on setting (after menu order is applied)
-      const settings = await loadSettings(['separate_rss_feed']);
-      const separateRssFeed = settings.separate_rss_feed ?? false;
-      if (!separateRssFeed) {
-        menu = menu.filter(item => item.path !== '/rss-feeds');
-      }
-    } catch (e) {
-      logger.error('layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', { error: e });
-    } finally {
-      menuLoading = false;
-    }
-  };
-
-  const applyMenuOrder = async () => {
-    try {
-      const settings = await loadSettings(['menu_order']);
-      const menuOrder = settings.menu_order as string[] | undefined;
-      
-      // Use current menu state instead of DEFAULT_MENU to preserve filters
-      const currentMenu = [...menu];
-      const currentMenuMap = new Map(currentMenu.map(item => [item.path, item]));
-      
-      if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
-        // Reorder menu based on saved order, keeping any new items at the end
-        const orderedMenu: typeof DEFAULT_MENU = [];
-        const addedPaths = new Set<string>();
-        
-        // Add items in saved order (only if they exist in current menu)
-        for (const path of menuOrder) {
-          const item = currentMenuMap.get(path);
-          if (item) {
-            orderedMenu.push(item);
-            addedPaths.add(path);
-          }
-        }
-        
-        // Add any items not in saved order (new items that exist in current menu)
-        for (const item of currentMenu) {
-          if (!addedPaths.has(item.path)) {
-            orderedMenu.push(item);
-          }
-        }
-        
-        menu = orderedMenu;
-      }
-      // If no menu order, keep current menu (already filtered)
-    } catch (e) {
-      logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
-      // Don't reset to DEFAULT_MENU on error, keep current filtered menu
-    }
-  };
-
-  // Config/menu loading is handled in checkSession/startLogin
 </script>
 
-{#if $page.url.pathname.startsWith('/Teach')}
-  <!-- Skip main layout for Teach routes - they have their own layout -->
-  {@render children()}
-{:else if !shellReady}
+{#if !shellReady}
   <LoadingScreen />
 {:else}
   <div class="flex flex-col h-screen">
@@ -797,31 +660,34 @@
     </div>
   </div>
 {/if}
-{#if !$page.url.pathname.startsWith('/Teach')}
-<Toaster 
-  position="bottom-right" 
+<Toaster
+  position="bottom-right"
   theme={$theme === 'dark' ? 'dark' : 'light'}
-  richColors 
-  expand={true} 
+  richColors
+  expand={true}
   closeButton
   offset="20px"
   visibleToasts={5}
   toastOptions={{
     unstyled: true,
     classes: {
-      toast: 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-lg border rounded-lg px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-all duration-200',
+      toast:
+        'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-lg border rounded-lg px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-all duration-200',
       title: 'text-sm font-semibold flex-1',
       description: 'text-sm text-zinc-600 dark:text-zinc-400 mt-1',
-      success: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-      error: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+      success:
+        'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+      error:
+        'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
       info: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-      warning: 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
-      closeButton: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0',
-      actionButton: 'bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-opacity',
-      cancelButton: 'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-colors'
-    }
-  }}
-/>
+      warning:
+        'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+      closeButton:
+        'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0',
+      actionButton:
+        'bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-opacity',
+      cancelButton:
+        'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+    },
+  }} />
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
-<Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />
-{/if}
