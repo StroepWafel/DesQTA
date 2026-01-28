@@ -1,0 +1,21 @@
+/* Monochrome Theme - Component Styles */
+
+/* Card components */
+.monochrome-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Button components */
+.monochrome-btn {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
+  transition: all 0.2s ease;
+}
+
+.monochrome-btn:hover {
+  background: #e5e5e5;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+

@@ -2,9 +2,11 @@
   import { Icon } from 'svelte-hero-icons';
   import { PencilSquare, Trash, Star, ArrowUturnLeft } from 'svelte-hero-icons';
   import type { Message } from '../types';
-  import { sanitizeHtml } from '../../../utils/sanitization';
+  import { sanitizeHtmlAsync } from '../../../utils/sanitization';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { openUrl } from '@tauri-apps/plugin-opener';
+  import { buildIframeHtml } from '../utils/iframeHtml';
 
   let {
     selectedMessage,
@@ -35,6 +37,7 @@
   let iframe: HTMLIFrameElement | null = $state(null);
   let detailAvatarUrl: string | null = $state(null);
   let detailAvatarFailed: boolean = $state(false);
+  let messageListenerCleanup: (() => void) | null = null; // Not reactive to avoid infinite loops
 
   function initial(name: string): string {
     return (name?.trim()?.charAt(0) || '?').toUpperCase();
@@ -60,65 +63,12 @@
     }
   }
 
-  function updateIframeContent() {
+  async function updateIframeContent() {
     if (!selectedMessage || !iframe || !iframe.contentWindow) return;
 
-    const sanitizedContent = sanitizeHtml(selectedMessage.body);
-
-    const html = /* html */ `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <style>
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        color: #f1f5f9;
-        margin: 0;
-        padding: 0 1px;
-        background-color: transparent;
-        line-height: 1.8;
-        font-size: 15px;
-      }
-
-      a {
-        color: #60a5fa;
-        text-decoration: none;
-      }
-
-      a:hover {
-        text-decoration: underline;
-      }
-      
-      p {
-        margin: 0 0 1.2em;
-      }
-
-      .forward {
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background-color: rgba(0, 0, 0, 0.05);
-        padding: 8px;
-        border-radius: 8px;
-        margin: 0;
-      }
-      
-      .forward .preamble {
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.8);
-        margin-bottom: 6px;
-        padding-bottom: 6px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      blockquote {
-        border-left: 3px solid #3b82f6;
-        margin-left: 0;
-        padding-left: 12px;
-        color: rgba(241, 245, 249, 0.8);
-      }
-    </style>
-  </head>
-  <body>${sanitizedContent}</body>
-</html>`;
+    // Use async Rust-side sanitization for better performance
+    const sanitizedContent = await sanitizeHtmlAsync(selectedMessage.body);
+    const html = buildIframeHtml(sanitizedContent);
 
     const doc = iframe.contentWindow.document;
     doc.open();
@@ -126,6 +76,37 @@
     doc.close();
 
     setTimeout(adjustIframeHeight, 100);
+  }
+
+  // Set up message listener for link clicks from iframe
+  // Only set up once to avoid infinite loops
+  let listenerSetup = false;
+  function setupMessageListener() {
+    // Only set up once
+    if (listenerSetup) return;
+
+    // Clean up previous listener if it exists
+    if (messageListenerCleanup) {
+      messageListenerCleanup();
+      messageListenerCleanup = null;
+    }
+
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'openUrl' && event.data?.url) {
+        try {
+          await openUrl(event.data.url);
+        } catch (error) {
+          console.error('Failed to open URL:', error);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    messageListenerCleanup = () => {
+      window.removeEventListener('message', handleMessage);
+      listenerSetup = false;
+    };
+    listenerSetup = true;
   }
 
   function adjustIframeHeight() {
@@ -137,29 +118,40 @@
 
   $effect(() => {
     if (selectedMessage && iframe) {
-      updateIframeContent();
+      void updateIframeContent();
     }
     // Load avatar whenever selectedMessage changes
     void loadDetailAvatar();
   });
 
   onMount(() => {
-    if (selectedMessage && iframe) {
-      updateIframeContent();
-    }
+    // Set up message listener once on mount
+    setupMessageListener();
 
     // Set up a resize observer to handle window resizing
-    if (window.ResizeObserver) {
+    if (window.ResizeObserver && iframe) {
+      const currentIframe = iframe; // Capture for closure
       const resizeObserver = new ResizeObserver(() => {
-        if (iframe) adjustIframeHeight();
+        if (currentIframe) adjustIframeHeight();
       });
 
-      if (iframe) resizeObserver.observe(iframe);
+      resizeObserver.observe(currentIframe);
 
       return () => {
-        if (iframe) resizeObserver.unobserve(iframe);
+        resizeObserver.unobserve(currentIframe);
+        // Clean up message listener on unmount
+        if (messageListenerCleanup) {
+          messageListenerCleanup();
+        }
       };
     }
+
+    return () => {
+      // Clean up message listener on unmount
+      if (messageListenerCleanup) {
+        messageListenerCleanup();
+      }
+    };
   });
 </script>
 
@@ -175,7 +167,7 @@
 
           <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-end">
             <div class="flex items-start gap-3">
-              <div class="flex-shrink-0">
+              <div class="shrink-0">
                 {#if detailAvatarUrl && !detailAvatarFailed}
                   <img
                     src={detailAvatarUrl}
@@ -298,7 +290,7 @@
             <iframe
               bind:this={iframe}
               class="w-full border-0"
-              sandbox="allow-same-origin allow-scripts allow-popups"
+              sandbox="allow-same-origin allow-scripts"
               title="Message content"></iframe>
           {/if}
         </div>
@@ -308,7 +300,7 @@
     <div
       class="flex flex-col justify-center items-center h-full text-center text-zinc-600 dark:text-zinc-400">
       <div
-        class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-gradient-to-br from-accent-500 to-accent-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
+        class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-linear-to-br from-accent-500 to-accent-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="w-8 h-8 sm:w-10 sm:h-10"

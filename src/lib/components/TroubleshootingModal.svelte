@@ -23,6 +23,8 @@
   } from 'svelte-hero-icons';
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
+  import { _ } from '../i18n';
+  import T from './T.svelte';
 
   let { open, onclose, errorReport } = $props<{
     open: boolean;
@@ -35,8 +37,11 @@
   let logs = $state<any[]>([]);
   let loadingLogs = $state(false);
   let apiTestResult = $state<{ success: boolean; message: string } | null>(null);
+  let rustSystemInfo = $state<any>(null);
+  let systemMetrics = $state<any>(null);
+  let loadingSystemInfo = $state(false);
 
-  // System information
+  // System information (browser-based)
   let systemInfo = $derived({
     userAgent: navigator.userAgent,
     platform: navigator.platform,
@@ -60,10 +65,79 @@
   // Simplified error stats since we're not using the complex error service
   let errorStats = $derived({ total: 0, resolved: 0, critical: 0, byCategory: {}, bySeverity: {} });
 
+  // Initialize system monitoring when modal opens
+  $effect(() => {
+    if (open) {
+      import('@tauri-apps/api/core').then(({ invoke }) => {
+        invoke('start_system_monitoring').catch(() => {});
+      });
+    }
+  });
+
   // Auto-load logs when System Logs tab is opened
   $effect(() => {
-    if (activeTab === 'logs' && logs.length === 0) {
-      loadSystemLogs();
+    if (open) {
+      if (activeTab === 'logs' && logs.length === 0) {
+        loadSystemLogs();
+      }
+      if (activeTab === 'diagnostics' && !rustSystemInfo) {
+        loadRustSystemInfo();
+      }
+      if (activeTab === 'performance' && !systemMetrics) {
+        loadSystemMetrics();
+      }
+    }
+  });
+
+  async function loadRustSystemInfo() {
+    loadingSystemInfo = true;
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      rustSystemInfo = await invoke('get_detailed_system_info');
+    } catch (error) {
+      logger.error('troubleshootingModal', 'loadRustSystemInfo', 'Failed to load Rust system info', { error });
+    } finally {
+      loadingSystemInfo = false;
+    }
+  }
+
+  let metricsInterval: number | null = null;
+
+  async function loadSystemMetrics() {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      systemMetrics = await invoke('get_system_metrics');
+      
+      // Clear any existing interval
+      if (metricsInterval !== null) {
+        clearInterval(metricsInterval);
+      }
+      
+      // Refresh metrics every 2 seconds while on performance tab and modal is open
+      metricsInterval = window.setInterval(async () => {
+        if (activeTab === 'performance' && open) {
+          try {
+            systemMetrics = await invoke('get_system_metrics');
+          } catch (error) {
+            logger.error('troubleshootingModal', 'loadSystemMetrics', 'Failed to refresh metrics', { error });
+          }
+        } else {
+          if (metricsInterval !== null) {
+            clearInterval(metricsInterval);
+            metricsInterval = null;
+          }
+        }
+      }, 2000);
+    } catch (error) {
+      logger.error('troubleshootingModal', 'loadSystemMetrics', 'Failed to load system metrics', { error });
+    }
+  }
+
+  // Cleanup interval when modal closes
+  $effect(() => {
+    if (!open && metricsInterval !== null) {
+      clearInterval(metricsInterval);
+      metricsInterval = null;
     }
   });
 
@@ -228,7 +302,7 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <Icon src={Cog} size="24" class="text-zinc-600 dark:text-zinc-400" />
-              <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">Advanced Troubleshooting</h2>
+              <h2 class="text-xl font-semibold text-zinc-900 dark:text-white"><T key="troubleshooting.title" fallback="Advanced Troubleshooting" /></h2>
             </div>
             <button
               onclick={closeModal}
@@ -243,13 +317,13 @@
         <div class="border-b border-zinc-200 dark:border-zinc-700">
           <nav class="flex space-x-8 px-6">
             {#each [
-              { id: 'diagnostics', label: 'System Diagnostics', icon: ComputerDesktop },
-              { id: 'errors', label: 'Error Logs', icon: ExclamationTriangle },
-              { id: 'logs', label: 'System Logs', icon: DocumentText },
-              { id: 'performance', label: 'Performance', icon: ChartBar },
-              { id: 'network', label: 'Network', icon: Wifi },
-              { id: 'storage', label: 'Storage', icon: CircleStack },
-              { id: 'troubleshooting', label: 'Troubleshooting', icon: LightBulb }
+              { id: 'diagnostics', label: $_('troubleshooting.tab_diagnostics') || 'System Diagnostics', icon: ComputerDesktop },
+              { id: 'errors', label: $_('troubleshooting.tab_errors') || 'Error Logs', icon: ExclamationTriangle },
+              { id: 'logs', label: $_('troubleshooting.tab_logs') || 'System Logs', icon: DocumentText },
+              { id: 'performance', label: $_('troubleshooting.tab_performance') || 'Performance', icon: ChartBar },
+              { id: 'network', label: $_('troubleshooting.tab_network') || 'Network', icon: Wifi },
+              { id: 'storage', label: $_('troubleshooting.tab_storage') || 'Storage', icon: CircleStack },
+              { id: 'troubleshooting', label: $_('troubleshooting.tab_troubleshooting') || 'Troubleshooting', icon: LightBulb }
             ] as tab}
         <button 
                 onclick={() => activeTab = tab.id}
@@ -267,6 +341,50 @@
           <!-- System Diagnostics Tab -->
           {#if activeTab === 'diagnostics'}
             <div class="space-y-6">
+              {#if loadingSystemInfo}
+                <div class="flex justify-center items-center py-8">
+                  <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent-500/30 border-t-accent-500"></div>
+                </div>
+              {:else if rustSystemInfo}
+                <!-- Rust System Information -->
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
+                  <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
+                    <Icon src={ComputerDesktop} size="16" />
+                    System Information (Rust)
+                  </h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Hostname:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{rustSystemInfo.hostname}</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">OS:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{rustSystemInfo.os_name} {rustSystemInfo.os_version}</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Kernel:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{rustSystemInfo.kernel_version}</span>
+                      </div>
+                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">CPU:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{rustSystemInfo.cpu_brand} ({rustSystemInfo.cpu_count} cores)</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Total Memory:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{(rustSystemInfo.total_memory / 1024 / 1024 / 1024).toFixed(2)} GB</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Uptime:</span>
+                        <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{Math.floor(rustSystemInfo.uptime_seconds / 3600)}h {Math.floor((rustSystemInfo.uptime_seconds % 3600) / 60)}m</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {/if}
+              
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- System Health -->
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
@@ -367,14 +485,14 @@
                   class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
                 >
                   <Icon src={Beaker} size="16" class="inline mr-2" />
-                  Run Diagnostics
+                  <T key="troubleshooting.run_diagnostics" fallback="Run Diagnostics" />
                 </button>
         <button 
                   onclick={generateDiagnosticReport}
                   class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                 >
                   <Icon src={ClipboardDocument} size="16" class="inline mr-2" />
-                  {copiedToClipboard ? 'Copied!' : 'Copy Report'}
+                  {copiedToClipboard ? ($_('troubleshooting.copied') || 'Copied!') : ($_('troubleshooting.copy_report') || 'Copy Report')}
         </button>
               </div>
       </div>
@@ -389,7 +507,7 @@
                   onclick={clearErrorLogs}
                   class="px-3 py-1 bg-red-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
                 >
-            Clear Logs
+            <T key="troubleshooting.clear_logs" fallback="Clear Logs" />
           </button>
         </div>
 
@@ -417,13 +535,13 @@
                     disabled={loadingLogs}
                     class="px-3 py-1 bg-blue-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loadingLogs ? 'Loading...' : 'Load Logs'}
+                    {loadingLogs ? ($_('troubleshooting.loading') || 'Loading...') : ($_('troubleshooting.load_logs') || 'Load Logs')}
                   </button>
                   <button
                     onclick={exportLogs}
                     class="px-3 py-1 bg-green-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                   >
-                    Export All
+                    <T key="troubleshooting.export_all" fallback="Export All" />
                   </button>
         </div>
       </div>
@@ -442,8 +560,8 @@
                   {:else}
                     <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">
                       <Icon src={DocumentText} size="48" class="mx-auto mb-4 opacity-50" />
-                      <p>No logs loaded</p>
-                      <p class="text-xs mt-2">Click "Load Logs" to fetch recent system logs</p>
+                      <p><T key="troubleshooting.no_logs_loaded" fallback="No logs loaded" /></p>
+                      <p class="text-xs mt-2"><T key="troubleshooting.click_load_logs" fallback='Click "Load Logs" to fetch recent system logs' /></p>
         </div>
       {/if}
     </div>
@@ -456,10 +574,77 @@
             <div class="space-y-6">
               <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Performance Metrics</h3>
               
+              {#if systemMetrics}
+                <!-- Real-time System Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <!-- CPU Usage -->
+                  <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">CPU Usage</h4>
+                    <div class="text-2xl font-bold text-accent-500">{systemMetrics.cpu.usage_percent.toFixed(1)}%</div>
+                    <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 mt-2">
+                      <div 
+                        class="bg-accent-500 h-2 rounded-full transition-all duration-300"
+                        style="width: {systemMetrics.cpu.usage_percent}%"
+                      ></div>
+                    </div>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{systemMetrics.cpu.frequency_mhz} MHz</div>
+                  </div>
+                  
+                  <!-- Memory Usage -->
+                  <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Memory Usage</h4>
+                    <div class="text-2xl font-bold text-blue-500">{systemMetrics.memory.usage_percent.toFixed(1)}%</div>
+                    <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 mt-2">
+                      <div 
+                        class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style="width: {systemMetrics.memory.usage_percent}%"
+                      ></div>
+                    </div>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      {(systemMetrics.memory.used_bytes / 1024 / 1024 / 1024).toFixed(2)} GB / {(systemMetrics.memory.total_bytes / 1024 / 1024 / 1024).toFixed(2)} GB
+                    </div>
+                  </div>
+                  
+                  <!-- Disk Usage -->
+                  <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Disk Usage</h4>
+                    <div class="text-2xl font-bold text-green-500">{systemMetrics.disk.usage_percent.toFixed(1)}%</div>
+                    <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 mt-2">
+                      <div 
+                        class="bg-green-500 h-2 rounded-full transition-all duration-300"
+                        style="width: {systemMetrics.disk.usage_percent}%"
+                      ></div>
+                    </div>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      {(systemMetrics.disk.used_bytes / 1024 / 1024 / 1024).toFixed(2)} GB / {(systemMetrics.disk.total_bytes / 1024 / 1024 / 1024).toFixed(2)} GB
+                    </div>
+                  </div>
+                  
+                  <!-- Network Activity -->
+                  <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Network</h4>
+                    <div class="space-y-1 text-xs">
+                      <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">Received:</span>
+                        <span class="text-zinc-700 dark:text-zinc-300">{(systemMetrics.network.received_bytes / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">Sent:</span>
+                        <span class="text-zinc-700 dark:text-zinc-300">{(systemMetrics.network.transmitted_bytes / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">Packets:</span>
+                        <span class="text-zinc-700 dark:text-zinc-300">{systemMetrics.network.received_packets + systemMetrics.network.transmitted_packets}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {/if}
+              
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Memory Usage -->
+                <!-- Memory Usage (Browser) -->
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
-                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Memory Usage</h4>
+                  <h4 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Browser Memory Usage</h4>
                   {#if systemInfo.memoryInfo}
                     <div class="space-y-2">
                       <div class="flex items-center justify-between">
@@ -569,13 +754,13 @@
                       onclick={testApiConnection}
                       class="w-full px-3 py-2 bg-blue-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
                     >
-                      Test API Connection
+                      <T key="troubleshooting.test_api_connection" fallback="Test API Connection" />
                     </button>
                     <button
                       onclick={() => window.open('https://www.google.com', '_blank')}
                       class="w-full px-3 py-2 bg-green-500 text-white rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
                     >
-                      Test Internet Connection
+                      <T key="troubleshooting.test_internet_connection" fallback="Test Internet Connection" />
                     </button>
                   </div>
                 </div>
@@ -646,13 +831,13 @@
                   onclick={() => localStorage.clear()}
                   class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:bg-red-600"
                 >
-                  Clear Local Storage
+                  <T key="troubleshooting.clear_local_storage" fallback="Clear Local Storage" />
                 </button>
                 <button
                   onclick={() => sessionStorage.clear()}
                   class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 hover:bg-orange-600"
                 >
-                  Clear Session Storage
+                  <T key="troubleshooting.clear_session_storage" fallback="Clear Session Storage" />
                 </button>
               </div>
             </div>

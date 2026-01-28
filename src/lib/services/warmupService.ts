@@ -3,6 +3,7 @@ import { seqtaFetch } from '../../utils/netUtil';
 import { logger } from '../../utils/logger';
 import { setIdb } from './idbCache';
 import { isOfflineMode } from '../utils/offlineMode';
+import { forumPhotoSyncService } from './forumPhotoSyncService';
 
 // Centralized background warm-up of frequently used SEQTA endpoints.
 // This primes the in-memory cache so pages can render instantly.
@@ -152,7 +153,18 @@ export async function warmUpCommonData(): Promise<void> {
     prefetchAssessmentsOverview(),
     prefetchNoticesLabels(),
     prefetchTodayNotices(),
+    prefetchAnalyticsSync(),
+    prefetchFoliosSettings(),
+    prefetchGoalsSettings(),
+    prefetchForumsSettings(),
+    prefetchForumsList(),
   ]);
+
+  // Run forum photo sync in background (non-blocking)
+  // This is a longer operation, so we don't wait for it
+  forumPhotoSyncService.syncAllPhotos().catch((e) => {
+    logger.error('warmup', 'warmUpCommonData', `Forum photo sync failed: ${e}`, { error: e });
+  });
 }
 
 // Assessments Overview warm-up: uses Rust backend for processing
@@ -248,6 +260,170 @@ async function prefetchTodayNotices(): Promise<void> {
         key,
         ttlMin: 30,
         count: notices?.length,
+      });
+    }
+  } catch {
+    // ignore warmup errors
+  }
+}
+
+// Analytics sync warm-up: syncs analytics data in background only if no data exists
+async function prefetchAnalyticsSync(): Promise<void> {
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+
+    // Check if analytics data already exists in cache
+    try {
+      const existingData = await invoke<string>('load_analytics');
+      if (existingData && existingData.trim() !== '' && existingData.trim() !== '[]') {
+        // Data exists, skip background sync - it will sync when user visits the page
+        logger.info(
+          'warmup',
+          'prefetchAnalyticsSync',
+          'Analytics data exists in cache, skipping background sync',
+        );
+        return;
+      }
+    } catch (e) {
+      // If load fails (file doesn't exist), continue with sync
+      logger.debug(
+        'warmup',
+        'prefetchAnalyticsSync',
+        'No existing analytics data found, proceeding with sync',
+      );
+    }
+
+    // Only sync if no data exists
+    await invoke<string>('sync_analytics_data');
+    logger.info('warmup', 'prefetchAnalyticsSync', 'Analytics data synced successfully');
+
+    // Show success toast notification
+    const { toastStore } = await import('../stores/toast');
+    toastStore.success('Analytics data synced');
+  } catch {
+    // ignore warmup errors - don't show toast for background warmup failures
+  }
+}
+
+// Folios settings warm-up
+async function prefetchFoliosSettings(): Promise<void> {
+  try {
+    const cacheKey = 'folios_settings_enabled';
+    if (cache.get(cacheKey)) return;
+
+    const response = await seqtaFetch('/seqta/student/load/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {},
+    });
+
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    const enabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
+    
+    cache.set(cacheKey, enabled, 60); // 60 min TTL
+    await setIdb(cacheKey, enabled);
+    logger.info('warmup', 'prefetchFoliosSettings', 'Cached folios settings (mem+idb)', {
+      ttlMin: 60,
+      enabled,
+    });
+  } catch {
+    // ignore warmup errors
+  }
+}
+
+// Goals settings and years warm-up
+async function prefetchGoalsSettings(): Promise<void> {
+  try {
+    const cacheKey = 'goals_settings_enabled';
+    if (cache.get(cacheKey)) return;
+
+    const response = await seqtaFetch('/seqta/student/load/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {},
+    });
+
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    const enabled = data?.payload?.['coneqt-s.page.goals']?.value === 'enabled';
+    
+    cache.set(cacheKey, enabled, 60); // 60 min TTL
+    await setIdb(cacheKey, enabled);
+    logger.info('warmup', 'prefetchGoalsSettings', 'Cached goals settings (mem+idb)', {
+      ttlMin: 60,
+      enabled,
+    });
+
+    // If enabled, also prefetch years list
+    if (enabled) {
+      const yearsResponse = await seqtaFetch('/seqta/student/load/goals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: { mode: 'years' },
+      });
+
+      const yearsData = typeof yearsResponse === 'string' ? JSON.parse(yearsResponse) : yearsResponse;
+      if (yearsData.status === '200' && Array.isArray(yearsData.payload)) {
+        const yearsKey = 'goals_years';
+        cache.set(yearsKey, yearsData.payload, 30); // 30 min TTL
+        await setIdb(yearsKey, yearsData.payload);
+        logger.info('warmup', 'prefetchGoalsSettings', 'Cached goals years (mem+idb)', {
+          ttlMin: 30,
+          count: yearsData.payload.length,
+        });
+      }
+    }
+  } catch {
+    // ignore warmup errors
+  }
+}
+
+// Forums settings warm-up
+async function prefetchForumsSettings(): Promise<void> {
+  try {
+    const cacheKey = 'forums_settings_enabled';
+    if (cache.get(cacheKey)) return;
+
+    const response = await seqtaFetch('/seqta/student/load/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {},
+    });
+
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    const forumsPageEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+    const forumsGreetingExists = data?.payload?.['coneqt-s.forum.greeting'] !== undefined;
+    const enabled = forumsPageEnabled || forumsGreetingExists;
+    
+    cache.set(cacheKey, enabled, 60); // 60 min TTL
+    await setIdb(cacheKey, enabled);
+    logger.info('warmup', 'prefetchForumsSettings', 'Cached forums settings (mem+idb)', {
+      ttlMin: 60,
+      enabled,
+    });
+  } catch {
+    // ignore warmup errors
+  }
+}
+
+// Forums list warm-up
+async function prefetchForumsList(): Promise<void> {
+  try {
+    const cacheKey = 'forums_list';
+    if (cache.get(cacheKey)) return;
+
+    const response = await seqtaFetch('/seqta/student/load/forums', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { mode: 'list' },
+    });
+
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    if (data?.payload?.forums && Array.isArray(data.payload.forums)) {
+      cache.set(cacheKey, data.payload, 15); // 15 min TTL (forums change frequently)
+      await setIdb(cacheKey, data.payload);
+      logger.info('warmup', 'prefetchForumsList', 'Cached forums list (mem+idb)', {
+        ttlMin: 15,
+        count: data.payload.forums.length,
       });
     }
   } catch {

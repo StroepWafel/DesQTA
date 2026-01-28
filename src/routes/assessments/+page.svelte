@@ -8,7 +8,6 @@
   // $lib/ imports
   import { setIdb } from '$lib/services/idbCache';
   import T from '$lib/components/T.svelte';
-  import GradePredictions from '$lib/components/GradePredictions.svelte';
   import AssessmentBoardView from '$lib/components/AssessmentBoardView.svelte';
   import AssessmentCalendarView from '$lib/components/AssessmentCalendarView.svelte';
   import AssessmentListView from '$lib/components/AssessmentListView.svelte';
@@ -24,6 +23,7 @@
   import { notify } from '../../utils/notify';
   import { logger } from '../../utils/logger';
   import { useDataLoader } from '$lib/utils/useDataLoader';
+  import { checkAndCalculateNewGrades } from '$lib/services/backgroundGradeService';
 
   // Types
   import type { Assessment, Subject, LessonColour, AssessmentsOverviewData } from '$lib/types';
@@ -104,13 +104,18 @@
           years: result.years,
         };
       },
-      onDataLoaded: (data) => {
+      onDataLoaded: async (data) => {
         upcomingAssessments = data.assessments;
         activeSubjects = data.subjects;
         allSubjects = data.allSubjects;
         subjectFilters = data.filters;
         availableYears = data.years;
         loadingAssessments = false;
+        
+        // Check for new marked assessments and auto-calculate in background
+        checkAndCalculateNewGrades(data.assessments).catch((e) => {
+          logger.error('assessments', '+page', 'Background grade check failed', { error: e });
+        });
       },
     });
 
@@ -316,15 +321,6 @@
 
   <!-- Content Area -->
   <div class="space-y-6">
-    <!-- Grade Predictions Section -->
-    <GradePredictions
-      assessments={upcomingAssessments}
-      {selectedYear}
-      {aiIntegrationsEnabled}
-      {gradeAnalyserEnabled}
-      showInView="list"
-      currentView={selectedTab} />
-
     <!-- Main Assessment Content -->
     {#if loadingAssessments}
       <div class="flex justify-center items-center py-12">

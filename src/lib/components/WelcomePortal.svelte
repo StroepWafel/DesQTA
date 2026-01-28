@@ -22,7 +22,6 @@
   let showPortalModal = $state(false);
   let showDefaultContent = $state<boolean>(false);
   let parsedPortalDocument = $state<ParsedDocument | null>(null);
-  const parser = new DOMParser();
 
   // Module type checking functions (same as CourseContent)
   function isModule<T extends Module>(
@@ -148,11 +147,18 @@
           if (payload.url) {
             portalUrl = payload.url;
           } else {
-            const html = parser.parseFromString(payload.contents, 'text/html');
-            const iframe = html.getElementsByTagName('iframe')[0];
-            if (iframe) {
-              portalUrl = iframe.src;
-            } else {
+            // Use Rust-side HTML parsing to extract iframe src
+            try {
+              const iframeSrc = await invoke<string | null>('extract_iframe_src_command', {
+                html: payload.contents
+              });
+              if (iframeSrc) {
+                portalUrl = iframeSrc;
+              } else {
+                showDefaultContent = true;
+              }
+            } catch (e) {
+              console.error('Error extracting iframe src:', e);
               showDefaultContent = true;
             }
           }

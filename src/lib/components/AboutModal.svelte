@@ -13,6 +13,7 @@
   } from 'svelte-hero-icons';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import T from './T.svelte';
+  import { _, locale } from '../i18n';
 
   interface Props {
     open: boolean;
@@ -20,14 +21,24 @@
   }
 
   let { open = $bindable(false), onclose }: Props = $props();
-  let appVersion: string = '1.0.0-rc.5';
+  let appVersion: string = '1.0.0-rc.6';
 
   function closeModal() {
     onclose?.();
   }
+
+  // Safe i18n helper that handles uninitialized locale
+  const safeTranslate = $derived(() => {
+    if (!$locale) return 'About Modal';
+    try {
+      return $_('about.modal_aria_label') || 'About Modal';
+    } catch {
+      return 'About Modal';
+    }
+  });
 </script>
 
-<Modal bind:open onclose={closeModal} ariaLabel="About Modal">
+<Modal bind:open onclose={closeModal} ariaLabel={safeTranslate()}>
   <!-- Easter Egg Trigger Area -->
   <div
     class="absolute top-0 right-0 w-16 h-16 opacity-0 cursor-auto"
@@ -70,32 +81,32 @@
         <div
           class="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-2xl border border-zinc-200/40 dark:border-zinc-700/40 p-4 sm:p-6 flex-1 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
           <h3 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
-            Version Information
+            <T key="about.version_information" fallback="Version Information" />
           </h3>
           <div class="space-y-2 sm:space-y-3">
             <div class="flex justify-between items-center">
-              <span class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">Version</span>
+              <span class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400"><T key="about.version" fallback="Version" /></span>
               <span class="text-sm sm:text-base font-medium text-zinc-900 dark:text-white">{appVersion}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">Build Date</span>
+              <span class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400"><T key="about.build_date" fallback="Build Date" /></span>
               <span class="text-sm sm:text-base font-medium text-zinc-900 dark:text-white"
                 >{new Date().toLocaleDateString()}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">Platform</span>
-              <span class="text-sm sm:text-base font-medium text-zinc-900 dark:text-white">Desktop</span>
+              <span class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400"><T key="about.platform" fallback="Platform" /></span>
+              <span class="text-sm sm:text-base font-medium text-zinc-900 dark:text-white"><T key="about.desktop" fallback="Desktop" /></span>
             </div>
           </div>
         </div>
         <div
           class="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-2xl border border-zinc-200/40 dark:border-zinc-700/40 p-4 sm:p-6 flex-1 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
-          <h3 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">Built By</h3>
+          <h3 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-zinc-900 dark:text-white"><T key="about.built_by" fallback="Built By" /></h3>
           <div class="grid grid-cols-2 gap-3 sm:gap-4">
             <div class="col-span-2 flex justify-center">
              <img
                src="https://contrib.rocks/image?repo=BetterSEQTA/DesQTA&columns=6"
-                alt="Contributers to DesQTA"
+                alt={$_('about.contributors_alt') || 'Contributers to DesQTA'}
                 class="w-full max-w-[500px] h-auto object-contain"
                />
              </div>
@@ -105,14 +116,14 @@
       <div class="flex flex-col gap-4 sm:gap-6 h-full">
         <div
           class="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-2xl border border-zinc-200/40 dark:border-zinc-700/40 p-4 sm:p-6 flex-1 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
-          <h3 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">Features</h3>
+          <h3 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-zinc-900 dark:text-white"><T key="about.features" fallback="Features" /></h3>
           <ul class="overflow-auto pr-2 space-y-2 sm:space-y-3 max-h-32 sm:max-h-40">
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div
                 class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-lg dark:bg-blue-900/50">
                 <Icon src={BookOpen} class="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Course Management</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_course_management" fallback="Course Management" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div
@@ -121,110 +132,110 @@
                   src={ClipboardDocumentList}
                   class="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Timetable (week view, export, lesson details)</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_timetable" fallback="Timetable (week view, export, lesson details)" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-yellow-100 rounded-lg dark:bg-yellow-900/50">
                 <Icon src={ClipboardDocumentList} class="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600 dark:text-yellow-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Assessment Tracking & AI Grade Predictions</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_assessments" fallback="Assessment Tracking & AI Grade Predictions" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-indigo-100 rounded-lg dark:bg-indigo-900/50">
                 <Icon src={DocumentText} class="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Analytics (grade distribution, performance graphs)</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_analytics" fallback="Analytics (grade distribution, performance graphs)" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-pink-100 rounded-lg dark:bg-pink-900/50">
                 <Icon src={ChatBubbleLeftRight} class="w-3 h-3 sm:w-4 sm:h-4 text-pink-600 dark:text-pink-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Direqt Messaging (folders, RSS, compose, DMs)</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_messaging" fallback="Direqt Messaging (folders, RSS, compose, DMs)" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-red-100 rounded-lg dark:bg-red-900/50">
                 <Icon src={Bell} class="w-3 h-3 sm:w-4 sm:h-4 text-red-600 dark:text-red-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Real-time Notifications & Reminders</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_notifications" fallback="Real-time Notifications & Reminders" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-lg dark:bg-purple-900/50">
                 <Icon src={GlobeAlt} class="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">News Reader (multi-country RSS, source selection)</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_news" fallback="News Reader (multi-country RSS, source selection)" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-orange-100 rounded-lg dark:bg-orange-900/50">
                 <Icon src={DocumentText} class="w-3 h-3 sm:w-4 sm:h-4 text-orange-600 dark:text-orange-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Notice Board with Label Filtering</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_notice_board" fallback="Notice Board with Label Filtering" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-teal-100 rounded-lg dark:bg-teal-900/50">
                 <Icon src={ClipboardDocumentList} class="w-3 h-3 sm:w-4 sm:h-4 text-teal-600 dark:text-teal-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Reports Viewer & Download</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_reports" fallback="Reports Viewer & Download" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-zinc-100 rounded-lg dark:bg-zinc-900/50">
                 <Icon src={CalendarDays} class="w-3 h-3 sm:w-4 sm:h-4 text-zinc-600 dark:text-zinc-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">QR Sign-in Utility</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_qr_signin" fallback="QR Sign-in Utility" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-lime-100 rounded-lg dark:bg-lime-900/50">
                 <Icon src={BookOpen} class="w-3 h-3 sm:w-4 sm:h-4 text-lime-600 dark:text-lime-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Homepage Shortcuts & Custom Widgets</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_homepage" fallback="Homepage Shortcuts & Custom Widgets" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-cyan-100 rounded-lg dark:bg-cyan-900/50">
                 <Icon src={GlobeAlt} class="w-3 h-3 sm:w-4 sm:h-4 text-cyan-600 dark:text-cyan-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Cloud Sync for Settings</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_cloud_sync" fallback="Cloud Sync for Settings" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-fuchsia-100 rounded-lg dark:bg-fuchsia-900/50">
                 <Icon src={Sun} class="w-3 h-3 sm:w-4 sm:h-4 text-fuchsia-600 dark:text-fuchsia-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Appearance & Theme Customization</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_theming" fallback="Appearance & Theme Customization" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-amber-100 rounded-lg dark:bg-amber-900/50">
                 <Icon src={ClipboardDocumentList} class="w-3 h-3 sm:w-4 sm:h-4 text-amber-600 dark:text-amber-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Sidebar Auto-Collapse & Auto-Expand on Hover</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_sidebar" fallback="Sidebar Auto-Collapse & Auto-Expand on Hover" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-rose-100 rounded-lg dark:bg-rose-900/50">
                 <Icon src={Bell} class="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Enhanced Playful UI Animations</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_animations" fallback="Enhanced Playful UI Animations" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-sky-100 rounded-lg dark:bg-sky-900/50">
                 <Icon src={GlobeAlt} class="w-3 h-3 sm:w-4 sm:h-4 text-sky-600 dark:text-sky-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Plugin System for Extensibility</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_plugins" fallback="Plugin System for Extensibility" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-violet-100 rounded-lg dark:bg-violet-900/50">
                 <Icon src={BookOpen} class="w-3 h-3 sm:w-4 sm:h-4 text-violet-600 dark:text-violet-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">AI Integrations (Gemini, Grade & Lesson Analysis)</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_ai" fallback="AI Integrations (Gemini, Grade & Lesson Analysis)" /></span>
             </li>
             <li class="flex items-center space-x-2 sm:space-x-3">
               <div
                 class="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-indigo-100 rounded-lg dark:bg-indigo-900/50">
                 <Icon src={DocumentText} class="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <span class="text-sm sm:text-base text-zinc-900 dark:text-white">Notice Board</span>
+              <span class="text-sm sm:text-base text-zinc-900 dark:text-white"><T key="about.feature_notice_board" fallback="Notice Board" /></span>
             </li>
           </ul>
         </div>
         <div
           class="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-2xl border border-zinc-200/40 dark:border-zinc-700/40 p-4 sm:p-6 flex-1 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
-          <h3 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">Links</h3>
+          <h3 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-zinc-900 dark:text-white"><T key="about.links" fallback="Links" /></h3>
           <div class="space-y-3 sm:space-y-4">
             <button
               type="button"
@@ -235,8 +246,8 @@
                 <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 72 72" width="128px" height="128px"><path d="M36,12c13.255,0,24,10.745,24,24c0,10.656-6.948,19.685-16.559,22.818c0.003-0.009,0.007-0.022,0.007-0.022	s-1.62-0.759-1.586-2.114c0.038-1.491,0-4.971,0-6.248c0-2.193-1.388-3.747-1.388-3.747s10.884,0.122,10.884-11.491	c0-4.481-2.342-6.812-2.342-6.812s1.23-4.784-0.426-6.812c-1.856-0.2-5.18,1.774-6.6,2.697c0,0-2.25-0.922-5.991-0.922	c-3.742,0-5.991,0.922-5.991,0.922c-1.419-0.922-4.744-2.897-6.6-2.697c-1.656,2.029-0.426,6.812-0.426,6.812	s-2.342,2.332-2.342,6.812c0,11.613,10.884,11.491,10.884,11.491s-1.097,1.239-1.336,3.061c-0.76,0.258-1.877,0.576-2.78,0.576	c-2.362,0-4.159-2.296-4.817-3.358c-0.649-1.048-1.98-1.927-3.221-1.927c-0.817,0-1.216,0.409-1.216,0.876s1.146,0.793,1.902,1.659	c1.594,1.826,1.565,5.933,7.245,5.933c0.617,0,1.876-0.152,2.823-0.279c-0.006,1.293-0.007,2.657,0.013,3.454	c0.034,1.355-1.586,2.114-1.586,2.114s0.004,0.013,0.007,0.022C18.948,55.685,12,46.656,12,36C12,22.745,22.745,12,36,12z"/></svg>
               </div>
               <div>
-                <div class="text-sm sm:text-base font-medium text-zinc-900 dark:text-white">GitHub Repository</div>
-                <div class="text-xs text-zinc-500 dark:text-zinc-400">View source code</div>
+                <div class="text-sm sm:text-base font-medium text-zinc-900 dark:text-white"><T key="about.github_repository" fallback="GitHub Repository" /></div>
+                <div class="text-xs text-zinc-500 dark:text-zinc-400"><T key="about.view_source_code" fallback="View source code" /></div>
               </div>
             </button>
             <button
@@ -255,8 +266,8 @@
                   </svg>
               </div>
               <div>
-                <div class="text-sm sm:text-base font-medium text-zinc-900 dark:text-white">Website</div>
-                <div class="text-xs text-zinc-500 dark:text-zinc-400">Official website</div>
+                <div class="text-sm sm:text-base font-medium text-zinc-900 dark:text-white"><T key="about.website" fallback="Website" /></div>
+                <div class="text-xs text-zinc-500 dark:text-zinc-400"><T key="about.official_website" fallback="Official website" /></div>
               </div>
             </button>
           </div>
@@ -266,7 +277,7 @@
 
     <div class="pt-6 sm:pt-4 mt-2 sm:mt-2">
       <p class="text-center text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-      © 2025 DesQTA. Licensed under MIT License.
+      <T key="about.copyright" fallback="© 2025 DesQTA. Licensed under MIT License." />
       </p>
     </div>
   </div>

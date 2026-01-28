@@ -7,6 +7,7 @@ export type SeqtaRequestInit = {
   params?: Record<string, string>;
   is_image?: boolean;
   return_url?: boolean;
+  parse_html?: boolean;
 };
 
 function getRandomItem<T>(arr: T[]): T {
@@ -74,6 +75,7 @@ export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promis
       parameters: init?.params || {},
       isImage: init?.is_image || false,
       returnUrl: init?.return_url || false,
+      parseHtml: init?.parse_html || false,
     });
     
     return response;

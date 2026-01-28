@@ -1,0 +1,14 @@
+/* Ocean Theme - Light Mode Styles */
+
+:not(.dark) {
+  --background-color: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%);
+  --surface-color: rgba(255, 255, 255, 0.9);
+  --text-color: #0c1729;
+  --border-color: #06b6d4;
+}
+
+:not(.dark) .ocean-deep {
+  background: rgba(6, 182, 212, 0.1) !important;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+}
+

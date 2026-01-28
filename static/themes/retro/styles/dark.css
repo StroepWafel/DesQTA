@@ -1,0 +1,25 @@
+/* Retro Theme - Dark Mode Styles */
+
+.dark {
+  --background-color: linear-gradient(135deg, #0a0a0a 0%, #1a0a1a 50%, #0a0a0a 100%);
+  --surface-color: rgba(26, 10, 26, 0.8);
+  --text-color: #ff00ff;
+  --border-color: #ff00ff;
+}
+
+.dark .retro-neon {
+  background: rgba(255, 0, 255, 0.15) !important;
+  border: 2px solid rgba(255, 0, 255, 0.6);
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+}
+
+/* Ensure all text glows in dark mode */
+.dark, .dark * {
+  text-shadow: 0 0 3px rgba(255, 0, 255, 0.3);
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #ff00ff !important;
+  text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+

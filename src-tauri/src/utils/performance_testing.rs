@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
+use crate::system_monitor;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PerformanceMetrics {
@@ -30,6 +31,8 @@ pub struct PerformanceMetrics {
     pub network_requests: u32,
     #[serde(rename = "resourceLoadTimes")]
     pub resource_load_times: Vec<ResourceLoadTime>,
+    #[serde(rename = "systemMetrics")]
+    pub system_metrics: Option<Vec<system_monitor::SystemMetrics>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -51,6 +54,14 @@ pub struct TestSummary {
     pub total_errors: u32,
     #[serde(rename = "totalWarnings")]
     pub total_warnings: u32,
+    #[serde(rename = "averageCpuUsage")]
+    pub average_cpu_usage: Option<f32>,
+    #[serde(rename = "peakCpuUsage")]
+    pub peak_cpu_usage: Option<f32>,
+    #[serde(rename = "averageMemoryUsage")]
+    pub average_memory_usage: Option<f32>,
+    #[serde(rename = "peakMemoryUsage")]
+    pub peak_memory_usage: Option<f32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -70,6 +81,8 @@ pub struct TestResults {
     pub pages: Vec<PerformanceMetrics>,
     #[serde(rename = "overallErrors")]
     pub overall_errors: Vec<String>,
+    #[serde(rename = "systemMetricsHistory")]
+    pub system_metrics_history: Option<Vec<system_monitor::SystemMetrics>>,
     pub summary: TestSummary,
     pub timestamp: String,
     pub version: String,

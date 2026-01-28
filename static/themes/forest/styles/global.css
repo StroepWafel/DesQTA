@@ -1,0 +1,99 @@
+/* Forest Theme - Global Styles */
+
+:root {
+  --accent-color-value: #16a34a;
+  --accent-color-hover: #15803d;
+  --background-color: linear-gradient(135deg, #0f1f0f 0%, #1a3a1a 50%, #0f1f0f 100%);
+}
+
+html, body {
+  background: transparent !important;
+}
+
+/* Custom scrollbar for forest theme */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #15803d, #16a34a);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: #16a34a transparent;
+}
+
+/* Enhanced forest effects */
+.forest-nature {
+  background: rgba(22, 163, 74, 0.1) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+/* Forest accent colors for interactive elements */
+.accent-bg {
+  background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+}
+
+.accent-bg-hover:hover {
+  background: linear-gradient(135deg, #15803d, #16a34a) !important;
+}
+
+.accent-text {
+  color: #16a34a !important;
+}
+
+.accent-border {
+  border-color: #16a34a !important;
+}
+
+.accent-ring {
+  --tw-ring-color: #16a34a !important;
+}
+
+/* Forest shadows */
+.accent-shadow {
+  box-shadow: 0 0 15px rgba(22, 163, 74, 0.3) !important;
+}
+
+/* Enhanced hover effects */
+.hover\:accent-shadow:hover {
+  box-shadow: 0 0 20px rgba(22, 163, 74, 0.4) !important;
+}
+
+/* Forest gradients for cards and containers */
+.forest-gradient {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.1), rgba(34, 197, 94, 0.1));
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+/* Forest theme specific button styles */
+.forest-button {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.forest-button:hover {
+  background: linear-gradient(135deg, #15803d, #16a34a);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+/* Forest leaf animations */
+.forest-leaf {
+  animation: forest-leaf 4s ease-in-out infinite;
+}
+
+@keyframes forest-leaf {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  50% {
+    transform: rotate(5deg) translateY(-3px);
+  }
+}
+

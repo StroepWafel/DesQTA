@@ -2,6 +2,8 @@
   import { Window } from '@tauri-apps/api/window';
   import WeatherWidget from './WeatherWidget.svelte';
   import UserDropdown from './UserDropdown.svelte';
+  import QuestionnaireWidget from './QuestionnaireWidget.svelte';
+  import QuestionnaireModal from './QuestionnaireModal.svelte';
   import {
     Icon,
     Bars3,
@@ -23,6 +25,7 @@
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
   import { flushAll } from '../services/syncService';
+  import { questionnaireService, type QuestionnaireQuestion } from '../services/questionnaireService';
   import { _ } from '../i18n';
   import T from './T.svelte';
 
@@ -126,6 +129,9 @@
     { nameKey: 'navigation.assessments', path: '/assessments' },
     { nameKey: 'navigation.courses', path: '/courses' },
     { nameKey: 'navigation.directory', path: '/directory' },
+    { nameKey: 'navigation.goals', path: '/goals' },
+    { nameKey: 'navigation.forums', path: '/forums' },
+    { nameKey: 'navigation.folios', path: '/folios' },
     { nameKey: 'navigation.messages', path: '/direqt-messages' },
     { nameKey: 'navigation.news', path: '/news' },
     { nameKey: 'navigation.notices', path: '/notices' },
@@ -154,6 +160,8 @@
   let unreadNotifications = $state(0);
   let isMobile = $state(false);
   let showNotificationsModal = $state(false);
+  let showQuestionnaireModal = $state(false);
+  let currentQuestion = $state<QuestionnaireQuestion | null>(null);
 
   function handleSelect(page: { nameKey: string; path: string }) {
     searchStore.set('');
@@ -406,6 +414,11 @@
       {#if weatherEnabled && weatherData}
         <WeatherWidget {weatherData} />
       {/if}
+      <QuestionnaireWidget
+        onOpenModal={(question) => {
+          currentQuestion = question;
+          showQuestionnaireModal = true;
+        }} />
     </div>
   </div>
   <div class="flex flex-1 justify-center">
@@ -543,7 +556,7 @@
       class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
-      aria-label="Notifications"
+      aria-label={$_('header.notifications') || 'Notifications'}
       tabindex="0"
       onclick={() => {
         showNotificationsModal = false;
@@ -614,4 +627,10 @@
       </div>
     </div>
   {/if}
+  <QuestionnaireModal
+    bind:open={showQuestionnaireModal}
+    question={currentQuestion}
+    onclose={() => {
+      showQuestionnaireModal = false;
+    }} />
 </header>

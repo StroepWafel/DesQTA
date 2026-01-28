@@ -130,6 +130,7 @@ async fn fetch_assignments(
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch assignments: {}", e))?;
@@ -217,6 +218,7 @@ async fn fetch_classes(
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch classes: {}", e))?;
@@ -348,6 +350,7 @@ async fn fetch_timetable_slots(
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch timetable: {}", e))?;
@@ -481,6 +484,7 @@ async fn fetch_notices(
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch notices: {}", e))?;
@@ -564,6 +568,7 @@ async fn fetch_homework(
         Some(params),
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch homework: {}", e))?;
@@ -654,6 +659,7 @@ async fn fetch_staff(query: &str, category_filter: Option<&str>) -> Result<Vec<S
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch staff: {}", e))?;
@@ -886,6 +892,7 @@ async fn fetch_assignment_by_id(
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch upcoming assessments: {}", e))?;
@@ -920,6 +927,7 @@ async fn fetch_assignment_by_id(
             None,
             false,
             false,
+            None,
         )
         .await
         {
@@ -994,6 +1002,7 @@ async fn fetch_assignment_by_id(
                 None,
                 false,
                 false,
+                None,
             )
             .await
             {
@@ -1140,6 +1149,7 @@ async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch classes: {}", e))?;
@@ -1201,6 +1211,7 @@ async fn fetch_class_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
             None,
             false,
             false,
+            None,
         )
         .await
         {
@@ -1311,6 +1322,7 @@ async fn fetch_subject_by_id(id: String) -> Result<Option<SeqtaMentionItem>> {
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch subjects: {}", e))?;
@@ -1420,6 +1432,7 @@ async fn fetch_timetable_slot_by_id(
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch timetable: {}", e))?;
@@ -1546,6 +1559,7 @@ async fn fetch_notice_by_id(id: String, meta: Option<Value>) -> Result<Option<Se
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch notices: {}", e))?;
@@ -1615,6 +1629,7 @@ async fn fetch_homework_by_id(
         Some(params),
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch homework: {}", e))?;
@@ -1688,6 +1703,7 @@ async fn fetch_teacher_by_id(id: String, _meta: Option<Value>) -> Result<Option<
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch staff: {}", e))?;
@@ -1776,6 +1792,7 @@ async fn fetch_timetable_by_id(
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| anyhow!("Failed to fetch timetable: {}", e))?;
@@ -1961,6 +1978,7 @@ pub async fn get_weekly_schedule_for_class(
             None,
             false,
             false,
+            None,
         )
         .await
         {
@@ -2098,6 +2116,7 @@ pub async fn fetch_lesson_content(
         None,
         false,
         false,
+        None,
     )
     .await
     .map_err(|e| format!("Failed to fetch lesson content: {}", e))?;

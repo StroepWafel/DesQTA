@@ -1,0 +1,22 @@
+/* Nordic Theme - Component Styles */
+
+/* Card components */
+.nordic-card {
+  background: rgba(100, 116, 139, 0.05);
+  border: 1px solid rgba(100, 116, 139, 0.1);
+}
+
+/* Button components */
+.nordic-btn {
+  background: linear-gradient(135deg, #64748b, #94a3b8);
+  color: #ffffff;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.nordic-btn:hover {
+  background: linear-gradient(135deg, #475569, #64748b);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(100, 116, 139, 0.15);
+}
+

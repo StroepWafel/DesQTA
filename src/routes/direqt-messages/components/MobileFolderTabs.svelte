@@ -25,14 +25,19 @@
         { name: 'Trash', icon: Trash, id: 'trash' },
       ];
 
-      const subset = await invoke<any>('get_settings_subset', { keys: ['feeds'] });
-      const feeds = (subset?.feeds || []) as Array<{ url: string }>;
-      for (const item of feeds) {
-        try {
-          const rss = await getRSS(item.url);
-          base.push({ name: `RSS: ${rss.channel.title}`, icon: Rss, id: `rss-${item.url}` });
-        } catch (_) {
-          // Ignore failed RSS entries on mobile tabs
+      const subset = await invoke<any>('get_settings_subset', { keys: ['feeds', 'separate_rss_feed'] });
+      const separateRssFeed = subset?.separate_rss_feed ?? false;
+      
+      // Only add RSS feeds to messages tabs if the setting is disabled
+      if (!separateRssFeed) {
+        const feeds = (subset?.feeds || []) as Array<{ url: string }>;
+        for (const item of feeds) {
+          try {
+            const rss = await getRSS(item.url);
+            base.push({ name: `RSS: ${rss.channel.title}`, icon: Rss, id: `rss-${item.url}` });
+          } catch (_) {
+            // Ignore failed RSS entries on mobile tabs
+          }
         }
       }
       folders = base;

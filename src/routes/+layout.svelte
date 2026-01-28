@@ -9,6 +9,8 @@
   import LoginScreen from '../lib/components/LoginScreen.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
+  import { Toaster } from 'svelte-sonner';
+  import Onboarding from '../lib/components/Onboarding.svelte';
   import { cloudAuthService } from '../lib/services/cloudAuthService';
   import { cloudSettingsService } from '../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../lib/services/settingsSync';
@@ -46,6 +48,10 @@
     GlobeAlt,
     XMark,
     PencilSquare,
+    Rss,
+    Flag,
+    ChatBubbleBottomCenterText,
+    FolderOpen,
   } from 'svelte-hero-icons';
   import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
@@ -65,6 +71,7 @@
   let sidebarOpen = $state(true);
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
+  let showOnboarding = $state(false);
 
   // Composables
   const weather = useWeather();
@@ -91,7 +98,11 @@
     { labelKey: 'navigation.assessments', icon: ClipboardDocumentList, path: '/assessments' },
     { labelKey: 'navigation.timetable', icon: CalendarDays, path: '/timetable' },
     { labelKey: 'navigation.study', icon: PencilSquare, path: '/study' },
+    { labelKey: 'navigation.goals', icon: Flag, path: '/goals' },
+    { labelKey: 'navigation.forums', icon: ChatBubbleBottomCenterText, path: '/forums' },
+    { labelKey: 'navigation.folios', icon: FolderOpen, path: '/folios' },
     { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { labelKey: 'navigation.rss_feeds', icon: Rss, path: '/rss-feeds' },
     { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
     { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },
     { labelKey: 'navigation.news', icon: Newspaper, path: '/news' },
@@ -180,6 +191,7 @@
       logger.debug('layout', 'onDestroy', 'Cleaning up reload listener');
       unlisten();
     }
+    window.removeEventListener('redo-onboarding', handleRedoOnboarding);
   });
 
   // Consolidated settings loader
@@ -382,9 +394,25 @@
     }
   });
 
+  // Listen for redo onboarding event
+  const handleRedoOnboarding = async () => {
+    try {
+      const settings = await loadSettings(['has_been_through_onboarding']);
+      if (!settings.has_been_through_onboarding) {
+        showOnboarding = true;
+        sidebarOpen = true;
+      }
+    } catch (e) {
+      logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', { error: e });
+    }
+  };
+
   onMount(async () => {
     logger.logComponentMount('layout');
     setupListeners();
+
+    // Set up redo onboarding listener
+    window.addEventListener('redo-onboarding', handleRedoOnboarding);
 
     // Initialize theme and i18n first
     await Promise.all([loadAccentColor(), loadTheme(), loadCurrentTheme(), initI18n()]);
@@ -416,6 +444,20 @@
         reloadSidebarSettings(),
         syncCloudSettings(),
       ]);
+
+      // Check if user needs onboarding - DISABLED: Only show when button is pressed in settings
+      // try {
+      //   const settings = await loadSettings(['has_been_through_onboarding']);
+      //   if (!settings.has_been_through_onboarding) {
+      //     // Wait a bit for UI to settle
+      //     setTimeout(() => {
+      //       showOnboarding = true;
+      //       sidebarOpen = true; // Ensure sidebar is open for first step
+      //     }, 1000);
+      //   }
+      // } catch (e) {
+      //   logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
+      // }
 
       // Load cached data from SQLite immediately for instant UI
       const { initializeApp } = await import('$lib/services/startupService');
@@ -574,8 +616,33 @@
 
       menu = [...DEFAULT_MENU]; // Use default menu configuration
       
+      // Filter menu items based on SEQTA config
+      if (latestConfig?.payload) {
+        const goalsEnabled = latestConfig.payload['coneqt-s.page.goals']?.value === 'enabled';
+        if (!goalsEnabled) {
+          menu = menu.filter(item => item.path !== '/goals');
+        }
+        const forumsPageEnabled = latestConfig.payload['coneqt-s.page.forums']?.value === 'enabled';
+        const forumsGreetingExists = latestConfig.payload['coneqt-s.forum.greeting'] !== undefined;
+        const forumsEnabled = forumsPageEnabled || forumsGreetingExists;
+        if (!forumsEnabled) {
+          menu = menu.filter(item => item.path !== '/forums');
+        }
+        const foliosEnabled = latestConfig.payload['coneqt-s.page.folios']?.value === 'enabled';
+        if (!foliosEnabled) {
+          menu = menu.filter(item => item.path !== '/folios');
+        }
+      }
+      
       // Apply menu order from settings
       await applyMenuOrder();
+      
+      // Filter RSS feeds menu item based on setting (after menu order is applied)
+      const settings = await loadSettings(['separate_rss_feed']);
+      const separateRssFeed = settings.separate_rss_feed ?? false;
+      if (!separateRssFeed) {
+        menu = menu.filter(item => item.path !== '/rss-feeds');
+      }
     } catch (e) {
       logger.error('layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', { error: e });
     } finally {
@@ -588,37 +655,37 @@
       const settings = await loadSettings(['menu_order']);
       const menuOrder = settings.menu_order as string[] | undefined;
       
+      // Use current menu state instead of DEFAULT_MENU to preserve filters
+      const currentMenu = [...menu];
+      const currentMenuMap = new Map(currentMenu.map(item => [item.path, item]));
+      
       if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
-        // Create a map of paths to menu items for quick lookup
-        const menuMap = new Map(DEFAULT_MENU.map(item => [item.path, item]));
-        
         // Reorder menu based on saved order, keeping any new items at the end
         const orderedMenu: typeof DEFAULT_MENU = [];
         const addedPaths = new Set<string>();
         
-        // Add items in saved order
+        // Add items in saved order (only if they exist in current menu)
         for (const path of menuOrder) {
-          const item = menuMap.get(path);
+          const item = currentMenuMap.get(path);
           if (item) {
             orderedMenu.push(item);
             addedPaths.add(path);
           }
         }
         
-        // Add any items not in saved order (new items)
-        for (const item of DEFAULT_MENU) {
+        // Add any items not in saved order (new items that exist in current menu)
+        for (const item of currentMenu) {
           if (!addedPaths.has(item.path)) {
             orderedMenu.push(item);
           }
         }
         
         menu = orderedMenu;
-      } else {
-        menu = [...DEFAULT_MENU];
       }
+      // If no menu order, keep current menu (already filtered)
     } catch (e) {
       logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
-      menu = [...DEFAULT_MENU];
+      // Don't reset to DEFAULT_MENU on error, keep current filtered menu
     }
   };
 
@@ -701,4 +768,29 @@
     </div>
   </div>
 {/if}
+<Toaster 
+  position="bottom-right" 
+  theme={$theme === 'dark' ? 'dark' : 'light'}
+  richColors 
+  expand={true} 
+  closeButton
+  offset="20px"
+  visibleToasts={5}
+  toastOptions={{
+    unstyled: true,
+    classes: {
+      toast: 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-lg border rounded-lg px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-all duration-200',
+      title: 'text-sm font-semibold flex-1',
+      description: 'text-sm text-zinc-600 dark:text-zinc-400 mt-1',
+      success: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+      error: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+      info: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+      warning: 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+      closeButton: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0',
+      actionButton: 'bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-opacity',
+      cancelButton: 'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-colors'
+    }
+  }}
+/>
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
+<Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />

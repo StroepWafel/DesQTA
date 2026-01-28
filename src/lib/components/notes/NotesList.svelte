@@ -108,8 +108,12 @@
       await NotesService.deleteNote(noteId);
       await loadNotes(); // Refresh the list
       dispatch('deleteNote', { noteId });
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.success('Note deleted successfully');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to delete note';
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Failed to delete note');
     }
   }
 
@@ -154,8 +158,12 @@
       await loadNotes(); // Refresh to get updated folders
       newFolderName = '';
       showCreateFolder = false;
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.success('Folder created successfully');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to create folder';
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Failed to create folder');
     }
   }
 
@@ -183,6 +191,8 @@
   async function deleteFolder(folderId: string) {
     if (folderId === 'default') {
       error = 'Cannot delete the default folder';
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Cannot delete the default folder');
       return;
     }
 
@@ -193,9 +203,13 @@
         if (selectedFolder === folderId) {
           selectedFolder = 'all';
         }
+        const { toastStore } = await import('../../stores/toast');
+        toastStore.success('Folder deleted successfully');
         folderMenuOpen = null;
       } catch (e) {
         error = e instanceof Error ? e.message : 'Failed to delete folder';
+        const { toastStore } = await import('../../stores/toast');
+        toastStore.error('Failed to delete folder');
       }
     }
   }
@@ -222,9 +236,13 @@
       await loadNotes(); // Refresh
       
       editingFolder = null;
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.success('Folder renamed successfully');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to rename folder';
       editingFolder = null;
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Failed to rename folder');
     }
   }
 

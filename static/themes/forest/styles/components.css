@@ -1,0 +1,22 @@
+/* Forest Theme - Component Styles */
+
+/* Card components */
+.forest-card {
+  background: rgba(22, 163, 74, 0.05);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+/* Button components */
+.forest-btn {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.forest-btn:hover {
+  background: linear-gradient(135deg, #15803d, #16a34a);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+

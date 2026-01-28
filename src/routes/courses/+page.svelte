@@ -80,15 +80,6 @@
         },
         onDataLoaded: (foldersData) => {
           processFolders(foldersData);
-          // If no subjects found but folders exist, clear cache and refetch
-          const testActiveFolders = foldersData.filter((f: Folder) => f.active);
-          const testActiveSubjects = testActiveFolders.flatMap((f: Folder) => f.subjects || []);
-          if (testActiveSubjects.length === 0 && foldersData.length > 0) {
-            cache.delete(cacheKey);
-            // Refetch immediately
-            loadSubjects();
-            return;
-          }
           loading = false;
         },
         shouldSyncInBackground: (foldersData) => {
@@ -338,7 +329,11 @@
     <div
       class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
       <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
-        {selectedSubject ? selectedSubject.title : $_('navigation.courses') || 'Courses'}
+        {#if selectedSubject}
+          {selectedSubject.title}
+        {:else}
+          <T key="navigation.courses" fallback="Courses" />
+        {/if}
       </h2>
       {#if selectedSubject}
         <button

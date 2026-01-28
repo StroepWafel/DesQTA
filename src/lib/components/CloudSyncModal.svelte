@@ -15,6 +15,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { cloudAuthService, type CloudUser } from '../services/cloudAuthService';
   import { cloudSettingsService } from '../services/cloudSettingsService';
+  import { toastStore } from '../stores/toast';
 
   const dispatch = createEventDispatcher();
 
@@ -64,8 +65,10 @@
       isAuthenticated = true;
       success = 'Successfully authenticated with BetterSEQTA Plus account';
       password = ''; // Clear password
+      toastStore.success('Successfully authenticated with BetterSEQTA Plus');
     } catch (err) {
       error = `Authentication failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      toastStore.error('Authentication failed');
     } finally {
       loading = false;
       operation = '';
@@ -78,8 +81,10 @@
       cloudUser = null;
       isAuthenticated = false;
       success = 'Successfully logged out';
+      toastStore.success('Successfully logged out');
     } catch (err) {
       error = `Logout failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      toastStore.error('Logout failed');
     }
   }
 
@@ -101,6 +106,7 @@
         // Settings are now saved locally AND synced to cloud by onSave (saveSettings in parent).
         // We can just finish up.
         success = 'Settings saved and uploaded.';
+        toastStore.success('Settings saved and synced to cloud');
         onSettingsUpload();
         location.reload();
         return;
@@ -137,9 +143,11 @@
       await cloudSettingsService.syncSettings(settings);
 
       success = 'Settings successfully uploaded to cloud';
+      toastStore.success('Settings successfully uploaded to cloud');
       onSettingsUpload();
     } catch (err) {
       error = `Failed to upload settings: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      toastStore.error('Failed to upload settings to cloud');
     } finally {
       loading = false;
       operation = '';
@@ -176,9 +184,16 @@
       });
 
       success = 'Settings successfully downloaded from cloud';
+      toastStore.success('Settings successfully downloaded from cloud');
       onSettingsDownload(cloudSettings);
+      
+      // Reload the page to apply the new settings
+      setTimeout(() => {
+        location.reload();
+      }, 500);
     } catch (err) {
       error = `Failed to download settings: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      toastStore.error('Failed to download settings from cloud');
     } finally {
       loading = false;
       operation = '';

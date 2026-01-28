@@ -1,0 +1,84 @@
+/* Gruvbox Theme - Global Styles */
+
+:root {
+  --accent-color-value: #fe8019;
+  --accent-color-hover: #d65d0e;
+  --background-color: #282828;
+}
+
+html, body {
+  background: transparent !important;
+}
+
+/* Custom scrollbar for gruvbox theme */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #fe8019, #d65d0e);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #d65d0e, #b8560c);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: #fe8019 transparent;
+}
+
+/* Enhanced gruvbox effects */
+.gruvbox-retro {
+  background: rgba(254, 128, 25, 0.1) !important;
+  border: 1px solid rgba(254, 128, 25, 0.3);
+}
+
+/* Gruvbox accent colors for interactive elements */
+.accent-bg {
+  background: linear-gradient(135deg, #fe8019, #d65d0e) !important;
+}
+
+.accent-bg-hover:hover {
+  background: linear-gradient(135deg, #d65d0e, #b8560c) !important;
+}
+
+.accent-text {
+  color: #fe8019 !important;
+}
+
+.accent-border {
+  border-color: #fe8019 !important;
+}
+
+.accent-ring {
+  --tw-ring-color: #fe8019 !important;
+}
+
+/* Gruvbox shadows */
+.accent-shadow {
+  box-shadow: 0 0 15px rgba(254, 128, 25, 0.3) !important;
+}
+
+/* Enhanced hover effects */
+.hover\:accent-shadow:hover {
+  box-shadow: 0 0 20px rgba(254, 128, 25, 0.4) !important;
+}
+
+/* Gruvbox gradients for cards and containers */
+.gruvbox-gradient {
+  background: linear-gradient(135deg, rgba(254, 128, 25, 0.1), rgba(214, 93, 14, 0.1));
+  border: 1px solid rgba(254, 128, 25, 0.3);
+}
+
+/* Gruvbox theme specific button styles */
+.gruvbox-button {
+  background: linear-gradient(135deg, #fe8019, #d65d0e);
+  color: #282828;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.gruvbox-button:hover {
+  background: linear-gradient(135deg, #d65d0e, #b8560c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(254, 128, 25, 0.3);
+}
+

@@ -1,0 +1,84 @@
+/* Tokyo Night Theme - Global Styles */
+
+:root {
+  --accent-color-value: #7aa2f7;
+  --accent-color-hover: #6183c4;
+  --background-color: #1a1b26;
+}
+
+html, body {
+  background: transparent !important;
+}
+
+/* Custom scrollbar for tokyo-night theme */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #7aa2f7, #9ece6a);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #6183c4, #8db573);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: #7aa2f7 transparent;
+}
+
+/* Enhanced tokyo-night effects */
+.tokyo-night-city {
+  background: rgba(122, 162, 247, 0.1) !important;
+  border: 1px solid rgba(122, 162, 247, 0.2);
+}
+
+/* Tokyo Night accent colors for interactive elements */
+.accent-bg {
+  background: linear-gradient(135deg, #7aa2f7, #9ece6a) !important;
+}
+
+.accent-bg-hover:hover {
+  background: linear-gradient(135deg, #6183c4, #8db573) !important;
+}
+
+.accent-text {
+  color: #7aa2f7 !important;
+}
+
+.accent-border {
+  border-color: #7aa2f7 !important;
+}
+
+.accent-ring {
+  --tw-ring-color: #7aa2f7 !important;
+}
+
+/* Tokyo Night shadows */
+.accent-shadow {
+  box-shadow: 0 0 15px rgba(122, 162, 247, 0.3) !important;
+}
+
+/* Enhanced hover effects */
+.hover\:accent-shadow:hover {
+  box-shadow: 0 0 20px rgba(122, 162, 247, 0.4) !important;
+}
+
+/* Tokyo Night gradients for cards and containers */
+.tokyo-night-gradient {
+  background: linear-gradient(135deg, rgba(122, 162, 247, 0.1), rgba(158, 206, 106, 0.1));
+  border: 1px solid rgba(122, 162, 247, 0.2);
+}
+
+/* Tokyo Night theme specific button styles */
+.tokyo-night-button {
+  background: linear-gradient(135deg, #7aa2f7, #9ece6a);
+  color: #1a1b26;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.tokyo-night-button:hover {
+  background: linear-gradient(135deg, #6183c4, #8db573);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(122, 162, 247, 0.3);
+}
+

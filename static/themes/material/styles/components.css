@@ -1,0 +1,59 @@
+/* Material Theme - Component Styles */
+
+/* Card components */
+.material-card {
+  background: rgba(33, 150, 243, 0.05);
+  border: 1px solid rgba(33, 150, 243, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.material-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25), 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Button components */
+.material-btn {
+  background: linear-gradient(135deg, #2196f3, #03a9f4);
+  color: #ffffff;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.material-btn:hover {
+  background: linear-gradient(135deg, #1976d2, #0288d1);
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+  transform: translateY(-1px);
+}
+
+.material-btn:active {
+  box-shadow: 0 1px 2px rgba(33, 150, 243, 0.3);
+  transform: translateY(0);
+}
+
+/* Floating Action Button */
+.material-fab {
+  background: #2196f3;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.material-fab:hover {
+  box-shadow: 0 6px 12px rgba(33, 150, 243, 0.5);
+  transform: scale(1.05);
+}
+
+.material-fab:active {
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+  transform: scale(0.95);
+}
+

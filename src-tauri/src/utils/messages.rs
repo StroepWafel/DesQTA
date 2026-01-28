@@ -248,6 +248,7 @@ async fn fetch_seqta_messages(
         None,
         false,
         false,
+        None,
     )
     .await?;
 
@@ -294,6 +295,7 @@ pub async fn fetch_message_content(id: i64) -> Result<String, String> {
         None,
         false,
         false,
+        None,
     )
     .await?;
 
@@ -333,6 +335,7 @@ pub async fn star_messages(items: Vec<i64>, star: bool) -> Result<(), String> {
         None,
         false,
         false,
+        None,
     )
     .await?;
 
@@ -362,6 +365,7 @@ pub async fn delete_messages(items: Vec<i64>) -> Result<(), String> {
         None,
         false,
         false,
+        None,
     )
     .await?;
 
@@ -391,6 +395,7 @@ pub async fn restore_messages(items: Vec<i64>) -> Result<(), String> {
         None,
         false,
         false,
+        None,
     )
     .await?;
 

@@ -37,8 +37,30 @@ export async function flushMessageDrafts(): Promise<void> {
 }
 
 export async function flushAll(): Promise<void> {
+  let flushedCount = 0;
+  
+  // Check items before flushing
+  const allItems = await queueAll();
+  const settingsToFlush = allItems.filter((item) => item.type === 'settings_patch').length;
+  const messagesToFlush = allItems.filter((item) => item.type === 'message_draft').length;
+  
+  // Flush settings queue
   await flushSettingsQueue();
+  if (settingsToFlush > 0) {
+    flushedCount += settingsToFlush;
+  }
+  
+  // Flush message drafts
   await flushMessageDrafts();
+  if (messagesToFlush > 0) {
+    flushedCount += messagesToFlush;
+  }
+  
+  // Show toast if items were flushed
+  if (flushedCount > 0) {
+    const { toastStore } = await import('../stores/toast');
+    toastStore.success(`Synced ${flushedCount} offline ${flushedCount === 1 ? 'item' : 'items'}`);
+  }
 }
 
 // Auto-flush when connection is restored

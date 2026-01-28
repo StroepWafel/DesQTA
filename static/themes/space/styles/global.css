@@ -1,0 +1,107 @@
+/* Space Theme - Global Styles */
+
+:root {
+  --accent-color-value: #8b5cf6;
+  --accent-color-hover: #7c3aed;
+  --background-color: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+}
+
+html, body {
+  background: transparent !important;
+}
+
+/* Custom scrollbar for space theme */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: #8b5cf6 transparent;
+}
+
+/* Enhanced space effects */
+.space-cosmic {
+  background: rgba(139, 92, 246, 0.1) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Space accent colors for interactive elements */
+.accent-bg {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa) !important;
+}
+
+.accent-bg-hover:hover {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important;
+}
+
+.accent-text {
+  color: #8b5cf6 !important;
+}
+
+.accent-border {
+  border-color: #8b5cf6 !important;
+}
+
+.accent-ring {
+  --tw-ring-color: #8b5cf6 !important;
+}
+
+/* Space shadows with glow */
+.accent-shadow {
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4) !important;
+}
+
+/* Enhanced hover effects */
+.hover\:accent-shadow:hover {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.5) !important;
+}
+
+/* Space gradients for cards and containers */
+.space-gradient {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(167, 139, 250, 0.1));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Space theme specific button styles */
+.space-button {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.space-button:hover {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+/* Star twinkle animation */
+.space-star {
+  animation: space-star 3s ease-in-out infinite;
+}
+
+@keyframes space-star {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Nebula background effect */
+.space-nebula {
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(167, 139, 250, 0.15) 0%, transparent 50%),
+    var(--background-color) !important;
+}
+

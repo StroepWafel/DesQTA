@@ -1,0 +1,14 @@
+/* Gruvbox Theme - Dark Mode Styles */
+
+.dark {
+  --background-color: #282828;
+  --surface-color: rgba(60, 56, 54, 0.9);
+  --text-color: #ebdbb2;
+  --border-color: #504945;
+}
+
+.dark .gruvbox-retro {
+  background: rgba(254, 128, 25, 0.15) !important;
+  border: 1px solid rgba(254, 128, 25, 0.4);
+}
+

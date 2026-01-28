@@ -143,6 +143,9 @@ jobs:
           echo "JAVA_HOME value: $JAVA_HOME"
 
       - name: Build Android APK
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           echo "Building with JAVA_HOME: $JAVA_HOME"
           echo "Building with GRADLE_OPTS: $GRADLE_OPTS"

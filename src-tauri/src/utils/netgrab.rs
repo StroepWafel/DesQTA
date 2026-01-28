@@ -145,6 +145,7 @@ pub async fn fetch_api_data(
     parameters: Option<HashMap<String, String>>,
     is_image: bool,
     return_url: bool,
+    parse_html: Option<bool>,
 ) -> Result<String, String> {
     // Log function entry
     if let Some(logger) = logger::get_logger() {
@@ -157,10 +158,12 @@ pub async fn fetch_api_data(
                 "url": url,
                 "method": format!("{:?}", method),
                 "is_image": is_image,
-                "return_url": return_url
+                "return_url": return_url,
+                "parse_html": parse_html.unwrap_or(false)
             }),
         );
     }
+    let _parse_html = parse_html; // Use parse_html later in the function
     let client = create_client();
     let mut session = session::Session::load();
 
@@ -298,6 +301,7 @@ pub async fn fetch_api_data(
 pub async fn get_api_data(
     url: &str,
     parameters: HashMap<String, String>,
+    parse_html: Option<bool>,
 ) -> Result<String, String> {
     // Log API call
     if let Some(logger) = logger::get_logger() {
@@ -317,6 +321,7 @@ pub async fn get_api_data(
         Some(parameters),
         false,
         false,
+        parse_html,
     )
     .await
 }
@@ -334,6 +339,7 @@ pub async fn get_seqta_file(file_type: &str, uuid: &str) -> Result<String, Strin
         Some(params),
         false,
         true,
+        None,
     )
     .await
 }
@@ -615,6 +621,7 @@ pub async fn post_api_data(
     url: &str,
     data: Value,
     parameters: HashMap<String, String>,
+    parse_html: Option<bool>,
 ) -> Result<String, String> {
     // Log API call
     if let Some(logger) = logger::get_logger() {
@@ -634,6 +641,7 @@ pub async fn post_api_data(
         Some(parameters),
         false,
         false,
+        parse_html,
     )
     .await
 }
@@ -688,7 +696,7 @@ pub async fn proxy_request(
 #[tauri::command]
 pub async fn clear_session() -> Result<(), String> {
     // Send logout request first
-    let _ = get_api_data("/saml2?logout", HashMap::new()).await;
+    let _ = get_api_data("/saml2?logout", HashMap::new(), None).await;
 
     // Then clear the session file
     session::Session::clear_file().map_err(|e| e.to_string())

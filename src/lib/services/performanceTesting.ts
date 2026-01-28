@@ -1,6 +1,42 @@
 import { goto } from '$app/navigation';
 import { logger } from '../../utils/logger';
 
+export interface SystemMetrics {
+  timestamp: number;
+  cpu: {
+    usage_percent: number;
+    cores: number[];
+    frequency_mhz: number;
+  };
+  memory: {
+    used_bytes: number;
+    total_bytes: number;
+    available_bytes: number;
+    usage_percent: number;
+    swap_used_bytes: number;
+    swap_total_bytes: number;
+  };
+  gpu: {
+    usage_percent?: number;
+    memory_used_bytes?: number;
+    memory_total_bytes?: number;
+    temperature_celsius?: number;
+    name?: string;
+  };
+  disk: {
+    total_bytes: number;
+    used_bytes: number;
+    available_bytes: number;
+    usage_percent: number;
+  };
+  network: {
+    received_bytes: number;
+    transmitted_bytes: number;
+    received_packets: number;
+    transmitted_packets: number;
+  };
+}
+
 export interface PerformanceMetrics {
   pageName: string;
   path: string;
@@ -20,6 +56,7 @@ export interface PerformanceMetrics {
     duration: number;
     size?: number;
   }>;
+  systemMetrics?: SystemMetrics[]; // System metrics collected during page load
 }
 
 export interface TestResults {
@@ -28,13 +65,20 @@ export interface TestResults {
   totalDuration: number;
   pages: PerformanceMetrics[];
   overallErrors: string[];
+  systemMetricsHistory: SystemMetrics[]; // System metrics collected throughout the test
   summary: {
     averageLoadTime: number;
     slowestPage: { name: string; time: number };
     fastestPage: { name: string; time: number };
     totalErrors: number;
     totalWarnings: number;
+    averageCpuUsage?: number;
+    peakCpuUsage?: number;
+    averageMemoryUsage?: number;
+    peakMemoryUsage?: number;
   };
+  timestamp?: string; // ISO timestamp string
+  version?: string; // App version
 }
 
 export class PerformanceTester {
@@ -44,6 +88,8 @@ export class PerformanceTester {
   private originalConsoleWarn: typeof console.warn;
   private capturedErrors: string[] = [];
   private capturedWarnings: string[] = [];
+  private systemMetricsHistory: SystemMetrics[] = [];
+  private metricsCollectionInterval: number | null = null;
 
   // All main navigation pages from the app
   private readonly testPages = [
@@ -59,6 +105,9 @@ export class PerformanceTester {
     { name: 'Directory', path: '/directory' },
     { name: 'Reports', path: '/reports' },
     { name: 'Analytics', path: '/analytics' },
+    { name: 'Folios', path: '/folios' },
+    { name: 'Goals', path: '/goals' },
+    { name: 'Forums', path: '/forums' },
     { name: 'Settings', path: '/settings' },
   ];
 
@@ -75,6 +124,10 @@ export class PerformanceTester {
     this.isRunning = true;
     this.capturedErrors = [];
     this.capturedWarnings = [];
+    this.systemMetricsHistory = [];
+    
+    // Start collecting system metrics
+    this.startSystemMetricsCollection();
     
     logger.info('PerformanceTester', 'startPerformanceTest', 'Starting automated performance testing');
 
@@ -124,19 +177,41 @@ export class PerformanceTester {
         prev.loadTime < current.loadTime ? prev : current
       );
 
+      // Stop collecting system metrics
+      this.stopSystemMetricsCollection();
+      
+      // Calculate system metrics summary
+      const cpuUsages = this.systemMetricsHistory.map(m => m.cpu.usage_percent);
+      const memoryUsages = this.systemMetricsHistory.map(m => m.memory.usage_percent);
+      const averageCpuUsage = cpuUsages.length > 0 
+        ? cpuUsages.reduce((a, b) => a + b, 0) / cpuUsages.length 
+        : undefined;
+      const peakCpuUsage = cpuUsages.length > 0 ? Math.max(...cpuUsages) : undefined;
+      const averageMemoryUsage = memoryUsages.length > 0 
+        ? memoryUsages.reduce((a, b) => a + b, 0) / memoryUsages.length 
+        : undefined;
+      const peakMemoryUsage = memoryUsages.length > 0 ? Math.max(...memoryUsages) : undefined;
+      
       this.results = {
         startTime,
         endTime,
         totalDuration,
         pages: pageMetrics,
         overallErrors: [...this.capturedErrors],
+        systemMetricsHistory: [...this.systemMetricsHistory],
         summary: {
           averageLoadTime,
           slowestPage: { name: slowestPage.pageName, time: slowestPage.loadTime },
           fastestPage: { name: fastestPage.pageName, time: fastestPage.loadTime },
           totalErrors: this.capturedErrors.length + pageMetrics.reduce((sum, p) => sum + p.errors.length, 0),
           totalWarnings: this.capturedWarnings.length + pageMetrics.reduce((sum, p) => sum + p.warnings.length, 0),
-        }
+          averageCpuUsage,
+          peakCpuUsage,
+          averageMemoryUsage,
+          peakMemoryUsage,
+        },
+        timestamp: new Date().toISOString(),
+        version: '1.0.0-rc.6', // Match Cargo.toml version
       };
 
       logger.info('PerformanceTester', 'startPerformanceTest', 'Performance testing completed', {
@@ -149,6 +224,7 @@ export class PerformanceTester {
       return this.results;
 
     } finally {
+      this.stopSystemMetricsCollection();
       this.restoreConsoleMonitoring();
       this.isRunning = false;
     }
@@ -158,12 +234,16 @@ export class PerformanceTester {
     const pageErrors: string[] = [];
     const pageWarnings: string[] = [];
     const resourceLoadTimes: Array<{ name: string; duration: number; size?: number }> = [];
+    const pageSystemMetrics: SystemMetrics[] = [];
 
     // Clear performance entries before navigation
     if (performance.clearMarks) performance.clearMarks();
     if (performance.clearMeasures) performance.clearMeasures();
 
     const navigationStart = performance.now();
+    
+    // Collect system metrics before navigation
+    await this.collectSystemMetricsSnapshot(pageSystemMetrics);
 
     // Set up performance observer for this page
     const observer = new PerformanceObserver((list) => {
@@ -189,8 +269,20 @@ export class PerformanceTester {
     // Navigate to the page
     await this.navigateToPage(pageName, path);
 
+    // Collect system metrics during navigation/load
+    await this.collectSystemMetricsSnapshot(pageSystemMetrics);
+    
     // Wait for page to be fully loaded
     await this.waitForPageLoad();
+    
+    // Collect system metrics after page load
+    await this.collectSystemMetricsSnapshot(pageSystemMetrics);
+    
+    // Collect a few more snapshots during the stabilization period
+    await this.delay(100);
+    await this.collectSystemMetricsSnapshot(pageSystemMetrics);
+    await this.delay(100);
+    await this.collectSystemMetricsSnapshot(pageSystemMetrics);
 
     const navigationEnd = performance.now();
     const loadTime = navigationEnd - navigationStart;
@@ -236,7 +328,8 @@ export class PerformanceTester {
       errors: [...pageErrors, ...currentErrors],
       warnings: [...pageWarnings, ...currentWarnings],
       networkRequests: resourceLoadTimes.length,
-      resourceLoadTimes
+      resourceLoadTimes,
+      systemMetrics: pageSystemMetrics.length > 0 ? pageSystemMetrics : undefined
     };
 
     logger.debug('PerformanceTester', 'testPage', `Metrics for ${pageName}:`, metrics);
@@ -478,6 +571,37 @@ export class PerformanceTester {
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private async startSystemMetricsCollection() {
+    const { invoke } = await import('@tauri-apps/api/core');
+    
+    // Collect metrics every 500ms
+    this.metricsCollectionInterval = window.setInterval(async () => {
+      try {
+        const metrics = await invoke<SystemMetrics>('get_system_metrics');
+        this.systemMetricsHistory.push(metrics);
+      } catch (error) {
+        logger.warn('PerformanceTester', 'startSystemMetricsCollection', 'Failed to collect system metrics', { error });
+      }
+    }, 500);
+  }
+
+  private stopSystemMetricsCollection() {
+    if (this.metricsCollectionInterval !== null) {
+      clearInterval(this.metricsCollectionInterval);
+      this.metricsCollectionInterval = null;
+    }
+  }
+
+  private async collectSystemMetricsSnapshot(metricsArray: SystemMetrics[]): Promise<void> {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const metrics = await invoke<SystemMetrics>('get_system_metrics');
+      metricsArray.push(metrics);
+    } catch (error) {
+      logger.warn('PerformanceTester', 'collectSystemMetricsSnapshot', 'Failed to collect system metrics snapshot', { error });
+    }
   }
 
   getResults(): TestResults | null {

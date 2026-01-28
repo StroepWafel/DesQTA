@@ -1,0 +1,138 @@
+/* Retro Theme - Global Styles */
+
+:root {
+  --accent-color-value: #ff00ff;
+  --accent-color-hover: #cc00cc;
+  --background-color: linear-gradient(135deg, #0a0a0a 0%, #1a0a1a 50%, #0a0a0a 100%);
+}
+
+html, body {
+  background: transparent !important;
+  font-family: 'Courier New', monospace;
+}
+
+/* Custom scrollbar for retro theme */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #cc00cc, #00cccc);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: #ff00ff transparent;
+}
+
+/* Enhanced retro effects */
+.retro-neon {
+  background: rgba(255, 0, 255, 0.1) !important;
+  border: 2px solid rgba(255, 0, 255, 0.5);
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+}
+
+/* Retro accent colors for interactive elements */
+.accent-bg {
+  background: linear-gradient(135deg, #ff00ff, #00ffff) !important;
+  color: #0a0a0a !important;
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.5) !important;
+}
+
+.accent-bg-hover:hover {
+  background: linear-gradient(135deg, #cc00cc, #00cccc) !important;
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.6) !important;
+}
+
+.accent-text {
+  color: #ff00ff !important;
+  text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+}
+
+.accent-border {
+  border-color: #ff00ff !important;
+  box-shadow: 0 0 5px rgba(255, 0, 255, 0.3);
+}
+
+.accent-ring {
+  --tw-ring-color: #ff00ff !important;
+  box-shadow: 0 0 0 3px rgba(255, 0, 255, 0.3);
+}
+
+/* Retro shadows */
+.accent-shadow {
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.5) !important;
+}
+
+/* Enhanced hover effects */
+.hover\:accent-shadow:hover {
+  box-shadow: 0 0 25px rgba(255, 0, 255, 0.7) !important;
+}
+
+/* Retro gradients for cards and containers */
+.retro-gradient {
+  background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(0, 255, 255, 0.1));
+  border: 2px solid rgba(255, 0, 255, 0.5);
+}
+
+/* Retro theme specific button styles */
+.retro-button {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #0a0a0a;
+  border: 2px solid #ff00ff;
+  transition: all 0.2s ease;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.retro-button:hover {
+  background: linear-gradient(135deg, #cc00cc, #00cccc);
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
+  transform: scale(1.05);
+}
+
+/* Retro scanline effect */
+.retro-scanline {
+  position: relative;
+}
+
+.retro-scanline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 0, 255, 0.03) 2px,
+    rgba(255, 0, 255, 0.03) 4px
+  );
+  pointer-events: none;
+}
+
+/* Retro grid background */
+.retro-grid {
+  background-image: 
+    linear-gradient(rgba(255, 0, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Synthwave sun effect */
+.retro-sun {
+  background: radial-gradient(circle, rgba(255, 0, 255, 0.2) 0%, transparent 70%);
+  position: fixed;
+  top: -50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: -1;
+}
+

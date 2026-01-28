@@ -1,0 +1,51 @@
+{
+  "name": "Catppuccin",
+  "version": "1.0.0",
+  "description": "A warm, pastel theme with soft colors inspired by the popular Catppuccin palette. Soothing and elegant.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/catppuccin/preview.png",
+    "screenshots": ["/themes/catppuccin/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#89b4fa",
+    "defaultTheme": "dark",
+    "supportsLightMode": true,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#89b4fa",
+    "secondaryColor": "#cba6f7",
+    "successColor": "#a6e3a1",
+    "warningColor": "#f9e2af",
+    "errorColor": "#f38ba8",
+    "backgroundColor": "#1e1e2e",
+    "surfaceColor": "#313244",
+    "textColor": "#cdd6f4",
+    "borderColor": "#45475a",
+    "shadowColor": "rgba(137, 180, 250, 0.2)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": true,
+    "shadows": true
+  }
+}
+

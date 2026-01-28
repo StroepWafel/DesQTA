@@ -7,7 +7,6 @@
     loadAccentColor,
     updateAccentColor,
     theme,
-    loadTheme,
     updateTheme,
   } from '../../lib/stores/theme';
   import { Icon } from 'svelte-hero-icons';
@@ -36,6 +35,9 @@
     CalendarDays,
     GlobeAlt,
     PencilSquare,
+    Flag,
+    ChatBubbleBottomCenterText,
+    FolderOpen,
   } from 'svelte-hero-icons';
   import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
@@ -46,12 +48,14 @@
   import T from '../../lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
-  import { goto } from '$app/navigation';
+  import { goto, beforeNavigate } from '$app/navigation';
   import { cloudAuthService } from '../../lib/services/cloudAuthService';
+  import { toastStore } from '../../lib/stores/toast';
   import { cloudSettingsService } from '../../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
   import { CacheManager } from '../../utils/cacheManager';
   import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
+  import Modal from '../../lib/components/Modal.svelte';
 
   interface Shortcut {
     name: string;
@@ -90,6 +94,7 @@
   let devSensitiveInfoHider = false;
   let devForceOfflineMode = false;
   let showDevSettings = false;
+  let separateRssFeed = false;
   let keyBuffer = '';
   let acceptedCloudEula = false;
   let showEulaModal = false;
@@ -104,6 +109,35 @@
   let updateNotes = '';
   let isDesktop = false;
   let showMenuOrderDialog = false;
+  let showUnsavedChangesModal = false;
+  let pendingNavigationUrl: string | null = null;
+  let resettingOnboarding = false;
+  
+  // Store initial settings state for comparison
+  let initialSettings: {
+    shortcuts: Shortcut[];
+    feeds: Feed[];
+    weatherEnabled: boolean;
+    weatherCity: string;
+    weatherCountry: string;
+    remindersEnabled: boolean;
+    forceUseLocation: boolean;
+    accentColor: string;
+    theme: string;
+    disableSchoolPicture: boolean;
+    enhancedAnimations: boolean;
+    geminiApiKey: string;
+    aiIntegrationsEnabled: boolean;
+    gradeAnalyserEnabled: boolean;
+    lessonSummaryAnalyserEnabled: boolean;
+    autoCollapseSidebar: boolean;
+    autoExpandSidebarHover: boolean;
+    globalSearchEnabled: boolean;
+    devSensitiveInfoHider: boolean;
+    devForceOfflineMode: boolean;
+    acceptedCloudEula: boolean;
+    separateRssFeed: boolean;
+  } | null = null;
 
   // Menu configuration (same as in layout)
   const DEFAULT_MENU = [
@@ -112,7 +146,11 @@
     { labelKey: 'navigation.assessments', icon: ClipboardDocumentList, path: '/assessments' },
     { labelKey: 'navigation.timetable', icon: CalendarDays, path: '/timetable' },
     { labelKey: 'navigation.study', icon: PencilSquare, path: '/study' },
+    { labelKey: 'navigation.goals', icon: Flag, path: '/goals' },
+    { labelKey: 'navigation.forums', icon: ChatBubbleBottomCenterText, path: '/forums' },
+    { labelKey: 'navigation.folios', icon: FolderOpen, path: '/folios' },
     { labelKey: 'navigation.messages', icon: ChatBubbleLeftRight, path: '/direqt-messages' },
+    { labelKey: 'navigation.rss_feeds', icon: Rss, path: '/rss-feeds' },
     { labelKey: 'navigation.portals', icon: GlobeAlt, path: '/portals' },
     { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },
     { labelKey: 'navigation.news', icon: Newspaper, path: '/news' },
@@ -219,6 +257,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'dev_force_offline_mode',
           'accepted_cloud_eula',
           'language',
+          'separate_rss_feed',
         ],
       });
       shortcuts = settings.shortcuts || [];
@@ -242,6 +281,33 @@ The Company reserves the right to terminate your access to the Service at any ti
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
+      separateRssFeed = settings.separate_rss_feed ?? false;
+      
+      // Store initial state for comparison
+      initialSettings = {
+        shortcuts: JSON.parse(JSON.stringify(shortcuts)),
+        feeds: JSON.parse(JSON.stringify(feeds)),
+        weatherEnabled,
+        weatherCity,
+        weatherCountry,
+        remindersEnabled,
+        forceUseLocation,
+        accentColor: settings.accent_color ?? '#3b82f6',
+        theme: settings.theme ?? 'dark',
+        disableSchoolPicture,
+        enhancedAnimations,
+        geminiApiKey,
+        aiIntegrationsEnabled,
+        gradeAnalyserEnabled,
+        lessonSummaryAnalyserEnabled,
+        autoCollapseSidebar,
+        autoExpandSidebarHover,
+        globalSearchEnabled,
+        devSensitiveInfoHider,
+        devForceOfflineMode,
+        acceptedCloudEula,
+        separateRssFeed,
+      };
 
       console.log('Loading settings', {
         shortcuts,
@@ -274,6 +340,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devSensitiveInfoHider = false;
       devForceOfflineMode = false;
       acceptedCloudEula = false;
+      separateRssFeed = false;
       showDevSettings = false;
     }
     loading = false;
@@ -340,6 +407,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         dev_sensitive_info_hider: devSensitiveInfoHider,
         dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
+        separate_rss_feed: separateRssFeed,
       };
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
@@ -353,12 +421,43 @@ The Company reserves the right to terminate your access to the Service at any ti
       }
 
       saveSuccess = true;
+      
+      // Show success toast
+      toastStore.success('Settings saved successfully');
+      
+      // Update initial settings after successful save
+      if (initialSettings) {
+        initialSettings.shortcuts = JSON.parse(JSON.stringify(shortcuts));
+        initialSettings.feeds = JSON.parse(JSON.stringify(feeds));
+        initialSettings.weatherEnabled = weatherEnabled;
+        initialSettings.weatherCity = weatherCity;
+        initialSettings.weatherCountry = weatherCountry;
+        initialSettings.remindersEnabled = remindersEnabled;
+        initialSettings.forceUseLocation = forceUseLocation;
+        initialSettings.accentColor = $accentColor;
+        initialSettings.theme = $theme;
+        initialSettings.disableSchoolPicture = disableSchoolPicture;
+        initialSettings.enhancedAnimations = enhancedAnimations;
+        initialSettings.geminiApiKey = geminiApiKey;
+        initialSettings.aiIntegrationsEnabled = aiIntegrationsEnabled;
+        initialSettings.gradeAnalyserEnabled = gradeAnalyserEnabled;
+        initialSettings.lessonSummaryAnalyserEnabled = lessonSummaryAnalyserEnabled;
+        initialSettings.autoCollapseSidebar = autoCollapseSidebar;
+        initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
+        initialSettings.globalSearchEnabled = globalSearchEnabled;
+        initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
+        initialSettings.devForceOfflineMode = devForceOfflineMode;
+        initialSettings.acceptedCloudEula = acceptedCloudEula;
+      }
+      
       if (!options.skipReload) {
         setTimeout(() => location.reload(), 1500);
       }
     } catch (e) {
       saveError = 'Failed to save settings.';
       console.log(e);
+      // Show error toast
+      toastStore.error('Failed to save settings');
     }
     saving = false;
   }
@@ -381,6 +480,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
   async function sendTestNotification() {
     if (!remindersEnabled) {
+      toastStore.warning('Reminders are currently disabled. Enable them to receive notifications.');
       alert('Reminders are currently disabled. Enable them to receive notifications.');
       return;
     }
@@ -388,6 +488,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       title: 'Test Notification',
       body: 'This is a test notification from DesQTA settings.',
     });
+    toastStore.success('Test notification sent');
   }
 
   async function testFeed(url: string) {
@@ -464,6 +565,31 @@ The Company reserves the right to terminate your access to the Service at any ti
 
     // Reload settings
     await loadSettings();
+    
+    // Reset initial settings after download to match current state
+    if (initialSettings) {
+      initialSettings.shortcuts = JSON.parse(JSON.stringify(shortcuts));
+      initialSettings.feeds = JSON.parse(JSON.stringify(feeds));
+      initialSettings.weatherEnabled = weatherEnabled;
+      initialSettings.weatherCity = weatherCity;
+      initialSettings.weatherCountry = weatherCountry;
+      initialSettings.remindersEnabled = remindersEnabled;
+      initialSettings.forceUseLocation = forceUseLocation;
+      initialSettings.accentColor = $accentColor;
+      initialSettings.theme = $theme;
+      initialSettings.disableSchoolPicture = disableSchoolPicture;
+      initialSettings.enhancedAnimations = enhancedAnimations;
+      initialSettings.geminiApiKey = geminiApiKey;
+      initialSettings.aiIntegrationsEnabled = aiIntegrationsEnabled;
+      initialSettings.gradeAnalyserEnabled = gradeAnalyserEnabled;
+      initialSettings.lessonSummaryAnalyserEnabled = lessonSummaryAnalyserEnabled;
+      initialSettings.autoCollapseSidebar = autoCollapseSidebar;
+      initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
+      initialSettings.globalSearchEnabled = globalSearchEnabled;
+      initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
+      initialSettings.devForceOfflineMode = devForceOfflineMode;
+      initialSettings.acceptedCloudEula = acceptedCloudEula;
+    }
   }
 
   function handleKeydown(event: KeyboardEvent) {
@@ -477,12 +603,81 @@ The Company reserves the right to terminate your access to the Service at any ti
     }
   }
 
+  // Check if there are unsaved changes
+  function hasUnsavedChanges(): boolean {
+    if (!initialSettings) return false;
+    
+    // Deep compare arrays
+    const shortcutsChanged = JSON.stringify(shortcuts) !== JSON.stringify(initialSettings.shortcuts);
+    const feedsChanged = JSON.stringify(feeds) !== JSON.stringify(initialSettings.feeds);
+    
+    return (
+      shortcutsChanged ||
+      feedsChanged ||
+      weatherEnabled !== initialSettings.weatherEnabled ||
+      weatherCity !== initialSettings.weatherCity ||
+      weatherCountry !== initialSettings.weatherCountry ||
+      remindersEnabled !== initialSettings.remindersEnabled ||
+      forceUseLocation !== initialSettings.forceUseLocation ||
+      $accentColor !== initialSettings.accentColor ||
+      $theme !== initialSettings.theme ||
+      disableSchoolPicture !== initialSettings.disableSchoolPicture ||
+      enhancedAnimations !== initialSettings.enhancedAnimations ||
+      geminiApiKey !== initialSettings.geminiApiKey ||
+      aiIntegrationsEnabled !== initialSettings.aiIntegrationsEnabled ||
+      gradeAnalyserEnabled !== initialSettings.gradeAnalyserEnabled ||
+      lessonSummaryAnalyserEnabled !== initialSettings.lessonSummaryAnalyserEnabled ||
+      autoCollapseSidebar !== initialSettings.autoCollapseSidebar ||
+      autoExpandSidebarHover !== initialSettings.autoExpandSidebarHover ||
+      globalSearchEnabled !== initialSettings.globalSearchEnabled ||
+      devSensitiveInfoHider !== initialSettings.devSensitiveInfoHider ||
+      devForceOfflineMode !== initialSettings.devForceOfflineMode ||
+      acceptedCloudEula !== initialSettings.acceptedCloudEula
+    );
+  }
+  
+  // Handle navigation with unsaved changes check
+  beforeNavigate(({ to, cancel }) => {
+    // Don't block navigation if we're already on the settings page or if there are no unsaved changes
+    if (!to || to.url.pathname === '/settings' || !hasUnsavedChanges()) {
+      return;
+    }
+    
+    // Cancel the navigation
+    cancel();
+    
+    // Store the URL to navigate to later if user confirms
+    pendingNavigationUrl = to.url.pathname + (to.url.search || '');
+    
+    // Show the confirmation modal
+    showUnsavedChangesModal = true;
+  });
+  
+  async function handleSaveAndLeave() {
+    showUnsavedChangesModal = false;
+    const urlToNavigate = pendingNavigationUrl;
+    pendingNavigationUrl = null;
+    
+    // Save settings first (with reload enabled like normal save)
+    await saveSettings();
+    
+    // Navigate to the new page (reload will happen after 1500ms on the new page)
+    if (urlToNavigate) {
+      goto(urlToNavigate);
+    }
+  }
+  
+  function handleCancelLeave() {
+    showUnsavedChangesModal = false;
+    pendingNavigationUrl = null;
+  }
+
   onMount(async () => {
     // Check if running on desktop (updater only works on desktop)
     const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
     isDesktop = tauriPlatform !== 'ios' && tauriPlatform !== 'android';
     
-    await Promise.all([loadSettings(), loadTheme(), loadCloudUser(), loadProfilePicture()]);
+    await Promise.all([loadSettings(), loadCloudUser(), loadProfilePicture()]);
     window.addEventListener('keydown', handleKeydown);
   });
   onDestroy(() => {
@@ -494,8 +689,10 @@ The Company reserves the right to terminate your access to the Service at any ti
     clearingCache = true;
     try {
       await CacheManager.clearCachesAndRefresh();
+      toastStore.success('Cache cleared successfully. Page will refresh...');
     } catch (error) {
       console.error('Failed to clear cache:', error);
+      toastStore.error('Failed to clear cache');
       clearingCache = false;
     }
   }
@@ -515,11 +712,13 @@ The Company reserves the right to terminate your access to the Service at any ti
         updateVersion = update.version;
         updateNotes = update.body || 'Bug fixes and improvements';
         
+        toastStore.info(`Update available: Version ${update.version}`);
         notify({
           title: 'Update Available',
           body: `Version ${update.version} is available! Click "Install Update" to download and install.`,
         });
       } else {
+        toastStore.success('You are running the latest version');
         notify({
           title: 'Up to Date',
           body: 'You are running the latest version of DesQTA.',
@@ -527,6 +726,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       }
     } catch (error) {
       logger.error('settings', 'checkForUpdates', 'Failed to check for updates', error);
+      toastStore.error('Failed to check for updates');
       notify({
         title: 'Update Check Failed',
         body: 'Unable to check for updates. Please try again later.',
@@ -542,6 +742,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       const update = await check();
       if (update?.available) {
         await update.downloadAndInstall();
+        toastStore.success('Update downloaded. Restart to install');
         notify({
           title: 'Update Downloaded',
           body: 'The update will be installed when you restart the application.',
@@ -549,6 +750,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       }
     } catch (error) {
       logger.error('settings', 'installUpdate', 'Failed to install update', error);
+      toastStore.error('Failed to install update');
       notify({
         title: 'Update Installation Failed',
         body: 'Unable to install the update. Please try again later.',
@@ -623,6 +825,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       await invoke('delete_profile_picture');
       customProfilePicture = null;
 
+      toastStore.success('Profile picture removed successfully');
+
       notify({
         title: 'Profile Picture Removed',
         body: 'Your custom profile picture has been removed.',
@@ -634,6 +838,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       }, 1000);
     } catch (error) {
       console.error('Failed to remove profile picture:', error);
+      toastStore.error('Failed to remove profile picture');
       notify({
         title: 'Removal Failed',
         body: 'Failed to remove profile picture. Please try again.',
@@ -645,6 +850,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     if (performanceTestRunning) return;
 
     performanceTestRunning = true;
+    toastStore.info('Performance test started...');
 
     try {
       const results = await performanceTester.startPerformanceTest();
@@ -654,6 +860,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         const savedPath = await invoke('save_performance_test_results', { results });
         console.log('Performance test results saved to:', savedPath);
 
+        toastStore.success('Performance test completed successfully');
+
         // Store results in session storage for the results page
         sessionStorage.setItem('performance-test-results', JSON.stringify(results));
 
@@ -661,6 +869,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         goto('/performance-results');
       } catch (saveError) {
         console.error('Failed to save performance results:', saveError);
+        toastStore.warning('Test completed but failed to save results');
         notify({
           title: 'Save Failed',
           body: 'Performance test completed but failed to save results. Showing results anyway.',
@@ -672,6 +881,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       }
     } catch (error) {
       console.error('Performance test failed:', error);
+      toastStore.error('Performance test failed');
 
       // Still try to save error report to backend
       try {
@@ -681,6 +891,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           totalDuration: 0,
           pages: [],
           overallErrors: [String(error)],
+          systemMetricsHistory: [],
           summary: {
             averageLoadTime: 0,
             slowestPage: { name: 'N/A', time: 0 },
@@ -689,7 +900,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             totalWarnings: 0,
           },
           timestamp: new Date().toISOString(),
-          version: '1.0.0',
+          version: '1.0.0-rc.6',
         };
 
         await invoke('save_performance_test_results', { results: errorResults });
@@ -715,16 +926,44 @@ The Company reserves the right to terminate your access to the Service at any ti
       const performanceDir = await invoke('get_performance_tests_directory');
       await invoke('open_url', { url: `file://${performanceDir}` });
 
+      toastStore.success('Performance tests folder opened');
       notify({
         title: 'Performance Tests Folder',
         body: 'Opened the folder containing all saved performance test results.',
       });
     } catch (error) {
       console.error('Failed to open performance tests folder:', error);
+      toastStore.error('Failed to open performance tests folder');
       notify({
         title: 'Error',
         body: 'Failed to open performance tests folder.',
       });
+    }
+  }
+
+  async function redoOnboarding() {
+    resettingOnboarding = true;
+    try {
+      await saveSettingsWithQueue({ has_been_through_onboarding: false });
+      await flushSettingsQueue();
+      
+      // Dispatch event to trigger onboarding in layout
+      window.dispatchEvent(new CustomEvent('redo-onboarding'));
+      
+      toastStore.add({
+        message: 'Onboarding walkthrough will start when you navigate away and back, or refresh the page.',
+        type: 'success',
+        duration: 5000,
+      });
+    } catch (error) {
+      console.error('Failed to reset onboarding:', error);
+      toastStore.add({
+        message: 'Failed to reset onboarding walkthrough.',
+        type: 'error',
+        duration: 5000,
+      });
+    } finally {
+      resettingOnboarding = false;
     }
   }
 </script>
@@ -779,6 +1018,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     <div class="space-y-6 sm:space-y-8">
       <!-- Cloud Sync Section -->
       <section
+        data-onboarding="cloud-sync"
         class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/30 dark:border-zinc-800/30">
           <h2 class="text-base font-semibold sm:text-lg text-zinc-500 dark:text-zinc-400">
@@ -1308,6 +1548,36 @@ The Company reserves the right to terminate your access to the Service at any ti
                     key="settings.theme_mode_description"
                     fallback="Choose between light mode, dark mode, or follow your system preference." />
                 </p>
+                <div class="mt-4 flex flex-col items-center">
+                  <button
+                    type="button"
+                    data-onboarding="theme-store"
+                    onclick={() => {
+                      console.log('Navigating to theme store...');
+                      console.log('Current URL:', window.location.href);
+
+                      // Try multiple navigation methods
+                      try {
+                        goto('/settings/theme-store');
+                      } catch (e) {
+                        console.warn('goto failed, trying window.location:', e);
+                        window.location.href = '/settings/theme-store';
+                      }
+
+                      setTimeout(() => {
+                        console.log('After navigation URL:', window.location.href);
+                        console.log('Page pathname:', window.location.pathname);
+                      }, 100);
+                    }}
+                    class="px-6 py-2 text-center text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
+                    <T key="settings.open_theme_store" fallback="Open Theme Store" />
+                  </button>
+                  <p class="mt-2 text-xs text-center text-zinc-600 dark:text-zinc-400">
+                    <T
+                      key="settings.theme_store_description"
+                      fallback="Browse and install custom themes for DesQTA" />
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -1529,6 +1799,23 @@ The Company reserves the right to terminate your access to the Service at any ti
           </p>
         </div>
         <div class="p-4 space-y-6 sm:p-6">
+          <!-- Separate RSS Feed Setting -->
+          <div class="flex justify-between items-center p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50">
+            <div class="flex-1">
+              <h3 class="text-sm font-semibold sm:text-base">Separate RSS Feed Page</h3>
+              <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+                Show RSS feeds in a separate page instead of within messages
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                class="sr-only peer"
+                bind:checked={separateRssFeed} />
+              <div
+                class="w-11 h-6 bg-zinc-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
           <div>
             <div class="flex justify-between items-center mb-4">
               <div>
@@ -1702,46 +1989,6 @@ The Company reserves the right to terminate your access to the Service at any ti
         </div>
       </section>
 
-      <!-- Theme Store Link -->
-      <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-base font-semibold sm:text-lg">Theme Store</h2>
-          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-            Browse and install custom themes for DesQTA
-          </p>
-        </div>
-        <div class="p-4 sm:p-6">
-          <div class="p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
-            <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Explore a collection of beautiful themes to customize your DesQTA experience.
-            </p>
-            <button
-              type="button"
-              onclick={() => {
-                console.log('Navigating to theme store...');
-                console.log('Current URL:', window.location.href);
-
-                // Try multiple navigation methods
-                try {
-                  goto('/settings/theme-store');
-                } catch (e) {
-                  console.warn('goto failed, trying window.location:', e);
-                  window.location.href = '/settings/theme-store';
-                }
-
-                setTimeout(() => {
-                  console.log('After navigation URL:', window.location.href);
-                  console.log('Page pathname:', window.location.pathname);
-                }, 100);
-              }}
-              class="inline-block px-6 py-2 w-full text-center text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
-              Open Theme Store
-            </button>
-          </div>
-        </div>
-      </section>
-
       <!-- Check for Updates (Desktop only) -->
       {#if isDesktop}
       <section
@@ -1792,6 +2039,36 @@ The Company reserves the right to terminate your access to the Service at any ti
         </div>
       </section>
       {/if}
+
+      <!-- Redo Onboarding -->
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-purple-700/50 animate-fade-in-up">
+        <div class="flex justify-between items-center p-4 sm:p-6">
+          <div>
+            <h2 class="text-base font-semibold sm:text-lg">
+              <T key="settings.redo_onboarding" fallback="Redo Walkthrough" />
+            </h2>
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+              <T
+                key="settings.redo_onboarding_description"
+                fallback="Restart the onboarding walkthrough to learn about DesQTA features." />
+            </p>
+          </div>
+          <button
+            type="button"
+            onclick={redoOnboarding}
+            disabled={resettingOnboarding}
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-purple-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-purple-600 focus:ring-2 focus:ring-purple-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+            {#if resettingOnboarding}
+              <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white"></div>
+              <span><T key="settings.resetting" fallback="Resetting..." /></span>
+            {:else}
+              <Icon src={ArrowPath} class="w-4 h-4" />
+              <span><T key="settings.redo_onboarding" fallback="Redo Walkthrough" /></span>
+            {/if}
+          </button>
+        </div>
+      </section>
 
       <!-- Troubleshooting button -->
       <section
@@ -1934,7 +2211,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     const menuOrder = orderedMenu.map(item => item.path);
     await saveSettingsWithQueue({ menu_order: menuOrder });
     await flushSettingsQueue();
-    notify.success('Menu order saved. Page will reload to apply changes.');
+    toastStore.success('Menu order saved. Page will reload to apply changes.');
     setTimeout(() => location.reload(), 1500);
   }} />
 
@@ -1974,6 +2251,42 @@ The Company reserves the right to terminate your access to the Service at any ti
     </div>
   </div>
 {/if}
+
+<!-- Unsaved Changes Confirmation Modal -->
+<Modal
+  bind:open={showUnsavedChangesModal}
+  title="Unsaved Changes"
+  closeOnBackdrop={false}
+  closeOnEscape={true}
+  onclose={handleCancelLeave}>
+  <div class="px-8 pb-8">
+    <p class="mb-6 text-zinc-600 dark:text-zinc-400">
+      <T
+        key="settings.unsaved_changes_message"
+        fallback="You have unsaved changes. Are you sure you want to leave? Your changes will be lost." />
+    </p>
+    <div class="flex gap-3 justify-end">
+      <button
+        class="px-4 py-2 rounded-lg transition-all duration-200 bg-zinc-200 dark:bg-zinc-700/50 text-zinc-800 dark:text-white hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2"
+        onclick={handleCancelLeave}>
+        <T key="common.cancel" fallback="Cancel" />
+      </button>
+      <button
+        class="px-4 py-2 text-white rounded-lg transition-all duration-200 transform accent-bg hover:accent-bg-hover hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring focus:ring-offset-2"
+        onclick={handleSaveAndLeave}
+        disabled={saving}>
+        {#if saving}
+          <div class="flex gap-2 items-center">
+            <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white"></div>
+            <span><T key="settings.saving" fallback="Saving..." /></span>
+          </div>
+        {:else}
+          <T key="settings.save_and_leave" fallback="Save Changes" />
+        {/if}
+      </button>
+    </div>
+  </div>
+</Modal>
 
 <style>
   @keyframes fade-in-up {

@@ -1,0 +1,51 @@
+{
+  "name": "Monochrome",
+  "version": "1.0.0",
+  "description": "A sleek black and white monochrome theme with high contrast and minimalist design. Perfect for focus and clarity.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/monochrome/preview.png",
+    "screenshots": ["/themes/monochrome/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#ffffff",
+    "defaultTheme": "dark",
+    "supportsLightMode": true,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#ffffff",
+    "secondaryColor": "#808080",
+    "successColor": "#ffffff",
+    "warningColor": "#808080",
+    "errorColor": "#000000",
+    "backgroundColor": "#000000",
+    "surfaceColor": "#1a1a1a",
+    "textColor": "#ffffff",
+    "borderColor": "#ffffff",
+    "shadowColor": "rgba(255, 255, 255, 0.2)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": false
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": false,
+    "shadows": true
+  }
+}
+

@@ -8,6 +8,8 @@ use tauri::AppHandle;
 use uuid::Uuid;
 use walkdir::WalkDir;
 
+use super::profiles;
+
 // Define types directly here (moved from notes.rs)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SeqtaReference {
@@ -80,12 +82,18 @@ pub struct FileTreeItem {
     pub children: Option<Vec<FileTreeItem>>,
 }
 
-/// Get the notes directory path
+/// Get the notes directory path for the current profile
 fn get_notes_directory(_app: &AppHandle) -> Result<PathBuf, String> {
+    // Get the current profile
+    let profile = profiles::ProfileManager::get_current_profile()
+        .ok_or_else(|| "No active profile. Please log in first.".to_string())?;
+    
     #[cfg(target_os = "android")]
     {
         let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
         dir.push("DesQTA");
+        dir.push("profiles");
+        dir.push(&profile.id);
         dir.push("notes");
         if !dir.exists() {
             fs::create_dir_all(&dir).map_err(|e| format!("Failed to create notes dir: {}", e))?;
@@ -97,6 +105,8 @@ fn get_notes_directory(_app: &AppHandle) -> Result<PathBuf, String> {
         let mut dir =
             dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
         dir.push("DesQTA");
+        dir.push("profiles");
+        dir.push(&profile.id);
         dir.push("notes");
         if !dir.exists() {
             fs::create_dir_all(&dir).map_err(|e| format!("Failed to create notes dir: {}", e))?;
@@ -782,9 +792,16 @@ fn strip_html_tags(html: &str) -> String {
 // Image handling functions
 
 fn get_notes_images_dir(_app: &AppHandle) -> Result<PathBuf, String> {
+    // Get the current profile
+    let profile = profiles::ProfileManager::get_current_profile()
+        .ok_or_else(|| "No active profile. Please log in first.".to_string())?;
+    
     #[cfg(target_os = "android")]
     {
         let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("DesQTA");
+        dir.push("profiles");
+        dir.push(&profile.id);
         dir.push("note_contents");
         if !dir.exists() {
             fs::create_dir_all(&dir)
@@ -797,6 +814,8 @@ fn get_notes_images_dir(_app: &AppHandle) -> Result<PathBuf, String> {
         let mut dir =
             dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
         dir.push("DesQTA");
+        dir.push("profiles");
+        dir.push(&profile.id);
         if !dir.exists() {
             fs::create_dir_all(&dir).map_err(|e| format!("Failed to create data dir: {}", e))?;
         }
@@ -863,17 +882,20 @@ pub fn save_image_from_base64_filesystem(
 
 #[tauri::command]
 pub fn get_image_path_filesystem(_app: AppHandle, relative_path: String) -> Result<String, String> {
-    // Get the base notes directory (same as notes.json location but without the filename)
+    // Get the current profile
+    let profile = profiles::ProfileManager::get_current_profile()
+        .ok_or_else(|| "No active profile. Please log in first.".to_string())?;
+    
+    // Get the base directory for the current profile
     #[cfg(target_os = "android")]
-    let base_dir = PathBuf::from("/data/data/com.desqta.app/files");
-
+    let mut base_dir = PathBuf::from("/data/data/com.desqta.app/files");
+    
     #[cfg(not(target_os = "android"))]
-    let base_dir = {
-        let mut dir =
-            dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
-        dir.push("DesQTA");
-        dir
-    };
+    let mut base_dir = dirs_next::data_dir().ok_or_else(|| "Unable to determine data dir".to_string())?;
+    
+    base_dir.push("DesQTA");
+    base_dir.push("profiles");
+    base_dir.push(&profile.id);
 
     let full_path = base_dir.join(&relative_path);
 

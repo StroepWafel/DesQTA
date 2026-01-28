@@ -109,6 +109,7 @@ async fn fetch_lesson_colours() -> Result<Vec<Value>, String> {
         None,
         false,
         false,
+        None,
     )
     .await?;
 
@@ -137,6 +138,7 @@ async fn fetch_subjects() -> Result<Vec<Folder>, String> {
         None,
         false,
         false,
+        None,
     )
     .await?;
 
@@ -170,6 +172,7 @@ async fn fetch_upcoming_assessments() -> Result<Vec<Value>, String> {
         None,
         false,
         false,
+        None,
     )
     .await?;
 
@@ -202,6 +205,7 @@ async fn fetch_past_assessments(programme: i32, metaclass: i32) -> Result<Vec<Va
         None,
         false,
         false,
+        None,
     )
     .await?;
 

@@ -9,6 +9,7 @@
   import TaskItem from '@tiptap/extension-task-item';
   import StarterKit from '@tiptap/starter-kit';
   import Link from '@tiptap/extension-link';
+  import Underline from '@tiptap/extension-underline';
 
   import { browser } from '$app/environment';
   import { Editor } from '@tiptap/core';
@@ -28,7 +29,7 @@
   import './userHTML.css';
 
   // Make htmlContent bindable from parent components
-  let { content = $bindable('') } = $props<{ content: string }>();
+  let { content = $bindable(''), editorInstance = $bindable<Editor | null>(null) } = $props<{ content: string; editorInstance?: Editor | null }>();
 
   let commandListInstance = $state<any>(null);
 
@@ -73,6 +74,7 @@
           TaskList,
           TaskItem,
           Link,
+          Underline,
           Typography,
           Commands.configure({
             suggestion,
@@ -95,6 +97,9 @@
           content = `<div class="editor-prose">${editorHTML}<${''}style>${EditorStyles}</${''}style></div>`;
         },
       });
+      
+      // Expose editor instance to parent
+      editorInstance = editor;
     }
   });
 

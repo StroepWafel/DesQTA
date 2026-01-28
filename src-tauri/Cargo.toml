@@ -1,6 +1,6 @@
 [package]
 name = "desqta"
-version = "1.0.0-rc.5"
+version = "1.0.0-rc.6"
 description = "DesQTA, a port of SEQTA to the Desktop"
 authors = ["BetterSEQTA+ Project"]
 edition = "2021"
@@ -47,12 +47,21 @@ once_cell = "1"
 uuid = { version = "1.0", features = ["v4", "serde"] }
 walkdir = "2.0"
 rusqlite = { version = "0.31", features = ["bundled", "chrono", "serde_json"] }
+sysinfo = "0.31"
+lazy_static = "1.5"
 
 # Security & Encryption
 ring = "0.17"
 keyring = "2.3"
 zeroize = "1.7"
 regex = "1.10"
+
+# HTML Parsing
+scraper = "0.20"
+ammonia = "4.0"
+
+# PDF Parsing
+pdf-extract = "0.7"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.25"

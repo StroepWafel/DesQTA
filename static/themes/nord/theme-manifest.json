@@ -1,0 +1,51 @@
+{
+  "name": "Nord",
+  "version": "1.0.0",
+  "description": "An arctic, north-bluish color palette theme inspired by the beautiful Arctic landscape. Clean and modern.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/nord/preview.png",
+    "screenshots": ["/themes/nord/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#88c0d0",
+    "defaultTheme": "dark",
+    "supportsLightMode": true,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#88c0d0",
+    "secondaryColor": "#5e81ac",
+    "successColor": "#a3be8c",
+    "warningColor": "#ebcb8b",
+    "errorColor": "#bf616a",
+    "backgroundColor": "#2e3440",
+    "surfaceColor": "#3b4252",
+    "textColor": "#eceff4",
+    "borderColor": "#4c566a",
+    "shadowColor": "rgba(136, 192, 208, 0.2)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": false,
+    "shadows": true
+  }
+}
+

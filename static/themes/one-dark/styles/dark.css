@@ -1,0 +1,14 @@
+/* One Dark Theme - Dark Mode Styles */
+
+.dark {
+  --background-color: #282c34;
+  --surface-color: rgba(53, 59, 69, 0.9);
+  --text-color: #abb2bf;
+  --border-color: #5c6370;
+}
+
+.dark .one-dark-modern {
+  background: rgba(97, 175, 239, 0.15) !important;
+  border: 1px solid rgba(97, 175, 239, 0.3);
+}
+

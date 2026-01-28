@@ -22,10 +22,14 @@ mod news;
 mod notes_filesystem;
 #[path = "utils/performance_testing.rs"]
 mod performance_testing;
+#[path = "utils/system_monitor.rs"]
+mod system_monitor;
 #[path = "utils/profile_picture.rs"]
 mod profile_picture;
 #[path = "utils/sanitization.rs"]
 mod sanitization;
+#[path = "utils/html_parser.rs"]
+mod html_parser;
 #[path = "utils/seqta_config.rs"]
 mod seqta_config;
 #[path = "services/seqta_mentions.rs"]
@@ -42,6 +46,10 @@ mod migration;
 mod theme_manager;
 #[path = "utils/todolist.rs"]
 mod todolist;
+#[path = "utils/pdf_extract.rs"]
+mod pdf_extract;
+#[path = "utils/forum_photos.rs"]
+mod forum_photos;
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use serde_json;
@@ -333,12 +341,19 @@ pub fn run() {
             profile_picture::delete_profile_picture,
             profile_picture::has_custom_profile_picture,
             profile_picture::get_profile_picture_data_url,
+            forum_photos::save_forum_photo,
+            forum_photos::get_forum_photo_path,
+            forum_photos::get_forum_photo_data_url,
+            forum_photos::get_forum_photo_uuid_by_name,
             performance_testing::save_performance_test_results,
             performance_testing::get_performance_test_results,
             performance_testing::load_performance_test_result,
             performance_testing::delete_performance_test_result,
             performance_testing::get_performance_tests_directory,
             performance_testing::clear_all_performance_tests,
+            system_monitor::get_system_metrics,
+            system_monitor::get_detailed_system_info,
+            system_monitor::start_system_monitoring,
             database::db_cache_get,
             database::db_cache_set,
             database::db_cache_delete,
@@ -361,7 +376,12 @@ pub fn run() {
             seqta_mentions::search_seqta_mentions_with_context,
             seqta_mentions::update_seqta_mention_data,
             seqta_mentions::get_weekly_schedule_for_class_cmd,
-            seqta_mentions::fetch_lesson_content_cmd
+            seqta_mentions::fetch_lesson_content_cmd,
+            html_parser::sanitize_html_command,
+            html_parser::parse_html_command,
+            html_parser::extract_iframe_src_command,
+            html_parser::extract_text_content_command,
+            pdf_extract::get_assessment_weighting
         ])
         .setup(|app| {
             // --- START: Auto-Clear Cache on Update ---

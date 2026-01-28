@@ -1,0 +1,51 @@
+{
+  "name": "Forest",
+  "version": "1.0.0",
+  "description": "A nature-inspired forest theme with rich greens and earthy browns, bringing the outdoors to your screen.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/forest/preview.png",
+    "screenshots": ["/themes/forest/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#16a34a",
+    "defaultTheme": "dark",
+    "supportsLightMode": true,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#16a34a",
+    "secondaryColor": "#22c55e",
+    "successColor": "#10b981",
+    "warningColor": "#f59e42",
+    "errorColor": "#ef4444",
+    "backgroundColor": "#0f1f0f",
+    "surfaceColor": "#1a3a1a",
+    "textColor": "#dcfce7",
+    "borderColor": "#15803d",
+    "shadowColor": "rgba(22, 163, 74, 0.3)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": false,
+    "gradients": true,
+    "shadows": true
+  }
+}
+

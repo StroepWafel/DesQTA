@@ -7,8 +7,9 @@
     code: string;
     due: string;
     status: string;
-    colour: string;
-    metaclass: number;
+    colour?: string;
+    metaclass?: number;
+    [key: string]: any; // Allow extra fields
   }
 
   interface Props {
@@ -39,9 +40,9 @@
 </script>
 
 <a
-  href="/assessments/{assessment.id}/{assessment.metaclass}?tab={detailsTab}#top"
+  href="/assessments/{assessment.id}/{assessment.metaclass || assessment.metaclassID || 0}?tab={detailsTab}#top"
   class="block bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xs rounded-xl p-4 shadow-lg border-l-8 border border-zinc-300/50 dark:border-zinc-700/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(99,102,241,0.2)]"
-  style="border-color: {assessment.colour};">
+  style="border-color: {assessment.colour || '#8e8e8e'};">
   <div class="flex gap-2 items-center">
     <div class="text-sm font-semibold text-zinc-600 dark:text-zinc-400">
       {new Date(assessment.due).toLocaleDateString('en-AU', {

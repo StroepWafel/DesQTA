@@ -8,6 +8,14 @@ register('de', () => import('./locales/de.json'));
 register('zh', () => import('./locales/zh.json'));
 register('ja', () => import('./locales/ja.json'));
 register('en-pirate', () => import('./locales/en-pirate.json'));
+register('pt', () => import('./locales/pt.json'));
+register('ru', () => import('./locales/ru.json'));
+register('it', () => import('./locales/it.json'));
+register('ko', () => import('./locales/ko.json'));
+register('ar', () => import('./locales/ar.json'));
+register('nl', () => import('./locales/nl.json'));
+register('pl', () => import('./locales/pl.json'));
+register('tr', () => import('./locales/tr.json'));
 
 // Initialize i18n
 export function initI18n() {
@@ -30,6 +38,14 @@ export const availableLocales = [
   { code: 'zh', name: '中文', flag: '🇨🇳' },
   { code: 'ja', name: '日本語', flag: '🇯🇵' },
   { code: 'en-pirate', name: 'English Pirate', flag: '🏴‍☠️' },
+  { code: 'pt', name: 'Português', flag: '🇵🇹' },
+  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'ko', name: '한국어', flag: '🇰🇷' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+  { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
+  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+  { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
 ];
 
 // Helper to get current locale info

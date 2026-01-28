@@ -1,41 +1,29 @@
-import DOMPurify from 'dompurify';
+import { invoke } from '@tauri-apps/api/core';
 import { logger } from './logger';
 
 /**
  * Centralized sanitization utilities for user input and HTML content
+ * Now uses Rust-side HTML parsing for better performance
  */
 
-// Configure DOMPurify with secure defaults
-DOMPurify.setConfig({
-  ALLOWED_TAGS: [
-    'p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre', 'span', 'div',
-    'table', 'thead', 'tbody', 'tr', 'th', 'td'
-  ],
-  ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel'],
-  ADD_ATTR: ['target', 'rel'],
-  FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'link'],
-  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
-});
-
-// Add hook to make all links open in new tab
-DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-  if (node.tagName === 'A' && node.getAttribute('href')) {
-    node.setAttribute('target', '_blank');
-    node.setAttribute('rel', 'noopener noreferrer');
-  }
-});
+// Cache for synchronous fallback
+let fallbackCache: Map<string, string> = new Map();
 
 /**
- * Sanitize HTML content for safe rendering
+ * Sanitize HTML content for safe rendering using Rust-side parsing (async)
+ * This is the preferred method for better performance
  */
-export function sanitizeHtml(html: string, customConfig?: any): string {
+export async function sanitizeHtmlAsync(html: string, customConfig?: any): Promise<string> {
   if (!html) return '';
   
   try {
-    const sanitized = DOMPurify.sanitize(html, customConfig).toString();
+    // Use Rust-side HTML sanitization for better performance
+    const sanitized = await invoke<string>('sanitize_html_command', {
+      html,
+      config: customConfig || null
+    });
     
-    logger.debug('sanitization', 'sanitizeHtml', 'HTML sanitized', {
+    logger.debug('sanitization', 'sanitizeHtmlAsync', 'HTML sanitized (Rust)', {
       originalLength: html.length,
       sanitizedLength: sanitized.length,
       removed: html.length - sanitized.length
@@ -43,8 +31,71 @@ export function sanitizeHtml(html: string, customConfig?: any): string {
     
     return sanitized;
   } catch (error) {
-    logger.error('sanitization', 'sanitizeHtml', 'Failed to sanitize HTML', { error });
-    return ''; // Return empty string on error for safety
+    logger.error('sanitization', 'sanitizeHtmlAsync', 'Failed to sanitize HTML (Rust)', { error });
+    // Fallback to synchronous version
+    return sanitizeHtml(html, customConfig);
+  }
+}
+
+/**
+ * Sanitize HTML content for safe rendering (synchronous)
+ * Uses regex-based fallback for backwards compatibility with Svelte templates
+ * For better performance, pre-sanitize HTML using sanitizeHtmlAsync before rendering
+ */
+export function sanitizeHtml(html: string, customConfig?: any): string {
+  if (!html) return '';
+  
+  // Check cache first
+  const cacheKey = html.substring(0, 100);
+  if (fallbackCache.has(cacheKey) && html.length < 1000) {
+    const cached = fallbackCache.get(cacheKey);
+    if (cached && html === cacheKey) {
+      return cached;
+    }
+  }
+  
+  try {
+    // Simple regex-based sanitization as synchronous fallback
+    // This is less secure than Rust-side parsing but works synchronously
+    let sanitized = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+      .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '');
+    
+    // Add target="_blank" and rel="noopener noreferrer" to links
+    sanitized = sanitized.replace(/<a\s+([^>]*?)>/gi, (match, attrs) => {
+      if (!attrs.includes('target=')) {
+        attrs += ' target="_blank"';
+      }
+      if (!attrs.includes('rel=')) {
+        attrs += ' rel="noopener noreferrer"';
+      }
+      return `<a ${attrs}>`;
+    });
+    
+    // Cache small results
+    if (html.length < 1000) {
+      fallbackCache.set(cacheKey, sanitized);
+      // Limit cache size
+      if (fallbackCache.size > 100) {
+        const firstKey = fallbackCache.keys().next().value;
+        fallbackCache.delete(firstKey);
+      }
+    }
+    
+    logger.debug('sanitization', 'sanitizeHtml', 'HTML sanitized (fallback)', {
+      originalLength: html.length,
+      sanitizedLength: sanitized.length
+    });
+    
+    return sanitized;
+  } catch (error) {
+    logger.error('sanitization', 'sanitizeHtml', 'Failed to sanitize HTML (fallback)', { error });
+    return '';
   }
 }
 

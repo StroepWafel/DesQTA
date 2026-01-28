@@ -187,9 +187,17 @@
       // Reload data after sync completes
       await loadAnalyticsData();
       error = null;
+      
+      // Show success toast notification
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.success('Analytics data synced successfully');
     } catch (e) {
       logger.error('analytics', 'onMount', `Failed to sync analytics data: ${e}`, { error: e });
       error = $_('analytics.sync_failed') || 'Failed to sync analytics data, showing cached data.';
+      
+      // Show error toast notification
+      const { toastStore } = await import('../../lib/stores/toast');
+      toastStore.error('Failed to sync analytics data');
     } finally {
       syncing = false;
     }

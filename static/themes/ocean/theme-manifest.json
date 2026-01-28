@@ -1,0 +1,51 @@
+{
+  "name": "Ocean",
+  "version": "1.0.0",
+  "description": "A calming ocean theme with deep blues and teals, inspired by the depths of the sea.",
+  "author": "DesQTA Team",
+  "license": "MIT",
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "preview": {
+    "thumbnail": "/themes/ocean/preview.png",
+    "screenshots": ["/themes/ocean/screenshot1.png"]
+  },
+  "settings": {
+    "defaultAccentColor": "#06b6d4",
+    "defaultTheme": "dark",
+    "supportsLightMode": true,
+    "supportsDarkMode": true,
+    "supportsSystemMode": true
+  },
+  "customProperties": {
+    "primaryColor": "#06b6d4",
+    "secondaryColor": "#0891b2",
+    "successColor": "#10b981",
+    "warningColor": "#f59e42",
+    "errorColor": "#ef4444",
+    "backgroundColor": "#0c1729",
+    "surfaceColor": "#1e3a5f",
+    "textColor": "#e0f2fe",
+    "borderColor": "#0e7490",
+    "shadowColor": "rgba(6, 182, 212, 0.3)"
+  },
+  "fonts": {
+    "primary": "Inter",
+    "secondary": "SF Pro Display",
+    "monospace": "JetBrains Mono"
+  },
+  "animations": {
+    "duration": "200ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "enableEnhanced": true
+  },
+  "features": {
+    "customScrollbars": true,
+    "glassmorphism": true,
+    "gradients": true,
+    "shadows": true
+  }
+}
+

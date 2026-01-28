@@ -3,6 +3,7 @@
   import { Icon, XMark } from 'svelte-hero-icons';
   import type { Snippet } from 'svelte';
   import { Button } from '$lib/components/ui';
+  import { _ } from '../i18n';
 
   interface Props {
     open: boolean;
@@ -82,7 +83,7 @@
             size="sm"
             icon={XMark}
             onclick={closeModal}
-            ariaLabel="Close modal"
+            ariaLabel={$_('modal.close_modal') || 'Close modal'}
             class="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
           />
         </div>

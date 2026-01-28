@@ -52,9 +52,14 @@
       if (notesFileExplorer) {
         await notesFileExplorer.loadFileTree();
       }
+      
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.success('Note created successfully');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to create note';
       console.error('Failed to create note:', e);
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Failed to create note');
     } finally {
       loading = false;
     }
@@ -140,9 +145,14 @@
       if (notesFileExplorer) {
         await notesFileExplorer.loadFileTree();
       }
+      
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.success('Note saved successfully');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to save note';
       console.error('Failed to save note:', e);
+      const { toastStore } = await import('../../stores/toast');
+      toastStore.error('Failed to save note');
     } finally {
       isSaving = false;
     }
@@ -224,7 +234,10 @@
             <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
               Notes
             </h2>
-            <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium" on:click={() => handleCreateNote()}>
+            <button class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium" on:click={async () => {
+              const currentPath = notesFileExplorer?.getCurrentFolderPath() || [];
+              await handleCreateNote(currentPath);
+            }}>
               <Icon src={Plus} class="w-4 h-4 inline mr-1" />
               New Note
             </button>

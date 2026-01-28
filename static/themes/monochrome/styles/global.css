@@ -1,0 +1,84 @@
+/* Monochrome Theme - Global Styles */
+
+:root {
+  --accent-color-value: #ffffff;
+  --accent-color-hover: #e5e5e5;
+  --background-color: #000000;
+}
+
+html, body {
+  background: transparent !important;
+}
+
+/* Custom scrollbar for monochrome theme */
+::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e5e5e5;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: #ffffff #000000;
+}
+
+/* Enhanced monochrome effects */
+.monochrome-clean {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Monochrome accent colors for interactive elements */
+.accent-bg {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.accent-bg-hover:hover {
+  background: #e5e5e5 !important;
+}
+
+.accent-text {
+  color: #ffffff !important;
+}
+
+.accent-border {
+  border-color: #ffffff !important;
+}
+
+.accent-ring {
+  --tw-ring-color: #ffffff !important;
+}
+
+/* Monochrome shadows */
+.accent-shadow {
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Enhanced hover effects */
+.hover\:accent-shadow:hover {
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Monochrome theme specific button styles */
+.monochrome-button {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
+  transition: all 0.2s ease;
+}
+
+.monochrome-button:hover {
+  background: #e5e5e5;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* High contrast focus */
+.monochrome-focus:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
