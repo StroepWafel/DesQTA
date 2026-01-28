@@ -2,6 +2,8 @@
   import { Window } from '@tauri-apps/api/window';
   import WeatherWidget from './WeatherWidget.svelte';
   import UserDropdown from './UserDropdown.svelte';
+  import QuestionnaireWidget from './QuestionnaireWidget.svelte';
+  import QuestionnaireModal from './QuestionnaireModal.svelte';
   import {
     Icon,
     Bars3,
@@ -23,6 +25,7 @@
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
   import { flushAll } from '../services/syncService';
+  import { questionnaireService, type QuestionnaireQuestion } from '../services/questionnaireService';
   import { _ } from '../i18n';
   import T from './T.svelte';
 
@@ -157,6 +160,8 @@
   let unreadNotifications = $state(0);
   let isMobile = $state(false);
   let showNotificationsModal = $state(false);
+  let showQuestionnaireModal = $state(false);
+  let currentQuestion = $state<QuestionnaireQuestion | null>(null);
 
   function handleSelect(page: { nameKey: string; path: string }) {
     searchStore.set('');
@@ -409,6 +414,11 @@
       {#if weatherEnabled && weatherData}
         <WeatherWidget {weatherData} />
       {/if}
+      <QuestionnaireWidget
+        onOpenModal={(question) => {
+          currentQuestion = question;
+          showQuestionnaireModal = true;
+        }} />
     </div>
   </div>
   <div class="flex flex-1 justify-center">
@@ -617,4 +627,10 @@
       </div>
     </div>
   {/if}
+  <QuestionnaireModal
+    bind:open={showQuestionnaireModal}
+    question={currentQuestion}
+    onclose={() => {
+      showQuestionnaireModal = false;
+    }} />
 </header>
