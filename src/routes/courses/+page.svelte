@@ -80,15 +80,6 @@
         },
         onDataLoaded: (foldersData) => {
           processFolders(foldersData);
-          // If no subjects found but folders exist, clear cache and refetch
-          const testActiveFolders = foldersData.filter((f: Folder) => f.active);
-          const testActiveSubjects = testActiveFolders.flatMap((f: Folder) => f.subjects || []);
-          if (testActiveSubjects.length === 0 && foldersData.length > 0) {
-            cache.delete(cacheKey);
-            // Refetch immediately
-            loadSubjects();
-            return;
-          }
           loading = false;
         },
         shouldSyncInBackground: (foldersData) => {
