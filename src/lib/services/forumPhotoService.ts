@@ -44,4 +44,24 @@ export const forumPhotoService = {
       return null;
     }
   },
+
+  /**
+   * Get UUID by name (for directory matching)
+   */
+  async getUUIDByName(name: string | null | undefined): Promise<string | null> {
+    if (!name || !name.trim()) return null;
+
+    try {
+      const uuid = await invoke<string | null>('get_forum_photo_uuid_by_name', {
+        name: name.trim(),
+      });
+      return uuid;
+    } catch (e) {
+      logger.debug('forumPhotoService', 'getUUIDByName', `Failed to get UUID for name ${name}: ${e}`, {
+        error: e,
+        name,
+      });
+      return null;
+    }
+  },
 };

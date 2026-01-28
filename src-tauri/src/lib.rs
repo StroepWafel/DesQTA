@@ -344,6 +344,7 @@ pub fn run() {
             forum_photos::save_forum_photo,
             forum_photos::get_forum_photo_path,
             forum_photos::get_forum_photo_data_url,
+            forum_photos::get_forum_photo_uuid_by_name,
             performance_testing::save_performance_test_results,
             performance_testing::get_performance_test_results,
             performance_testing::load_performance_test_result,

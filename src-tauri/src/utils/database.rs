@@ -204,13 +204,25 @@ fn init_schema(conn: &Connection) -> SqlResult<()> {
         "CREATE TABLE IF NOT EXISTS forum_photos (
             uuid TEXT PRIMARY KEY,
             file_path TEXT NOT NULL,
+            name TEXT,
             cached_at INTEGER NOT NULL
         )",
         [],
     )?;
     
+    // Add name column if it doesn't exist (migration for existing databases)
+    conn.execute(
+        "ALTER TABLE forum_photos ADD COLUMN name TEXT",
+        [],
+    ).ok(); // Ignore error if column already exists
+    
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_forum_photos_cached_at ON forum_photos(cached_at)",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_forum_photos_name ON forum_photos(name)",
         [],
     )?;
 

@@ -89,6 +89,65 @@ pub async fn get_forum_photo_path(uuid: String) -> Result<Option<String>, String
     Ok(None)
 }
 
+/// Get UUID by name (for directory matching)
+/// Supports exact match and case-insensitive matching
+#[tauri::command]
+pub async fn get_forum_photo_uuid_by_name(name: String) -> Result<Option<String>, String> {
+    use crate::database;
+    
+    database::with_conn(|conn| {
+        // Try exact match first
+        let mut stmt = conn
+            .prepare("SELECT uuid FROM forum_photos WHERE name = ?1 LIMIT 1")
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+        
+        let uuid: Result<String, rusqlite::Error> = stmt.query_row(params![name], |row| {
+            Ok(row.get(0)?)
+        });
+        
+        match uuid {
+            Ok(u) => return Ok(Some(u)),
+            Err(rusqlite::Error::QueryReturnedNoRows) => {
+                // Try case-insensitive match
+                let mut stmt_ci = conn
+                    .prepare("SELECT uuid FROM forum_photos WHERE LOWER(name) = LOWER(?1) LIMIT 1")
+                    .map_err(|e| anyhow::anyhow!("Failed to prepare case-insensitive statement: {}", e))?;
+                
+                let uuid_ci: Result<String, rusqlite::Error> = stmt_ci.query_row(params![name], |row| {
+                    Ok(row.get(0)?)
+                });
+                
+                match uuid_ci {
+                    Ok(u) => Ok(Some(u)),
+                    Err(rusqlite::Error::QueryReturnedNoRows) => {
+                        // Try partial match (name contains the search term, ignoring case)
+                        // This helps match "Reuben Wheeler" with stored "Reuben Wheeler" even if stored name has title
+                        let search_lower = name.to_lowercase();
+                        let mut stmt_partial = conn
+                            .prepare("SELECT uuid FROM forum_photos WHERE LOWER(name) LIKE ?1 LIMIT 1")
+                            .map_err(|e| anyhow::anyhow!("Failed to prepare partial match statement: {}", e))?;
+                        
+                        // Match if stored name contains the search name
+                        let pattern = format!("%{}%", search_lower);
+                        let uuid_partial: Result<String, rusqlite::Error> = stmt_partial.query_row(params![pattern], |row| {
+                            Ok(row.get(0)?)
+                        });
+                        
+                        match uuid_partial {
+                            Ok(u) => Ok(Some(u)),
+                            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+                            Err(e) => Err(anyhow::anyhow!("Failed to get UUID by name (partial match): {}", e)),
+                        }
+                    },
+                    Err(e) => Err(anyhow::anyhow!("Failed to get UUID by name (case-insensitive): {}", e)),
+                }
+            },
+            Err(e) => Err(anyhow::anyhow!("Failed to get UUID by name: {}", e)),
+        }
+    })
+    .map_err(|e| e.to_string())
+}
+
 /// Get photo as base64 data URL for web display
 #[tauri::command]
 pub async fn get_forum_photo_data_url(uuid: String) -> Result<Option<String>, String> {

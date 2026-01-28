@@ -15,6 +15,8 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
+  import { forumPhotoService } from '../../lib/services/forumPhotoService';
+  import Modal from '../../lib/components/Modal.svelte';
 
   interface Student {
     id: number;
@@ -27,6 +29,7 @@
     house_colour: string;
     campus: string;
     rollgroup: string;
+    personUUID?: string; // May be available from API
   }
 
   let students: Student[] = $state([]);
@@ -37,9 +40,20 @@
   let selectedSubSchool = $state('all');
   let selectedHouse = $state('all');
   let selectedCampus = $state('all');
+  let filterHasPhoto = $state(false);
   let devSensitiveInfoHider = $state(false);
   let currentPage = $state(1);
   let itemsPerPage = $state(24); // 6 rows of 4 cards on large screens
+
+  // Cache for student photos: Map<studentId, photoDataUrl>
+  let studentPhotos = $state<Map<number, string>>(new Map());
+  // Track which students have photos available
+  let studentsWithPhotos = $state<Set<number>>(new Set());
+  
+  // Image viewer modal state
+  let showImageModal = $state(false);
+  let selectedImageUrl = $state<string | null>(null);
+  let selectedStudentName = $state<string>('');
 
   let years: string[] = $state([]);
   let subSchools: string[] = $state([]);
@@ -153,8 +167,9 @@
     const matchesSubSchool = selectedSubSchool === 'all' || student.sub_school === selectedSubSchool;
     const matchesHouse = selectedHouse === 'all' || student.house === selectedHouse;
     const matchesCampus = selectedCampus === 'all' || student.campus === selectedCampus;
+    const matchesPhoto = !filterHasPhoto || studentsWithPhotos.has(student.id);
     
-    return matchesSearch && matchesYear && matchesSubSchool && matchesHouse && matchesCampus;
+    return matchesSearch && matchesYear && matchesSubSchool && matchesHouse && matchesCampus && matchesPhoto;
   }
 
   function clearFilters() {
@@ -163,7 +178,82 @@
     selectedSubSchool = 'all';
     selectedHouse = 'all';
     selectedCampus = 'all';
+    filterHasPhoto = false;
     currentPage = 1; // Reset to first page when clearing filters
+  }
+
+  // Normalize name for matching (remove titles, trim, lowercase)
+  function normalizeName(name: string): string {
+    return name
+      .replace(/^(Mr|Mrs|Ms|Miss|Dr|Prof)\.?\s+/i, '') // Remove titles
+      .trim()
+      .toLowerCase();
+  }
+
+  // Load photos for students
+  async function loadStudentPhotos() {
+    if (devSensitiveInfoHider) return; // Skip if sensitive info hider is enabled
+
+    // Try to match students by name to UUIDs from forum photos
+    // First try personUUID if available, otherwise match by various name formats
+    const photoPromises = students.map(async (student) => {
+      let uuid: string | null = null;
+
+      // If student has personUUID, use it directly
+      if (student.personUUID) {
+        uuid = student.personUUID.trim();
+      } else {
+        // Try multiple name matching strategies
+        const nameVariants = [
+          student.xx_display, // Display name (e.g., "Alice Smith")
+          `${student.firstname} ${student.surname}`, // First + Last (e.g., "Alice Smith")
+          `${student.prefname || student.firstname} ${student.surname}`, // Preferred + Last
+        ];
+
+        // Try exact matches first
+        for (const name of nameVariants) {
+          if (name) {
+            uuid = await forumPhotoService.getUUIDByName(name);
+            if (uuid) break;
+          }
+        }
+
+        // If no exact match, try normalized matching (case-insensitive, without titles)
+        if (!uuid) {
+          const normalizedStudentName = normalizeName(`${student.firstname} ${student.surname}`);
+          // We'll need to get all names from the database and compare
+          // For now, try common variations
+          for (const name of nameVariants) {
+            if (name) {
+              const normalized = normalizeName(name);
+              uuid = await forumPhotoService.getUUIDByName(normalized);
+              if (uuid) break;
+            }
+          }
+        }
+      }
+
+      if (uuid) {
+        try {
+          const photoUrl = await forumPhotoService.getPhotoDataUrl(uuid);
+          if (photoUrl) {
+            studentPhotos = new Map(studentPhotos);
+            studentPhotos.set(student.id, photoUrl);
+            studentsWithPhotos = new Set(studentsWithPhotos);
+            studentsWithPhotos.add(student.id);
+          }
+        } catch (e) {
+          logger.debug('directory', 'loadStudentPhotos', `Failed to load photo for student ${student.id}: ${e}`, {
+            error: e,
+            studentId: student.id,
+            uuid,
+          });
+        }
+      }
+    });
+
+    await Promise.allSettled(photoPromises);
+    logger.debug('directory', 'loadStudentPhotos', `Loaded photos for ${studentsWithPhotos.size} students`);
   }
 
   function getFilteredStudents() {
@@ -179,6 +269,21 @@
 
   function getTotalPages() {
     return Math.ceil(getFilteredStudents().length / itemsPerPage);
+  }
+
+  function openImageModal(student: Student) {
+    const photoUrl = studentPhotos.get(student.id);
+    if (photoUrl) {
+      selectedImageUrl = photoUrl;
+      selectedStudentName = student.xx_display || `${student.firstname} ${student.surname}`;
+      showImageModal = true;
+    }
+  }
+
+  function closeImageModal() {
+    showImageModal = false;
+    selectedImageUrl = null;
+    selectedStudentName = '';
   }
 
   // Handle scroll wheel navigation through pages (only when hovering over pagination)
@@ -200,8 +305,15 @@
 
   // Reset to first page when filters change
   $effect(() => {
-    if (search || selectedYear !== 'all' || selectedSubSchool !== 'all' || selectedHouse !== 'all' || selectedCampus !== 'all') {
+    if (search || selectedYear !== 'all' || selectedSubSchool !== 'all' || selectedHouse !== 'all' || selectedCampus !== 'all' || filterHasPhoto) {
       currentPage = 1;
+    }
+  });
+
+  // Load photos when students are loaded
+  $effect(() => {
+    if (students.length > 0 && !devSensitiveInfoHider) {
+      loadStudentPhotos();
     }
   });
 
@@ -319,6 +431,23 @@
                 </Select.Content>
               </Select.Root>
             </div>
+
+            <!-- Has Photo Filter -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <T key="directory.has_photo" fallback="Has Photo" />
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  bind:checked={filterHasPhoto}
+                  class="w-4 h-4 text-accent-600 bg-zinc-100 border-zinc-300 rounded focus:ring-accent-500 focus:ring-2 dark:bg-zinc-700 dark:border-zinc-600"
+                />
+                <span class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <T key="directory.show_only_with_photos" fallback="Show only students with photos" />
+                </span>
+              </label>
+            </div>
           </div>
         </Popover.Content>
       </Popover.Root>
@@ -380,6 +509,41 @@
                   alt={$_('directory.student_avatar') || 'Student avatar'}
                   class="w-10 h-10 rounded-full object-cover border-2 border-white/60 dark:border-zinc-600/60"
                 />
+              {:else if studentPhotos.has(student.id)}
+                {@const photoUrl = studentPhotos.get(student.id)}
+                {#if photoUrl}
+                  <button
+                    type="button"
+                    onclick={() => openImageModal(student)}
+                    class="w-10 h-10 rounded-full overflow-hidden border-2 border-white/60 dark:border-zinc-600/60 cursor-pointer hover:ring-2 hover:ring-accent-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                    aria-label={$_('directory.view_photo') || `View photo of ${student.xx_display || student.firstname}`}
+                  >
+                    <img
+                      src={photoUrl}
+                      alt={$_('directory.student_avatar') || 'Student avatar'}
+                      class="w-full h-full object-cover"
+                      onerror={(e) => {
+                        // Fallback to initials on error
+                        const img = e.currentTarget;
+                        const fallback = document.createElement('div');
+                        fallback.className = 'w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm';
+                        fallback.style.backgroundColor = student.house_colour;
+                        fallback.innerHTML = `<span>${student.firstname.charAt(0)}${student.surname.charAt(0)}</span>`;
+                        img.parentNode?.replaceChild(fallback, img);
+                        // Remove from photos map on error
+                        studentPhotos = new Map(studentPhotos);
+                        studentPhotos.delete(student.id);
+                      }}
+                    />
+                  </button>
+                {:else}
+                  <div 
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                    style="background-color: {student.house_colour}"
+                  >
+                    {student.firstname.charAt(0)}{student.surname.charAt(0)}
+                  </div>
+                {/if}
               {:else}
                 <div 
                   class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
@@ -463,4 +627,27 @@
       {/snippet}
     </AsyncWrapper>
   </div>
-</div> 
+</div>
+
+<!-- Image Viewer Modal -->
+<Modal
+  bind:open={showImageModal}
+  onclose={closeImageModal}
+  maxWidth="max-w-4xl"
+  className="p-0"
+  ariaLabel={$_('directory.student_photo') || 'Student Photo'}>
+  {#if selectedImageUrl}
+    <div class="flex flex-col items-center justify-center p-8">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
+        {selectedStudentName}
+      </h2>
+      <div class="relative w-full max-w-2xl">
+        <img
+          src={selectedImageUrl}
+          alt={$_('directory.student_photo') || `Photo of ${selectedStudentName}`}
+          class="w-full h-auto rounded-lg shadow-2xl object-contain max-h-[70vh]"
+        />
+      </div>
+    </div>
+  {/if}
+</Modal> 
