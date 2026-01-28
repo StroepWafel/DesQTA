@@ -28,6 +28,9 @@
     staffID: number;
   }
 
+  // Cache for loaded photos - using reactive state
+  let photoUrls = $state<Map<string, string>>(new Map());
+
   interface ForumDetail {
     owner: string;
     assessment: number;
@@ -104,6 +107,48 @@
     return (name?.trim()?.charAt(0) || '?').toUpperCase();
   }
 
+  async function loadPhoto(uuid: string): Promise<string | null> {
+    if (!uuid) return null;
+    
+    // Check cache first
+    if (photoUrls.has(uuid)) {
+      return photoUrls.get(uuid) || null;
+    }
+
+    try {
+      const profileImage = await seqtaFetch(`/seqta/student/photo/get`, {
+        params: { uuid: uuid.trim(), format: 'low' },
+        is_image: true,
+      });
+      
+      if (profileImage) {
+        const dataUrl = `data:image/png;base64,${profileImage}`;
+        // Update reactive state
+        photoUrls = new Map(photoUrls);
+        photoUrls.set(uuid, dataUrl);
+        return dataUrl;
+      }
+    } catch (e) {
+      logger.debug('forums', 'loadPhoto', `Failed to load photo for UUID ${uuid}: ${e}`, { error: e });
+    }
+    
+    return null;
+  }
+
+  // Load photos for all messages
+  async function loadMessagePhotos() {
+    if (!forumData?.messages) return;
+    
+    // Load photos for all messages in parallel
+    const photoPromises = forumData.messages.map(async (message) => {
+      if (message.uuid) {
+        await loadPhoto(message.uuid);
+      }
+    });
+    
+    await Promise.all(photoPromises);
+  }
+
   function formatDate(dateString: string): string {
     try {
       const date = new Date(dateString);
@@ -134,6 +179,8 @@
 
       if (data.status === '200' && data.payload) {
         forumData = data.payload;
+        // Load photos for all messages
+        await loadMessagePhotos();
       } else {
         error = 'Invalid response format';
         logger.error('forums', 'loadForum', 'Invalid response format', { data });
@@ -321,9 +368,31 @@
               <div class="flex gap-4">
                 <!-- Avatar -->
                 <div class="flex-shrink-0">
-                  <div class="w-10 h-10 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
-                    <span class="text-sm font-semibold">{initial(message.name)}</span>
-                  </div>
+                  {#if message.uuid && photoUrls.has(message.uuid)}
+                    {@const photoUrl = photoUrls.get(message.uuid)}
+                    {#if photoUrl}
+                      <img
+                        src={photoUrl}
+                        alt={message.name}
+                        class="w-10 h-10 rounded-full object-cover border border-zinc-200 dark:border-zinc-700"
+                        onerror={(e) => {
+                          // Replace with fallback on error
+                          const img = e.currentTarget;
+                          const fallback = document.createElement('div');
+                          fallback.className = 'w-10 h-10 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300';
+                          fallback.innerHTML = `<span class="text-sm font-semibold">${initial(message.name)}</span>`;
+                          img.parentNode?.replaceChild(fallback, img);
+                        }} />
+                    {:else}
+                      <div class="w-10 h-10 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
+                        <span class="text-sm font-semibold">{initial(message.name)}</span>
+                      </div>
+                    {/if}
+                  {:else}
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
+                      <span class="text-sm font-semibold">{initial(message.name)}</span>
+                    </div>
+                  {/if}
                 </div>
 
                 <!-- Content -->
