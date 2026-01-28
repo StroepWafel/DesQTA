@@ -622,7 +622,9 @@
         if (!goalsEnabled) {
           menu = menu.filter(item => item.path !== '/goals');
         }
-        const forumsEnabled = latestConfig.payload['coneqt-s.page.forums']?.value === 'enabled';
+        const forumsPageEnabled = latestConfig.payload['coneqt-s.page.forums']?.value === 'enabled';
+        const forumsGreetingExists = latestConfig.payload['coneqt-s.forum.greeting'] !== undefined;
+        const forumsEnabled = forumsPageEnabled || forumsGreetingExists;
         if (!forumsEnabled) {
           menu = menu.filter(item => item.path !== '/forums');
         }

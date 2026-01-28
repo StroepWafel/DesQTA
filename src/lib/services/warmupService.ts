@@ -383,7 +383,9 @@ async function prefetchForumsSettings(): Promise<void> {
     });
 
     const data = typeof response === 'string' ? JSON.parse(response) : response;
-    const enabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+    const forumsPageEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+    const forumsGreetingExists = data?.payload?.['coneqt-s.forum.greeting'] !== undefined;
+    const enabled = forumsPageEnabled || forumsGreetingExists;
     
     cache.set(cacheKey, enabled, 60); // 60 min TTL
     await setIdb(cacheKey, enabled);

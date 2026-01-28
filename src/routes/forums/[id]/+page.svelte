@@ -65,7 +65,9 @@
       });
 
       const data = typeof response === 'string' ? JSON.parse(response) : response;
-      forumsEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+      const forumsPageEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+      const forumsGreetingExists = data?.payload?.['coneqt-s.forum.greeting'] !== undefined;
+      forumsEnabled = forumsPageEnabled || forumsGreetingExists;
     } catch (e) {
       logger.error('forums', 'checkForumsEnabled', `Failed to check if forums are enabled: ${e}`, {
         error: e,

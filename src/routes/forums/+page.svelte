@@ -81,7 +81,9 @@
       });
 
       const data = typeof response === 'string' ? JSON.parse(response) : response;
-      const enabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+      const forumsPageEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
+      const forumsGreetingExists = data?.payload?.['coneqt-s.forum.greeting'] !== undefined;
+      const enabled = forumsPageEnabled || forumsGreetingExists;
       
       forumsEnabled = enabled;
       cache.set(cacheKey, enabled, 60);
