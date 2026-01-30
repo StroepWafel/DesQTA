@@ -257,6 +257,7 @@
             {/if}
 
             {#if lesson.programmeID !== 0}
+              {@const lessonYear = new Date(lesson.date).getFullYear()}
               <div class="flex gap-3">
                 <Button
                   variant="ghost"
@@ -264,7 +265,7 @@
                   icon={DocumentText}
                   ariaLabel={$_('dashboard.view_assessment') || 'View Assessment'}
                   onclick={() =>
-                    (location.href = `/assessments?code=${lesson.code}&date=${lesson.date}`)}
+                    (location.href = `/assessments?code=${lesson.code}&date=${lesson.date}&year=${lessonYear}`)}
                   class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"
                 />
                 <Button
@@ -274,6 +275,15 @@
                   ariaLabel={$_('dashboard.view_course') || 'View Course'}
                   onclick={() =>
                     (location.href = `/courses?code=${lesson.code}&date=${lesson.date}`)}
+                  class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={CalendarDays}
+                  ariaLabel={$_('dashboard.view_timetable') || 'View Timetable'}
+                  onclick={() =>
+                    (location.href = `/timetable?date=${lesson.date}`)}
                   class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"
                 />
               </div>

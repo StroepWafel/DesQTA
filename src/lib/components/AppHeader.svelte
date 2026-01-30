@@ -328,12 +328,15 @@
   function handleNotificationClick(notification: Notification) {
     if (notification.type === 'coneqtassessments' && notification.coneqtAssessments) {
       const { assessmentID, metaclassID } = notification.coneqtAssessments;
+      // Extract year from notification timestamp (fallback to current year if unavailable)
+      const notificationYear = new Date(notification.timestamp).getFullYear();
       showNotifications = false;
       showNotificationsModal = false;
-      goto(`/assessments/${assessmentID}/${metaclassID}`);
+      goto(`/assessments/${assessmentID}/${metaclassID}?year=${notificationYear}`);
     } else if (notification.type === 'report') {
       showNotifications = false;
       showNotificationsModal = false;
+      // Report notifications don't have UUID in the interface, so just go to reports page
       goto('/reports');
     } else if (notification.type === 'message' && notification.message) {
       const id = notification.message.messageID;

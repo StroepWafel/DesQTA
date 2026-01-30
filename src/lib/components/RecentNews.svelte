@@ -8,6 +8,7 @@
   import { logger } from '../../utils/logger';
   import { getRSS } from '../../utils/netUtil';
   import { invoke } from '@tauri-apps/api/core';
+  import { goto } from '$app/navigation';
   import T from './T.svelte';
   import { _ } from '../../lib/i18n';
 
@@ -195,6 +196,11 @@
             target="_blank"
             rel="noopener noreferrer"
             title={n.title}
+            onclick={async (e) => {
+              // Update URL before opening external link
+              const encodedUrl = encodeURIComponent(n.link);
+              await goto(`/news?item=${encodedUrl}&source=${selectedSource}`, { keepFocus: true, replaceState: true });
+            }}
             class="group relative min-w-[260px] max-w-[320px] h-40 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-800 hover:scale-[1.02] transition-all duration-200"
           >
             {#if n.image}

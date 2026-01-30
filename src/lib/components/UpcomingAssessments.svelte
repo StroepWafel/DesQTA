@@ -159,7 +159,10 @@
   {:else}
     <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 sm:p-6">
       {#each filteredAssessments as a}
-        <div
+        {@const assessmentYear = new Date(a.due).getFullYear()}
+        {@const dateStr = new Date(a.due).toISOString().split('T')[0]}
+        <a
+          href="/assessments?code={a.code}&date={dateStr}&year={assessmentYear}"
           class="flex flex-col gap-4 p-4 sm:p-5 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(var(--accent-color-value),0.2)] relative group">
           <div
             class="absolute inset-0 bg-linear-to-br rounded-xl opacity-30 animate-gradient"
@@ -209,7 +212,7 @@
               {a.description}
             </div>
           {/if}
-        </div>
+        </a>
       {/each}
     </div>
   {/if}

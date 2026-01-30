@@ -205,20 +205,63 @@
     if (!mentionData?.data) return;
 
     if (mentionType === 'assessment' || mentionType === 'assignment') {
-      goto('/assessments');
+      const assessmentID = mentionData.data.assessmentID || mentionData.data.id;
+      const metaclassID = mentionData.data.metaclassID || mentionData.data.metaclass || 0;
+      const code = mentionData.data.code || mentionData.data.subjectCode;
+      const dueDate = mentionData.data.dueDate || mentionData.data.due;
+      const year = dueDate ? new Date(dueDate).getFullYear() : new Date().getFullYear();
+      
+      if (assessmentID) {
+        goto(`/assessments/${assessmentID}/${metaclassID}?year=${year}`);
+      } else if (code && dueDate) {
+        const dateStr = new Date(dueDate).toISOString().split('T')[0];
+        goto(`/assessments?code=${code}&date=${dateStr}&year=${year}`);
+      } else {
+        goto('/assessments');
+      }
     } else if (mentionType === 'class' || mentionType === 'subject') {
       const code = mentionData.data.code;
       const programme = mentionData.data.programme;
       const metaclass = mentionData.data.metaclass;
+      const date = mentionData.data.date || mentionData.data.lessonDate;
+      
       if (programme && metaclass) {
-        goto(`/courses?code=${code}&programme=${programme}&metaclass=${metaclass}`);
+        let url = `/courses?code=${code}&programme=${programme}&metaclass=${metaclass}`;
+        if (date) {
+          const dateStr = new Date(date).toISOString().split('T')[0];
+          url += `&date=${dateStr}`;
+        }
+        goto(url);
+      } else if (code) {
+        goto(`/courses?code=${code}`);
       } else {
         goto('/courses');
       }
     } else if (mentionType === 'timetable' || mentionType === 'timetable_slot') {
-      goto('/timetable');
+      const date = mentionData.data.date;
+      if (date) {
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        goto(`/timetable?date=${dateStr}`);
+      } else {
+        goto('/timetable');
+      }
     } else if (mentionType === 'notice') {
-      goto('/notices');
+      const noticeId = mentionData.data.id || mentionData.data.noticeId;
+      const labelId = mentionData.data.labelId || mentionData.data.label;
+      const date = mentionData.data.date;
+      
+      let url = '/notices';
+      const params: string[] = [];
+      if (noticeId) params.push(`item=${noticeId}`);
+      if (labelId) params.push(`category=${labelId}`);
+      if (date) {
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        params.push(`date=${dateStr}`);
+      }
+      if (params.length > 0) {
+        url += `?${params.join('&')}`;
+      }
+      goto(url);
     }
     closeModal();
   }

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
+
   interface Assessment {
     id: number;
     title: string;
@@ -68,6 +70,12 @@
     const [r, g, b] = hexToRgb(hex);
     return (r * 299 + g * 587 + b * 114) / 1000 > 150;
   }
+
+  function handleDateClick(date: Date) {
+    const year = date.getFullYear();
+    const dateStr = date.toISOString().split('T')[0];
+    goto(`/assessments?year=${year}&date=${dateStr}`);
+  }
 </script>
 
 <div
@@ -106,7 +114,16 @@
       {@const isToday = date.toDateString() === new Date().toDateString()}
       <div class="p-1 aspect-square">
         <div
-          class="h-full rounded-lg border p-2 transition-all duration-300 hover:scale-105 {assessments.length >
+          role="button"
+          tabindex="0"
+          onclick={() => handleDateClick(date)}
+          onkeydown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleDateClick(date);
+            }
+          }}
+          class="h-full rounded-lg border p-2 transition-all duration-300 hover:scale-105 cursor-pointer {assessments.length >
           0
             ? ''
             : 'bg-zinc-200/60 dark:bg-zinc-800/30'} {isToday

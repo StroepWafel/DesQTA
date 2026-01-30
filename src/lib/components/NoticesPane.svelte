@@ -172,8 +172,11 @@
     {:else}
       <div class="space-y-3">
         {#each notices as notice}
-          <div class="rounded-lg shadow-xs bg-white/10 text-(--text) border-l-4 p-3 transition-all duration-200 hover:shadow-md hover:bg-white/20"
-               style="border-left-color: {getLabelColor(notice.labelId)};">
+          {@const noticeDate = new Date().toISOString().split('T')[0]}
+          <a
+            href="/notices?item={notice.id}&category={notice.labelId}&date={noticeDate}"
+            class="block rounded-lg shadow-xs bg-white/10 text-(--text) border-l-4 p-3 transition-all duration-200 hover:shadow-md hover:bg-white/20"
+            style="border-left-color: {getLabelColor(notice.labelId)};">
             <div class="flex items-start gap-2 mb-2">
               <span
                 class="px-2 py-1 text-xs font-medium rounded-full text-white shrink-0"
@@ -189,7 +192,7 @@
             <div class="text-xs text-(--text-muted) line-clamp-2">
               {@html notice.content}
             </div>
-          </div>
+          </a>
         {/each}
       </div>
     {/if}
