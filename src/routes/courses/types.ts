@@ -86,6 +86,19 @@ export interface TextBlockModule extends BaseModule {
   };
 }
 
+export interface LexicalModule extends BaseModule {
+  content: {
+    editor: 'lexical';
+    html: string;
+  };
+}
+
+export interface TableModule extends BaseModule {
+  content: {
+    content: string; // HTML table content
+  };
+}
+
 export interface ResourceLink {
   filename: string;
   size?: string;
@@ -113,7 +126,7 @@ export interface LinkModule extends BaseModule {
   };
 }
 
-export type Module = TitleModule | TextBlockModule | ResourceModule | LinkModule | BaseModule;
+export type Module = TitleModule | TextBlockModule | ResourceModule | LinkModule | LexicalModule | TableModule | BaseModule;
 
 export interface ParsedDocument {
   document: {

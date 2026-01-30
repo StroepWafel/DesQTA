@@ -18,6 +18,8 @@
     TextBlockModule,
     ResourceModule,
     LinkModule,
+    LexicalModule,
+    TableModule,
     ResourceLink,
     LinkPreview as LinkPreviewType,
   } from '../types';
@@ -42,11 +44,13 @@
     coursePayload,
     parsedDocument = null,
     selectedLessonContent = null,
+    selectedStandaloneContent = null,
     showingOverview = true,
   }: {
     coursePayload: CoursePayload;
     parsedDocument?: ParsedDocument | null;
     selectedLessonContent?: WeeklyLessonContent | null;
+    selectedStandaloneContent?: WeeklyLessonContent | null;
     showingOverview?: boolean;
   } = $props();
 
@@ -74,6 +78,24 @@
     return isModule(module, (content) => content && content.content && content.content.blocks);
   }
 
+  function isLexicalModule(module: Module): module is LexicalModule {
+    return isModule(
+      module,
+      (content) => content && content.editor === 'lexical' && typeof content.html === 'string',
+    );
+  }
+
+  function isTableModule(module: Module): module is TableModule {
+    return (
+      module.type === '0d49d130-c197-421d-a56a-d1ba0a67cfc0' &&
+      isModule(
+        module,
+        (content) =>
+          content && typeof content.content === 'string' && content.content.includes('<table'),
+      )
+    );
+  }
+
   function isResourceModule(module: Module): module is ResourceModule {
     return isModule(module, (content) => content && content.value && content.value.resources);
   }
@@ -94,12 +116,25 @@
   type RenderedModule =
     | { type: 'title'; content: string }
     | { type: 'text'; content: string }
+    | { type: 'table'; content: string }
     | { type: 'resources'; content: ResourceLink[] }
     | { type: 'link'; content: string };
 
   function renderModule(module: Module): RenderedModule | null {
     if (isTitleModule(module)) {
       return { type: 'title', content: module.content.value };
+    } else if (isLexicalModule(module)) {
+      // Lexical editor modules have HTML content
+      return {
+        type: 'text',
+        content: module.content.html,
+      };
+    } else if (isTableModule(module)) {
+      // Table modules have HTML table content
+      return {
+        type: 'table',
+        content: module.content.content,
+      };
     } else if (isTextBlockModule(module)) {
       return {
         type: 'text',
@@ -122,6 +157,7 @@
 
   function parseLessonDocument(lessonContent: WeeklyLessonContent) {
     if (!lessonContent.document) return null;
+    if (!lessonContent.document.contents) return null;
     try {
       return JSON.parse(lessonContent.document.contents);
     } catch (error) {
@@ -204,6 +240,30 @@
               }
               lessonText += '\n';
             }
+            // Lexical editor content
+            else if (
+              mod.content &&
+              mod.content.editor === 'lexical' &&
+              typeof mod.content.html === 'string'
+            ) {
+              // For AI summary, we can just use the raw HTML and let the LLM process it
+              lessonText += mod.content.html + '\n\n';
+            }
+            // Table modules
+            else if (
+              mod.type === '0d49d130-c197-421d-a56a-d1ba0a67cfc0' &&
+              mod.content &&
+              typeof mod.content.content === 'string'
+            ) {
+              // Extract text from table HTML for AI summary
+              const tableText = mod.content.content
+                .replace(/<[^>]*>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+              if (tableText) {
+                lessonText += `Table: ${tableText}\n\n`;
+              }
+            }
           }
         }
         // Also check top-level modules
@@ -216,6 +276,24 @@
                 if (block.text) lessonText += block.text + '\n';
               }
               lessonText += '\n';
+            } else if (
+              mod.content &&
+              mod.content.editor === 'lexical' &&
+              typeof mod.content.html === 'string'
+            ) {
+              lessonText += mod.content.html + '\n\n';
+            } else if (
+              mod.type === '0d49d130-c197-421d-a56a-d1ba0a67cfc0' &&
+              mod.content &&
+              typeof mod.content.content === 'string'
+            ) {
+              const tableText = mod.content.content
+                .replace(/<[^>]*>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+              if (tableText) {
+                lessonText += `Table: ${tableText}\n\n`;
+              }
             }
           }
         }
@@ -235,7 +313,8 @@
   }
 
   async function generateLessonSummary() {
-    if (!selectedLessonContent) return;
+    const activeContent = selectedLessonContent || selectedStandaloneContent;
+    if (!activeContent) return;
 
     // Collapse content with animation
     contentCollapsed = true;
@@ -246,9 +325,9 @@
     aiSummary = null;
 
     try {
-      const lessonTitle = selectedLessonContent.t || 'Lesson';
-      const lessonText = extractLessonText(selectedLessonContent);
-      const attachments = (selectedLessonContent.r || []).map((r) => ({ name: r.t }));
+      const lessonTitle = activeContent.t || 'Lesson';
+      const lessonText = extractLessonText(activeContent);
+      const attachments = (activeContent.r || []).map((r) => ({ name: r.t }));
       aiSummary = await GeminiService.summarizeLessonContent({
         title: lessonTitle,
         content: lessonText,
@@ -268,7 +347,7 @@
   }
 
   $effect(() => {
-    if (selectedLessonContent) {
+    if (selectedLessonContent || selectedStandaloneContent) {
       aiSummary = null;
       aiSummaryError = null;
       contentCollapsed = false;
@@ -292,226 +371,240 @@
 </script>
 
 <div class="overflow-y-auto relative flex-1">
-  {#if !showingOverview && selectedLessonContent}
-    <div class="p-6">
-      <h1 class="px-6 py-4 mb-6 text-2xl font-bold text-white rounded-lg accent-bg">
-        {selectedLessonContent.t}
-      </h1>
+  {#if !showingOverview && (selectedLessonContent || selectedStandaloneContent)}
+    {@const activeContent = selectedLessonContent || selectedStandaloneContent}
+    {#if activeContent}
+      {@const content = activeContent}
+      <div class="p-6">
+        <h1 class="px-6 py-4 mb-6 text-2xl font-bold text-white rounded-lg accent-bg">
+          {content.t}
+        </h1>
 
-      {#if selectedLessonContent.h}
-        <div
-          class="p-4 mb-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-900/50 border-zinc-300/50 dark:border-zinc-800/50 animate-slide-in animate-delay-1">
-          <h3 class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">
-            <T key="courses.homework_notes" fallback="Homework/Notes" />
-          </h3>
-          <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
-            <p class="text-zinc-700 dark:text-zinc-300">
-              {selectedLessonContent.h}
-            </p>
-          </div>
-        </div>
-      {/if}
-
-      {#if selectedLessonContent.r && selectedLessonContent.r.length > 0}
-        <div class="mb-6 animate-slide-in animate-delay-2">
-          <h2 class="px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg">
-            <T key="courses.lesson_resources" fallback="Lesson Resources" />
-          </h2>
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {#each selectedLessonContent.r as resource}
-              <button
-                type="button"
-                class="flex items-center p-4 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
-                onclick={async () => {
-                  try {
-                    const url = await invoke('get_seqta_file', {
-                      fileType: 'resource',
-                      uuid: resource.uuid,
-                    });
-                    if (typeof url === 'string') {
-                      await openUrl(url);
-                    }
-                  } catch (e) {
-                    // Optionally handle error
-                  }
-                }}>
-                <div class="flex items-center w-full">
-                  <span class="mr-3 text-2xl">{getFileIcon(resource.mimetype)}</span>
-                  <div class="flex-1 min-w-0">
-                    <div class="font-semibold truncate text-zinc-900 dark:text-white">
-                      {resource.t}
-                    </div>
-                    <div class="text-sm text-zinc-600 dark:text-zinc-400">
-                      {formatFileSize(resource.size)}
-                    </div>
-                  </div>
-                </div>
-              </button>
-            {/each}
-          </div>
-        </div>
-      {/if}
-
-      {#if selectedLessonContent.document}
-        {@const lessonDoc = parseLessonDocument(selectedLessonContent)}
-        {#if lessonDoc?.document?.modules}
-          {@const sortedModules = sortModules(lessonDoc.document.modules)}
-          {@const hasAIFeature =
-            settingsLoaded && aiIntegrationsEnabled && lessonSummaryAnalyserEnabled}
+        {#if content.h}
           <div
-            class="relative mb-6 transition-all duration-700 ease-in-out rounded-2xl border-2 {hasAIFeature
-              ? 'border-accent-500/70 dark:border-accent-400/70'
-              : 'border-zinc-200 dark:border-zinc-700'} bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm"
-            style="overflow: hidden; transition: max-height 700ms ease-in-out; {contentCollapsed &&
-            hasAIFeature &&
-            !aiSummary
-              ? 'max-height: 300px;'
-              : contentCollapsed && hasAIFeature && aiSummary
-                ? 'max-height: 2000px;'
-                : ''}">
-            {#if hasAIFeature}
-              <!-- Summarize Button - Prominent Placement -->
-              <div class="absolute top-4 right-4 z-20">
-                <button
-                  class="relative flex items-center gap-3 px-6 py-3 text-base font-semibold rounded-xl transition-all duration-200 transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50 focus:ring-offset-2 text-white disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden glow-button"
-                  onclick={contentCollapsed ? expandContent : generateLessonSummary}
-                  disabled={aiSummaryLoading && !contentCollapsed}>
-                  <span class="relative z-10 flex items-center gap-3">
-                    {#if aiSummaryLoading}
-                      <div class="flex items-center gap-3">
-                        <div
-                          class="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin">
-                        </div>
-                        <T key="courses.generating" fallback="Generating..." />
-                      </div>
-                    {:else if contentCollapsed && aiSummary}
-                      <Icon src={ArrowsPointingOut} class="w-5 h-5" />
-                      <T key="courses.expand_content" fallback="Expand Content" />
-                    {:else}
-                      <Icon src={Sparkles} class="w-5 h-5" />
-                      <T key="courses.summarize" fallback="Summarize" />
-                    {/if}
-                  </span>
-                </button>
-              </div>
-            {/if}
-
-            <!-- Lesson Content -->
-            <div
-              class="p-6 transition-all duration-500 ease-in-out {contentCollapsed
-                ? 'opacity-30 blur-sm'
-                : 'opacity-100 blur-0'}">
-              <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
-                {#each sortedModules as module, i}
-                  {@const renderedModule = renderModule(module)}
-                  {#if renderedModule}
-                    {#if renderedModule.type === 'title'}
-                      <h2 class="px-6 py-4 my-4 text-xl font-bold text-white rounded-lg accent-bg">
-                        {renderedModule.content}
-                      </h2>
-                    {:else if renderedModule.type === 'text'}
-                      <div
-                        class="p-4 my-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
-                        style="--animation-delay: {0.2 + i * 0.05}s;">
-                        {@html sanitizeHtml(renderedModule.content)}
-                      </div>
-                    {:else if renderedModule.type === 'link'}
-                      <div class="animate-slide-in" style="--animation-delay: {0.2 + i * 0.05}s;">
-                        <LinkPreview
-                          url={renderedModule.content}
-                          preview={linkPreviews.get(renderedModule.content)} />
-                      </div>
-                    {/if}
-                  {/if}
-                {/each}
-              </div>
+            class="p-4 mb-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-900/50 border-zinc-300/50 dark:border-zinc-800/50 animate-slide-in animate-delay-1">
+            <h3 class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">
+              <T key="courses.homework_notes" fallback="Homework/Notes" />
+            </h3>
+            <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
+              <p class="text-zinc-700 dark:text-zinc-300">
+                {content.h}
+              </p>
             </div>
-
-            <!-- AI Summary Overlay -->
-            {#if contentCollapsed && (aiSummaryLoading || aiSummary || aiSummaryError)}
-              <div
-                class="absolute inset-0 flex flex-col justify-start items-stretch bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md"
-                transition:scale={{ duration: 300, start: 0.95 }}>
-                <div class="flex-1 min-h-0 p-6">
-                  {#if aiSummaryLoading}
-                    <div
-                      class="flex flex-col items-center gap-4"
-                      transition:fade={{ duration: 200 }}>
-                      <LoadingSpinner
-                        size="md"
-                        message={$_('courses.generating_summary') || 'Generating summary...'} />
-                    </div>
-                  {:else if aiSummaryError}
-                    <div transition:fade={{ duration: 200 }}>
-                      <Badge variant="danger" size="md" class="w-full justify-center py-2">
-                        {aiSummaryError}
-                      </Badge>
-                    </div>
-                  {:else if aiSummary}
-                    <div class="space-y-6" transition:fade={{ duration: 600 }}>
-                      <!-- Summary Card -->
-                      <div
-                        class="p-6 rounded-2xl border backdrop-blur-xl bg-white/90 dark:bg-zinc-800/90 border-zinc-200/60 dark:border-zinc-700/60 shadow-lg"
-                        transition:fly={{ y: 20, duration: 800, delay: 200 }}>
-                        <div class="flex items-center gap-3 mb-4">
-                          <div
-                            class="flex items-center justify-center w-10 h-10 rounded-xl accent-bg">
-                            <Icon src={DocumentText} class="w-5 h-5 text-white" />
-                          </div>
-                          <h3 class="text-2xl font-bold text-zinc-900 dark:text-white">
-                            <T key="courses.summary" fallback="Summary" />
-                          </h3>
-                        </div>
-                        <p
-                          class="text-lg leading-relaxed text-zinc-700 dark:text-zinc-200 whitespace-pre-line"
-                          transition:fly={{ y: 20, duration: 800, delay: 400 }}>
-                          {aiSummary.summary}
-                        </p>
-                      </div>
-
-                      <!-- Steps Card -->
-                      <div
-                        class="p-6 rounded-2xl border backdrop-blur-xl bg-white/90 dark:bg-zinc-800/90 border-zinc-200/60 dark:border-zinc-700/60 shadow-lg"
-                        transition:fly={{ y: 20, duration: 800, delay: 600 }}>
-                        <div class="flex items-center gap-3 mb-5">
-                          <div
-                            class="flex items-center justify-center w-10 h-10 rounded-xl accent-bg">
-                            <Icon src={ClipboardDocumentCheck} class="w-5 h-5 text-white" />
-                          </div>
-                          <h3 class="text-2xl font-bold text-zinc-900 dark:text-white">
-                            <T key="courses.steps" fallback="Action Steps" />
-                          </h3>
-                        </div>
-                        <ol class="space-y-4">
-                          {#each aiSummary.steps as step, stepIndex}
-                            <li
-                              class="flex gap-4 group"
-                              transition:fly={{
-                                y: 20,
-                                duration: 800,
-                                delay: 800 + stepIndex * 100,
-                              }}>
-                              <div
-                                class="flex items-center justify-center shrink-0 w-8 h-8 rounded-lg text-sm font-bold accent-bg text-white group-hover:scale-110 transition-transform duration-200">
-                                {stepIndex + 1}
-                              </div>
-                              <p
-                                class="flex-1 text-base leading-relaxed text-zinc-700 dark:text-zinc-200 pt-1">
-                                {step}
-                              </p>
-                            </li>
-                          {/each}
-                        </ol>
-                      </div>
-                    </div>
-                  {/if}
-                </div>
-              </div>
-            {/if}
           </div>
         {/if}
-      {/if}
-    </div>
+
+        {#if content.r && content.r.length > 0}
+          <div class="mb-6 animate-slide-in animate-delay-2">
+            <h2 class="px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg">
+              <T key="courses.lesson_resources" fallback="Lesson Resources" />
+            </h2>
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {#each content.r as resource}
+                <button
+                  type="button"
+                  class="flex items-center p-4 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
+                  onclick={async () => {
+                    try {
+                      const url = await invoke('get_seqta_file', {
+                        fileType: 'resource',
+                        uuid: resource.uuid,
+                      });
+                      if (typeof url === 'string') {
+                        await openUrl(url);
+                      }
+                    } catch (e) {
+                      // Optionally handle error
+                    }
+                  }}>
+                  <div class="flex items-center w-full">
+                    <span class="mr-3 text-2xl">{getFileIcon(resource.mimetype)}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="font-semibold truncate text-zinc-900 dark:text-white">
+                        {resource.t}
+                      </div>
+                      <div class="text-sm text-zinc-600 dark:text-zinc-400">
+                        {formatFileSize(resource.size)}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        {#if content.document}
+          {@const lessonDoc = parseLessonDocument(content)}
+          {#if lessonDoc?.document?.modules}
+            {@const sortedModules = sortModules(lessonDoc.document.modules)}
+            {@const hasAIFeature =
+              settingsLoaded && aiIntegrationsEnabled && lessonSummaryAnalyserEnabled}
+            <div
+              class="relative mb-6 transition-all duration-700 ease-in-out rounded-2xl border-2 {hasAIFeature
+                ? 'border-accent-500/70 dark:border-accent-400/70'
+                : 'border-zinc-200 dark:border-zinc-700'} bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm"
+              style="overflow: hidden; transition: max-height 700ms ease-in-out; {contentCollapsed &&
+              hasAIFeature &&
+              !aiSummary
+                ? 'max-height: 300px;'
+                : contentCollapsed && hasAIFeature && aiSummary
+                  ? 'max-height: 2000px;'
+                  : ''}">
+              {#if hasAIFeature}
+                <!-- Summarize Button - Prominent Placement -->
+                <div class="absolute top-4 right-4 z-20">
+                  <button
+                    class="relative flex items-center gap-3 px-6 py-3 text-base font-semibold rounded-xl transition-all duration-200 transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50 focus:ring-offset-2 text-white disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden glow-button"
+                    onclick={contentCollapsed ? expandContent : generateLessonSummary}
+                    disabled={aiSummaryLoading && !contentCollapsed}>
+                    <span class="relative z-10 flex items-center gap-3">
+                      {#if aiSummaryLoading}
+                        <div class="flex items-center gap-3">
+                          <div
+                            class="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin">
+                          </div>
+                          <T key="courses.generating" fallback="Generating..." />
+                        </div>
+                      {:else if contentCollapsed && aiSummary}
+                        <Icon src={ArrowsPointingOut} class="w-5 h-5" />
+                        <T key="courses.expand_content" fallback="Expand Content" />
+                      {:else}
+                        <Icon src={Sparkles} class="w-5 h-5" />
+                        <T key="courses.summarize" fallback="Summarize" />
+                      {/if}
+                    </span>
+                  </button>
+                </div>
+              {/if}
+
+              <!-- Lesson Content -->
+              <div
+                class="p-6 transition-all duration-500 ease-in-out {contentCollapsed
+                  ? 'opacity-30 blur-sm'
+                  : 'opacity-100 blur-0'}">
+                <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
+                  {#each sortedModules as module, i}
+                    {@const renderedModule = renderModule(module)}
+                    {#if renderedModule}
+                      {#if renderedModule.type === 'title'}
+                        <h2
+                          class="px-6 py-4 my-4 text-xl font-bold text-white rounded-lg accent-bg">
+                          {renderedModule.content}
+                        </h2>
+                      {:else if renderedModule.type === 'text'}
+                        <div
+                          class="p-4 my-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
+                          style="--animation-delay: {0.2 + i * 0.05}s;">
+                          {@html sanitizeHtml(renderedModule.content)}
+                        </div>
+                      {:else if renderedModule.type === 'table'}
+                        <div
+                          class="p-4 my-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 overflow-x-auto"
+                          style="--animation-delay: {0.2 + i * 0.05}s;">
+                          <div
+                            class="max-w-full [&_table]:w-full [&_table]:border-collapse [&_table_td]:p-2 [&_table_td]:border [&_table_td]:border-zinc-300 [&_table_td]:dark:border-zinc-600 [&_table_td]:text-zinc-900 [&_table_td]:dark:text-zinc-100 [&_table_th]:p-2 [&_table_th]:border [&_table_th]:border-zinc-300 [&_table_th]:dark:border-zinc-600 [&_table_th]:bg-zinc-100 [&_table_th]:dark:bg-zinc-700 [&_table_th]:font-semibold [&_table_th]:text-zinc-900 [&_table_th]:dark:text-zinc-100 [&_table_a]:text-accent-600 [&_table_a]:dark:text-accent-400 [&_table_a]:hover:underline">
+                            {@html sanitizeHtml(renderedModule.content)}
+                          </div>
+                        </div>
+                      {:else if renderedModule.type === 'link'}
+                        <div class="animate-slide-in" style="--animation-delay: {0.2 + i * 0.05}s;">
+                          <LinkPreview
+                            url={renderedModule.content}
+                            preview={linkPreviews.get(renderedModule.content)} />
+                        </div>
+                      {/if}
+                    {/if}
+                  {/each}
+                </div>
+              </div>
+
+              <!-- AI Summary Overlay -->
+              {#if contentCollapsed && (aiSummaryLoading || aiSummary || aiSummaryError)}
+                <div
+                  class="absolute inset-0 flex flex-col justify-start items-stretch bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md"
+                  transition:scale={{ duration: 300, start: 0.95 }}>
+                  <div class="flex-1 min-h-0 p-6">
+                    {#if aiSummaryLoading}
+                      <div
+                        class="flex flex-col items-center gap-4"
+                        transition:fade={{ duration: 200 }}>
+                        <LoadingSpinner
+                          size="md"
+                          message={$_('courses.generating_summary') || 'Generating summary...'} />
+                      </div>
+                    {:else if aiSummaryError}
+                      <div transition:fade={{ duration: 200 }}>
+                        <Badge variant="danger" size="md" class="w-full justify-center py-2">
+                          {aiSummaryError}
+                        </Badge>
+                      </div>
+                    {:else if aiSummary}
+                      <div class="space-y-6" transition:fade={{ duration: 600 }}>
+                        <!-- Summary Card -->
+                        <div
+                          class="p-6 rounded-2xl border backdrop-blur-xl bg-white/90 dark:bg-zinc-800/90 border-zinc-200/60 dark:border-zinc-700/60 shadow-lg"
+                          transition:fly={{ y: 20, duration: 800, delay: 200 }}>
+                          <div class="flex items-center gap-3 mb-4">
+                            <div
+                              class="flex items-center justify-center w-10 h-10 rounded-xl accent-bg">
+                              <Icon src={DocumentText} class="w-5 h-5 text-white" />
+                            </div>
+                            <h3 class="text-2xl font-bold text-zinc-900 dark:text-white">
+                              <T key="courses.summary" fallback="Summary" />
+                            </h3>
+                          </div>
+                          <p
+                            class="text-lg leading-relaxed text-zinc-700 dark:text-zinc-200 whitespace-pre-line"
+                            transition:fly={{ y: 20, duration: 800, delay: 400 }}>
+                            {aiSummary.summary}
+                          </p>
+                        </div>
+
+                        <!-- Steps Card -->
+                        <div
+                          class="p-6 rounded-2xl border backdrop-blur-xl bg-white/90 dark:bg-zinc-800/90 border-zinc-200/60 dark:border-zinc-700/60 shadow-lg"
+                          transition:fly={{ y: 20, duration: 800, delay: 600 }}>
+                          <div class="flex items-center gap-3 mb-5">
+                            <div
+                              class="flex items-center justify-center w-10 h-10 rounded-xl accent-bg">
+                              <Icon src={ClipboardDocumentCheck} class="w-5 h-5 text-white" />
+                            </div>
+                            <h3 class="text-2xl font-bold text-zinc-900 dark:text-white">
+                              <T key="courses.steps" fallback="Action Steps" />
+                            </h3>
+                          </div>
+                          <ol class="space-y-4">
+                            {#each aiSummary.steps as step, stepIndex}
+                              <li
+                                class="flex gap-4 group"
+                                transition:fly={{
+                                  y: 20,
+                                  duration: 800,
+                                  delay: 800 + stepIndex * 100,
+                                }}>
+                                <div
+                                  class="flex items-center justify-center shrink-0 w-8 h-8 rounded-lg text-sm font-bold accent-bg text-white group-hover:scale-110 transition-transform duration-200">
+                                  {stepIndex + 1}
+                                </div>
+                                <p
+                                  class="flex-1 text-base leading-relaxed text-zinc-700 dark:text-zinc-200 pt-1">
+                                  {step}
+                                </p>
+                              </li>
+                            {/each}
+                          </ol>
+                        </div>
+                      </div>
+                    {/if}
+                  </div>
+                </div>
+              {/if}
+            </div>
+          {/if}
+        {/if}
+      </div>
+    {/if}
   {:else}
     <div class="p-6">
       <h1 class="px-6 py-4 mb-6 text-2xl font-bold text-white rounded-lg accent-bg">
@@ -533,6 +626,15 @@
                   class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 animate-slide-in"
                   style="--animation-delay: {0.1 + i * 0.05}s;">
                   {@html sanitizeHtml(renderedModule.content)}
+                </div>
+              {:else if renderedModule.type === 'table'}
+                <div
+                  class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 overflow-x-auto animate-slide-in"
+                  style="--animation-delay: {0.1 + i * 0.05}s;">
+                  <div
+                    class="max-w-full [&_table]:w-full [&_table]:border-collapse [&_table_td]:p-2 [&_table_td]:border [&_table_td]:border-zinc-300 [&_table_td]:dark:border-zinc-600 [&_table_td]:text-zinc-900 [&_table_td]:dark:text-zinc-100 [&_table_th]:p-2 [&_table_th]:border [&_table_th]:border-zinc-300 [&_table_th]:dark:border-zinc-600 [&_table_th]:bg-zinc-100 [&_table_th]:dark:bg-zinc-700 [&_table_th]:font-semibold [&_table_th]:text-zinc-900 [&_table_th]:dark:text-zinc-100 [&_table_a]:text-accent-600 [&_table_a]:dark:text-accent-400 [&_table_a]:hover:underline">
+                    {@html sanitizeHtml(renderedModule.content)}
+                  </div>
                 </div>
               {:else if renderedModule.type === 'resources'}
                 <div class="mb-6">
