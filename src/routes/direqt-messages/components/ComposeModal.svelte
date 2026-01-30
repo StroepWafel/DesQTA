@@ -1,9 +1,11 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
-  import { XMark } from 'svelte-hero-icons';
+  import { XMark, PaperClip } from 'svelte-hero-icons';
   import Editor from '../../../components/Editor/Editor.svelte';
   import { onMount } from 'svelte';
-  import { seqtaFetch } from '../../../utils/netUtil';
+  import { seqtaFetch, uploadSeqtaFile } from '../../../utils/netUtil';
+  import { open } from '@tauri-apps/plugin-dialog';
+  import { sanitizeFilename } from '../../../utils/sanitization';
   import Modal from '$lib/components/Modal.svelte';
   import { queueAdd } from '$lib/services/idb';
   import Input from '$lib/components/ui/Input.svelte';
@@ -11,13 +13,17 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import { toastStore } from '../../../lib/stores/toast';
-  
+
   function clickOutside(node: HTMLElement, onOutside: () => void) {
     const handler = (e: MouseEvent) => {
       if (!node.contains(e.target as Node)) onOutside?.();
     };
     document.addEventListener('mousedown', handler, true);
-    return { destroy() { document.removeEventListener('mousedown', handler, true); } };
+    return {
+      destroy() {
+        document.removeEventListener('mousedown', handler, true);
+      },
+    };
   }
 
   type Student = {
@@ -71,8 +77,17 @@
   let isSubmitting = $state(false);
   let studentsEnabled = $state(true);
 
+  type AttachedFile = {
+    id: number;
+    filename: string;
+    size?: string;
+  };
+  let attachedFiles = $state<AttachedFile[]>([]);
+  let uploadingFiles = $state(false);
+
   function studentMatches(s: Student, q: string) {
-    const hay = `${s.xx_display} ${s.firstname} ${s.surname} ${s.year} ${s.rollgroup} ${s['sub-school']} ${s.house} ${s.campus}`.toLowerCase();
+    const hay =
+      `${s.xx_display} ${s.firstname} ${s.surname} ${s.year} ${s.rollgroup} ${s['sub-school']} ${s.house} ${s.campus}`.toLowerCase();
     return hay.includes(q.toLowerCase());
   }
 
@@ -82,11 +97,11 @@
   }
 
   const filteredStudents = $derived(
-    students.filter((s) => studentMatches(s, studentSearchQuery)).slice(0, 50)
+    students.filter((s) => studentMatches(s, studentSearchQuery)).slice(0, 50),
   );
 
   const filteredStaff = $derived(
-    staff.filter((t) => staffMatches(t, staffSearchQuery)).slice(0, 50)
+    staff.filter((t) => staffMatches(t, staffSearchQuery)).slice(0, 50),
   );
 
   async function loadRecipients() {
@@ -116,7 +131,8 @@
       console.log('Loaded staff:', staff.length);
     } catch (err) {
       console.error('Failed to load recipients:', err);
-      errorMessage = $_('messages.failed_to_load_recipients') || 'Failed to load recipients. Please try again.';
+      errorMessage =
+        $_('messages.failed_to_load_recipients') || 'Failed to load recipients. Please try again.';
     } finally {
       loadingStudents = false;
       loadingStaff = false;
@@ -141,6 +157,74 @@
     selectedRecipients = selectedRecipients.filter((_, i) => i !== index);
   }
 
+  async function handleAddFiles() {
+    try {
+      uploadingFiles = true;
+      const selected = await open({
+        multiple: true,
+        filters: [
+          {
+            name: 'All Files',
+            extensions: ['*'],
+          },
+        ],
+      });
+
+      if (!selected) {
+        uploadingFiles = false;
+        return;
+      }
+
+      const files = Array.isArray(selected) ? selected : [selected];
+
+      for (const filePath of files) {
+        let fileName = filePath.split(/[/\\]/).pop() || 'unknown';
+        fileName = sanitizeFilename(fileName);
+
+        try {
+          const uploadResponse = await uploadSeqtaFile(fileName, filePath);
+          const uploadResult = JSON.parse(uploadResponse);
+
+          if (uploadResult.status === '200' && uploadResult.payload) {
+            attachedFiles = [
+              ...attachedFiles,
+              {
+                id: uploadResult.payload.id,
+                filename: fileName,
+                size: uploadResult.payload.size,
+              },
+            ];
+            toastStore.success(`File "${fileName}" added`);
+          } else {
+            toastStore.error(`Failed to upload "${fileName}"`);
+          }
+        } catch (e) {
+          toastStore.error(`Failed to upload "${fileName}"`);
+        }
+      }
+    } catch (e) {
+      toastStore.error('Failed to select files');
+    } finally {
+      uploadingFiles = false;
+    }
+  }
+
+  function removeFile(index: number) {
+    attachedFiles = attachedFiles.filter((_, i) => i !== index);
+  }
+
+  function formatFileSize(bytes: string | undefined): string {
+    if (!bytes) return '';
+    const numBytes = parseInt(bytes, 10);
+    if (isNaN(numBytes)) return bytes;
+
+    if (numBytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(numBytes) / Math.log(k));
+    return parseFloat((numBytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
   async function sendMessage() {
     if (!composeSubject.trim() || !composeBody.trim() || selectedRecipients.length === 0) {
       return;
@@ -152,6 +236,8 @@
         staff ? { staff: true, id } : { student: true, id },
       );
 
+      const fileIds = attachedFiles.map((f) => f.id);
+
       const response = await seqtaFetch('/seqta/student/save/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -160,7 +246,7 @@
           contents: composeBody,
           participants: participants,
           blind: useBCC,
-          files: [],
+          files: fileIds,
         },
       });
 
@@ -170,6 +256,7 @@
         selectedRecipients = [];
         composeSubject = '';
         composeBody = '';
+        attachedFiles = [];
         closeModal();
         toastStore.success('Message sent successfully');
       } else {
@@ -185,8 +272,8 @@
           contents: composeBody,
           recipients: selectedRecipients,
           blind: useBCC,
-          files: [],
-        }
+          files: attachedFiles.map((f) => f.id),
+        },
       });
       closeModal();
       errorMessage = '';
@@ -204,18 +291,18 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: {},
-    }).then((res) => {
-      const data = typeof res === 'string' ? JSON.parse(res) : res;
-      if (
-        data?.payload?.['coneqt-s.messages.students.enabled']?.value === 'disabled'
-      ) {
-        studentsEnabled = false;
-      } else {
-        studentsEnabled = true;
-      }
-    }).catch(() => {
-      studentsEnabled = true; // fallback to enabled if error
-    });
+    })
+      .then((res) => {
+        const data = typeof res === 'string' ? JSON.parse(res) : res;
+        if (data?.payload?.['coneqt-s.messages.students.enabled']?.value === 'disabled') {
+          studentsEnabled = false;
+        } else {
+          studentsEnabled = true;
+        }
+      })
+      .catch(() => {
+        studentsEnabled = true; // fallback to enabled if error
+      });
     return () => {};
   });
 </script>
@@ -257,9 +344,15 @@
       {/if}
 
       <!-- Subject -->
-      <div class="px-5 py-4 border-b space-y-2 border-zinc-200/60 dark:border-zinc-700/60 bg-transparent">
+      <div
+        class="px-5 py-4 border-b space-y-2 border-zinc-200/60 dark:border-zinc-700/60 bg-transparent">
         <Label for="subject"><T key="messages.subject" fallback="Subject" /></Label>
-        <Input id="subject" placeholder={$_('messages.subject_placeholder') || 'Subject...'} bind:value={composeSubject} size="lg" fullWidth />
+        <Input
+          id="subject"
+          placeholder={$_('messages.subject_placeholder') || 'Subject...'}
+          bind:value={composeSubject}
+          size="lg"
+          fullWidth />
       </div>
 
       <!-- Editor -->
@@ -269,20 +362,27 @@
     </div>
 
     <!-- Sidebar (right) column -->
-    <div class="flex flex-col w-full sm:w-[360px] min-w-0 sm:min-w-[320px] sm:max-w-[400px] border-t sm:border-t-0 sm:border-l border-zinc-200/60 dark:border-zinc-700/60 bg-transparent p-4 gap-4">
+    <div
+      class="flex flex-col w-full sm:w-[360px] min-w-0 sm:min-w-[320px] sm:max-w-[400px] border-t sm:border-t-0 sm:border-l border-zinc-200/60 dark:border-zinc-700/60 bg-transparent p-4 gap-4">
       <!-- Student selector (conditionally rendered) -->
       {#if studentsEnabled}
         <div class="relative mb-2 space-y-2" use:clickOutside={() => (showStudentDropdown = false)}>
-          <Label for="student-search"><T key="messages.select_student" fallback="Select student" /></Label>
+          <Label for="student-search"
+            ><T key="messages.select_student" fallback="Select student" /></Label>
           <Input
             id="student-search"
             type="search"
-            placeholder={$_('messages.search_students_placeholder') || 'Search students by name, class, house, campus...'}
+            placeholder={$_('messages.search_students_placeholder') ||
+              'Search students by name, class, house, campus...'}
             bind:value={studentSearchQuery}
-            onfocus={() => { showStudentDropdown = true; showStaffDropdown = false; }}
-            onkeydown={(e) => { if (e.key === 'Escape') showStudentDropdown = false; }}
-            fullWidth
-          />
+            onfocus={() => {
+              showStudentDropdown = true;
+              showStaffDropdown = false;
+            }}
+            onkeydown={(e) => {
+              if (e.key === 'Escape') showStudentDropdown = false;
+            }}
+            fullWidth />
           {#if showStudentDropdown}
             <div
               id="student-dropdown"
@@ -293,22 +393,26 @@
                 </div>
               {:else if filteredStudents.length === 0}
                 <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
-                  {studentSearchQuery ? ($_('messages.no_matching_students') || 'No matching students') : ($_('messages.type_to_search_students') || 'Type to search students')}
+                  {studentSearchQuery
+                    ? $_('messages.no_matching_students') || 'No matching students'
+                    : $_('messages.type_to_search_students') || 'Type to search students'}
                 </div>
               {:else}
                 {#each filteredStudents as student}
                   <button
                     class="flex items-start gap-3 px-4 py-2 w-full text-left text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                    onclick={() => addRecipient(
-                      student.id,
-                      student.xx_display,
-                      false,
-                      `Year ${student.year}${student.rollgroup ? ` · Class ${student.rollgroup}` : ''}${student['sub-school'] ? ` · ${student['sub-school']}` : ''}${student.campus ? ` · ${student.campus}` : ''}`,
-                      student.house_colour
-                    )}
-                  >
+                    onclick={() =>
+                      addRecipient(
+                        student.id,
+                        student.xx_display,
+                        false,
+                        `Year ${student.year}${student.rollgroup ? ` · Class ${student.rollgroup}` : ''}${student['sub-school'] ? ` · ${student['sub-school']}` : ''}${student.campus ? ` · ${student.campus}` : ''}`,
+                        student.house_colour,
+                      )}>
                     {#if student.house_colour}
-                      <span class="mt-1 inline-block w-2.5 h-2.5 rounded-full border border-black/5" style={`background-color: ${student.house_colour}`}></span>
+                      <span
+                        class="mt-1 inline-block w-2.5 h-2.5 rounded-full border border-black/5"
+                        style={`background-color: ${student.house_colour}`}></span>
                     {/if}
                     <div class="min-w-0">
                       <div class="truncate font-medium">{student.xx_display}</div>
@@ -344,11 +448,15 @@
           type="search"
           placeholder={$_('messages.search_staff_placeholder') || 'Search staff by name...'}
           bind:value={staffSearchQuery}
-          onfocus={() => { showStaffDropdown = true; showStudentDropdown = false; }}
-          onkeydown={(e) => { if (e.key === 'Escape') showStaffDropdown = false; }}
+          onfocus={() => {
+            showStaffDropdown = true;
+            showStudentDropdown = false;
+          }}
+          onkeydown={(e) => {
+            if (e.key === 'Escape') showStaffDropdown = false;
+          }}
           size="md"
-          fullWidth
-        />
+          fullWidth />
         {#if showStaffDropdown}
           <div
             id="staff-dropdown"
@@ -359,7 +467,9 @@
               </div>
             {:else if filteredStaff.length === 0}
               <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
-                {staffSearchQuery ? ($_('messages.no_matching_staff') || 'No matching staff') : ($_('messages.type_to_search_staff') || 'Type to search staff')}
+                {staffSearchQuery
+                  ? $_('messages.no_matching_staff') || 'No matching staff'
+                  : $_('messages.type_to_search_staff') || 'Type to search staff'}
               </div>
             {:else}
               {#each filteredStaff as teacher}
@@ -381,12 +491,16 @@
             type="checkbox"
             bind:checked={useBCC}
             class="text-blue-500 bg-white rounded-sm border-zinc-300 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700" />
-          <span><T key="messages.keep_private_bcc" fallback="Keep recipient list private (BCC)" /></span>
+          <span
+            ><T
+              key="messages.keep_private_bcc"
+              fallback="Keep recipient list private (BCC)" /></span>
         </label>
       </div>
 
       <!-- Selected recipients -->
-      <div class="rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-700">
+      <div
+        class="rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-700">
         {#if selectedRecipients.length === 0}
           <div class="px-3 py-2 text-sm text-zinc-600 dark:text-zinc-500">
             <T key="messages.no_recipients_selected" fallback="No recipients selected" />
@@ -395,15 +509,22 @@
           {#each selectedRecipients as recipient, i}
             <div class="flex items-center gap-3 px-3 py-2">
               {#if !recipient.staff && recipient.color}
-                <span class="w-2.5 h-2.5 rounded-full border border-black/5" style={`background-color: ${recipient.color}`}></span>
+                <span
+                  class="w-2.5 h-2.5 rounded-full border border-black/5"
+                  style={`background-color: ${recipient.color}`}></span>
               {/if}
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
                   <span class="font-medium truncate">{recipient.name}</span>
-                  <span class="text-xs text-zinc-600 dark:text-zinc-400">{recipient.staff ? ($_('messages.staff') || 'Staff') : ($_('messages.student') || 'Student')}</span>
+                  <span class="text-xs text-zinc-600 dark:text-zinc-400"
+                    >{recipient.staff
+                      ? $_('messages.staff') || 'Staff'
+                      : $_('messages.student') || 'Student'}</span>
                 </div>
                 {#if recipient.meta}
-                  <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate">{recipient.meta}</div>
+                  <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                    {recipient.meta}
+                  </div>
                 {/if}
               </div>
               <button
@@ -418,8 +539,7 @@
         <div class="flex justify-end mt-3">
           <button
             class="px-3 py-1.5 text-xs rounded-md bg-white/70 border border-zinc-300/60 text-zinc-700 hover:bg-white/90 dark:bg-zinc-800/70 dark:text-zinc-200 dark:border-zinc-700/60 dark:hover:bg-zinc-700/80"
-            onclick={() => (selectedRecipients = [])}
-          >
+            onclick={() => (selectedRecipients = [])}>
             <T key="messages.clear_all" fallback="Clear all" />
           </button>
         </div>
@@ -430,21 +550,41 @@
   <!-- Footer with actions -->
   <div
     class="flex flex-col gap-3 justify-between items-stretch px-5 py-4 border-t sm:flex-row sm:items-center border-zinc-200/60 dark:border-zinc-700/60 bg-transparent">
-    <div>
+    <div class="flex flex-col gap-2">
       <button
-        class="flex gap-2 items-center px-4 py-2 text-sm rounded-lg text-zinc-900 bg-white/70 border border-zinc-300/60 dark:text-white dark:bg-zinc-800/70 dark:border-zinc-700/60 hover:bg-white/90 dark:hover:bg-zinc-700/80">
-        <span><T key="messages.add_files" fallback="Add files" /></span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="w-4 h-4"
-          viewBox="0 0 20 20"
-          fill="currentColor">
-          <path
-            fill-rule="evenodd"
-            d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
-            clip-rule="evenodd" />
-        </svg>
+        class="flex gap-2 items-center px-4 py-2 text-sm rounded-lg text-zinc-900 bg-white/70 border border-zinc-300/60 dark:text-white dark:bg-zinc-800/70 dark:border-zinc-700/60 hover:bg-white/90 dark:hover:bg-zinc-700/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+        onclick={handleAddFiles}
+        disabled={uploadingFiles}>
+        {#if uploadingFiles}
+          <div
+            class="w-4 h-4 border-2 border-zinc-600 dark:border-zinc-400 border-t-transparent rounded-full animate-spin">
+          </div>
+          <span><T key="messages.uploading_files" fallback="Uploading..." /></span>
+        {:else}
+          <Icon src={PaperClip} class="w-4 h-4" />
+          <span><T key="messages.add_files" fallback="Add files" /></span>
+        {/if}
       </button>
+      {#if attachedFiles.length > 0}
+        <div class="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+          {#each attachedFiles as file, i}
+            <div
+              class="flex items-center gap-2 px-2 py-1.5 text-xs rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-300/50 dark:border-zinc-700/50">
+              <Icon src={PaperClip} class="w-3 h-3 text-zinc-600 dark:text-zinc-400 shrink-0" />
+              <span class="flex-1 min-w-0 truncate text-zinc-700 dark:text-zinc-300"
+                >{file.filename}</span>
+              {#if file.size}
+                <span class="text-zinc-500 dark:text-zinc-500 shrink-0"
+                  >{formatFileSize(file.size)}</span>
+              {/if}
+              <button
+                onclick={() => removeFile(i)}
+                class="ml-1 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 shrink-0"
+                aria-label="Remove file">×</button>
+            </div>
+          {/each}
+        </div>
+      {/if}
     </div>
     <div class="flex flex-col gap-3 w-full sm:flex-row sm:w-auto">
       <button
@@ -459,7 +599,7 @@
           selectedRecipients.length === 0 ||
           isSubmitting}
         onclick={sendMessage}>
-        {isSubmitting ? ($_('messages.sending') || 'Sending...') : ($_('messages.send') || 'Send')}
+        {isSubmitting ? $_('messages.sending') || 'Sending...' : $_('messages.send') || 'Send'}
       </button>
     </div>
   </div>
