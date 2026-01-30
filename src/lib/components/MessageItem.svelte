@@ -77,8 +77,8 @@
   }
 
   // Check if message has attachments
-  function hasAttachment(preview: string): boolean {
-    return preview.includes('(Attachment)');
+  function hasAttachment(): boolean {
+    return (msg.files && msg.files.length > 0) || (msg.attachments === true) || msg.preview.includes('(Attachment)');
   }
 </script>
 
@@ -120,8 +120,8 @@
     <!-- Row 2: subject (+ attachment icon) -->
     <div class="flex items-center gap-2 min-w-0">
       <span class="font-medium text-sm sm:text-[15px] leading-tight line-clamp-1 {msg.unread ? 'text-accent-600' : 'text-zinc-800 dark:text-zinc-200'}">{msg.subject}</span>
-      {#if hasAttachment(msg.preview)}
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      {#if hasAttachment()}
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
         </svg>
       {/if}
@@ -132,7 +132,7 @@
       <span class="hidden sm:inline whitespace-nowrap opacity-70">To: <span class="font-medium text-zinc-700 dark:text-zinc-300">{msg.to}</span></span>
       <span class="hidden sm:inline mx-1">•</span>
       <span class="opacity-80 line-clamp-1">
-        {hasAttachment(msg.preview) ? msg.preview.replace(/\(Attachment\)/, '') : msg.preview}
+        {hasAttachment() ? msg.preview.replace(/\(Attachment\)/, '') : msg.preview}
       </span>
     </div>
   </div>

@@ -125,6 +125,13 @@ fn is_autostart_enabled(window: Window) -> Result<bool, String> {
     }
 }
 
+/// Get the SEQTA base URL from the current session
+#[tauri::command]
+fn get_seqta_base_url() -> String {
+    let session = session::Session::load();
+    session.base_url
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
@@ -243,6 +250,7 @@ pub fn run() {
             login::force_reload,
             login::cleanup_login_windows,
             login::clear_webview_data,
+            get_seqta_base_url,
             profiles::get_current_profile,
             profiles::list_profiles,
             profiles::switch_profile,

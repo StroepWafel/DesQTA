@@ -23,7 +23,7 @@
   import MobileFolderTabs from './components/MobileFolderTabs.svelte';
 
   // Types
-  import { type Message } from './types';
+  import { type Message, type MessageFile } from './types';
 
   let messages = $state<Message[]>([]);
   let loading = $state(true);
@@ -133,7 +133,7 @@
       msg.folder.includes('RSS') || selectedFolder.includes('RSS') || msg.folder.includes('rss-');
     const cacheKey = isRSSMessage ? `rss_${msg.id}` : `message_${msg.id}`;
 
-    const content = await useDataLoader<string>({
+    const messageData = await useDataLoader<{ content: string; files?: MessageFile[] }>({
       cacheKey,
       ttlMinutes: 1440, // 24 hours
       context: 'direqt-messages',
@@ -141,19 +141,27 @@
       skipCache: isRSSMessage, // Skip caching for RSS feeds to always get fresh content
       fetcher: async () => {
         if (isRSSMessage) {
-          return msg.body; // RSS body is already loaded
+          return { content: msg.body, files: [] }; // RSS body is already loaded
         }
-        const content = await invoke<string>('fetch_message_content', { id: msg.id });
-        return content;
+        const result = await invoke<{ content: string; files?: MessageFile[] }>('fetch_message_content', { id: msg.id });
+        return result;
       },
-      onDataLoaded: (content) => {
-        msg.body = content;
+      onDataLoaded: (data) => {
+        msg.body = data.content;
+        if (data.files) {
+          msg.files = data.files;
+        }
       },
     });
 
-    if (!content && !msg.body) {
+    if (!messageData?.content && !msg.body) {
       // Fetch failed or no content
       msg.body = `<em>${$_('messages.no_content') || 'No content.'}</em>`;
+    } else if (messageData?.content) {
+      msg.body = messageData.content;
+      if (messageData.files) {
+        msg.files = messageData.files;
+      }
     }
   }
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
-  import { PencilSquare, Trash, Star, ArrowUturnLeft } from 'svelte-hero-icons';
-  import type { Message } from '../types';
+  import { PencilSquare, Trash, Star, ArrowUturnLeft, PaperClip } from 'svelte-hero-icons';
+  import type { Message, MessageFile } from '../types';
   import { sanitizeHtmlAsync } from '../../../utils/sanitization';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
@@ -38,9 +38,36 @@
   let detailAvatarUrl: string | null = $state(null);
   let detailAvatarFailed: boolean = $state(false);
   let messageListenerCleanup: (() => void) | null = null; // Not reactive to avoid infinite loops
+  let seqtaBaseUrl: string | null = $state(null);
 
   function initial(name: string): string {
     return (name?.trim()?.charAt(0) || '?').toUpperCase();
+  }
+
+  async function loadSeqtaBaseUrl() {
+    try {
+      seqtaBaseUrl = await invoke<string>('get_seqta_base_url');
+    } catch (e) {
+      console.error('Failed to get SEQTA base URL:', e);
+    }
+  }
+
+  function formatFileSize(size: string): string {
+    const bytes = parseInt(size, 10);
+    if (isNaN(bytes)) return size;
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  async function openAttachment(file: MessageFile) {
+    if (!seqtaBaseUrl) {
+      await loadSeqtaBaseUrl();
+    }
+    if (seqtaBaseUrl) {
+      const url = `${seqtaBaseUrl}/seqta/student/load/file?type=message&file=${file.uuid}`;
+      await openUrl(url);
+    }
   }
 
   async function loadDetailAvatar() {
@@ -127,6 +154,8 @@
   onMount(() => {
     // Set up message listener once on mount
     setupMessageListener();
+    // Load SEQTA base URL
+    loadSeqtaBaseUrl();
 
     // Set up a resize observer to handle window resizing
     if (window.ResizeObserver && iframe) {
@@ -287,6 +316,36 @@
               <span class="text-sm sm:text-base">{detailError}</span>
             </div>
           {:else}
+            {#if selectedMessage.files && selectedMessage.files.length > 0}
+              <div class="mb-4 pb-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
+                <div class="flex items-center gap-2 mb-3">
+                  <Icon src={PaperClip} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+                  <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    Attachments ({selectedMessage.files.length})
+                  </span>
+                </div>
+                <div class="space-y-2">
+                  {#each selectedMessage.files as file}
+                    <button
+                      class="flex items-center gap-3 w-full p-3 rounded-lg border border-zinc-300/50 dark:border-zinc-700/50 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-all duration-200 hover:shadow-md text-left"
+                      onclick={() => openAttachment(file)}
+                      title="Click to open attachment">
+                      <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-accent-500/10 flex items-center justify-center">
+                        <Icon src={PaperClip} class="w-5 h-5 text-accent-500" />
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                          {file.filename}
+                        </div>
+                        <div class="text-xs text-zinc-600 dark:text-zinc-400">
+                          {formatFileSize(file.size)} • {file.mimetype}
+                        </div>
+                      </div>
+                    </button>
+                  {/each}
+                </div>
+              </div>
+            {/if}
             <iframe
               bind:this={iframe}
               class="w-full border-0"

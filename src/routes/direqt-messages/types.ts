@@ -1,3 +1,14 @@
+export interface MessageFile {
+  filename: string;
+  size: string;
+  context_uuid?: string;
+  mimetype: string;
+  id: number;
+  created_date?: string;
+  uuid: string;
+  created_by?: string;
+}
+
 export interface Message {
   id: number;
   folder: string;
@@ -10,4 +21,6 @@ export interface Message {
   date: string;
   unread: boolean;
   starred?: boolean;
+  files?: MessageFile[];
+  attachments?: boolean;
 }
