@@ -1,6 +1,7 @@
 <script lang="ts">
   // Svelte imports
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
 
   // External libraries
   import { ScheduleXCalendar } from '@schedule-x/svelte';
@@ -23,6 +24,7 @@
   import TimeGridEvent from '$lib/components/timetable/TimeGridEvent.svelte';
   import { _ } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
+  import { updateUrlParam, getUrlParam } from '$lib/utils/urlParams';
 
   // Relative imports
   import { seqtaFetch } from '../../utils/netUtil';
@@ -161,9 +163,54 @@
     }
   }
 
+  function getMonday(date: Date): Date {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function parseDateFromUrl(): string {
+    // Check for date parameter first
+    const dateParam = getUrlParam('date');
+    if (dateParam) {
+      // Validate date format (YYYY-MM-DD)
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (dateRegex.test(dateParam)) {
+        return dateParam;
+      }
+    }
+
+    // Check for week parameter (Monday date of the week)
+    const weekParam = getUrlParam('week');
+    if (weekParam) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (dateRegex.test(weekParam)) {
+        return weekParam;
+      }
+    }
+
+    // Default to today
+    return new Date().toISOString().split('T')[0];
+  }
+
+  async function updateCalendarUrl(date: Date) {
+    const dateStr = date.toISOString().split('T')[0];
+    await updateUrlParam('date', dateStr);
+    // Remove week param if date is set
+    const weekParam = getUrlParam('week');
+    if (weekParam) {
+      await updateUrlParam('week', null);
+    }
+  }
+
   function initCalendar(events: ReturnType<typeof transformLessonsToEvents>) {
-    // Determine initial date (today)
-    const today = new Date().toISOString().split('T')[0];
+    // Determine initial date from URL or today
+    const initialDateStr = parseDateFromUrl();
+    // @ts-ignore
+    const initialDate = Temporal.PlainDate.from(initialDateStr);
 
     const plugins = [
       createCalendarControlsPlugin(),
@@ -173,7 +220,7 @@
 
     calendarApp = createCalendar({
       // @ts-ignore
-      selectedDate: Temporal.PlainDate.from(today),
+      selectedDate: initialDate,
       // Set the calendar timezone to match the user's local time so events appear at the correct wall-clock time
       // @ts-ignore
       timezone: Temporal.Now.timeZoneId(),
@@ -206,8 +253,36 @@
       isDark: $theme === 'dark',
       plugins: plugins,
       callbacks: {
-        // We could hook into view changes here to fetch more data if needed
+        // Update URL when date changes
+        onRangeUpdate: async (range: { start: string; end: string }) => {
+          if (range.start) {
+            // @ts-ignore
+            const date = Temporal.PlainDate.from(range.start);
+            const jsDate = new Date(date.year, date.month - 1, date.day);
+            await updateCalendarUrl(jsDate);
+          }
+        },
       },
+    });
+
+    // Listen for date changes from calendar controls
+    // Schedule-X calendar updates selectedDate when user navigates
+    // We'll use an effect to watch for changes
+    $effect(() => {
+      if (calendarApp) {
+        // @ts-ignore
+        const currentDate = calendarApp.calendarState.value.selectedDate;
+        if (currentDate) {
+          // @ts-ignore
+          const dateStr = `${currentDate.year}-${String(currentDate.month).padStart(2, '0')}-${String(currentDate.day).padStart(2, '0')}`;
+          const urlDate = getUrlParam('date');
+          if (urlDate !== dateStr) {
+            updateCalendarUrl(new Date(dateStr)).catch(() => {
+              // Silently fail if navigation is in progress
+            });
+          }
+        }
+      }
     });
   }
 

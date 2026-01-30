@@ -17,6 +17,7 @@
   } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
+  import { updateUrlParams, getUrlParam } from '$lib/utils/urlParams';
 
   // Relative imports
   import { invoke } from '@tauri-apps/api/core';
@@ -149,9 +150,17 @@
     selectedLesson = null;
     selectedLessonContent = null;
     await loadCourseContent(subject);
+    // Update URL with subject code
+    await updateUrlParams({
+      code: subject.code,
+      date: null, // Clear date when selecting subject
+      lesson: null,
+      term: null,
+      week: null,
+    });
   }
 
-  function selectLesson(termSchedule: TermSchedule, lesson: Lesson, lessonIndex: number) {
+  async function selectLesson(termSchedule: TermSchedule, lesson: Lesson, lessonIndex: number) {
     selectedLesson = lesson;
     showingOverview = false;
 
@@ -162,16 +171,38 @@
       selectedLessonContent = null;
     }
 
+    // Update URL with lesson details
+    if (selectedSubject) {
+      await updateUrlParams({
+        code: selectedSubject.code,
+        date: lesson.d,
+        lesson: lessonIndex.toString(),
+        term: termSchedule.t.toString(),
+        week: termSchedule.w.toString(),
+      });
+    }
+
     // Scroll content area to top when new lesson is selected
     if (contentScrollContainer) {
       contentScrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
-  function selectOverview() {
+  async function selectOverview() {
     showingOverview = true;
     selectedLesson = null;
     selectedLessonContent = null;
+
+    // Update URL - keep code but clear lesson-specific params
+    if (selectedSubject) {
+      await updateUrlParams({
+        code: selectedSubject.code,
+        lesson: null,
+        term: null,
+        week: null,
+        // Keep date if it exists
+      });
+    }
 
     // Scroll content area to top when overview is selected
     if (contentScrollContainer) {
@@ -195,16 +226,18 @@
   }
 
   function getQueryParams() {
-    const params = new URLSearchParams(window.location.search);
     return {
-      code: params.get('code'),
-      date: params.get('date'),
+      code: getUrlParam('code'),
+      date: getUrlParam('date'),
+      lesson: getUrlParam('lesson'),
+      term: getUrlParam('term'),
+      week: getUrlParam('week'),
     };
   }
 
   async function autoSelectFromQuery() {
-    const { code, date } = getQueryParams();
-    if (!code || !date) return;
+    const { code, date, lesson, term, week } = getQueryParams();
+    if (!code) return;
     // Find the subject by code
     const subject = activeSubjects.find((s) => s.code === code);
     if (!subject) return;
@@ -280,32 +313,79 @@
         return;
       }
 
-      // Find the lesson closest to the date
+      // Try to find lesson by term/week/lesson index first, then fall back to date
       if (coursePayload?.d && coursePayload?.w) {
-        let closest: {
+        let targetLesson: {
           termSchedule: TermSchedule | null;
           lesson: Lesson | null;
           lessonIndex: number;
-          diff: number;
-        } = {
-          termSchedule: null,
-          lesson: null,
-          lessonIndex: -1,
-          diff: Infinity,
-        };
-        const targetDate = new Date(date);
-        coursePayload.d.forEach((termSchedule, termIdx) => {
-          termSchedule.l.forEach((lesson, lessonIndex) => {
-            const lessonDate = new Date(lesson.d);
-            const diff = Math.abs(lessonDate.getTime() - targetDate.getTime());
-            if (diff < closest.diff) {
-              closest = { termSchedule, lesson, lessonIndex, diff };
-            }
+        } | null = null;
+
+        // Try to find by term/week/lesson parameters
+        if (term && week && lesson !== null) {
+          const termNum = parseInt(term, 10);
+          const weekNum = parseInt(week, 10);
+          const lessonIndex = parseInt(lesson, 10);
+          
+          const termSchedule = coursePayload.d.find(
+            (ts) => ts.t === termNum && ts.w === weekNum
+          );
+          
+          if (termSchedule && termSchedule.l[lessonIndex]) {
+            targetLesson = {
+              termSchedule,
+              lesson: termSchedule.l[lessonIndex],
+              lessonIndex,
+            };
+          }
+        }
+
+        // Fall back to finding by date if term/week/lesson didn't work
+        if (!targetLesson && date) {
+          let closest: {
+            termSchedule: TermSchedule | null;
+            lesson: Lesson | null;
+            lessonIndex: number;
+            diff: number;
+          } = {
+            termSchedule: null,
+            lesson: null,
+            lessonIndex: -1,
+            diff: Infinity,
+          };
+          const targetDate = new Date(date);
+          coursePayload.d.forEach((termSchedule, termIdx) => {
+            termSchedule.l.forEach((lesson, lessonIndex) => {
+              const lessonDate = new Date(lesson.d);
+              const diff = Math.abs(lessonDate.getTime() - targetDate.getTime());
+              if (diff < closest.diff) {
+                closest = { termSchedule, lesson, lessonIndex, diff };
+              }
+            });
           });
-        });
-        if (closest.lesson && closest.termSchedule) {
+          if (closest.lesson && closest.termSchedule) {
+            targetLesson = {
+              termSchedule: closest.termSchedule,
+              lesson: closest.lesson,
+              lessonIndex: closest.lessonIndex,
+            };
+          }
+        }
+
+        if (targetLesson && targetLesson.lesson && targetLesson.termSchedule) {
           selectedSubject = subject;
-          selectLesson(closest.termSchedule, closest.lesson, closest.lessonIndex);
+          // Don't update URL here since we're reading from it
+          selectedLesson = targetLesson.lesson;
+          showingOverview = false;
+          if (coursePayload?.w?.[targetLesson.termSchedule.n]?.[targetLesson.lessonIndex]) {
+            selectedLessonContent = coursePayload.w[targetLesson.termSchedule.n][targetLesson.lessonIndex];
+          } else {
+            selectedLessonContent = null;
+          }
+        } else if (!date && !lesson) {
+          // If no specific lesson params, just show overview
+          selectedSubject = subject;
+          showingOverview = true;
         }
       }
     } catch (e) {

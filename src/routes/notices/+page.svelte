@@ -11,6 +11,7 @@
   import * as Label from '$lib/components/ui/label/index.js';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
+  import { getUrlParam, updateUrlParams } from '$lib/utils/urlParams';
 
   // Relative imports
   import { seqtaFetch } from '../../utils/netUtil';
@@ -156,14 +157,53 @@
     }
   }
 
-  function updateDate(event: Event) {
+  async function updateDate(event: Event) {
     const input = event.target as HTMLInputElement;
     selectedDate = new Date(input.value);
+    await updateUrlParams({
+      date: formatDate(selectedDate),
+      category: selectedLabel ? selectedLabel.toString() : null,
+    });
     fetchNotices();
   }
 
   onMount(async () => {
+    // Read URL parameters
+    const dateParam = getUrlParam('date');
+    if (dateParam) {
+      const parsedDate = new Date(dateParam);
+      if (!isNaN(parsedDate.getTime())) {
+        selectedDate = parsedDate;
+      }
+    }
+
+    const categoryParam = getUrlParam('category');
+    if (categoryParam) {
+      const labelId = parseInt(categoryParam, 10);
+      if (!isNaN(labelId)) {
+        selectedLabel = labelId;
+        selectedLabelString = labelId.toString();
+      }
+    }
+
     await Promise.all([fetchLabels(), fetchNotices()]);
+
+    // Check for item parameter to scroll to specific notice
+    const itemParam = getUrlParam('item');
+    if (itemParam && filteredNotices.length > 0) {
+      const noticeId = parseInt(itemParam, 10);
+      if (!isNaN(noticeId)) {
+        setTimeout(() => {
+          const notice = filteredNotices.find((n) => n.id === noticeId);
+          if (notice) {
+            const element = document.querySelector(`[data-notice-id="${notice.id}"]`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        }, 500);
+      }
+    }
   });
 
   // Get color for a notice from the label
@@ -218,9 +258,13 @@
       <Select.Root
         type="single"
         bind:value={selectedLabelString}
-        onValueChange={(value) => {
+        onValueChange={async (value) => {
           selectedLabelString = value;
           selectedLabel = value === undefined || value === 'all' ? null : +value;
+          await updateUrlParams({
+            category: selectedLabel ? selectedLabel.toString() : null,
+            date: formatDate(selectedDate),
+          });
         }}>
         <Select.Trigger class="w-44">
           <span class="truncate">
@@ -266,6 +310,7 @@
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {#each filteredNotices as notice}
         <div
+          data-notice-id={notice.id}
           class="rounded-xl shadow-lg bg-white/10 text-(--text) border-t-8 flex flex-col h-96"
           style={`border-top-color: ${getLabelColor(notice.labelId)}; border-top-width: 8px;`}>
           <div class="flex overflow-y-auto flex-col flex-1 p-5">

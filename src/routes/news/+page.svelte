@@ -2,6 +2,7 @@
   // Svelte imports
   import { onMount, onDestroy } from 'svelte';
   import { fade } from 'svelte/transition';
+  import { page } from '$app/stores';
 
   // Tauri imports
   import { invoke } from '@tauri-apps/api/core';
@@ -9,6 +10,7 @@
   // $lib/ imports
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
+  import { getUrlParam, updateUrlParam } from '$lib/utils/urlParams';
 
   // Relative imports
   import { cache } from '../../utils/cache';
@@ -145,6 +147,7 @@
     error = null;
     selectedSource = source;
     showSourceSelector = false;
+    await updateUrlParam('source', source);
     await fetchNews(source);
   };
 
@@ -160,8 +163,29 @@
 
   let clickOutsideHandler: (event: MouseEvent) => void;
 
-  onMount(() => {
-    fetchNews(selectedSource);
+  onMount(async () => {
+    // Read source from URL parameter
+    const sourceParam = getUrlParam('source');
+    if (sourceParam && (rssFeedsByCountry[sourceParam.toLowerCase()] || sourceParam === 'australia')) {
+      selectedSource = sourceParam.toLowerCase();
+    }
+    
+    await fetchNews(selectedSource);
+    
+    // Check for item parameter to scroll to specific article
+    const itemParam = getUrlParam('item');
+    if (itemParam && news.length > 0) {
+      setTimeout(() => {
+        const article = news.find((a) => a.url === itemParam || a.title === decodeURIComponent(itemParam));
+        if (article) {
+          const element = document.querySelector(`a[href="${CSS.escape(article.url)}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }, 500);
+    }
+    
     clickOutsideHandler = handleClickOutside;
     document.addEventListener('click', clickOutsideHandler);
   });

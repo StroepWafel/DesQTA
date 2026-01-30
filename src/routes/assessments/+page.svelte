@@ -1,6 +1,7 @@
 <script lang="ts">
   // Svelte imports
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
 
   // Tauri imports
   import { invoke } from '@tauri-apps/api/core';
@@ -16,6 +17,7 @@
   import EmptyState from '$lib/components/EmptyState.svelte';
   import { ClipboardDocumentList } from 'svelte-hero-icons';
   import { _ } from '$lib/i18n';
+  import { updateUrlParam, getUrlParam } from '$lib/utils/urlParams';
 
   // Relative imports
   import { seqtaFetch } from '../../utils/netUtil';
@@ -196,8 +198,9 @@
     selectedTab = tab;
   }
 
-  function handleYearChange(year: number) {
+  async function handleYearChange(year: number) {
     selectedYear = year;
+    await updateUrlParam('year', year.toString());
   }
 
   function handleGroupByChange(group: 'subject' | 'month' | 'status') {
@@ -216,6 +219,16 @@
       gradeAnalyserEnabled = true;
     }
     await loadAssessments();
+    
+    // Read year from URL parameter
+    const yearParam = getUrlParam('year');
+    if (yearParam) {
+      const year = parseInt(yearParam, 10);
+      if (!isNaN(year) && availableYears.includes(year)) {
+        selectedYear = year;
+      }
+    }
+    
     highlightAssessmentFromQuery();
   });
 </script>
@@ -397,7 +410,10 @@
         <AssessmentListView
           assessments={filteredAssessments}
           subjects={allSubjects}
-          {activeSubjects} />
+          {activeSubjects}
+          {availableYears}
+          {selectedYear}
+          onYearChange={handleYearChange} />
       {/if}
     {/if}
   </div>

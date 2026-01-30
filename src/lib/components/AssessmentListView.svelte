@@ -9,17 +9,22 @@
   } from '../services/weightedGradeCacheService';
   import type { Assessment, Subject, WeightedGradePrediction } from '../types';
   import { Icon } from 'svelte-hero-icons';
-  import { Sparkles, ChevronDown, ChevronUp, InformationCircle } from 'svelte-hero-icons';
+  import { Sparkles, ChevronDown, ChevronUp, InformationCircle, Calendar } from 'svelte-hero-icons';
   import { seqtaFetch } from '../../utils/netUtil';
   import { onMount } from 'svelte';
+  import T from './T.svelte';
+  import { _ } from '../i18n';
 
   interface Props {
     assessments: Assessment[];
     subjects: Subject[];
     activeSubjects: Subject[];
+    availableYears?: number[];
+    selectedYear?: number;
+    onYearChange?: (year: number) => void | Promise<void>;
   }
 
-  let { assessments, subjects, activeSubjects }: Props = $props();
+  let { assessments, subjects, activeSubjects, availableYears = [], selectedYear, onYearChange }: Props = $props();
 
   // Store weighted predictions per subject (using Record for better reactivity)
   let weightedPredictions = $state<Record<string, WeightedGradePrediction>>({});
@@ -162,6 +167,27 @@
       }
     }
   });
+
+  // Calculate latest year (first item since sorted descending)
+  const latestYear = $derived(availableYears.length > 0 ? availableYears[0] : null);
+  
+  // Show "Change to Latest Year" button if:
+  // - No assessments for current year
+  // - Other years exist
+  // - Current year is not the latest year
+  const showChangeYearButton = $derived(
+    assessments.length === 0 &&
+    availableYears.length > 1 &&
+    selectedYear !== undefined &&
+    latestYear !== null &&
+    selectedYear !== latestYear
+  );
+
+  async function handleChangeToLatestYear() {
+    if (latestYear !== null && onYearChange) {
+      await onYearChange(latestYear);
+    }
+  }
 </script>
 
 <div class="flex flex-col gap-6 lg:flex-row">
@@ -192,6 +218,31 @@
 
   <!-- Main Content -->
   <div class="flex-1 space-y-6">
+    <!-- Change to Latest Year Banner -->
+    {#if showChangeYearButton}
+      <div class="p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <Icon src={Calendar} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <div>
+              <p class="text-sm font-medium text-zinc-900 dark:text-white">
+                <T key="assessments.no_assessments_for_year" fallback="No assessments for {year}" values={{ year: selectedYear?.toString() || '' }} />
+              </p>
+              <p class="text-xs text-zinc-600 dark:text-zinc-400">
+                <T key="assessments.other_years_available" fallback="Other years are available" />
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="primary"
+            onclick={handleChangeToLatestYear}
+            class="transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+            <T key="assessments.change_to_latest_year" fallback="Change to Latest Year" />
+          </Button>
+        </div>
+      </div>
+    {/if}
+
     {#each subjects.filter( (subject) => assessments.some((a) => a.code === subject.code), ) as subject}
       <div id="subject-{subject.code}">
         <Card variant="default" padding="none" class="overflow-hidden">

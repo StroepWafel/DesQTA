@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import { getUrlParam } from '$lib/utils/urlParams';
 
   let reports = $state<any[]>([]);
   let loading = $state(true);
@@ -75,7 +77,26 @@
     }
   }
 
-  onMount(loadReports);
+  onMount(async () => {
+    await loadReports();
+    
+    // Check for report parameter to highlight/open specific report
+    const reportParam = getUrlParam('report');
+    if (reportParam && reports.length > 0) {
+      const report = reports.find((r) => r.uuid === reportParam || r.id?.toString() === reportParam);
+      if (report) {
+        // Scroll to report and optionally open it
+        setTimeout(() => {
+          const element = document.querySelector(`[data-report-id="${report.uuid || report.id}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Optionally auto-open the report
+            // openReportInBrowser(report);
+          }
+        }, 300);
+      }
+    }
+  });
 </script>
 
 <div class="p-8 min-h-screen">
@@ -103,6 +124,7 @@
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {#each reports as report}
         <div
+          data-report-id={report.uuid || report.id}
           class="group dark:bg-zinc-800 dark:border-[#333] border border-zinc-200 bg-zinc-100 rounded-2xl p-0 overflow-hidden shadow-md transition-all duration-200 hover:scale-[1.03] hover:shadow-lg focus:outline-hidden">
           <div class="flex justify-between items-center px-6 pt-6">
             <div

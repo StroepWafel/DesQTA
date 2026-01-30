@@ -11,6 +11,7 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import { logger } from '../../../utils/logger';
+  import { getUrlParam } from '$lib/utils/urlParams';
 
   interface GoalsData {
     overview: string;
@@ -206,7 +207,21 @@
   onMount(async () => {
     await checkGoalsEnabled();
     if (goalsEnabled) {
-      loadGoals();
+      await loadGoals();
+      
+      // Check for goal parameter to scroll to specific goal item
+      const goalParam = getUrlParam('goal');
+      if (goalParam && goalItems.length > 0) {
+        const goalIndex = parseInt(goalParam, 10);
+        if (!isNaN(goalIndex) && goalIndex >= 0 && goalIndex < goalItems.length) {
+          setTimeout(() => {
+            const element = document.querySelector(`[data-goal-index="${goalIndex}"]`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 300);
+        }
+      }
     } else {
       loading = false;
     }
@@ -342,7 +357,7 @@
               <tbody>
                 {#if goalItems.length > 0}
                   {#each goalItems as item, index}
-                    <tr class="border-b border-zinc-200 dark:border-zinc-700">
+                    <tr data-goal-index={index} class="border-b border-zinc-200 dark:border-zinc-700">
                       <td class="px-4 py-3">
                         <input
                           type="text"
