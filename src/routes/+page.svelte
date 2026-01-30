@@ -56,15 +56,15 @@
   <!-- Main Dashboard Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
     
-    <!-- Top Row - Full Width Components -->
+    <!-- Top Row - Side by Side Components -->
     <div class="lg:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-      <!-- Recent News -->
-      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6">
-        <RecentNews />
+      <!-- Upcoming Assessments -->
+      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6 flex flex-col h-full">
+        <UpcomingAssessments />
       </div>
       
       <!-- Messages Preview -->
-      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6">
+      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6 flex flex-col h-full">
         <MessagesPreview />
       </div>
     </div>
@@ -89,9 +89,11 @@
       <NoticesPane />
     </div>
 
-    <!-- Fifth Row - Upcoming Assessments (Full Width) -->
+    <!-- Fifth Row - Recent News (Full Width) -->
     <div class="lg:col-span-12">
-      <UpcomingAssessments />
+      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6">
+        <RecentNews />
+      </div>
     </div>
 
     <!-- Sixth Row - Welcome Portal (Full Width) -->

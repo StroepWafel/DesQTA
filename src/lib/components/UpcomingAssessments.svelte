@@ -118,11 +118,11 @@
 </script>
 
 <div
-  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+  class="overflow-hidden relative h-full flex flex-col rounded-2xl border shadow-xl backdrop-blur-xs bg-transparent border-transparent">
   <div
-    class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
-    <span class="pr-4 text-xl font-semibold text-zinc-900 dark:text-white text-nowrap"
-      >Upcoming Assessments</span>
+    class="flex justify-between items-center mb-3 shrink-0">
+    <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white"
+      >Upcoming Assessments</h3>
     <div class="flex overflow-x-scroll gap-2" id="upcoming-filters">
       {#each activeSubjects as subj}
         <label
@@ -138,7 +138,7 @@
   </div>
 
   {#if loadingAssessments}
-    <div class="flex flex-col justify-center items-center py-12 sm:py-16">
+    <div class="flex flex-col justify-center items-center py-12 sm:py-16 flex-1">
       <div
         class="w-12 h-12 rounded-full border-4 animate-spin sm:w-16 sm:h-16 border-accent/30 border-t-accent">
       </div>
@@ -147,7 +147,7 @@
       </p>
     </div>
   {:else if filteredAssessments.length === 0}
-    <div class="flex flex-col justify-center items-center py-12 sm:py-16">
+    <div class="flex flex-col justify-center items-center py-12 sm:py-16 flex-1">
       <div
         class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-linear-to-br from-accent to-accent-600 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(var(--accent-color-value),0.3)] animate-gradient">
         🎉
@@ -157,7 +157,8 @@
       </p>
     </div>
   {:else}
-    <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 sm:p-6">
+    <div class="flex-1 overflow-y-auto">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
       {#each filteredAssessments as a}
         {@const assessmentYear = new Date(a.due).getFullYear()}
         {@const dateStr = new Date(a.due).toISOString().split('T')[0]}
@@ -214,6 +215,7 @@
           {/if}
         </a>
       {/each}
+      </div>
     </div>
   {/if}
 </div> 
