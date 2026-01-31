@@ -226,6 +226,73 @@ fn init_schema(conn: &Connection) -> SqlResult<()> {
         [],
     )?;
 
+    // Search history table: stores search queries
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS search_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            query TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            use_count INTEGER DEFAULT 1
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_search_history_query ON search_history(query)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_search_history_created_at ON search_history(created_at)",
+        [],
+    )?;
+
+    // Search favorites table: stores favorite search items
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS search_favorites (
+            item_id TEXT PRIMARY KEY,
+            created_at INTEGER NOT NULL
+        )",
+        [],
+    )?;
+
+    // Search recent items table: stores recently accessed search items
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS search_recent_items (
+            item_id TEXT PRIMARY KEY,
+            item_data TEXT NOT NULL,
+            last_used INTEGER NOT NULL,
+            use_count INTEGER DEFAULT 1
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_search_recent_last_used ON search_recent_items(last_used)",
+        [],
+    )?;
+
+    // Search usage tracking table: tracks item usage statistics
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS search_usage (
+            item_id TEXT NOT NULL,
+            category TEXT NOT NULL,
+            used_at INTEGER NOT NULL,
+            PRIMARY KEY (item_id, used_at)
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_search_usage_item_id ON search_usage(item_id)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_search_usage_category ON search_usage(category)",
+        [],
+    )?;
+
     // Clean up expired cache entries
     cleanup_expired_cache(conn)?;
 
@@ -412,7 +479,287 @@ pub fn db_queue_clear() -> Result<(), String> {
     }).map_err(|e| e.to_string())
 }
 
+// ========== Search Data Operations ==========
+
+#[tauri::command]
+pub fn db_search_history_get(limit: Option<i32>) -> Result<Vec<String>, String> {
+    let limit = limit.unwrap_or(10);
+    with_conn(|conn| {
+        let mut stmt = conn
+            .prepare("SELECT query FROM search_history ORDER BY created_at DESC, use_count DESC LIMIT ?")
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+
+        let rows = stmt
+            .query_map(params![limit], |row| {
+                Ok(row.get::<_, String>(0)?)
+            })
+            .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+        }
+
+        Ok(results)
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_history_add(query: String) -> Result<(), String> {
+    let now = Utc::now().timestamp();
+    with_conn(|conn| {
+        // Check if query exists
+        let exists: bool = conn
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM search_history WHERE query = ?)",
+                params![query],
+                |row| row.get(0),
+            )
+            .unwrap_or(false);
+
+        if exists {
+            // Update use_count and created_at
+            conn.execute(
+                "UPDATE search_history SET use_count = use_count + 1, created_at = ? WHERE query = ?",
+                params![now, query],
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to update: {}", e))?;
+        } else {
+            // Insert new query
+            conn.execute(
+                "INSERT INTO search_history (query, created_at, use_count) VALUES (?1, ?2, 1)",
+                params![query, now],
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to insert: {}", e))?;
+        }
+
+        Ok(())
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_history_clear() -> Result<(), String> {
+    with_conn(|conn| {
+        conn.execute("DELETE FROM search_history", [])
+            .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_favorites_get() -> Result<Vec<String>, String> {
+    with_conn(|conn| {
+        let mut stmt = conn
+            .prepare("SELECT item_id FROM search_favorites ORDER BY created_at DESC")
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(row.get::<_, String>(0)?)
+            })
+            .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+        }
+
+        Ok(results)
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_favorites_add(item_id: String) -> Result<(), String> {
+    let now = Utc::now().timestamp();
+    with_conn(|conn| {
+        conn.execute(
+            "INSERT OR IGNORE INTO search_favorites (item_id, created_at) VALUES (?1, ?2)",
+            params![item_id, now],
+        )
+        .map_err(|e| anyhow::anyhow!("Failed to insert: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_favorites_remove(item_id: String) -> Result<(), String> {
+    with_conn(|conn| {
+        conn.execute("DELETE FROM search_favorites WHERE item_id = ?", params![item_id])
+            .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_recent_get(limit: Option<i32>) -> Result<Vec<Value>, String> {
+    let limit = limit.unwrap_or(5);
+    with_conn(|conn| {
+        let mut stmt = conn
+            .prepare("SELECT item_data FROM search_recent_items ORDER BY last_used DESC LIMIT ?")
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+
+        let rows = stmt
+            .query_map(params![limit], |row| {
+                let data_str: String = row.get(0)?;
+                serde_json::from_str::<Value>(&data_str).map_err(|_| {
+                    rusqlite::Error::InvalidColumnType(
+                        0,
+                        "TEXT".to_string(),
+                        rusqlite::types::Type::Text,
+                    )
+                })
+            })
+            .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+        }
+
+        Ok(results)
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_recent_add(item_id: String, item_data: Value) -> Result<(), String> {
+    let now = Utc::now().timestamp();
+    let item_data_str = serde_json::to_string(&item_data)
+        .map_err(|e| format!("Failed to serialize: {}", e))?;
+
+    with_conn(|conn| {
+        // Check if item exists
+        let exists: bool = conn
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM search_recent_items WHERE item_id = ?)",
+                params![item_id],
+                |row| row.get(0),
+            )
+            .unwrap_or(false);
+
+        if exists {
+            // Update last_used and use_count
+            conn.execute(
+                "UPDATE search_recent_items SET last_used = ?, use_count = use_count + 1, item_data = ? WHERE item_id = ?",
+                params![now, item_data_str, item_id],
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to update: {}", e))?;
+        } else {
+            // Insert new item
+            conn.execute(
+                "INSERT INTO search_recent_items (item_id, item_data, last_used, use_count) VALUES (?1, ?2, ?3, 1)",
+                params![item_id, item_data_str, now],
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to insert: {}", e))?;
+        }
+
+        // Keep only the most recent items (limit to 20)
+        conn.execute(
+            "DELETE FROM search_recent_items WHERE item_id NOT IN (
+                SELECT item_id FROM search_recent_items ORDER BY last_used DESC LIMIT 20
+            )",
+            [],
+        )
+        .ok(); // Ignore errors
+
+        Ok(())
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_recent_clear() -> Result<(), String> {
+    with_conn(|conn| {
+        conn.execute("DELETE FROM search_recent_items", [])
+            .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_usage_track(item_id: String, category: String) -> Result<(), String> {
+    let now = Utc::now().timestamp();
+    with_conn(|conn| {
+        conn.execute(
+            "INSERT OR IGNORE INTO search_usage (item_id, category, used_at) VALUES (?1, ?2, ?3)",
+            params![item_id, category, now],
+        )
+        .map_err(|e| anyhow::anyhow!("Failed to insert: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
+}
+
 // ========== Structured Data Operations (for future use) ==========
+
+#[tauri::command]
+pub fn db_search_assessments(query: String, limit: Option<i32>) -> Result<Vec<Value>, String> {
+    let limit = limit.unwrap_or(5);
+    let search_pattern = format!("%{}%", query);
+    with_conn(|conn| {
+        let mut stmt = conn
+            .prepare(
+                "SELECT data FROM assessments 
+                WHERE title LIKE ?1 OR code LIKE ?1 
+                ORDER BY due ASC 
+                LIMIT ?2"
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+        
+        let rows = stmt
+            .query_map(params![search_pattern, limit], |row| {
+                let data_str: String = row.get(0)?;
+                serde_json::from_str::<Value>(&data_str).map_err(|_| {
+                    rusqlite::Error::InvalidColumnType(
+                        0,
+                        "TEXT".to_string(),
+                        rusqlite::types::Type::Text,
+                    )
+                })
+            })
+            .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+        }
+
+        Ok(results)
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_search_courses(query: String, limit: Option<i32>) -> Result<Vec<Value>, String> {
+    let limit = limit.unwrap_or(5);
+    let search_pattern = format!("%{}%", query);
+    with_conn(|conn| {
+        let mut stmt = conn
+            .prepare(
+                "SELECT data FROM courses 
+                WHERE title LIKE ?1 OR course_code LIKE ?1 
+                ORDER BY updated_at DESC 
+                LIMIT ?2"
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+        
+        let rows = stmt
+            .query_map(params![search_pattern, limit], |row| {
+                let data_str: String = row.get(0)?;
+                serde_json::from_str::<Value>(&data_str).map_err(|_| {
+                    rusqlite::Error::InvalidColumnType(
+                        0,
+                        "TEXT".to_string(),
+                        rusqlite::types::Type::Text,
+                    )
+                })
+            })
+            .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+        }
+
+        Ok(results)
+    }).map_err(|e| e.to_string())
+}
 
 #[tauri::command]
 pub fn db_get_assessments_by_year(year: Option<i32>) -> Result<Vec<Value>, String> {

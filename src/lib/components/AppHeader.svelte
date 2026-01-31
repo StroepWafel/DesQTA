@@ -197,7 +197,7 @@
 
     try {
       const subset = await invoke<any>('get_settings_subset', { keys: ['global_search_enabled'] });
-      globalSearchEnabled = false; // Temporarily disabled
+      globalSearchEnabled = subset?.global_search_enabled ?? true; // Default to enabled
       logger.info(
         'AppHeader',
         'loadGlobalSearchSetting',
@@ -210,7 +210,7 @@
         `Failed to load global search setting: ${error}`,
         { error },
       );
-      globalSearchEnabled = false; // Temporarily disabled
+      globalSearchEnabled = true; // Default to enabled on error
     }
   }
 
