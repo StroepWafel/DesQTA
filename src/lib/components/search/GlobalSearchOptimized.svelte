@@ -58,13 +58,23 @@
   let dynamicCourses = $state<SearchItem[]>([]);
   let loadingDynamic = $state(false);
   let dynamicPages = $state<SearchItem[]>([]);
+  // Convert to stores so filteredItems can reactively track them
+  const homepageAssessments = writable<SearchItem[]>([]);
+  const homepageCourses = writable<SearchItem[]>([]);
   const dynamicCategories = writable<SearchCategory[]>([]);
 
-  // Sanitize search input reactively
+  // Sanitize search input reactively (but preserve spaces for normal typing)
   $effect(() => {
     const currentSearch = $searchStore;
     if (currentSearch) {
-      const sanitized = sanitizeSearchQuery(currentSearch);
+      // Only sanitize dangerous characters, don't trim while typing
+      // This allows spaces to work normally
+      const sanitized = currentSearch
+        .replace(/[<>'"]/g, '') // Remove potentially dangerous characters
+        .replace(/\\/g, '') // Remove backslashes
+        .replace(/javascript:/gi, '') // Remove javascript protocol
+        .substring(0, 500); // Limit length
+
       if (sanitized !== currentSearch) {
         searchStore.set(sanitized);
       }
@@ -129,7 +139,9 @@
   const dynamicItemsStore = writable<SearchItem[]>([]);
 
   $effect(() => {
-    dynamicItemsStore.set([...dynamicAssessments, ...dynamicCourses]);
+    // Only include search results, not homepage items
+    const items = [...dynamicAssessments, ...dynamicCourses];
+    dynamicItemsStore.set(items);
   });
 
   // Load dynamic pages from menu
@@ -234,6 +246,8 @@
       dynamicItemsStore,
       currentCategory,
       dynamicCategories,
+      homepageAssessments,
+      homepageCourses,
     ],
     ([
       $search,
@@ -243,6 +257,8 @@
       $dynamicItems,
       $currentCategory,
       $dynamicCategories,
+      $homepageAssessments,
+      $homepageCourses,
     ]) => {
       // Determine source items based on current context
       const sourceItems = $currentCategory
@@ -261,7 +277,7 @@
           return sourceItems;
         }
 
-        // Global search with no query - show favorites and recents
+        // Global search with no query - show favorites, recents, and homepage items
         const recentWithBadge = $recents.map((item) => ({ ...item, badge: 'Recent' }));
         const allSearchItems = [
           ...searchItems.filter((item) => item.category !== 'page'),
@@ -270,13 +286,39 @@
         const favoriteWithBadge = allSearchItems
           .filter((item) => $favorites.includes(item.id))
           .map((item) => ({ ...item, badge: 'Favorite' }));
-        return [...favoriteWithBadge, ...recentWithBadge].slice(0, 8);
+
+        // Combine: favorites, recents, homepage assessments, homepage courses
+        const homepageItems = [
+          ...favoriteWithBadge,
+          ...recentWithBadge,
+          ...$homepageAssessments.map((item) => ({ ...item, badge: item.badge || 'Assessment' })),
+          ...$homepageCourses.map((item) => ({ ...item, badge: 'Course' })),
+        ];
+
+        return homepageItems.slice(0, 12);
       }
 
-      let results = sourceItems;
+      // Include dynamic items (assessments and courses) in search results
+      // Note: sourceItems already includes $dynamicItems, but we ensure they're included
+      // and properly deduplicated
+      const itemsMap = new Map<string, SearchItem>();
+
+      // Add source items first (this already includes $dynamicItems from line 270)
+      sourceItems.forEach((item) => {
+        itemsMap.set(item.id, item);
+      });
+
+      // Explicitly add dynamic items to ensure they're included (will deduplicate by id)
+      $dynamicItems.forEach((item) => {
+        itemsMap.set(item.id, item);
+      });
+
+      const allSearchableItems = Array.from(itemsMap.values());
+
+      let results = allSearchableItems;
 
       if ($mode === 'fuzzy') {
-        results = sourceItems
+        results = allSearchableItems
           .map((item) => ({
             ...item,
             score: Math.max(
@@ -289,7 +331,7 @@
           .sort((a, b) => (b.score || 0) - (a.score || 0));
       } else {
         const query = $search.toLowerCase();
-        results = sourceItems.filter((item) => {
+        results = allSearchableItems.filter((item) => {
           return (
             item.name.toLowerCase().includes(query) ||
             item.description?.toLowerCase().includes(query) ||
@@ -323,6 +365,10 @@
     searchMode.set('normal');
     currentCategory.set(null);
     selectedIndex.set(0);
+    // Load homepage data when opening modal
+    if (!$searchStore.trim()) {
+      loadHomepageData();
+    }
   };
 
   const openCommandMode = () => {
@@ -558,6 +604,32 @@
   const handleKeydown = (e: KeyboardEvent) => {
     if (!$showModal) return;
 
+    // Don't intercept keys when user is typing in the input (allow normal text input)
+    const target = e.target;
+    const isInput =
+      target instanceof HTMLInputElement && (target.type === 'text' || target.type === 'search');
+
+    // If typing in input, only handle specific navigation keys - let everything else pass through
+    if (isInput) {
+      // Only handle navigation keys when in input, ignore all other keys (including Space, letters, numbers, etc.)
+      const navigationKeys = [
+        'ArrowDown',
+        'ArrowUp',
+        'Home',
+        'End',
+        'PageDown',
+        'PageUp',
+        'Enter',
+        'Escape',
+      ];
+      // If it's not a navigation key, don't handle it at all - let the browser handle it
+      // This ensures Space and all other text input keys work normally
+      if (!navigationKeys.includes(e.key)) {
+        return; // Let the input handle normal typing (including Space, letters, etc.)
+      }
+      // For navigation keys in input, continue to handle them below
+    }
+
     // Determine what items are currently being displayed
     let items: any[] = [];
     if ($currentCategory) {
@@ -660,6 +732,198 @@
     }
   };
 
+  // Load recent/popular courses and assessments for homepage
+  // Note: Only uses cache/API, not database search (database search is only for actual search queries)
+  async function loadHomepageData() {
+    try {
+      // Load from cache first, then fall back to API
+      const [cachedAssessments, cachedCourses] = await Promise.all([
+        idbCacheGet<{
+          assessments: Assessment[];
+          subjects: Subject[];
+          all_subjects: Subject[];
+        }>('assessments_overview_data'),
+        idbCacheGet<Folder[]>('courses_subjects_folders'),
+      ]);
+
+      // Process assessments - show upcoming/overdue first
+      if (cachedAssessments?.assessments) {
+        const sortedAssessments = [...cachedAssessments.assessments]
+          .sort((a: Assessment, b: Assessment) => {
+            // Prioritize overdue
+            if (a.overdue && !b.overdue) return -1;
+            if (!a.overdue && b.overdue) return 1;
+            // Then by due date
+            const aDue = new Date(a.due).getTime();
+            const bDue = new Date(b.due).getTime();
+            return aDue - bDue;
+          })
+          .slice(0, 5)
+          .map((a: Assessment) => {
+            const dueDate = new Date(a.due);
+            const isOverdue = a.overdue;
+            const statusBadge = isOverdue ? 'Overdue' : dueDate.toLocaleDateString();
+
+            return {
+              id: `assessment-${a.id}-${a.metaclassID}`,
+              name: a.title,
+              path: `/assessments/${a.id}/${a.metaclassID}`,
+              category: 'page' as const,
+              icon: ClipboardDocumentList,
+              description: `${a.code} • ${a.subject || 'Unknown'}`,
+              keywords: [a.title, a.code, a.subject || ''],
+              badge: statusBadge,
+              priority: isOverdue ? 15 : 8,
+              metadata: { assessmentId: a.id, metaclassId: a.metaclassID },
+            } as SearchItem;
+          });
+
+        homepageAssessments.set(sortedAssessments);
+      } else {
+        // Try to fetch fresh data from API
+        try {
+          const assessmentsData = await invoke<{
+            assessments: Assessment[];
+            subjects: Subject[];
+            all_subjects: Subject[];
+          }>('get_processed_assessments').catch(() => null);
+
+          if (assessmentsData?.assessments) {
+            const sortedAssessments = [...assessmentsData.assessments]
+              .sort((a: Assessment, b: Assessment) => {
+                if (a.overdue && !b.overdue) return -1;
+                if (!a.overdue && b.overdue) return 1;
+                const aDue = new Date(a.due).getTime();
+                const bDue = new Date(b.due).getTime();
+                return aDue - bDue;
+              })
+              .slice(0, 5)
+              .map((a: Assessment) => {
+                const dueDate = new Date(a.due);
+                const isOverdue = a.overdue;
+                const statusBadge = isOverdue ? 'Overdue' : dueDate.toLocaleDateString();
+
+                return {
+                  id: `assessment-${a.id}-${a.metaclassID}`,
+                  name: a.title,
+                  path: `/assessments/${a.id}/${a.metaclassID}`,
+                  category: 'page' as const,
+                  icon: ClipboardDocumentList,
+                  description: `${a.code} • ${a.subject || 'Unknown'}`,
+                  keywords: [a.title, a.code, a.subject || ''],
+                  badge: statusBadge,
+                  priority: isOverdue ? 15 : 8,
+                  metadata: { assessmentId: a.id, metaclassId: a.metaclassID },
+                } as SearchItem;
+              });
+
+            homepageAssessments.set(sortedAssessments);
+          } else {
+            homepageAssessments.set([]);
+          }
+        } catch (e) {
+          console.warn('Failed to load homepage assessments:', e);
+          homepageAssessments.set([]);
+        }
+      }
+
+      // Process courses - show recent/active courses
+      if (cachedCourses && cachedCourses.length > 0) {
+        // Get unique courses from folders
+        const courseMap = new Map<string, any>();
+        cachedCourses.forEach((folder: Folder) => {
+          folder.subjects?.forEach((subject: any) => {
+            const key = `${subject.programme}-${subject.metaclass}`;
+            if (!courseMap.has(key)) {
+              courseMap.set(key, {
+                programme: subject.programme,
+                metaclass: subject.metaclass,
+                code: subject.code,
+                title: subject.title,
+                description: subject.description,
+              });
+            }
+          });
+        });
+
+        const courses = Array.from(courseMap.values())
+          .slice(0, 5)
+          .map((course: any) => {
+            return {
+              id: `course-${course.programme}-${course.metaclass}`,
+              name: course.title || course.code,
+              path: `/courses?code=${course.code}&programme=${course.programme}&metaclass=${course.metaclass}`,
+              category: 'page' as const,
+              icon: BookOpen,
+              description: course.description || `${course.code} course`,
+              keywords: [course.title, course.code, course.description || ''],
+              priority: 9,
+              metadata: {
+                programme: course.programme,
+                metaclass: course.metaclass,
+                code: course.code,
+              },
+            } as SearchItem;
+          });
+
+        homepageCourses.set(courses);
+      } else {
+        // Try to fetch fresh data
+        try {
+          const coursesData = await invoke<Folder[]>('get_courses_subjects').catch(() => null);
+          if (coursesData) {
+            const courseMap = new Map<string, any>();
+            coursesData.forEach((folder: Folder) => {
+              folder.subjects?.forEach((subject: any) => {
+                const key = `${subject.programme}-${subject.metaclass}`;
+                if (!courseMap.has(key)) {
+                  courseMap.set(key, {
+                    programme: subject.programme,
+                    metaclass: subject.metaclass,
+                    code: subject.code,
+                    title: subject.title,
+                    description: subject.description,
+                  });
+                }
+              });
+            });
+
+            const courses = Array.from(courseMap.values())
+              .slice(0, 5)
+              .map((course: any) => {
+                return {
+                  id: `course-${course.programme}-${course.metaclass}`,
+                  name: course.title || course.code,
+                  path: `/courses?code=${course.code}&programme=${course.programme}&metaclass=${course.metaclass}`,
+                  category: 'page' as const,
+                  icon: BookOpen,
+                  description: course.description || `${course.code} course`,
+                  keywords: [course.title, course.code, course.description || ''],
+                  priority: 9,
+                  metadata: {
+                    programme: course.programme,
+                    metaclass: course.metaclass,
+                    code: course.code,
+                  },
+                } as SearchItem;
+              });
+
+            homepageCourses.set(courses);
+          } else {
+            homepageCourses.set([]);
+          }
+        } catch (e) {
+          console.warn('Failed to load homepage courses:', e);
+          homepageCourses.set([]);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load homepage data:', error);
+      homepageAssessments.set([]);
+      homepageCourses.set([]);
+    }
+  }
+
   // Load dynamic data (assessments and courses) when searching
   async function loadDynamicSearchData(query: string) {
     if (!query.trim() || query.length < 2) {
@@ -688,31 +952,40 @@
 
       // If database search returned results, use them
       if (dbAssessments && dbAssessments.length > 0) {
-        const matchedAssessments = dbAssessments.slice(0, 5).map((a: any) => {
-          // Database returns the full data JSON blob, parse it
-          const assessment =
-            typeof a === 'object' && 'id' in a ? a : typeof a === 'string' ? JSON.parse(a) : a;
-          const dueDate = new Date(assessment.due || Date.now());
-          const isOverdue =
-            assessment.overdue || (assessment.due && new Date(assessment.due) < new Date());
-          const statusBadge = isOverdue ? 'Overdue' : dueDate.toLocaleDateString();
+        const matchedAssessments = dbAssessments
+          .slice(0, 5)
+          .map((a: any) => {
+            // Database returns parsed JSON Value objects - they should already be objects
+            // The data column contains the full assessment JSON, which is parsed by Rust
+            const assessment = typeof a === 'string' ? JSON.parse(a) : a;
 
-          return {
-            id: `assessment-${assessment.id}-${assessment.metaclassID || assessment.metaclass}`,
-            name: assessment.title,
-            path: `/assessments/${assessment.id}/${assessment.metaclassID || assessment.metaclass}`,
-            category: 'page' as const,
-            icon: ClipboardDocumentList,
-            description: `${assessment.code} • ${assessment.subject || 'Unknown'}`,
-            keywords: [assessment.title, assessment.code, assessment.subject || ''],
-            badge: statusBadge,
-            priority: isOverdue ? 15 : 8,
-            metadata: {
-              assessmentId: assessment.id,
-              metaclassId: assessment.metaclassID || assessment.metaclass,
-            },
-          } as SearchItem;
-        });
+            if (!assessment || typeof assessment !== 'object') {
+              console.warn('Invalid assessment data:', assessment);
+              return null;
+            }
+
+            const dueDate = new Date(assessment.due || Date.now());
+            const isOverdue =
+              assessment.overdue || (assessment.due && new Date(assessment.due) < new Date());
+            const statusBadge = isOverdue ? 'Overdue' : dueDate.toLocaleDateString();
+
+            return {
+              id: `assessment-${assessment.id}-${assessment.metaclassID || assessment.metaclass}`,
+              name: assessment.title,
+              path: `/assessments/${assessment.id}/${assessment.metaclassID || assessment.metaclass}`,
+              category: 'page' as const,
+              icon: ClipboardDocumentList,
+              description: `${assessment.code} • ${assessment.subject || 'Unknown'}`,
+              keywords: [assessment.title, assessment.code, assessment.subject || ''],
+              badge: statusBadge,
+              priority: isOverdue ? 15 : 8,
+              metadata: {
+                assessmentId: assessment.id,
+                metaclassId: assessment.metaclassID || assessment.metaclass,
+              },
+            } as SearchItem;
+          })
+          .filter((item): item is SearchItem => item !== null);
 
         dynamicAssessments = matchedAssessments;
       } else {
@@ -762,32 +1035,43 @@
 
       // Process courses - try database first, then fallback
       if (dbCourses && dbCourses.length > 0) {
-        const matchedCourses = dbCourses.slice(0, 5).map((c: any) => {
-          // Database returns the full data JSON blob, parse it
-          const courseData =
-            typeof c === 'object' && 'programme' in c
-              ? c
-              : typeof c === 'string'
-                ? JSON.parse(c)
-                : c;
-          // The data field contains the full course object
-          const course = courseData.data ? courseData.data : courseData;
-          return {
-            id: `course-${course.programme}-${course.metaclass}`,
-            name: course.title || course.course_code,
-            path: `/courses?code=${course.course_code}&programme=${course.programme}&metaclass=${course.metaclass}`,
-            category: 'page' as const,
-            icon: BookOpen,
-            description: course.description || `${course.course_code} course`,
-            keywords: [course.title, course.course_code, course.description || ''],
-            priority: 9,
-            metadata: {
-              programme: course.programme,
-              metaclass: course.metaclass,
-              code: course.course_code,
-            },
-          } as SearchItem;
-        });
+        const matchedCourses = dbCourses
+          .slice(0, 5)
+          .map((c: any) => {
+            // Database returns parsed JSON Value objects - they should already be objects
+            // The data column contains the full course JSON, which is parsed by Rust
+            const courseData = typeof c === 'string' ? JSON.parse(c) : c;
+
+            if (!courseData || typeof courseData !== 'object') {
+              console.warn('Invalid course data:', courseData);
+              return null;
+            }
+
+            // The data field contains the full course object
+            const course = courseData.data ? courseData.data : courseData;
+
+            if (!course || !course.programme || !course.metaclass) {
+              console.warn('Invalid course structure:', course);
+              return null;
+            }
+
+            return {
+              id: `course-${course.programme}-${course.metaclass}`,
+              name: course.title || course.course_code,
+              path: `/courses?code=${course.course_code}&programme=${course.programme}&metaclass=${course.metaclass}`,
+              category: 'page' as const,
+              icon: BookOpen,
+              description: course.description || `${course.course_code} course`,
+              keywords: [course.title, course.course_code, course.description || ''],
+              priority: 9,
+              metadata: {
+                programme: course.programme,
+                metaclass: course.metaclass,
+                code: course.course_code,
+              },
+            } as SearchItem;
+          })
+          .filter((item): item is SearchItem => item !== null);
 
         dynamicCourses = matchedCourses;
       } else {
@@ -835,15 +1119,54 @@
   }
 
   // Watch search query and load dynamic data
+  let lastSearchQuery = $state('');
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+
   $effect(() => {
     const query = $searchStore.trim();
+
+    // Don't clear timeout here - let cleanup functions handle it
+    // This prevents clearing a timeout that's about to fire
+    // The cleanup from previous effect run will clear it if needed
+
+    // Only trigger if query meaningfully changed (not just whitespace changes)
+    // This prevents triggering when adding trailing/leading spaces
+    if (query === lastSearchQuery) {
+      return; // Query hasn't meaningfully changed (e.g., "test" -> "test " still trims to "test")
+    }
+
     if (query && query.length >= 2 && $showModal) {
       // Debounce dynamic loading
-      const timeout = setTimeout(() => {
-        loadDynamicSearchData(query);
+      // Capture timeout ID in closure to prevent cleanup from clearing wrong timeout
+      const timeoutId = setTimeout(() => {
+        // Double-check query hasn't changed during debounce and modal is still open
+        const currentQuery = $searchStore.trim();
+        if (currentQuery === query && $showModal) {
+          loadDynamicSearchData(query);
+        }
+        // Update lastSearchQuery after successful search
+        lastSearchQuery = query;
+        // Only clear if this is still the active timeout
+        if (searchTimeout === timeoutId) {
+          searchTimeout = null;
+        }
       }, 300);
-      return () => clearTimeout(timeout);
+      searchTimeout = timeoutId;
+      return () => {
+        // Only clear this specific timeout, not any new one that might have been set
+        // Use a closure variable to ensure we only clear the timeout we created
+        const timeoutToClear = timeoutId;
+        if (searchTimeout === timeoutToClear) {
+          clearTimeout(timeoutToClear);
+          // Only nullify if we're clearing the current active timeout
+          if (searchTimeout === timeoutToClear) {
+            searchTimeout = null;
+          }
+        }
+      };
     } else {
+      // Update lastSearchQuery when clearing
+      lastSearchQuery = query;
       dynamicAssessments = [];
       dynamicCourses = [];
     }
@@ -853,6 +1176,7 @@
   onMount(() => {
     loadSearchData();
     loadDynamicPages();
+    loadHomepageData();
 
     // Check for URL params on mount
     const urlSearch = getUrlParam('search');

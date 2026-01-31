@@ -237,7 +237,7 @@
                   transition:fly={{
                     y: 10,
                     duration: 300,
-                    delay: i * 50,
+                    delay: Math.max(0, i * 50),
                     easing: cubicInOut,
                     opacity: 0,
                   }}
@@ -304,7 +304,7 @@
                   transition:fly={{
                     y: 10,
                     duration: 300,
-                    delay: i * 50,
+                    delay: Math.max(0, i * 50),
                     easing: cubicInOut,
                     opacity: 0,
                   }}
@@ -376,7 +376,7 @@
                       transition:fly={{
                         y: 10,
                         duration: 300,
-                        delay: globalIndex * 50,
+                        delay: Math.max(0, globalIndex * 50),
                         easing: cubicInOut,
                         opacity: 0,
                       }}
@@ -439,7 +439,7 @@
                       transition:fly={{
                         y: 10,
                         duration: 300,
-                        delay: globalIndex * 50,
+                        delay: Math.max(0, globalIndex * 50),
                         easing: cubicInOut,
                         opacity: 0,
                       }}
@@ -505,7 +505,7 @@
                       transition:fly={{
                         y: 10,
                         duration: 300,
-                        delay: globalIndex * 50,
+                        delay: Math.max(0, globalIndex * 50),
                         easing: cubicInOut,
                         opacity: 0,
                       }}
