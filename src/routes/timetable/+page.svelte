@@ -300,7 +300,9 @@
 
 <div class="sx-svelte-calendar-wrapper h-full w-full min-h-[calc(100vh-4rem)] p-4">
   {#if calendarApp}
-    <ScheduleXCalendar {calendarApp} timeGridEvent={TimeGridEvent} />
+    <div class="calendar-content-animate">
+      <ScheduleXCalendar {calendarApp} timeGridEvent={TimeGridEvent} />
+    </div>
   {:else}
     <div class="flex items-center justify-center h-full">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -394,5 +396,18 @@
   :global(.sx__date-picker__day.is-selected) {
     background-color: var(--color-accent) !important;
     color: var(--color-accent-foreground) !important;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .calendar-content-animate {
+    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 </style>

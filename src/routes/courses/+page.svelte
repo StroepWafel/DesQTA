@@ -1,6 +1,7 @@
 <script lang="ts">
   // Svelte imports
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
 
   // $lib/ imports
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
@@ -43,6 +44,11 @@
   let loading = $state(true);
   let error: string | null = $state(null);
 
+  // Create a unique key that changes when subjects load to force re-render
+  const subjectsKey = $derived(
+    `${loading}-${activeSubjects.length}-${activeSubjects.map((s) => s.code).join(',')}`,
+  );
+
   let expandedFolders: Record<string, boolean> = $state({});
   let selectedSubject: Subject | null = $state(null);
   let coursePayload: CoursePayload | null = $state(null);
@@ -84,13 +90,11 @@
           processFolders(foldersData);
           loading = false;
         },
-        shouldSyncInBackground: (foldersData) => {
-          // Don't sync if cached data has no active subjects
-          const testFolders = foldersData;
-          const testActiveFolders = testFolders.filter((f: Folder) => f.active);
-          const testActiveSubjects = testActiveFolders.flatMap((f: Folder) => f.subjects || []);
-          return testActiveSubjects.length > 0;
+        shouldSyncInBackground: () => {
+          // Always sync if online - subjects are critical data and may have been added recently
+          return true;
         },
+        updateOnBackgroundSync: true, // Update UI when fresh data arrives
       });
 
       if (!data) {
@@ -545,16 +549,20 @@
                         size="sm" />
                     </div>
                   {:else}
-                    {#each activeSubjects.filter(subjectMatches) as subject}
-                      <button
-                        class="py-3 w-full text-left group"
-                        onclick={() => selectSubject(subject)}>
-                        <div
-                          class="font-semibold text-zinc-900 transition-colors duration-100 dark:text-white group-hover:text-accent">
-                          {subject.title}
+                    {#key subjectsKey}
+                      {#each activeSubjects.filter(subjectMatches) as subject, i}
+                        <div class="subject-item-animate" style="animation-delay: {i * 50}ms;">
+                          <button
+                            class="py-3 w-full text-left group transition-all duration-200 transform hover:scale-[1.02]"
+                            onclick={() => selectSubject(subject)}>
+                            <div
+                              class="font-semibold text-zinc-900 transition-colors duration-200 dark:text-white group-hover:text-accent">
+                              {subject.title}
+                            </div>
+                          </button>
                         </div>
-                      </button>
-                    {/each}
+                      {/each}
+                    {/key}
                   {/if}
                 </div>
               </div>
@@ -581,18 +589,24 @@
                         </button>
                         {#if expandedFolders[folder.code]}
                           <div class="mt-2 ml-4 space-y-2">
-                            {#each folder.subjects.filter(subjectMatches) as subject}
-                              <button
-                                class="px-4 py-3 w-full text-sm text-left bg-zinc-50 rounded-lg border-l-4 border-transparent transition-all duration-200 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-accent/50"
-                                onclick={() => selectSubject(subject)}>
-                                <div class="font-medium text-zinc-800 dark:text-zinc-200">
-                                  {subject.title}
+                            {#key folder.code + expandedFolders[folder.code]}
+                              {#each folder.subjects.filter(subjectMatches) as subject, i}
+                                <div
+                                  class="subject-item-animate"
+                                  style="animation-delay: {i * 50}ms;">
+                                  <button
+                                    class="px-4 py-3 w-full text-sm text-left bg-zinc-50 rounded-lg border-l-4 border-transparent transition-all duration-200 transform dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-accent/50 hover:scale-[1.01]"
+                                    onclick={() => selectSubject(subject)}>
+                                    <div class="font-medium text-zinc-800 dark:text-zinc-200">
+                                      {subject.title}
+                                    </div>
+                                    <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                      {subject.code}
+                                    </div>
+                                  </button>
                                 </div>
-                                <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                                  {subject.code}
-                                </div>
-                              </button>
-                            {/each}
+                              {/each}
+                            {/key}
                           </div>
                         {/if}
                       </div>
@@ -630,7 +644,7 @@
             <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
               <div class="space-y-2">
                 <button
-                  class="w-full px-4 py-3 text-left rounded-lg border transition-all duration-200 {showingOverview
+                  class="w-full px-4 py-3 text-left rounded-lg border transition-all duration-200 transform hover:scale-[1.01] {showingOverview
                     ? 'bg-accent text-white border-accent'
                     : 'bg-accent/10 border-accent/20 hover:bg-accent/20'}"
                   onclick={() => selectOverview()}>
@@ -675,7 +689,7 @@
 
                   {#if jumpTarget}
                     <button
-                      class="px-4 py-3 w-full text-left bg-green-50 rounded-lg border border-green-200 transition-all duration-200 dark:bg-green-900/20 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30"
+                      class="px-4 py-3 w-full text-left bg-green-50 rounded-lg border border-green-200 transition-all duration-200 transform dark:bg-green-900/20 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 hover:scale-[1.01]"
                       onclick={() =>
                         selectLesson(
                           jumpTarget.termSchedule,
@@ -716,7 +730,7 @@
                       {@const lessonContent = coursePayload?.w?.[termSchedule.n]?.[lessonIndex]}
                       {@const lessonTopic = lessonContent?.t}
                       <button
-                        class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 {isSelected
+                        class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
                           ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
                           : 'border-transparent hover:border-accent/50'}"
                         onclick={() => selectLesson(termSchedule, lesson, lessonIndex)}>
@@ -753,7 +767,7 @@
                     {@const isSelected =
                       selectedStandaloneContent === contentItem && !showingOverview}
                     <button
-                      class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 {isSelected
+                      class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
                         ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
                         : 'border-transparent hover:border-accent/50'}"
                       onclick={() => selectStandaloneContent(contentItem)}>
@@ -940,5 +954,21 @@
   :global(.course-content video) {
     width: 100%;
     border-radius: 0.5rem;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .subject-item-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

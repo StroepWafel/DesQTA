@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { fade } from 'svelte/transition';
   import { invoke } from '@tauri-apps/api/core';
   import Modal from '$lib/components/Modal.svelte';
   import TodaySchedule from '$lib/components/TodaySchedule.svelte';
@@ -39,7 +40,12 @@
         homepageShortcuts = subset.shortcuts;
       }
     } catch (e) {
-      logger.error('dashboard', 'loadHomepageShortcuts', `Failed to load homepage shortcuts: ${e}`, { error: e });
+      logger.error(
+        'dashboard',
+        'loadHomepageShortcuts',
+        `Failed to load homepage shortcuts: ${e}`,
+        { error: e },
+      );
     }
   }
 
@@ -55,28 +61,32 @@
 <div class="p-4 sm:p-6 min-h-screen">
   <!-- Main Dashboard Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
-    
     <!-- Top Row - Side by Side Components -->
     <div class="lg:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
       <!-- Upcoming Assessments -->
-      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6 flex flex-col h-full">
+      <div
+        in:fade={{ duration: 400 }}
+        class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6 flex flex-col h-full transition-all duration-200 hover:scale-[1.01] hover:shadow-sm">
         <UpcomingAssessments />
       </div>
-      
+
       <!-- Messages Preview -->
-      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6 flex flex-col h-full">
+      <div
+        in:fade={{ duration: 400, delay: 100 }}
+        class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6 flex flex-col h-full transition-all duration-200 hover:scale-[1.01] hover:shadow-sm">
         <MessagesPreview />
       </div>
     </div>
 
     <!-- Second Row - Today's Schedule (Full Width) -->
-    <div class="lg:col-span-12">
+    <div class="lg:col-span-12" in:fade={{ duration: 400, delay: 200 }}>
       <TodaySchedule />
     </div>
 
     <!-- Third Row - Shortcuts (Full Width) -->
-    <div class="lg:col-span-12">
-      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6">
+    <div class="lg:col-span-12" in:fade={{ duration: 400, delay: 300 }}>
+      <div
+        class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6 transition-all duration-200 hover:shadow-sm">
         <h2 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
           <T key="dashboard.quick_links" fallback="Quick Links" />
         </h2>
@@ -85,36 +95,37 @@
     </div>
 
     <!-- Fourth Row - Notices (Full Width) -->
-    <div class="lg:col-span-12">
+    <div class="lg:col-span-12" in:fade={{ duration: 400, delay: 400 }}>
       <NoticesPane />
     </div>
 
     <!-- Fifth Row - Recent News (Full Width) -->
-    <div class="lg:col-span-12">
-      <div class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6">
+    <div class="lg:col-span-12" in:fade={{ duration: 400, delay: 500 }}>
+      <div
+        class="bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs p-4 sm:p-6 transition-all duration-200 hover:shadow-sm">
         <RecentNews />
       </div>
     </div>
 
     <!-- Sixth Row - Welcome Portal (Full Width) -->
-    <div class="lg:col-span-12">
+    <div class="lg:col-span-12" in:fade={{ duration: 400, delay: 600 }}>
       <WelcomePortal />
     </div>
 
     <!-- Bottom Row - Side by Side Components -->
     <div class="lg:col-span-12 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
       <!-- Homework -->
-      <div>
+      <div in:fade={{ duration: 400, delay: 700 }}>
         <Homework />
       </div>
-      
+
       <!-- Todo List -->
-      <div>
+      <div in:fade={{ duration: 400, delay: 800 }}>
         <TodoList />
       </div>
-      
+
       <!-- Focus Timer -->
-      <div>
+      <div in:fade={{ duration: 400, delay: 900 }}>
         <FocusTimer />
       </div>
     </div>
@@ -130,6 +141,7 @@
   className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl"
   ariaLabel="Welcome Portal Modal">
   {#if portalUrl}
-    <iframe src={portalUrl} class="w-full h-full rounded-2xl border-0" title="Welcome Portal"></iframe>
+    <iframe src={portalUrl} class="w-full h-full rounded-2xl border-0" title="Welcome Portal"
+    ></iframe>
   {/if}
 </Modal>

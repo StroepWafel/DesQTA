@@ -18,6 +18,7 @@
   import { theme } from '$lib/stores/theme';
   import { tick } from 'svelte';
   import { fly, fade, scale } from 'svelte/transition';
+  import { cubicInOut } from 'svelte/easing';
   import { Input, Button } from '$lib/components/ui';
   import Modal from '$lib/components/Modal.svelte';
 
@@ -68,6 +69,8 @@
     }>
   >([]);
   let loadingProfiles = $state(false);
+  let profilesKey = $derived(profiles.length + profiles.map((p) => p.id).join(','));
+  let profilesReadyToAnimate = $state(false);
 
   async function loadProfiles() {
     try {
@@ -82,13 +85,30 @@
         }>
       >('list_profiles');
       profiles = profilesList;
+      // Delay animation trigger to ensure component is visible after loading screen
+      setTimeout(() => {
+        profilesReadyToAnimate = true;
+      }, 300);
     } catch (e) {
       console.error('Failed to load profiles:', e);
       profiles = [];
+      setTimeout(() => {
+        profilesReadyToAnimate = true;
+      }, 300);
     } finally {
       loadingProfiles = false;
     }
   }
+
+  // Reset animation state when profiles change
+  $effect(() => {
+    if (profiles.length > 0 && !loadingProfiles) {
+      profilesReadyToAnimate = false;
+      setTimeout(() => {
+        profilesReadyToAnimate = true;
+      }, 300);
+    }
+  });
 
   async function selectProfile(profile: {
     id: string;
@@ -102,15 +122,24 @@
       await invoke('switch_profile', { profileId: profile.id });
       // Set the URL to the profile's base_url
       onUrlChange(profile.base_url);
-      
+
       // Show instructions overlay for manual auth when profile is selected
       showManualAuthInstructions = true;
-      
-      // Check for session completion to hide overlay
+
+      // Check for session completion or window closure to hide overlay
       const checkSessionInterval = setInterval(async () => {
         try {
           const sessionExists = await authService.checkSession();
           if (sessionExists) {
+            showManualAuthInstructions = false;
+            clearInterval(checkSessionInterval);
+            return;
+          }
+
+          // Check if login window still exists
+          const hasWindows = await invoke<boolean>('has_login_windows');
+          if (!hasWindows) {
+            // Window was closed, hide overlay
             showManualAuthInstructions = false;
             clearInterval(checkSessionInterval);
           }
@@ -118,15 +147,18 @@
           // Ignore errors
         }
       }, 1000);
-      
+
       // Clean up after 5 minutes
-      setTimeout(() => {
-        clearInterval(checkSessionInterval);
-        if (showManualAuthInstructions) {
-          showManualAuthInstructions = false;
-        }
-      }, 5 * 60 * 1000);
-      
+      setTimeout(
+        () => {
+          clearInterval(checkSessionInterval);
+          if (showManualAuthInstructions) {
+            showManualAuthInstructions = false;
+          }
+        },
+        5 * 60 * 1000,
+      );
+
       // Start login with this profile's URL
       onStartLogin();
     } catch (e) {
@@ -406,19 +438,19 @@
     {#if !isMobile}
       <div class="flex items-center space-x-1" data-tauri-drag-region>
         <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           onclick={() => appWindow.minimize()}
           aria-label="Minimize">
           <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           onclick={() => appWindow.toggleMaximize()}
           aria-label="Maximize">
           <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 group hover:bg-red-500/90 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform group hover:bg-red-500/90 hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           onclick={() => appWindow.close()}
           aria-label="Close">
           <Icon
@@ -449,7 +481,8 @@
       <div
         class="relative overflow-hidden {isMobile
           ? 'rounded-2xl'
-          : 'rounded-3xl'} bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/40 dark:border-zinc-700/40 shadow-2xl">
+          : 'rounded-3xl'} bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/40 dark:border-zinc-700/40 shadow-2xl login-card-animate"
+        transition:scale={{ duration: 400, start: 0.95, easing: cubicInOut }}>
         <!-- Static Background -->
         <div
           class="absolute inset-0 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-800 {isMobile
@@ -546,30 +579,34 @@
                     </p>
                   </div>
                   <div class="space-y-2 max-h-64 overflow-y-auto">
-                    {#each profiles as profile (profile.id)}
-                      <button
-                        type="button"
-                        class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 hover:bg-white/20 dark:hover:bg-zinc-800/20 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 group"
-                        onclick={() => selectProfile(profile)}>
-                        <div
-                          class="flex justify-center items-center w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900/50 transition-colors">
+                    {#key profilesKey}
+                      {#each profiles as profile, i (profile.id)}
+                        <button
+                          type="button"
+                          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 hover:bg-white/20 dark:hover:bg-zinc-800/20 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 hover:scale-[1.01] active:scale-[0.99] group"
+                          class:profile-card-animate={profilesReadyToAnimate}
+                          style="animation-delay: {profilesReadyToAnimate ? i * 50 : 0}ms;"
+                          onclick={() => selectProfile(profile)}>
+                          <div
+                            class="flex justify-center items-center w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900/50 transition-colors">
+                            <Icon
+                              src={UserCircle}
+                              class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <div class="font-medium text-zinc-900 dark:text-white truncate">
+                              {formatProfileName(profile)}
+                            </div>
+                            <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                              {profile.base_url}
+                            </div>
+                          </div>
                           <Icon
-                            src={UserCircle}
-                            class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                          <div class="font-medium text-zinc-900 dark:text-white truncate">
-                            {formatProfileName(profile)}
-                          </div>
-                          <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate">
-                            {profile.base_url}
-                          </div>
-                        </div>
-                        <Icon
-                          src={ArrowRight}
-                          class="w-5 h-5 text-zinc-400 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
-                      </button>
-                    {/each}
+                            src={ArrowRight}
+                            class="w-5 h-5 text-zinc-400 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
+                        </button>
+                      {/each}
+                    {/key}
                   </div>
                   <div class="flex items-center">
                     <div
@@ -592,27 +629,27 @@
                       class="flex p-1 bg-white/15 dark:bg-zinc-800/20 backdrop-blur-xl rounded-2xl relative overflow-hidden border border-white/20 dark:border-zinc-700/20">
                       <!-- Animated background slider -->
                       <div
-                        class="absolute top-1 bottom-1 bg-white/30 dark:bg-zinc-700/40 backdrop-blur-xl rounded-xl shadow-xs transition-all duration-300 ease-out border border-white/40 dark:border-zinc-600/40"
+                        class="absolute top-1 bottom-1 bg-white/30 dark:bg-zinc-700/40 backdrop-blur-xl rounded-xl shadow-xs transition-all duration-300 ease-in-out border border-white/40 dark:border-zinc-600/40"
                         style="left: {loginMethod === 'qr'
                           ? '4px'
-                          : 'calc(50% - 4px)'}; width: calc(50% - 4px)">
+                          : 'calc(50% - 4px)'}; width: calc(50% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                       </div>
                       <button
-                        class="px-6 py-3 rounded-xl font-medium transition-all duration-300 relative z-10 transform hover:scale-105 {loginMethod ===
+                        class="px-6 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
                         'qr'
                           ? 'text-indigo-600 dark:text-indigo-400'
                           : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
                         onclick={() => (loginMethod = 'qr')}>
                         <Icon
                           src={QrCode}
-                          class="w-5 h-5 inline mr-2 transition-transform duration-300 {loginMethod ===
+                          class="w-5 h-5 inline mr-2 transition-transform duration-200 ease-in-out {loginMethod ===
                           'qr'
                             ? 'scale-110'
                             : ''}" />
                         <T key="login.qr_code" fallback="QR Code" />
                       </button>
                       <button
-                        class="px-6 py-3 rounded-xl font-medium transition-all duration-300 relative z-10 transform hover:scale-105 {loginMethod ===
+                        class="px-6 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
                         'url'
                           ? 'text-indigo-600 dark:text-indigo-400'
                           : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
@@ -642,7 +679,7 @@
                     ? '200px'
                     : loginMethod === 'qr'
                       ? '350px'
-                      : '200px'};">
+                      : '200px'}; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                   <!-- Mobile SSO URL Input -->
                   {#if isMobile && showMobileSsoInput}
                     <div class="space-y-6">
@@ -713,10 +750,10 @@
                           onchange={handleQrFileInput} />
                         <label
                           for="qr-upload"
-                          class="flex flex-col items-center justify-center w-full h-[10.6rem] border-2 border-dashed border-indigo-300/60 dark:border-indigo-600/60 rounded-2xl cursor-pointer bg-white/5 dark:bg-zinc-800/5 backdrop-blur-xl hover:bg-white/15 dark:hover:bg-zinc-800/15 transition-all duration-300 group hover:border-indigo-400/80 dark:hover:border-indigo-500/80 hover:scale-[1.02]">
+                          class="flex flex-col items-center justify-center w-full h-[10.6rem] border-2 border-dashed border-indigo-300/60 dark:border-indigo-600/60 rounded-2xl cursor-pointer bg-white/5 dark:bg-zinc-800/5 backdrop-blur-xl hover:bg-white/15 dark:hover:bg-zinc-800/15 transition-all duration-200 ease-in-out transform group hover:border-indigo-400/80 dark:hover:border-indigo-500/80 hover:scale-[1.02] active:scale-[0.98]">
                           <div class="flex flex-col items-center space-y-4">
                             <div
-                              class="p-4 bg-white/15 dark:bg-zinc-800/20 backdrop-blur-xl rounded-full group-hover:scale-110 transition-transform duration-200 border border-white/20 dark:border-zinc-700/20">
+                              class="p-4 bg-white/15 dark:bg-zinc-800/20 backdrop-blur-xl rounded-full group-hover:scale-110 transition-transform duration-200 ease-in-out border border-white/20 dark:border-zinc-700/20">
                               <Icon
                                 src={ArrowUpTray}
                                 class="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
@@ -824,9 +861,11 @@
                 <!-- Status Messages -->
                 {#if qrProcessing}
                   <div
-                    class="flex items-center justify-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
+                    class="flex items-center justify-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800 status-message-animate"
+                    transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div
-                      class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin">
+                      class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
+                      style="animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                     </div>
                     <span class="text-blue-700 dark:text-blue-300 font-medium"
                       ><T key="login.processing_qr" fallback="Processing QR code..." /></span>
@@ -835,7 +874,8 @@
 
                 {#if qrSuccess}
                   <div
-                    class="p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-200 dark:border-green-800">
+                    class="p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-200 dark:border-green-800 status-message-animate"
+                    transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div class="flex items-center space-x-3">
                       <div
                         class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
@@ -856,7 +896,8 @@
 
                 {#if qrError}
                   <div
-                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800">
+                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800 status-message-animate"
+                    transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div class="flex items-center space-x-3">
                       <div class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
                         <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -945,12 +986,21 @@
                     // Show instructions overlay for manual auth
                     if (loginMethod === 'url') {
                       showManualAuthInstructions = true;
-                      
-                      // Check for session completion to hide overlay
+
+                      // Check for session completion or window closure to hide overlay
                       const checkSessionInterval = setInterval(async () => {
                         try {
                           const sessionExists = await authService.checkSession();
                           if (sessionExists) {
+                            showManualAuthInstructions = false;
+                            clearInterval(checkSessionInterval);
+                            return;
+                          }
+
+                          // Check if login window still exists
+                          const hasWindows = await invoke<boolean>('has_login_windows');
+                          if (!hasWindows) {
+                            // Window was closed, hide overlay
                             showManualAuthInstructions = false;
                             clearInterval(checkSessionInterval);
                           }
@@ -958,14 +1008,17 @@
                           // Ignore errors
                         }
                       }, 1000);
-                      
+
                       // Clean up after 5 minutes
-                      setTimeout(() => {
-                        clearInterval(checkSessionInterval);
-                        if (showManualAuthInstructions) {
-                          showManualAuthInstructions = false;
-                        }
-                      }, 5 * 60 * 1000);
+                      setTimeout(
+                        () => {
+                          clearInterval(checkSessionInterval);
+                          if (showManualAuthInstructions) {
+                            showManualAuthInstructions = false;
+                          }
+                        },
+                        5 * 60 * 1000,
+                      );
                     }
                     onStartLogin();
                   }}
@@ -1012,30 +1065,34 @@
                   </p>
                 </div>
                 <div class="flex flex-col gap-2 overflow-y-auto overflow-x-hidden flex-1 pr-1">
-                  {#each profiles as profile (profile.id)}
-                    <button
-                      type="button"
-                      class="flex gap-3 items-center px-4 py-3 text-left rounded-xl transition-all duration-200 bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 hover:bg-white/20 dark:hover:bg-zinc-800/20 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 group hover:scale-[1.01]"
-                      onclick={() => selectProfile(profile)}>
-                      <div
-                        class="flex justify-center items-center w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900/50 transition-colors shrink-0">
+                  {#key profilesKey}
+                    {#each profiles as profile, i (profile.id)}
+                      <button
+                        type="button"
+                        class="flex gap-3 items-center px-4 py-3 text-left rounded-xl transition-all duration-200 ease-in-out transform bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 hover:bg-white/20 dark:hover:bg-zinc-800/20 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 hover:scale-[1.01] active:scale-[0.99] group"
+                        class:profile-card-animate={profilesReadyToAnimate}
+                        style="animation-delay: {profilesReadyToAnimate ? i * 50 : 0}ms;"
+                        onclick={() => selectProfile(profile)}>
+                        <div
+                          class="flex justify-center items-center w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900/50 transition-colors shrink-0">
+                          <Icon
+                            src={UserCircle}
+                            class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <div class="font-medium text-zinc-900 dark:text-white truncate text-sm">
+                            {formatProfileName(profile)}
+                          </div>
+                          <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate mt-0.5">
+                            {profile.base_url}
+                          </div>
+                        </div>
                         <Icon
-                          src={UserCircle}
-                          class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="font-medium text-zinc-900 dark:text-white truncate text-sm">
-                          {formatProfileName(profile)}
-                        </div>
-                        <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate mt-0.5">
-                          {profile.base_url}
-                        </div>
-                      </div>
-                      <Icon
-                        src={ArrowRight}
-                        class="w-5 h-5 text-zinc-400 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
-                    </button>
-                  {/each}
+                          src={ArrowRight}
+                          class="w-5 h-5 text-zinc-400 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
+                      </button>
+                    {/each}
+                  {/key}
                 </div>
               </div>
             {/if}
@@ -1055,7 +1112,7 @@
             <T key="login.live_scanner" fallback="Live QR Scanner" />
           </h2>
           <button
-            class="p-2 rounded-full bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xs hover:bg-white/30 dark:hover:bg-zinc-800/40 transition-all duration-200 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 border border-white/30 dark:border-zinc-700/30"
+            class="p-2 rounded-full bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xs hover:bg-white/30 dark:hover:bg-zinc-800/40 transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 border border-white/30 dark:border-zinc-700/30"
             onclick={stopLiveScan}
             aria-label="Close live scan modal">
             <Icon src={XMark} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
@@ -1090,14 +1147,14 @@
   {#if showPreviewModal && selectedPreview}
     <div
       class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xl bg-black/70"
-      transition:fade={{ duration: 300 }}>
+      transition:fade={{ duration: 300, easing: cubicInOut }}>
       <div
         class="relative w-full max-w-4xl mx-8"
-        transition:fly={{ y: 50, duration: 500 }}
+        transition:fly={{ y: 50, duration: 500, easing: cubicInOut }}
         style="transform-origin: center;">
         <!-- Close Button -->
         <button
-          class="absolute -top-12 right-0 p-3 rounded-full bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl hover:bg-white/30 dark:hover:bg-zinc-800/40 transition-all duration-200 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-white/50 focus:ring-offset-2 border border-white/30 dark:border-zinc-700/30 z-10"
+          class="absolute -top-12 right-0 p-3 rounded-full bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl hover:bg-white/30 dark:hover:bg-zinc-800/40 transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-white/50 focus:ring-offset-2 border border-white/30 dark:border-zinc-700/30 z-10"
           onclick={closePreviewModal}
           aria-label="Close preview modal">
           <Icon src={XMark} class="w-6 h-6 text-white" />
@@ -1143,13 +1200,7 @@
               <div
                 class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
                 <div class="space-y-4">
-                  {#each [
-                    { icon: 'indigo-400', label: $_('navigation.dashboard'), desc: $_('login.feature_dashboard_desc', { default: 'Main overview' }) },
-                    { icon: 'purple-400', label: $_('navigation.assessments'), desc: $_('login.feature_assessments_desc', { default: 'View assignments' }) },
-                    { icon: 'pink-400', label: $_('navigation.timetable'), desc: $_('login.feature_timetable_desc', { default: 'Class schedule' }) },
-                    { icon: 'blue-400', label: $_('navigation.analytics'), desc: $_('login.feature_analytics_desc', { default: 'Performance data' }) },
-                    { icon: 'green-400', label: $_('navigation.settings'), desc: $_('login.feature_settings_desc', { default: 'App preferences' }) }
-                  ] as item}
+                  {#each [{ icon: 'indigo-400', label: $_('navigation.dashboard'), desc: $_( 'login.feature_dashboard_desc', { default: 'Main overview' }, ) }, { icon: 'purple-400', label: $_('navigation.assessments'), desc: $_( 'login.feature_assessments_desc', { default: 'View assignments' }, ) }, { icon: 'pink-400', label: $_('navigation.timetable'), desc: $_( 'login.feature_timetable_desc', { default: 'Class schedule' }, ) }, { icon: 'blue-400', label: $_('navigation.analytics'), desc: $_( 'login.feature_analytics_desc', { default: 'Performance data' }, ) }, { icon: 'green-400', label: $_('navigation.settings'), desc: $_( 'login.feature_settings_desc', { default: 'App preferences' }, ) }] as item}
                     <div class="flex items-center space-x-4">
                       <div class="w-8 h-8 bg-{item.icon} rounded-sm"></div>
                       <div class="flex-1">
@@ -1315,13 +1366,27 @@
   <!-- Manual Auth Instructions Overlay -->
   {#if showManualAuthInstructions}
     <div
-      class="fixed inset-0 z-[9999] flex items-center justify-end backdrop-blur-sm bg-black/80 pr-8"
-      transition:fade={{ duration: 200 }}>
+      class="fixed inset-0 z-9999 flex items-center justify-end backdrop-blur-sm bg-black/80 pr-8"
+      transition:fade={{ duration: 200, easing: cubicInOut }}
+      onclick={(e) => {
+        // Close overlay when clicking backdrop
+        if (e.target === e.currentTarget) {
+          showManualAuthInstructions = false;
+        }
+      }}>
       <div
         class="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-zinc-700/40 p-8 max-w-2xl"
-        transition:scale={{ duration: 200 }}>
+        transition:scale={{ duration: 200, easing: cubicInOut }}
+        onclick={(e) => e.stopPropagation()}>
+        <!-- Close Button -->
+        <button
+          class="absolute top-6 right-6 p-2 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+          onclick={() => (showManualAuthInstructions = false)}
+          aria-label="Close instructions">
+          <Icon src={XMark} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+        </button>
         <div class="space-y-6">
-          <div class="text-center space-y-2">
+          <div class="text-center space-y-2 pr-10">
             <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">
               <T key="login.manual_auth_title" fallback="Manual Authentication" />
             </h2>
@@ -1332,7 +1397,8 @@
             </p>
           </div>
 
-          <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-6">
+          <div
+            class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-6">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
@@ -1351,7 +1417,8 @@
             </div>
           </div>
 
-          <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-6">
+          <div
+            class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-6">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
@@ -1359,7 +1426,9 @@
               </div>
               <div class="flex-1">
                 <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
-                  <T key="login.wait_for_close" fallback="Wait for the window to close automatically" />
+                  <T
+                    key="login.wait_for_close"
+                    fallback="Wait for the window to close automatically" />
                 </h3>
                 <p class="text-zinc-600 dark:text-zinc-300">
                   <T
@@ -1370,7 +1439,8 @@
             </div>
           </div>
 
-          <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4">
+          <div
+            class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4">
             <div class="flex items-start space-x-3">
               <Icon
                 src={QuestionMarkCircle}
@@ -1572,3 +1642,29 @@
 </div>
 
 <div id="qr-reader-temp" style="display:none;"></div>
+
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .login-card-animate {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .profile-card-animate {
+    opacity: 0;
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .status-message-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+</style>

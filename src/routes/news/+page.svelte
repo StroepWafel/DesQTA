@@ -74,7 +74,9 @@
       const response = await invoke<any>('get_news_australia', { from, domains });
       return response;
     } catch (error) {
-      logger.error('news', 'fetchAustraliaNews', `Error fetching Australian news: ${error}`, { error });
+      logger.error('news', 'fetchAustraliaNews', `Error fetching Australian news: ${error}`, {
+        error,
+      });
       throw error;
     }
   };
@@ -93,7 +95,7 @@
         const date = new Date();
         const from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate() - 5}`;
         const response = await fetchAustraliaNews(from, 'abc.net.au');
-        news = (response && response.articles) ? response.articles : [];
+        news = response && response.articles ? response.articles : [];
       } else {
         let feeds: string[];
 
@@ -119,7 +121,10 @@
               urlToImage: null,
             }));
           } catch (error) {
-            logger.error('news', 'fetchNews', `Failed to fetch RSS feed: ${feedUrl}`, { feedUrl, error });
+            logger.error('news', 'fetchNews', `Failed to fetch RSS feed: ${feedUrl}`, {
+              feedUrl,
+              error,
+            });
             return [];
           }
         });
@@ -128,14 +133,17 @@
         news = articlesArray.flat().filter((article) => article.title !== 'No Title');
 
         if (news.length === 0) {
-          error = $_('news.no_articles_loaded') || 'No articles could be loaded from the selected sources.';
+          error =
+            $_('news.no_articles_loaded') ||
+            'No articles could be loaded from the selected sources.';
         }
       }
 
       // Cache the results for 30 minutes
       cache.set(cacheKey, news, 30 * 60 * 1000);
     } catch (err) {
-      error = err instanceof Error ? err.message : $_('news.failed_to_fetch') || 'Failed to fetch news';
+      error =
+        err instanceof Error ? err.message : $_('news.failed_to_fetch') || 'Failed to fetch news';
       news = [];
     } finally {
       loading = false;
@@ -166,17 +174,22 @@
   onMount(async () => {
     // Read source from URL parameter
     const sourceParam = getUrlParam('source');
-    if (sourceParam && (rssFeedsByCountry[sourceParam.toLowerCase()] || sourceParam === 'australia')) {
+    if (
+      sourceParam &&
+      (rssFeedsByCountry[sourceParam.toLowerCase()] || sourceParam === 'australia')
+    ) {
       selectedSource = sourceParam.toLowerCase();
     }
-    
+
     await fetchNews(selectedSource);
-    
+
     // Check for item parameter to scroll to specific article
     const itemParam = getUrlParam('item');
     if (itemParam && news.length > 0) {
       setTimeout(() => {
-        const article = news.find((a) => a.url === itemParam || a.title === decodeURIComponent(itemParam));
+        const article = news.find(
+          (a) => a.url === itemParam || a.title === decodeURIComponent(itemParam),
+        );
         if (article) {
           const element = document.querySelector(`a[href="${CSS.escape(article.url)}"]`);
           if (element) {
@@ -185,7 +198,7 @@
         }
       }, 500);
     }
-    
+
     clickOutsideHandler = handleClickOutside;
     document.addEventListener('click', clickOutsideHandler);
   });
@@ -252,31 +265,33 @@
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {#each news as article (article.url)}
-        <a
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="group block dark:bg-zinc-900 bg-zinc-100 border dark:border-zinc-800 border-zinc-200 rounded-xl shadow-2xl hover:scale-[1.025] hover:shadow-blue-900/30 transition-all duration-200 overflow-hidden focus:ring-2 focus:ring-blue-500"
-          transition:fade>
-          <div class="relative">
-            {#if article.urlToImage}
-              <img
-                src={article.urlToImage}
-                alt={article.title}
-                class="object-cover w-full h-48 rounded-t-xl" />
-            {/if}
-          </div>
-          <div class="p-5">
-            <h2 class="mb-2 text-lg font-semibold dark:text-white line-clamp-2">
-              {article.title}
-            </h2>
-            <p class="dark:text-zinc-300 text-zinc-700 line-clamp-3">
-              {article.description}
-            </p>
-          </div>
-        </a>
-      {/each}
+      {#key selectedSource + news.length}
+        {#each news as article, i (article.url)}
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group block dark:bg-zinc-900 bg-zinc-100 border dark:border-zinc-800 border-zinc-200 rounded-xl shadow-2xl hover:scale-[1.025] hover:shadow-blue-900/30 transition-all duration-200 overflow-hidden focus:ring-2 focus:ring-blue-500 news-card-animate"
+            style="animation-delay: {i * 50}ms;">
+            <div class="relative">
+              {#if article.urlToImage}
+                <img
+                  src={article.urlToImage}
+                  alt={article.title}
+                  class="object-cover w-full h-48 rounded-t-xl" />
+              {/if}
+            </div>
+            <div class="p-5">
+              <h2 class="mb-2 text-lg font-semibold dark:text-white line-clamp-2">
+                {article.title}
+              </h2>
+              <p class="dark:text-zinc-300 text-zinc-700 line-clamp-3">
+                {article.description}
+              </p>
+            </div>
+          </a>
+        {/each}
+      {/key}
     </div>
   {/if}
 </div>
@@ -296,5 +311,21 @@
     line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .news-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

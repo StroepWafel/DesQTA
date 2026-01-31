@@ -52,25 +52,28 @@
   async function loadPortals() {
     loading = true;
     error = null;
-    
+
     try {
       const responseText = await seqtaFetch('/seqta/student/load/portals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: {}
+        body: {},
       });
 
       const data: PortalsResponse = JSON.parse(responseText);
-      
+
       if (data.status === '200' && data.payload) {
         portals = data.payload.sort((a, b) => a.priority - b.priority);
       } else {
         error = $_('portals.failed_to_load') || 'Failed to load portals';
       }
     } catch (err) {
-      error = err instanceof Error ? err.message : $_('portals.failed_to_load') || 'Failed to load portals';
+      error =
+        err instanceof Error
+          ? err.message
+          : $_('portals.failed_to_load') || 'Failed to load portals';
       console.error('Error loading portals:', err);
     } finally {
       loading = false;
@@ -91,7 +94,7 @@
       'colour-zinc': '#6b7280',
       'colour-grey': '#6b7280',
     };
-    
+
     return colorMap[iconClass] || '#6b7280';
   }
 
@@ -207,11 +210,11 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          'Accept': 'text/html,application/json;q=0.9,*/*;q=0.8'
+          Accept: 'text/html,application/json;q=0.9,*/*;q=0.8',
         },
         body: {
-          id: portal.uuid
-        }
+          id: portal.uuid,
+        },
       });
 
       console.log('Portal response:', response);
@@ -230,7 +233,7 @@
         portalContent = {
           contents: responseText,
           is_power_portal: portal.is_power_portal,
-          inherit_styles: portal.inherit_styles
+          inherit_styles: portal.inherit_styles,
         };
         console.log('Portal HTML content loaded');
       } else {
@@ -249,17 +252,19 @@
                   console.log('Power portal content parsed');
                 } else {
                   portalContent = {
-                    contents: '<div class="text-center py-8"><p class="text-zinc-600 dark:text-zinc-400">No content available for this portal.</p></div>',
+                    contents:
+                      '<div class="text-center py-8"><p class="text-zinc-600 dark:text-zinc-400">No content available for this portal.</p></div>',
                     is_power_portal: portal.is_power_portal,
-                    inherit_styles: portal.inherit_styles
+                    inherit_styles: portal.inherit_styles,
                   };
                 }
               } catch (e) {
                 console.error('Error parsing power portal content:', e);
                 portalContent = {
-                  contents: '<div class="text-center py-8"><p class="text-zinc-600 dark:text-zinc-400">Error parsing portal content.</p></div>',
+                  contents:
+                    '<div class="text-center py-8"><p class="text-zinc-600 dark:text-zinc-400">Error parsing portal content.</p></div>',
                   is_power_portal: portal.is_power_portal,
-                  inherit_styles: portal.inherit_styles
+                  inherit_styles: portal.inherit_styles,
                 };
               }
             } else {
@@ -269,7 +274,10 @@
                 contentsHtml = payload.contents;
               } else if (payload && Array.isArray(payload.links)) {
                 contentsHtml = `<div class="space-y-2">${payload.links
-                  .map((l: any) => `<div><a class=\"text-accent-500 underline\" href=\"${l.url}\" target=\"_blank\" rel=\"noreferrer noopener\">${escapeHtml(l.label || l.url)}</a></div>`) 
+                  .map(
+                    (l: any) =>
+                      `<div><a class=\"text-accent-500 underline\" href=\"${l.url}\" target=\"_blank\" rel=\"noreferrer noopener\">${escapeHtml(l.label || l.url)}</a></div>`,
+                  )
                   .join('')}</div>`;
               } else if (typeof payload === 'string' && payload.trim().startsWith('<')) {
                 contentsHtml = payload;
@@ -280,7 +288,7 @@
               portalContent = {
                 contents: contentsHtml,
                 is_power_portal: portal.is_power_portal,
-                inherit_styles: portal.inherit_styles
+                inherit_styles: portal.inherit_styles,
               };
               console.log('Portal JSON content loaded');
             }
@@ -292,7 +300,7 @@
           portalContent = {
             contents: responseText,
             is_power_portal: portal.is_power_portal,
-            inherit_styles: portal.inherit_styles
+            inherit_styles: portal.inherit_styles,
           };
           console.log('Portal plain text content loaded');
         }
@@ -324,7 +332,10 @@
       </h1>
     </div>
     <div class="text-sm text-zinc-600 dark:text-zinc-400">
-      <T key="portals.count" fallback="portals available" values={{ count: portals.length, plural: portals.length !== 1 ? 's' : '' }} />
+      <T
+        key="portals.count"
+        fallback="portals available"
+        values={{ count: portals.length, plural: portals.length !== 1 ? 's' : '' }} />
     </div>
   </div>
 
@@ -372,7 +383,9 @@
               <T key="portals.no_portals_title" fallback="No Portals Available" />
             </h3>
             <p class="text-zinc-600 dark:text-zinc-400 max-w-md">
-              <T key="portals.no_portals_description" fallback="There are currently no portals configured for your account." />
+              <T
+                key="portals.no_portals_description"
+                fallback="There are currently no portals configured for your account." />
             </p>
           </div>
         </div>
@@ -393,40 +406,46 @@
         </div>
         <div class="p-6">
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {#each portals as portal (portal.uuid)}
-              <button
-                class="group relative p-6 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/30 backdrop-blur-xs transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 cursor-pointer"
-                onclick={() => handlePortalClick(portal)}>
-                
-                <!-- Portal Icon -->
-                <div class="flex justify-center mb-4">
-                  <div 
-                    class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md"
-                    style="background-color: {getIconColor(portal.icon)}">
-                    {portal.label.charAt(0).toUpperCase()}
+            {#key portals.length + portals.map((p) => p.uuid).join(',')}
+              {#each portals as portal, i (portal.uuid)}
+                <button
+                  class="group relative p-6 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/30 backdrop-blur-xs transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 cursor-pointer portal-card-animate"
+                  style="animation-delay: {i * 50}ms;"
+                  onclick={() => handlePortalClick(portal)}>
+                  <!-- Portal Icon -->
+                  <div class="flex justify-center mb-4">
+                    <div
+                      class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md"
+                      style="background-color: {getIconColor(portal.icon)}">
+                      {portal.label.charAt(0).toUpperCase()}
+                    </div>
                   </div>
-                </div>
-                
-                <!-- Portal Info -->
-                <div class="text-center">
-                  <h3 class="font-semibold text-zinc-900 dark:text-white mb-1 group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors">
-                    {portal.label}
-                  </h3>
-                  
-                  <!-- Portal Badges -->
-                  <div class="flex flex-wrap justify-center gap-1 mt-2">
-                    {#if portal.is_power_portal}
-                      <span class="px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full">
-                        <T key="portals.power_portal" fallback="Power Portal" />
-                      </span>
-                    {/if}
+
+                  <!-- Portal Info -->
+                  <div class="text-center">
+                    <h3
+                      class="font-semibold text-zinc-900 dark:text-white mb-1 group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors">
+                      {portal.label}
+                    </h3>
+
+                    <!-- Portal Badges -->
+                    <div class="flex flex-wrap justify-center gap-1 mt-2">
+                      {#if portal.is_power_portal}
+                        <span
+                          class="px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full">
+                          <T key="portals.power_portal" fallback="Power Portal" />
+                        </span>
+                      {/if}
+                    </div>
                   </div>
-                </div>
-                
-                <!-- Hover Effect -->
-                <div class="absolute inset-0 rounded-xl bg-linear-to-br from-accent-500/0 to-accent-600/0 group-hover:from-accent-500/5 group-hover:to-accent-600/10 transition-all duration-200 pointer-events-none"></div>
-              </button>
-            {/each}
+
+                  <!-- Hover Effect -->
+                  <div
+                    class="absolute inset-0 rounded-xl bg-linear-to-br from-accent-500/0 to-accent-600/0 group-hover:from-accent-500/5 group-hover:to-accent-600/10 transition-all duration-200 pointer-events-none">
+                  </div>
+                </button>
+              {/each}
+            {/key}
           </div>
         </div>
       </section>
@@ -435,13 +454,12 @@
 </div>
 
 <!-- Portal Content Modal -->
-<Modal 
-  bind:open={showPortalModal} 
+<Modal
+  bind:open={showPortalModal}
   title={selectedPortal?.label || 'Portal Content'}
   maxWidth="max-w-7xl"
   maxHeight="max-h-[85vh]"
-  onclose={closePortalModal}
->
+  onclose={closePortalModal}>
   {#if loadingContent}
     <div class="flex items-center justify-center py-12">
       <LoadingSpinner />
@@ -451,7 +469,8 @@
     </div>
   {:else if parsedPortalDocument?.document?.modules}
     {@const sortedModules = sortModules(parsedPortalDocument.document.modules)}
-    <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
+    <div
+      class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
       <div class="p-6">
         <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
           {#each sortedModules as module, i}
@@ -495,7 +514,8 @@
       </div>
     </div>
   {:else if portalContent}
-    <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
+    <div
+      class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
       <div class="p-4">
         {#if portalContent.contents}
           {@html sanitizeHtml(portalContent.contents)}
@@ -543,4 +563,20 @@
       opacity: 1;
     }
   }
-</style> 
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .portal-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

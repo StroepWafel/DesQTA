@@ -29,6 +29,12 @@
 
   let { assessments, subjects, activeSubjects, groupBy }: Props = $props();
 
+  // Create unique key for assessments to force re-render with animations
+  const assessmentsKey = $derived.by(() => {
+    const ids = assessments.map((a) => a.id).join(',');
+    return `${groupBy}-${assessments.length}-${ids}`;
+  });
+
   function getStatusBadge(status: string, due: string) {
     const dueDate = new Date(due);
     const now = new Date();
@@ -82,78 +88,92 @@
 </script>
 
 <div class="space-y-6">
-
   <div
     class="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-zinc-300/20 dark:scrollbar-track-zinc-800/10">
-    {#if groupBy === 'subject'}
-      {#each subjects.filter(subject => assessments.some(a => a.code === subject.code)) as subject}
-        <div class="shrink-0 w-72 sm:w-80">
+    {#key assessmentsKey}
+      {#if groupBy === 'subject'}
+        {#each subjects.filter( (subject) => assessments.some((a) => a.code === subject.code), ) as subject, columnIndex}
           <div
-            class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
-            style="border-color: {subject.colour || '#8e8e8e'};">
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
-                  {subject.title}
-                </h3>
-                <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                  {subject.code}
-                  {#if activeSubjects && activeSubjects.some((as: any) => as.code === subject.code)}
-                    <Badge variant="success" size="xs" class="ml-2">Active</Badge>
-                  {/if}
-                </p>
+            class="shrink-0 w-72 sm:w-80 board-column-animate"
+            style="animation-delay: {columnIndex * 100}ms;">
+            <div
+              class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
+              style="border-color: {subject.colour || '#8e8e8e'};">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
+                    {subject.title}
+                  </h3>
+                  <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                    {subject.code}
+                    {#if activeSubjects && activeSubjects.some((as: any) => as.code === subject.code)}
+                      <Badge variant="success" size="xs" class="ml-2">Active</Badge>
+                    {/if}
+                  </p>
+                </div>
               </div>
-
+            </div>
+            <div class="space-y-4">
+              {#each assessments.filter((a) => a.code === subject.code) as assessment, cardIndex}
+                <div class="board-card-animate" style="animation-delay: {cardIndex * 50}ms;">
+                  <AssessmentCard {assessment} />
+                </div>
+              {/each}
             </div>
           </div>
-          <div class="space-y-4">
-            {#each assessments.filter((a) => a.code === subject.code) as assessment}
-              <AssessmentCard {assessment} />
-            {/each}
-          </div>
-        </div>
-      {/each}
-    {:else if groupBy === 'month'}
-      {#each getAssessmentsByMonth() as [month, monthAssessments]}
-        <div class="shrink-0 w-72 sm:w-80">
+        {/each}
+      {:else if groupBy === 'month'}
+        {#each getAssessmentsByMonth() as [month, monthAssessments], columnIndex}
           <div
-            class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-zinc-800/50 border-zinc-700/50">
-            <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
-              {month}
-            </h3>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">
-              {monthAssessments.length} assessment{monthAssessments.length === 1 ? '' : 's'}
-            </p>
+            class="shrink-0 w-72 sm:w-80 board-column-animate"
+            style="animation-delay: {columnIndex * 100}ms;">
+            <div
+              class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-zinc-800/50 border-zinc-700/50">
+              <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
+                {month}
+              </h3>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                {monthAssessments.length} assessment{monthAssessments.length === 1 ? '' : 's'}
+              </p>
+            </div>
+            <div class="space-y-4">
+              {#each monthAssessments as assessment, cardIndex}
+                <div class="board-card-animate" style="animation-delay: {cardIndex * 50}ms;">
+                  <AssessmentCard {assessment} showSubject={true} />
+                </div>
+              {/each}
+            </div>
           </div>
-          <div class="space-y-4">
-            {#each monthAssessments as assessment}
-              <AssessmentCard {assessment} showSubject={true} />
-            {/each}
-          </div>
-        </div>
-      {/each}
-    {:else if groupBy === 'status'}
-      {#each getAssessmentsByStatus() as [status, statusAssessments]}
-        <div class="shrink-0 w-72 sm:w-80">
+        {/each}
+      {:else if groupBy === 'status'}
+        {#each getAssessmentsByStatus() as [status, statusAssessments], columnIndex}
           <div
-            class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-zinc-800/50 border-zinc-700/50"
-            style="border-color: {getStatusBadge(statusAssessments[0].status, statusAssessments[0].due)
-              .color};">
-            <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
-              {status}
-            </h3>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">
-              {statusAssessments.length} assessment{statusAssessments.length === 1 ? '' : 's'}
-            </p>
+            class="shrink-0 w-72 sm:w-80 board-column-animate"
+            style="animation-delay: {columnIndex * 100}ms;">
+            <div
+              class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-zinc-800/50 border-zinc-700/50"
+              style="border-color: {getStatusBadge(
+                statusAssessments[0].status,
+                statusAssessments[0].due,
+              ).color};">
+              <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
+                {status}
+              </h3>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                {statusAssessments.length} assessment{statusAssessments.length === 1 ? '' : 's'}
+              </p>
+            </div>
+            <div class="space-y-4">
+              {#each statusAssessments as assessment, cardIndex}
+                <div class="board-card-animate" style="animation-delay: {cardIndex * 50}ms;">
+                  <AssessmentCard {assessment} showSubject={true} />
+                </div>
+              {/each}
+            </div>
           </div>
-          <div class="space-y-4">
-            {#each statusAssessments as assessment}
-              <AssessmentCard {assessment} showSubject={true} />
-            {/each}
-          </div>
-        </div>
-      {/each}
-    {/if}
+        {/each}
+      {/if}
+    {/key}
   </div>
 </div>
 
@@ -175,4 +195,25 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: rgba(99, 102, 241, 0.5);
   }
-</style> 
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .board-column-animate {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  .board-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

@@ -34,7 +34,7 @@
 
 <!-- Parent container that controls width animation -->
 <aside
-  class="transition-all duration-300 ease-in-out overflow-hidden sm:relative"
+  class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative"
   class:fixed={sidebarOpen}
   class:top-0={sidebarOpen}
   class:left-0={sidebarOpen}
@@ -50,17 +50,16 @@
   class:sm:pointer-events-auto={sidebarOpen}
   class:sm:w-64={sidebarOpen}
   class:sm:w-0={!sidebarOpen}
-  class:sm:z-auto={sidebarOpen}
->
+  class:sm:z-auto={sidebarOpen}>
   <!-- Nav with fixed width and absolute positioning -->
-  <nav class="absolute top-0 right-0 w-full sm:w-64 h-full overflow-y-auto p-3 py-px space-y-2 transition-transform duration-300 ease-in-out bg-transparent">
+  <nav
+    class="absolute top-0 right-0 w-full sm:w-64 h-full overflow-y-auto p-3 py-px space-y-2 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
     <!-- Mobile Close Button -->
     <div class="flex justify-end sm:hidden mb-4">
       <button
         onclick={handleCloseSidebar}
-        class="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
-        aria-label={$_('navigation.close_sidebar', { default: 'Close sidebar' })}
-      >
+        class="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        aria-label={$_('navigation.close_sidebar', { default: 'Close sidebar' })}>
         <Icon src={XMark} class="w-5 h-5" />
       </button>
     </div>
@@ -77,10 +76,8 @@
       <a
         href={item.path}
         onclick={handleMenuItemClick}
-        class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-150 ease-out focus:outline-hidden {(
-          item.path === '/'
-            ? $page.url.pathname === '/'
-            : $page.url.pathname.startsWith(item.path)
+        class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden {(
+          item.path === '/' ? $page.url.pathname === '/' : $page.url.pathname.startsWith(item.path)
         )
           ? 'bg-accent text-white'
           : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white'} playful">

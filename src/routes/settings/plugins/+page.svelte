@@ -78,12 +78,16 @@
       );
       await notify({
         title: $_('plugins.installed_title', { default: 'Plugin Installed' }),
-        body: $_('plugins.installed_body', { default: 'The plugin has been successfully installed.' }),
+        body: $_('plugins.installed_body', {
+          default: 'The plugin has been successfully installed.',
+        }),
       });
     } catch (e) {
       await notify({
         title: $_('plugins.install_failed_title', { default: 'Installation Failed' }),
-        body: $_('plugins.install_failed_body', { default: 'Failed to install the plugin. Please try again.' }),
+        body: $_('plugins.install_failed_body', {
+          default: 'Failed to install the plugin. Please try again.',
+        }),
       });
     }
   }
@@ -96,12 +100,16 @@
       );
       await notify({
         title: $_('plugins.uninstalled_title', { default: 'Plugin Uninstalled' }),
-        body: $_('plugins.uninstalled_body', { default: 'The plugin has been successfully uninstalled.' }),
+        body: $_('plugins.uninstalled_body', {
+          default: 'The plugin has been successfully uninstalled.',
+        }),
       });
     } catch (e) {
       await notify({
         title: $_('plugins.uninstall_failed_title', { default: 'Uninstallation Failed' }),
-        body: $_('plugins.uninstall_failed_body', { default: 'Failed to uninstall the plugin. Please try again.' }),
+        body: $_('plugins.uninstall_failed_body', {
+          default: 'Failed to uninstall the plugin. Please try again.',
+        }),
       });
     }
   }
@@ -128,7 +136,9 @@
           <T key="settings.plugin_store_coming_soon" fallback="Plugin Store Coming Soon" />
         </h3>
         <p class="text-sm text-yellow-300">
-          <T key="settings.plugin_store_development" fallback="The plugin store is currently in development. Installation and management features are not yet functional." />
+          <T
+            key="settings.plugin_store_development"
+            fallback="The plugin store is currently in development. Installation and management features are not yet functional." />
         </p>
       </div>
     </div>
@@ -136,18 +146,18 @@
 
   <div class="flex justify-between items-center mb-8 animate-fade-in-up">
     <div class="flex items-center gap-4">
-      <a 
-        href="/settings" 
-        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
-      >
+      <a
+        href="/settings"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"
+          ></path>
         </svg>
         <T key="settings.back_to_settings" fallback="Back to Settings" />
       </a>
-    <h1 class="text-2xl font-bold">
-      <T key="settings.plugin_store" fallback="Plugin Store" />
-    </h1>
+      <h1 class="text-2xl font-bold">
+        <T key="settings.plugin_store" fallback="Plugin Store" />
+      </h1>
     </div>
   </div>
 
@@ -159,49 +169,52 @@
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-      {#each plugins as plugin}
-        <button
-          type="button"
-          class="overflow-hidden bg-white rounded-2xl border shadow-xl transition-all duration-300 cursor-pointer dark:bg-zinc-900 border-zinc-300 dark:border-zinc-800 hover:shadow-2xl hover:border-blue-700 animate-fade-in-up w-full text-left focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
-          on:click={() => openPluginDetails(plugin)}>
-          <div class="overflow-hidden relative h-32">
-            <img
-              src={plugin.banner.dark}
-              alt={`${plugin.name} banner`}
-              class="object-cover w-full h-full" />
-            <div class="absolute inset-0 bg-linear-to-t to-transparent from-zinc-900"></div>
-          </div>
-          <div class="p-6">
-            <div class="flex gap-4 items-start">
-              <div class="text-4xl">{plugin.icon}</div>
-              <div class="flex-1">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
-                  {plugin.name}
-                </h3>
-                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  {plugin.description}
-                </p>
-                <div
-                  class="flex gap-2 items-center mt-2 text-sm text-zinc-500 dark:text-zinc-500">
-                  <span>v{plugin.version}</span>
-                  <span>•</span>
-                  <span>by {plugin.author}</span>
-                  <span>•</span>
-                  <span>⭐ {plugin.rating}</span>
-                </div>
-                <div class="flex flex-wrap gap-2 mt-2">
-                  {#each plugin.tags as tag}
-                    <span
-                      class="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-200">
-                      {tag}
-                    </span>
-                  {/each}
+      {#key plugins.length + plugins.map((p) => p.id).join(',')}
+        {#each plugins as plugin, i}
+          <button
+            type="button"
+            class="overflow-hidden bg-white rounded-2xl border shadow-xl transition-all duration-300 cursor-pointer dark:bg-zinc-900 border-zinc-300 dark:border-zinc-800 hover:shadow-2xl hover:border-blue-700 plugin-card-animate w-full text-left focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            style="animation-delay: {i * 50}ms;"
+            on:click={() => openPluginDetails(plugin)}>
+            <div class="overflow-hidden relative h-32">
+              <img
+                src={plugin.banner.dark}
+                alt={`${plugin.name} banner`}
+                class="object-cover w-full h-full" />
+              <div class="absolute inset-0 bg-linear-to-t to-transparent from-zinc-900"></div>
+            </div>
+            <div class="p-6">
+              <div class="flex gap-4 items-start">
+                <div class="text-4xl">{plugin.icon}</div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                    {plugin.name}
+                  </h3>
+                  <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    {plugin.description}
+                  </p>
+                  <div
+                    class="flex gap-2 items-center mt-2 text-sm text-zinc-500 dark:text-zinc-500">
+                    <span>v{plugin.version}</span>
+                    <span>•</span>
+                    <span>by {plugin.author}</span>
+                    <span>•</span>
+                    <span>⭐ {plugin.rating}</span>
+                  </div>
+                  <div class="flex flex-wrap gap-2 mt-2">
+                    {#each plugin.tags as tag}
+                      <span
+                        class="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-200">
+                        {tag}
+                      </span>
+                    {/each}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </button>
-      {/each}
+          </button>
+        {/each}
+      {/key}
     </div>
   {/if}
 </div>
@@ -400,5 +413,21 @@
     to {
       opacity: 1;
     }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .plugin-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

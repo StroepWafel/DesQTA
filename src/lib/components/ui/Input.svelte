@@ -63,50 +63,55 @@
     onkeydown,
     onfocus,
     onblur,
-    rightAction
+    rightAction,
   }: Props = $props();
 
   const sizes = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2 text-sm',
-    lg: 'px-4 py-3 text-base'
+    lg: 'px-4 py-3 text-base',
   };
 
   const iconSizes = {
     sm: '16',
     md: '18',
-    lg: '20'
+    lg: '20',
   };
 
   let hasError = $derived(!!error);
   let hasLeftIcon = $derived(!!leftIcon);
   let hasRightIcon = $derived(!!rightIcon || !!rightAction);
 
-  let containerClasses = $derived([
-    fullWidth ? 'w-full' : '',
-    className
-  ].filter(Boolean).join(' '));
+  let containerClasses = $derived([fullWidth ? 'w-full' : '', className].filter(Boolean).join(' '));
 
-  let inputClasses = $derived([
-    'w-full border rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-1',
-    hasError 
-      ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-      : 'border-zinc-300 dark:border-zinc-600 focus:border-accent-500 focus:ring-accent-500',
-    'bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100',
-    'placeholder-zinc-400 dark:placeholder-zinc-500',
-    disabled ? 'opacity-50 cursor-not-allowed' : '',
-    readonly ? 'bg-zinc-50 dark:bg-zinc-700' : '',
-    hasLeftIcon ? 'pl-10' : '',
-    hasRightIcon ? 'pr-10' : '',
-    sizes[size],
-    inputClass
-  ].filter(Boolean).join(' '));
+  let inputClasses = $derived(
+    [
+      'w-full border rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-1',
+      hasError
+        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+        : 'border-zinc-300 dark:border-zinc-600 focus:border-accent-500 focus:ring-accent-500',
+      'bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100',
+      'placeholder-zinc-400 dark:placeholder-zinc-500',
+      disabled ? 'opacity-50 cursor-not-allowed' : '',
+      readonly ? 'bg-zinc-50 dark:bg-zinc-700' : '',
+      hasLeftIcon ? 'pl-10' : '',
+      hasRightIcon ? 'pr-10' : '',
+      sizes[size],
+      inputClass,
+    ]
+      .filter(Boolean)
+      .join(' '),
+  );
 
-  let labelClasses = $derived([
-    'block text-sm font-medium mb-1',
-    hasError ? 'text-red-700 dark:text-red-400' : 'text-zinc-700 dark:text-zinc-300',
-    required ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ''
-  ].filter(Boolean).join(' '));
+  let labelClasses = $derived(
+    [
+      'block text-sm font-medium mb-1',
+      hasError ? 'text-red-700 dark:text-red-400' : 'text-zinc-700 dark:text-zinc-300',
+      required ? "after:content-['*'] after:ml-0.5 after:text-red-500" : '',
+    ]
+      .filter(Boolean)
+      .join(' '),
+  );
 </script>
 
 <div class={containerClasses}>
@@ -115,18 +120,14 @@
       {label}
     </label>
   {/if}
-  
+
   <div class="relative">
     {#if hasLeftIcon}
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Icon 
-          src={leftIcon} 
-          size={iconSizes[size]} 
-          class="text-zinc-400 dark:text-zinc-500" 
-        />
+        <Icon src={leftIcon} size={iconSizes[size]} class="text-zinc-400 dark:text-zinc-500" />
       </div>
     {/if}
-    
+
     <input
       {type}
       {id}
@@ -143,28 +144,23 @@
       {pattern}
       bind:value
       class={inputClasses}
-      onchange={onchange}
-      oninput={oninput}
-      onkeydown={onkeydown}
-      onfocus={onfocus}
-      onblur={onblur}
-    />
-    
+      {onchange}
+      {oninput}
+      {onkeydown}
+      {onfocus}
+      {onblur} />
+
     {#if hasRightIcon || rightAction}
       <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
         {#if rightAction}
           {@render rightAction()}
         {:else if rightIcon}
-          <Icon 
-            src={rightIcon} 
-            size={iconSizes[size]} 
-            class="text-zinc-400 dark:text-zinc-500" 
-          />
+          <Icon src={rightIcon} size={iconSizes[size]} class="text-zinc-400 dark:text-zinc-500" />
         {/if}
       </div>
     {/if}
   </div>
-  
+
   {#if error}
     <p class="mt-1 text-sm text-red-600 dark:text-red-400">
       {error}

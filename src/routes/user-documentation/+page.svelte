@@ -380,44 +380,46 @@
       </Card>
     {:else}
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {#each filteredFAQs as item, index (item.question)}
-          {@const categoryIcon = getCategoryIcon(item.category)}
-          <div in:fly={{ y: 20, duration: 300, delay: index * 0.03 }}>
-            <Card
-              variant="elevated"
-              padding="lg"
-              interactive={true}
-              onclick={() => openFAQ(item)}
-              class="h-full flex flex-col transition-all duration-200 hover:shadow-xl hover:scale-[1.02] cursor-pointer">
-              <!-- Icon and Category -->
-              <div class="flex gap-3 items-start mb-3">
-                <div
-                  class="flex justify-center items-center shrink-0 w-12 h-12 rounded-xl bg-accent-100 dark:bg-accent-900/30">
-                  <Icon src={categoryIcon} class="w-6 h-6 text-accent-600 dark:text-accent-400" />
+        {#key filteredFAQs.length + filteredFAQs.map((f) => f.question).join(',')}
+          {#each filteredFAQs as item, index (item.question)}
+            {@const categoryIcon = getCategoryIcon(item.category)}
+            <div class="faq-card-animate" style="animation-delay: {index * 50}ms;">
+              <Card
+                variant="elevated"
+                padding="lg"
+                interactive={true}
+                onclick={() => openFAQ(item)}
+                class="h-full flex flex-col transition-all duration-200 hover:shadow-xl hover:scale-[1.02] cursor-pointer">
+                <!-- Icon and Category -->
+                <div class="flex gap-3 items-start mb-3">
+                  <div
+                    class="flex justify-center items-center shrink-0 w-12 h-12 rounded-xl bg-accent-100 dark:bg-accent-900/30">
+                    <Icon src={categoryIcon} class="w-6 h-6 text-accent-600 dark:text-accent-400" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span
+                      class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                      {item.category}
+                    </span>
+                  </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <span
-                    class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                    {item.category}
-                  </span>
-                </div>
-              </div>
 
-              <!-- Question -->
-              <h3 class="mb-3 text-base font-semibold text-zinc-900 dark:text-white line-clamp-2">
-                {item.question}
-              </h3>
+                <!-- Question -->
+                <h3 class="mb-3 text-base font-semibold text-zinc-900 dark:text-white line-clamp-2">
+                  {item.question}
+                </h3>
 
-              <!-- Click to view hint -->
-              <div class="mt-auto pt-2">
-                <div class="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-500">
-                  <span>Click to view answer</span>
-                  <Icon src={ChevronDown} class="w-4 h-4" />
+                <!-- Click to view hint -->
+                <div class="mt-auto pt-2">
+                  <div class="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-500">
+                    <span>Click to view answer</span>
+                    <Icon src={ChevronDown} class="w-4 h-4" />
+                  </div>
                 </div>
-              </div>
-            </Card>
-          </div>
-        {/each}
+              </Card>
+            </div>
+          {/each}
+        {/key}
       </div>
     {/if}
   </div>
@@ -502,5 +504,21 @@
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .faq-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

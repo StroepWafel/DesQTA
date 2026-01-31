@@ -233,6 +233,12 @@
   const filteredNotices = $derived(
     notices.filter((n) => !selectedLabel || n.labelId === selectedLabel),
   );
+
+  // Create unique key for notices to force re-render with animations
+  const noticesKey = $derived.by(() => {
+    const ids = filteredNotices.map((n) => n.id).join(',');
+    return `${selectedDate.getTime()}-${selectedLabel}-${filteredNotices.length}-${ids}`;
+  });
 </script>
 
 <div class="p-6">
@@ -308,26 +314,46 @@
   {:else}
     <!-- Use regular grid -->
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {#each filteredNotices as notice}
-        <div
-          data-notice-id={notice.id}
-          class="rounded-xl shadow-lg bg-white/10 text-(--text) border-t-8 flex flex-col h-96"
-          style={`border-top-color: ${getLabelColor(notice.labelId)}; border-top-width: 8px;`}>
-          <div class="flex overflow-y-auto flex-col flex-1 p-5">
-            <h2 class="mb-1 text-2xl font-bold">{notice.title}</h2>
-            <div
-              class="mb-1 text-sm font-semibold"
-              style={`color: ${getLabelColor(notice.labelId)}`}
-              class:text-white={isColorDark(getLabelColor(notice.labelId))}>
-              {getLabelTitle(notice.labelId)}
+      {#key noticesKey}
+        {#each filteredNotices as notice, i}
+          <div
+            data-notice-id={notice.id}
+            class="rounded-xl shadow-lg bg-white/10 text-(--text) border-t-8 flex flex-col h-96 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-xl notice-card-animate"
+            style={`border-top-color: ${getLabelColor(notice.labelId)}; border-top-width: 8px; animation-delay: ${i * 50}ms;`}>
+            <div class="flex overflow-y-auto flex-col flex-1 p-5">
+              <h2 class="mb-1 text-2xl font-bold">{notice.title}</h2>
+              <div
+                class="mb-1 text-sm font-semibold"
+                style={`color: ${getLabelColor(notice.labelId)}`}
+                class:text-white={isColorDark(getLabelColor(notice.labelId))}>
+                {getLabelTitle(notice.labelId)}
+              </div>
+              <div class="text-xs text-(--text-muted) mb-2 uppercase tracking-wide">
+                {notice.author}
+              </div>
+              <div class="flex-1 text-base">{@html sanitizeHtml(notice.content)}</div>
             </div>
-            <div class="text-xs text-(--text-muted) mb-2 uppercase tracking-wide">
-              {notice.author}
-            </div>
-            <div class="flex-1 text-base">{@html sanitizeHtml(notice.content)}</div>
           </div>
-        </div>
-      {/each}
+        {/each}
+      {/key}
     </div>
   {/if}
 </div>
+
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .notice-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

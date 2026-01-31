@@ -1,6 +1,7 @@
 <script lang="ts">
   // Svelte imports
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
   import { page } from '$app/stores';
 
   // Tauri imports
@@ -143,7 +144,10 @@
         if (isRSSMessage) {
           return { content: msg.body, files: [] }; // RSS body is already loaded
         }
-        const result = await invoke<{ content: string; files?: MessageFile[] }>('fetch_message_content', { id: msg.id });
+        const result = await invoke<{ content: string; files?: MessageFile[] }>(
+          'fetch_message_content',
+          { id: msg.id },
+        );
         return result;
       },
       onDataLoaded: (data) => {
@@ -299,7 +303,7 @@
         onclose={() => (selectedMessage = null)}
         maxWidth="w-full"
         maxHeight="h-full"
-        className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xs rounded-none"
+        className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-none transition-all duration-300"
         showCloseButton={false}
         closeOnBackdrop={false}
         ariaLabel="Message Detail">
@@ -330,7 +334,7 @@
             <!-- Spacer for alignment -->
           </div>
 
-          <div class="overflow-y-auto flex-1">
+          <div class="overflow-y-auto flex-1" in:fade={{ duration: 300 }}>
             <MessageDetail
               {selectedMessage}
               {selectedFolder}
@@ -351,38 +355,3 @@
 </div>
 
 <ComposeModal {showComposeModal} {composeSubject} {composeBody} {closeModal} />
-
-<style>
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slide-in {
-    from {
-      transform: translateX(20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  @keyframes scale-in {
-    from {
-      transform: scale(0.95);
-      opacity: 0;
-    }
-    to {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-</style>

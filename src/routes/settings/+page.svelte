@@ -112,7 +112,7 @@
   let showUnsavedChangesModal = false;
   let pendingNavigationUrl: string | null = null;
   let resettingOnboarding = false;
-  
+
   // Store initial settings state for comparison
   let initialSettings: {
     shortcuts: Shortcut[];
@@ -282,7 +282,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
       separateRssFeed = settings.separate_rss_feed ?? false;
-      
+
       // Store initial state for comparison
       initialSettings = {
         shortcuts: JSON.parse(JSON.stringify(shortcuts)),
@@ -421,10 +421,10 @@ The Company reserves the right to terminate your access to the Service at any ti
       }
 
       saveSuccess = true;
-      
+
       // Show success toast
       toastStore.success('Settings saved successfully');
-      
+
       // Update initial settings after successful save
       if (initialSettings) {
         initialSettings.shortcuts = JSON.parse(JSON.stringify(shortcuts));
@@ -449,7 +449,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.devForceOfflineMode = devForceOfflineMode;
         initialSettings.acceptedCloudEula = acceptedCloudEula;
       }
-      
+
       if (!options.skipReload) {
         setTimeout(() => location.reload(), 1500);
       }
@@ -565,7 +565,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
     // Reload settings
     await loadSettings();
-    
+
     // Reset initial settings after download to match current state
     if (initialSettings) {
       initialSettings.shortcuts = JSON.parse(JSON.stringify(shortcuts));
@@ -606,11 +606,12 @@ The Company reserves the right to terminate your access to the Service at any ti
   // Check if there are unsaved changes
   function hasUnsavedChanges(): boolean {
     if (!initialSettings) return false;
-    
+
     // Deep compare arrays
-    const shortcutsChanged = JSON.stringify(shortcuts) !== JSON.stringify(initialSettings.shortcuts);
+    const shortcutsChanged =
+      JSON.stringify(shortcuts) !== JSON.stringify(initialSettings.shortcuts);
     const feedsChanged = JSON.stringify(feeds) !== JSON.stringify(initialSettings.feeds);
-    
+
     return (
       shortcutsChanged ||
       feedsChanged ||
@@ -635,38 +636,38 @@ The Company reserves the right to terminate your access to the Service at any ti
       acceptedCloudEula !== initialSettings.acceptedCloudEula
     );
   }
-  
+
   // Handle navigation with unsaved changes check
   beforeNavigate(({ to, cancel }) => {
     // Don't block navigation if we're already on the settings page or if there are no unsaved changes
     if (!to || to.url.pathname === '/settings' || !hasUnsavedChanges()) {
       return;
     }
-    
+
     // Cancel the navigation
     cancel();
-    
+
     // Store the URL to navigate to later if user confirms
     pendingNavigationUrl = to.url.pathname + (to.url.search || '');
-    
+
     // Show the confirmation modal
     showUnsavedChangesModal = true;
   });
-  
+
   async function handleSaveAndLeave() {
     showUnsavedChangesModal = false;
     const urlToNavigate = pendingNavigationUrl;
     pendingNavigationUrl = null;
-    
+
     // Save settings first (with reload enabled like normal save)
     await saveSettings();
-    
+
     // Navigate to the new page (reload will happen after 1500ms on the new page)
     if (urlToNavigate) {
       goto(urlToNavigate);
     }
   }
-  
+
   function handleCancelLeave() {
     showUnsavedChangesModal = false;
     pendingNavigationUrl = null;
@@ -676,7 +677,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     // Check if running on desktop (updater only works on desktop)
     const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
     isDesktop = tauriPlatform !== 'ios' && tauriPlatform !== 'android';
-    
+
     await Promise.all([loadSettings(), loadCloudUser(), loadProfilePicture()]);
     window.addEventListener('keydown', handleKeydown);
   });
@@ -706,12 +707,12 @@ The Company reserves the right to terminate your access to the Service at any ti
 
     try {
       const update = await check();
-      
+
       if (update?.available) {
         updateAvailable = true;
         updateVersion = update.version;
         updateNotes = update.body || 'Bug fixes and improvements';
-        
+
         toastStore.info(`Update available: Version ${update.version}`);
         notify({
           title: 'Update Available',
@@ -946,12 +947,13 @@ The Company reserves the right to terminate your access to the Service at any ti
     try {
       await saveSettingsWithQueue({ has_been_through_onboarding: false });
       await flushSettingsQueue();
-      
+
       // Dispatch event to trigger onboarding in layout
       window.dispatchEvent(new CustomEvent('redo-onboarding'));
-      
+
       toastStore.add({
-        message: 'Onboarding walkthrough will start when you navigate away and back, or refresh the page.',
+        message:
+          'Onboarding walkthrough will start when you navigate away and back, or refresh the page.',
         type: 'success',
         duration: 5000,
       });
@@ -1383,55 +1385,58 @@ The Company reserves the right to terminate your access to the Service at any ti
                 fallback="Add shortcuts to frequently used features that will appear as quick action buttons on your dashboard." />
             </p>
             <div class="space-y-3 sm:space-y-4">
-              {#each shortcuts as shortcut, idx}
-                <div
-                  class="flex flex-col gap-2 items-start p-3 rounded-lg transition-all duration-200 sm:flex-row sm:items-center bg-zinc-100/80 dark:bg-zinc-800/50 hover:shadow-lg hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 animate-fade-in">
-                  <div class="flex flex-col gap-1 w-full sm:w-32">
-                    <label
-                      for="shortcut-name-{idx}"
-                      class="text-xs text-zinc-600 dark:text-zinc-400">
-                      <T key="common.name" fallback="Name" />
-                    </label>
-                    <input
-                      id="shortcut-name-{idx}"
-                      class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
-                      placeholder={$_('settings.shortcut_name_placeholder') || 'Dashboard'}
-                      bind:value={shortcut.name} />
+              {#key shortcuts.length + shortcuts.map((s) => s.name + s.url).join(',')}
+                {#each shortcuts as shortcut, idx}
+                  <div
+                    class="flex flex-col gap-2 items-start p-3 rounded-lg transition-all duration-200 sm:flex-row sm:items-center bg-zinc-100/80 dark:bg-zinc-800/50 hover:shadow-lg hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 shortcut-item-animate"
+                    style="animation-delay: {idx * 50}ms;">
+                    <div class="flex flex-col gap-1 w-full sm:w-32">
+                      <label
+                        for="shortcut-name-{idx}"
+                        class="text-xs text-zinc-600 dark:text-zinc-400">
+                        <T key="common.name" fallback="Name" />
+                      </label>
+                      <input
+                        id="shortcut-name-{idx}"
+                        class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
+                        placeholder={$_('settings.shortcut_name_placeholder') || 'Dashboard'}
+                        bind:value={shortcut.name} />
+                    </div>
+                    <div class="flex flex-col gap-1 w-full sm:w-16">
+                      <label
+                        for="shortcut-icon-{idx}"
+                        class="text-xs text-zinc-600 dark:text-zinc-400">
+                        <T key="settings.icon" fallback="Icon" />
+                      </label>
+                      <input
+                        id="shortcut-icon-{idx}"
+                        class="px-2 py-1.5 w-full text-sm text-center bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
+                        placeholder="🏠"
+                        bind:value={shortcut.icon} />
+                    </div>
+                    <div class="flex flex-col gap-1 w-full sm:flex-1">
+                      <label
+                        for="shortcut-url-{idx}"
+                        class="text-xs text-zinc-600 dark:text-zinc-400">
+                        <T key="settings.url" fallback="URL" />
+                      </label>
+                      <input
+                        id="shortcut-url-{idx}"
+                        class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
+                        placeholder={$_('settings.shortcut_url_placeholder') || '/dashboard'}
+                        bind:value={shortcut.url} />
+                    </div>
+                    <div class="flex items-end pt-4 h-full sm:pt-0">
+                      <button
+                        class="px-3 py-2 text-red-400 rounded-sm transition-all duration-200 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95"
+                        onclick={() => removeShortcut(idx)}
+                        title={$_('settings.remove_shortcut') || 'Remove shortcut'}>
+                        <Icon src={Trash} class="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div class="flex flex-col gap-1 w-full sm:w-16">
-                    <label
-                      for="shortcut-icon-{idx}"
-                      class="text-xs text-zinc-600 dark:text-zinc-400">
-                      <T key="settings.icon" fallback="Icon" />
-                    </label>
-                    <input
-                      id="shortcut-icon-{idx}"
-                      class="px-2 py-1.5 w-full text-sm text-center bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
-                      placeholder="🏠"
-                      bind:value={shortcut.icon} />
-                  </div>
-                  <div class="flex flex-col gap-1 w-full sm:flex-1">
-                    <label
-                      for="shortcut-url-{idx}"
-                      class="text-xs text-zinc-600 dark:text-zinc-400">
-                      <T key="settings.url" fallback="URL" />
-                    </label>
-                    <input
-                      id="shortcut-url-{idx}"
-                      class="px-2 py-1.5 w-full text-sm bg-white rounded-sm transition dark:bg-zinc-900/50 focus:ring-2 focus:ring-blue-500"
-                      placeholder={$_('settings.shortcut_url_placeholder') || '/dashboard'}
-                      bind:value={shortcut.url} />
-                  </div>
-                  <div class="flex items-end pt-4 h-full sm:pt-0">
-                    <button
-                      class="px-3 py-2 text-red-400 rounded-sm transition-all duration-200 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95"
-                      onclick={() => removeShortcut(idx)}
-                      title={$_('settings.remove_shortcut') || 'Remove shortcut'}>
-                      <Icon src={Trash} class="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              {/each}
+                {/each}
+              {/key}
               {#if shortcuts.length === 0}
                 <div class="py-8 text-center text-zinc-600 dark:text-zinc-400 animate-fade-in">
                   <div class="mb-3 text-4xl opacity-50">⚡</div>
@@ -1800,7 +1805,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         </div>
         <div class="p-4 space-y-6 sm:p-6">
           <!-- Separate RSS Feed Setting -->
-          <div class="flex justify-between items-center p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50">
+          <div
+            class="flex justify-between items-center p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50">
             <div class="flex-1">
               <h3 class="text-sm font-semibold sm:text-base">Separate RSS Feed Page</h3>
               <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
@@ -1808,12 +1814,10 @@ The Company reserves the right to terminate your access to the Service at any ti
               </p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                class="sr-only peer"
-                bind:checked={separateRssFeed} />
+              <input type="checkbox" class="sr-only peer" bind:checked={separateRssFeed} />
               <div
-                class="w-11 h-6 bg-zinc-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-blue-600"></div>
+                class="w-11 h-6 bg-zinc-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-blue-600">
+              </div>
             </label>
           </div>
           <div>
@@ -1991,53 +1995,56 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Check for Updates (Desktop only) -->
       {#if isDesktop}
-      <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-green-700/50 animate-fade-in-up">
-        <div class="p-4 sm:p-6">
-          <div class="flex justify-between items-center mb-4">
-            <div>
-              <h2 class="text-base font-semibold sm:text-lg">Updates</h2>
-              <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-                Check for the latest version of DesQTA.
-              </p>
+        <section
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-green-700/50 animate-fade-in-up">
+          <div class="p-4 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h2 class="text-base font-semibold sm:text-lg">Updates</h2>
+                <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+                  Check for the latest version of DesQTA.
+                </p>
+              </div>
+              <button
+                type="button"
+                onclick={checkForUpdates}
+                disabled={checkingUpdates}
+                class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-green-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                {#if checkingUpdates}
+                  <div
+                    class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
+                  </div>
+                  <span>Checking...</span>
+                {:else}
+                  <Icon src={ArrowPath} class="w-4 h-4" />
+                  <span>Check for Updates</span>
+                {/if}
+              </button>
             </div>
-            <button
-              type="button"
-              onclick={checkForUpdates}
-              disabled={checkingUpdates}
-              class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-green-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
-              {#if checkingUpdates}
-                <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white"></div>
-                <span>Checking...</span>
-              {:else}
-                <Icon src={ArrowPath} class="w-4 h-4" />
-                <span>Check for Updates</span>
-              {/if}
-            </button>
-          </div>
-          {#if updateAvailable}
-            <div class="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50">
-              <div class="flex gap-3 items-start">
-                <div class="flex-1">
-                  <h3 class="text-sm font-semibold text-green-800 dark:text-green-200 mb-1">
-                    Update Available: v{updateVersion}
-                  </h3>
-                  <p class="text-xs text-green-700 dark:text-green-300 mb-3 whitespace-pre-line">
-                    {updateNotes}
-                  </p>
-                  <button
-                    type="button"
-                    onclick={installUpdate}
-                    class="flex gap-2 items-center px-4 py-2 text-white bg-green-600 rounded-lg shadow-xs transition-all duration-200 hover:bg-green-700 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105">
-                    <Icon src={CloudArrowUp} class="w-4 h-4" />
-                    <span>Install Update</span>
-                  </button>
+            {#if updateAvailable}
+              <div
+                class="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50">
+                <div class="flex gap-3 items-start">
+                  <div class="flex-1">
+                    <h3 class="text-sm font-semibold text-green-800 dark:text-green-200 mb-1">
+                      Update Available: v{updateVersion}
+                    </h3>
+                    <p class="text-xs text-green-700 dark:text-green-300 mb-3 whitespace-pre-line">
+                      {updateNotes}
+                    </p>
+                    <button
+                      type="button"
+                      onclick={installUpdate}
+                      class="flex gap-2 items-center px-4 py-2 text-white bg-green-600 rounded-lg shadow-xs transition-all duration-200 hover:bg-green-700 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105">
+                      <Icon src={CloudArrowUp} class="w-4 h-4" />
+                      <span>Install Update</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          {/if}
-        </div>
-      </section>
+            {/if}
+          </div>
+        </section>
       {/if}
 
       <!-- Redo Onboarding -->
@@ -2060,7 +2067,9 @@ The Company reserves the right to terminate your access to the Service at any ti
             disabled={resettingOnboarding}
             class="flex gap-2 justify-center items-center px-4 py-2 text-white bg-purple-500 rounded-lg shadow-xs transition-all duration-200 hover:bg-purple-600 focus:ring-2 focus:ring-purple-400 active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
             {#if resettingOnboarding}
-              <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white"></div>
+              <div
+                class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
+              </div>
               <span><T key="settings.resetting" fallback="Resetting..." /></span>
             {:else}
               <Icon src={ArrowPath} class="w-4 h-4" />
@@ -2208,7 +2217,7 @@ The Company reserves the right to terminate your access to the Service at any ti
   menu={DEFAULT_MENU}
   onClose={() => (showMenuOrderDialog = false)}
   onSave={async (orderedMenu) => {
-    const menuOrder = orderedMenu.map(item => item.path);
+    const menuOrder = orderedMenu.map((item) => item.path);
     await saveSettingsWithQueue({ menu_order: menuOrder });
     await flushSettingsQueue();
     toastStore.success('Menu order saved. Page will reload to apply changes.');
@@ -2277,7 +2286,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         disabled={saving}>
         {#if saving}
           <div class="flex gap-2 items-center">
-            <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white"></div>
+            <div class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
+            </div>
             <span><T key="settings.saving" fallback="Saving..." /></span>
           </div>
         {:else}
@@ -2312,5 +2322,21 @@ The Company reserves the right to terminate your access to the Service at any ti
     to {
       opacity: 1;
     }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .shortcut-item-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

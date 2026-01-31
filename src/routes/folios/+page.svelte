@@ -17,11 +17,12 @@
     loading = true;
     const cacheKey = 'folios_settings_enabled';
     const isOnline = navigator.onLine;
-    
+
     // Load from cache first for instant UI
-    const cached = cache.get<boolean>(cacheKey) || 
-      await getWithIdbFallback<boolean>(cacheKey, cacheKey, () => cache.get<boolean>(cacheKey));
-    
+    const cached =
+      cache.get<boolean>(cacheKey) ||
+      (await getWithIdbFallback<boolean>(cacheKey, cacheKey, () => cache.get<boolean>(cacheKey)));
+
     if (cached !== null && cached !== undefined) {
       foliosEnabled = cached;
       loading = false;
@@ -58,7 +59,7 @@
 
       const data = typeof response === 'string' ? JSON.parse(response) : response;
       const enabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
-      
+
       foliosEnabled = enabled;
       cache.set(cacheKey, enabled, 60);
       const { setIdb } = await import('../../lib/services/idbCache');
@@ -95,39 +96,66 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
       <!-- Edit My Folios -->
-      <button
-        onclick={() => goto('/folios/edit')}
-        class="group p-8 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-        <div class="flex flex-col items-center text-center space-y-4">
-          <div class="w-16 h-16 rounded-full bg-accent-500/10 flex items-center justify-center group-hover:bg-accent-500/20 transition-colors">
-            <Icon src={PencilSquare} class="w-8 h-8 text-accent" />
+      <div class="folio-action-card-animate" style="animation-delay: 0ms;">
+        <button
+          onclick={() => goto('/folios/edit')}
+          class="group p-8 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+          <div class="flex flex-col items-center text-center space-y-4">
+            <div
+              class="w-16 h-16 rounded-full bg-accent-500/10 flex items-center justify-center group-hover:bg-accent-500/20 transition-colors">
+              <Icon src={PencilSquare} class="w-8 h-8 text-accent" />
+            </div>
+            <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+              <T key="folios.edit_my_folios" fallback="Edit My Folios" />
+            </h2>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <T
+                key="folios.edit_my_folios_description"
+                fallback="Create and manage your personal folios" />
+            </p>
           </div>
-          <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
-            <T key="folios.edit_my_folios" fallback="Edit My Folios" />
-          </h2>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400">
-            <T key="folios.edit_my_folios_description" fallback="Create and manage your personal folios" />
-          </p>
-        </div>
-      </button>
+        </button>
+      </div>
 
       <!-- Browse Folios -->
-      <button
-        onclick={() => goto('/folios/browse')}
-        class="group p-8 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-        <div class="flex flex-col items-center text-center space-y-4">
-          <div class="w-16 h-16 rounded-full bg-accent-500/10 flex items-center justify-center group-hover:bg-accent-500/20 transition-colors">
-            <Icon src={FolderOpen} class="w-8 h-8 text-accent" />
+      <div class="folio-action-card-animate" style="animation-delay: 100ms;">
+        <button
+          onclick={() => goto('/folios/browse')}
+          class="group p-8 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+          <div class="flex flex-col items-center text-center space-y-4">
+            <div
+              class="w-16 h-16 rounded-full bg-accent-500/10 flex items-center justify-center group-hover:bg-accent-500/20 transition-colors">
+              <Icon src={FolderOpen} class="w-8 h-8 text-accent" />
+            </div>
+            <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+              <T key="folios.browse_folios" fallback="Browse Folios" />
+            </h2>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <T
+                key="folios.browse_folios_description"
+                fallback="Explore and view available folios" />
+            </p>
           </div>
-          <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
-            <T key="folios.browse_folios" fallback="Browse Folios" />
-          </h2>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400">
-            <T key="folios.browse_folios_description" fallback="Explore and view available folios" />
-          </p>
-        </div>
-      </button>
+        </button>
+      </div>
     </div>
   {/if}
 </div>
 
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .folio-action-card-animate {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

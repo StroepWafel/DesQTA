@@ -162,6 +162,33 @@ pub fn cleanup_login_windows(_app: tauri::AppHandle) {
     // No-op on mobile platforms
 }
 
+/// Check if any login windows exist
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+#[tauri::command]
+pub fn has_login_windows(app: tauri::AppHandle) -> bool {
+    // Check the old static window ID
+    if app.get_webview_window("seqta_login").is_some() {
+        return true;
+    }
+
+    // Check any numbered login windows
+    for i in 0..100 {
+        let window_id = format!("seqta_login_{}", i);
+        if app.get_webview_window(&window_id).is_some() {
+            return true;
+        }
+    }
+
+    false
+}
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+#[tauri::command]
+pub fn has_login_windows(_app: tauri::AppHandle) -> bool {
+    // No login windows on mobile platforms
+    false
+}
+
 /// Parse and validate a Seqta Learn SSO deeplink
 fn parse_deeplink(deeplink: &str) -> Result<SeqtaSSOPayload, String> {
     const DEEPLINK_PREFIX: &str = "seqtalearn://sso/";

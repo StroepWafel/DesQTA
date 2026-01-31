@@ -20,14 +20,14 @@
     onclick,
     children,
     header,
-    footer
+    footer,
   }: Props = $props();
 
   const variants = {
     default: 'bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700',
     elevated: 'bg-white dark:bg-zinc-800 shadow-md border border-zinc-200 dark:border-zinc-700',
     outlined: 'bg-transparent border-2 border-zinc-200 dark:border-zinc-700',
-    ghost: 'bg-zinc-50/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50'
+    ghost: 'bg-zinc-50/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50',
   };
 
   const paddings = {
@@ -36,42 +36,45 @@
     sm: 'p-3',
     md: 'p-4',
     lg: 'p-6',
-    xl: 'p-8'
+    xl: 'p-8',
   };
 
-  let baseClasses = $derived([
-    'rounded-lg transition-all duration-200',
-    variants[variant],
-    interactive ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] transform' : '',
-    className
-  ].filter(Boolean).join(' '));
+  let baseClasses = $derived(
+    [
+      'rounded-lg transition-all duration-200 ease-in-out',
+      variants[variant],
+      interactive
+        ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] transform active:scale-[0.98]'
+        : '',
+      className,
+    ]
+      .filter(Boolean)
+      .join(' '),
+  );
 
-  let contentClasses = $derived([
-    paddings[padding]
-  ].join(' '));
+  let contentClasses = $derived([paddings[padding]].join(' '));
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-<div 
+<div
   class={baseClasses}
-  onclick={onclick}
+  {onclick}
   role={interactive ? 'button' : undefined}
-  tabindex={interactive ? 0 : undefined}
->
+  tabindex={interactive ? 0 : undefined}>
   {#if header}
     <div class="border-b border-zinc-200 dark:border-zinc-700 px-4 py-3">
       {@render header()}
     </div>
   {/if}
-  
+
   {#if children}
     <div class={contentClasses}>
       {@render children()}
     </div>
   {/if}
-  
+
   {#if footer}
     <div class="border-t border-zinc-200 dark:border-zinc-700 px-4 py-3">
       {@render footer()}

@@ -12,6 +12,7 @@
   import { Sparkles, ChevronDown, ChevronUp, InformationCircle, Calendar } from 'svelte-hero-icons';
   import { seqtaFetch } from '../../utils/netUtil';
   import { onMount } from 'svelte';
+  import { fly } from 'svelte/transition';
   import T from './T.svelte';
   import { _ } from '../i18n';
 
@@ -24,7 +25,14 @@
     onYearChange?: (year: number) => void | Promise<void>;
   }
 
-  let { assessments, subjects, activeSubjects, availableYears = [], selectedYear, onYearChange }: Props = $props();
+  let {
+    assessments,
+    subjects,
+    activeSubjects,
+    availableYears = [],
+    selectedYear,
+    onYearChange,
+  }: Props = $props();
 
   // Store weighted predictions per subject (using Record for better reactivity)
   let weightedPredictions = $state<Record<string, WeightedGradePrediction>>({});
@@ -151,11 +159,14 @@
     }
   }
 
-  // Load cached predictions on mount
-  onMount(async () => {
+  // Load cached predictions on mount and when assessments/year changes
+  async function loadCachedPredictions() {
     const subjectCodes = new Set(
       subjects.filter((s) => assessments.some((a) => a.code === s.code)).map((s) => s.code),
     );
+
+    // Clear existing predictions first
+    weightedPredictions = {};
 
     for (const subjectCode of subjectCodes) {
       const cached = await loadWeightedPrediction(subjectCode);
@@ -166,22 +177,42 @@
         };
       }
     }
+  }
+
+  onMount(async () => {
+    await loadCachedPredictions();
+  });
+
+  // Reload predictions when assessments or selectedYear changes
+  $effect(() => {
+    // Track dependencies
+    assessments;
+    selectedYear;
+
+    // Reload predictions when they change
+    loadCachedPredictions();
   });
 
   // Calculate latest year (first item since sorted descending)
   const latestYear = $derived(availableYears.length > 0 ? availableYears[0] : null);
-  
+
   // Show "Change to Latest Year" button if:
   // - No assessments for current year
   // - Other years exist
   // - Current year is not the latest year
   const showChangeYearButton = $derived(
     assessments.length === 0 &&
-    availableYears.length > 1 &&
-    selectedYear !== undefined &&
-    latestYear !== null &&
-    selectedYear !== latestYear
+      availableYears.length > 1 &&
+      selectedYear !== undefined &&
+      latestYear !== null &&
+      selectedYear !== latestYear,
   );
+
+  // Create unique key for assessments to force re-render with animations
+  const assessmentsKey = $derived.by(() => {
+    const ids = assessments.map((a) => a.id).join(',');
+    return `${selectedYear}-${assessments.length}-${ids}`;
+  });
 
   async function handleChangeToLatestYear() {
     if (latestYear !== null && onYearChange) {
@@ -220,13 +251,17 @@
   <div class="flex-1 space-y-6">
     <!-- Change to Latest Year Banner -->
     {#if showChangeYearButton}
-      <div class="p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+      <div
+        class="p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <Icon src={Calendar} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
             <div>
               <p class="text-sm font-medium text-zinc-900 dark:text-white">
-                <T key="assessments.no_assessments_for_year" fallback="No assessments for {year}" values={{ year: selectedYear?.toString() || '' }} />
+                <T
+                  key="assessments.no_assessments_for_year"
+                  fallback="No assessments for {year}"
+                  values={{ year: selectedYear?.toString() || '' }} />
               </p>
               <p class="text-xs text-zinc-600 dark:text-zinc-400">
                 <T key="assessments.other_years_available" fallback="Other years are available" />
@@ -243,152 +278,163 @@
       </div>
     {/if}
 
-    {#each subjects.filter( (subject) => assessments.some((a) => a.code === subject.code), ) as subject}
-      <div id="subject-{subject.code}">
-        <Card variant="default" padding="none" class="overflow-hidden">
-          {#snippet header()}
-            <div class="flex gap-3 items-center justify-between">
-              <div class="flex gap-3 items-center flex-wrap">
-                <div
-                  class="w-3 h-3 rounded-full"
-                  style="background-color: {subject.colour || '#8e8e8e'}">
-                </div>
-                <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
-                  {subject.title}
-                </h3>
-                <span class="text-sm text-zinc-600 dark:text-zinc-400">({subject.code})</span>
-                {#if activeSubjects && activeSubjects.some((as: any) => as.code === subject.code)}
-                  <Badge variant="success" size="xs">Active</Badge>
-                {/if}
+    {#key assessmentsKey}
+      {#each subjects.filter( (subject) => assessments.some((a) => a.code === subject.code), ) as subject, subjectIndex}
+        <div
+          id="subject-{subject.code}"
+          class="subject-group-animate"
+          style="animation-delay: {subjectIndex * 100}ms;">
+          <Card variant="default" padding="none" class="overflow-hidden">
+            {#snippet header()}
+              <div class="flex gap-3 items-center justify-between">
+                <div class="flex gap-3 items-center flex-wrap">
+                  <div
+                    class="w-3 h-3 rounded-full"
+                    style="background-color: {subject.colour || '#8e8e8e'}">
+                  </div>
+                  <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
+                    {subject.title}
+                  </h3>
+                  <span class="text-sm text-zinc-600 dark:text-zinc-400">({subject.code})</span>
+                  {#if activeSubjects && activeSubjects.some((as: any) => as.code === subject.code)}
+                    <Badge variant="success" size="xs">Active</Badge>
+                  {/if}
 
-                <!-- Calculate Grade Button -->
-                {#if !weightedPredictions[subject.code]}
+                  <!-- Calculate Grade Button -->
+                  {#if !weightedPredictions[subject.code]}
+                    <button
+                      type="button"
+                      onclick={() => {
+                        calculateWeightedPredictionForSubject(subject.code);
+                      }}
+                      disabled={calculatingForSubject === subject.code}
+                      class="ml-2 inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 disabled:opacity-50 disabled:cursor-not-allowed">
+                      {#if calculatingForSubject === subject.code}
+                        <div
+                          class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin">
+                        </div>
+                      {:else}
+                        <Icon src={Sparkles} class="w-3 h-3" />
+                      {/if}
+                      <span class="ml-1">Calculate Grade</span>
+                    </button>
+                  {/if}
+                </div>
+              </div>
+            {/snippet}
+
+            <!-- Weighted Grade Prediction Bar (below header) -->
+            {#if weightedPredictions[subject.code]}
+              {@const prediction = weightedPredictions[subject.code]}
+              {@const isExpanded = expandedSubjects[subject.code] || false}
+              {@const letterGrade = getLetterGrade(prediction.predictedGrade)}
+              <div class="px-4 pt-4 pb-2">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    Weighted Grade Prediction
+                  </span>
                   <button
                     type="button"
                     onclick={() => {
-                      calculateWeightedPredictionForSubject(subject.code);
+                      showDisclaimer = true;
                     }}
-                    disabled={calculatingForSubject === subject.code}
-                    class="ml-2 inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    {#if calculatingForSubject === subject.code}
-                      <div
-                        class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin">
-                      </div>
-                    {:else}
-                      <Icon src={Sparkles} class="w-3 h-3" />
-                    {/if}
-                    <span class="ml-1">Calculate Grade</span>
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400">
+                    <Icon src={InformationCircle} class="w-3 h-3" />
+                    <span>Disclaimer</span>
                   </button>
-                {/if}
-              </div>
-            </div>
-          {/snippet}
-
-          <!-- Weighted Grade Prediction Bar (below header) -->
-          {#if weightedPredictions[subject.code]}
-            {@const prediction = weightedPredictions[subject.code]}
-            {@const isExpanded = expandedSubjects[subject.code] || false}
-            {@const letterGrade = getLetterGrade(prediction.predictedGrade)}
-            <div class="px-4 pt-4 pb-2">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  Weighted Grade Prediction
-                </span>
+                </div>
                 <button
                   type="button"
                   onclick={() => {
-                    showDisclaimer = true;
+                    expandedSubjects[subject.code] = !isExpanded;
+                    expandedSubjects = { ...expandedSubjects };
                   }}
-                  class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400">
-                  <Icon src={InformationCircle} class="w-3 h-3" />
-                  <span>Disclaimer</span>
-                </button>
-              </div>
-              <button
-                type="button"
-                onclick={() => {
-                  expandedSubjects[subject.code] = !isExpanded;
-                  expandedSubjects = { ...expandedSubjects };
-                }}
-                class="w-full text-left">
-                <div
-                  class="overflow-hidden relative w-full h-12 rounded-lg border transition-all duration-300 dark:bg-zinc-800 bg-zinc-200 dark:border-zinc-700 border-zinc-200 hover:shadow-lg hover:shadow-accent-500/10">
+                  class="w-full text-left">
                   <div
-                    class="absolute top-0 left-0 h-full bg-accent-600 transition-all duration-500"
-                    style="width: {Math.min(prediction.predictedGrade, 100)}%">
-                  </div>
-                  <div class="flex relative z-10 justify-between items-center h-full px-4">
-                    <div class="flex items-baseline gap-2">
-                      <span
-                        class="text-lg font-bold tracking-wide text-white drop-shadow-xs"
-                        style="text-shadow: 0 2px 8px #000a">
-                        {Math.round(prediction.predictedGrade)}%
-                      </span>
-                      <span
-                        class="text-sm font-semibold text-white/90 drop-shadow-xs"
-                        style="text-shadow: 0 2px 8px #000a">
-                        ({letterGrade})
-                      </span>
+                    class="overflow-hidden relative w-full h-12 rounded-lg border transition-all duration-300 dark:bg-zinc-800 bg-zinc-200 dark:border-zinc-700 border-zinc-200 hover:shadow-lg hover:shadow-accent-500/10">
+                    <div
+                      class="absolute top-0 left-0 h-full bg-accent-600 transition-all duration-500"
+                      style="width: {Math.min(prediction.predictedGrade, 100)}%">
                     </div>
-                    <div class="flex gap-2 items-center">
-                      <span class="text-xs text-white/90">
-                        {prediction.assessmentsCount} assessment{prediction.assessmentsCount !== 1
-                          ? 's'
-                          : ''}
-                      </span>
-                      <Icon
-                        src={isExpanded ? ChevronUp : ChevronDown}
-                        class="w-4 h-4 text-white/90" />
-                    </div>
-                  </div>
-                </div>
-              </button>
-              {#if isExpanded}
-                <div
-                  class="mt-2 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700">
-                  <div class="mb-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
-                    Assessment Breakdown:
-                  </div>
-                  <div class="space-y-2">
-                    {#each prediction.assessments as assessment}
-                      <div
-                        class="flex justify-between items-center p-2 rounded bg-white dark:bg-zinc-800">
-                        <div class="flex-1 min-w-0">
-                          <div class="text-sm font-medium text-zinc-900 dark:text-white truncate">
-                            {assessment.title}
-                          </div>
-                          <div class="text-xs text-zinc-500 dark:text-zinc-400">
-                            Weight: {assessment.weighting}%
-                          </div>
-                        </div>
-                        <div
-                          class="ml-2 text-sm font-bold {getWeightedGradeColor(assessment.grade)}">
-                          {Math.round(assessment.grade)}%
-                        </div>
+                    <div class="flex relative z-10 justify-between items-center h-full px-4">
+                      <div class="flex items-baseline gap-2">
+                        <span
+                          class="text-lg font-bold tracking-wide text-white drop-shadow-xs"
+                          style="text-shadow: 0 2px 8px #000a">
+                          {Math.round(prediction.predictedGrade)}%
+                        </span>
+                        <span
+                          class="text-sm font-semibold text-white/90 drop-shadow-xs"
+                          style="text-shadow: 0 2px 8px #000a">
+                          ({letterGrade})
+                        </span>
                       </div>
-                    {/each}
-                  </div>
-                  <div class="mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
-                    <div class="flex justify-between items-center text-xs">
-                      <span class="text-zinc-600 dark:text-zinc-400">Total Weight:</span>
-                      <span class="font-semibold text-zinc-900 dark:text-white">
-                        {prediction.totalWeight}%
-                      </span>
+                      <div class="flex gap-2 items-center">
+                        <span class="text-xs text-white/90">
+                          {prediction.assessmentsCount} assessment{prediction.assessmentsCount !== 1
+                            ? 's'
+                            : ''}
+                        </span>
+                        <Icon
+                          src={isExpanded ? ChevronUp : ChevronDown}
+                          class="w-4 h-4 text-white/90 transition-transform duration-300 ease-in-out {isExpanded
+                            ? 'rotate-180'
+                            : ''}" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              {/if}
-            </div>
-          {/if}
+                </button>
+                {#if isExpanded}
+                  <div
+                    class="mt-2 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700">
+                    <div class="mb-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                      Assessment Breakdown:
+                    </div>
+                    <div class="space-y-2">
+                      {#each prediction.assessments as assessment}
+                        <div
+                          class="flex justify-between items-center p-2 rounded bg-white dark:bg-zinc-800">
+                          <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium text-zinc-900 dark:text-white truncate">
+                              {assessment.title}
+                            </div>
+                            <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                              Weight: {assessment.weighting}%
+                            </div>
+                          </div>
+                          <div
+                            class="ml-2 text-sm font-bold {getWeightedGradeColor(
+                              assessment.grade,
+                            )}">
+                            {Math.round(assessment.grade)}%
+                          </div>
+                        </div>
+                      {/each}
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                      <div class="flex justify-between items-center text-xs">
+                        <span class="text-zinc-600 dark:text-zinc-400">Total Weight:</span>
+                        <span class="font-semibold text-zinc-900 dark:text-white">
+                          {prediction.totalWeight}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                {/if}
+              </div>
+            {/if}
 
-          <div class="p-4 space-y-4">
-            {#each assessments.filter((a) => a.code === subject.code) as assessment}
-              <AssessmentCard {assessment} />
-            {/each}
-          </div>
-        </Card>
-      </div>
-    {/each}
+            <div class="p-4 space-y-4">
+              {#each assessments.filter((a) => a.code === subject.code) as assessment, cardIndex}
+                <div class="assessment-card-animate" style="animation-delay: {cardIndex * 50}ms;">
+                  <AssessmentCard {assessment} />
+                </div>
+              {/each}
+            </div>
+          </Card>
+        </div>
+      {/each}
+    {/key}
   </div>
 </div>
 
@@ -453,5 +499,26 @@
 
   :global(.highlight-subject) {
     animation: highlight 1.5s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .subject-group-animate {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  .assessment-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

@@ -113,12 +113,14 @@
         subjectFilters = data.filters;
         availableYears = data.years;
         loadingAssessments = false;
-        
+
         // Check for new marked assessments and auto-calculate in background
         checkAndCalculateNewGrades(data.assessments).catch((e) => {
           logger.error('assessments', '+page', 'Background grade check failed', { error: e });
         });
       },
+      shouldSyncInBackground: () => true, // Always sync if online - subjects are critical
+      updateOnBackgroundSync: true, // Update UI when fresh data arrives
     });
 
     if (!data) {
@@ -219,7 +221,7 @@
       gradeAnalyserEnabled = true;
     }
     await loadAssessments();
-    
+
     // Read year from URL parameter
     const yearParam = getUrlParam('year');
     if (yearParam) {
@@ -228,7 +230,7 @@
         selectedYear = year;
       }
     }
-    
+
     highlightAssessmentFromQuery();
   });
 </script>

@@ -1,6 +1,14 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
-  import { Plus, Inbox, PaperAirplane, Trash, Star, Rss, ChatBubbleLeftRight } from 'svelte-hero-icons';
+  import {
+    Plus,
+    Inbox,
+    PaperAirplane,
+    Trash,
+    Star,
+    Rss,
+    ChatBubbleLeftRight,
+  } from 'svelte-hero-icons';
   import { getRSS } from '../../../utils/netUtil';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
@@ -24,9 +32,11 @@
       { name: $_('messages.trash') || 'Trash', icon: Trash, id: 'trash' },
     ];
     // Check if RSS feeds should be separated
-    const settingsSubset = await invoke<any>('get_settings_subset', { keys: ['feeds', 'separate_rss_feed'] });
+    const settingsSubset = await invoke<any>('get_settings_subset', {
+      keys: ['feeds', 'separate_rss_feed'],
+    });
     const separateRssFeed = settingsSubset?.separate_rss_feed ?? false;
-    
+
     // Only add RSS feeds to messages sidebar if the setting is disabled
     if (!separateRssFeed) {
       const feeds = settingsSubset?.feeds || [];
@@ -64,10 +74,10 @@
     <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
       {#each folders as folder}
         <button
-          class="w-full flex items-center border gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
+          class="w-full flex items-center border gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group transform
             {selectedFolder === folder.name
-              ? 'bg-accent/10 border-accent dark:text-white pl-5 shadow-md'
-              : 'border-transparent text-zinc-700 dark:text-white hover:bg-accent-100/10 dark:hover:bg-accent/10 hover:scale-[1.02]'}
+            ? 'bg-accent/10 border-accent dark:text-white pl-5 shadow-md'
+            : 'border-transparent text-zinc-700 dark:text-white hover:bg-accent-100/10 dark:hover:bg-accent/10 hover:scale-[1.02]'}
             focus:outline-hidden focus:ring-2 accent-ring"
           onclick={() => openFolder(folder)}>
           <Icon src={folder.icon} class="w-5 h-5" />
@@ -76,6 +86,6 @@
       {/each}
     </nav>
   {:catch error}
-    <p><T key="messages.error" fallback="Error! {error}" values={{error}} /></p>
+    <p><T key="messages.error" fallback="Error! {error}" values={{ error }} /></p>
   {/await}
 </aside>

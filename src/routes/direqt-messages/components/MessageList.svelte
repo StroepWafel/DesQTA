@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade } from 'svelte/transition';
   import type { Message } from '../types';
   import MessageItem from '$lib/components/MessageItem.svelte';
   import T from '$lib/components/T.svelte';
@@ -15,6 +16,12 @@
 
   // Filter messages for the selected folder
   const filteredMessages = $derived(messages.filter((m: Message) => m.folder === selectedFolder));
+
+  // Create a unique key that changes when folder or messages change to force re-render
+  const messagesKey = $derived.by(() => {
+    const ids = filteredMessages.map((m) => m.id).join(',');
+    return `${selectedFolder}-${filteredMessages.length}-${ids}`;
+  });
 </script>
 
 <section
@@ -85,14 +92,15 @@
         </p>
       </div>
     {:else}
-      <div class="overflow-y-scroll p-2 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-zinc-800/10">
-        {#each filteredMessages as message (message.id)}
-          <MessageItem 
-            {message}
-            {selectedMessage}
-            {openMessage}
-          />
-        {/each}
+      <div
+        class="overflow-y-scroll p-2 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-zinc-800/10">
+        {#key messagesKey}
+          {#each filteredMessages as message, i (message.id)}
+            <div class="message-item-animate" style="animation-delay: {i * 50}ms;">
+              <MessageItem {message} {selectedMessage} {openMessage} />
+            </div>
+          {/each}
+        {/key}
       </div>
     {/if}
   </div>
@@ -132,5 +140,21 @@
   .animate-gradient {
     background-size: 200% 200%;
     animation: gradient 3s ease infinite;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .message-item-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

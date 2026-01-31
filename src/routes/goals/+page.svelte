@@ -18,11 +18,12 @@
   async function checkGoalsEnabled() {
     const cacheKey = 'goals_settings_enabled';
     const isOnline = navigator.onLine;
-    
+
     // Load from cache first for instant UI
-    const cached = cache.get<boolean>(cacheKey) || 
-      await getWithIdbFallback<boolean>(cacheKey, cacheKey, () => cache.get<boolean>(cacheKey));
-    
+    const cached =
+      cache.get<boolean>(cacheKey) ||
+      (await getWithIdbFallback<boolean>(cacheKey, cacheKey, () => cache.get<boolean>(cacheKey)));
+
     if (cached !== null && cached !== undefined) {
       goalsEnabled = cached;
     }
@@ -57,7 +58,7 @@
 
       const data = typeof response === 'string' ? JSON.parse(response) : response;
       const enabled = data?.payload?.['coneqt-s.page.goals']?.value === 'enabled';
-      
+
       goalsEnabled = enabled;
       cache.set(cacheKey, enabled, 60);
       const { setIdb } = await import('../../lib/services/idbCache');
@@ -74,9 +75,10 @@
     const isOnline = navigator.onLine;
 
     // Load from cache first for instant UI
-    const cached = cache.get<string[]>(cacheKey) || 
-      await getWithIdbFallback<string[]>(cacheKey, cacheKey, () => cache.get<string[]>(cacheKey));
-    
+    const cached =
+      cache.get<string[]>(cacheKey) ||
+      (await getWithIdbFallback<string[]>(cacheKey, cacheKey, () => cache.get<string[]>(cacheKey)));
+
     if (cached && Array.isArray(cached) && cached.length > 0) {
       years = cached;
       loading = false;
@@ -176,16 +178,38 @@
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {#each years as year}
-        <button
-          onclick={() => goto(`/goals/${year}`)}
-          class="px-6 py-4 text-left bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-          <div class="flex items-center gap-3">
-            <Icon src={Flag} class="w-6 h-6 text-accent" />
-            <span class="text-lg font-semibold text-zinc-900 dark:text-white">{year}</span>
+      {#key years.join(',')}
+        {#each years as year, i}
+          <div class="goal-year-card-animate" style="animation-delay: {i * 50}ms;">
+            <button
+              onclick={() => goto(`/goals/${year}`)}
+              class="px-6 py-4 text-left bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+              <div class="flex items-center gap-3">
+                <Icon src={Flag} class="w-6 h-6 text-accent" />
+                <span class="text-lg font-semibold text-zinc-900 dark:text-white">{year}</span>
+              </div>
+            </button>
           </div>
-        </button>
-      {/each}
+        {/each}
+      {/key}
     </div>
   {/if}
 </div>
+
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .goal-year-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

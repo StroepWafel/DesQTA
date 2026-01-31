@@ -441,10 +441,10 @@
             {@const hasAIFeature =
               settingsLoaded && aiIntegrationsEnabled && lessonSummaryAnalyserEnabled}
             <div
-              class="relative mb-6 transition-all duration-700 ease-in-out rounded-2xl border-2 {hasAIFeature
+              class="relative mb-6 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] rounded-2xl border-2 {hasAIFeature
                 ? 'border-accent-500/70 dark:border-accent-400/70'
                 : 'border-zinc-200 dark:border-zinc-700'} bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm"
-              style="overflow: hidden; transition: max-height 700ms ease-in-out; {contentCollapsed &&
+              style="overflow: hidden; transition: max-height 700ms cubic-bezier(0.4, 0, 0.2, 1); {contentCollapsed &&
               hasAIFeature &&
               !aiSummary
                 ? 'max-height: 300px;'

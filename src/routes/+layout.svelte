@@ -403,7 +403,9 @@
         sidebarOpen = true;
       }
     } catch (e) {
-      logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', { error: e });
+      logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', {
+        error: e,
+      });
     }
   };
 
@@ -615,33 +617,33 @@
       }
 
       menu = [...DEFAULT_MENU]; // Use default menu configuration
-      
+
       // Filter menu items based on SEQTA config
       if (latestConfig?.payload) {
         const goalsEnabled = latestConfig.payload['coneqt-s.page.goals']?.value === 'enabled';
         if (!goalsEnabled) {
-          menu = menu.filter(item => item.path !== '/goals');
+          menu = menu.filter((item) => item.path !== '/goals');
         }
         const forumsPageEnabled = latestConfig.payload['coneqt-s.page.forums']?.value === 'enabled';
         const forumsGreetingExists = latestConfig.payload['coneqt-s.forum.greeting'] !== undefined;
         const forumsEnabled = forumsPageEnabled || forumsGreetingExists;
         if (!forumsEnabled) {
-          menu = menu.filter(item => item.path !== '/forums');
+          menu = menu.filter((item) => item.path !== '/forums');
         }
         const foliosEnabled = latestConfig.payload['coneqt-s.page.folios']?.value === 'enabled';
         if (!foliosEnabled) {
-          menu = menu.filter(item => item.path !== '/folios');
+          menu = menu.filter((item) => item.path !== '/folios');
         }
       }
-      
+
       // Apply menu order from settings
       await applyMenuOrder();
-      
+
       // Filter RSS feeds menu item based on setting (after menu order is applied)
       const settings = await loadSettings(['separate_rss_feed']);
       const separateRssFeed = settings.separate_rss_feed ?? false;
       if (!separateRssFeed) {
-        menu = menu.filter(item => item.path !== '/rss-feeds');
+        menu = menu.filter((item) => item.path !== '/rss-feeds');
       }
     } catch (e) {
       logger.error('layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', { error: e });
@@ -654,16 +656,16 @@
     try {
       const settings = await loadSettings(['menu_order']);
       const menuOrder = settings.menu_order as string[] | undefined;
-      
+
       // Use current menu state instead of DEFAULT_MENU to preserve filters
       const currentMenu = [...menu];
-      const currentMenuMap = new Map(currentMenu.map(item => [item.path, item]));
-      
+      const currentMenuMap = new Map(currentMenu.map((item) => [item.path, item]));
+
       if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
         // Reorder menu based on saved order, keeping any new items at the end
         const orderedMenu: typeof DEFAULT_MENU = [];
         const addedPaths = new Set<string>();
-        
+
         // Add items in saved order (only if they exist in current menu)
         for (const path of menuOrder) {
           const item = currentMenuMap.get(path);
@@ -672,14 +674,14 @@
             addedPaths.add(path);
           }
         }
-        
+
         // Add any items not in saved order (new items that exist in current menu)
         for (const item of currentMenu) {
           if (!addedPaths.has(item.path)) {
             orderedMenu.push(item);
           }
         }
-        
+
         menu = orderedMenu;
       }
       // If no menu order, keep current menu (already filtered)
@@ -768,29 +770,35 @@
     </div>
   </div>
 {/if}
-<Toaster 
-  position="bottom-right" 
+<Toaster
+  position="bottom-right"
   theme={$theme === 'dark' ? 'dark' : 'light'}
-  richColors 
-  expand={true} 
+  richColors
+  expand={true}
   closeButton
   offset="20px"
   visibleToasts={5}
   toastOptions={{
     unstyled: true,
     classes: {
-      toast: 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-lg border rounded-lg px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-all duration-200',
+      toast:
+        'bg-white/95 dark:bg-zinc-800/95 backdrop-blur-md text-zinc-900 dark:text-zinc-100 shadow-2xl border rounded-xl px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] border-white/20 dark:border-zinc-700/40',
       title: 'text-sm font-semibold flex-1',
       description: 'text-sm text-zinc-600 dark:text-zinc-400 mt-1',
-      success: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-      error: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-      info: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-      warning: 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
-      closeButton: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0',
-      actionButton: 'bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-opacity',
-      cancelButton: 'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-colors'
-    }
-  }}
-/>
+      success:
+        'border-green-200/60 dark:border-green-800/60 bg-green-50/95 dark:bg-green-900/40 backdrop-blur-md text-green-700 dark:text-green-300',
+      error:
+        'border-red-200/60 dark:border-red-800/60 bg-red-50/95 dark:bg-red-900/40 backdrop-blur-md text-red-700 dark:text-red-300',
+      info: 'border-blue-200/60 dark:border-blue-800/60 bg-blue-50/95 dark:bg-blue-900/40 backdrop-blur-md text-blue-700 dark:text-blue-300',
+      warning:
+        'border-yellow-200/60 dark:border-yellow-800/60 bg-yellow-50/95 dark:bg-yellow-900/40 backdrop-blur-md text-yellow-700 dark:text-yellow-300',
+      closeButton:
+        'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-all duration-200 ease-in-out rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0 transform hover:scale-110 active:scale-95',
+      actionButton:
+        'bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95',
+      cancelButton:
+        'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95',
+    },
+  }} />
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />

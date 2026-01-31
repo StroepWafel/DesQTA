@@ -3,6 +3,8 @@
   import { XMark, PaperClip } from 'svelte-hero-icons';
   import Editor from '../../../components/Editor/Editor.svelte';
   import { onMount } from 'svelte';
+  import { fly, scale } from 'svelte/transition';
+  import { cubicInOut } from 'svelte/easing';
   import { seqtaFetch, uploadSeqtaFile } from '../../../utils/netUtil';
   import { open } from '@tauri-apps/plugin-dialog';
   import { sanitizeFilename } from '../../../utils/sanitization';
@@ -334,10 +336,12 @@
     <!-- Main (left) column -->
     <div class="flex flex-col flex-1 min-w-0">
       {#if errorMessage}
-        <div class="p-3 m-4 text-white bg-red-500 rounded-lg">
+        <div
+          class="p-3 m-4 text-white bg-red-500 rounded-lg transition-all duration-200"
+          transition:scale={{ duration: 200, easing: cubicInOut }}>
           {errorMessage}
           <button
-            class="float-right font-bold"
+            class="float-right font-bold transition-transform duration-200 ease-in-out hover:scale-110 active:scale-95"
             onclick={() => (errorMessage = '')}
             aria-label="Dismiss error">×</button>
         </div>
@@ -386,7 +390,8 @@
           {#if showStudentDropdown}
             <div
               id="student-dropdown"
-              class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700">
+              class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700"
+              transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
               {#if loadingStudents}
                 <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
                   <T key="messages.loading_students" fallback="Loading students..." />
@@ -400,7 +405,7 @@
               {:else}
                 {#each filteredStudents as student}
                   <button
-                    class="flex items-start gap-3 px-4 py-2 w-full text-left text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    class="flex items-start gap-3 px-4 py-2 w-full text-left text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99]"
                     onclick={() =>
                       addRecipient(
                         student.id,
@@ -460,7 +465,8 @@
         {#if showStaffDropdown}
           <div
             id="staff-dropdown"
-            class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700">
+            class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700"
+            transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
             {#if loadingStaff}
               <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
                 <T key="messages.loading_staff" fallback="Loading staff..." />
@@ -474,7 +480,7 @@
             {:else}
               {#each filteredStaff as teacher}
                 <button
-                  class="px-4 py-2 w-full text-left text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  class="px-4 py-2 w-full text-left text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99]"
                   onclick={() => addRecipient(teacher.id, teacher.xx_display, true)}>
                   <div class="font-medium truncate">{teacher.xx_display}</div>
                 </button>
@@ -506,11 +512,14 @@
             <T key="messages.no_recipients_selected" fallback="No recipients selected" />
           </div>
         {:else}
-          {#each selectedRecipients as recipient, i}
-            <div class="flex items-center gap-3 px-3 py-2">
+          {#each selectedRecipients as recipient, i (recipient.id + (recipient.staff ? 'staff' : 'student'))}
+            <div
+              class="flex items-center gap-3 px-3 py-2 transition-all duration-200 ease-in-out"
+              in:fly={{ y: -10, duration: 200, easing: cubicInOut }}
+              out:fly={{ y: -10, duration: 150, easing: cubicInOut }}>
               {#if !recipient.staff && recipient.color}
                 <span
-                  class="w-2.5 h-2.5 rounded-full border border-black/5"
+                  class="w-2.5 h-2.5 rounded-full border border-black/5 transition-transform duration-200"
                   style={`background-color: ${recipient.color}`}></span>
               {/if}
               <div class="min-w-0 flex-1">
@@ -529,7 +538,7 @@
               </div>
               <button
                 onclick={() => removeRecipient(i)}
-                class="ml-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                class="ml-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95"
                 aria-label={$_('messages.remove_recipient') || 'Remove recipient'}>×</button>
             </div>
           {/each}
@@ -567,9 +576,11 @@
       </button>
       {#if attachedFiles.length > 0}
         <div class="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
-          {#each attachedFiles as file, i}
+          {#each attachedFiles as file, i (file.id)}
             <div
-              class="flex items-center gap-2 px-2 py-1.5 text-xs rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-300/50 dark:border-zinc-700/50">
+              class="flex items-center gap-2 px-2 py-1.5 text-xs rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-300/50 dark:border-zinc-700/50 transition-all duration-200 ease-in-out"
+              in:fly={{ y: -8, duration: 200, easing: cubicInOut }}
+              out:fly={{ y: -8, duration: 150, easing: cubicInOut }}>
               <Icon src={PaperClip} class="w-3 h-3 text-zinc-600 dark:text-zinc-400 shrink-0" />
               <span class="flex-1 min-w-0 truncate text-zinc-700 dark:text-zinc-300"
                 >{file.filename}</span>
@@ -579,7 +590,7 @@
               {/if}
               <button
                 onclick={() => removeFile(i)}
-                class="ml-1 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 shrink-0"
+                class="ml-1 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 shrink-0 transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95"
                 aria-label="Remove file">×</button>
             </div>
           {/each}
