@@ -415,7 +415,8 @@
   class="flex flex-col h-full min-h-full w-full relative {isMobile
     ? 'overflow-y-auto'
     : 'overflow-hidden'} bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-800"
-  style="visibility: visible; opacity: 1;">
+  style="visibility: visible !important; opacity: 1 !important; display: flex !important;"
+  hidden={false}>
   <!-- Window Controls Bar -->
   <div
     class="relative flex justify-between items-center px-6 py-3 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-b border-white/20 dark:border-zinc-700/30 z-10 {isMobile
