@@ -92,16 +92,7 @@ export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promis
 
     return response;
   } catch (error) {
-    // Tauri errors can be strings or Error objects
-    let errorMessage = 'Unknown fetch error';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    } else if (typeof error === 'string') {
-      errorMessage = error;
-    } else if (error && typeof error === 'object' && 'message' in error) {
-      errorMessage = String((error as any).message);
-    }
-    throw new Error(errorMessage);
+    throw new Error(error instanceof Error ? error.message : 'Unknown fetch error');
   }
 }
 

@@ -713,7 +713,7 @@
         {disableSchoolPicture} />
     {/if}
 
-    <div class="flex relative flex-1 min-h-0 {$needsSetup ? 'h-full' : ''}">
+    <div class="flex relative flex-1 min-h-0">
       {#if !$needsSetup && !menuLoading}
         <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
       {/if}
@@ -735,9 +735,7 @@
       <main
         class="overflow-y-auto flex-1 border-t rounded-tl-xl {!$needsSetup
           ? 'border-l'
-          : ''} border-zinc-200 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-900/50 transition-all duration-200 {$needsSetup
-          ? 'h-full'
-          : ''}"
+          : ''} border-zinc-200 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-900/50 transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if contentLoading}
           <div class="flex items-center justify-center w-full h-full py-12">
