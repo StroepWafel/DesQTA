@@ -210,22 +210,64 @@ impl Session {
             // First try encrypted file
             if path.exists() {
                 if let Ok(encrypted_data) = fs::read(&path) {
-                    if let Ok(decrypted_data) = SessionEncryption::decrypt(&encrypted_data) {
-                        if let Ok(mut json_str) = String::from_utf8(decrypted_data) {
-                            if let Ok(sess) = serde_json::from_str::<Session>(&json_str) {
-                                // Clear sensitive data from memory
-                                json_str.zeroize();
+                    #[cfg(target_os = "linux")]
+                    {
+                        // On Linux, handle keyring failures gracefully
+                        match SessionEncryption::decrypt(&encrypted_data) {
+                            Ok(decrypted_data) => {
+                                if let Ok(mut json_str) = String::from_utf8(decrypted_data) {
+                                    if let Ok(sess) = serde_json::from_str::<Session>(&json_str) {
+                                        // Clear sensitive data from memory
+                                        json_str.zeroize();
 
+                                        if let Some(logger) = logger::get_logger() {
+                                            let _ = logger.log(
+                                                logger::LogLevel::DEBUG,
+                                                "session",
+                                                "load",
+                                                "Encrypted session loaded successfully",
+                                                serde_json::json!({"has_base_url": !sess.base_url.is_empty()})
+                                            );
+                                        }
+                                        return sess;
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                // Log decryption error (keyring access failure on Linux)
                                 if let Some(logger) = logger::get_logger() {
                                     let _ = logger.log(
-                                        logger::LogLevel::DEBUG,
+                                        logger::LogLevel::WARN,
                                         "session",
                                         "load",
-                                        "Encrypted session loaded successfully",
-                                        serde_json::json!({"has_base_url": !sess.base_url.is_empty()})
+                                        "Failed to decrypt session file, trying fallback",
+                                        serde_json::json!({"error": e})
                                     );
                                 }
-                                return sess;
+                                // Fall through to try unencrypted fallback
+                            }
+                        }
+                    }
+                    #[cfg(not(target_os = "linux"))]
+                    {
+                        // On other platforms, expect encryption to work
+                        if let Ok(decrypted_data) = SessionEncryption::decrypt(&encrypted_data) {
+                            if let Ok(mut json_str) = String::from_utf8(decrypted_data) {
+                                if let Ok(sess) = serde_json::from_str::<Session>(&json_str) {
+                                    // Clear sensitive data from memory
+                                    json_str.zeroize();
+
+                                    if let Some(logger) = logger::get_logger() {
+                                        let _ = logger.log(
+                                            logger::LogLevel::DEBUG,
+                                            "session",
+                                            "load",
+                                            "Encrypted session loaded successfully",
+                                            serde_json::json!({"has_base_url": !sess.base_url.is_empty()})
+                                        );
+                                    }
+                                    return sess;
+                                }
                             }
                         }
                     }
@@ -244,21 +286,45 @@ impl Session {
                     let mut contents = String::new();
                     if file.read_to_string(&mut contents).is_ok() {
                         if let Ok(sess) = serde_json::from_str::<Session>(&contents) {
-                            if let Some(logger) = logger::get_logger() {
-                                let _ = logger.log(
-                                    logger::LogLevel::INFO,
-                                    "session",
-                                    "load",
-                                    "Migrating old unencrypted session to encrypted format",
-                                    serde_json::json!({}),
-                                );
+                            #[cfg(target_os = "linux")]
+                            {
+                                if let Some(logger) = logger::get_logger() {
+                                    let _ = logger.log(
+                                        logger::LogLevel::INFO,
+                                        "session",
+                                        "load",
+                                        "Loaded unencrypted session (encryption unavailable or migration)",
+                                        serde_json::json!({}),
+                                    );
+                                }
+
+                                // Try to save in encrypted format (will fall back to unencrypted if encryption fails)
+                                let _ = sess.save();
+
+                                // Only remove old unencrypted file if encrypted save succeeded
+                                // (save() will handle creating the right file format)
+                                if path.exists() && path != old_path {
+                                    let _ = fs::remove_file(&old_path);
+                                }
                             }
+                            #[cfg(not(target_os = "linux"))]
+                            {
+                                if let Some(logger) = logger::get_logger() {
+                                    let _ = logger.log(
+                                        logger::LogLevel::INFO,
+                                        "session",
+                                        "load",
+                                        "Migrating old unencrypted session to encrypted format",
+                                        serde_json::json!({}),
+                                    );
+                                }
 
-                            // Save in encrypted format
-                            let _ = sess.save();
+                                // Save in encrypted format
+                                let _ = sess.save();
 
-                            // Remove old unencrypted file
-                            let _ = fs::remove_file(&old_path);
+                                // Remove old unencrypted file
+                                let _ = fs::remove_file(&old_path);
+                            }
 
                             // Clear sensitive data from memory
                             contents.zeroize();
@@ -317,25 +383,95 @@ impl Session {
             let mut json_data = serde_json::to_string(self)
                 .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-            // Encrypt the data
-            let encrypted_data = SessionEncryption::encrypt(json_data.as_bytes())
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            #[cfg(target_os = "linux")]
+            {
+                // On Linux, try to encrypt - fall back to unencrypted if keyring unavailable
+                match SessionEncryption::encrypt(json_data.as_bytes()) {
+                    Ok(encrypted_data) => {
+                        // Clear sensitive data from memory
+                        json_data.zeroize();
 
-            // Clear sensitive data from memory
-            json_data.zeroize();
+                        // Write encrypted data to file
+                        let mut file = fs::File::create(&path)?;
+                        file.write_all(&encrypted_data)?;
 
-            // Write encrypted data to file
-            let mut file = fs::File::create(path)?;
-            file.write_all(&encrypted_data)?;
+                        // Remove old unencrypted file if it exists
+                        let old_path = {
+                            let mut p = path.clone();
+                            p.set_file_name("session.json");
+                            p
+                        };
+                        if old_path.exists() {
+                            let _ = fs::remove_file(&old_path);
+                        }
 
-            if let Some(logger) = logger::get_logger() {
-                let _ = logger.log(
-                    logger::LogLevel::DEBUG,
-                    "session",
-                    "save",
-                    "Session saved with encryption",
-                    serde_json::json!({}),
-                );
+                        if let Some(logger) = logger::get_logger() {
+                            let _ = logger.log(
+                                logger::LogLevel::DEBUG,
+                                "session",
+                                "save",
+                                "Session saved with encryption",
+                                serde_json::json!({}),
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        // Encryption failed (keyring unavailable on Linux) - fall back to unencrypted
+                        if let Some(logger) = logger::get_logger() {
+                            let _ = logger.log(
+                                logger::LogLevel::WARN,
+                                "session",
+                                "save",
+                                "Encryption failed, saving as unencrypted JSON",
+                                serde_json::json!({"error": e}),
+                            );
+                        }
+
+                        // Save as unencrypted JSON instead
+                        let old_path = {
+                            let mut p = path.clone();
+                            p.set_file_name("session.json");
+                            p
+                        };
+                        fs::write(&old_path, &json_data)?;
+                        
+                        // Clear sensitive data from memory
+                        json_data.zeroize();
+                    }
+                }
+            }
+            #[cfg(not(target_os = "linux"))]
+            {
+                // On other platforms, encryption should always work
+                let encrypted_data = SessionEncryption::encrypt(json_data.as_bytes())
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+
+                // Clear sensitive data from memory
+                json_data.zeroize();
+
+                // Write encrypted data to file
+                let mut file = fs::File::create(&path)?;
+                file.write_all(&encrypted_data)?;
+
+                // Remove old unencrypted file if it exists
+                let old_path = {
+                    let mut p = path.clone();
+                    p.set_file_name("session.json");
+                    p
+                };
+                if old_path.exists() {
+                    let _ = fs::remove_file(&old_path);
+                }
+
+                if let Some(logger) = logger::get_logger() {
+                    let _ = logger.log(
+                        logger::LogLevel::DEBUG,
+                        "session",
+                        "save",
+                        "Session saved with encryption",
+                        serde_json::json!({}),
+                    );
+                }
             }
         }
 
