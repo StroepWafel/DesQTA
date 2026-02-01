@@ -206,6 +206,15 @@
         // Get translated name - we'll use a simple fallback for now
         const nameKey = item.labelKey.replace('navigation.', '');
         const name = nameKey.charAt(0).toUpperCase() + nameKey.slice(1).replace(/_/g, ' ');
+
+        // Build keywords array
+        const keywords = [name.toLowerCase(), item.path];
+
+        // Add "home" as alias for dashboard
+        if (item.path === '/' || item.labelKey === 'navigation.dashboard') {
+          keywords.push('home');
+        }
+
         return {
           id: `page-${item.path}`,
           name,
@@ -213,7 +222,7 @@
           category: 'page' as const,
           icon: item.icon || Home, // Use the icon component directly
           description: `Navigate to ${name}`,
-          keywords: [name.toLowerCase(), item.path],
+          keywords,
           priority: 9,
         } as SearchItem;
       });
@@ -317,6 +326,29 @@
 
       let results = allSearchableItems;
 
+      // Helper function to check if item is assessment or course
+      const isAssessmentOrCourse = (item: SearchItem): boolean => {
+        return (
+          item.id.startsWith('assessment-') ||
+          item.id.startsWith('course-') ||
+          $dynamicItems.some((di) => di.id === item.id)
+        );
+      };
+
+      // Helper function to check for direct/exact match
+      const isDirectMatch = (item: SearchItem, query: string): boolean => {
+        const queryLower = query.toLowerCase();
+        const nameLower = item.name.toLowerCase();
+        const exactNameMatch = nameLower === queryLower;
+        const exactKeywordMatch = item.keywords?.some((k) => k.toLowerCase() === queryLower);
+        return exactNameMatch || exactKeywordMatch || false;
+      };
+
+      // Helper function to check if name starts with query (for better prioritization)
+      const nameStartsWithQuery = (item: SearchItem, query: string): boolean => {
+        return item.name.toLowerCase().startsWith(query.toLowerCase());
+      };
+
       if ($mode === 'fuzzy') {
         results = allSearchableItems
           .map((item) => ({
@@ -328,7 +360,24 @@
             ),
           }))
           .filter((item) => item.score > 0.3)
-          .sort((a, b) => (b.score || 0) - (a.score || 0));
+          .sort((a, b) => {
+            // Check for direct matches
+            const aDirect = isDirectMatch(a, $search);
+            const bDirect = isDirectMatch(b, $search);
+            const aIsAssessmentCourse = isAssessmentOrCourse(a);
+            const bIsAssessmentCourse = isAssessmentOrCourse(b);
+
+            // Prioritize direct matches that are NOT assessments/courses
+            if (aDirect && !aIsAssessmentCourse && (!bDirect || bIsAssessmentCourse)) {
+              return -1;
+            }
+            if (bDirect && !bIsAssessmentCourse && (!aDirect || aIsAssessmentCourse)) {
+              return 1;
+            }
+
+            // Then by score
+            return (b.score || 0) - (a.score || 0);
+          });
       } else {
         const query = $search.toLowerCase();
         results = allSearchableItems.filter((item) => {
@@ -339,15 +388,62 @@
             item.path.toLowerCase().includes(query)
           );
         });
-      }
 
-      return results
-        .sort((a, b) => {
+        // Sort results with better prioritization
+        results = results.sort((a, b) => {
+          const aDirect = isDirectMatch(a, query);
+          const bDirect = isDirectMatch(b, query);
+          const aIsAssessmentCourse = isAssessmentOrCourse(a);
+          const bIsAssessmentCourse = isAssessmentOrCourse(b);
+          const aNameStarts = nameStartsWithQuery(a, query);
+          const bNameStarts = nameStartsWithQuery(b, query);
+
+          // 1. Exact name matches (non-assessment/course) - highest priority
+          const aExactName = !aIsAssessmentCourse && a.name.toLowerCase() === query;
+          const bExactName = !bIsAssessmentCourse && b.name.toLowerCase() === query;
+
+          if (aExactName && !bExactName) {
+            return -1;
+          }
+          if (bExactName && !aExactName) {
+            return 1;
+          }
+
+          // 2. Exact name matches (assessment/course)
+          const aExactNameAssessment = aIsAssessmentCourse && a.name.toLowerCase() === query;
+          const bExactNameAssessment = bIsAssessmentCourse && b.name.toLowerCase() === query;
+
+          if (aExactNameAssessment && !bExactNameAssessment) {
+            return -1;
+          }
+          if (bExactNameAssessment && !aExactNameAssessment) {
+            return 1;
+          }
+
+          // 3. Direct matches (exact keyword or name) - non-assessment/course
+          if (aDirect && !aIsAssessmentCourse && (!bDirect || bIsAssessmentCourse)) {
+            return -1;
+          }
+          if (bDirect && !bIsAssessmentCourse && (!aDirect || aIsAssessmentCourse)) {
+            return 1;
+          }
+
+          // 4. Name starts with query - non-assessment/course
+          if (aNameStarts && !aIsAssessmentCourse && (!bNameStarts || bIsAssessmentCourse)) {
+            return -1;
+          }
+          if (bNameStarts && !bIsAssessmentCourse && (!aNameStarts || aIsAssessmentCourse)) {
+            return 1;
+          }
+
+          // 5. Then by priority and use count
           const aPriority = (a.priority || 0) + (a.useCount || 0) * 0.1;
           const bPriority = (b.priority || 0) + (b.useCount || 0) * 0.1;
           return bPriority - aPriority;
-        })
-        .slice(0, 12);
+        });
+      }
+
+      return results.slice(0, 12);
     },
   );
 

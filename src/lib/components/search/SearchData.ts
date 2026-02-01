@@ -74,7 +74,7 @@ const PAGES: SearchItem[] = [
     category: 'page',
     icon: Home,
     description: 'Dashboard and widgets',
-    keywords: ['dashboard', 'main', 'start'],
+    keywords: ['dashboard', 'main', 'start', 'home'],
     priority: 10,
   },
   {
