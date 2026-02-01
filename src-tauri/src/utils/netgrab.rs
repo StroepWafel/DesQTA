@@ -170,7 +170,11 @@ pub async fn fetch_api_data(
     let full_url = if url.starts_with("http") {
         url.to_string()
     } else {
-        format!("{}{}", session.base_url.parse::<String>().unwrap(), url)
+        // Check if base_url is empty before trying to build full URL
+        if session.base_url.is_empty() {
+            return Err(format!("No session base URL available. Please log in first."));
+        }
+        format!("{}{}", session.base_url, url)
     };
 
     let mut request = match method {
@@ -409,9 +413,14 @@ pub async fn upload_seqta_file(file_name: String, file_path: String) -> Result<S
     // Read the file content
     let file_content = fs::read(&file_path).map_err(|e| format!("Failed to read file: {}", e))?;
 
+    // Check if base_url is empty before trying to build URL
+    if session.base_url.is_empty() {
+        return Err("No session base URL available. Please log in first.".to_string());
+    }
+
     let url = format!(
         "{}/seqta/student/file/upload/xhr2",
-        session.base_url.parse::<String>().unwrap()
+        session.base_url
     );
     let mut request = client.post(&url);
     request = append_default_headers(request).await;
