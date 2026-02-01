@@ -1,68 +1,14 @@
 import { Node } from '@tiptap/core';
+import { createIconSVG } from '../utils/iconUtils';
+import { logger } from '../../../../utils/logger';
+import {
+  SeqtaMentionsServiceRust as SeqtaMentionsService,
+  type SeqtaMentionItem,
+} from '../../../services/seqtaMentionsServiceRust';
 
 export interface SeqtaContentBlockOptions {
   HTMLAttributes: Record<string, any>;
 }
-
-// Helper function to create SVG icon elements
-const createIconSVG = (
-  iconName: string,
-  size: number = 16,
-  className: string = 'text-zinc-500 dark:text-zinc-400',
-): SVGSVGElement => {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('width', size.toString());
-  svg.setAttribute('height', size.toString());
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('class', className);
-
-  // Heroicons paths (outline versions)
-  const iconPaths: Record<string, string> = {
-    clock: 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
-    calendar: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5',
-    user: 'M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z',
-    mapPin: 'M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z',
-    academicCap:
-      'M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443a55.381 55.381 0 0 1 5.25 2.882v3.675m-5.25 0a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z',
-    documentText:
-      'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
-    chartBar:
-      'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
-    clipboard:
-      'M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15a2.25 2.25 0 0 1 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75',
-    bookOpen:
-      'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
-    paperClip:
-      'M18.375 12.739l-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.12 2.122l7.81-7.81a1.5 1.5 0 0 0-2.122-2.122Z',
-    scale:
-      'M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.224 48.224 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.589-1.202L18.75 4.971Zm-16.5.52c1.01-.203 2.01-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.589-1.202L5.25 4.971Z',
-    arrowPath:
-      'M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99',
-    arrowTopRightOnSquare:
-      'M13.5 6.75a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0V8.25h-4.5a.75.75 0 0 1-.75-.75ZM4.5 4.5a.75.75 0 0 0-.75.75v13.5c0 .414.336.75.75.75h13.5a.75.75 0 0 0 .75-.75V9a.75.75 0 0 0-1.5 0v9.75H5.25V5.25H15a.75.75 0 0 0 0-1.5H4.5Z',
-    envelope:
-      'M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75',
-    buildingOffice:
-      'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z',
-    arrowRight:
-      'M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3',
-    megaphone:
-      'M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 0 0 0 9h2.25c.723 0 1.402-.03 2.09-.09m0-9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46',
-    link:
-      'M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244',
-  };
-
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', iconPaths[iconName] || iconPaths.link);
-  svg.appendChild(path);
-
-  return svg;
-};
 
 export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
   name: 'seqtaContentBlock',
@@ -323,7 +269,8 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
 
       // Icon based on type
       const icon = document.createElement('div');
-      icon.className = 'w-5 h-5 flex items-center justify-center flex-shrink-0 text-zinc-600 dark:text-zinc-400';
+      icon.className =
+        'w-5 h-5 flex items-center justify-center flex-shrink-0 text-zinc-600 dark:text-zinc-400';
       const typeIcons: Record<string, string> = {
         assessment: 'chartBar',
         assignment: 'documentText',
@@ -336,7 +283,11 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
         teacher: 'user',
         lesson_content: 'bookOpen',
       };
-      const iconSVG = createIconSVG(typeIcons[blockType] || 'link', 20, 'w-5 h-5 text-zinc-600 dark:text-zinc-400');
+      const iconSVG = createIconSVG(
+        typeIcons[blockType] || 'link',
+        20,
+        'w-5 h-5 text-zinc-600 dark:text-zinc-400',
+      );
       icon.appendChild(iconSVG);
 
       const titleWrapper = document.createElement('div');
@@ -365,13 +316,64 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
       // Refresh button
       const refreshBtn = document.createElement('button');
       refreshBtn.className =
-        'p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 transition-colors flex items-center justify-center';
+        'p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed';
       refreshBtn.appendChild(createIconSVG('arrowPath', 16, 'w-4 h-4'));
       refreshBtn.title = 'Refresh';
-      refreshBtn.onclick = (e) => {
+      let isRefreshing = false;
+      refreshBtn.onclick = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Refresh clicked for block:', blockId);
+        if (isRefreshing || !editor || typeof getPos !== 'function') return;
+
+        isRefreshing = true;
+        refreshBtn.disabled = true;
+        const icon = refreshBtn.querySelector('svg');
+        if (icon) {
+          icon.classList.add('animate-spin');
+        }
+
+        try {
+          logger.debug('SeqtaContentBlock', 'refresh', 'Refreshing content block', {
+            blockId,
+            blockType,
+          });
+
+          const updatedData = await SeqtaMentionsService.updateMentionData(blockId, blockType, {
+            data: blockData,
+          });
+
+          if (updatedData && editor) {
+            const pos = getPos();
+            if (pos !== undefined && pos >= 0) {
+              editor
+                .chain()
+                .focus()
+                .updateAttributes('seqtaContentBlock', {
+                  data: updatedData.data,
+                  id: updatedData.id,
+                  type: updatedData.type,
+                })
+                .run();
+
+              logger.info('SeqtaContentBlock', 'refresh', 'Content block refreshed successfully', {
+                blockId,
+                blockType,
+              });
+            }
+          }
+        } catch (error) {
+          logger.error('SeqtaContentBlock', 'refresh', 'Failed to refresh content block', {
+            error: error instanceof Error ? error.message : String(error),
+            blockId,
+            blockType,
+          });
+        } finally {
+          isRefreshing = false;
+          refreshBtn.disabled = false;
+          if (icon) {
+            icon.classList.remove('animate-spin');
+          }
+        }
       };
 
       // External link button
@@ -383,7 +385,105 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
       linkBtn.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Open in app clicked for block:', blockId);
+
+        try {
+          logger.debug('SeqtaContentBlock', 'openInApp', 'Opening content block in app', {
+            blockId,
+            blockType,
+          });
+
+          // Build URL based on mention type (similar to SeqtaMentionDetailModal)
+          let url = '/';
+
+          if (blockType === 'assessment' || blockType === 'assignment') {
+            const assessmentID = blockData.assessmentID || blockData.id;
+            const metaclassID = blockData.metaclassID || blockData.metaclass || 0;
+            const code = blockData.code || blockData.subjectCode;
+            const dueDate = blockData.dueDate || blockData.due;
+
+            // Try to get year from data, fallback to due date year, then current year
+            let year: number;
+            if (blockData.year) {
+              year = blockData.year;
+            } else if (dueDate) {
+              try {
+                const date = new Date(dueDate);
+                if (!isNaN(date.getTime())) {
+                  year = date.getFullYear();
+                } else {
+                  year = new Date().getFullYear();
+                }
+              } catch {
+                year = new Date().getFullYear();
+              }
+            } else {
+              year = new Date().getFullYear();
+            }
+
+            if (assessmentID) {
+              url = `/assessments/${assessmentID}/${metaclassID}?year=${year}`;
+            } else if (code && dueDate) {
+              const dateStr = new Date(dueDate).toISOString().split('T')[0];
+              url = `/assessments?code=${code}&date=${dateStr}&year=${year}`;
+            } else {
+              url = '/assessments';
+            }
+          } else if (blockType === 'class' || blockType === 'subject') {
+            const code = blockData.code;
+            const programme = blockData.programme;
+            const metaclass = blockData.metaclass;
+            const date = blockData.date || blockData.lessonDate;
+
+            if (programme && metaclass) {
+              url = `/courses?code=${code}&programme=${programme}&metaclass=${metaclass}`;
+              if (date) {
+                const dateStr = new Date(date).toISOString().split('T')[0];
+                url += `&date=${dateStr}`;
+              }
+            } else if (code) {
+              url = `/courses?code=${code}`;
+            } else {
+              url = '/courses';
+            }
+          } else if (blockType === 'timetable' || blockType === 'timetable_slot') {
+            const date = blockData.date;
+            if (date) {
+              const dateStr = new Date(date).toISOString().split('T')[0];
+              url = `/timetable?date=${dateStr}`;
+            } else {
+              url = '/timetable';
+            }
+          } else if (blockType === 'notice') {
+            const noticeId = blockData.id || blockData.noticeId;
+            const labelId = blockData.labelId || blockData.label;
+            const date = blockData.date;
+
+            url = '/notices';
+            const params: string[] = [];
+            if (noticeId) params.push(`item=${noticeId}`);
+            if (labelId) params.push(`category=${labelId}`);
+            if (date) {
+              const dateStr = new Date(date).toISOString().split('T')[0];
+              params.push(`date=${dateStr}`);
+            }
+            if (params.length > 0) {
+              url += `?${params.join('&')}`;
+            }
+          }
+
+          window.location.href = url;
+          logger.info('SeqtaContentBlock', 'openInApp', 'Navigated to content block', {
+            blockId,
+            blockType,
+            url,
+          });
+        } catch (error) {
+          logger.error('SeqtaContentBlock', 'openInApp', 'Failed to open content block in app', {
+            error: error instanceof Error ? error.message : String(error),
+            blockId,
+            blockType,
+          });
+        }
       };
 
       headerRight.appendChild(refreshBtn);
@@ -404,22 +504,24 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
         const createInfoRow = (iconName: string, label: string, value: string) => {
           const row = document.createElement('div');
           row.className = 'flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300';
-          
+
           const iconWrapper = document.createElement('div');
           iconWrapper.className = 'flex-shrink-0';
-          iconWrapper.appendChild(createIconSVG(iconName, 16, 'w-4 h-4 text-zinc-500 dark:text-zinc-400'));
-          
+          iconWrapper.appendChild(
+            createIconSVG(iconName, 16, 'w-4 h-4 text-zinc-500 dark:text-zinc-400'),
+          );
+
           const labelSpan = document.createElement('span');
           labelSpan.className = 'font-medium';
           labelSpan.textContent = `${label}:`;
-          
+
           const valueSpan = document.createElement('span');
           valueSpan.textContent = value;
-          
+
           row.appendChild(iconWrapper);
           row.appendChild(labelSpan);
           row.appendChild(valueSpan);
-          
+
           return row;
         };
 
@@ -454,7 +556,11 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
           }
           if (blockData.subject || blockData.subjectName) {
             content.appendChild(
-              createInfoRow('bookOpen', 'Subject', blockData.subjectName || blockData.subject || 'N/A'),
+              createInfoRow(
+                'bookOpen',
+                'Subject',
+                blockData.subjectName || blockData.subject || 'N/A',
+              ),
             );
           }
           if (blockData.weight) {
@@ -470,12 +576,15 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
             statusDiv.className = `inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
               statusColors[blockData.status] || 'text-zinc-600 dark:text-zinc-400'
             }`;
-            statusDiv.textContent = blockData.status.charAt(0).toUpperCase() + blockData.status.slice(1);
+            statusDiv.textContent =
+              blockData.status.charAt(0).toUpperCase() + blockData.status.slice(1);
             const row = document.createElement('div');
             row.className = 'flex items-center gap-2';
             const iconWrapper = document.createElement('div');
             iconWrapper.className = 'flex-shrink-0';
-            iconWrapper.appendChild(createIconSVG('link', 16, 'w-4 h-4 text-zinc-500 dark:text-zinc-400'));
+            iconWrapper.appendChild(
+              createIconSVG('link', 16, 'w-4 h-4 text-zinc-500 dark:text-zinc-400'),
+            );
             const labelText = document.createTextNode('Status: ');
             row.appendChild(iconWrapper);
             row.appendChild(labelText);
@@ -493,7 +602,11 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
           }
           if (blockData.subject || blockData.subjectName) {
             content.appendChild(
-              createInfoRow('bookOpen', 'Subject', blockData.subjectName || blockData.subject || 'N/A'),
+              createInfoRow(
+                'bookOpen',
+                'Subject',
+                blockData.subjectName || blockData.subject || 'N/A',
+              ),
             );
           }
           if (blockData.teacher) {
@@ -514,7 +627,11 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
           }
           if (blockData.subjectName || blockData.code) {
             content.appendChild(
-              createInfoRow('bookOpen', 'Subject', blockData.subjectName || blockData.code || 'N/A'),
+              createInfoRow(
+                'bookOpen',
+                'Subject',
+                blockData.subjectName || blockData.code || 'N/A',
+              ),
             );
           }
           if (blockData.room) {
@@ -557,7 +674,8 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
               lessonLeft.className = 'flex-1 min-w-0';
 
               const lessonTitle = document.createElement('div');
-              lessonTitle.className = 'text-sm font-semibold text-zinc-900 dark:text-white truncate';
+              lessonTitle.className =
+                'text-sm font-semibold text-zinc-900 dark:text-white truncate';
               lessonTitle.textContent =
                 lesson.subjectName || lesson.code || lesson.title || 'Lesson';
 
@@ -588,7 +706,8 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
               lessonHeader.appendChild(lessonRight);
 
               const lessonMeta = document.createElement('div');
-              lessonMeta.className = 'flex items-center gap-3 mt-1.5 text-xs text-zinc-500 dark:text-zinc-400';
+              lessonMeta.className =
+                'flex items-center gap-3 mt-1.5 text-xs text-zinc-500 dark:text-zinc-400';
 
               if (lesson.teacher) {
                 const teacherSpan = document.createElement('span');
@@ -630,7 +749,9 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
             content.appendChild(createInfoRow('calendar', 'Year', blockData.year.toString()));
           }
           if (blockData.nextClass) {
-            content.appendChild(createInfoRow('arrowRight', 'Next Class', formatDate(blockData.nextClass)));
+            content.appendChild(
+              createInfoRow('arrowRight', 'Next Class', formatDate(blockData.nextClass)),
+            );
           }
           if (blockData.room) {
             content.appendChild(createInfoRow('mapPin', 'Room', blockData.room));
@@ -662,7 +783,9 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
             content.appendChild(createInfoRow('envelope', 'Email', blockData.email));
           }
           if (blockData.department) {
-            content.appendChild(createInfoRow('buildingOffice', 'Department', blockData.department));
+            content.appendChild(
+              createInfoRow('buildingOffice', 'Department', blockData.department),
+            );
           }
         }
 

@@ -30,6 +30,7 @@
     Clipboard,
     BookOpen,
     Megaphone,
+    PaperClip,
   } from 'svelte-hero-icons';
   import TimetableSelector from './plugins/TimetableSelector.svelte';
   import type { SeqtaMentionItem } from '$lib/services/seqtaMentionsServiceRust';
@@ -187,7 +188,7 @@
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
 
-  // Mention types
+  // Mention types - must match SeqtaMentions.ts validTypes order
   const mentionTypes = [
     { id: 'assessment', label: 'Assessment', icon: ChartBar },
     { id: 'assignment', label: 'Assignment', icon: DocumentText },
@@ -196,7 +197,9 @@
     { id: 'subject', label: 'Subject', icon: BookOpen },
     { id: 'teacher', label: 'Teacher', icon: User },
     { id: 'timetable_slot', label: 'Timetable Slot', icon: Clock },
+    { id: 'timetable', label: 'Timetable', icon: Calendar },
     { id: 'notice', label: 'Notice', icon: Megaphone },
+    { id: 'file', label: 'File', icon: PaperClip },
   ];
 
   // Insert mention

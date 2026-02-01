@@ -27,7 +27,7 @@
 
   function toggleLink() {
     if (!editor) return;
-    
+
     if (editor.isActive('link')) {
       editor.chain().focus().unsetLink().run();
     } else {
@@ -40,7 +40,7 @@
 
   function isActive(format: string): boolean {
     if (!editor) return false;
-    
+
     switch (format) {
       case 'bold':
         return editor.isActive('bold');
@@ -59,46 +59,62 @@
 </script>
 
 {#if editor}
-  <div class="bubble-menu-content flex items-center bg-zinc-900 dark:bg-zinc-800 text-white rounded-lg shadow-lg border border-zinc-700 p-1">
+  <div
+    class="bubble-menu-content flex items-center bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg p-1">
     <button
-      class="p-2 rounded-md hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors {isActive('bold') ? 'bg-zinc-700 dark:bg-zinc-600 text-blue-400' : ''}"
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+        'bold',
+      )
+        ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
+        : ''}"
       on:click={toggleBold}
-      title="Bold"
-    >
+      title="Bold">
       <Icon src={Bold} class="w-4 h-4" />
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors {isActive('italic') ? 'bg-zinc-700 dark:bg-zinc-600 text-blue-400' : ''}"
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+        'italic',
+      )
+        ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
+        : ''}"
       on:click={toggleItalic}
-      title="Italic"
-    >
+      title="Italic">
       <Icon src={Italic} class="w-4 h-4" />
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors {isActive('strike') ? 'bg-zinc-700 dark:bg-zinc-600 text-blue-400' : ''}"
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+        'strike',
+      )
+        ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
+        : ''}"
       on:click={toggleStrikethrough}
-      title="Strikethrough"
-    >
+      title="Strikethrough">
       <Icon src={Strikethrough} class="w-4 h-4" />
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors {isActive('code') ? 'bg-zinc-700 dark:bg-zinc-600 text-blue-400' : ''}"
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+        'code',
+      )
+        ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
+        : ''}"
       on:click={toggleCode}
-      title="Code"
-    >
+      title="Code">
       <Icon src={CodeBracket} class="w-4 h-4" />
     </button>
 
-    <div class="w-px h-6 bg-zinc-600 mx-1"></div>
+    <div class="w-px h-6 bg-zinc-300 dark:bg-zinc-600 mx-1"></div>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors {isActive('link') ? 'bg-zinc-700 dark:bg-zinc-600 text-blue-400' : ''}"
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+        'link',
+      )
+        ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
+        : ''}"
       on:click={toggleLink}
-      title={isActive('link') ? 'Remove link' : 'Add link'}
-    >
+      title={isActive('link') ? 'Remove link' : 'Add link'}>
       <Icon src={Link} class="w-4 h-4" />
     </button>
   </div>

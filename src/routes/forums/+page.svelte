@@ -497,9 +497,7 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-
-  .forum-card-animate {
+  }  .forum-card-animate {
     animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     opacity: 0;
   }
