@@ -1,8 +1,12 @@
 <script lang="ts">
-  import { questionnaireService, type QuestionnaireQuestion } from '../services/questionnaireService';
+  import {
+    questionnaireService,
+    type QuestionnaireQuestion,
+  } from '../services/questionnaireService';
   import { cloudAuthService } from '../services/cloudAuthService';
   import { logger } from '../../utils/logger';
   import { onMount } from 'svelte';
+  import { Icon, ChartBar } from 'svelte-hero-icons';
 
   interface Props {
     onOpenModal: (question: QuestionnaireQuestion | null) => void;
@@ -28,19 +32,21 @@
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (!cached) return null;
-      
+
       const parsed: CachedQuestion = JSON.parse(cached);
       const now = Date.now();
-      
+
       // Check if cache is expired
       if (now - parsed.timestamp > CACHE_TTL) {
         localStorage.removeItem(CACHE_KEY);
         return null;
       }
-      
+
       return parsed;
     } catch (err) {
-      logger.error('QuestionnaireWidget', 'getCachedQuestion', `Failed to read cache: ${err}`, { error: err });
+      logger.error('QuestionnaireWidget', 'getCachedQuestion', `Failed to read cache: ${err}`, {
+        error: err,
+      });
       return null;
     }
   }
@@ -54,7 +60,9 @@
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
     } catch (err) {
-      logger.error('QuestionnaireWidget', 'setCachedQuestion', `Failed to write cache: ${err}`, { error: err });
+      logger.error('QuestionnaireWidget', 'setCachedQuestion', `Failed to write cache: ${err}`, {
+        error: err,
+      });
     }
   }
 
@@ -77,7 +85,7 @@
       if (question) {
         currentQuestion = question;
         let votes = 0;
-        
+
         // Try to get results to show vote count (only if user has voted)
         const user = await cloudAuthService.getUser();
         if (user) {
@@ -89,7 +97,7 @@
             }
           }
         }
-        
+
         totalVotes = votes;
         setCachedQuestion(question, votes);
       } else {
@@ -98,7 +106,9 @@
         setCachedQuestion(null, 0);
       }
     } catch (err) {
-      logger.error('QuestionnaireWidget', 'loadQuestion', `Failed to load question: ${err}`, { error: err });
+      logger.error('QuestionnaireWidget', 'loadQuestion', `Failed to load question: ${err}`, {
+        error: err,
+      });
       error = 'Failed to load question';
       currentQuestion = null;
     } finally {
@@ -133,16 +143,19 @@
 
 {#if !loading && currentQuestion}
   <button
-    class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 backdrop-blur-sm border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-none focus:ring-2 accent-ring hover:scale-[1.02]"
+    class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 backdrop-blur-sm border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-none focus:ring-2 accent-ring hover:scale-[1.02]
+    max-lg:px-2 max-lg:py-2 max-lg:w-10 max-lg:h-10 max-lg:justify-center max-lg:gap-0"
     onclick={handleClick}
     aria-label="Open questionnaire">
-    <div class="flex flex-col items-start min-w-0 flex-1">
+    <Icon src={ChartBar} class="w-5 h-5 text-zinc-600 dark:text-zinc-400 shrink-0" />
+    <div class="flex flex-col items-start min-w-0 flex-1 max-lg:hidden">
       <span class="text-xs font-medium text-zinc-600 dark:text-zinc-400 truncate w-full">
         {truncateText(currentQuestion.question, 40)}
       </span>
       {#if totalVotes > 0}
         <span class="text-xs text-zinc-500 dark:text-zinc-500">
-          {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
+          {totalVotes}
+          {totalVotes === 1 ? 'vote' : 'votes'}
         </span>
       {/if}
     </div>
