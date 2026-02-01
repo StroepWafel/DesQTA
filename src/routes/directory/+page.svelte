@@ -204,13 +204,21 @@
       .toLowerCase();
   }
 
-  // Load photos for students
-  async function loadStudentPhotos() {
-    if (devSensitiveInfoHider) return; // Skip if sensitive info hider is enabled
+  // Track which students are currently loading photos
+  let loadingPhotos = $state<Set<number>>(new Set());
+  // Track which page we've already loaded photos for (to prevent re-loading)
+  let loadedPageKey = $state<string>('');
 
-    // Try to match students by name to UUIDs from forum photos
-    // First try personUUID if available, otherwise match by various name formats
-    const photoPromises = students.map(async (student) => {
+  // Load photo for a single student
+  async function loadStudentPhoto(student: Student): Promise<void> {
+    if (devSensitiveInfoHider) return; // Skip if sensitive info hider is enabled
+    if (studentPhotos.has(student.id)) return; // Already loaded
+    if (loadingPhotos.has(student.id)) return; // Already loading
+
+    loadingPhotos = new Set(loadingPhotos);
+    loadingPhotos.add(student.id);
+
+    try {
       let uuid: string | null = null;
 
       // If student has personUUID, use it directly
@@ -221,7 +229,6 @@
         const nameVariants = [
           student.xx_display, // Display name (e.g., "Alice Smith")
           `${student.firstname} ${student.surname}`, // First + Last (e.g., "Alice Smith")
-          `${student.prefname || student.firstname} ${student.surname}`, // Preferred + Last
         ];
 
         // Try exact matches first
@@ -234,9 +241,6 @@
 
         // If no exact match, try normalized matching (case-insensitive, without titles)
         if (!uuid) {
-          const normalizedStudentName = normalizeName(`${student.firstname} ${student.surname}`);
-          // We'll need to get all names from the database and compare
-          // For now, try common variations
           for (const name of nameVariants) {
             if (name) {
               const normalized = normalizeName(name);
@@ -259,7 +263,7 @@
         } catch (e) {
           logger.debug(
             'directory',
-            'loadStudentPhotos',
+            'loadStudentPhoto',
             `Failed to load photo for student ${student.id}: ${e}`,
             {
               error: e,
@@ -269,13 +273,41 @@
           );
         }
       }
-    });
+    } finally {
+      loadingPhotos = new Set(loadingPhotos);
+      loadingPhotos.delete(student.id);
+    }
+  }
 
-    await Promise.allSettled(photoPromises);
+  // Load photos for a list of students (used for current page)
+  async function loadStudentPhotos(studentsToLoad: Student[]): Promise<void> {
+    if (devSensitiveInfoHider) return; // Skip if sensitive info hider is enabled
+
+    // Filter out students that already have photos loaded
+    const studentsNeedingPhotos = studentsToLoad.filter(
+      (student) => !studentPhotos.has(student.id) && !loadingPhotos.has(student.id),
+    );
+
+    if (studentsNeedingPhotos.length === 0) {
+      return; // All photos already loaded
+    }
+
+    // Load photos in parallel with a small delay between batches to avoid overwhelming the system
+    const batchSize = 5;
+    for (let i = 0; i < studentsNeedingPhotos.length; i += batchSize) {
+      const batch = studentsNeedingPhotos.slice(i, i + batchSize);
+      await Promise.allSettled(batch.map((student) => loadStudentPhoto(student)));
+
+      // Small delay between batches to prevent resource overload
+      if (i + batchSize < studentsNeedingPhotos.length) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+
     logger.debug(
       'directory',
       'loadStudentPhotos',
-      `Loaded photos for ${studentsWithPhotos.size} students`,
+      `Loaded photos for ${studentsNeedingPhotos.length} students on current page`,
     );
   }
 
@@ -299,6 +331,16 @@
     const paginated = getPaginatedStudents();
     const ids = paginated.map((s) => s.id).join(',');
     return `${search}-${selectedYear}-${selectedSubSchool}-${selectedHouse}-${selectedCampus}-${filterHasPhoto}-${currentPage}-${ids}`;
+  });
+
+  // Create a stable key for the current page to track if we've loaded photos
+  const currentPageKey = $derived.by(() => {
+    const paginated = getPaginatedStudents();
+    const ids = paginated
+      .map((s) => s.id)
+      .sort()
+      .join(',');
+    return `${currentPage}-${ids}`;
   });
 
   function openImageModal(student: Student) {
@@ -347,10 +389,34 @@
     }
   });
 
-  // Load photos when students are loaded
+  // Load photos for students on the current page only (only when page changes)
+  let isLoadingPhotosForPage = $state(false);
+
   $effect(() => {
-    if (students.length > 0 && !devSensitiveInfoHider) {
-      loadStudentPhotos();
+    if (students.length === 0 || devSensitiveInfoHider || isLoadingPhotosForPage) {
+      return;
+    }
+
+    const pageKey = currentPageKey;
+
+    // Only load if this is a new page we haven't loaded yet
+    if (pageKey && pageKey !== loadedPageKey) {
+      isLoadingPhotosForPage = true;
+      loadedPageKey = pageKey;
+      const paginatedStudents = getPaginatedStudents();
+
+      if (paginatedStudents.length > 0) {
+        loadStudentPhotos(paginatedStudents)
+          .then(() => {
+            isLoadingPhotosForPage = false;
+          })
+          .catch((e) => {
+            logger.error('directory', 'effect', 'Failed to load student photos', { error: e });
+            isLoadingPhotosForPage = false;
+          });
+      } else {
+        isLoadingPhotosForPage = false;
+      }
     }
   });
 
