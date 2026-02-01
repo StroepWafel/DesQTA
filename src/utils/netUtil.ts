@@ -16,7 +16,17 @@ function getRandomItem<T>(arr: T[]): T {
 
 // Generate a random Dicebear avatar URL for sensitive content hider mode
 export function getRandomDicebearAvatar(): string {
-  const styles = ['adventurer', 'avataaars', 'big-ears', 'bottts', 'croodles', 'fun-emoji', 'micah', 'miniavs', 'personas'];
+  const styles = [
+    'adventurer',
+    'avataaars',
+    'big-ears',
+    'bottts',
+    'croodles',
+    'fun-emoji',
+    'micah',
+    'miniavs',
+    'personas',
+  ];
   const style = getRandomItem(styles);
   const seed = Math.random().toString(36).substring(2, 10);
   return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
@@ -40,7 +50,9 @@ async function getDevSensitiveInfoHider(): Promise<boolean> {
   }
   devInfoHiderInFlight = (async () => {
     try {
-      const subset = await invoke<any>('get_settings_subset', { keys: ['dev_sensitive_info_hider'] });
+      const subset = await invoke<any>('get_settings_subset', {
+        keys: ['dev_sensitive_info_hider'],
+      });
       const value = subset?.dev_sensitive_info_hider ?? false;
       devInfoHiderCache = { value, timestamp: Date.now() };
       return value;
@@ -61,11 +73,11 @@ export function invalidateDevSensitiveInfoHiderCache(): void {
 export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promise<any> {
   // Read once with memoization to prevent dozens of calls on startup
   const useMock = await getDevSensitiveInfoHider();
-  
+
   if (useMock) {
     return mockApiResponse(input);
   }
-  
+
   try {
     const response = await invoke('fetch_api_data', {
       url: input,
@@ -77,10 +89,19 @@ export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promis
       returnUrl: init?.return_url || false,
       parseHtml: init?.parse_html || false,
     });
-    
+
     return response;
   } catch (error) {
-    throw new Error(error instanceof Error ? error.message : 'Unknown fetch error');
+    // Tauri errors can be strings or Error objects
+    let errorMessage = 'Unknown fetch error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = String((error as any).message);
+    }
+    throw new Error(errorMessage);
   }
 }
 
