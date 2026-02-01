@@ -10,6 +10,7 @@ import { cache } from '../../utils/cache';
 import { logger } from '../../utils/logger';
 import { idbCacheGet } from '../services/idb';
 import { isOfflineMode } from '../utils/offlineMode';
+import { notificationService } from './notificationService';
 
 /**
  * Load all cached data from SQLite into memory cache for instant access
@@ -204,10 +205,35 @@ export async function initializeApp(): Promise<void> {
   // Step 1: Load cached data from SQLite immediately (blocks until loaded)
   await loadCachedDataOnStartup();
 
-  // Step 2: Trigger background sync (non-blocking)
+  // Step 2: Initialize notification system
+  try {
+    // Migrate localStorage data to database (one-time)
+    await notificationService.migrateLocalStorageData();
+
+    // Start background notification checker
+    notificationService.startBackgroundChecker();
+
+    // Run initial notification check
+    notificationService.checkAndSendDueNotifications().catch((e) => {
+      logger.error('startup', 'initializeApp', 'Initial notification check failed', { error: e });
+    });
+
+    // Cleanup old notifications (keep last 30 days)
+    notificationService.cleanupOldNotifications(30).catch((e) => {
+      logger.debug('startup', 'initializeApp', 'Notification cleanup error (non-critical)', {
+        error: e,
+      });
+    });
+  } catch (e) {
+    logger.error('startup', 'initializeApp', 'Failed to initialize notification system', {
+      error: e,
+    });
+  }
+
+  // Step 3: Trigger background sync (non-blocking)
   triggerBackgroundSync();
 
-  // Step 3: Check for updates silently in background (non-blocking, desktop only)
+  // Step 4: Check for updates silently in background (non-blocking, desktop only)
   checkForUpdatesOnStartup().catch((e) => {
     logger.debug('startup', 'initializeApp', 'Update check error (non-critical)', { error: e });
   });

@@ -293,6 +293,35 @@ fn init_schema(conn: &Connection) -> SqlResult<()> {
         [],
     )?;
 
+    // Notifications table: stores scheduled OS notifications for assessments
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            assessment_id INTEGER NOT NULL,
+            notification_type TEXT NOT NULL,
+            scheduled_for INTEGER NOT NULL,
+            sent_at INTEGER,
+            created_at INTEGER NOT NULL,
+            UNIQUE(assessment_id, notification_type)
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_notifications_scheduled_for ON notifications(scheduled_for)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_notifications_assessment_id ON notifications(assessment_id)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_notifications_sent_at ON notifications(sent_at)",
+        [],
+    )?;
+
     // Clean up expired cache entries
     cleanup_expired_cache(conn)?;
 
@@ -809,5 +838,147 @@ pub fn db_get_assessments_by_year(year: Option<i32>) -> Result<Vec<Value>, Strin
         }
 
         Ok(results)
+    }).map_err(|e| e.to_string())
+}
+
+// ========== Notification Operations ==========
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Notification {
+    pub id: i64,
+    pub assessment_id: i64,
+    pub notification_type: String,
+    pub scheduled_for: i64,
+    pub sent_at: Option<i64>,
+    pub created_at: i64,
+}
+
+#[tauri::command]
+pub fn db_notification_schedule(
+    assessment_id: i64,
+    notification_type: String,
+    scheduled_for: i64,
+) -> Result<i64, String> {
+    let now = Utc::now().timestamp();
+    
+    with_conn(|conn| {
+        // Use INSERT OR REPLACE to handle unique constraint
+        conn.execute(
+            "INSERT OR REPLACE INTO notifications (assessment_id, notification_type, scheduled_for, sent_at, created_at) 
+             VALUES (?1, ?2, ?3, NULL, ?4)",
+            params![assessment_id, notification_type, scheduled_for, now],
+        )
+        .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+
+        let id = conn.last_insert_rowid();
+        Ok(id)
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_notification_get_due(now_timestamp: i64) -> Result<Vec<Notification>, String> {
+    with_conn(|conn| {
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, assessment_id, notification_type, scheduled_for, sent_at, created_at 
+                 FROM notifications 
+                 WHERE scheduled_for <= ? AND sent_at IS NULL 
+                 ORDER BY scheduled_for ASC"
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+
+        let rows = stmt
+            .query_map(params![now_timestamp], |row| {
+                Ok(Notification {
+                    id: row.get(0)?,
+                    assessment_id: row.get(1)?,
+                    notification_type: row.get(2)?,
+                    scheduled_for: row.get(3)?,
+                    sent_at: row.get(4)?,
+                    created_at: row.get(5)?,
+                })
+            })
+            .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+        }
+
+        Ok(results)
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_notification_mark_sent(notification_id: i64) -> Result<(), String> {
+    let now = Utc::now().timestamp();
+    
+    with_conn(|conn| {
+        conn.execute(
+            "UPDATE notifications SET sent_at = ? WHERE id = ?",
+            params![now, notification_id],
+        )
+        .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_notification_get_by_assessment(assessment_id: i64) -> Result<Vec<Notification>, String> {
+    with_conn(|conn| {
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, assessment_id, notification_type, scheduled_for, sent_at, created_at 
+                 FROM notifications 
+                 WHERE assessment_id = ? 
+                 ORDER BY scheduled_for ASC"
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+
+        let rows = stmt
+            .query_map(params![assessment_id], |row| {
+                Ok(Notification {
+                    id: row.get(0)?,
+                    assessment_id: row.get(1)?,
+                    notification_type: row.get(2)?,
+                    scheduled_for: row.get(3)?,
+                    sent_at: row.get(4)?,
+                    created_at: row.get(5)?,
+                })
+            })
+            .map_err(|e| anyhow::anyhow!("Query error: {}", e))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row.map_err(|e| anyhow::anyhow!("Row error: {}", e))?);
+        }
+
+        Ok(results)
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_notification_cleanup_old(days_to_keep: i64) -> Result<(), String> {
+    let cutoff = Utc::now().timestamp() - (days_to_keep * 24 * 60 * 60);
+    
+    with_conn(|conn| {
+        conn.execute(
+            "DELETE FROM notifications WHERE sent_at IS NOT NULL AND sent_at < ?",
+            params![cutoff],
+        )
+        .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_notification_delete_by_assessment(assessment_id: i64) -> Result<(), String> {
+    with_conn(|conn| {
+        conn.execute(
+            "DELETE FROM notifications WHERE assessment_id = ?",
+            params![assessment_id],
+        )
+        .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
+        Ok(())
     }).map_err(|e| e.to_string())
 }

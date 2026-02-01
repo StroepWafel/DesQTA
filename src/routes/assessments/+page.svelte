@@ -22,10 +22,10 @@
   // Relative imports
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
-  import { notify } from '../../utils/notify';
   import { logger } from '../../utils/logger';
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import { checkAndCalculateNewGrades } from '$lib/services/backgroundGradeService';
+  import { notificationService } from '$lib/services/notificationService';
 
   // Types
   import type { Assessment, Subject, LessonColour, AssessmentsOverviewData } from '$lib/types';
@@ -39,7 +39,6 @@
   let loadingAssessments = $state<boolean>(true);
   let selectedTab = $state<'list' | 'board' | 'calendar' | 'gantt'>('list');
   let subjectFilters: Record<string, boolean> = {};
-  let remindersEnabled = true;
   let groupBy = $state<'subject' | 'month' | 'status'>('subject');
 
   // Year filter state
@@ -127,36 +126,6 @@
       loadingAssessments = false;
     }
   }
-
-  function scheduleAssessmentReminders(assessments: Assessment[]) {
-    if (!remindersEnabled) return;
-    const now = Date.now();
-    const scheduled = new Set(
-      JSON.parse(localStorage.getItem('scheduledAssessmentReminders') || '[]'),
-    );
-
-    for (const a of assessments) {
-      const due = new Date(a.due).getTime();
-      const reminderTime = due - 24 * 60 * 60 * 1000; // 1 day before
-      if (reminderTime > now && !scheduled.has(a.id)) {
-        const timeout = reminderTime - now;
-        setTimeout(() => {
-          notify({
-            title: 'Assessment Reminder',
-            body: `${a.title} is due tomorrow!`,
-          });
-        }, timeout);
-        scheduled.add(a.id);
-      }
-    }
-    localStorage.setItem('scheduledAssessmentReminders', JSON.stringify(Array.from(scheduled)));
-  }
-
-  $effect(() => {
-    if (upcomingAssessments.length) {
-      scheduleAssessmentReminders(upcomingAssessments);
-    }
-  });
 
   function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
