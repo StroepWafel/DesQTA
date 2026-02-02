@@ -251,6 +251,8 @@ pub fn run() {
             login::cleanup_login_windows,
             login::has_login_windows,
             login::clear_webview_data,
+            login::direct_login,
+            login::reauthenticate,
             get_seqta_base_url,
             profiles::get_current_profile,
             profiles::list_profiles,

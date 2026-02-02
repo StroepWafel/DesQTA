@@ -141,6 +141,9 @@ pub struct Session {
     pub base_url: String,
     pub jsessionid: String,
     pub additional_cookies: Vec<Cookie>,
+    /// Stored credentials for direct login (encrypted)
+    pub stored_username: Option<String>,
+    pub stored_password: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -284,6 +287,8 @@ impl Session {
             base_url: String::new(),
             jsessionid: String::new(),
             additional_cookies: Vec::new(),
+            stored_username: None,
+            stored_password: None,
         }
     }
 

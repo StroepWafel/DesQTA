@@ -84,6 +84,26 @@ export const authService = {
     console.log('[AUTH_SERVICE] create_login_window command completed');
   },
 
+  async directLogin(baseUrl: string, username: string, password: string): Promise<void> {
+    logger.logFunctionEntry('authService', 'directLogin', { baseUrl, username: '***' });
+    logger.info('authService', 'directLogin', 'Starting direct login');
+
+    try {
+      await invoke('direct_login', {
+        baseUrl: baseUrl.trim(),
+        username: username.trim(),
+        password: password.trim(),
+      });
+      logger.info('authService', 'directLogin', 'Direct login successful');
+      logger.logFunctionExit('authService', 'directLogin', { success: true });
+      // App will reload automatically after successful login
+    } catch (error) {
+      logger.error('authService', 'directLogin', `Direct login failed: ${error}`, { error });
+      logger.logFunctionExit('authService', 'directLogin', { success: false, error });
+      throw error;
+    }
+  },
+
   async logout(): Promise<boolean> {
     console.log('[AUTH_SERVICE] Logging out');
     // Clear user info cache on logout

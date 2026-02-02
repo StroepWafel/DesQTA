@@ -49,7 +49,12 @@
   let liveScanError = $state('');
   let html5QrLive: Html5Qrcode | null = null;
   let isMobile = $state(false);
-  let loginMethod = $state<'url' | 'qr'>('url'); // Default to manual URL for desktop
+  let loginMethod = $state<'url' | 'qr' | 'direct'>('url'); // Default to manual URL for desktop
+  let directUsername = $state('');
+  let directPassword = $state('');
+  let directSeqtaUrl = $state('');
+  let directLoginError = $state('');
+  let directLoginLoading = $state(false);
   let mobileSsoUrl = $state(''); // For manual SSO URL entry on mobile
   let showMobileSsoInput = $state(false); // Toggle for mobile SSO URL input
   let showPreviewModal = $state(false);
@@ -409,6 +414,30 @@
 
     return value;
   }
+
+  async function handleDirectLogin() {
+    if (!directSeqtaUrl.trim() || !directUsername.trim() || !directPassword.trim()) {
+      directLoginError = 'Please fill in all fields';
+      return;
+    }
+
+    directLoginError = '';
+    directLoginLoading = true;
+
+    try {
+      await invoke('direct_login', {
+        baseUrl: directSeqtaUrl.trim(),
+        username: directUsername.trim(),
+        password: directPassword.trim(),
+      });
+      // Success - app will reload automatically
+    } catch (error) {
+      console.error('[DIRECT_LOGIN] Failed:', error);
+      directLoginError =
+        typeof error === 'string' ? error : 'Login failed. Please check your credentials.';
+      directLoginLoading = false;
+    }
+  }
 </script>
 
 <div
@@ -632,10 +661,12 @@
                         class="absolute top-1 bottom-1 bg-white/30 dark:bg-zinc-700/40 backdrop-blur-xl rounded-xl shadow-xs transition-all duration-300 ease-in-out border border-white/40 dark:border-zinc-600/40"
                         style="left: {loginMethod === 'qr'
                           ? '4px'
-                          : 'calc(50% - 4px)'}; width: calc(50% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
+                          : loginMethod === 'url'
+                            ? 'calc(33.333% - 4px)'
+                            : 'calc(66.666% - 4px)'}; width: calc(33.333% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                       </div>
                       <button
-                        class="px-6 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
+                        class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
                         'qr'
                           ? 'text-indigo-600 dark:text-indigo-400'
                           : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
@@ -649,12 +680,20 @@
                         <T key="login.qr_code" fallback="QR Code" />
                       </button>
                       <button
-                        class="px-6 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
+                        class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
                         'url'
                           ? 'text-indigo-600 dark:text-indigo-400'
                           : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
                         onclick={() => (loginMethod = 'url')}>
                         <T key="login.manual_url" fallback="Manual URL" />
+                      </button>
+                      <button
+                        class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
+                        'direct'
+                          ? 'text-indigo-600 dark:text-indigo-400'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
+                        onclick={() => (loginMethod = 'direct')}>
+                        <T key="login.direct_login" fallback="Direct Login" />
                       </button>
                     </div>
                   </div>
@@ -679,7 +718,9 @@
                     ? '200px'
                     : loginMethod === 'qr'
                       ? '350px'
-                      : '200px'}; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
+                      : loginMethod === 'direct'
+                        ? '400px'
+                        : '200px'}; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                   <!-- Mobile SSO URL Input -->
                   {#if isMobile && showMobileSsoInput}
                     <div class="space-y-6">
@@ -856,6 +897,84 @@
                       </div>
                     </div>
                   {/if}
+
+                  <!-- Direct Login Method -->
+                  {#if loginMethod === 'direct'}
+                    <div class="space-y-6">
+                      <div class="text-center space-y-2">
+                        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">
+                          <T key="login.direct_login_title" fallback="Direct Login" />
+                        </h2>
+                        <p class="text-zinc-600 dark:text-zinc-400">
+                          <T
+                            key="login.direct_login_description"
+                            fallback="Enter your credentials directly (last resort method)" />
+                        </p>
+                      </div>
+
+                      <div
+                        class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4">
+                        <div class="flex items-start space-x-3">
+                          <Icon
+                            src={QuestionMarkCircle}
+                            class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                          <p class="text-sm text-amber-700 dark:text-amber-300">
+                            <T
+                              key="login.direct_login_warning"
+                              fallback="Your credentials will be stored securely and encrypted. Use this method only if QR code or browser login fails." />
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="space-y-4">
+                        <div class="relative px-4">
+                          <Input
+                            type="text"
+                            bind:value={directSeqtaUrl}
+                            oninput={(e) => {
+                              const el = e.target as HTMLInputElement;
+                              const normalized = normalizeSeqtaUrlInput(el.value);
+                              if (el.value !== normalized) {
+                                el.value = normalized;
+                              }
+                              directSeqtaUrl = normalized;
+                            }}
+                            placeholder={$_('login.url_placeholder', {
+                              default: 'school.seqta.com.au',
+                            })}
+                            inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                        </div>
+                        <div class="relative px-4">
+                          <Input
+                            type="text"
+                            bind:value={directUsername}
+                            placeholder={$_('login.username_placeholder', {
+                              default: 'Username',
+                            })}
+                            inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                        </div>
+                        <div class="relative px-4">
+                          <Input
+                            type="password"
+                            bind:value={directPassword}
+                            onkeydown={(e: KeyboardEvent) => {
+                              if (
+                                e.key === 'Enter' &&
+                                directSeqtaUrl.trim() &&
+                                directUsername.trim() &&
+                                directPassword.trim()
+                              ) {
+                                handleDirectLogin();
+                              }
+                            }}
+                            placeholder={$_('login.password_placeholder', {
+                              default: 'Password',
+                            })}
+                            inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
                 </div>
 
                 <!-- Status Messages -->
@@ -972,68 +1091,115 @@
                   </div>
                 {/if}
 
+                {#if directLoginError}
+                  <div
+                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800 status-message-animate"
+                    transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
+                    <div class="flex items-center space-x-3">
+                      <div class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fill-rule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <span class="text-red-700 dark:text-red-300 font-medium"
+                        >{directLoginError}</span>
+                    </div>
+                  </div>
+                {/if}
+
+                {#if directLoginLoading}
+                  <div
+                    class="flex items-center justify-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800 status-message-animate"
+                    transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
+                    <div
+                      class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
+                      style="animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
+                    </div>
+                    <span class="text-blue-700 dark:text-blue-300 font-medium"
+                      ><T key="login.processing_login" fallback="Logging in..." /></span>
+                  </div>
+                {/if}
+
                 <!-- Sign In Button -->
-                <Button
-                  variant="primary"
-                  size="lg"
-                  fullWidth={true}
-                  onclick={() => {
-                    jwtExpiredError = false;
-                    if (isMobile && showMobileSsoInput && mobileSsoUrl.trim()) {
-                      // Use the manually entered SSO URL
-                      onUrlChange(mobileSsoUrl.trim());
-                    }
-                    // Show instructions overlay for manual auth
-                    if (loginMethod === 'url') {
-                      showManualAuthInstructions = true;
+                {#if loginMethod === 'direct'}
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    fullWidth={true}
+                    onclick={handleDirectLogin}
+                    disabled={directLoginLoading ||
+                      !directSeqtaUrl.trim() ||
+                      !directUsername.trim() ||
+                      !directPassword.trim()}
+                    class="py-4 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200 transform hover:scale-105 active:scale-95">
+                    <T key="login.sign_in" fallback="Sign In to DesQTA" />
+                  </Button>
+                {:else}
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    fullWidth={true}
+                    onclick={() => {
+                      jwtExpiredError = false;
+                      if (isMobile && showMobileSsoInput && mobileSsoUrl.trim()) {
+                        // Use the manually entered SSO URL
+                        onUrlChange(mobileSsoUrl.trim());
+                      }
+                      // Show instructions overlay for manual auth
+                      if (loginMethod === 'url') {
+                        showManualAuthInstructions = true;
 
-                      // Check for session completion or window closure to hide overlay
-                      const checkSessionInterval = setInterval(async () => {
-                        try {
-                          const sessionExists = await authService.checkSession();
-                          if (sessionExists) {
-                            showManualAuthInstructions = false;
+                        // Check for session completion or window closure to hide overlay
+                        const checkSessionInterval = setInterval(async () => {
+                          try {
+                            const sessionExists = await authService.checkSession();
+                            if (sessionExists) {
+                              showManualAuthInstructions = false;
+                              clearInterval(checkSessionInterval);
+                              return;
+                            }
+
+                            // Check if login window still exists
+                            const hasWindows = await invoke<boolean>('has_login_windows');
+                            if (!hasWindows) {
+                              // Window was closed, hide overlay
+                              showManualAuthInstructions = false;
+                              clearInterval(checkSessionInterval);
+                            }
+                          } catch {
+                            // Ignore errors
+                          }
+                        }, 1000);
+
+                        // Clean up after 5 minutes
+                        setTimeout(
+                          () => {
                             clearInterval(checkSessionInterval);
-                            return;
-                          }
-
-                          // Check if login window still exists
-                          const hasWindows = await invoke<boolean>('has_login_windows');
-                          if (!hasWindows) {
-                            // Window was closed, hide overlay
-                            showManualAuthInstructions = false;
-                            clearInterval(checkSessionInterval);
-                          }
-                        } catch {
-                          // Ignore errors
-                        }
-                      }, 1000);
-
-                      // Clean up after 5 minutes
-                      setTimeout(
-                        () => {
-                          clearInterval(checkSessionInterval);
-                          if (showManualAuthInstructions) {
-                            showManualAuthInstructions = false;
-                          }
-                        },
-                        5 * 60 * 1000,
-                      );
-                    }
-                    onStartLogin();
-                  }}
-                  disabled={jwtExpiredError ||
-                    (loginMethod === 'url' && !seqtaUrl.trim()) ||
-                    (loginMethod === 'qr' &&
-                      !qrSuccess &&
-                      !(
-                        isMobile &&
-                        showMobileSsoInput &&
-                        mobileSsoUrl.trim().startsWith('seqtalearn://')
-                      ))}
-                  class="py-4 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none">
-                  <T key="login.sign_in" fallback="Sign In to DesQTA" />
-                </Button>
+                            if (showManualAuthInstructions) {
+                              showManualAuthInstructions = false;
+                            }
+                          },
+                          5 * 60 * 1000,
+                        );
+                      }
+                      onStartLogin();
+                    }}
+                    disabled={jwtExpiredError ||
+                      (loginMethod === 'url' && !seqtaUrl.trim()) ||
+                      (loginMethod === 'qr' &&
+                        !qrSuccess &&
+                        !(
+                          isMobile &&
+                          showMobileSsoInput &&
+                          mobileSsoUrl.trim().startsWith('seqtalearn://')
+                        ))}
+                    class="py-4 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200 transform hover:scale-105 active:scale-95">
+                    <T key="login.sign_in" fallback="Sign In to DesQTA" />
+                  </Button>
+                {/if}
 
                 <!-- Help Link -->
                 <div class="text-center">

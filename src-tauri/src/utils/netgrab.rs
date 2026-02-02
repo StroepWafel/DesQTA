@@ -15,6 +15,7 @@ use base64::{engine::general_purpose, Engine as _};
 
 use crate::logger;
 use crate::session;
+use crate::login;
 
 static GLOBAL_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
@@ -136,6 +137,94 @@ async fn append_default_headers(req: RequestBuilder) -> RequestBuilder {
     req.headers(headers)
 }
 
+/// Re-authenticate inline without app handle (for use in netgrab)
+async fn reauthenticate_inline(
+    base_url: &str,
+    username: &str,
+    password: &str,
+) -> Result<String, String> {
+    use reqwest::header;
+    use serde_json::json;
+    
+    // Normalize base_url
+    let http_url = if base_url.starts_with("https://") {
+        base_url.to_string()
+    } else {
+        format!("https://{}", base_url)
+    };
+
+    let login_url = format!("{}/seqta/student/login", http_url);
+
+    // Create HTTP client with cookie store enabled
+    let client = reqwest::Client::builder()
+        .cookie_store(true)
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    // Prepare login request body
+    let login_body = json!({
+        "username": username,
+        "password": password,
+        "mode": "normal",
+        "query": null
+    });
+
+    // Make login request
+    let response = client
+        .post(&login_url)
+        .header("Content-Type", "application/json; charset=utf-8")
+        .json(&login_body)
+        .send()
+        .await
+        .map_err(|e| format!("Login request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
+            return Err("Invalid username or password".to_string());
+        }
+        return Err(format!("Login failed with status: {}", status));
+    }
+
+    // Extract JSESSIONID from Set-Cookie header
+    let jsessionid = response
+        .headers()
+        .get("Set-Cookie")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|cookie_str| {
+            cookie_str
+                .split(';')
+                .find(|part| part.trim().starts_with("JSESSIONID="))
+                .map(|jsession_part| {
+                    jsession_part
+                        .trim()
+                        .strip_prefix("JSESSIONID=")
+                        .unwrap_or("")
+                        .to_string()
+                })
+        })
+        .ok_or("Could not get JSESSIONID from response headers")?;
+
+    // Validate session with a heartbeat request
+    let heartbeat_url = format!("{}/seqta/student/heartbeat", http_url);
+    let heartbeat_body = json!({ "heartbeat": true });
+
+    let heartbeat_response = client
+        .post(&heartbeat_url)
+        .header("Cookie", format!("JSESSIONID={}", jsessionid))
+        .header("Content-Type", "application/json; charset=utf-8")
+        .json(&heartbeat_body)
+        .send()
+        .await
+        .map_err(|e| format!("Heartbeat request failed: {}", e))?;
+
+    if !heartbeat_response.status().is_success() {
+        return Err("Session validation failed".to_string());
+    }
+
+    Ok(jsessionid)
+}
+
 #[tauri::command]
 pub async fn fetch_api_data(
     url: &str,
@@ -173,6 +262,11 @@ pub async fn fetch_api_data(
         format!("{}{}", session.base_url.parse::<String>().unwrap(), url)
     };
 
+    // Clone headers and parameters for potential retry
+    let headers_clone = headers.clone();
+    let parameters_clone = parameters.clone();
+    let body_clone = body.clone();
+
     let mut request = match method {
         RequestMethod::GET => client.get(&full_url),
         RequestMethod::POST => client.post(&full_url),
@@ -181,15 +275,15 @@ pub async fn fetch_api_data(
     request = append_default_headers(request).await;
 
     // Add custom headers if provided
-    if let Some(headers) = headers {
+    if let Some(headers) = &headers {
         for (key, value) in headers {
-            request = request.header(&key, value);
+            request = request.header(key, value);
         }
     }
 
     // Add query parameters if provided
-    if let Some(params) = parameters {
-        request = request.query(&params);
+    if let Some(params) = &parameters {
+        request = request.query(params);
     }
 
     // Add body for POST requests if provided
@@ -245,6 +339,163 @@ pub async fn fetch_api_data(
 
             // Capture status before consuming response
             let status = resp.status();
+            
+            // Check for HTTP-level authentication failures
+            let is_http_auth_failure = status == reqwest::StatusCode::UNAUTHORIZED 
+                || status == reqwest::StatusCode::FORBIDDEN;
+            
+            // For non-image, non-URL responses, check the body for authentication failures
+            // SEQTA APIs can return HTTP 200 with {"status":"401"} in the body
+            if !is_image && !return_url {
+                // Read the response text to check for auth failures
+                let response_text = resp.text().await.map_err(|e| e.to_string())?;
+                
+                // Try to parse as JSON and check for status: "401"
+                let mut is_body_auth_failure = false;
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&response_text) {
+                    if let Some(status_str) = json.get("status").and_then(|s| s.as_str()) {
+                        if status_str == "401" || status_str == "failed" {
+                            is_body_auth_failure = true;
+                        }
+                    }
+                }
+                
+                // If we detected auth failure (either HTTP status or body status), attempt re-auth
+                if (is_http_auth_failure || is_body_auth_failure) 
+                    && session.stored_username.is_some() 
+                    && session.stored_password.is_some() 
+                {
+                    if let Some(logger) = logger::get_logger() {
+                        let _ = logger.log(
+                            logger::LogLevel::INFO,
+                            "netgrab",
+                            "fetch_api_data",
+                            "Authentication failed, attempting re-authentication",
+                            serde_json::json!({
+                                "url": url,
+                                "http_status": status.as_u16(),
+                                "body_auth_failure": is_body_auth_failure
+                            }),
+                        );
+                    }
+                    
+                    // Attempt re-authentication inline using stored credentials
+                    let username = session.stored_username.clone().unwrap();
+                    let password = session.stored_password.clone().unwrap();
+                    let base_url = session.base_url.clone();
+                    
+                    // Perform re-authentication directly
+                    match reauthenticate_inline(&base_url, &username, &password).await {
+                        Ok(new_jsessionid) => {
+                            // Update session with new JSESSIONID
+                            let mut updated_session = session::Session::load();
+                            updated_session.jsessionid = new_jsessionid;
+                            if let Err(e) = updated_session.save() {
+                                if let Some(logger) = logger::get_logger() {
+                                    let _ = logger.log(
+                                        logger::LogLevel::ERROR,
+                                        "netgrab",
+                                        "fetch_api_data",
+                                        &format!("Failed to save updated session: {}", e),
+                                        serde_json::json!({}),
+                                    );
+                                }
+                            }
+                            
+                            // Reload session and retry the original request
+                            let retry_session = session::Session::load();
+                            let mut retry_request = match method {
+                                RequestMethod::GET => client.get(&full_url),
+                                RequestMethod::POST => client.post(&full_url),
+                            };
+                            
+                            retry_request = append_default_headers(retry_request).await;
+                            
+                            // Add custom headers if provided
+                            if let Some(headers) = &headers_clone {
+                                for (key, value) in headers {
+                                    retry_request = retry_request.header(key, value);
+                                }
+                            }
+                            
+                            // Add query parameters if provided
+                            if let Some(params) = &parameters_clone {
+                                retry_request = retry_request.query(params);
+                            }
+                            
+                            // Add body for POST requests if provided
+                            if let RequestMethod::POST = method {
+                                let mut final_body = body_clone.unwrap_or_else(|| json!({}));
+                                if let Some(body_obj) = final_body.as_object_mut() {
+                                    if retry_session.jsessionid.starts_with("eyJ") {
+                                        body_obj.insert("jwt".to_string(), json!(retry_session.jsessionid));
+                                    }
+                                }
+                                retry_request = retry_request.json(&final_body);
+                            }
+                            
+                            // Retry the request
+                            match retry_request.send().await {
+                                Ok(retry_resp) => {
+                                    let retry_status = retry_resp.status();
+                                    if retry_status.is_success() {
+                                        let retry_text = retry_resp.text().await.map_err(|e| e.to_string())?;
+                                        return Ok(retry_text);
+                                    } else {
+                                        return Err(format!("Request failed after re-authentication: {}", retry_status));
+                                    }
+                                }
+                                Err(e) => {
+                                    return Err(format!("Request failed after re-authentication: {}", e));
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            // Re-authentication failed
+                            return Err(format!("Re-authentication failed: {}", e));
+                        }
+                    }
+                } else if is_body_auth_failure || is_http_auth_failure {
+                    // Auth failure but no stored credentials
+                    return Err(format!("Authentication failed: {}", response_text));
+                }
+                
+                // Return the response text (no auth failure detected)
+                return Ok(response_text);
+            }
+            
+            // For HTTP-level auth failures on image/URL requests
+            if is_http_auth_failure 
+                && session.stored_username.is_some() 
+                && session.stored_password.is_some() 
+            {
+                if let Some(logger) = logger::get_logger() {
+                    let _ = logger.log(
+                        logger::LogLevel::INFO,
+                        "netgrab",
+                        "fetch_api_data",
+                        "Authentication failed (HTTP), attempting re-authentication",
+                        serde_json::json!({
+                            "url": url,
+                            "http_status": status.as_u16()
+                        }),
+                    );
+                }
+                
+                let username = session.stored_username.clone().unwrap();
+                let password = session.stored_password.clone().unwrap();
+                let base_url = session.base_url.clone();
+                
+                match reauthenticate_inline(&base_url, &username, &password).await {
+                    Ok(_) => {
+                        // Retry logic would go here for image/URL requests if needed
+                        return Err(format!("AUTH_REQUIRED: Session expired, re-authentication completed. Please retry request."));
+                    }
+                    Err(e) => {
+                        return Err(format!("Re-authentication failed: {}", e));
+                    }
+                }
+            }
 
             let result = if is_image == true {
                 // Get the bytes (await and ? to bubble up errors)
@@ -256,6 +507,7 @@ pub async fn fetch_api_data(
                 let url = String::from(resp.url().as_str());
                 Ok(url)
             } else {
+                // This should not be reached due to the check above, but keeping for safety
                 let text = resp.text().await.map_err(|e| e.to_string())?;
                 Ok(text)
             };
