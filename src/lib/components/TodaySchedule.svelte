@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { goto } from '$app/navigation';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import {
@@ -119,6 +120,18 @@
     loadLessons();
   }
 
+  function formatLessonDate(date: string | Date): string {
+    if (typeof date === 'string') {
+      // If it's already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return date;
+      }
+      // Otherwise, parse and format
+      return formatDate(new Date(date));
+    }
+    return formatDate(date);
+  }
+
   function lessonsSubtitle() {
     const today = new Date();
     const diff = ~~((today.getTime() - currentSelectedDate.getTime()) / 86_400_000);
@@ -155,14 +168,12 @@
           value={formatDate(currentSelectedDate)}
           onchange={onDateChange}
           class="w-full sm:w-auto px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-accent-500 hover:border-accent-400 dark:hover:border-accent-400"
-          title={$_('dashboard.select_date') || 'Select a date'}
-        />
-        <Icon 
-          src={CalendarDays} 
-          class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" 
-        />
+          title={$_('dashboard.select_date') || 'Select a date'} />
+        <Icon
+          src={CalendarDays}
+          class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
       </div>
-      
+
       <!-- Today Button -->
       <button
         onclick={goToToday}
@@ -170,7 +181,7 @@
         title={$_('dashboard.go_to_today') || 'Go to today'}>
         <T key="dashboard.today" fallback="Today" />
       </button>
-      
+
       <!-- Navigation Buttons -->
       <div class="flex gap-1 justify-center sm:justify-start">
         <button
@@ -210,7 +221,9 @@
           <T key="dashboard.no_lessons_today" fallback="No lessons today!" />
         </p>
         <p class="text-lg text-center text-zinc-600 dark:text-zinc-300">
-          <T key="dashboard.enjoy_free_time" fallback="Enjoy your free time or check your other tasks." />
+          <T
+            key="dashboard.enjoy_free_time"
+            fallback="Enjoy your free time or check your other tasks." />
         </p>
       </div>
     </div>
@@ -222,8 +235,7 @@
           style="border-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
           <div class="flex relative flex-col flex-1 gap-2 p-3 backdrop-blur-xs sm:p-4">
             <div class="flex justify-between items-center">
-              <span
-                class="text-base font-bold truncate text-zinc-900 sm:text-lg dark:text-white"
+              <span class="text-base font-bold truncate text-zinc-900 sm:text-lg dark:text-white"
                 >{lesson.description}</span>
               {#if lesson.active}
                 <span
@@ -233,16 +245,11 @@
             </div>
             <div
               class="flex items-center mt-1 text-sm text-zinc-700 sm:text-base dark:text-zinc-300">
-              <Icon
-                src={AcademicCap}
-                class="mr-1.5 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+              <Icon src={AcademicCap} class="mr-1.5 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
               <span class="truncate">{lesson.staff}</span>
             </div>
-            <div
-              class="flex items-center text-sm text-zinc-700 sm:text-base dark:text-zinc-300">
-              <Icon
-                src={BuildingOffice}
-                class="mr-1.5 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <div class="flex items-center text-sm text-zinc-700 sm:text-base dark:text-zinc-300">
+              <Icon src={BuildingOffice} class="mr-1.5 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
               <span class="truncate">{lesson.room}</span>
             </div>
             <div
@@ -257,35 +264,38 @@
             {/if}
 
             {#if lesson.programmeID !== 0}
-              {@const lessonYear = new Date(lesson.date).getFullYear()}
+              {@const formattedDate = formatLessonDate(lesson.date)}
+              {@const lessonYear = new Date(formattedDate).getFullYear()}
               <div class="flex gap-3">
                 <Button
                   variant="ghost"
                   size="sm"
                   icon={DocumentText}
                   ariaLabel={$_('dashboard.view_assessment') || 'View Assessment'}
-                  onclick={() =>
-                    (location.href = `/assessments?code=${lesson.code}&date=${lesson.date}&year=${lessonYear}`)}
-                  class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"
-                />
+                  onclick={async () => {
+                    await goto(
+                      `/assessments?code=${lesson.code}&date=${formattedDate}&year=${lessonYear}`,
+                    );
+                  }}
+                  class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50" />
                 <Button
                   variant="ghost"
                   size="sm"
                   icon={BookOpen}
                   ariaLabel={$_('dashboard.view_course') || 'View Course'}
-                  onclick={() =>
-                    (location.href = `/courses?code=${lesson.code}&date=${lesson.date}`)}
-                  class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"
-                />
+                  onclick={async () => {
+                    await goto(`/courses?code=${lesson.code}&date=${formattedDate}`);
+                  }}
+                  class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50" />
                 <Button
                   variant="ghost"
                   size="sm"
                   icon={CalendarDays}
                   ariaLabel={$_('dashboard.view_timetable') || 'View Timetable'}
-                  onclick={() =>
-                    (location.href = `/timetable?date=${lesson.date}`)}
-                  class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50"
-                />
+                  onclick={async () => {
+                    await goto(`/timetable?date=${formattedDate}`);
+                  }}
+                  class="w-9 h-9 p-0 bg-zinc-200/70 dark:bg-zinc-800/70 hover:bg-accent-500 hover:text-white border border-zinc-300/50 dark:border-zinc-700/50" />
               </div>
             {/if}
           </div>
@@ -293,4 +303,4 @@
       {/each}
     </div>
   {/if}
-</div> 
+</div>
