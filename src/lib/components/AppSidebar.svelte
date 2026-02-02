@@ -1,9 +1,11 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { Icon } from 'svelte-hero-icons';
   import { XMark } from 'svelte-hero-icons';
   import { _ } from '../i18n';
   import T from './T.svelte';
+  import { onMount, onDestroy } from 'svelte';
 
   interface MenuItem {
     labelKey: string;
@@ -19,6 +21,8 @@
 
   let { sidebarOpen, menu, onMenuItemClick }: Props = $props();
 
+  let asideElement: HTMLElement | null = $state(null);
+
   function handleMenuItemClick() {
     if (onMenuItemClick) {
       onMenuItemClick();
@@ -30,10 +34,74 @@
       onMenuItemClick();
     }
   }
+
+  function getCurrentPageIndex(): number {
+    const currentPath = $page.url.pathname;
+    return menu.findIndex((item) => {
+      if (item.path === '/') {
+        return currentPath === '/';
+      }
+      return currentPath.startsWith(item.path);
+    });
+  }
+
+  function navigateToPage(index: number) {
+    if (index >= 0 && index < menu.length) {
+      goto(menu[index].path);
+      if (onMenuItemClick) {
+        onMenuItemClick();
+      }
+    }
+  }
+
+  function handleWheel(event: WheelEvent) {
+    // Check if Control key is held (works for both Ctrl and Cmd on Mac)
+    const isControlHeld = event.ctrlKey || event.metaKey;
+
+    if (!isControlHeld || !sidebarOpen) {
+      return;
+    }
+
+    // Prevent default scrolling behavior
+    event.preventDefault();
+    event.stopPropagation();
+
+    const currentIndex = getCurrentPageIndex();
+    if (currentIndex === -1) {
+      return;
+    }
+
+    // Determine scroll direction
+    const scrollDelta = event.deltaY;
+    let nextIndex: number;
+
+    if (scrollDelta > 0) {
+      // Scrolling down - go to next page
+      nextIndex = (currentIndex + 1) % menu.length;
+    } else {
+      // Scrolling up - go to previous page
+      nextIndex = (currentIndex - 1 + menu.length) % menu.length;
+    }
+
+    navigateToPage(nextIndex);
+  }
+
+  onMount(() => {
+    if (asideElement) {
+      asideElement.addEventListener('wheel', handleWheel, { passive: false });
+    }
+  });
+
+  onDestroy(() => {
+    if (asideElement) {
+      asideElement.removeEventListener('wheel', handleWheel);
+    }
+  });
 </script>
 
 <!-- Parent container that controls width animation -->
 <aside
+  bind:this={asideElement}
   class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative"
   class:fixed={sidebarOpen}
   class:top-0={sidebarOpen}

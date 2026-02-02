@@ -5,33 +5,42 @@ Welcome to the comprehensive documentation for DesQTA - a modern student managem
 ## 📋 Table of Contents
 
 ### 🎨 Frontend Architecture
+
 - [Frontend Overview](./frontend/README.md) - Application structure and routing
 - [Component Library](./frontend/components/README.md) - Reusable UI components
 - [Theme System](./frontend/theme-system.md) - Theming and styling architecture
 - [State Management](./frontend/state-management.md) - Stores and data flow
 
-### 🔧 Backend Architecture  
+### 🔧 Backend Architecture
+
 - [Rust Backend](./backend/README.md) - Tauri services and native integration
 - [Authentication](./backend/authentication.md) - Login and security implementation
 - [File System](./backend/filesystem.md) - Data persistence and file handling
 - [Network Services](./backend/networking.md) - API communication and utilities
 
 ### 🏗 Architecture & Design
+
 - [Data Flow & State Management](./architecture/data-flow.md) - Comprehensive data architecture
 - [Utility Functions & Service Layers](./architecture/utilities-services.md) - Service layer patterns
 
 ### 🔧 Development & Deployment
+
 - [Build Process & Deployment](./development/build-deployment.md) - Build system and deployment guide
 - [Logging System](./development/logging-system.md) - Comprehensive logging and debugging
 - [Logging Quick Reference](./development/logging-quick-reference.md) - Quick reference for logging APIs
+- [Future Roadmap](./development/future-roadmap.md) - Comprehensive development plan and roadmap
+- [Roadmap Summary](./development/roadmap-summary.md) - Quick reference guide for roadmap
+- [Premium UI Refinement Checklist](./development/premium-ui-refinement-checklist.md) - UI polish and animation guide
 
 ### 📱 Core Features
+
 - [Assessment System](./features/assessments.md) - Assessment management and tracking
 - [Timetable System](./features/timetable.md) - Schedule management and display
 - [Messaging System](./features/messaging.md) - DireQt messaging implementation
 - [Analytics Dashboard](./features/analytics.md) - Data visualization and insights
 
 ### 📚 Component Reference
+
 - [Layout Components](./components/layout.md) - Header, Sidebar, Navigation
 - [UI Components](./components/ui.md) - Buttons, Modals, Forms
 - [Data Components](./components/data.md) - Tables, Charts, Lists
@@ -49,6 +58,7 @@ Welcome to the comprehensive documentation for DesQTA - a modern student managem
 ## 📖 Documentation Standards
 
 This documentation follows these conventions:
+
 - **Code Examples**: All examples are functional and tested
 - **Component Props**: Documented with TypeScript interfaces
 - **API References**: Include request/response examples
@@ -58,6 +68,7 @@ This documentation follows these conventions:
 ## 🏗 Architecture Overview
 
 DesQTA is built using:
+
 - **Frontend**: SvelteKit with TypeScript
 - **Backend**: Rust with Tauri v2
 - **Styling**: TailwindCSS with custom theme system
@@ -67,6 +78,7 @@ DesQTA is built using:
 ## 📝 Contributing to Documentation
 
 When adding new documentation:
+
 1. Follow the established structure
 2. Include practical code examples
 3. Add cross-references to related sections
@@ -75,5 +87,5 @@ When adding new documentation:
 
 ---
 
-*Last updated: $(date)*
-*Version: 1.0.0* 
+_Last updated: $(date)_
+_Version: 1.0.0_
