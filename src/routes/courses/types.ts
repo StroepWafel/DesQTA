@@ -126,7 +126,51 @@ export interface LinkModule extends BaseModule {
   };
 }
 
-export type Module = TitleModule | TextBlockModule | ResourceModule | LinkModule | LexicalModule | TableModule | BaseModule;
+export interface ColumnLayoutModule extends BaseModule {
+  content: {
+    AdvanceLayout: {
+      col1: string[];
+      col2: string[];
+      col3: string[];
+      layoutStyle: string;
+    };
+  };
+}
+
+export interface FormulaModule extends BaseModule {
+  content: {
+    scale: string;
+    formula: string;
+  };
+}
+
+export interface PollModule extends BaseModule {
+  content: {
+    uuid: string;
+    proposition: string;
+    options: string[];
+  };
+}
+
+export interface PreviewLexicalModule extends BaseModule {
+  content: {
+    html: string;
+    displayMode: 'preview' | 'edit';
+  };
+}
+
+export type Module =
+  | TitleModule
+  | TextBlockModule
+  | ResourceModule
+  | LinkModule
+  | LexicalModule
+  | TableModule
+  | ColumnLayoutModule
+  | FormulaModule
+  | PollModule
+  | PreviewLexicalModule
+  | BaseModule;
 
 export interface ParsedDocument {
   document: {

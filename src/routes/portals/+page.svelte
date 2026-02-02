@@ -8,17 +8,9 @@
   import Modal from '$lib/components/Modal.svelte';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import ModuleList from '$lib/components/ModuleList.svelte';
   import { sanitizeHtml } from '../../utils/sanitization';
-  import { renderDraftJSText } from '../courses/utils';
-  import type {
-    Module,
-    TitleModule,
-    TextBlockModule,
-    ResourceModule,
-    LinkModule,
-    ParsedDocument,
-    ResourceLink,
-  } from '../courses/types';
+  import type { ParsedDocument } from '../courses/types';
 
   interface Portal {
     is_power_portal: boolean;
@@ -105,94 +97,6 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
-  }
-
-  // Module type checking functions (same as CourseContent and WelcomePortal)
-  function isModule<T extends Module>(
-    module: Module,
-    contentCheck: (content: any) => boolean,
-  ): module is T {
-    return 'content' in module && contentCheck(module.content);
-  }
-
-  function isTitleModule(module: Module): module is TitleModule {
-    return isModule(module, (content) => content && typeof content.value === 'string');
-  }
-
-  function isTextBlockModule(module: Module): module is TextBlockModule {
-    return isModule(module, (content) => content && content.content && content.content.blocks);
-  }
-
-  function isResourceModule(module: Module): module is ResourceModule {
-    return isModule(module, (content) => content && content.value && content.value.resources);
-  }
-
-  function isLinkModule(module: Module): module is LinkModule {
-    return isModule(module, (content) => content && content.url);
-  }
-
-  type RenderedModule =
-    | { type: 'title'; content: string }
-    | { type: 'text'; content: string }
-    | { type: 'resources'; content: ResourceLink[] }
-    | { type: 'link'; content: string };
-
-  function renderModule(module: Module): RenderedModule | null {
-    if (isTitleModule(module)) {
-      return { type: 'title', content: module.content.value };
-    } else if (isTextBlockModule(module)) {
-      return {
-        type: 'text',
-        content: renderDraftJSText(module.content.content),
-      };
-    } else if (isResourceModule(module)) {
-      return {
-        type: 'resources',
-        content: module.content.value.resources.filter((r) => r.selected),
-      };
-    } else if (isLinkModule(module)) {
-      return { type: 'link', content: module.content.url };
-    }
-    return null;
-  }
-
-  function sortModules(modules: Module[]): Module[] {
-    if (!modules || modules.length === 0) return [];
-
-    // Filter out the container module (the one with parentModule === null)
-    const contentModules = modules.filter((m) => m.parentModule !== null);
-    if (contentModules.length === 0) return modules;
-
-    const moduleMap = new Map<string, Module>();
-    contentModules.forEach((module) => {
-      moduleMap.set(module.uuid, module);
-    });
-
-    const firstModule = contentModules.find(
-      (module) => !module.prevModule || !moduleMap.has(module.prevModule),
-    );
-
-    if (!firstModule) {
-      return contentModules;
-    }
-
-    const orderedModules: Module[] = [];
-    let currentModule: Module | undefined = firstModule;
-
-    while (currentModule && orderedModules.length < modules.length) {
-      orderedModules.push(currentModule);
-      currentModule = currentModule.nextModule
-        ? moduleMap.get(currentModule.nextModule)
-        : undefined;
-    }
-
-    contentModules.forEach((module) => {
-      if (!orderedModules.includes(module)) {
-        orderedModules.push(module);
-      }
-    });
-
-    return orderedModules;
   }
 
   async function handlePortalClick(portal: Portal) {
@@ -468,49 +372,10 @@
       </span>
     </div>
   {:else if parsedPortalDocument?.document?.modules}
-    {@const sortedModules = sortModules(parsedPortalDocument.document.modules)}
     <div
       class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
       <div class="p-6">
-        <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
-          {#each sortedModules as module, i}
-            {@const renderedModule = renderModule(module)}
-            {#if renderedModule}
-              {#if renderedModule.type === 'title'}
-                <h2 class="px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg">
-                  {renderedModule.content}
-                </h2>
-              {:else if renderedModule.type === 'text'}
-                <div
-                  class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
-                  {@html sanitizeHtml(renderedModule.content)}
-                </div>
-              {:else if renderedModule.type === 'resources'}
-                <div class="mb-6">
-                  <h3 class="text-lg font-semibold mb-3 text-white">Resources</h3>
-                  <div class="space-y-2">
-                    {#each renderedModule.content as resource}
-                      <div
-                        class="p-3 rounded-lg border border-zinc-300/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50">
-                        <p class="text-white">{resource.filename}</p>
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-              {:else if renderedModule.type === 'link'}
-                <div class="mb-6">
-                  <a
-                    href={renderedModule.content}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-indigo-400 underline hover:text-purple-300">
-                    {renderedModule.content}
-                  </a>
-                </div>
-              {/if}
-            {/if}
-          {/each}
-        </div>
+        <ModuleList modules={parsedPortalDocument.document.modules} filterByParentModule={true} />
       </div>
     </div>
   {:else if portalContent}

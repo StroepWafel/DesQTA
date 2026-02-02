@@ -1,25 +1,14 @@
 <script lang="ts">
-  import {
-    renderDraftJSText,
-    sanitizeHtml,
-    getFileIcon,
-    getFileColor,
-    formatFileSize,
-    fetchLinkPreview,
-    isValidUrl,
-  } from '../utils';
+  import { getFileIcon, formatFileSize, fetchLinkPreview, isValidUrl } from '../utils';
+  import ModuleList from '$lib/components/ModuleList.svelte';
+  import { renderModule, sortModules } from '$lib/utils/moduleUtils';
+  import { sanitizeHtml } from '../../../utils/sanitization';
   import LinkPreview from './LinkPreview.svelte';
   import type {
     CoursePayload,
     ParsedDocument,
     WeeklyLessonContent,
     Module,
-    TitleModule,
-    TextBlockModule,
-    ResourceModule,
-    LinkModule,
-    LexicalModule,
-    TableModule,
     ResourceLink,
     LinkPreview as LinkPreviewType,
   } from '../types';
@@ -63,47 +52,6 @@
   let settingsLoaded = $state(false);
   let contentCollapsed = $state(false);
 
-  function isModule<T extends Module>(
-    module: Module,
-    contentCheck: (content: any) => boolean,
-  ): module is T {
-    return 'content' in module && contentCheck(module.content);
-  }
-
-  function isTitleModule(module: Module): module is TitleModule {
-    return isModule(module, (content) => content && typeof content.value === 'string');
-  }
-
-  function isTextBlockModule(module: Module): module is TextBlockModule {
-    return isModule(module, (content) => content && content.content && content.content.blocks);
-  }
-
-  function isLexicalModule(module: Module): module is LexicalModule {
-    return isModule(
-      module,
-      (content) => content && content.editor === 'lexical' && typeof content.html === 'string',
-    );
-  }
-
-  function isTableModule(module: Module): module is TableModule {
-    return (
-      module.type === '0d49d130-c197-421d-a56a-d1ba0a67cfc0' &&
-      isModule(
-        module,
-        (content) =>
-          content && typeof content.content === 'string' && content.content.includes('<table'),
-      )
-    );
-  }
-
-  function isResourceModule(module: Module): module is ResourceModule {
-    return isModule(module, (content) => content && content.value && content.value.resources);
-  }
-
-  function isLinkModule(module: Module): module is LinkModule {
-    return isModule(module, (content) => content && content.url);
-  }
-
   async function loadLinkPreview(url: string) {
     if (!linkPreviews.has(url)) {
       linkPreviews.set(url, null);
@@ -111,48 +59,6 @@
       linkPreviews.set(url, preview);
       linkPreviews = linkPreviews;
     }
-  }
-
-  type RenderedModule =
-    | { type: 'title'; content: string }
-    | { type: 'text'; content: string }
-    | { type: 'table'; content: string }
-    | { type: 'resources'; content: ResourceLink[] }
-    | { type: 'link'; content: string };
-
-  function renderModule(module: Module): RenderedModule | null {
-    if (isTitleModule(module)) {
-      return { type: 'title', content: module.content.value };
-    } else if (isLexicalModule(module)) {
-      // Lexical editor modules have HTML content
-      return {
-        type: 'text',
-        content: module.content.html,
-      };
-    } else if (isTableModule(module)) {
-      // Table modules have HTML table content
-      return {
-        type: 'table',
-        content: module.content.content,
-      };
-    } else if (isTextBlockModule(module)) {
-      return {
-        type: 'text',
-        content: renderDraftJSText(module.content.content),
-      };
-    } else if (isResourceModule(module)) {
-      return {
-        type: 'resources',
-        content: module.content.value.resources.filter((r) => r.selected),
-      };
-    } else if (isLinkModule(module)) {
-      const url = module.content.url;
-      if (isValidUrl(url)) {
-        loadLinkPreview(url);
-      }
-      return { type: 'link', content: url };
-    }
-    return null;
   }
 
   function parseLessonDocument(lessonContent: WeeklyLessonContent) {
@@ -166,40 +72,53 @@
     }
   }
 
-  function sortModules(modules: Module[]): Module[] {
-    if (!modules || modules.length === 0) return [];
-
-    const moduleMap = new Map<string, Module>();
-    modules.forEach((module) => {
-      moduleMap.set(module.uuid, module);
-    });
-
-    const firstModule = modules.find(
-      (module) => !module.prevModule || !moduleMap.has(module.prevModule),
-    );
-
-    if (!firstModule) {
-      return modules;
-    }
-
-    const orderedModules: Module[] = [];
-    let currentModule: Module | undefined = firstModule;
-
-    while (currentModule && orderedModules.length < modules.length) {
-      orderedModules.push(currentModule);
-      currentModule = currentModule.nextModule
-        ? moduleMap.get(currentModule.nextModule)
-        : undefined;
-    }
-
-    modules.forEach((module) => {
-      if (!orderedModules.includes(module)) {
-        orderedModules.push(module);
+  async function handleResourceClick(resource: ResourceLink) {
+    try {
+      const url = await invoke('get_seqta_file', {
+        fileType: 'resource',
+        uuid: resource.uuid,
+      });
+      if (typeof url === 'string') {
+        await openUrl(url);
       }
-    });
-
-    return orderedModules;
+    } catch (e) {
+      // Optionally handle error
+    }
   }
+
+  // Preload link previews for modules
+  $effect(() => {
+    const activeContent = selectedLessonContent || selectedStandaloneContent;
+    if (activeContent?.document) {
+      const lessonDoc = parseLessonDocument(activeContent);
+      if (lessonDoc?.document?.modules) {
+        lessonDoc.document.modules.forEach((module: Module) => {
+          if ('content' in module && module.content && typeof module.content === 'object') {
+            const content = module.content as { url?: string };
+            if ('url' in content && content.url) {
+              const url = content.url;
+              if (isValidUrl(url)) {
+                loadLinkPreview(url);
+              }
+            }
+          }
+        });
+      }
+    }
+    if (parsedDocument?.document?.modules) {
+      parsedDocument.document.modules.forEach((module: Module) => {
+        if ('content' in module && module.content && typeof module.content === 'object') {
+          const content = module.content as { url?: string };
+          if ('url' in content && content.url) {
+            const url = content.url;
+            if (isValidUrl(url)) {
+              loadLinkPreview(url);
+            }
+          }
+        }
+      });
+    }
+  });
 
   function extractLessonText(lessonContent: WeeklyLessonContent): string {
     let lessonText = '';
@@ -437,11 +356,10 @@
         {#if content.document}
           {@const lessonDoc = parseLessonDocument(content)}
           {#if lessonDoc?.document?.modules}
-            {@const sortedModules = sortModules(lessonDoc.document.modules)}
             {@const hasAIFeature =
               settingsLoaded && aiIntegrationsEnabled && lessonSummaryAnalyserEnabled}
             <div
-              class="relative mb-6 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] rounded-2xl border-2 {hasAIFeature
+              class="relative mb-6 transition-all duration-700 ease-in-out rounded-2xl border-2 {hasAIFeature
                 ? 'border-accent-500/70 dark:border-accent-400/70'
                 : 'border-zinc-200 dark:border-zinc-700'} bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm"
               style="overflow: hidden; transition: max-height 700ms cubic-bezier(0.4, 0, 0.2, 1); {contentCollapsed &&
@@ -483,40 +401,11 @@
                 class="p-6 transition-all duration-500 ease-in-out {contentCollapsed
                   ? 'opacity-30 blur-sm'
                   : 'opacity-100 blur-0'}">
-                <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
-                  {#each sortedModules as module, i}
-                    {@const renderedModule = renderModule(module)}
-                    {#if renderedModule}
-                      {#if renderedModule.type === 'title'}
-                        <h2
-                          class="px-6 py-4 my-4 text-xl font-bold text-white rounded-lg accent-bg">
-                          {renderedModule.content}
-                        </h2>
-                      {:else if renderedModule.type === 'text'}
-                        <div
-                          class="p-4 my-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
-                          style="--animation-delay: {0.2 + i * 0.05}s;">
-                          {@html sanitizeHtml(renderedModule.content)}
-                        </div>
-                      {:else if renderedModule.type === 'table'}
-                        <div
-                          class="p-4 my-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 overflow-x-auto"
-                          style="--animation-delay: {0.2 + i * 0.05}s;">
-                          <div
-                            class="max-w-full [&_table]:w-full [&_table]:border-collapse [&_table_td]:p-2 [&_table_td]:border [&_table_td]:border-zinc-300 [&_table_td]:dark:border-zinc-600 [&_table_td]:text-zinc-900 [&_table_td]:dark:text-zinc-100 [&_table_th]:p-2 [&_table_th]:border [&_table_th]:border-zinc-300 [&_table_th]:dark:border-zinc-600 [&_table_th]:bg-zinc-100 [&_table_th]:dark:bg-zinc-700 [&_table_th]:font-semibold [&_table_th]:text-zinc-900 [&_table_th]:dark:text-zinc-100 [&_table_a]:text-accent-600 [&_table_a]:dark:text-accent-400 [&_table_a]:hover:underline">
-                            {@html sanitizeHtml(renderedModule.content)}
-                          </div>
-                        </div>
-                      {:else if renderedModule.type === 'link'}
-                        <div class="animate-slide-in" style="--animation-delay: {0.2 + i * 0.05}s;">
-                          <LinkPreview
-                            url={renderedModule.content}
-                            preview={linkPreviews.get(renderedModule.content)} />
-                        </div>
-                      {/if}
-                    {/if}
-                  {/each}
-                </div>
+                <ModuleList
+                  modules={lessonDoc.document.modules}
+                  enableLinkPreviews={true}
+                  linkPreview={linkPreviews}
+                  onResourceClick={handleResourceClick} />
               </div>
 
               <!-- AI Summary Overlay -->
@@ -612,78 +501,23 @@
       </h1>
 
       {#if parsedDocument?.document?.modules}
-        {@const sortedModules = sortModules(parsedDocument.document.modules)}
-        <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
-          {#each sortedModules as module, i}
-            {@const renderedModule = renderModule(module)}
-            {#if renderedModule}
-              {#if renderedModule.type === 'title'}
-                <h2 class="px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg">
-                  {renderedModule.content}
-                </h2>
-              {:else if renderedModule.type === 'text'}
-                <div
-                  class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 animate-slide-in"
-                  style="--animation-delay: {0.1 + i * 0.05}s;">
-                  {@html sanitizeHtml(renderedModule.content)}
-                </div>
-              {:else if renderedModule.type === 'table'}
-                <div
-                  class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 overflow-x-auto animate-slide-in"
-                  style="--animation-delay: {0.1 + i * 0.05}s;">
-                  <div
-                    class="max-w-full [&_table]:w-full [&_table]:border-collapse [&_table_td]:p-2 [&_table_td]:border [&_table_td]:border-zinc-300 [&_table_td]:dark:border-zinc-600 [&_table_td]:text-zinc-900 [&_table_td]:dark:text-zinc-100 [&_table_th]:p-2 [&_table_th]:border [&_table_th]:border-zinc-300 [&_table_th]:dark:border-zinc-600 [&_table_th]:bg-zinc-100 [&_table_th]:dark:bg-zinc-700 [&_table_th]:font-semibold [&_table_th]:text-zinc-900 [&_table_th]:dark:text-zinc-100 [&_table_a]:text-accent-600 [&_table_a]:dark:text-accent-400 [&_table_a]:hover:underline">
-                    {@html sanitizeHtml(renderedModule.content)}
-                  </div>
-                </div>
-              {:else if renderedModule.type === 'resources'}
-                <div class="mb-6">
-                  <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    {#each renderedModule.content as resource}
-                      {@const fileDetails = coursePayload.cf.find((f) => f.uuid === resource.uuid)}
-                      {#if fileDetails}
-                        <button
-                          type="button"
-                          class="flex items-center p-4 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left"
-                          onclick={async () => {
-                            try {
-                              const url = await invoke('get_seqta_file', {
-                                fileType: 'resource',
-                                uuid: resource.uuid,
-                              });
-                              if (typeof url === 'string') {
-                                await openUrl(url);
-                              }
-                            } catch (e) {
-                              // Optionally handle error
-                            }
-                          }}>
-                          <div class="flex items-center w-full">
-                            <span class="mr-3 text-2xl">{getFileIcon(fileDetails.mimetype)}</span>
-                            <div class="flex-1 min-w-0">
-                              <div class="font-semibold truncate text-zinc-900 dark:text-white">
-                                {fileDetails.filename}
-                              </div>
-                              <div class="text-sm text-zinc-600 dark:text-zinc-400">
-                                {formatFileSize(fileDetails.size)}
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      {/if}
-                    {/each}
-                  </div>
-                </div>
-              {:else if renderedModule.type === 'link'}
-                <div class="animate-slide-in" style="--animation-delay: {0.1 + i * 0.05}s;">
-                  <LinkPreview
-                    url={renderedModule.content}
-                    preview={linkPreviews.get(renderedModule.content)} />
-                </div>
-              {/if}
-            {/if}
-          {/each}
-        </div>
+        <ModuleList
+          modules={parsedDocument.document.modules}
+          enableLinkPreviews={true}
+          linkPreview={linkPreviews}
+          onResourceClick={async (resource) => {
+            try {
+              const url = await invoke('get_seqta_file', {
+                fileType: 'resource',
+                uuid: resource.uuid,
+              });
+              if (typeof url === 'string') {
+                await openUrl(url);
+              }
+            } catch (e) {
+              // Optionally handle error
+            }
+          }} />
       {/if}
     </div>
   {/if}
