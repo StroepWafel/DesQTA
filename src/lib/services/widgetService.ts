@@ -67,61 +67,61 @@ export const widgetService = {
         id: 'upcoming_assessments',
         type: 'upcoming_assessments',
         enabled: true,
-        position: { x: 0, y: 0, w: 6, h: 5 },
+        position: { x: 0, y: 0, w: 6, h: 4 },
       },
       {
         id: 'messages_preview',
         type: 'messages_preview',
         enabled: true,
-        position: { x: 6, y: 0, w: 6, h: 5 },
+        position: { x: 6, y: 0, w: 6, h: 4 },
       },
       {
         id: 'today_schedule',
         type: 'today_schedule',
         enabled: true,
-        position: { x: 0, y: 5, w: 12, h: 6 }, // Full width
-      },
-      {
-        id: 'shortcuts',
-        type: 'shortcuts',
-        enabled: true,
-        position: { x: 0, y: 11, w: 12, h: 4 }, // Full width
+        position: { x: 0, y: 4, w: 12, h: 5 }, // Full width
       },
       {
         id: 'notices',
         type: 'notices',
         enabled: true,
-        position: { x: 0, y: 15, w: 12, h: 5 }, // Full width
+        position: { x: 0, y: 9, w: 12, h: 4 }, // Full width
+      },
+      {
+        id: 'shortcuts',
+        type: 'shortcuts',
+        enabled: true,
+        position: { x: 0, y: 13, w: 12, h: 3 }, // Full width
       },
       {
         id: 'news',
         type: 'news',
         enabled: true,
-        position: { x: 0, y: 20, w: 12, h: 5 },
+        position: { x: 0, y: 16, w: 12, h: 4 },
       },
       {
         id: 'welcome_portal',
         type: 'welcome_portal',
         enabled: true,
-        position: { x: 0, y: 25, w: 12, h: 5 },
+        position: { x: 0, y: 20, w: 12, h: 4 },
       },
       {
         id: 'homework',
         type: 'homework',
         enabled: true,
-        position: { x: 0, y: 30, w: 4, h: 5 },
+        position: { x: 0, y: 24, w: 4, h: 4 },
       },
       {
         id: 'todo_list',
         type: 'todo_list',
         enabled: true,
-        position: { x: 4, y: 30, w: 4, h: 5 },
+        position: { x: 4, y: 24, w: 4, h: 4 },
       },
       {
         id: 'focus_timer',
         type: 'focus_timer',
         enabled: true,
-        position: { x: 8, y: 30, w: 4, h: 5 },
+        position: { x: 8, y: 24, w: 4, h: 4 },
       },
     ];
 

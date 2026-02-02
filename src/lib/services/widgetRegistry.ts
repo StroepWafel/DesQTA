@@ -69,8 +69,8 @@ export const widgetRegistry = new Map<WidgetType, WidgetDefinition>([
       name: 'Messages Preview',
       description: 'Preview your recent messages',
       icon: ChatBubbleLeftRight,
-      defaultSize: { w: 6, h: 6 },
-      minSize: { w: 4, h: 5 },
+      defaultSize: { w: 6, h: 4 },
+      minSize: { w: 4, h: 4 },
       maxSize: { w: 12, h: 10 },
       component: MessagesPreview,
       settingsSchema: {
