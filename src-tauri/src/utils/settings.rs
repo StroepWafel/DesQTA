@@ -100,6 +100,12 @@ pub struct Settings {
     pub separate_rss_feed: bool,
     #[serde(default)]
     pub dashboard_widgets_layout: Option<String>,
+    #[serde(default)]
+    pub sidebar_folders: Option<Vec<SidebarFolder>>,
+    #[serde(default)]
+    pub sidebar_favorites: Option<Vec<String>>, // Array of paths
+    #[serde(default)]
+    pub sidebar_recent_activity: Option<Vec<RecentActivity>>,
 }
 
 impl Default for Settings {
@@ -132,6 +138,9 @@ impl Default for Settings {
             has_been_through_onboarding: false,
             separate_rss_feed: false,
             dashboard_widgets_layout: None,
+            sidebar_folders: None,
+            sidebar_favorites: None,
+            sidebar_recent_activity: None,
         }
     }
 }
@@ -146,6 +155,22 @@ pub struct Shortcut {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Feed {
     pub url: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SidebarFolder {
+    pub id: String,
+    pub name: String,
+    pub icon: Option<String>, // Optional icon identifier
+    pub items: Vec<String>,   // Array of menu item paths
+    pub collapsed: bool,      // Default collapsed state
+    pub order: i32,           // Display order
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RecentActivity {
+    pub path: String,
+    pub visited_at: i64, // Unix timestamp
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -398,6 +423,69 @@ impl Settings {
             default_settings.separate_rss_feed,
         );
         default_settings.dashboard_widgets_layout = get_opt_string(&existing_json, "dashboard_widgets_layout");
+
+        // Merge sidebar folders
+        if let Some(folders_json) = existing_json.get("sidebar_folders").and_then(|v| v.as_array()) {
+            let mut folders = Vec::new();
+            for folder_json in folders_json {
+                if let (Some(id), Some(name)) = (
+                    folder_json.get("id").and_then(|v| v.as_str()),
+                    folder_json.get("name").and_then(|v| v.as_str()),
+                ) {
+                    let items = folder_json
+                        .get("items")
+                        .and_then(|v| v.as_array())
+                        .map(|arr| {
+                            arr.iter()
+                                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    let collapsed = folder_json
+                        .get("collapsed")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false);
+                    let order = folder_json
+                        .get("order")
+                        .and_then(|v| v.as_i64())
+                        .map(|v| v as i32)
+                        .unwrap_or(0);
+                    let icon = folder_json
+                        .get("icon")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    folders.push(SidebarFolder {
+                        id: id.to_string(),
+                        name: name.to_string(),
+                        icon,
+                        items,
+                        collapsed,
+                        order,
+                    });
+                }
+            }
+            default_settings.sidebar_folders = Some(folders);
+        }
+
+        // Merge sidebar favorites
+        default_settings.sidebar_favorites = get_opt_string_array(&existing_json, "sidebar_favorites");
+
+        // Merge recent activity
+        if let Some(activity_json) = existing_json.get("sidebar_recent_activity").and_then(|v| v.as_array()) {
+            let mut activities = Vec::new();
+            for activity_item in activity_json {
+                if let (Some(path), Some(visited_at)) = (
+                    activity_item.get("path").and_then(|v| v.as_str()),
+                    activity_item.get("visited_at").and_then(|v| v.as_i64()),
+                ) {
+                    activities.push(RecentActivity {
+                        path: path.to_string(),
+                        visited_at,
+                    });
+                }
+            }
+            default_settings.sidebar_recent_activity = Some(activities);
+        }
 
         default_settings
     }

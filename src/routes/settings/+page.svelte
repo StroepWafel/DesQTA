@@ -42,7 +42,7 @@
   import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
   import TroubleshootingModal from '../../lib/components/TroubleshootingModal.svelte';
-  import MenuOrderDialog from '../../lib/components/MenuOrderDialog.svelte';
+  import SidebarSettingsDialog from '../../lib/components/SidebarSettingsDialog.svelte';
   import LanguageSelector from '../../lib/components/LanguageSelector.svelte';
   import Card from '../../lib/components/ui/Card.svelte';
   import T from '../../lib/components/T.svelte';
@@ -108,7 +108,7 @@
   let updateVersion = '';
   let updateNotes = '';
   let isDesktop = false;
-  let showMenuOrderDialog = false;
+  let showSidebarSettingsDialog = false;
   let showUnsavedChangesModal = false;
   let pendingNavigationUrl: string | null = null;
   let resettingOnboarding = false;
@@ -726,7 +726,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         });
       }
     } catch (error) {
-      logger.error('settings', 'checkForUpdates', 'Failed to check for updates', error);
+      logger.error('settings', 'checkForUpdates', 'Failed to check for updates', { error });
       toastStore.error('Failed to check for updates');
       notify({
         title: 'Update Check Failed',
@@ -750,7 +750,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         });
       }
     } catch (error) {
-      logger.error('settings', 'installUpdate', 'Failed to install update', error);
+      logger.error('settings', 'installUpdate', 'Failed to install update', { error });
       toastStore.error('Failed to install update');
       notify({
         title: 'Update Installation Failed',
@@ -1626,13 +1626,13 @@ The Company reserves the right to terminate your access to the Service at any ti
               </p>
               <div class="mt-4">
                 <button
-                  onclick={() => (showMenuOrderDialog = true)}
+                  onclick={() => (showSidebarSettingsDialog = true)}
                   class="flex gap-2 items-center px-4 py-2 text-sm font-medium text-white rounded-lg transition-all duration-200 transform accent-bg hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
                   <Icon src={Bars3} class="w-5 h-5" />
-                  <T key="settings.reorder_pages" fallback="Reorder Pages" />
+                  <T key="settings.customize_sidebar" fallback="Customize Sidebar" />
                 </button>
                 <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-                  Customize the order of pages in the sidebar navigation.
+                  Reorder pages, organize with folders, and manage favorites.
                 </p>
               </div>
               <div class="flex gap-4 items-center mt-4 mb-4">
@@ -2211,16 +2211,13 @@ The Company reserves the right to terminate your access to the Service at any ti
 <!-- Troubleshooting Modal -->
 <TroubleshootingModal open={showTroubleshootingModal} onclose={closeTroubleshootingModal} />
 
-<!-- Menu Order Dialog -->
-<MenuOrderDialog
-  open={showMenuOrderDialog}
+<!-- Sidebar Settings Dialog -->
+<SidebarSettingsDialog
+  open={showSidebarSettingsDialog}
   menu={DEFAULT_MENU}
-  onClose={() => (showMenuOrderDialog = false)}
-  onSave={async (orderedMenu) => {
-    const menuOrder = orderedMenu.map((item) => item.path);
-    await saveSettingsWithQueue({ menu_order: menuOrder });
-    await flushSettingsQueue();
-    toastStore.success('Menu order saved. Page will reload to apply changes.');
+  onClose={() => (showSidebarSettingsDialog = false)}
+  onSave={() => {
+    toastStore.success('Sidebar settings saved. Page will reload to apply changes.');
     setTimeout(() => location.reload(), 1500);
   }} />
 

@@ -17,7 +17,10 @@
     "clear": "Clear",
     "refresh": "Refresh",
     "settings": "Settings",
-    "close_theme_builder": "Close Theme Builder"
+    "close_theme_builder": "Close Theme Builder",
+    "move_up": "Move up",
+    "move_down": "Move down",
+    "add_folder": "Add Folder"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -573,7 +576,20 @@
     "clear_filters": "Clear Filters",
     "redo_onboarding": "Redo Walkthrough",
     "redo_onboarding_description": "Restart the onboarding walkthrough to learn about DesQTA features.",
-    "resetting": "Resetting..."
+    "resetting": "Resetting...",
+    "menu_order": "Menu Order",
+    "sidebar_settings": "Sidebar Settings",
+    "customize_sidebar": "Customize Sidebar",
+    "reorder_pages_description": "Use the arrow buttons to reorder items. Click the star to favorite items. Use the folder button to organize items into folders.",
+    "favorites": "Favorites",
+    "folders": "Folders",
+    "folder_name": "Folder name",
+    "folder_icon": "Icon (optional)",
+    "available_items": "Available Items",
+    "drag_to_folders": "Drag items below to add them to folders.",
+    "drag_items_here": "Drag items here",
+    "clear_recent_activity": "Clear Recent Activity",
+    "reset_to_default": "Reset to Default"
   },
   "analytics": {
     "description": "Track your academic performance and progress over time",
