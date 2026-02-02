@@ -278,7 +278,7 @@
 <!-- Parent container that controls width animation -->
 <aside
   bind:this={asideElement}
-  class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative"
+  class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative rounded-bl-2xl bg-white dark:bg-zinc-900"
   class:fixed={sidebarOpen}
   class:top-0={sidebarOpen}
   class:left-0={sidebarOpen}

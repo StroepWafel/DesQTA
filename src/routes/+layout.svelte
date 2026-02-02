@@ -741,7 +741,9 @@
 {#if !shellReady}
   <LoadingScreen />
 {:else}
-  <div class="flex flex-col h-screen">
+  <div
+    class="flex flex-col h-screen w-screen rounded-2xl overflow-hidden bg-white dark:bg-zinc-900"
+    style="outline: none; border: none; margin: 0; padding: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
     {#if !$needsSetup}
       <AppHeader
         {sidebarOpen}
@@ -777,9 +779,9 @@
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t rounded-tl-xl {!$needsSetup
-          ? 'border-l'
-          : ''} border-zinc-200 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-900/50 transition-all duration-200"
+        class="overflow-y-auto flex-1 border-t {!$needsSetup
+          ? 'border-l rounded-br-2xl'
+          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900 transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if contentLoading}
           <div class="flex items-center justify-center w-full h-full py-12">

@@ -138,7 +138,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: transparent !important;
   }
 }
 
@@ -268,12 +269,17 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* prevent overscrolling on safari based browsers */
 html {
   scroll-behavior: smooth;
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 html,
 body,
 #app,
-#svelte {
+#svelte,
+body > div,
+body > div > div {
   background: transparent !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -284,7 +290,7 @@ body,
 
 body {
   height: 100%;
-  overflow: auto;
+  overflow: hidden; /* Prevents scrollbars on the main window for rounded corners */
 }
 
 /* Enhanced Animations */
@@ -334,7 +340,7 @@ body {
 }
 
 body > div {
-  background: var(--background-color);
+  background: transparent !important;
 }
 
 button {
