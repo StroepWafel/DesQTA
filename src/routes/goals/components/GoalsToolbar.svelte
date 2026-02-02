@@ -27,11 +27,11 @@
     onSave?: () => void;
   }
 
-  let { editor, readonly = false, saving = false, onSave }: Props = $props();
+  let { editor = $bindable(), readonly = false, saving = false, onSave }: Props = $props();
 
   // Toolbar state
-  let showBlockTypeDropdown = false;
-  let showMoreDropdown = false;
+  let showBlockTypeDropdown = $state(false);
+  let showMoreDropdown = $state(false);
 
   // Force reactivity trigger
   let editorUpdateTrigger = $state(0);

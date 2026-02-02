@@ -19,7 +19,7 @@
 
   // Create a unique key that changes when folder or messages change to force re-render
   const messagesKey = $derived.by(() => {
-    const ids = filteredMessages.map((m) => m.id).join(',');
+    const ids = filteredMessages.map((m: any) => m.id).join(',');
     return `${selectedFolder}-${filteredMessages.length}-${ids}`;
   });
 </script>

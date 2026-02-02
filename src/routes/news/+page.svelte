@@ -219,7 +219,7 @@
       <button
         id="source-button"
         class="px-4 py-2 bg-white rounded-lg border transition-colors text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:ring-2 focus:ring-blue-500"
-        on:click={() => (showSourceSelector = !showSourceSelector)}>
+        onclick={() => (showSourceSelector = !showSourceSelector)}>
         {selectedSource.toUpperCase()}
       </button>
       {#if showSourceSelector}
@@ -230,13 +230,13 @@
           {#each Object.keys(rssFeedsByCountry) as country}
             <button
               class="px-4 py-2 w-full text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-700 first:rounded-t-lg last:rounded-b-lg"
-              on:click={() => handleSourceChange(country)}>
+              onclick={() => handleSourceChange(country)}>
               {country.toUpperCase()}
             </button>
           {/each}
           <button
             class="px-4 py-2 w-full text-left border-t transition-colors border-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 dark:border-zinc-700"
-            on:click={() => handleSourceChange('australia')}>
+            onclick={() => handleSourceChange('australia')}>
             AUSTRALIA
           </button>
         </div>
@@ -253,7 +253,7 @@
       <p class="mb-4 text-red-400">{error}</p>
       <button
         class="px-4 py-2 text-white bg-blue-600 rounded-lg transition-colors hover:bg-blue-700"
-        on:click={() => fetchNews(selectedSource)}>
+        onclick={() => fetchNews(selectedSource)}>
         <T key="common.retry" fallback="Retry" />
       </button>
     </div>

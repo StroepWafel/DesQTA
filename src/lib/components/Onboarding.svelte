@@ -42,7 +42,8 @@
     {
       id: 'theme-store',
       title: 'Customize Your Experience',
-      description: 'Scroll down to find the Theme Store where you can customize your app appearance.',
+      description:
+        'Scroll down to find the Theme Store where you can customize your app appearance.',
       targetSelector: '[data-onboarding="theme-store"]',
       page: '/settings',
       scrollTo: 'theme-store',
@@ -50,7 +51,8 @@
     {
       id: 'cloud-sync',
       title: 'Cloud Sync',
-      description: 'Scroll up to find Cloud Sync settings to keep your data synchronized across devices.',
+      description:
+        'Scroll up to find Cloud Sync settings to keep your data synchronized across devices.',
       targetSelector: '[data-onboarding="cloud-sync"]',
       page: '/settings',
       scrollTo: 'cloud-sync',
@@ -58,7 +60,8 @@
     {
       id: 'user-dropdown',
       title: 'Your Profile',
-      description: 'Click on your profile picture in the header to access your account settings and preferences.',
+      description:
+        'Click on your profile picture in the header to access your account settings and preferences.',
       targetSelector: '[data-onboarding="user-dropdown"]',
       page: '/',
       scrollTo: null,
@@ -126,11 +129,11 @@
         if (element) break;
         await new Promise((resolve) => setTimeout(resolve, 200));
       }
-      
+
       if (element) {
         highlightElement = element;
         overlayVisible = true;
-        
+
         // Ensure element is visible
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
@@ -171,7 +174,7 @@
 
   // Track previous open state to detect when it first becomes true
   let prevOpen = $state(false);
-  
+
   $effect(() => {
     // Only initialize when open changes from false to true
     if (open && !prevOpen && !hasInitialized) {
@@ -212,24 +215,24 @@
       const tooltipWidth = 400; // max-w-md
       const tooltipHeight = 300; // approximate height
       const spacing = 20;
-      
+
       // Try to position below the element first
       let top = highlightRect.top + highlightRect.height + spacing;
       let left = highlightRect.left;
-      
+
       // If it would go off the bottom of the viewport, position above instead
       if (top + tooltipHeight > window.innerHeight) {
         top = highlightRect.top - tooltipHeight - spacing;
       }
-      
+
       // Ensure it doesn't go above the viewport
       if (top < 0) {
         top = spacing;
       }
-      
+
       // Center horizontally relative to the element, but keep within viewport
       left = Math.max(spacing, Math.min(left, window.innerWidth - tooltipWidth - spacing));
-      
+
       return `top: ${top}px; left: ${left}px;`;
     }
     return 'top: 50%; left: 50%; transform: translate(-50%, -50%);';
@@ -308,7 +311,8 @@
               class="h-1 flex-1 rounded-full transition-colors"
               style={i <= currentStep ? 'background-color: var(--accent);' : ''}
               class:bg-zinc-200={i > currentStep}
-              class:dark:bg-zinc-700={i > currentStep} />
+              class:dark:bg-zinc-700={i > currentStep}>
+            </div>
           {/each}
         </div>
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-2 text-center">
@@ -351,4 +355,3 @@
     </div>
   </div>
 {/if}
-

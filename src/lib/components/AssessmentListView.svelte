@@ -260,7 +260,7 @@
               <p class="text-sm font-medium text-zinc-900 dark:text-white">
                 <T
                   key="assessments.no_assessments_for_year"
-                  fallback="No assessments for {year}"
+                  fallback={`No assessments for ${selectedYear?.toString() || ''}`}
                   values={{ year: selectedYear?.toString() || '' }} />
               </p>
               <p class="text-xs text-zinc-600 dark:text-zinc-400">

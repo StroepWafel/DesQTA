@@ -423,7 +423,7 @@
   {/if}
 </div>
 
-{#snippet forumCard(forum)}
+{#snippet forumCard(forum: Forum)}
   <button
     onclick={() => goto(`/forums/${forum.id}`)}
     class="w-full text-left p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">

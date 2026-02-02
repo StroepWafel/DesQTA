@@ -2,27 +2,21 @@
   import AssessmentCard from './AssessmentCard.svelte';
   import { Card, Badge, Button } from '$lib/components/ui';
 
-  interface Assessment {
-    id: number;
-    title: string;
-    code: string;
-    due: string;
-    status: string;
-    colour: string;
-    metaclass: number;
+  import type { Assessment, Subject } from '$lib/types';
+
+  interface AssessmentWithColour extends Assessment {
+    colour?: string;
+    metaclass?: number;
   }
 
-  interface Subject {
-    title: string;
-    code: string;
-    colour: string;
-    metaclass: number;
+  interface SubjectWithMetaclass extends Subject {
+    metaclass?: number;
   }
 
   interface Props {
-    assessments: Assessment[];
-    subjects: Subject[];
-    activeSubjects: Subject[];
+    assessments: AssessmentWithColour[];
+    subjects: SubjectWithMetaclass[];
+    activeSubjects: SubjectWithMetaclass[];
     groupBy: 'subject' | 'month' | 'status';
     onGroupByChange: (group: 'subject' | 'month' | 'status') => void;
   }

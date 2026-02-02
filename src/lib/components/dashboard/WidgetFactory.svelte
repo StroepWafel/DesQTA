@@ -21,7 +21,8 @@
 
 {#if Component}
   <!-- Pass widget and settings to component, maintaining backward compatibility -->
-  <svelte:component this={Component} {widget} {settings} />
+  {@const WidgetComponent = Component}
+  <WidgetComponent {widget} {settings} />
 {:else}
   <div
     class="flex flex-col items-center justify-center h-full p-4 text-center bg-white/80 dark:bg-zinc-900/60 rounded-xl border border-zinc-200 dark:border-zinc-800">

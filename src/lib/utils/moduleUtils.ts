@@ -139,9 +139,11 @@ export function renderModule(module: Module, allModules?: Module[]): RenderedMod
     };
   } else if (isLegacyEditorModule(module)) {
     // Legacy editor modules have HTML content but use the table module UUID
+    // Type assertion needed because legacy editor modules aren't in the Module union
+    const legacyContent = (module as any).content as { content?: string };
     return {
       type: 'text',
-      content: (module.content as any).content,
+      content: legacyContent?.content || '',
     };
   } else if (isTableModule(module)) {
     // Table modules have HTML table content

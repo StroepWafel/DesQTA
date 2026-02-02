@@ -1534,16 +1534,22 @@
     <div
       class="fixed inset-0 z-9999 flex items-center justify-end backdrop-blur-sm bg-black/80 pr-8"
       transition:fade={{ duration: 200, easing: cubicInOut }}
+      role="button"
+      tabindex="0"
       onclick={(e) => {
         // Close overlay when clicking backdrop
         if (e.target === e.currentTarget) {
           showManualAuthInstructions = false;
         }
+      }}
+      onkeydown={(e) => {
+        if (e.key === 'Escape' || (e.key === 'Enter' && e.target === e.currentTarget)) {
+          showManualAuthInstructions = false;
+        }
       }}>
       <div
         class="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-zinc-700/40 p-8 max-w-2xl"
-        transition:scale={{ duration: 200, easing: cubicInOut }}
-        onclick={(e) => e.stopPropagation()}>
+        transition:scale={{ duration: 200, easing: cubicInOut }}>
         <!-- Close Button -->
         <button
           class="absolute top-6 right-6 p-2 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"

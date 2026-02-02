@@ -206,10 +206,10 @@
           selectedFolder={selectedFeed || ''}
           detailLoading={false}
           detailError={null}
-          openCompose={() => {}}
-          starMessage={() => {}}
-          deleteMessage={() => {}}
-          restoreMessage={() => {}}
+          openCompose={async () => {}}
+          starMessage={async () => {}}
+          deleteMessage={async () => {}}
+          restoreMessage={async () => {}}
           starring={false}
           deleting={false}
           restoring={false} />
@@ -260,10 +260,10 @@
             selectedFolder={selectedFeed || ''}
             detailLoading={false}
             detailError={null}
-            openCompose={() => {}}
-            starMessage={() => {}}
-            deleteMessage={() => {}}
-            restoreMessage={() => {}}
+            openCompose={async () => {}}
+            starMessage={async () => {}}
+            deleteMessage={async () => {}}
+            restoreMessage={async () => {}}
             starring={false}
             deleting={false}
             restoring={false} />

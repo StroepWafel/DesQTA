@@ -56,8 +56,8 @@
   }: Props = $props();
 
   let modalInput = $state<HTMLInputElement>();
-  let touchStartY = $state<0 | null>(null);
-  let touchStartTime = $state(0);
+  let touchStartY = $state<number | null>(null);
+  let touchStartTime = $state<number>(0);
 
   const placeholderText = $derived(
     searchMode === 'command'

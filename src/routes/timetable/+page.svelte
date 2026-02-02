@@ -254,8 +254,8 @@
       plugins: plugins,
       callbacks: {
         // Update URL when date changes
-        onRangeUpdate: async (range: { start: string; end: string }) => {
-          if (range.start) {
+        onRangeUpdate: async (range: any) => {
+          if (range?.start) {
             // @ts-ignore
             const date = Temporal.PlainDate.from(range.start);
             const jsDate = new Date(date.year, date.month - 1, date.day);

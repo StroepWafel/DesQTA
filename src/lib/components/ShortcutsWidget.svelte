@@ -85,7 +85,7 @@
           class="flex relative flex-col justify-center items-center p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border shadow-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer border-zinc-200/80 dark:border-zinc-800/80 group bg-white/95 dark:bg-zinc-900/90 backdrop-blur-sm hover:accent-bg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring transform"
           tabindex="0"
           aria-label={shortcut.name}
-          on:click={(e) => handleShortcutClick(e, shortcut.url)}
+          onclick={(e) => handleShortcutClick(e, shortcut.url)}
           in:fade={{ duration: 300, delay: 100 + i * 50 }}
           style="transform-origin: center center;">
           <div

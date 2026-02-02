@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { fly } from 'svelte/transition';
   import { SeqtaMentionsServiceRust as SeqtaMentionsService } from '../../../services/seqtaMentionsServiceRust';
   import { Icon, ChevronDown, ChevronUp } from 'svelte-hero-icons';
 
@@ -105,7 +106,7 @@
     {#if expanded}
       <div
         class="p-4 bg-white dark:bg-zinc-900/50 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-        transition:fly={{ y: -10, duration: 300, easing: (t) => t * (2 - t) }}>
+        transition:fly={{ y: -10, duration: 300, easing: (t: number) => t * (2 - t) }}>
         <div class="grid grid-cols-5 gap-2">
           {#each dayOrder as day}
             <div class="min-w-0">

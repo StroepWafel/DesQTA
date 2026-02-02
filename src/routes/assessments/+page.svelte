@@ -365,17 +365,17 @@
           </div>
         </div>
         <AssessmentBoardView
-          assessments={filteredAssessments}
-          subjects={allSubjects}
+          assessments={filteredAssessments as any}
+          subjects={allSubjects as any}
           {activeSubjects}
           {groupBy}
           onGroupByChange={handleGroupByChange} />
       {:else if selectedTab === 'calendar'}
-        <AssessmentCalendarView assessments={filteredAssessments} />
+        <AssessmentCalendarView assessments={filteredAssessments as any} />
       {:else if selectedTab === 'gantt'}
         <AssessmentGanttView
-          assessments={filteredAssessments}
-          subjects={allSubjects}
+          assessments={filteredAssessments as any}
+          subjects={allSubjects as any}
           {activeSubjects} />
       {:else}
         <AssessmentListView
