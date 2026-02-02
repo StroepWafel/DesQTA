@@ -1,12 +1,13 @@
 use anyhow::{Context, Result};
 use chrono::Utc;
-use rusqlite::{params, Connection, Result as SqlResult};
+use rusqlite::{params, Connection, Result as SqlResult, OptionalExtension};
 use serde_json::Value;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::AppHandle;
 use crate::profiles;
 use crate::logger;
+use crate::settings::Settings;
 
 // Global database connection (allows reinitialization for profile switching)
 static DB: Mutex<Option<Connection>> = Mutex::new(None);
@@ -319,6 +320,45 @@ fn init_schema(conn: &Connection) -> SqlResult<()> {
 
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_notifications_sent_at ON notifications(sent_at)",
+        [],
+    )?;
+
+    // Widget layouts table: stores dashboard widget configurations
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS widget_layouts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            widget_id TEXT NOT NULL,
+            widget_type TEXT NOT NULL,
+            position_x INTEGER NOT NULL,
+            position_y INTEGER NOT NULL,
+            position_w INTEGER NOT NULL,
+            position_h INTEGER NOT NULL,
+            position_min_w INTEGER,
+            position_min_h INTEGER,
+            position_max_w INTEGER,
+            position_max_h INTEGER,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            settings TEXT,
+            title TEXT,
+            layout_version INTEGER NOT NULL DEFAULT 1,
+            last_modified INTEGER NOT NULL,
+            UNIQUE(widget_id, layout_version)
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_widget_layouts_widget_id ON widget_layouts(widget_id)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_widget_layouts_type ON widget_layouts(widget_type)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_widget_layouts_version ON widget_layouts(layout_version)",
         [],
     )?;
 
@@ -981,4 +1021,81 @@ pub fn db_notification_delete_by_assessment(assessment_id: i64) -> Result<(), St
         .map_err(|e| anyhow::anyhow!("Failed to execute: {}", e))?;
         Ok(())
     }).map_err(|e| e.to_string())
+}
+
+// ========== Widget Layout Operations ==========
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
+pub struct WidgetPosition {
+    pub x: i32,
+    pub y: i32,
+    pub w: i32,
+    pub h: i32,
+    #[serde(default, rename = "minW", skip_serializing_if = "Option::is_none")]
+    pub min_w: Option<i32>,
+    #[serde(default, rename = "minH", skip_serializing_if = "Option::is_none")]
+    pub min_h: Option<i32>,
+    #[serde(default, rename = "maxW", skip_serializing_if = "Option::is_none")]
+    pub max_w: Option<i32>,
+    #[serde(default, rename = "maxH", skip_serializing_if = "Option::is_none")]
+    pub max_h: Option<i32>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
+pub struct WidgetConfig {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub widget_type: String,
+    pub position: WidgetPosition,
+    pub enabled: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub settings: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct WidgetLayout {
+    pub widgets: Vec<WidgetConfig>,
+    pub version: i32,
+    #[serde(rename = "lastModified")]
+    pub last_modified: String, // ISO 8601 string
+}
+
+#[tauri::command]
+pub fn db_widget_layout_save(layout: WidgetLayout) -> Result<(), String> {
+    // Serialize layout to JSON string
+    let json_str = serde_json::to_string(&layout)
+        .map_err(|e| format!("Failed to serialize layout: {}", e))?;
+
+    // Load current settings
+    let mut settings = Settings::load();
+
+    // Update widget layout field
+    settings.dashboard_widgets_layout = Some(json_str);
+
+    // Save settings
+    settings
+        .save()
+        .map_err(|e| format!("Failed to save settings: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn db_widget_layout_load() -> Result<Option<WidgetLayout>, String> {
+    // Load settings
+    let settings = Settings::load();
+
+    // Get widget layout JSON string
+    let json_str = match settings.dashboard_widgets_layout {
+        Some(s) => s,
+        None => return Ok(None),
+    };
+
+    // Deserialize to WidgetLayout
+    let layout: WidgetLayout = serde_json::from_str(&json_str)
+        .map_err(|e| format!("Failed to deserialize layout: {}", e))?;
+
+    Ok(Some(layout))
 }

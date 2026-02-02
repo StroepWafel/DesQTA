@@ -393,6 +393,8 @@ pub fn run() {
             database::db_notification_get_by_assessment,
             database::db_notification_cleanup_old,
             database::db_notification_delete_by_assessment,
+            database::db_widget_layout_save,
+            database::db_widget_layout_load,
             assessments::get_processed_assessments,
             courses::get_courses_subjects,
             courses::get_course_content,

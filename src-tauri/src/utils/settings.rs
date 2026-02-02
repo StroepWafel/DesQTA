@@ -98,6 +98,8 @@ pub struct Settings {
     pub has_been_through_onboarding: bool,
     #[serde(default)]
     pub separate_rss_feed: bool,
+    #[serde(default)]
+    pub dashboard_widgets_layout: Option<String>,
 }
 
 impl Default for Settings {
@@ -129,6 +131,7 @@ impl Default for Settings {
             menu_order: None,
             has_been_through_onboarding: false,
             separate_rss_feed: false,
+            dashboard_widgets_layout: None,
         }
     }
 }
@@ -394,6 +397,7 @@ impl Settings {
             "separate_rss_feed",
             default_settings.separate_rss_feed,
         );
+        default_settings.dashboard_widgets_layout = get_opt_string(&existing_json, "dashboard_widgets_layout");
 
         default_settings
     }

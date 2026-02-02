@@ -199,6 +199,18 @@ body {
   }
 }
 
+/* Premium fade and scale animation */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Make calendar icon in date inputs appropriate for theme */
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(0);

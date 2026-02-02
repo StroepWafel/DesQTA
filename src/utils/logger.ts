@@ -54,7 +54,7 @@ class FrontendLogger {
     this.originalConsoleWarn = console.warn;
     this.setupGlobalErrorHandlers();
     this.startFlushTimer();
-    
+
     // Log initialization
     this.info('logger', 'constructor', 'Frontend logger initialized', {
       sessionId: this.sessionId,
@@ -64,13 +64,21 @@ class FrontendLogger {
 
   private generateSessionId(): string {
     const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 0xFFFFFF).toString(16);
+    const random = Math.floor(Math.random() * 0xffffff).toString(16);
     return `frontend_${timestamp}_${random}`;
   }
 
   private setupGlobalErrorHandlers(): void {
     // Capture unhandled errors
     window.addEventListener('error', (event) => {
+      // Suppress ResizeObserver errors - these are benign browser quirks
+      if (
+        event.message?.includes('ResizeObserver loop') ||
+        event.message?.includes('ResizeObserver loop completed')
+      ) {
+        return;
+      }
+
       this.error('global', 'error_handler', `Unhandled error: ${event.message}`, {
         filename: event.filename,
         lineno: event.lineno,
@@ -106,16 +114,16 @@ class FrontendLogger {
     message: string,
     metadata: Record<string, any> = {},
     file?: string,
-    line?: number
+    line?: number,
   ): LogEntry {
     const error = new Error();
     const stack = error.stack?.split('\n');
     const caller = stack?.[3] || '';
-    
+
     // Simplified file and line extraction to prevent regex issues
     let extractedFile = file || 'unknown';
     let extractedLine = line || 0;
-    
+
     try {
       const match = caller.match(/([^\/\\]+):(\d+):\d+/);
       if (match) {
@@ -152,7 +160,7 @@ class FrontendLogger {
     // Console output if enabled
     if (this.config.enableConsole) {
       const consoleMessage = `[${entry.timestamp}] [${LogLevel[entry.level]}] [${entry.module}::${entry.function}] ${entry.message}`;
-      
+
       switch (entry.level) {
         case LogLevel.TRACE:
         case LogLevel.DEBUG:
@@ -213,37 +221,67 @@ class FrontendLogger {
   }
 
   // Public logging methods
-  public trace(module: string, functionName: string, message: string, metadata?: Record<string, any>): void {
+  public trace(
+    module: string,
+    functionName: string,
+    message: string,
+    metadata?: Record<string, any>,
+  ): void {
     if (!this.shouldLog(LogLevel.TRACE)) return;
     const entry = this.createLogEntry(LogLevel.TRACE, module, functionName, message, metadata);
     this.logEntry(entry);
   }
 
-  public debug(module: string, functionName: string, message: string, metadata?: Record<string, any>): void {
+  public debug(
+    module: string,
+    functionName: string,
+    message: string,
+    metadata?: Record<string, any>,
+  ): void {
     if (!this.shouldLog(LogLevel.DEBUG)) return;
     const entry = this.createLogEntry(LogLevel.DEBUG, module, functionName, message, metadata);
     this.logEntry(entry);
   }
 
-  public info(module: string, functionName: string, message: string, metadata?: Record<string, any>): void {
+  public info(
+    module: string,
+    functionName: string,
+    message: string,
+    metadata?: Record<string, any>,
+  ): void {
     if (!this.shouldLog(LogLevel.INFO)) return;
     const entry = this.createLogEntry(LogLevel.INFO, module, functionName, message, metadata);
     this.logEntry(entry);
   }
 
-  public warn(module: string, functionName: string, message: string, metadata?: Record<string, any>): void {
+  public warn(
+    module: string,
+    functionName: string,
+    message: string,
+    metadata?: Record<string, any>,
+  ): void {
     if (!this.shouldLog(LogLevel.WARN)) return;
     const entry = this.createLogEntry(LogLevel.WARN, module, functionName, message, metadata);
     this.logEntry(entry);
   }
 
-  public error(module: string, functionName: string, message: string, metadata?: Record<string, any>): void {
+  public error(
+    module: string,
+    functionName: string,
+    message: string,
+    metadata?: Record<string, any>,
+  ): void {
     if (!this.shouldLog(LogLevel.ERROR)) return;
     const entry = this.createLogEntry(LogLevel.ERROR, module, functionName, message, metadata);
     this.logEntry(entry);
   }
 
-  public fatal(module: string, functionName: string, message: string, metadata?: Record<string, any>): void {
+  public fatal(
+    module: string,
+    functionName: string,
+    message: string,
+    metadata?: Record<string, any>,
+  ): void {
     if (!this.shouldLog(LogLevel.FATAL)) return;
     const entry = this.createLogEntry(LogLevel.FATAL, module, functionName, message, metadata);
     this.logEntry(entry);
@@ -315,7 +353,13 @@ class FrontendLogger {
   }
 
   // HTTP request logging
-  public logHttpRequest(module: string, functionName: string, method: string, url: string, options?: RequestInit): void {
+  public logHttpRequest(
+    module: string,
+    functionName: string,
+    method: string,
+    url: string,
+    options?: RequestInit,
+  ): void {
     this.debug(module, functionName, `HTTP ${method} ${url}`, {
       method,
       url,
@@ -324,14 +368,21 @@ class FrontendLogger {
     });
   }
 
-  public logHttpResponse(module: string, functionName: string, method: string, url: string, status: number, statusText: string): void {
+  public logHttpResponse(
+    module: string,
+    functionName: string,
+    method: string,
+    url: string,
+    status: number,
+    statusText: string,
+  ): void {
     const level = status >= 400 ? LogLevel.ERROR : LogLevel.DEBUG;
     const entry = this.createLogEntry(
       level,
       module,
       functionName,
       `HTTP ${method} ${url} -> ${status} ${statusText}`,
-      { method, url, status, statusText }
+      { method, url, status, statusText },
     );
     this.logEntry(entry);
   }
@@ -380,23 +431,39 @@ class FrontendLogger {
 export const logger = new FrontendLogger();
 
 // Convenience functions for easier usage
-export const trace = (module: string, fn: string, message: string, metadata?: Record<string, any>) => 
-  logger.trace(module, fn, message, metadata);
+export const trace = (
+  module: string,
+  fn: string,
+  message: string,
+  metadata?: Record<string, any>,
+) => logger.trace(module, fn, message, metadata);
 
-export const debug = (module: string, fn: string, message: string, metadata?: Record<string, any>) => 
-  logger.debug(module, fn, message, metadata);
+export const debug = (
+  module: string,
+  fn: string,
+  message: string,
+  metadata?: Record<string, any>,
+) => logger.debug(module, fn, message, metadata);
 
-export const info = (module: string, fn: string, message: string, metadata?: Record<string, any>) => 
+export const info = (module: string, fn: string, message: string, metadata?: Record<string, any>) =>
   logger.info(module, fn, message, metadata);
 
-export const warn = (module: string, fn: string, message: string, metadata?: Record<string, any>) => 
+export const warn = (module: string, fn: string, message: string, metadata?: Record<string, any>) =>
   logger.warn(module, fn, message, metadata);
 
-export const error = (module: string, fn: string, message: string, metadata?: Record<string, any>) => 
-  logger.error(module, fn, message, metadata);
+export const error = (
+  module: string,
+  fn: string,
+  message: string,
+  metadata?: Record<string, any>,
+) => logger.error(module, fn, message, metadata);
 
-export const fatal = (module: string, fn: string, message: string, metadata?: Record<string, any>) => 
-  logger.fatal(module, fn, message, metadata);
+export const fatal = (
+  module: string,
+  fn: string,
+  message: string,
+  metadata?: Record<string, any>,
+) => logger.fatal(module, fn, message, metadata);
 
 // Function decorators for automatic logging
 export function logFunction(module: string) {
@@ -405,10 +472,10 @@ export function logFunction(module: string) {
 
     descriptor.value = function (...args: any[]) {
       logger.logFunctionEntry(module, propertyKey, { args });
-      
+
       try {
         const result = originalMethod.apply(this, args);
-        
+
         // Handle async functions
         if (result instanceof Promise) {
           return result
@@ -441,10 +508,10 @@ export function logPerformance(module: string) {
 
     descriptor.value = function (...args: any[]) {
       const stopTimer = logger.startTimer(module, propertyKey, 'function_execution');
-      
+
       try {
         const result = originalMethod.apply(this, args);
-        
+
         if (result instanceof Promise) {
           return result.finally(() => stopTimer());
         } else {
@@ -466,13 +533,13 @@ export async function loggedFetch(
   module: string,
   functionName: string,
   input: RequestInfo | URL,
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<Response> {
   const url = typeof input === 'string' ? input : input.toString();
   const method = init?.method || 'GET';
-  
+
   logger.logHttpRequest(module, functionName, method, url, init);
-  
+
   try {
     const response = await fetch(input, init);
     logger.logHttpResponse(module, functionName, method, url, response.status, response.statusText);
@@ -500,4 +567,4 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export default logger; 
+export default logger;
