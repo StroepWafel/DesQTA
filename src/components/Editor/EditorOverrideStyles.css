@@ -396,3 +396,21 @@
     }
   }
 }
+
+/* Exclude navigation and sidebar elements from editor prose styles */
+/* These rules override the .editor-prose a styles for navigation elements */
+aside a,
+aside nav a,
+nav a,
+[role='navigation'] a,
+.sidebar a,
+header a {
+  color: revert !important;
+  text-decoration: revert !important;
+  text-decoration-color: revert !important;
+}
+
+aside a span,
+aside nav a span {
+  color: revert !important;
+}

@@ -719,7 +719,7 @@
                     : loginMethod === 'qr'
                       ? '350px'
                       : loginMethod === 'direct'
-                        ? '400px'
+                        ? '380px'
                         : '200px'}; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                   <!-- Mobile SSO URL Input -->
                   {#if isMobile && showMobileSsoInput}
@@ -900,12 +900,12 @@
 
                   <!-- Direct Login Method -->
                   {#if loginMethod === 'direct'}
-                    <div class="space-y-6">
-                      <div class="text-center space-y-2">
-                        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">
+                    <div class="space-y-3 px-2">
+                      <div class="text-center space-y-1">
+                        <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
                           <T key="login.direct_login_title" fallback="Direct Login" />
                         </h2>
-                        <p class="text-zinc-600 dark:text-zinc-400">
+                        <p class="text-xs text-zinc-600 dark:text-zinc-400">
                           <T
                             key="login.direct_login_description"
                             fallback="Enter your credentials directly (last resort method)" />
@@ -913,12 +913,12 @@
                       </div>
 
                       <div
-                        class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4">
-                        <div class="flex items-start space-x-3">
+                        class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5">
+                        <div class="flex items-start space-x-2">
                           <Icon
                             src={QuestionMarkCircle}
-                            class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                          <p class="text-sm text-amber-700 dark:text-amber-300">
+                            class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                          <p class="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
                             <T
                               key="login.direct_login_warning"
                               fallback="Your credentials will be stored securely and encrypted. Use this method only if QR code or browser login fails." />
@@ -926,8 +926,8 @@
                         </div>
                       </div>
 
-                      <div class="space-y-4">
-                        <div class="relative px-4">
+                      <div class="space-y-2.5">
+                        <div class="relative">
                           <Input
                             type="text"
                             bind:value={directSeqtaUrl}
@@ -942,18 +942,18 @@
                             placeholder={$_('login.url_placeholder', {
                               default: 'school.seqta.com.au',
                             })}
-                            inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                            inputClass="w-full py-2.5 px-4 text-sm bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-lg text-zinc-900 dark:text-white placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
-                        <div class="relative px-4">
+                        <div class="relative">
                           <Input
                             type="text"
                             bind:value={directUsername}
                             placeholder={$_('login.username_placeholder', {
                               default: 'Username',
                             })}
-                            inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                            inputClass="w-full py-2.5 px-4 text-sm bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-lg text-zinc-900 dark:text-white placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
-                        <div class="relative px-4">
+                        <div class="relative">
                           <Input
                             type="password"
                             bind:value={directPassword}
@@ -970,7 +970,7 @@
                             placeholder={$_('login.password_placeholder', {
                               default: 'Password',
                             })}
-                            inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                            inputClass="w-full py-2.5 px-4 text-sm bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-lg text-zinc-900 dark:text-white placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
                       </div>
                     </div>
@@ -1134,7 +1134,7 @@
                       !directSeqtaUrl.trim() ||
                       !directUsername.trim() ||
                       !directPassword.trim()}
-                    class="py-4 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200 transform hover:scale-105 active:scale-95">
+                    class="py-3 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-xl shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200 transform hover:scale-105 active:scale-95">
                     <T key="login.sign_in" fallback="Sign In to DesQTA" />
                   </Button>
                 {:else}
@@ -1616,6 +1616,34 @@
                   key="login.manual_auth_note"
                   fallback="Note: Do not close the login window manually. It will close automatically once authentication is complete." />
               </p>
+            </div>
+          </div>
+
+          <div
+            class="bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-300 dark:border-indigo-700 rounded-2xl p-5">
+            <div class="flex items-start space-x-3">
+              <Icon
+                src={QuestionMarkCircle}
+                class="w-6 h-6 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-indigo-800 dark:text-indigo-200 mb-2">
+                  <T key="login.not_working" fallback="Not Working?" />
+                </h3>
+                <p class="text-sm text-indigo-700 dark:text-indigo-300 mb-3">
+                  <T
+                    key="login.try_direct_login"
+                    fallback="If the browser login window isn't working, try the Direct Login method instead. It allows you to enter your credentials directly." />
+                </p>
+                <button
+                  type="button"
+                  onclick={() => {
+                    showManualAuthInstructions = false;
+                    loginMethod = 'direct';
+                  }}
+                  class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                  <T key="login.switch_to_direct" fallback="Switch to Direct Login" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
