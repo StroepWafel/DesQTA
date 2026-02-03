@@ -73,6 +73,7 @@
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
   let showOnboarding = $state(false);
+  let isFullscreen = $state(false);
 
   // Composables
   const weather = useWeather();
@@ -155,6 +156,8 @@
   // Remove duplicate onMount - consolidating below
 
   let unlisten: (() => void) | undefined;
+  let fullscreenCheckInterval: ReturnType<typeof setInterval> | undefined;
+  let checkFullscreenState: (() => Promise<void>) | undefined;
 
   const setupListeners = async () => {
     logger.debug('layout', 'onMount', 'Setting up reload listener');
@@ -164,26 +167,47 @@
     });
 
     // Listen for fullscreen changes from Tauri backend
-    await listen<boolean>('fullscreen-changed', (event) => {
-      const isFullscreen = event.payload;
+    await listen<boolean>('fullscreen-changed', async (event) => {
+      isFullscreen = event.payload;
       logger.debug('layout', 'fullscreen_listener', `Fullscreen changed: ${isFullscreen}`);
-
-      if (isFullscreen) {
-        // Remove rounded corners when entering fullscreen
-        document.body.classList.remove('rounded-xl');
-        const contentDiv = document.querySelector('.overflow-clip.rounded-xl');
-        if (contentDiv) {
-          contentDiv.classList.remove('rounded-xl');
-        }
-      } else {
-        // Add rounded corners when exiting fullscreen
-        document.body.classList.add('rounded-xl');
-        const contentDiv = document.querySelector('.overflow-clip');
-        if (contentDiv) {
-          contentDiv.classList.add('rounded-xl');
-        }
-      }
     });
+
+    // Also check fullscreen state periodically and on window focus to catch any missed events
+    checkFullscreenState = async () => {
+      try {
+        const [currentFullscreen, currentMaximized] = await Promise.all([
+          appWindow.isFullscreen(),
+          appWindow.isMaximized().catch(() => false), // Fallback to false if not supported
+        ]);
+        // Consider both fullscreen and maximized as "fullscreen" for corner removal
+        const shouldRemoveCorners = currentFullscreen || currentMaximized;
+        if (shouldRemoveCorners !== isFullscreen) {
+          isFullscreen = shouldRemoveCorners;
+          logger.debug(
+            'layout',
+            'checkFullscreenState',
+            `Fullscreen/Maximized state updated: ${isFullscreen} (fullscreen: ${currentFullscreen}, maximized: ${currentMaximized})`,
+          );
+        }
+      } catch (e) {
+        logger.debug('layout', 'checkFullscreenState', 'Failed to check fullscreen state', {
+          error: e,
+        });
+      }
+    };
+
+    // Check immediately
+    await checkFullscreenState();
+
+    // Check periodically (every 300ms) to catch any missed events
+    fullscreenCheckInterval = setInterval(checkFullscreenState, 300);
+
+    // Also check on window focus and resize events
+    window.addEventListener('focus', checkFullscreenState);
+    window.addEventListener('resize', checkFullscreenState);
+
+    // Listen to Tauri window events as well
+    appWindow.onResized(checkFullscreenState);
   };
 
   onDestroy(() => {
@@ -191,6 +215,13 @@
     if (unlisten) {
       logger.debug('layout', 'onDestroy', 'Cleaning up reload listener');
       unlisten();
+    }
+    if (fullscreenCheckInterval) {
+      clearInterval(fullscreenCheckInterval);
+    }
+    if (checkFullscreenState) {
+      window.removeEventListener('focus', checkFullscreenState);
+      window.removeEventListener('resize', checkFullscreenState);
     }
     window.removeEventListener('redo-onboarding', handleRedoOnboarding);
   });
@@ -503,9 +534,18 @@
       // Send startup analytics
       sendAnalytics();
 
-      // Check and apply initial fullscreen styling
+      // Check and apply initial fullscreen state (also check maximized)
       try {
-        await invoke('handle_fullscreen_change');
+        const [currentFullscreen, currentMaximized] = await Promise.all([
+          appWindow.isFullscreen(),
+          appWindow.isMaximized().catch(() => false),
+        ]);
+        isFullscreen = currentFullscreen || currentMaximized;
+        logger.debug(
+          'layout',
+          'onMount',
+          `Initial fullscreen/maximized state: ${isFullscreen} (fullscreen: ${currentFullscreen}, maximized: ${currentMaximized})`,
+        );
       } catch (e) {
         logger.debug('layout', 'onMount', 'Failed to check initial fullscreen state', { error: e });
       }
@@ -742,7 +782,9 @@
   <LoadingScreen />
 {:else}
   <div
-    class="flex flex-col h-screen w-screen rounded-2xl overflow-hidden bg-white dark:bg-zinc-900"
+    class="flex flex-col h-screen w-screen {isFullscreen
+      ? ''
+      : 'rounded-2xl'} overflow-hidden bg-white dark:bg-zinc-900"
     style="outline: none; border: none; margin: 0; padding: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
     {#if !$needsSetup}
       <AppHeader
@@ -779,8 +821,8 @@
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t {!$needsSetup
-          ? 'border-l rounded-br-2xl'
+        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen
+          ? ''
           : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900 transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if contentLoading}
