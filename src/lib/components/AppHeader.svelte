@@ -38,6 +38,7 @@
     weatherData: any;
     userInfo?: UserInfo;
     showUserDropdown: boolean;
+    isFullscreen?: boolean;
     onToggleSidebar: () => void;
     onToggleUserDropdown: () => void;
     onLogout: () => void;
@@ -116,6 +117,7 @@
     weatherData,
     userInfo,
     showUserDropdown,
+    isFullscreen = false,
     onToggleSidebar,
     onToggleUserDropdown,
     onLogout,
@@ -404,7 +406,11 @@
 </script>
 
 <header
-  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 rounded-t-2xl theme-bg"
+  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 theme-bg {isFullscreen
+    ? ''
+    : sidebarOpen
+      ? 'rounded-tr-2xl'
+      : 'rounded-t-2xl'}"
   data-tauri-drag-region>
   <div class="flex items-center space-x-4">
     <button

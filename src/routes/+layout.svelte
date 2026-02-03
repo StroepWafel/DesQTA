@@ -793,6 +793,7 @@
         {weatherData}
         {userInfo}
         {showUserDropdown}
+        {isFullscreen}
         onToggleSidebar={() => (sidebarOpen = !sidebarOpen)}
         onToggleUserDropdown={() => (showUserDropdown = !showUserDropdown)}
         onLogout={handleLogout}
