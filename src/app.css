@@ -256,11 +256,23 @@ input[type='date']::-webkit-calendar-picker-indicator {
   --accent-color-dark: color-mix(in srgb, var(--accent-color-value) 90%, black);
 }
 
+/* Theme-aware background utility class - applies theme background color */
+/* This works at a higher level and can be used throughout the app */
+/* Handles both solid colors and gradients - themes can override --background-color */
+.theme-bg {
+  /* Use background property to support both solid colors and gradients */
+  /* Themes define --background-color which can be a color or gradient */
+  background: var(--background-color, var(--background, white)) !important;
+  /* Fallback to background-color for solid colors if background doesn't work */
+  background-color: var(--background-color, var(--background, white));
+}
+
+/* Theme-aware root background - uses CSS variable that themes can override */
 #root {
   padding: 1rem;
   border-radius: 50px;
   height: 100vh;
-  background-color: #f3f3f3;
+  background-color: var(--background-color, var(--background));
   border-radius: 5px;
   width: 100%;
   height: 100%;

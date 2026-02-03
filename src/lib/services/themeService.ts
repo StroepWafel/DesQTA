@@ -76,7 +76,10 @@ class ThemeService {
   private isPreviewing = false;
 
   // Utilities for property style management
-  private buildPropertiesCss(properties: Record<string, string>, fonts?: ThemeManifest['fonts']): string {
+  private buildPropertiesCss(
+    properties: Record<string, string>,
+    fonts?: ThemeManifest['fonts'],
+  ): string {
     const lines: string[] = [];
     Object.entries(properties || {}).forEach(([key, value]) => {
       const name = key.startsWith('--') ? key : `--${key}`;
@@ -91,7 +94,11 @@ class ThemeService {
     return `:root{\n${lines.join('\n')}\n}`;
   }
 
-  private setStyleTag(id: string, css: string, dataset: Record<string, string> = {}): HTMLStyleElement {
+  private setStyleTag(
+    id: string,
+    css: string,
+    dataset: Record<string, string> = {},
+  ): HTMLStyleElement {
     let style = document.getElementById(id) as HTMLStyleElement | null;
     if (!style) {
       style = document.createElement('style');
@@ -119,16 +126,16 @@ class ThemeService {
     try {
       // Load theme manifest
       const manifest = await this.loadThemeManifest(themeName);
-      
+
       // Load CSS files
       await this.loadThemeCSS(themeName, manifest);
-      
+
       // Apply custom properties + fonts via dedicated style tag
       this.applyCustomProperties(manifest.customProperties, manifest.fonts, { preview: false });
-      
+
       // Update current theme
       this.currentTheme = themeName;
-      
+
       // Save to settings
       await this.saveThemePreference(themeName);
     } catch (error) {
@@ -256,16 +263,16 @@ class ThemeService {
       return manifest;
     } catch (backendError) {
       console.warn('Backend theme loading failed, trying static fallback:', backendError);
-      
+
       // Fallback to static themes directory
       const manifestPath = `/themes/${themeName}/theme-manifest.json`;
-      
+
       try {
         const response = await fetch(manifestPath);
         if (!response.ok) {
           throw new Error(`Failed to load theme manifest: ${response.statusText}`);
         }
-        
+
         const manifest: ThemeManifest = await response.json();
         this.loadedThemes.set(themeName, manifest);
         return manifest;
@@ -397,23 +404,23 @@ class ThemeService {
       link.rel = 'stylesheet';
       link.href = path;
       link.dataset.theme = 'true';
-      
+
       link.onload = () => {
         this.activeCSSLinks.push(link);
         resolve();
       };
-      
+
       link.onerror = () => {
         // Silently fail for missing CSS files
         resolve();
       };
-      
+
       document.head.appendChild(link);
     });
   }
 
   private removeActiveCSS(): void {
-    this.activeCSSLinks.forEach(link => {
+    this.activeCSSLinks.forEach((link) => {
       if (link.parentNode) {
         link.parentNode.removeChild(link);
       }
@@ -423,10 +430,16 @@ class ThemeService {
     this.removeStyleTag('theme-properties');
   }
 
-  private applyCustomProperties(properties: Record<string, string>, fonts?: ThemeManifest['fonts'], opts?: { preview?: boolean }): void {
+  private applyCustomProperties(
+    properties: Record<string, string>,
+    fonts?: ThemeManifest['fonts'],
+    opts?: { preview?: boolean },
+  ): void {
     const css = this.buildPropertiesCss(properties, fonts);
     const id = opts?.preview ? 'theme-preview-properties' : 'theme-properties';
-    const dataset: Record<string, string> = opts?.preview ? { themePreview: 'true' } : { theme: 'true' };
+    const dataset: Record<string, string> = opts?.preview
+      ? { themePreview: 'true' }
+      : { theme: 'true' };
     this.setStyleTag(id, css, dataset);
   }
 
@@ -486,7 +499,7 @@ class ThemeService {
     if (this.loadedThemes.has(themeName)) {
       return this.loadedThemes.get(themeName)!;
     }
-    
+
     try {
       return await this.loadThemeManifest(themeName);
     } catch (error) {
@@ -501,7 +514,7 @@ class ThemeService {
     // Remove property style tags
     this.removeStyleTag('theme-properties');
     this.removeStyleTag('theme-preview-properties');
-    
+
     await this.saveThemePreference('default');
   }
 
@@ -572,19 +585,19 @@ class ThemeService {
   // Validate theme data structure
   validateThemeData(themeData: any): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     if (!themeData.name || typeof themeData.name !== 'string') {
       errors.push('Theme name is required and must be a string');
     }
-    
+
     if (!themeData.displayName || typeof themeData.displayName !== 'string') {
       errors.push('Display name is required and must be a string');
     }
-    
+
     if (!themeData.version || typeof themeData.version !== 'string') {
       errors.push('Version is required and must be a string');
     }
-    
+
     if (!themeData.customProperties || typeof themeData.customProperties !== 'object') {
       errors.push('Custom properties are required and must be an object');
     } else {
@@ -595,51 +608,51 @@ class ThemeService {
         }
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
   // Generate theme preview CSS for testing
   generatePreviewCSS(themeData: any): string {
     let css = ':root {\n';
-    
+
     if (themeData.customProperties) {
       for (const [key, value] of Object.entries(themeData.customProperties)) {
         css += `  ${key}: ${value};\n`;
       }
     }
-    
+
     if (themeData.fonts && themeData.features?.customFonts) {
       css += `  --font-primary: ${themeData.fonts.primary};\n`;
       css += `  --font-secondary: ${themeData.fonts.secondary};\n`;
       css += `  --font-monospace: ${themeData.fonts.monospace};\n`;
       css += `  --font-display: ${themeData.fonts.display};\n`;
     }
-    
+
     if (themeData.animations && themeData.features?.animations) {
       css += `  --animation-duration: ${themeData.animations.duration};\n`;
       css += `  --animation-easing: ${themeData.animations.easing};\n`;
       css += `  --animation-scale: ${themeData.animations.scale};\n`;
     }
-    
+
     css += '}\n';
-    
+
     return css;
   }
 
   // Apply temporary theme for preview without saving
   applyTemporaryTheme(themeData: any): void {
     const css = this.generatePreviewCSS(themeData);
-    
+
     // Remove existing preview styles
     const existingPreview = document.getElementById('theme-preview-styles');
     if (existingPreview) {
       existingPreview.remove();
     }
-    
+
     // Add new preview styles
     const style = document.createElement('style');
     style.id = 'theme-preview-styles';
@@ -657,4 +670,4 @@ class ThemeService {
 }
 
 // Export singleton instance
-export const themeService = new ThemeService(); 
+export const themeService = new ThemeService();

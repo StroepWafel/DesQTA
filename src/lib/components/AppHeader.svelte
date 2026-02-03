@@ -404,7 +404,7 @@
 </script>
 
 <header
-  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 rounded-t-2xl bg-white dark:bg-zinc-900"
+  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 rounded-t-2xl theme-bg"
   data-tauri-drag-region>
   <div class="flex items-center space-x-4">
     <button

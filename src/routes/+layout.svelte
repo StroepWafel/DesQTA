@@ -784,7 +784,7 @@
   <div
     class="flex flex-col h-screen w-screen {isFullscreen
       ? ''
-      : 'rounded-2xl'} overflow-hidden bg-white dark:bg-zinc-900"
+      : 'rounded-2xl'} overflow-hidden theme-bg"
     style="outline: none; border: none; margin: 0; padding: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
     {#if !$needsSetup}
       <AppHeader
@@ -823,7 +823,7 @@
       <main
         class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen
           ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900 transition-all duration-200"
+          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if contentLoading}
           <div class="flex items-center justify-center w-full h-full py-12">
@@ -842,7 +842,7 @@
       <!-- ThemeBuilder Sidebar -->
       {#if $themeBuilderSidebarOpen}
         <aside
-          class="flex fixed top-0 right-0 z-50 flex-col w-96 h-full bg-white border-l shadow-xl transition-transform duration-200 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700">
+          class="flex fixed top-0 right-0 z-50 flex-col w-96 h-full theme-bg border-l shadow-xl transition-transform duration-200 border-zinc-200 dark:border-zinc-700">
           <ThemeBuilder>
             {#snippet close()}
               <button
