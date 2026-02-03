@@ -251,8 +251,10 @@ fn decode_jwt(token: &str) -> Result<SeqtaJWT, String> {
 
 /// Fetch user info from SEQTA API
 async fn fetch_user_info(base_url: &str, jsessionid: &str) -> Result<UserInfoPayload, String> {
+    use crate::netgrab;
+    
     let login_url = format!("{}/seqta/student/login", base_url);
-    let client = reqwest::Client::builder()
+    let client = netgrab::create_client_builder()
         .cookie_store(true)
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
@@ -322,7 +324,9 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         header::HeaderValue::from_str(&format!("Bearer {}", &token)).unwrap(),
     );
 
-    let client = reqwest::Client::builder()
+    use crate::netgrab;
+    
+    let client = netgrab::create_client_builder()
         .cookie_provider(jar.clone())
         .cookie_store(true)
         .default_headers(headers)
@@ -544,8 +548,10 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
 
                                                 // Validate the session with a subjects request before accepting it
                                                 // This prevents capturing invalid/pre-login sessions
+                                                use crate::netgrab;
+                                                
                                                 let subjects_url = format!("{}/seqta/student/load/subjects", base_url);
-                                                let client = reqwest::Client::builder()
+                                                let client = netgrab::create_client_builder()
                                                     .cookie_store(true)
                                                     .build()
                                                     .unwrap_or_default();
@@ -728,10 +734,12 @@ pub async fn direct_login(
         format!("https://{}", base_url)
     };
 
+    use crate::netgrab;
+    
     let login_url = format!("{}/seqta/student/login", http_url);
 
-    // Create HTTP client with cookie store enabled
-    let client = reqwest::Client::builder()
+    // Create HTTP client with cookie store enabled and school network-friendly config
+    let client = netgrab::create_client_builder()
         .cookie_store(true)
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
