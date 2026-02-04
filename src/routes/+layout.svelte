@@ -157,7 +157,6 @@
   // Remove duplicate onMount - consolidating below
 
   let unlisten: (() => void) | undefined;
-  let fullscreenCheckInterval: ReturnType<typeof setInterval> | undefined;
   let checkFullscreenState: (() => Promise<void>) | undefined;
 
   const setupListeners = async () => {
@@ -167,13 +166,13 @@
       location.reload();
     });
 
-    // Listen for fullscreen changes from Tauri backend
+    // Listen for fullscreen/maximized changes from Tauri backend
     await listen<boolean>('fullscreen-changed', async (event) => {
       isFullscreen = event.payload;
-      logger.debug('layout', 'fullscreen_listener', `Fullscreen changed: ${isFullscreen}`);
+      logger.debug('layout', 'fullscreen_listener', `Window state changed: ${isFullscreen}`);
     });
 
-    // Also check fullscreen state periodically and on window focus to catch any missed events
+    // Check fullscreen state only when window state actually changes (event-driven)
     checkFullscreenState = async () => {
       try {
         const [currentFullscreen, currentMaximized] = await Promise.all([
@@ -187,28 +186,24 @@
           logger.debug(
             'layout',
             'checkFullscreenState',
-            `Fullscreen/Maximized state updated: ${isFullscreen} (fullscreen: ${currentFullscreen}, maximized: ${currentMaximized})`,
+            `Window state updated: ${isFullscreen} (fullscreen: ${currentFullscreen}, maximized: ${currentMaximized})`,
           );
         }
       } catch (e) {
-        logger.debug('layout', 'checkFullscreenState', 'Failed to check fullscreen state', {
+        logger.debug('layout', 'checkFullscreenState', 'Failed to check window state', {
           error: e,
         });
       }
     };
 
-    // Check immediately
+    // Check initial state once
     await checkFullscreenState();
 
-    // Check periodically (every 300ms) to catch any missed events
-    fullscreenCheckInterval = setInterval(checkFullscreenState, 300);
-
-    // Also check on window focus and resize events
-    window.addEventListener('focus', checkFullscreenState);
-    window.addEventListener('resize', checkFullscreenState);
-
-    // Listen to Tauri window events as well
+    // Listen to Tauri window events - these fire when window state actually changes
+    // The backend also emits 'fullscreen-changed' events on Resized/Moved, so we rely on that
+    // plus these frontend events as a backup
     appWindow.onResized(checkFullscreenState);
+    appWindow.onMoved(checkFullscreenState);
   };
 
   onDestroy(() => {
@@ -216,13 +211,6 @@
     if (unlisten) {
       logger.debug('layout', 'onDestroy', 'Cleaning up reload listener');
       unlisten();
-    }
-    if (fullscreenCheckInterval) {
-      clearInterval(fullscreenCheckInterval);
-    }
-    if (checkFullscreenState) {
-      window.removeEventListener('focus', checkFullscreenState);
-      window.removeEventListener('resize', checkFullscreenState);
     }
     window.removeEventListener('redo-onboarding', handleRedoOnboarding);
   });

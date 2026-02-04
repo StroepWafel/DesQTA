@@ -547,16 +547,33 @@ pub fn run() {
                     
                     let window_clone = window.clone();
                     let current_fullscreen = Cell::new(window.is_fullscreen().unwrap_or(false));
+                    let current_maximized = Cell::new(window.is_maximized().unwrap_or(false));
+                    
+                    // Helper function to check and emit window state changes
+                    let check_and_emit_state = {
+                        let window_ref = window_clone.clone();
+                        move || {
+                            let is_fullscreen = window_ref.is_fullscreen().unwrap_or(false);
+                            let is_maximized = window_ref.is_maximized().unwrap_or(false);
+                            let should_remove_corners = is_fullscreen || is_maximized;
+                            
+                            let fullscreen_changed = is_fullscreen != current_fullscreen.get();
+                            let maximized_changed = is_maximized != current_maximized.get();
+                            
+                            if fullscreen_changed || maximized_changed {
+                                current_fullscreen.set(is_fullscreen);
+                                current_maximized.set(is_maximized);
+                                println!("[DesQTA] Window state changed: fullscreen={}, maximized={}, remove_corners={}", 
+                                    is_fullscreen, is_maximized, should_remove_corners);
+                                let _ = window_ref.emit("fullscreen-changed", should_remove_corners);
+                            }
+                        }
+                    };
+                    
                     window.on_window_event(move |event| {
                         match event {
                             WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
-                                if let Ok(is_fullscreen) = window_clone.is_fullscreen() {
-                                    if is_fullscreen != current_fullscreen.get() {
-                                        println!("[DesQTA] Fullscreen state changed: {}", is_fullscreen);
-                                        let _ = window_clone.emit("fullscreen-changed", is_fullscreen);
-                                        current_fullscreen.set(is_fullscreen);
-                                    }
-                                }
+                                check_and_emit_state();
                             }
                             _ => {}
                         }
