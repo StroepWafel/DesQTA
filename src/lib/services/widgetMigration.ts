@@ -12,7 +12,10 @@ export async function migrateToWidgetSystem(): Promise<void> {
     // Check if a saved layout exists in the database by calling the Rust command directly
     const layout = await invoke<any>('db_widget_layout_load');
 
-    if (!layout || !layout.widgets || layout.widgets.length === 0) {
+    // Ensure widgets is always an array (defensive check for production builds)
+    const widgets = Array.isArray(layout?.widgets) ? layout.widgets : [];
+
+    if (!layout || widgets.length === 0) {
       logger.info(
         'widgetMigration',
         'migrateToWidgetSystem',
@@ -30,7 +33,7 @@ export async function migrateToWidgetSystem(): Promise<void> {
         'widgetMigration',
         'migrateToWidgetSystem',
         'Layout already exists in database, skipping migration',
-        { widgetCount: layout.widgets.length, version: layout.version },
+        { widgetCount: widgets.length, version: layout.version },
       );
     }
   } catch (e) {
@@ -48,10 +51,14 @@ export async function validateAndFixLayout(): Promise<void> {
   try {
     const layout = await widgetService.loadLayout();
 
+    // Ensure widgets is always an array (defensive check)
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+
     // Check for invalid widgets (widgets with types that don't exist)
-    const validWidgets = layout.widgets.filter((widget) => {
+    const validWidgets = widgets.filter((widget) => {
       // Basic validation - check if widget has required fields
       return (
+        widget &&
         widget.id &&
         widget.type &&
         widget.position &&
@@ -63,13 +70,12 @@ export async function validateAndFixLayout(): Promise<void> {
     });
 
     // If we filtered out any invalid widgets, save the fixed layout
-    if (validWidgets.length !== layout.widgets.length) {
+    if (validWidgets.length !== widgets.length) {
       logger.warn('widgetMigration', 'validateAndFixLayout', 'Removed invalid widgets', {
-        originalCount: layout.widgets.length,
+        originalCount: widgets.length,
         validCount: validWidgets.length,
       });
-      layout.widgets = validWidgets;
-      await widgetService.saveLayout(layout);
+      await widgetService.saveLayout({ ...layout, widgets: validWidgets });
     }
   } catch (e) {
     logger.error('widgetMigration', 'validateAndFixLayout', `Validation failed: ${e}`, {

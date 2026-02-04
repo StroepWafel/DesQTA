@@ -63,13 +63,14 @@
     </div>
   </div>
 {:else if renderedModule.type === 'resources'}
+  {@const resources = Array.isArray(renderedModule.content) ? renderedModule.content : []}
   <div
     class="mb-6"
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     <h3 class="text-lg font-semibold mb-3 text-white">Resources</h3>
     <div class="space-y-2">
-      {#each renderedModule.content as resource, resourceIndex}
+      {#each resources as resource, resourceIndex}
         {#if onResourceClick}
           <button
             type="button"
@@ -114,9 +115,12 @@
     {/if}
   </div>
 {:else if renderedModule.type === 'columnLayout'}
-  {@const hasCol1 = renderedModule.content.col1.length > 0}
-  {@const hasCol2 = renderedModule.content.col2.length > 0}
-  {@const hasCol3 = renderedModule.content.col3.length > 0}
+  {@const col1 = Array.isArray(renderedModule.content?.col1) ? renderedModule.content.col1 : []}
+  {@const col2 = Array.isArray(renderedModule.content?.col2) ? renderedModule.content.col2 : []}
+  {@const col3 = Array.isArray(renderedModule.content?.col3) ? renderedModule.content.col3 : []}
+  {@const hasCol1 = col1.length > 0}
+  {@const hasCol2 = col2.length > 0}
+  {@const hasCol3 = col3.length > 0}
   {@const columnCount = [hasCol1, hasCol2, hasCol3].filter(Boolean).length}
   {@const gridClasses =
     renderedModule.content.layoutStyle === 'equal-widths'
@@ -131,9 +135,9 @@
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     <div class="grid gap-4 {gridClasses}">
-      {#if renderedModule.content.col1.length > 0}
+      {#if col1.length > 0}
         <div class="space-y-4">
-          {#each renderedModule.content.col1 as moduleUuid}
+          {#each col1 as moduleUuid}
             {@const module = allModules.find((m) => m.uuid === moduleUuid)}
             {#if module}
               {@const rendered = renderModule(module, allModules)}
@@ -179,9 +183,9 @@
           {/each}
         </div>
       {/if}
-      {#if renderedModule.content.col2.length > 0}
+      {#if col2.length > 0}
         <div class="space-y-4">
-          {#each renderedModule.content.col2 as moduleUuid}
+          {#each col2 as moduleUuid}
             {@const module = allModules.find((m) => m.uuid === moduleUuid)}
             {#if module}
               {@const rendered = renderModule(module, allModules)}
@@ -227,9 +231,9 @@
           {/each}
         </div>
       {/if}
-      {#if renderedModule.content.col3.length > 0}
+      {#if col3.length > 0}
         <div class="space-y-4">
-          {#each renderedModule.content.col3 as moduleUuid}
+          {#each col3 as moduleUuid}
             {@const module = allModules.find((m) => m.uuid === moduleUuid)}
             {#if module}
               {@const rendered = renderModule(module, allModules)}
@@ -278,6 +282,8 @@
     </div>
   </div>
 {:else if renderedModule.type === 'formula'}
+  {@const formulaContent = renderedModule.content?.formula || ''}
+  {@const formulaScale = renderedModule.content?.scale}
   <div
     class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
     transition:fade={{ duration: 300, delay: animationDelay }}
@@ -286,24 +292,29 @@
       <div class="flex-1">
         <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Formula</div>
         <div class="text-lg font-mono text-zinc-900 dark:text-white">
-          {renderedModule.content.formula}
+          {formulaContent}
         </div>
       </div>
-      {#if renderedModule.content.scale && renderedModule.content.scale !== '1'}
+      {#if formulaScale && formulaScale !== '1'}
         <div class="text-sm text-zinc-600 dark:text-zinc-400">
-          Scale: {renderedModule.content.scale}x
+          Scale: {formulaScale}x
         </div>
       {/if}
     </div>
   </div>
 {:else if renderedModule.type === 'poll'}
+  {@const pollOptions = Array.isArray(renderedModule.content?.options)
+    ? renderedModule.content.options
+    : []}
   <div
     class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
-    <h3 class="text-lg font-semibold mb-3 text-white">{renderedModule.content.proposition}</h3>
+    <h3 class="text-lg font-semibold mb-3 text-white">
+      {renderedModule.content?.proposition || ''}
+    </h3>
     <div class="space-y-2">
-      {#each renderedModule.content.options as option, optionIndex}
+      {#each pollOptions as option, optionIndex}
         <div
           class="p-3 rounded-lg border border-zinc-300/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50">
           <div class="flex items-center gap-2">

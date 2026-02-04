@@ -64,7 +64,8 @@
     w = snapToPreset(w, PRESET_WIDTHS);
     h = snapToPreset(h, PRESET_HEIGHTS);
 
-    const widget = layout.widgets.find((w) => w.id === widgetId);
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+    const widget = widgets.find((w) => w.id === widgetId);
     if (widget) {
       // Only update if position actually changed to avoid unnecessary saves
       const hasChanged =
@@ -92,11 +93,15 @@
     try {
       const loadedLayout = await widgetService.loadLayout();
 
+      // Ensure widgets is always an array (defensive check)
+      const currentWidgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+      const loadedWidgets = Array.isArray(loadedLayout.widgets) ? loadedLayout.widgets : [];
+
       // Always update if widgets array is different (handles initial empty state)
       const widgetsChanged =
-        layout.widgets.length !== loadedLayout.widgets.length ||
-        layout.widgets.some((w, i) => {
-          const loaded = loadedLayout.widgets[i];
+        currentWidgets.length !== loadedWidgets.length ||
+        currentWidgets.some((w, i) => {
+          const loaded = loadedWidgets[i];
           return (
             !loaded ||
             w.id !== loaded.id ||
@@ -108,12 +113,12 @@
           );
         });
 
-      if (widgetsChanged || layout.widgets.length === 0) {
-        layout = loadedLayout;
+      if (widgetsChanged || currentWidgets.length === 0) {
+        layout = { ...loadedLayout, widgets: loadedWidgets };
         logger.debug('WidgetGrid', 'loadLayout', 'Layout loaded successfully', {
-          widgetCount: layout.widgets.length,
-          version: layout.version,
-          widgetIds: layout.widgets.map((w) => w.id),
+          widgetCount: loadedWidgets.length,
+          version: loadedLayout.version,
+          widgetIds: loadedWidgets.map((w) => w.id),
         });
       } else {
         logger.debug('WidgetGrid', 'loadLayout', 'Layout unchanged, skipping update');
@@ -174,7 +179,8 @@
             ) {
               const widgetId = item.el.getAttribute('data-gs-id');
               if (widgetId) {
-                const widget = layout.widgets.find((w) => w.id === widgetId);
+                const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+                const widget = widgets.find((w) => w.id === widgetId);
                 if (widget) {
                   let w = snapToPreset(item.w, PRESET_WIDTHS);
                   let h = snapToPreset(item.h, PRESET_HEIGHTS);
@@ -234,7 +240,8 @@
             ) {
               const widgetId = item.el.getAttribute('data-gs-id');
               if (widgetId) {
-                const widget = layout.widgets.find((w) => w.id === widgetId);
+                const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+                const widget = widgets.find((w) => w.id === widgetId);
                 if (widget) {
                   let w = snapToPreset(item.w, PRESET_WIDTHS);
                   let h = snapToPreset(item.h, PRESET_HEIGHTS);
@@ -265,7 +272,8 @@
             ) {
               const widgetId = item.el.getAttribute('data-gs-id');
               if (widgetId) {
-                const widget = layout.widgets.find((w) => w.id === widgetId);
+                const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+                const widget = widgets.find((w) => w.id === widgetId);
                 if (widget) {
                   let w = snapToPreset(item.w, PRESET_WIDTHS);
                   let h = snapToPreset(item.h, PRESET_HEIGHTS);
@@ -293,8 +301,10 @@
     // Set flag to prevent change events from saving during initial positioning
     isAddingWidgets = true;
 
+    // Ensure widgets is an array before filtering
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
     logger.debug('WidgetGrid', 'addWidgetsToGrid', 'Starting to add widgets', {
-      widgetCount: layout.widgets.filter((w) => w.enabled).length,
+      widgetCount: widgets.filter((w) => w.enabled).length,
     });
 
     await tick();
@@ -317,14 +327,14 @@
     // Remove widgets that are no longer in layout
     existingElements.forEach((el) => {
       const widgetId = el.getAttribute('data-gs-id');
-      if (widgetId && !layout.widgets.find((w) => w.id === widgetId && w.enabled)) {
+      if (widgetId && !widgets.find((w) => w.id === widgetId && w.enabled)) {
         logger.debug('WidgetGrid', 'addWidgetsToGrid', `Removing widget ${widgetId}`);
         grid?.removeWidget(el, false);
       }
     });
 
     // Add or update widgets
-    for (const widget of layout.widgets.filter((w) => w.enabled)) {
+    for (const widget of widgets.filter((w) => w.enabled)) {
       let element = gridElement?.querySelector(`[data-gs-id="${widget.id}"]`) as HTMLElement;
 
       if (!element) {
@@ -423,8 +433,9 @@
   // Watch for layout.widgets changes and reload grid (but not on initial mount)
   let isInitialMount = $state(true);
   $effect(() => {
-    // Watch for layout changes
-    if (grid && layout.widgets.length > 0) {
+    // Watch for layout changes - ensure widgets is an array before checking length
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+    if (grid && widgets.length > 0) {
       // On initial mount, we handle this in onMount
       if (isInitialMount) {
         return;
@@ -451,9 +462,11 @@
   onMount(async () => {
     logger.debug('WidgetGrid', 'onMount', 'Starting mount sequence');
     await loadLayout();
+    // Ensure widgets is an array before accessing properties
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
     logger.debug('WidgetGrid', 'onMount', 'Layout loaded', {
-      widgetCount: layout.widgets.length,
-      widgetIds: layout.widgets.map((w) => w.id),
+      widgetCount: widgets.length,
+      widgetIds: widgets.map((w) => w.id),
     });
     initializeGrid();
     logger.debug('WidgetGrid', 'onMount', 'Grid initialized');
@@ -474,7 +487,8 @@
     }
 
     // Force a final save of current layout state
-    if (layout.widgets.length > 0) {
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+    if (widgets.length > 0) {
       // Read current positions from GridStack before destroying
       if (grid && gridElement) {
         const allWidgets = Array.from(
@@ -489,7 +503,7 @@
             const w = parseInt(el.getAttribute('data-gs-w') || '1');
             const h = parseInt(el.getAttribute('data-gs-h') || '1');
 
-            const widget = layout.widgets.find((w) => w.id === widgetId);
+            const widget = widgets.find((w) => w.id === widgetId);
             if (widget) {
               widget.position = { ...widget.position, x, y, w, h };
             }
@@ -498,7 +512,7 @@
       }
 
       // Save synchronously before destroy
-      widgetService.saveLayout(layout).catch((e) => {
+      widgetService.saveLayout({ ...layout, widgets }).catch((e) => {
         logger.error('WidgetGrid', 'onDestroy', `Failed to save layout on destroy: ${e}`, {
           error: e,
         });
@@ -519,7 +533,7 @@
   aria-live="polite"
   aria-atomic="false">
   <!-- Widgets are rendered by Svelte, GridStack manages their positioning -->
-  {#each layout.widgets as widget (widget.id)}
+  {#each Array.isArray(layout.widgets) ? layout.widgets : [] as widget (widget.id)}
     {#if widget.enabled}
       <WidgetContainer
         {widget}

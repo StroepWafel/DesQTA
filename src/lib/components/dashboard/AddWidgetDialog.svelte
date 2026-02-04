@@ -52,7 +52,8 @@
 
       // Find the highest y position to place new widget at the bottom
       const layout = await widgetService.loadLayout();
-      const maxY = layout.widgets.reduce((max, w) => Math.max(max, w.position.y + w.position.h), 0);
+      const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+      const maxY = widgets.reduce((max, w) => Math.max(max, w.position.y + w.position.h), 0);
 
       const newWidget: WidgetConfig = {
         id: `${type}_${Date.now()}`,

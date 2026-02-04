@@ -8,15 +8,19 @@ export const widgetService = {
       const layout = await invoke<WidgetLayout | null>('db_widget_layout_load');
 
       if (layout) {
+        // Ensure widgets is always an array (defensive check for production builds)
+        const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+
         // Convert lastModified string to Date
         const layoutWithDate: WidgetLayout = {
           ...layout,
+          widgets,
           lastModified:
             typeof layout.lastModified === 'string' ? new Date(layout.lastModified) : new Date(),
         };
 
         logger.debug('widgetService', 'loadLayout', 'Layout loaded from database', {
-          widgetCount: layout.widgets.length,
+          widgetCount: widgets.length,
           version: layout.version,
         });
 
@@ -39,9 +43,13 @@ export const widgetService = {
 
   async saveLayout(layout: WidgetLayout): Promise<void> {
     try {
+      // Ensure widgets is always an array (defensive check)
+      const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+
       // Convert Date to ISO string for Rust
       const layoutToSave: WidgetLayout = {
         ...layout,
+        widgets,
         lastModified:
           typeof layout.lastModified === 'string'
             ? layout.lastModified
@@ -51,7 +59,7 @@ export const widgetService = {
 
       await invoke('db_widget_layout_save', { layout: layoutToSave });
       logger.debug('widgetService', 'saveLayout', 'Layout saved successfully', {
-        widgetCount: layout.widgets.length,
+        widgetCount: widgets.length,
         version: layoutToSave.version,
       });
     } catch (e) {
@@ -134,23 +142,26 @@ export const widgetService = {
 
   async updateWidgetConfig(widgetId: string, updates: Partial<WidgetConfig>): Promise<void> {
     const layout = await this.loadLayout();
-    const widget = layout.widgets.find((w) => w.id === widgetId);
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+    const widget = widgets.find((w) => w.id === widgetId);
     if (widget) {
       Object.assign(widget, updates);
-      await this.saveLayout(layout);
+      await this.saveLayout({ ...layout, widgets });
     }
   },
 
   async addWidget(widget: WidgetConfig): Promise<void> {
     const layout = await this.loadLayout();
-    layout.widgets.push(widget);
-    await this.saveLayout(layout);
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+    widgets.push(widget);
+    await this.saveLayout({ ...layout, widgets });
   },
 
   async removeWidget(widgetId: string): Promise<void> {
     const layout = await this.loadLayout();
-    layout.widgets = layout.widgets.filter((w) => w.id !== widgetId);
-    await this.saveLayout(layout);
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+    const filteredWidgets = widgets.filter((w) => w.id !== widgetId);
+    await this.saveLayout({ ...layout, widgets: filteredWidgets });
   },
 
   async updateWidgetPosition(
@@ -158,10 +169,11 @@ export const widgetService = {
     position: Partial<WidgetConfig['position']>,
   ): Promise<void> {
     const layout = await this.loadLayout();
-    const widget = layout.widgets.find((w) => w.id === widgetId);
+    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
+    const widget = widgets.find((w) => w.id === widgetId);
     if (widget) {
       widget.position = { ...widget.position, ...position };
-      await this.saveLayout(layout);
+      await this.saveLayout({ ...layout, widgets });
     }
   },
 
