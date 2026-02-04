@@ -27,6 +27,7 @@
     MagnifyingGlass,
     ChevronRight,
     XMark,
+    ArrowPath,
   } from 'svelte-hero-icons';
   import { fade, fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
@@ -513,6 +514,11 @@
     await loadCurrentTheme(); // Refresh current theme name
   }
 
+  async function handleUnapplyTheme() {
+    await loadAndApplyTheme('default');
+    await loadCurrentTheme(); // Refresh current theme name
+  }
+
   function getFilteredThemes() {
     let filtered = [...displayThemes]; // Create a copy to avoid mutating state
 
@@ -637,6 +643,15 @@
           <Icon src={Sparkles} class="w-4 h-4" />
           <span class="truncate max-w-[100px]">{capitalizeName(currentThemeName)}</span>
         </button>
+        {#if currentThemeName !== 'default'}
+          <button
+            class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+            onclick={handleUnapplyTheme}
+            title="Reset to default theme">
+            <Icon src={ArrowPath} class="w-4 h-4" />
+            <span class="hidden sm:inline">Reset</span>
+          </button>
+        {/if}
         <button
           class="flex items-center gap-2 px-4 py-2 rounded-lg accent-bg hover:accent-bg-hover text-white font-medium transition-all duration-200 transform hover:scale-105 active:scale-95"
           onclick={() => themeBuilderSidebarOpen.set(true)}>
