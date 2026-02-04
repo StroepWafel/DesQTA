@@ -381,6 +381,16 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

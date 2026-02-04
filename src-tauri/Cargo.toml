@@ -63,6 +63,11 @@ ammonia = "4.0"
 # PDF Parsing
 pdf-extract = "0.7"
 
+# ZIP and Hashing
+zip = "0.6"
+sha2 = "0.10"
+hex = "0.4"
+
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.25"
 objc = "0.2"

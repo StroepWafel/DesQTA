@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
+use zip::ZipArchive;
+use sha2::{Sha256, Digest};
+use hex;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -700,4 +703,136 @@ pub async fn export_theme_to_file(
     fs::write(&file_path, theme_json).map_err(|e| format!("Failed to write theme file: {}", e))?;
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn download_and_install_theme(
+    app: AppHandle,
+    zip_url: String,
+    _theme_id: String,
+    theme_slug: String,
+    checksum: Option<String>,
+) -> Result<String, String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let theme_dir = themes_dir.join(&theme_slug);
+
+    println!(
+        "[ThemeManager] Downloading theme {} from {}",
+        theme_slug, zip_url
+    );
+
+    // 1. Download ZIP from URL using the global client (handles school networks/SSL)
+    use crate::netgrab;
+    let client = netgrab::create_client();
+
+    let response = client
+        .get(&zip_url)
+        .timeout(std::time::Duration::from_secs(60))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to download ZIP: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("HTTP error: {}", response.status()));
+    }
+
+    let zip_bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read ZIP bytes: {}", e))?;
+
+    // 2. Verify checksum if provided
+    if let Some(expected_checksum) = checksum {
+        let mut hasher = Sha256::new();
+        hasher.update(&zip_bytes);
+        let computed_hash = hex::encode(hasher.finalize());
+        
+        // Remove "sha256:" prefix if present
+        let expected_hash = expected_checksum
+            .strip_prefix("sha256:")
+            .unwrap_or(&expected_checksum)
+            .to_lowercase();
+
+        if computed_hash.to_lowercase() != expected_hash {
+            return Err(format!(
+                "Checksum mismatch. Expected: {}, Got: {}",
+                expected_hash, computed_hash
+            ));
+        }
+        println!("[ThemeManager] Checksum verified successfully");
+    }
+
+    // 3. Extract ZIP to app data themes directory
+    let mut archive = ZipArchive::new(std::io::Cursor::new(&zip_bytes))
+        .map_err(|e| format!("Failed to open ZIP archive: {}", e))?;
+
+    // Remove existing theme directory if it exists
+    if theme_dir.exists() {
+        println!("[ThemeManager] Removing existing theme directory: {:?}", theme_dir);
+        fs::remove_dir_all(&theme_dir)
+            .map_err(|e| format!("Failed to remove existing theme: {}", e))?;
+    }
+
+    // Create theme directory
+    fs::create_dir_all(&theme_dir)
+        .map_err(|e| format!("Failed to create theme directory: {}", e))?;
+
+    // Extract all files from ZIP
+    for i in 0..archive.len() {
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| format!("Failed to read file {} from ZIP: {}", i, e))?;
+
+        let file_path = match file.enclosed_name() {
+            Some(path) => path,
+            None => continue,
+        };
+
+        // Remove the root folder name if ZIP contains {theme-slug}/ structure
+        let relative_path = if file_path.starts_with(&theme_slug) {
+            file_path.strip_prefix(&format!("{}/", theme_slug))
+                .unwrap_or(file_path)
+        } else {
+            file_path
+        };
+
+        let outpath = theme_dir.join(relative_path);
+
+        // Create parent directories if needed
+        if let Some(parent) = outpath.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create directory {:?}: {}", parent, e))?;
+        }
+
+        // Skip directories
+        if file.is_dir() {
+            fs::create_dir_all(&outpath)
+                .map_err(|e| format!("Failed to create directory {:?}: {}", outpath, e))?;
+            continue;
+        }
+
+        // Extract file
+        let mut outfile = fs::File::create(&outpath)
+            .map_err(|e| format!("Failed to create file {:?}: {}", outpath, e))?;
+        std::io::copy(&mut file, &mut outfile)
+            .map_err(|e| format!("Failed to write file {:?}: {}", outpath, e))?;
+    }
+
+    println!("[ThemeManager] Theme extracted successfully to: {:?}", theme_dir);
+
+    // 4. Validate structure (check for theme-manifest.json)
+    let manifest_path = theme_dir.join("theme-manifest.json");
+    if !manifest_path.exists() {
+        return Err(format!(
+            "Theme manifest not found at {:?}. Invalid theme structure.",
+            manifest_path
+        ));
+    }
+
+    // 5. Return theme slug - frontend will load manifest using existing load_theme_manifest command
+    Ok(theme_slug)
 }

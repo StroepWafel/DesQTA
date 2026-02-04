@@ -29,6 +29,7 @@
     loadTheme,
     loadCurrentTheme,
   } from '../lib/stores/theme';
+  import { themeService } from '../lib/services/themeService';
   import { initI18n, locale, availableLocales, _ } from '../lib/i18n';
   import T from '../lib/components/T.svelte';
   import { themeBuilderSidebarOpen } from '../lib/stores/themeBuilderSidebar';
@@ -450,6 +451,11 @@
 
     // Initialize theme and i18n first
     await Promise.all([loadAccentColor(), loadTheme(), loadCurrentTheme(), initI18n()]);
+
+    // Initialize theme sync in background (don't block startup)
+    themeService.initializeThemeSync().catch((e) => {
+      logger.error('layout', 'onMount', 'Failed to initialize theme sync', { error: e });
+    });
 
     shellReady = true;
 

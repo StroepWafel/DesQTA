@@ -34,6 +34,8 @@ mod html_parser;
 mod seqta_config;
 #[path = "services/seqta_mentions.rs"]
 mod seqta_mentions;
+#[path = "services/theme_store.rs"]
+mod theme_store;
 #[path = "utils/session.rs"]
 mod session;
 #[path = "utils/settings.rs"]
@@ -324,6 +326,20 @@ pub fn run() {
             theme_manager::get_themes_directory_path,
             theme_manager::export_theme_to_file,
             theme_manager::read_theme_css,
+            theme_manager::download_and_install_theme,
+            theme_store::theme_store_request,
+            theme_store::theme_store_list_themes,
+            theme_store::theme_store_get_theme,
+            theme_store::theme_store_search_themes,
+            theme_store::theme_store_get_collections,
+            theme_store::theme_store_get_collection,
+            theme_store::theme_store_get_spotlight,
+            theme_store::theme_store_download_theme,
+            theme_store::theme_store_favorite_theme,
+            theme_store::theme_store_unfavorite_theme,
+            theme_store::theme_store_get_favorites,
+            theme_store::theme_store_get_user_status,
+            theme_store::theme_store_rate_theme,
             news::get_news_australia,
             todolist::load_todos,
             todolist::save_todos,
