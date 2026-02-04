@@ -81,6 +81,8 @@ pub struct Settings {
     pub disable_school_picture: bool,
     pub enhanced_animations: bool,
     pub gemini_api_key: Option<String>,
+    pub cerebras_api_key: Option<String>,
+    pub ai_provider: Option<String>, // "gemini" or "cerebras"
     pub ai_integrations_enabled: Option<bool>,
     pub grade_analyser_enabled: Option<bool>,
     pub lesson_summary_analyser_enabled: Option<bool>,
@@ -127,6 +129,8 @@ impl Default for Settings {
             disable_school_picture: false,
             enhanced_animations: true,
             gemini_api_key: None,
+            cerebras_api_key: None,
+            ai_provider: Some("gemini".to_string()), // Default to Gemini
             ai_integrations_enabled: Some(false),
             grade_analyser_enabled: Some(true),
             lesson_summary_analyser_enabled: Some(true),
@@ -378,6 +382,8 @@ impl Settings {
             default_settings.enhanced_animations,
         );
         default_settings.gemini_api_key = get_opt_string(&existing_json, "gemini_api_key");
+        default_settings.cerebras_api_key = get_opt_string(&existing_json, "cerebras_api_key");
+        default_settings.ai_provider = get_opt_string(&existing_json, "ai_provider").or_else(|| Some("gemini".to_string()));
         default_settings.ai_integrations_enabled =
             get_opt_bool(&existing_json, "ai_integrations_enabled");
         default_settings.grade_analyser_enabled =

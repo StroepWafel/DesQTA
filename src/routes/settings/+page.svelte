@@ -80,6 +80,8 @@
   let disableSchoolPicture = false;
   let enhancedAnimations = true;
   let geminiApiKey = '';
+  let cerebrasApiKey = '';
+  let aiProvider: 'gemini' | 'cerebras' = 'gemini';
 
   let remindersEnabled = true;
   let showCloudSyncModal = false;
@@ -127,6 +129,8 @@
     disableSchoolPicture: boolean;
     enhancedAnimations: boolean;
     geminiApiKey: string;
+    cerebrasApiKey: string;
+    aiProvider: 'gemini' | 'cerebras';
     aiIntegrationsEnabled: boolean;
     gradeAnalyserEnabled: boolean;
     lessonSummaryAnalyserEnabled: boolean;
@@ -270,6 +274,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       disableSchoolPicture = settings.disable_school_picture ?? false;
       enhancedAnimations = settings.enhanced_animations ?? true;
       geminiApiKey = settings.gemini_api_key ?? '';
+      cerebrasApiKey = settings.cerebras_api_key ?? '';
+      aiProvider = (settings.ai_provider as 'gemini' | 'cerebras') || 'gemini';
       accentColor.set(settings.accent_color ?? '#3b82f6');
       theme.set(settings.theme ?? 'dark');
       aiIntegrationsEnabled = settings.ai_integrations_enabled ?? false;
@@ -297,6 +303,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         disableSchoolPicture,
         enhancedAnimations,
         geminiApiKey,
+        cerebrasApiKey,
+        aiProvider,
         aiIntegrationsEnabled,
         gradeAnalyserEnabled,
         lessonSummaryAnalyserEnabled,
@@ -329,6 +337,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       disableSchoolPicture = false;
       enhancedAnimations = true;
       geminiApiKey = '';
+      cerebrasApiKey = '';
+      aiProvider = 'gemini';
       accentColor.set('#3b82f6');
       theme.set('dark');
       aiIntegrationsEnabled = false;
@@ -398,6 +408,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         disable_school_picture: disableSchoolPicture,
         enhanced_animations: enhancedAnimations,
         gemini_api_key: geminiApiKey,
+        cerebras_api_key: cerebrasApiKey,
+        ai_provider: aiProvider,
         ai_integrations_enabled: aiIntegrationsEnabled,
         grade_analyser_enabled: gradeAnalyserEnabled,
         lesson_summary_analyser_enabled: lessonSummaryAnalyserEnabled,
@@ -552,6 +564,8 @@ The Company reserves the right to terminate your access to the Service at any ti
     disableSchoolPicture = cloudSettings.disable_school_picture ?? false;
     enhancedAnimations = cloudSettings.enhanced_animations ?? true;
     geminiApiKey = cloudSettings.gemini_api_key ?? '';
+    cerebrasApiKey = cloudSettings.cerebras_api_key ?? '';
+    aiProvider = (cloudSettings.ai_provider as 'gemini' | 'cerebras') || 'gemini';
     accentColor.set(cloudSettings.accent_color ?? '#3b82f6');
     theme.set(cloudSettings.theme ?? 'dark');
     aiIntegrationsEnabled = cloudSettings.ai_integrations_enabled ?? false;
@@ -625,6 +639,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       disableSchoolPicture !== initialSettings.disableSchoolPicture ||
       enhancedAnimations !== initialSettings.enhancedAnimations ||
       geminiApiKey !== initialSettings.geminiApiKey ||
+      cerebrasApiKey !== initialSettings.cerebrasApiKey ||
+      aiProvider !== initialSettings.aiProvider ||
       aiIntegrationsEnabled !== initialSettings.aiIntegrationsEnabled ||
       gradeAnalyserEnabled !== initialSettings.gradeAnalyserEnabled ||
       lessonSummaryAnalyserEnabled !== initialSettings.lessonSummaryAnalyserEnabled ||
@@ -1933,31 +1949,76 @@ The Company reserves the right to terminate your access to the Service at any ti
                   <T key="settings.lesson_summary_analyser" fallback="Lesson Summary Analyser" />
                 </label>
               </div>
-              <div class="mt-6">
-                <label
-                  for="gemini-api-key"
-                  class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  <T key="settings.gemini_api_key" fallback="Gemini API Key" />
-                </label>
-                <input
-                  id="gemini-api-key"
-                  type="text"
-                  class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  placeholder={$_('settings.gemini_placeholder') ||
-                    'Paste your Gemini API key here'}
-                  bind:value={geminiApiKey}
-                  autocomplete="off"
-                  spellcheck="false" />
-                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  Get your API key from
-                  <a
-                    href="https://aistudio.google.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-blue-600 dark:text-blue-400 hover:underline">
-                    Google AI Studio
-                  </a>
-                </p>
+              <div class="mt-6 space-y-4">
+                <div>
+                  <label
+                    for="ai-provider"
+                    class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                    <T key="settings.ai_provider" fallback="AI Provider" />
+                  </label>
+                  <select
+                    id="ai-provider"
+                    bind:value={aiProvider}
+                    class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500">
+                    <option value="gemini">Gemini</option>
+                    <option value="cerebras">Cerebras</option>
+                  </select>
+                </div>
+                {#if aiProvider === 'gemini'}
+                  <div>
+                    <label
+                      for="gemini-api-key"
+                      class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                      <T key="settings.gemini_api_key" fallback="Gemini API Key" />
+                    </label>
+                    <input
+                      id="gemini-api-key"
+                      type="text"
+                      class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      placeholder={$_('settings.gemini_placeholder') ||
+                        'Paste your Gemini API key here'}
+                      bind:value={geminiApiKey}
+                      autocomplete="off"
+                      spellcheck="false" />
+                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                      Get your API key from
+                      <a
+                        href="https://aistudio.google.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-blue-600 dark:text-blue-400 hover:underline">
+                        Google AI Studio
+                      </a>
+                    </p>
+                  </div>
+                {:else}
+                  <div>
+                    <label
+                      for="cerebras-api-key"
+                      class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                      <T key="settings.cerebras_api_key" fallback="Cerebras API Key" />
+                    </label>
+                    <input
+                      id="cerebras-api-key"
+                      type="text"
+                      class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      placeholder={$_('settings.cerebras_placeholder') ||
+                        'Paste your Cerebras API key here'}
+                      bind:value={cerebrasApiKey}
+                      autocomplete="off"
+                      spellcheck="false" />
+                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                      Get your API key from
+                      <a
+                        href="https://cloud.cerebras.ai"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-blue-600 dark:text-blue-400 hover:underline">
+                        Cerebras Cloud
+                      </a>
+                    </p>
+                  </div>
+                {/if}
               </div>
             </div>
           {/if}

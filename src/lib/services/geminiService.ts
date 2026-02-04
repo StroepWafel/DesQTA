@@ -32,28 +32,47 @@ export interface LessonSummary {
   steps: string[];
 }
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
+
+type AIProvider = 'gemini' | 'cerebras';
 
 export class GeminiService {
-  static async getApiKey(): Promise<string | null> {
+  static async getProvider(): Promise<AIProvider> {
     try {
-    const subset = await invoke<any>('get_settings_subset', { keys: ['gemini_api_key'] });
-    return subset?.gemini_api_key || null;
+      const subset = await invoke<any>('get_settings_subset', { keys: ['ai_provider'] });
+      return (subset?.ai_provider || 'gemini') as AIProvider;
+    } catch {
+      return 'gemini';
+    }
+  }
+
+  static async getApiKey(provider?: AIProvider): Promise<string | null> {
+    try {
+      const currentProvider = provider || (await this.getProvider());
+      const keys = currentProvider === 'cerebras' ? ['cerebras_api_key'] : ['gemini_api_key'];
+      const subset = await invoke<any>('get_settings_subset', { keys });
+      return currentProvider === 'cerebras'
+        ? subset?.cerebras_api_key || null
+        : subset?.gemini_api_key || null;
     } catch {
       return null;
     }
   }
 
   static async predictGrades(assessments: AssessmentData[]): Promise<GradePrediction[]> {
-    const apiKey = await this.getApiKey();
+    const provider = await this.getProvider();
+    const apiKey = await this.getApiKey(provider);
     if (!apiKey) {
-      throw new Error('No Gemini API key set. Please add your API key in Settings.');
+      const providerName = provider === 'cerebras' ? 'Cerebras' : 'Gemini';
+      throw new Error(`No ${providerName} API key set. Please add your API key in Settings.`);
     }
     try {
       // Group assessments by subject
       const assessmentsBySubject = new Map<string, AssessmentData[]>();
-      
-      assessments.forEach(assessment => {
+
+      assessments.forEach((assessment) => {
         if (!assessmentsBySubject.has(assessment.subject)) {
           assessmentsBySubject.set(assessment.subject, []);
         }
@@ -64,8 +83,8 @@ export class GeminiService {
 
       for (const [subject, subjectAssessments] of assessmentsBySubject) {
         // Filter for completed assessments with grades
-        const completedAssessments = subjectAssessments.filter(a => 
-          a.status === 'MARKS_RELEASED' && a.finalGrade !== undefined
+        const completedAssessments = subjectAssessments.filter(
+          (a) => a.status === 'MARKS_RELEASED' && a.finalGrade !== undefined,
         );
 
         if (completedAssessments.length === 0) {
@@ -74,16 +93,16 @@ export class GeminiService {
         }
 
         // Prepare data for the AI
-        const assessmentData = completedAssessments.map(a => ({
+        const assessmentData = completedAssessments.map((a) => ({
           title: a.title,
           grade: a.finalGrade,
           dueDate: a.due,
-          status: a.status
+          status: a.status,
         }));
 
         const prompt = this.buildPredictionPrompt(subject, assessmentData);
-        
-        const prediction = await this.callGeminiAPI(prompt, apiKey);
+
+        const prediction = await this.callAIAPI(prompt, apiKey, provider);
         if (prediction) {
           predictions.push(prediction);
         }
@@ -97,9 +116,9 @@ export class GeminiService {
   }
 
   private static buildPredictionPrompt(subject: string, assessments: any[]): string {
-    const assessmentList = assessments.map(a => 
-      `- ${a.title}: ${a.grade}% (due: ${new Date(a.due).toLocaleDateString()})`
-    ).join('\n');
+    const assessmentList = assessments
+      .map((a) => `- ${a.title}: ${a.grade}% (due: ${new Date(a.due).toLocaleDateString()})`)
+      .join('\n');
 
     const averageGrade = assessments.reduce((sum, a) => sum + a.grade, 0) / assessments.length;
 
@@ -128,7 +147,22 @@ Respond with ONLY a JSON object in this exact format:
 Be realistic and consider that the prediction should be based on demonstrated performance patterns.`;
   }
 
-  private static async callGeminiAPI(prompt: string, apiKey: string): Promise<GradePrediction | null> {
+  private static async callAIAPI(
+    prompt: string,
+    apiKey: string,
+    provider: AIProvider,
+  ): Promise<GradePrediction | null> {
+    if (provider === 'cerebras') {
+      return this.callCerebrasAPI(prompt, apiKey);
+    } else {
+      return this.callGeminiAPI(prompt, apiKey);
+    }
+  }
+
+  private static async callGeminiAPI(
+    prompt: string,
+    apiKey: string,
+  ): Promise<GradePrediction | null> {
     try {
       const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
         method: 'POST',
@@ -136,18 +170,22 @@ Be realistic and consider that the prediction should be based on demonstrated pe
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
           generationConfig: {
             temperature: 0.3,
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 1024,
-          }
-        })
+          },
+        }),
       });
 
       if (!response.ok) {
@@ -155,13 +193,13 @@ Be realistic and consider that the prediction should be based on demonstrated pe
       }
 
       const data = await response.json();
-      
+
       if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
         throw new Error('Invalid response from Gemini API');
       }
 
       const responseText = data.candidates[0].content.parts[0].text;
-      
+
       // Try to extract JSON from the response
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
@@ -169,10 +207,14 @@ Be realistic and consider that the prediction should be based on demonstrated pe
       }
 
       const prediction = JSON.parse(jsonMatch[0]);
-      
+
       // Validate the prediction format
-      if (!prediction.subject || typeof prediction.predictedGrade !== 'number' || 
-          typeof prediction.confidence !== 'number' || !prediction.reasoning) {
+      if (
+        !prediction.subject ||
+        typeof prediction.predictedGrade !== 'number' ||
+        typeof prediction.confidence !== 'number' ||
+        !prediction.reasoning
+      ) {
         throw new Error('Invalid prediction format');
       }
 
@@ -183,15 +225,86 @@ Be realistic and consider that the prediction should be based on demonstrated pe
     }
   }
 
-  static async summarizeLessonContent(lesson: { title: string; content: string; attachments: { name: string }[] }): Promise<LessonSummary | null> {
-    const apiKey = await this.getApiKey();
-    if (!apiKey) {
-      throw new Error('No Gemini API key set. Please add your API key in Settings.');
+  private static async callCerebrasAPI(
+    prompt: string,
+    apiKey: string,
+  ): Promise<GradePrediction | null> {
+    try {
+      const response = await fetch(CEREBRAS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          'User-Agent': 'DesQTA/1.0',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b',
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.3,
+          max_tokens: 1024,
+          top_p: 0.95,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Cerebras API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        throw new Error('Invalid response from Cerebras API');
+      }
+
+      const responseText = data.choices[0].message.content;
+
+      // Try to extract JSON from the response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+
+      const prediction = JSON.parse(jsonMatch[0]);
+
+      // Validate the prediction format
+      if (
+        !prediction.subject ||
+        typeof prediction.predictedGrade !== 'number' ||
+        typeof prediction.confidence !== 'number' ||
+        !prediction.reasoning
+      ) {
+        throw new Error('Invalid prediction format');
+      }
+
+      return prediction as GradePrediction;
+    } catch (error) {
+      console.error('Error calling Cerebras API:', error);
+      return null;
     }
-    const attachmentList = lesson.attachments.length > 0 
-      ? lesson.attachments.map(a => `- ${a.name}`).join('\n')
-      : 'No attachments';
-    
+  }
+
+  static async summarizeLessonContent(lesson: {
+    title: string;
+    content: string;
+    attachments: { name: string }[];
+  }): Promise<LessonSummary | null> {
+    const provider = await this.getProvider();
+    const apiKey = await this.getApiKey(provider);
+    if (!apiKey) {
+      const providerName = provider === 'cerebras' ? 'Cerebras' : 'Gemini';
+      throw new Error(`No ${providerName} API key set. Please add your API key in Settings.`);
+    }
+    const attachmentList =
+      lesson.attachments.length > 0
+        ? lesson.attachments.map((a) => `- ${a.name}`).join('\n')
+        : 'No attachments';
+
     const prompt = `You are an AI assistant for students. Analyze the following lesson content and provide a personalized summary and action steps based on the ACTUAL content provided. Do NOT use placeholders like [Topic of the lesson] or [Key concept 1]. Use the specific information from the lesson content.
 
 Lesson Title: ${lesson.title}
@@ -215,31 +328,65 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
   "steps": ["Specific step 1 based on the content", "Specific step 2 based on the content", ...]
 }`;
     try {
-      const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
+      if (provider === 'cerebras') {
+        const response = await fetch(CEREBRAS_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+            'User-Agent': 'DesQTA/1.0',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b',
+            messages: [{ role: 'user', content: prompt }],
             temperature: 0.3,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          }
-        })
-      });
-      if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-      const data = await response.json();
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) throw new Error('Invalid response from Gemini API');
-      const responseText = data.candidates[0].content.parts[0].text;
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found in response');
-      const summaryObj = JSON.parse(jsonMatch[0]);
-      if (!summaryObj.summary || !Array.isArray(summaryObj.steps)) throw new Error('Invalid summary format');
-      return summaryObj as LessonSummary;
+            max_tokens: 1024,
+            top_p: 0.95,
+          }),
+        });
+        if (!response.ok) throw new Error(`Cerebras API error: ${response.status}`);
+        const data = await response.json();
+        if (!data.choices || !data.choices[0] || !data.choices[0].message)
+          throw new Error('Invalid response from Cerebras API');
+        const responseText = data.choices[0].message.content;
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in response');
+        const summaryObj = JSON.parse(jsonMatch[0]);
+        if (!summaryObj.summary || !Array.isArray(summaryObj.steps))
+          throw new Error('Invalid summary format');
+        return summaryObj as LessonSummary;
+      } else {
+        const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.3,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            },
+          }),
+        });
+        if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+        const data = await response.json();
+        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content)
+          throw new Error('Invalid response from Gemini API');
+        const responseText = data.candidates[0].content.parts[0].text;
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in response');
+        const summaryObj = JSON.parse(jsonMatch[0]);
+        if (!summaryObj.summary || !Array.isArray(summaryObj.steps))
+          throw new Error('Invalid summary format');
+        return summaryObj as LessonSummary;
+      }
     } catch (error) {
-      console.error('Error calling Gemini API for lesson summary:', error);
+      console.error(
+        `Error calling ${provider === 'cerebras' ? 'Cerebras' : 'Gemini'} API for lesson summary:`,
+        error,
+      );
       return null;
     }
   }
-} 
+}
