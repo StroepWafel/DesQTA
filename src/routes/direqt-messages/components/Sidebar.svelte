@@ -59,7 +59,7 @@
 </script>
 
 <aside
-  class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs overflow-y-scroll xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900">
+  class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs overflow-y-auto xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent">
   <div class="p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
     <button
       class="flex gap-2 items-center px-4 py-3 w-full text-sm font-semibold text-white rounded-2xl shadow-md transition-all duration-200 bg-accent/80 border-accent sm:text-base hover:opacity-95 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
@@ -89,3 +89,38 @@
     <p><T key="messages.error" fallback="Error! {error}" values={{ error }} /></p>
   {/await}
 </aside>
+
+<style>
+  /* Hide native scrollbar buttons (up/down arrows) */
+  aside::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /* Firefox - hide scrollbar buttons and use accent color */
+  aside {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--accent-color-value, #3b82f6) 30%, transparent)
+      transparent;
+  }
+
+  /* Webkit scrollbar thumb with accent color */
+  aside::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  aside::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+  }
+
+  aside::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--accent-color-value, #3b82f6) 30%, transparent);
+    border-radius: 3px;
+  }
+
+  aside::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--accent-color-value, #3b82f6) 50%, transparent);
+  }
+</style>
