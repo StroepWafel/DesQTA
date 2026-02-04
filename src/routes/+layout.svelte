@@ -815,24 +815,24 @@
       {/if}
 
       <!-- Main Content -->
-      <main
-        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen
-          ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
-        style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
-        {#if contentLoading}
-          <div class="flex items-center justify-center w-full h-full py-12">
-            <LoadingScreen inline />
-          </div>
-        {:else if $needsSetup}
-          <LoginScreen
-            {seqtaUrl}
-            onStartLogin={startLogin}
-            onUrlChange={(url) => (seqtaUrl = url)} />
-        {:else}
-          {@render children()}
-        {/if}
-      </main>
+<main
+  class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen
+    ? ''
+    : 'rounded-tr-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
+  style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
+  {#if contentLoading}
+    <div class="flex items-center justify-center w-full h-full py-12">
+      <LoadingScreen inline />
+    </div>
+  {:else if $needsSetup}
+    <LoginScreen
+      {seqtaUrl}
+      onStartLogin={startLogin}
+      onUrlChange={(url) => (seqtaUrl = url)} />
+  {:else}
+    {@render children()}
+  {/if}
+</main>
 
       <!-- ThemeBuilder Sidebar -->
       {#if $themeBuilderSidebarOpen}
