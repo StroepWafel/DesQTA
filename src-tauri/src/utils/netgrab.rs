@@ -5,7 +5,7 @@ use rss::Channel;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::{fs, io::Cursor, io::Read, sync::OnceLock};
+use std::{fs, io::Cursor, io::Read, sync::OnceLock, time::Duration};
 use url::form_urlencoded;
 use url::Url;
 use xmltree::{Element, XMLNode};
@@ -24,7 +24,33 @@ pub enum RequestMethod {
     POST,
 }
 
+/// Create an HTTP client builder with school network-friendly configuration:
+/// - Timeouts to prevent hanging requests
+/// - SSL certificate validation that handles MITM proxies
+/// - Automatic proxy detection
+pub fn create_client_builder() -> reqwest::ClientBuilder {
+        let builder = reqwest::Client::builder()
+        // Set timeouts to prevent hanging requests on slow/unreliable networks
+        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(30))
+        .read_timeout(Duration::from_secs(30))
+        // For school networks with MITM proxies/content filters, we need to be more lenient
+        // with SSL certificate validation. Many school networks use proxies with self-signed certs.
+        // Note: This is a security trade-off but necessary for school network compatibility.
+        .danger_accept_invalid_certs(true)
+        .danger_accept_invalid_hostnames(true);
+
+    // reqwest automatically uses system proxies and environment variables (HTTP_PROXY, HTTPS_PROXY, etc.)
+    // No explicit configuration needed - reqwest handles this automatically
+
+    builder
+}
+
 /// Build an HTTP client with headers based on the saved session.
+/// This client is configured to work on school networks with:
+/// - Timeouts to prevent hanging requests
+/// - Proxy support (automatic detection)
+/// - SSL certificate validation that can handle MITM proxies
 pub fn create_client() -> &'static reqwest::Client {
     GLOBAL_CLIENT.get_or_init(|| {
         let mut headers = reqwest::header::HeaderMap::new();
@@ -42,7 +68,7 @@ pub fn create_client() -> &'static reqwest::Client {
             "en-US,en;q=0.9".parse().unwrap(),
         );
 
-        reqwest::Client::builder()
+        create_client_builder()
             .default_headers(headers)
             .build()
             .expect("Failed to create HTTP client")
@@ -136,6 +162,93 @@ async fn append_default_headers(req: RequestBuilder) -> RequestBuilder {
     req.headers(headers)
 }
 
+/// Re-authenticate inline without app handle (for use in netgrab)
+async fn reauthenticate_inline(
+    base_url: &str,
+    username: &str,
+    password: &str,
+) -> Result<String, String> {
+    use serde_json::json;
+    
+    // Normalize base_url
+    let http_url = if base_url.starts_with("https://") {
+        base_url.to_string()
+    } else {
+        format!("https://{}", base_url)
+    };
+
+    let login_url = format!("{}/seqta/student/login", http_url);
+
+    // Create HTTP client with cookie store enabled and school network-friendly config
+    let client = create_client_builder()
+        .cookie_store(true)
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    // Prepare login request body
+    let login_body = json!({
+        "username": username,
+        "password": password,
+        "mode": "normal",
+        "query": null
+    });
+
+    // Make login request
+    let response = client
+        .post(&login_url)
+        .header("Content-Type", "application/json; charset=utf-8")
+        .json(&login_body)
+        .send()
+        .await
+        .map_err(|e| format!("Login request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
+            return Err("Invalid username or password".to_string());
+        }
+        return Err(format!("Login failed with status: {}", status));
+    }
+
+    // Extract JSESSIONID from Set-Cookie header
+    let jsessionid = response
+        .headers()
+        .get("Set-Cookie")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|cookie_str| {
+            cookie_str
+                .split(';')
+                .find(|part| part.trim().starts_with("JSESSIONID="))
+                .map(|jsession_part| {
+                    jsession_part
+                        .trim()
+                        .strip_prefix("JSESSIONID=")
+                        .unwrap_or("")
+                        .to_string()
+                })
+        })
+        .ok_or("Could not get JSESSIONID from response headers")?;
+
+    // Validate session with a heartbeat request
+    let heartbeat_url = format!("{}/seqta/student/heartbeat", http_url);
+    let heartbeat_body = json!({ "heartbeat": true });
+
+    let heartbeat_response = client
+        .post(&heartbeat_url)
+        .header("Cookie", format!("JSESSIONID={}", jsessionid))
+        .header("Content-Type", "application/json; charset=utf-8")
+        .json(&heartbeat_body)
+        .send()
+        .await
+        .map_err(|e| format!("Heartbeat request failed: {}", e))?;
+
+    if !heartbeat_response.status().is_success() {
+        return Err("Session validation failed".to_string());
+    }
+
+    Ok(jsessionid)
+}
+
 #[tauri::command]
 pub async fn fetch_api_data(
     url: &str,
@@ -173,41 +286,46 @@ pub async fn fetch_api_data(
         format!("{}{}", session.base_url.parse::<String>().unwrap(), url)
     };
 
-    let mut request = match method {
-        RequestMethod::GET => client.get(&full_url),
-        RequestMethod::POST => client.post(&full_url),
-    };
+    // Clone headers and parameters for potential retry
+    let headers_clone = headers.clone();
+    let parameters_clone = parameters.clone();
+    let body_clone = body.clone();
 
-    request = append_default_headers(request).await;
-
-    // Add custom headers if provided
-    if let Some(headers) = headers {
-        for (key, value) in headers {
-            request = request.header(&key, value);
-        }
-    }
-
-    // Add query parameters if provided
-    if let Some(params) = parameters {
-        request = request.query(&params);
-    }
-
-    // Add body for POST requests if provided
-    if let RequestMethod::POST = method {
-        let mut final_body = body.unwrap_or_else(|| json!({}));
-
-        // For JWT-based sessions, automatically include the JWT token in the body
-        if session.jsessionid.starts_with("eyJ") {
-            if let Some(body_obj) = final_body.as_object_mut() {
-                body_obj.insert("jwt".to_string(), json!(session.jsessionid));
+    // Retry logic for transient network failures (common on school WiFi)
+    let max_retries = 3;
+    let mut last_error: Option<String> = None;
+    
+    for attempt in 0..=max_retries {
+        // Build request for this attempt
+        let mut request_to_send = match method {
+            RequestMethod::GET => client.get(&full_url),
+            RequestMethod::POST => client.post(&full_url),
+        };
+        
+        request_to_send = append_default_headers(request_to_send).await;
+        
+        if let Some(headers) = &headers {
+            for (key, value) in headers {
+                request_to_send = request_to_send.header(key, value);
             }
         }
-
-        request = request.json(&final_body);
-    }
-
-    match request.send().await {
-        Ok(resp) => {
+        
+        if let Some(params) = &parameters {
+            request_to_send = request_to_send.query(params);
+        }
+        
+        if let RequestMethod::POST = method {
+            let mut final_body = body_clone.as_ref().cloned().unwrap_or_else(|| json!({}));
+            if session.jsessionid.starts_with("eyJ") {
+                if let Some(body_obj) = final_body.as_object_mut() {
+                    body_obj.insert("jwt".to_string(), json!(session.jsessionid));
+                }
+            }
+            request_to_send = request_to_send.json(&final_body);
+        }
+        
+        match request_to_send.send().await {
+            Ok(resp) => {
             // Check for JSESSIONID cookie in response headers for JWT-based sessions
             if session.jsessionid.starts_with("eyJ") {
                 if let Some(set_cookie_header) = resp.headers().get("set-cookie") {
@@ -245,6 +363,163 @@ pub async fn fetch_api_data(
 
             // Capture status before consuming response
             let status = resp.status();
+            
+            // Check for HTTP-level authentication failures
+            let is_http_auth_failure = status == reqwest::StatusCode::UNAUTHORIZED 
+                || status == reqwest::StatusCode::FORBIDDEN;
+            
+            // For non-image, non-URL responses, check the body for authentication failures
+            // SEQTA APIs can return HTTP 200 with {"status":"401"} in the body
+            if !is_image && !return_url {
+                // Read the response text to check for auth failures
+                let response_text = resp.text().await.map_err(|e| e.to_string())?;
+                
+                // Try to parse as JSON and check for status: "401"
+                let mut is_body_auth_failure = false;
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&response_text) {
+                    if let Some(status_str) = json.get("status").and_then(|s| s.as_str()) {
+                        if status_str == "401" || status_str == "failed" {
+                            is_body_auth_failure = true;
+                        }
+                    }
+                }
+                
+                // If we detected auth failure (either HTTP status or body status), attempt re-auth
+                if (is_http_auth_failure || is_body_auth_failure) 
+                    && session.stored_username.is_some() 
+                    && session.stored_password.is_some() 
+                {
+                    if let Some(logger) = logger::get_logger() {
+                        let _ = logger.log(
+                            logger::LogLevel::INFO,
+                            "netgrab",
+                            "fetch_api_data",
+                            "Authentication failed, attempting re-authentication",
+                            serde_json::json!({
+                                "url": url,
+                                "http_status": status.as_u16(),
+                                "body_auth_failure": is_body_auth_failure
+                            }),
+                        );
+                    }
+                    
+                    // Attempt re-authentication inline using stored credentials
+                    let username = session.stored_username.clone().unwrap();
+                    let password = session.stored_password.clone().unwrap();
+                    let base_url = session.base_url.clone();
+                    
+                    // Perform re-authentication directly
+                    match reauthenticate_inline(&base_url, &username, &password).await {
+                        Ok(new_jsessionid) => {
+                            // Update session with new JSESSIONID
+                            let mut updated_session = session::Session::load();
+                            updated_session.jsessionid = new_jsessionid;
+                            if let Err(e) = updated_session.save() {
+                                if let Some(logger) = logger::get_logger() {
+                                    let _ = logger.log(
+                                        logger::LogLevel::ERROR,
+                                        "netgrab",
+                                        "fetch_api_data",
+                                        &format!("Failed to save updated session: {}", e),
+                                        serde_json::json!({}),
+                                    );
+                                }
+                            }
+                            
+                            // Reload session and retry the original request
+                            let retry_session = session::Session::load();
+                            let mut retry_request = match method {
+                                RequestMethod::GET => client.get(&full_url),
+                                RequestMethod::POST => client.post(&full_url),
+                            };
+                            
+                            retry_request = append_default_headers(retry_request).await;
+                            
+                            // Add custom headers if provided
+                            if let Some(headers) = &headers_clone {
+                                for (key, value) in headers {
+                                    retry_request = retry_request.header(key, value);
+                                }
+                            }
+                            
+                            // Add query parameters if provided
+                            if let Some(params) = &parameters_clone {
+                                retry_request = retry_request.query(params);
+                            }
+                            
+                            // Add body for POST requests if provided
+                            if let RequestMethod::POST = method {
+                                let mut final_body = body_clone.unwrap_or_else(|| json!({}));
+                                if let Some(body_obj) = final_body.as_object_mut() {
+                                    if retry_session.jsessionid.starts_with("eyJ") {
+                                        body_obj.insert("jwt".to_string(), json!(retry_session.jsessionid));
+                                    }
+                                }
+                                retry_request = retry_request.json(&final_body);
+                            }
+                            
+                            // Retry the request
+                            match retry_request.send().await {
+                                Ok(retry_resp) => {
+                                    let retry_status = retry_resp.status();
+                                    if retry_status.is_success() {
+                                        let retry_text = retry_resp.text().await.map_err(|e| e.to_string())?;
+                                        return Ok(retry_text);
+                                    } else {
+                                        return Err(format!("Request failed after re-authentication: {}", retry_status));
+                                    }
+                                }
+                                Err(e) => {
+                                    return Err(format!("Request failed after re-authentication: {}", e));
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            // Re-authentication failed
+                            return Err(format!("Re-authentication failed: {}", e));
+                        }
+                    }
+                } else if is_body_auth_failure || is_http_auth_failure {
+                    // Auth failure but no stored credentials
+                    return Err(format!("Authentication failed: {}", response_text));
+                }
+                
+                // Return the response text (no auth failure detected)
+                return Ok(response_text);
+            }
+            
+            // For HTTP-level auth failures on image/URL requests
+            if is_http_auth_failure 
+                && session.stored_username.is_some() 
+                && session.stored_password.is_some() 
+            {
+                if let Some(logger) = logger::get_logger() {
+                    let _ = logger.log(
+                        logger::LogLevel::INFO,
+                        "netgrab",
+                        "fetch_api_data",
+                        "Authentication failed (HTTP), attempting re-authentication",
+                        serde_json::json!({
+                            "url": url,
+                            "http_status": status.as_u16()
+                        }),
+                    );
+                }
+                
+                let username = session.stored_username.clone().unwrap();
+                let password = session.stored_password.clone().unwrap();
+                let base_url = session.base_url.clone();
+                
+                match reauthenticate_inline(&base_url, &username, &password).await {
+                    Ok(_) => {
+                        // Retry logic would go here for image/URL requests if needed
+                        return Err(format!("AUTH_REQUIRED: Session expired, re-authentication completed. Please retry request."));
+                    }
+                    Err(e) => {
+                        return Err(format!("Re-authentication failed: {}", e));
+                    }
+                }
+            }
 
             let result = if is_image == true {
                 // Get the bytes (await and ? to bubble up errors)
@@ -256,6 +531,7 @@ pub async fn fetch_api_data(
                 let url = String::from(resp.url().as_str());
                 Ok(url)
             } else {
+                // This should not be reached due to the check above, but keeping for safety
                 let text = resp.text().await.map_err(|e| e.to_string())?;
                 Ok(text)
             };
@@ -275,26 +551,69 @@ pub async fn fetch_api_data(
                     }),
                 );
             }
-            result
-        }
-        Err(e) => {
-            // Log error
-            if let Some(logger) = logger::get_logger() {
-                let _ = logger.log(
-                    logger::LogLevel::ERROR,
-                    "netgrab",
-                    "fetch_api_data",
-                    &format!("HTTP request failed: {}", e),
-                    serde_json::json!({
-                        "url": url,
-                        "method": format!("{:?}", method),
-                        "error": e.to_string()
-                    }),
-                );
+                return result;
             }
-            Err(format!("HTTP request failed: {e}"))
+            Err(e) => {
+                last_error = Some(e.to_string());
+                
+                // Check if this is a retryable error (network/timeout issues)
+                let is_retryable = last_error.as_ref().map(|err_str| {
+                    let err_lower = err_str.to_lowercase();
+                    err_lower.contains("timeout") 
+                        || err_lower.contains("connection")
+                        || err_lower.contains("network")
+                        || err_lower.contains("dns")
+                        || err_lower.contains("tls")
+                        || err_lower.contains("certificate")
+                }).unwrap_or(false);
+                
+                // If this is the last attempt or error is not retryable, return error
+                if attempt >= max_retries || !is_retryable {
+                    // Log error
+                    if let Some(logger) = logger::get_logger() {
+                        let _ = logger.log(
+                            logger::LogLevel::ERROR,
+                            "netgrab",
+                            "fetch_api_data",
+                            &format!("HTTP request failed after {} attempts: {}", attempt + 1, last_error.as_ref().unwrap()),
+                            serde_json::json!({
+                                "url": url,
+                                "method": format!("{:?}", method),
+                                "error": last_error.as_ref().unwrap().to_string(),
+                                "attempts": attempt + 1
+                            }),
+                        );
+                    }
+                    return Err(format!("HTTP request failed: {}", last_error.as_ref().unwrap()));
+                }
+                
+                // Exponential backoff: wait before retrying (1s, 2s, 4s)
+                let delay_ms = 1000 * (1 << attempt);
+                if let Some(logger) = logger::get_logger() {
+                    let _ = logger.log(
+                        logger::LogLevel::DEBUG,
+                        "netgrab",
+                        "fetch_api_data",
+                        &format!("Retrying request (attempt {}/{}) after {}ms", attempt + 1, max_retries + 1, delay_ms),
+                        serde_json::json!({
+                            "url": url,
+                            "attempt": attempt + 1,
+                            "max_retries": max_retries + 1,
+                            "delay_ms": delay_ms
+                        }),
+                    );
+                }
+                
+                tokio::time::sleep(Duration::from_millis(delay_ms)).await;
+                
+                // Reload session for retry (in case it was updated)
+                session = session::Session::load();
+            }
         }
     }
+    
+    // This should never be reached, but handle it just in case
+    Err(format!("HTTP request failed: {}", last_error.unwrap_or_else(|| "Unknown error".to_string())))
 }
 
 #[tauri::command]

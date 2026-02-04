@@ -6,6 +6,21 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MessageFile {
+    pub filename: String,
+    pub size: String,
+    #[serde(rename = "context_uuid")]
+    pub context_uuid: Option<String>,
+    pub mimetype: String,
+    pub id: i64,
+    #[serde(rename = "created_date")]
+    pub created_date: Option<String>,
+    pub uuid: String,
+    #[serde(rename = "created_by")]
+    pub created_by: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Message {
     pub id: i64,
     pub folder: String,
@@ -19,6 +34,7 @@ pub struct Message {
     pub date: String,
     pub unread: bool,
     pub starred: bool,
+    pub files: Option<Vec<MessageFile>>,
 }
 
 fn parse_message_json(msg: &Value, folder_label: &str) -> Option<Message> {
@@ -53,15 +69,37 @@ fn parse_message_json(msg: &Value, folder_label: &str) -> Option<Message> {
         "".to_string()
     };
 
-    let attachments = msg
-        .get("attachments")
+    // Check for files array (new format) or attachments array (old format)
+    let files: Option<Vec<MessageFile>> = msg
+        .get("files")
         .and_then(|v| v.as_array())
-        .map(|a| !a.is_empty())
-        .unwrap_or(false);
+        .map(|f| {
+            f.iter()
+                .filter_map(|file_val| {
+                    Some(MessageFile {
+                        filename: file_val.get("filename")?.as_str()?.to_string(),
+                        size: file_val.get("size")?.as_str()?.to_string(),
+                        context_uuid: file_val.get("context_uuid").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        mimetype: file_val.get("mimetype")?.as_str()?.to_string(),
+                        id: file_val.get("id")?.as_i64()?,
+                        created_date: file_val.get("created_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        uuid: file_val.get("uuid")?.as_str()?.to_string(),
+                        created_by: file_val.get("created_by").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    })
+                })
+                .collect()
+        });
+    
+    let has_attachments = files.as_ref().map(|f: &Vec<MessageFile>| !f.is_empty()).unwrap_or(false) ||
+        msg.get("attachments")
+            .and_then(|v| v.as_array())
+            .map(|a| !a.is_empty())
+            .unwrap_or(false);
+    
     let preview = format!(
         "{}{}",
         subject,
-        if attachments { " (Attachment)" } else { "" }
+        if has_attachments { " (Attachment)" } else { "" }
     );
 
     let date_raw = msg.get("date").and_then(|v| v.as_str()).unwrap_or("");
@@ -97,6 +135,7 @@ fn parse_message_json(msg: &Value, folder_label: &str) -> Option<Message> {
         date,
         unread: !read,
         starred,
+        files,
     })
 }
 
@@ -202,6 +241,7 @@ pub async fn fetch_messages(
                             date: date_formatted,
                             unread: false,
                             starred: false,
+                            files: None,
                         });
                     }
                 }
@@ -273,8 +313,14 @@ async fn fetch_seqta_messages(
     Ok(messages)
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MessageContentResponse {
+    pub content: String,
+    pub files: Option<Vec<MessageFile>>,
+}
+
 #[tauri::command]
-pub async fn fetch_message_content(id: i64) -> Result<String, String> {
+pub async fn fetch_message_content(id: i64) -> Result<MessageContentResponse, String> {
     let body = json!({
         "action": "message",
         "id": id,
@@ -309,7 +355,29 @@ pub async fn fetch_message_content(id: i64) -> Result<String, String> {
         .unwrap_or("No content")
         .to_string();
 
-    Ok(content)
+    // Extract files array from payload
+    let files = data
+        .get("payload")
+        .and_then(|p| p.get("files"))
+        .and_then(|v| v.as_array())
+        .map(|f| {
+            f.iter()
+                .filter_map(|file_val| {
+                    Some(MessageFile {
+                        filename: file_val.get("filename")?.as_str()?.to_string(),
+                        size: file_val.get("size")?.as_str()?.to_string(),
+                        context_uuid: file_val.get("context_uuid").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        mimetype: file_val.get("mimetype")?.as_str()?.to_string(),
+                        id: file_val.get("id")?.as_i64()?,
+                        created_date: file_val.get("created_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        uuid: file_val.get("uuid")?.as_str()?.to_string(),
+                        created_by: file_val.get("created_by").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    })
+                })
+                .collect()
+        });
+
+    Ok(MessageContentResponse { content, files })
 }
 
 #[tauri::command]

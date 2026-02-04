@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
   import { DocumentText } from 'svelte-hero-icons';
+  import { scale, fly } from 'svelte/transition';
+  import { cubicInOut } from 'svelte/easing';
 
   interface Props {
     title: string;
@@ -40,13 +42,22 @@
   <div
     class="flex items-center justify-center rounded-full {iconContainerSizes[
       size
-    ]} bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400 shadow-lg accent-shadow transition-all duration-200">
-    <Icon src={icon} class={iconSizes[size]} />
+    ]} bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400 shadow-lg accent-shadow transition-all duration-300 ease-in-out hover:scale-110"
+    in:fly={{ y: -10, duration: 400, easing: cubicInOut }}>
+    <Icon src={icon} class="{iconSizes[size]} transition-transform duration-300" />
   </div>
-  <p class="mt-4 {titleSizes[size]} font-semibold text-zinc-900 dark:text-white">
+  <p
+    class="mt-4 {titleSizes[
+      size
+    ]} font-semibold text-zinc-900 dark:text-white transition-opacity duration-300"
+    in:fly={{ y: 10, duration: 400, delay: 100, easing: cubicInOut }}>
     {title}
   </p>
-  <p class="mt-2 {messageSizes[size]} text-zinc-600 dark:text-zinc-400 text-center max-w-md">
+  <p
+    class="mt-2 {messageSizes[
+      size
+    ]} text-zinc-600 dark:text-zinc-400 text-center max-w-md transition-opacity duration-300"
+    in:fly={{ y: 10, duration: 400, delay: 200, easing: cubicInOut }}>
     {message}
   </p>
 </div>

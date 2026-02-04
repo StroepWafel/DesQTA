@@ -25,7 +25,10 @@
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
   import { flushAll } from '../services/syncService';
-  import { questionnaireService, type QuestionnaireQuestion } from '../services/questionnaireService';
+  import {
+    questionnaireService,
+    type QuestionnaireQuestion,
+  } from '../services/questionnaireService';
   import { _ } from '../i18n';
   import T from './T.svelte';
 
@@ -35,6 +38,7 @@
     weatherData: any;
     userInfo?: UserInfo;
     showUserDropdown: boolean;
+    isFullscreen?: boolean;
     onToggleSidebar: () => void;
     onToggleUserDropdown: () => void;
     onLogout: () => void;
@@ -113,6 +117,7 @@
     weatherData,
     userInfo,
     showUserDropdown,
+    isFullscreen = false,
     onToggleSidebar,
     onToggleUserDropdown,
     onLogout,
@@ -145,10 +150,12 @@
   const searchStore = writable('');
   const showDropdownStore = writable(false);
   const filteredPages = derived(searchStore, ($search) =>
-    $search ? pages.filter((p) => {
-      const translatedName = $_(`${p.nameKey}`, { default: p.nameKey });
-      return translatedName.toLowerCase().includes($search.toLowerCase());
-    }) : pages,
+    $search
+      ? pages.filter((p) => {
+          const translatedName = $_(`${p.nameKey}`, { default: p.nameKey });
+          return translatedName.toLowerCase().includes($search.toLowerCase());
+        })
+      : pages,
   );
 
   let selectedIndex = $state(-1);
@@ -192,7 +199,7 @@
 
     try {
       const subset = await invoke<any>('get_settings_subset', { keys: ['global_search_enabled'] });
-      globalSearchEnabled = false; // Temporarily disabled
+      globalSearchEnabled = subset?.global_search_enabled ?? true; // Default to enabled
       logger.info(
         'AppHeader',
         'loadGlobalSearchSetting',
@@ -205,7 +212,7 @@
         `Failed to load global search setting: ${error}`,
         { error },
       );
-      globalSearchEnabled = false; // Temporarily disabled
+      globalSearchEnabled = true; // Default to enabled on error
     }
   }
 
@@ -328,12 +335,15 @@
   function handleNotificationClick(notification: Notification) {
     if (notification.type === 'coneqtassessments' && notification.coneqtAssessments) {
       const { assessmentID, metaclassID } = notification.coneqtAssessments;
+      // Extract year from notification timestamp (fallback to current year if unavailable)
+      const notificationYear = new Date(notification.timestamp).getFullYear();
       showNotifications = false;
       showNotificationsModal = false;
-      goto(`/assessments/${assessmentID}/${metaclassID}`);
+      goto(`/assessments/${assessmentID}/${metaclassID}?year=${notificationYear}`);
     } else if (notification.type === 'report') {
       showNotifications = false;
       showNotificationsModal = false;
+      // Report notifications don't have UUID in the interface, so just go to reports page
       goto('/reports');
     } else if (notification.type === 'message' && notification.message) {
       const id = notification.message.messageID;
@@ -396,11 +406,15 @@
 </script>
 
 <header
-  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999"
+  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 theme-bg {isFullscreen
+    ? ''
+    : sidebarOpen
+      ? 'rounded-tr-2xl'
+      : 'rounded-t-2xl'}"
   data-tauri-drag-region>
   <div class="flex items-center space-x-4">
     <button
-      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
+      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
       onclick={onToggleSidebar}
       aria-label={$_('header.toggle_sidebar', { default: 'Toggle sidebar' })}>
       <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
@@ -426,7 +440,7 @@
       <GlobalSearch />
     {/if}
   </div>
-  
+
   <div class="flex items-center space-x-2">
     {#if userInfo}
       <UserDropdown
@@ -441,7 +455,7 @@
 
     <div class="relative notification-dropdown">
       <button
-        class="flex relative justify-center items-center rounded-xl border transition-all duration-200 size-12 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-hidden focus:ring-2 accent-ring playful"
+        class="flex relative justify-center items-center rounded-xl border transition-all duration-200 ease-in-out transform size-12 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
         onclick={toggleNotifications}>
         <Icon src={Bell} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 hover:text-white" />
         {#if unreadNotifications > 0}
@@ -455,16 +469,17 @@
       {#if showNotifications}
         <div
           class="overflow-y-auto absolute right-0 z-50 mt-2 w-96 max-h-96 rounded-xl border shadow-2xl backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 border-white/20 dark:border-zinc-700/40"
-          transition:fly={{ y: -8, duration: 180 }}
+          transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}
           style="transform-origin: top right;">
           <div class="p-4 border-b border-zinc-200 dark:border-zinc-700">
             <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+              <h3
+                class="text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
                 <Icon src={Bell} class="w-5 h-5 opacity-80" />
                 Notifications
               </h3>
               <button
-                class="transition-colors text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1"
+                class="transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1"
                 onclick={clearNotifications}>
                 <Icon src={XMark} class="w-4 h-4" />
                 Clear all
@@ -488,7 +503,7 @@
               {#each notifications as notification (notification.notificationID)}
                 <button
                   type="button"
-                  class="p-3 w-full text-left rounded-lg transition-all cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01]"
+                  class="p-3 w-full text-left rounded-lg transition-all duration-200 ease-in-out transform cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01] active:scale-[0.99]"
                   aria-label={getNotificationTitle(notification)}
                   onclick={() => handleNotificationClick(notification)}
                   onkeydown={(e) => {
@@ -526,19 +541,19 @@
     {#if !isMobile}
       <div class="flex items-center ml-4 space-x-2">
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
           onclick={() => appWindow.minimize()}
           aria-label={$_('header.minimize', { default: 'Minimize' })}>
           <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring playful"
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
           onclick={() => appWindow.toggleMaximize()}
           aria-label={$_('header.maximize', { default: 'Maximize' })}>
           <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 group hover:bg-red-500 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 playful"
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform group hover:bg-red-500 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:scale-105 active:scale-95 playful"
           onclick={() => appWindow.close()}
           aria-label={$_('header.close', { default: 'Close' })}>
           <Icon
@@ -571,7 +586,7 @@
           class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
           <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Notifications</h3>
           <button
-            class="px-3 py-1 ml-2 text-base font-semibold rounded-lg transition-colors bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600"
+            class="px-3 py-1 ml-2 text-base font-semibold rounded-lg transition-all duration-200 ease-in-out transform bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600 hover:scale-105 active:scale-95"
             onclick={() => {
               showNotificationsModal = false;
             }}>
@@ -594,7 +609,7 @@
             {#each sortedNotifications as notification (notification.notificationID)}
               <button
                 type="button"
-                class="p-3 w-full text-left rounded-lg transition-all cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01]"
+                class="p-3 w-full text-left rounded-lg transition-all duration-200 ease-in-out transform cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01] active:scale-[0.99]"
                 aria-label={getNotificationTitle(notification)}
                 onclick={() => handleNotificationClick(notification)}
                 onkeydown={(e) => {

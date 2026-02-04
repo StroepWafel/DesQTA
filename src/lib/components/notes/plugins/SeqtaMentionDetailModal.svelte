@@ -18,6 +18,7 @@
   import { goto } from '$app/navigation';
   import WeeklyScheduleEmbed from './WeeklyScheduleEmbed.svelte';
   import LessonContentEmbed from './LessonContentEmbed.svelte';
+  import { logger } from '../../../../utils/logger';
 
   interface Props {
     open: boolean;
@@ -81,11 +82,10 @@
         }
       }
 
-      console.log('Loading mention data:', {
+      logger.debug('SeqtaMentionDetailModal', 'loadMentionData', 'Loading mention data', {
         mentionId,
         originalType: mentionType,
         normalizedType,
-        storedData,
       });
 
       const data = await SeqtaMentionsService.updateMentionData(mentionId, normalizedType, {
@@ -98,7 +98,11 @@
         await loadRelatedItems(data);
       }
     } catch (e) {
-      console.error('Failed to load mention details:', e);
+      logger.error('SeqtaMentionDetailModal', 'loadMentionData', 'Failed to load mention details', {
+        error: e instanceof Error ? e.message : String(e),
+        mentionId,
+        mentionType,
+      });
     } finally {
       loading = false;
     }
@@ -116,7 +120,11 @@
         );
       }
     } catch (e) {
-      console.error('Failed to load related items:', e);
+      logger.error('SeqtaMentionDetailModal', 'loadRelatedItems', 'Failed to load related items', {
+        error: e instanceof Error ? e.message : String(e),
+        mentionId,
+        mentionType,
+      });
     }
   }
 
@@ -205,20 +213,82 @@
     if (!mentionData?.data) return;
 
     if (mentionType === 'assessment' || mentionType === 'assignment') {
-      goto('/assessments');
+      const assessmentID = mentionData.data.assessmentID || mentionData.data.id;
+      const metaclassID = mentionData.data.metaclassID || mentionData.data.metaclass || 0;
+      const code = mentionData.data.code || mentionData.data.subjectCode;
+      const dueDate = mentionData.data.dueDate || mentionData.data.due;
+
+      // Try to get year from data, fallback to due date year, then current year
+      let year: number;
+      if (mentionData.data.year) {
+        year = mentionData.data.year;
+      } else if (dueDate) {
+        try {
+          const date = new Date(dueDate);
+          if (!isNaN(date.getTime())) {
+            year = date.getFullYear();
+          } else {
+            year = new Date().getFullYear();
+          }
+        } catch {
+          year = new Date().getFullYear();
+        }
+      } else {
+        year = new Date().getFullYear();
+      }
+
+      if (assessmentID) {
+        // Navigate to assessment detail page with year parameter
+        goto(`/assessments/${assessmentID}/${metaclassID}?year=${year}`);
+      } else if (code && dueDate) {
+        const dateStr = new Date(dueDate).toISOString().split('T')[0];
+        goto(`/assessments?code=${code}&date=${dateStr}&year=${year}`);
+      } else {
+        goto('/assessments');
+      }
     } else if (mentionType === 'class' || mentionType === 'subject') {
       const code = mentionData.data.code;
       const programme = mentionData.data.programme;
       const metaclass = mentionData.data.metaclass;
+      const date = mentionData.data.date || mentionData.data.lessonDate;
+
       if (programme && metaclass) {
-        goto(`/courses?code=${code}&programme=${programme}&metaclass=${metaclass}`);
+        let url = `/courses?code=${code}&programme=${programme}&metaclass=${metaclass}`;
+        if (date) {
+          const dateStr = new Date(date).toISOString().split('T')[0];
+          url += `&date=${dateStr}`;
+        }
+        goto(url);
+      } else if (code) {
+        goto(`/courses?code=${code}`);
       } else {
         goto('/courses');
       }
     } else if (mentionType === 'timetable' || mentionType === 'timetable_slot') {
-      goto('/timetable');
+      const date = mentionData.data.date;
+      if (date) {
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        goto(`/timetable?date=${dateStr}`);
+      } else {
+        goto('/timetable');
+      }
     } else if (mentionType === 'notice') {
-      goto('/notices');
+      const noticeId = mentionData.data.id || mentionData.data.noticeId;
+      const labelId = mentionData.data.labelId || mentionData.data.label;
+      const date = mentionData.data.date;
+
+      let url = '/notices';
+      const params: string[] = [];
+      if (noticeId) params.push(`item=${noticeId}`);
+      if (labelId) params.push(`category=${labelId}`);
+      if (date) {
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        params.push(`date=${dateStr}`);
+      }
+      if (params.length > 0) {
+        url += `?${params.join('&')}`;
+      }
+      goto(url);
     }
     closeModal();
   }
@@ -336,7 +406,9 @@
                   Subject
                 </div>
                 <div class="text-sm font-medium text-zinc-900 dark:text-white">
-                  {mentionData.data.subjectName || mentionData.data.subject || mentionData.data.code}
+                  {mentionData.data.subjectName ||
+                    mentionData.data.subject ||
+                    mentionData.data.code}
                 </div>
               </div>
             </div>
@@ -345,15 +417,12 @@
           {#if mentionData.data.from || mentionData.data.from12}
             <div
               class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
-              <Icon
-                src={Clock}
-                class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" />
+              <Icon src={Clock} class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" />
               <div>
-                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">
-                  Time
-                </div>
+                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Time</div>
                 <div class="text-sm font-medium text-zinc-900 dark:text-white">
-                  {mentionData.data.from12 || formatTime(mentionData.data.from)} - {mentionData.data.until12 || formatTime(mentionData.data.until)}
+                  {mentionData.data.from12 || formatTime(mentionData.data.from)} - {mentionData.data
+                    .until12 || formatTime(mentionData.data.until)}
                 </div>
               </div>
             </div>
@@ -366,9 +435,7 @@
                 src={Calendar}
                 class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" />
               <div>
-                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">
-                  Date
-                </div>
+                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Date</div>
                 <div class="text-sm font-medium text-zinc-900 dark:text-white">
                   {formatDate(mentionData.data.date)}
                 </div>
@@ -384,7 +451,8 @@
             <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
               {mentionType === 'notice' ? 'Content' : 'Description'}
             </div>
-            <div class="text-sm text-zinc-900 dark:text-white whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none">
+            <div
+              class="text-sm text-zinc-900 dark:text-white whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none">
               {#if mentionType === 'notice' && mentionData.data.content}
                 {@html mentionData.data.content}
               {:else}
@@ -445,8 +513,7 @@
               programme={mentionData.data.programme}
               metaclass={mentionData.data.metaclass}
               code={mentionData.data.code}
-              title={title}
-            />
+              {title} />
           </div>
         {/if}
 
@@ -456,8 +523,7 @@
             <LessonContentEmbed
               programme={mentionData.data.programme}
               metaclass={mentionData.data.metaclass}
-              title={mentionData.data.code || title}
-            />
+              title={mentionData.data.code || title} />
           </div>
         {/if}
       </div>

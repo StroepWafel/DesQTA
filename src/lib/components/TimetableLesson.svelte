@@ -26,38 +26,23 @@
   }
 </script>
 
-<style>
-  .attendance-details {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height 0.2s cubic-bezier(0.4,0,0.2,1), opacity 0.2s;
-  }
-  .lesson-block:hover .attendance-details,
-  .lesson-block:focus-within .attendance-details,
-  .lesson-block.expanded .attendance-details {
-    max-height: 100px;
-    opacity: 1;
-  }
-</style>
-
 <button
   type="button"
   class="lesson-block flex flex-col justify-start p-2 bg-white/95 backdrop-blur-xs rounded-xl border-l-4 shadow-lg hover:shadow-xl transition-all duration-200 dark:bg-zinc-800/95 group cursor-pointer select-none h-full w-full text-left"
   style="border-color: {lesson.colour}; min-height: 54px;"
-  class:expanded={expanded}
+  class:expanded
   onclick={handleClick}
-  aria-label="Lesson: {lesson.description} from {lesson.from} to {lesson.until}"
->
+  aria-label="Lesson: {lesson.description} from {lesson.from} to {lesson.until}">
   <!-- Subject and Time Header -->
   <div class="flex justify-between items-center mb-0.5">
-    <h3 class="text-sm font-bold text-zinc-900 dark:text-white break-words whitespace-normal flex-1 mr-2">
+    <h3
+      class="text-sm font-bold text-zinc-900 dark:text-white break-words whitespace-normal flex-1 mr-2">
       {lesson.description}
     </h3>
     {#if !overlap}
-    <span class="text-xs font-mono font-semibold text-zinc-700 dark:text-zinc-300">
-      {lesson.from} - {lesson.until}
-    </span>
+      <span class="text-xs font-mono font-semibold text-zinc-700 dark:text-zinc-300">
+        {lesson.from} - {lesson.until}
+      </span>
     {/if}
   </div>
 
@@ -83,4 +68,21 @@
       </span>
     </div>
   {/if}
-</button> 
+</button>
+
+<style>
+  .attendance-details {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .lesson-block:hover .attendance-details,
+  .lesson-block:focus-within .attendance-details,
+  .lesson-block.expanded .attendance-details {
+    max-height: 100px;
+    opacity: 1;
+  }
+</style>

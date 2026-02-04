@@ -9,7 +9,9 @@
     Clock,
     MapPin,
     User,
+    ArrowTopRightOnSquare,
   } from 'svelte-hero-icons';
+  import { goto } from '$app/navigation';
   import type { SeqtaMentionItem } from '$lib/services/seqtaMentionsServiceRust';
 
   interface Props {
@@ -239,42 +241,57 @@
             </div>
             <div class="space-y-2 min-h-[400px]">
               {#each getLessonsForDay(dayIdx) as lesson}
-                <button
-                  class="w-full p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-[1.02] text-left"
-                  onclick={() => selectSlot(lesson)}>
-                  <div class="flex items-start justify-between mb-1">
-                    <div class="flex-1">
-                      <div class="text-sm font-semibold text-zinc-900 dark:text-white mb-1">
-                        {getSubjectName(lesson)}
-                      </div>
-                      <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                        <div class="flex items-center gap-1">
-                          <Icon src={Clock} class="w-3 h-3" />
-                          <span
-                            >{lesson.from12 || lesson.from} - {lesson.until12 ||
-                              lesson.until}</span>
+                <div class="flex flex-col gap-2">
+                  <button
+                    class="w-full p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-[1.02] text-left"
+                    onclick={() => selectSlot(lesson)}>
+                    <div class="flex items-start justify-between mb-1">
+                      <div class="flex-1">
+                        <div class="text-sm font-semibold text-zinc-900 dark:text-white mb-1">
+                          {getSubjectName(lesson)}
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          <div class="flex items-center gap-1">
+                            <Icon src={Clock} class="w-3 h-3" />
+                            <span
+                              >{lesson.from12 || lesson.from} - {lesson.until12 ||
+                                lesson.until}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  {#if lesson.room || lesson.staff}
-                    <div
-                      class="flex items-center gap-3 mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      {#if lesson.room}
-                        <div class="flex items-center gap-1">
-                          <Icon src={MapPin} class="w-3 h-3" />
-                          <span>{lesson.room}</span>
-                        </div>
-                      {/if}
-                      {#if lesson.staff}
-                        <div class="flex items-center gap-1">
-                          <Icon src={User} class="w-3 h-3" />
-                          <span class="truncate">{lesson.staff}</span>
-                        </div>
-                      {/if}
-                    </div>
-                  {/if}
-                </button>
+                    {#if lesson.room || lesson.staff}
+                      <div
+                        class="flex items-center gap-3 mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                        {#if lesson.room}
+                          <div class="flex items-center gap-1">
+                            <Icon src={MapPin} class="w-3 h-3" />
+                            <span>{lesson.room}</span>
+                          </div>
+                        {/if}
+                        {#if lesson.staff}
+                          <div class="flex items-center gap-1">
+                            <Icon src={User} class="w-3 h-3" />
+                            <span class="truncate">{lesson.staff}</span>
+                          </div>
+                        {/if}
+                      </div>
+                    {/if}
+                  </button>
+                  <button
+                    class="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      const dateStr = lesson.date || (lesson.from || '').split('T')[0];
+                      if (dateStr) {
+                        goto(`/timetable?date=${dateStr}`);
+                      }
+                    }}
+                    title="View in Timetable">
+                    <Icon src={ArrowTopRightOnSquare} class="w-3 h-3" />
+                    <span>View in Timetable</span>
+                  </button>
+                </div>
               {/each}
               {#if getLessonsForDay(dayIdx).length === 0}
                 <div class="text-center text-xs text-zinc-400 dark:text-zinc-500 py-8">

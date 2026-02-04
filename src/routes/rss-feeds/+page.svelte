@@ -39,7 +39,7 @@
       const subset = await invoke<any>('get_settings_subset', { keys: ['feeds'] });
       const feedList = subset?.feeds || [];
       const feedData = [];
-      
+
       for (const item of feedList) {
         try {
           const rssData = await getRSS(item.url);
@@ -55,7 +55,7 @@
           });
         }
       }
-      
+
       feeds = feedData;
       if (feedData.length > 0 && !selectedFeed) {
         selectedFeed = feedData[0].name;
@@ -144,7 +144,9 @@
           <T key="rss_feeds.error_loading" fallback="Failed to load RSS feeds." />
         </div>
         <p class="text-sm text-zinc-600 dark:text-zinc-400">
-          <T key="rss_feeds.add_feeds_in_settings" fallback="Add RSS feeds in Settings to get started." />
+          <T
+            key="rss_feeds.add_feeds_in_settings"
+            fallback="Add RSS feeds in Settings to get started." />
         </p>
       </div>
     {:else if feeds.length === 0}
@@ -154,7 +156,9 @@
           <T key="rss_feeds.no_feeds" fallback="No RSS Feeds" />
         </div>
         <p class="text-sm text-zinc-600 dark:text-zinc-400">
-          <T key="rss_feeds.add_feeds_in_settings" fallback="Add RSS feeds in Settings to get started." />
+          <T
+            key="rss_feeds.add_feeds_in_settings"
+            fallback="Add RSS feeds in Settings to get started." />
         </p>
       </div>
     {:else}
@@ -167,18 +171,22 @@
           </h2>
         </div>
         <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
-          {#each feeds as feed}
-            <button
-              class="w-full flex items-center border gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
-                {selectedFeed === feed.name
-                  ? 'bg-accent/10 border-accent dark:text-white pl-5 shadow-md'
-                  : 'border-transparent text-zinc-700 dark:text-white hover:bg-accent-100/10 dark:hover:bg-accent/10 hover:scale-[1.02]'}
-                focus:outline-hidden focus:ring-2 accent-ring"
-              onclick={() => openFeed(feed)}>
-              <Icon src={Rss} class="w-5 h-5" />
-              <span>{feed.name}</span>
-            </button>
-          {/each}
+          {#key feeds.length + feeds.map((f) => f.url).join(',')}
+            {#each feeds as feed, i}
+              <div class="rss-feed-item-animate" style="animation-delay: {i * 50}ms;">
+                <button
+                  class="w-full flex items-center border gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
+                    {selectedFeed === feed.name
+                    ? 'bg-accent/10 border-accent dark:text-white pl-5 shadow-md'
+                    : 'border-transparent text-zinc-700 dark:text-white hover:bg-accent-100/10 dark:hover:bg-accent/10 hover:scale-[1.02]'}
+                    focus:outline-hidden focus:ring-2 accent-ring"
+                  onclick={() => openFeed(feed)}>
+                  <Icon src={Rss} class="w-5 h-5" />
+                  <span>{feed.name}</span>
+                </button>
+              </div>
+            {/each}
+          {/key}
         </nav>
       </aside>
 
@@ -198,10 +206,10 @@
           selectedFolder={selectedFeed || ''}
           detailLoading={false}
           detailError={null}
-          openCompose={() => {}}
-          starMessage={() => {}}
-          deleteMessage={() => {}}
-          restoreMessage={() => {}}
+          openCompose={async () => {}}
+          starMessage={async () => {}}
+          deleteMessage={async () => {}}
+          restoreMessage={async () => {}}
           starring={false}
           deleting={false}
           restoring={false} />
@@ -252,10 +260,10 @@
             selectedFolder={selectedFeed || ''}
             detailLoading={false}
             detailError={null}
-            openCompose={() => {}}
-            starMessage={() => {}}
-            deleteMessage={() => {}}
-            restoreMessage={() => {}}
+            openCompose={async () => {}}
+            starMessage={async () => {}}
+            deleteMessage={async () => {}}
+            restoreMessage={async () => {}}
             starring={false}
             deleting={false}
             restoring={false} />
@@ -286,5 +294,21 @@
       transform: translateX(0);
       opacity: 1;
     }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .rss-feed-item-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

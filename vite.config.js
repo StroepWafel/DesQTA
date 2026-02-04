@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { sveltekit } from '@sveltejs/kit/vite';
+// @ts-expect-error - fs is a Node.js built-in module
 import fs from 'fs';
 
 // @ts-expect-error process is a nodejs global
@@ -23,7 +24,7 @@ function cssAsText() {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig({
   plugins: [sveltekit(), cssAsText()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
@@ -90,4 +91,4 @@ export default defineConfig(async () => ({
     // Target modern browsers for better optimization
     target: 'esnext',
   },
-}));
+});

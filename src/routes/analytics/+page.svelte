@@ -187,14 +187,14 @@
       // Reload data after sync completes
       await loadAnalyticsData();
       error = null;
-      
+
       // Show success toast notification
       const { toastStore } = await import('../../lib/stores/toast');
       toastStore.success('Analytics data synced successfully');
     } catch (e) {
       logger.error('analytics', 'onMount', `Failed to sync analytics data: ${e}`, { error: e });
       error = $_('analytics.sync_failed') || 'Failed to sync analytics data, showing cached data.';
-      
+
       // Show error toast notification
       const { toastStore } = await import('../../lib/stores/toast');
       toastStore.error('Failed to sync analytics data');
@@ -318,7 +318,9 @@
         </h1>
         {#if syncing}
           <Badge variant="primary" size="sm" class="animate-pulse">
-            <div class="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin mr-1"></div>
+            <div
+              class="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin mr-1">
+            </div>
             <T key="analytics.syncing" fallback="Syncing..." />
           </Badge>
         {/if}
@@ -338,7 +340,9 @@
 
   {#if loading}
     <div class="flex justify-center items-center h-64">
-      <div class="w-12 h-12 rounded-full border-4 border-accent-600/30 border-t-accent-600 animate-spin"></div>
+      <div
+        class="w-12 h-12 rounded-full border-4 border-accent-600/30 border-t-accent-600 animate-spin">
+      </div>
     </div>
   {:else if analyticsData && analyticsData.length > 0}
     <!-- Compact filters near heading -->
@@ -393,13 +397,21 @@
     </div>
 
     <!-- Main Analytics Charts -->
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" in:fade={{ duration: 400, delay: 100 }}>
-      <AnalyticsAreaChart data={filteredData()} />
-      <AnalyticsBarChart data={filteredData()} />
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      {#key filteredData().length + filteredData()
+          .map((d) => d.id)
+          .join(',')}
+        <div class="analytics-chart-animate" style="animation-delay: 0ms;">
+          <AnalyticsAreaChart data={filteredData()} />
+        </div>
+        <div class="analytics-chart-animate" style="animation-delay: 100ms;">
+          <AnalyticsBarChart data={filteredData()} />
+        </div>
+      {/key}
     </div>
 
     <!-- Assessment Data Table -->
-    <div in:fade={{ duration: 400, delay: 200 }}>
+    <div class="analytics-table-animate" style="animation-delay: 200ms;">
       <RawDataTable data={filteredData()} />
     </div>
 
@@ -416,19 +428,37 @@
         </Button>
       {/if}
     </div>
+  {:else if error}
+    <EmptyState
+      title={$_('analytics.no_data_available') || 'No analytics data available'}
+      message={error}
+      icon={ExclamationTriangle}
+      size="md" />
   {:else}
-    {#if error}
-      <EmptyState
-        title={$_('analytics.no_data_available') || 'No analytics data available'}
-        message={error}
-        icon={ExclamationTriangle}
-        size="md" />
-    {:else}
-      <EmptyState
-        title={$_('analytics.no_data_available') || 'No analytics data available'}
-        message={$_('analytics.syncing_automatically') || 'Data syncs automatically when you visit this page. If you have assessments with released marks, they will appear here.'}
-        icon={ChartBar}
-        size="md" />
-    {/if}
+    <EmptyState
+      title={$_('analytics.no_data_available') || 'No analytics data available'}
+      message={$_('analytics.syncing_automatically') ||
+        'Data syncs automatically when you visit this page. If you have assessments with released marks, they will appear here.'}
+      icon={ChartBar}
+      size="md" />
   {/if}
 </div>
+
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .analytics-chart-animate,
+  .analytics-table-animate {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

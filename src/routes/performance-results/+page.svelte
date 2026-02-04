@@ -209,98 +209,110 @@
     </div>
   {:else if results}
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-4" in:fade={{ duration: 400 }}>
-      <Card.Root class="justify-between">
-        <Card.Content class="flex items-center gap-3 p-6">
-          <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <Icon src={Clock} class="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">
-              <T key="performance.total_duration" fallback="Total Duration" />
-            </p>
-            <p class="text-2xl font-bold text-zinc-900 dark:text-white">
-              {formatTime(results.totalDuration)}
-            </p>
-          </div>
-        </Card.Content>
-      </Card.Root>
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-4">
+      {#key results.pages.length + results.totalDuration}
+        <div class="performance-card-animate" style="animation-delay: 0ms;">
+          <Card.Root class="justify-between">
+            <Card.Content class="flex items-center gap-3 p-6">
+              <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Icon src={Clock} class="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <T key="performance.total_duration" fallback="Total Duration" />
+                </p>
+                <p class="text-2xl font-bold text-zinc-900 dark:text-white">
+                  {formatTime(results.totalDuration)}
+                </p>
+              </div>
+            </Card.Content>
+          </Card.Root>
+        </div>
 
-      <Card.Root class="justify-between">
-        <Card.Content class="flex items-center gap-3 p-6">
-          <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-            <Icon src={ChartBar} class="w-6 h-6 text-green-600" />
-          </div>
-          <div>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">
-              <T key="performance.pages_tested" fallback="Pages Tested" />
-            </p>
-            <p class="text-2xl font-bold text-zinc-900 dark:text-white">
-              {results.pages.length}
-            </p>
-          </div>
-        </Card.Content>
-      </Card.Root>
+        <div class="performance-card-animate" style="animation-delay: 50ms;">
+          <Card.Root class="justify-between">
+            <Card.Content class="flex items-center gap-3 p-6">
+              <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <Icon src={ChartBar} class="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <T key="performance.pages_tested" fallback="Pages Tested" />
+                </p>
+                <p class="text-2xl font-bold text-zinc-900 dark:text-white">
+                  {results.pages.length}
+                </p>
+              </div>
+            </Card.Content>
+          </Card.Root>
+        </div>
 
-      <Card.Root class="justify-between">
-        <Card.Content class="flex items-center gap-3 p-6">
-          <div class="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-            <Icon src={Clock} class="w-6 h-6 text-yellow-600" />
-          </div>
-          <div>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">
-              <T key="performance.avg_load_time" fallback="Avg Load Time" />
-            </p>
-            <p class="text-2xl font-bold text-zinc-900 dark:text-white">
-              {formatTime(results.summary.averageLoadTime)}
-            </p>
-          </div>
-        </Card.Content>
-      </Card.Root>
+        <div class="performance-card-animate" style="animation-delay: 100ms;">
+          <Card.Root class="justify-between">
+            <Card.Content class="flex items-center gap-3 p-6">
+              <div class="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                <Icon src={Clock} class="w-6 h-6 text-yellow-600" />
+              </div>
+              <div>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <T key="performance.avg_load_time" fallback="Avg Load Time" />
+                </p>
+                <p class="text-2xl font-bold text-zinc-900 dark:text-white">
+                  {formatTime(results.summary.averageLoadTime)}
+                </p>
+              </div>
+            </Card.Content>
+          </Card.Root>
+        </div>
 
-      <Card.Root class="justify-between">
-        <Card.Content class="flex items-center gap-3 p-6">
-          <div
-            class="p-2 {results.summary.totalErrors > 0
-              ? 'bg-red-100 dark:bg-red-900/30'
-              : 'bg-green-100 dark:bg-green-900/30'} rounded-lg">
-            <Icon
-              src={results.summary.totalErrors > 0 ? ExclamationTriangle : CheckCircle}
-              class="w-6 h-6 {results.summary.totalErrors > 0
-                ? 'text-red-600'
-                : 'text-green-600'}" />
-          </div>
-          <div>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">
-              <T key="performance.total_errors" fallback="Total Errors" />
-            </p>
-            <p
-              class="text-2xl font-bold {results.summary.totalErrors > 0
-                ? 'text-red-500'
-                : 'text-green-500'}">
-              {results.summary.totalErrors}
-            </p>
-          </div>
-        </Card.Content>
-      </Card.Root>
+        <div class="performance-card-animate" style="animation-delay: 150ms;">
+          <Card.Root class="justify-between">
+            <Card.Content class="flex items-center gap-3 p-6">
+              <div
+                class="p-2 {results.summary.totalErrors > 0
+                  ? 'bg-red-100 dark:bg-red-900/30'
+                  : 'bg-green-100 dark:bg-green-900/30'} rounded-lg">
+                <Icon
+                  src={results.summary.totalErrors > 0 ? ExclamationTriangle : CheckCircle}
+                  class="w-6 h-6 {results.summary.totalErrors > 0
+                    ? 'text-red-600'
+                    : 'text-green-600'}" />
+              </div>
+              <div>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <T key="performance.total_errors" fallback="Total Errors" />
+                </p>
+                <p
+                  class="text-2xl font-bold {results.summary.totalErrors > 0
+                    ? 'text-red-500'
+                    : 'text-green-500'}">
+                  {results.summary.totalErrors}
+                </p>
+              </div>
+            </Card.Content>
+          </Card.Root>
+        </div>
 
-      {#if results.summary.averageCpuUsage !== undefined}
-        <Card.Root class="justify-between">
-          <Card.Content class="flex items-center gap-3 p-6">
-            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <Icon src={ComputerDesktop} class="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                <T key="performance.avg_cpu_usage" fallback="Avg CPU Usage" />
-              </p>
-              <p class="text-2xl font-bold text-zinc-900 dark:text-white">
-                {results.summary.averageCpuUsage.toFixed(1)}%
-              </p>
-            </div>
-          </Card.Content>
-        </Card.Root>
-      {/if}
+        {#if results.summary.averageCpuUsage !== undefined}
+          <div class="performance-card-animate" style="animation-delay: 200ms;">
+            <Card.Root class="justify-between">
+              <Card.Content class="flex items-center gap-3 p-6">
+                <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <Icon src={ComputerDesktop} class="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                    <T key="performance.avg_cpu_usage" fallback="Avg CPU Usage" />
+                  </p>
+                  <p class="text-2xl font-bold text-zinc-900 dark:text-white">
+                    {results.summary.averageCpuUsage.toFixed(1)}%
+                  </p>
+                </div>
+              </Card.Content>
+            </Card.Root>
+          </div>
+        {/if}
+      {/key}
     </div>
 
     <!-- Performance Charts -->
@@ -567,270 +579,273 @@
         </Card.Header>
         <Card.Content>
           <div class="space-y-4">
-            {#each sortedPages as page, index}
-              <div
-                class="p-4 {getPerformanceBgColor(
-                  page.loadTime,
-                )} rounded-lg border border-zinc-200 dark:border-zinc-600">
-                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                      <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400"
-                        >#{index + 1}</span>
-                      <h4 class="font-semibold text-zinc-900 dark:text-white">{page.pageName}</h4>
-                      <span
-                        class="text-xs px-2 py-1 bg-zinc-200 dark:bg-zinc-700 rounded text-zinc-600 dark:text-zinc-400">
-                        {page.path}
-                      </span>
-                    </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span class="text-zinc-500 dark:text-zinc-400">
-                          <T key="performance.load_time" fallback="Load Time" />
+            {#key sortedPages.length + sortedPages.map((p) => p.pageName).join(',')}
+              {#each sortedPages as page, index}
+                <div
+                  class="p-4 {getPerformanceBgColor(
+                    page.loadTime,
+                  )} rounded-lg border border-zinc-200 dark:border-zinc-600 performance-page-row-animate"
+                  style="animation-delay: {index * 50}ms;">
+                  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-3 mb-2">
+                        <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400"
+                          >#{index + 1}</span>
+                        <h4 class="font-semibold text-zinc-900 dark:text-white">{page.pageName}</h4>
+                        <span
+                          class="text-xs px-2 py-1 bg-zinc-200 dark:bg-zinc-700 rounded text-zinc-600 dark:text-zinc-400">
+                          {page.path}
                         </span>
-                        <p class="font-semibold {getPerformanceColor(page.loadTime)}">
-                          {formatTime(page.loadTime)}
-                        </p>
                       </div>
-                      <div>
-                        <span class="text-zinc-500 dark:text-zinc-400">
-                          <T key="performance.dom_ready" fallback="DOM Ready" />
-                        </span>
-                        <p class="font-semibold text-zinc-700 dark:text-zinc-300">
-                          {formatTime(page.domContentLoaded)}
-                        </p>
-                      </div>
-                      <div>
-                        <span class="text-zinc-500 dark:text-zinc-400">
-                          <T key="performance.memory" fallback="Memory" />
-                        </span>
-                        <p class="font-semibold text-zinc-700 dark:text-zinc-300">
-                          {formatMemory(page.memoryUsage)}
-                        </p>
-                      </div>
-                      <div>
-                        <span class="text-zinc-500 dark:text-zinc-400">
-                          <T key="performance.requests" fallback="Requests" />
-                        </span>
-                        <p class="font-semibold text-zinc-700 dark:text-zinc-300">
-                          {page.networkRequests}
-                        </p>
-                      </div>
-                    </div>
 
-                    {#if page.firstPaint || page.firstContentfulPaint}
-                      <div class="mt-3 grid grid-cols-2 gap-4 text-sm">
-                        {#if page.firstPaint}
-                          <div>
-                            <span class="text-zinc-500 dark:text-zinc-400">
-                              <T key="performance.first_paint" fallback="First Paint" />
-                            </span>
-                            <p class="font-semibold text-zinc-700 dark:text-zinc-300">
-                              {formatTime(page.firstPaint)}
-                            </p>
-                          </div>
-                        {/if}
-                        {#if page.firstContentfulPaint}
-                          <div>
-                            <span class="text-zinc-500 dark:text-zinc-400">
-                              <T
-                                key="performance.first_contentful_paint"
-                                fallback="First Contentful Paint" />
-                            </span>
-                            <p class="font-semibold text-zinc-700 dark:text-zinc-300">
-                              {formatTime(page.firstContentfulPaint)}
-                            </p>
-                          </div>
-                        {/if}
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span class="text-zinc-500 dark:text-zinc-400">
+                            <T key="performance.load_time" fallback="Load Time" />
+                          </span>
+                          <p class="font-semibold {getPerformanceColor(page.loadTime)}">
+                            {formatTime(page.loadTime)}
+                          </p>
+                        </div>
+                        <div>
+                          <span class="text-zinc-500 dark:text-zinc-400">
+                            <T key="performance.dom_ready" fallback="DOM Ready" />
+                          </span>
+                          <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                            {formatTime(page.domContentLoaded)}
+                          </p>
+                        </div>
+                        <div>
+                          <span class="text-zinc-500 dark:text-zinc-400">
+                            <T key="performance.memory" fallback="Memory" />
+                          </span>
+                          <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                            {formatMemory(page.memoryUsage)}
+                          </p>
+                        </div>
+                        <div>
+                          <span class="text-zinc-500 dark:text-zinc-400">
+                            <T key="performance.requests" fallback="Requests" />
+                          </span>
+                          <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                            {page.networkRequests}
+                          </p>
+                        </div>
                       </div>
-                    {/if}
 
-                    {#if page.systemMetrics && page.systemMetrics.length > 0}
-                      {@const avgCpu =
-                        page.systemMetrics.reduce((sum, m) => sum + m.cpu.usage_percent, 0) /
-                        page.systemMetrics.length}
-                      {@const peakCpu = Math.max(
-                        ...page.systemMetrics.map((m) => m.cpu.usage_percent),
-                      )}
-                      {@const avgMemory =
-                        page.systemMetrics.reduce((sum, m) => sum + m.memory.usage_percent, 0) /
-                        page.systemMetrics.length}
-                      {@const peakMemory = Math.max(
-                        ...page.systemMetrics.map((m) => m.memory.usage_percent),
-                      )}
-                      {@const gpuMetrics = page.systemMetrics.filter(
-                        (m) => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined,
-                      )}
-                      {@const avgGpu =
-                        gpuMetrics.length > 0
-                          ? gpuMetrics.reduce((sum, m) => sum + (m.gpu.usage_percent || 0), 0) /
-                            gpuMetrics.length
-                          : NaN}
-                      {@const peakGpu =
-                        gpuMetrics.length > 0
-                          ? Math.max(...gpuMetrics.map((m) => m.gpu.usage_percent || 0))
-                          : NaN}
-
-                      <div class="mt-4 pt-4 border-t border-zinc-300 dark:border-zinc-600">
-                        <h5 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
-                          <T
-                            key="performance.system_resource_usage"
-                            fallback="System Resource Usage" />
-                        </h5>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <span class="text-zinc-500 dark:text-zinc-400">
-                              <T key="performance.avg_cpu" fallback="Avg CPU" />
-                            </span>
-                            <p
-                              class="font-semibold {avgCpu > 80
-                                ? 'text-red-500'
-                                : avgCpu > 50
-                                  ? 'text-yellow-500'
-                                  : 'text-green-500'}">
-                              {avgCpu.toFixed(1)}%
-                            </p>
-                            <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                              {#if true}
-                                {@const peakCpuStr = peakCpu.toFixed(1)}
-                                <T
-                                  key="performance.peak"
-                                  fallback={`Peak: ${peakCpuStr}%`}
-                                  values={{ value: peakCpuStr }} />
-                              {/if}
-                            </p>
-                          </div>
-                          <div>
-                            <span class="text-zinc-500 dark:text-zinc-400">
-                              <T key="performance.avg_memory" fallback="Avg Memory" />
-                            </span>
-                            <p
-                              class="font-semibold {avgMemory > 80
-                                ? 'text-red-500'
-                                : avgMemory > 50
-                                  ? 'text-yellow-500'
-                                  : 'text-green-500'}">
-                              {avgMemory.toFixed(1)}%
-                            </p>
-                            <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                              {#if true}
-                                {@const peakMemStr = peakMemory.toFixed(1)}
-                                <T
-                                  key="performance.peak"
-                                  fallback={`Peak: ${peakMemStr}%`}
-                                  values={{ value: peakMemStr }} />
-                              {/if}
-                            </p>
-                          </div>
-                          {#if !isNaN(avgGpu)}
+                      {#if page.firstPaint || page.firstContentfulPaint}
+                        <div class="mt-3 grid grid-cols-2 gap-4 text-sm">
+                          {#if page.firstPaint}
                             <div>
                               <span class="text-zinc-500 dark:text-zinc-400">
-                                <T key="performance.avg_gpu" fallback="Avg GPU" />
+                                <T key="performance.first_paint" fallback="First Paint" />
                               </span>
-                              <p
-                                class="font-semibold {avgGpu > 80
-                                  ? 'text-red-500'
-                                  : avgGpu > 50
-                                    ? 'text-yellow-500'
-                                    : 'text-green-500'}">
-                                {avgGpu.toFixed(1)}%
+                              <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                                {formatTime(page.firstPaint)}
                               </p>
-                              <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                                {#if true}
-                                  {@const peakGpuStr = peakGpu.toFixed(1)}
-                                  <T
-                                    key="performance.peak"
-                                    fallback={`Peak: ${peakGpuStr}%`}
-                                    values={{ value: peakGpuStr }} />
-                                {/if}
+                            </div>
+                          {/if}
+                          {#if page.firstContentfulPaint}
+                            <div>
+                              <span class="text-zinc-500 dark:text-zinc-400">
+                                <T
+                                  key="performance.first_contentful_paint"
+                                  fallback="First Contentful Paint" />
+                              </span>
+                              <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                                {formatTime(page.firstContentfulPaint)}
                               </p>
                             </div>
                           {/if}
                         </div>
-                      </div>
-                    {/if}
+                      {/if}
+
+                      {#if page.systemMetrics && page.systemMetrics.length > 0}
+                        {@const avgCpu =
+                          page.systemMetrics.reduce((sum, m) => sum + m.cpu.usage_percent, 0) /
+                          page.systemMetrics.length}
+                        {@const peakCpu = Math.max(
+                          ...page.systemMetrics.map((m) => m.cpu.usage_percent),
+                        )}
+                        {@const avgMemory =
+                          page.systemMetrics.reduce((sum, m) => sum + m.memory.usage_percent, 0) /
+                          page.systemMetrics.length}
+                        {@const peakMemory = Math.max(
+                          ...page.systemMetrics.map((m) => m.memory.usage_percent),
+                        )}
+                        {@const gpuMetrics = page.systemMetrics.filter(
+                          (m) => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined,
+                        )}
+                        {@const avgGpu =
+                          gpuMetrics.length > 0
+                            ? gpuMetrics.reduce((sum, m) => sum + (m.gpu.usage_percent || 0), 0) /
+                              gpuMetrics.length
+                            : NaN}
+                        {@const peakGpu =
+                          gpuMetrics.length > 0
+                            ? Math.max(...gpuMetrics.map((m) => m.gpu.usage_percent || 0))
+                            : NaN}
+
+                        <div class="mt-4 pt-4 border-t border-zinc-300 dark:border-zinc-600">
+                          <h5 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
+                            <T
+                              key="performance.system_resource_usage"
+                              fallback="System Resource Usage" />
+                          </h5>
+                          <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span class="text-zinc-500 dark:text-zinc-400">
+                                <T key="performance.avg_cpu" fallback="Avg CPU" />
+                              </span>
+                              <p
+                                class="font-semibold {avgCpu > 80
+                                  ? 'text-red-500'
+                                  : avgCpu > 50
+                                    ? 'text-yellow-500'
+                                    : 'text-green-500'}">
+                                {avgCpu.toFixed(1)}%
+                              </p>
+                              <p class="text-xs text-zinc-400 dark:text-zinc-500">
+                                {#if true}
+                                  {@const peakCpuStr = peakCpu.toFixed(1)}
+                                  <T
+                                    key="performance.peak"
+                                    fallback={`Peak: ${peakCpuStr}%`}
+                                    values={{ value: peakCpuStr }} />
+                                {/if}
+                              </p>
+                            </div>
+                            <div>
+                              <span class="text-zinc-500 dark:text-zinc-400">
+                                <T key="performance.avg_memory" fallback="Avg Memory" />
+                              </span>
+                              <p
+                                class="font-semibold {avgMemory > 80
+                                  ? 'text-red-500'
+                                  : avgMemory > 50
+                                    ? 'text-yellow-500'
+                                    : 'text-green-500'}">
+                                {avgMemory.toFixed(1)}%
+                              </p>
+                              <p class="text-xs text-zinc-400 dark:text-zinc-500">
+                                {#if true}
+                                  {@const peakMemStr = peakMemory.toFixed(1)}
+                                  <T
+                                    key="performance.peak"
+                                    fallback={`Peak: ${peakMemStr}%`}
+                                    values={{ value: peakMemStr }} />
+                                {/if}
+                              </p>
+                            </div>
+                            {#if !isNaN(avgGpu)}
+                              <div>
+                                <span class="text-zinc-500 dark:text-zinc-400">
+                                  <T key="performance.avg_gpu" fallback="Avg GPU" />
+                                </span>
+                                <p
+                                  class="font-semibold {avgGpu > 80
+                                    ? 'text-red-500'
+                                    : avgGpu > 50
+                                      ? 'text-yellow-500'
+                                      : 'text-green-500'}">
+                                  {avgGpu.toFixed(1)}%
+                                </p>
+                                <p class="text-xs text-zinc-400 dark:text-zinc-500">
+                                  {#if true}
+                                    {@const peakGpuStr = peakGpu.toFixed(1)}
+                                    <T
+                                      key="performance.peak"
+                                      fallback={`Peak: ${peakGpuStr}%`}
+                                      values={{ value: peakGpuStr }} />
+                                  {/if}
+                                </p>
+                              </div>
+                            {/if}
+                          </div>
+                        </div>
+                      {/if}
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                      {#if page.errors.length > 0}
+                        <div
+                          class="flex items-center gap-2 px-3 py-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                          <Icon src={ExclamationTriangle} class="w-4 h-4 text-red-500" />
+                          <span class="text-sm font-medium text-red-700 dark:text-red-300">
+                            {#if true}
+                              {@const errorCount = page.errors.length}
+                              <T
+                                key="performance.errors_count"
+                                fallback={`${errorCount} errors`}
+                                values={{ count: errorCount }} />
+                            {/if}
+                          </span>
+                        </div>
+                      {/if}
+                      {#if page.warnings.length > 0}
+                        <div
+                          class="flex items-center gap-2 px-3 py-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                          <Icon src={ExclamationTriangle} class="w-4 h-4 text-yellow-500" />
+                          <span class="text-sm font-medium text-yellow-700 dark:text-yellow-300">
+                            {#if true}
+                              {@const warningCount = page.warnings.length}
+                              <T
+                                key="performance.warnings_count"
+                                fallback={`${warningCount} warnings`}
+                                values={{ count: warningCount }} />
+                            {/if}
+                          </span>
+                        </div>
+                      {/if}
+                      {#if page.errors.length === 0 && page.warnings.length === 0}
+                        <div
+                          class="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                          <Icon src={CheckCircle} class="w-4 h-4 text-green-500" />
+                          <span class="text-sm font-medium text-green-700 dark:text-green-300">
+                            <T key="performance.no_issues" fallback="No issues" />
+                          </span>
+                        </div>
+                      {/if}
+                    </div>
                   </div>
 
-                  <div class="flex items-center gap-4">
-                    {#if page.errors.length > 0}
-                      <div
-                        class="flex items-center gap-2 px-3 py-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                        <Icon src={ExclamationTriangle} class="w-4 h-4 text-red-500" />
-                        <span class="text-sm font-medium text-red-700 dark:text-red-300">
-                          {#if true}
-                            {@const errorCount = page.errors.length}
-                            <T
-                              key="performance.errors_count"
-                              fallback={`${errorCount} errors`}
-                              values={{ count: errorCount }} />
-                          {/if}
-                        </span>
-                      </div>
-                    {/if}
-                    {#if page.warnings.length > 0}
-                      <div
-                        class="flex items-center gap-2 px-3 py-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-                        <Icon src={ExclamationTriangle} class="w-4 h-4 text-yellow-500" />
-                        <span class="text-sm font-medium text-yellow-700 dark:text-yellow-300">
-                          {#if true}
-                            {@const warningCount = page.warnings.length}
-                            <T
-                              key="performance.warnings_count"
-                              fallback={`${warningCount} warnings`}
-                              values={{ count: warningCount }} />
-                          {/if}
-                        </span>
-                      </div>
-                    {/if}
-                    {#if page.errors.length === 0 && page.warnings.length === 0}
-                      <div
-                        class="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                        <Icon src={CheckCircle} class="w-4 h-4 text-green-500" />
-                        <span class="text-sm font-medium text-green-700 dark:text-green-300">
-                          <T key="performance.no_issues" fallback="No issues" />
-                        </span>
-                      </div>
-                    {/if}
-                  </div>
+                  {#if page.errors.length > 0 || page.warnings.length > 0}
+                    <div class="mt-4 pt-4 border-t border-zinc-300 dark:border-zinc-600">
+                      {#if page.errors.length > 0}
+                        <div class="mb-3">
+                          <h5 class="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
+                            Errors:
+                          </h5>
+                          <ul class="space-y-1">
+                            {#each page.errors as error}
+                              <li
+                                class="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                                {error}
+                              </li>
+                            {/each}
+                          </ul>
+                        </div>
+                      {/if}
+                      {#if page.warnings.length > 0}
+                        <div>
+                          <h5 class="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">
+                            Warnings:
+                          </h5>
+                          <ul class="space-y-1">
+                            {#each page.warnings as warning}
+                              <li
+                                class="text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+                                {warning}
+                              </li>
+                            {/each}
+                          </ul>
+                        </div>
+                      {/if}
+                    </div>
+                  {/if}
                 </div>
-
-                {#if page.errors.length > 0 || page.warnings.length > 0}
-                  <div class="mt-4 pt-4 border-t border-zinc-300 dark:border-zinc-600">
-                    {#if page.errors.length > 0}
-                      <div class="mb-3">
-                        <h5 class="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
-                          Errors:
-                        </h5>
-                        <ul class="space-y-1">
-                          {#each page.errors as error}
-                            <li
-                              class="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
-                              {error}
-                            </li>
-                          {/each}
-                        </ul>
-                      </div>
-                    {/if}
-                    {#if page.warnings.length > 0}
-                      <div>
-                        <h5 class="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">
-                          Warnings:
-                        </h5>
-                        <ul class="space-y-1">
-                          {#each page.warnings as warning}
-                            <li
-                              class="text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
-                              {warning}
-                            </li>
-                          {/each}
-                        </ul>
-                      </div>
-                    {/if}
-                  </div>
-                {/if}
-              </div>
-            {/each}
+              {/each}
+            {/key}
           </div>
         </Card.Content>
       </Card.Root>
@@ -862,3 +877,22 @@
     {/if}
   {/if}
 </div>
+
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .performance-card-animate,
+  .performance-page-row-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

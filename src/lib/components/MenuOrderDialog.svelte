@@ -108,9 +108,13 @@
     onclick={(e) => {
       if (e.target === e.currentTarget) onClose();
     }}
+    onkeydown={(e) => {
+      if (e.key === 'Escape') onClose();
+    }}
     role="dialog"
     aria-modal="true"
-    aria-labelledby="menu-order-dialog-title">
+    aria-labelledby="menu-order-dialog-title"
+    tabindex="0">
     <!-- Dialog -->
     <div
       class="relative bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col"
@@ -144,6 +148,8 @@
             {@const isDragOver = dragOverIndex === index}
             <div
               draggable="true"
+              role="button"
+              tabindex="0"
               ondragstart={(e) => handleDragStart(e, index)}
               ondragover={(e) => handleDragOver(e, index)}
               ondragleave={handleDragLeave}
@@ -195,14 +201,14 @@
       <div class="flex justify-between items-center p-6 border-t border-zinc-200 dark:border-zinc-700 gap-3">
         <Button
           onclick={handleReset}
-          variant="outline"
+          variant="secondary"
           class="transition-all duration-200 transform hover:scale-105 active:scale-95">
           <T key="common.reset" fallback="Reset" />
         </Button>
         <div class="flex gap-3">
           <Button
             onclick={onClose}
-            variant="outline"
+            variant="secondary"
             class="transition-all duration-200 transform hover:scale-105 active:scale-95">
             <T key="common.cancel" fallback="Cancel" />
           </Button>

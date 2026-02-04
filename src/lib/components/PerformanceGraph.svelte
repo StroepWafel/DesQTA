@@ -7,13 +7,7 @@
     maxValue?: number;
   }
 
-  let {
-    data = $bindable([]),
-    label,
-    color = '#3b82f6',
-    height = 150,
-    maxValue,
-  }: Props = $props();
+  let { data = $bindable([]), label, color = '#3b82f6', height = 150, maxValue }: Props = $props();
 
   let width = $state(600);
   let svgRef: SVGSVGElement;
@@ -31,17 +25,19 @@
   });
 
   const padding = { top: 20, right: 20, bottom: 30, left: 50 };
-  
+
   let chartWidth = $derived(width - padding.left - padding.right);
   let chartHeight = $derived(height - padding.top - padding.bottom);
 
-  let maxVal = $derived(maxValue ?? (data.length > 0 ? Math.max(...data.map(d => d.value), 100) : 100));
-  let minVal = $derived(data.length > 0 ? Math.min(...data.map(d => d.value), 0) : 0);
+  let maxVal = $derived(
+    maxValue ?? (data.length > 0 ? Math.max(...data.map((d) => d.value), 100) : 100),
+  );
+  let minVal = $derived(data.length > 0 ? Math.min(...data.map((d) => d.value), 0) : 0);
 
   function xScale(val: number): number {
     if (data.length === 0) return 0;
-    const minTime = Math.min(...data.map(d => d.timestamp));
-    const maxTime = Math.max(...data.map(d => d.timestamp));
+    const minTime = Math.min(...data.map((d) => d.timestamp));
+    const maxTime = Math.max(...data.map((d) => d.timestamp));
     const range = maxTime - minTime || 1;
     return ((val - minTime) / range) * chartWidth;
   }
@@ -51,7 +47,7 @@
     return chartHeight - ((val - minVal) / range) * chartHeight;
   }
 
-  let pathData = $derived(() => {
+  let pathData = $derived.by(() => {
     if (data.length === 0) return '';
     const points = data.map((d, i) => {
       const x = padding.left + xScale(d.timestamp);
@@ -61,7 +57,7 @@
     return points.join(' ');
   });
 
-  let areaPathData = $derived(() => {
+  let areaPathData = $derived.by(() => {
     if (data.length === 0) return '';
     const points = data.map((d, i) => {
       const x = padding.left + xScale(d.timestamp);
@@ -79,7 +75,7 @@
   <svg
     bind:this={svgRef}
     class="w-full"
-    height={height}
+    {height}
     viewBox={`0 0 ${width} ${height}`}
     preserveAspectRatio="none">
     <!-- Grid lines -->
@@ -94,11 +90,8 @@
         stroke-opacity="0.1"
         stroke-width="1" />
       {@const value = maxVal - (maxVal - minVal) * (i / 4)}
-      <text
-        x={padding.left - 10}
-        y={y + 4}
-        class="text-xs fill-white"
-        text-anchor="end">{value.toFixed(1)}</text>
+      <text x={padding.left - 10} y={y + 4} class="text-xs fill-white" text-anchor="end"
+        >{value.toFixed(1)}</text>
     {/each}
 
     <!-- Y-axis label -->
@@ -111,10 +104,7 @@
 
     <!-- Area fill -->
     {#if data.length > 0}
-      <path
-        d={areaPathData}
-        fill={color}
-        fill-opacity="0.2" />
+      <path d={areaPathData} fill={color} fill-opacity="0.2" />
     {/if}
 
     <!-- Line -->
@@ -132,13 +122,7 @@
     {#each data as point, i}
       {@const x = padding.left + xScale(point.timestamp)}
       {@const y = padding.top + yScale(point.value)}
-      <circle
-        cx={x}
-        cy={y}
-        r="3"
-        fill={color}
-        stroke="white"
-        stroke-width="1" />
+      <circle cx={x} cy={y} r="3" fill={color} stroke="white" stroke-width="1" />
     {/each}
 
     <!-- X-axis -->
@@ -168,4 +152,3 @@
     color: rgb(161 161 170); /* zinc-400 */
   }
 </style>
-

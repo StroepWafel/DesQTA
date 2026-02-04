@@ -15,20 +15,20 @@ let fallbackCache: Map<string, string> = new Map();
  */
 export async function sanitizeHtmlAsync(html: string, customConfig?: any): Promise<string> {
   if (!html) return '';
-  
+
   try {
     // Use Rust-side HTML sanitization for better performance
     const sanitized = await invoke<string>('sanitize_html_command', {
       html,
-      config: customConfig || null
+      config: customConfig || null,
     });
-    
+
     logger.debug('sanitization', 'sanitizeHtmlAsync', 'HTML sanitized (Rust)', {
       originalLength: html.length,
       sanitizedLength: sanitized.length,
-      removed: html.length - sanitized.length
+      removed: html.length - sanitized.length,
     });
-    
+
     return sanitized;
   } catch (error) {
     logger.error('sanitization', 'sanitizeHtmlAsync', 'Failed to sanitize HTML (Rust)', { error });
@@ -44,7 +44,7 @@ export async function sanitizeHtmlAsync(html: string, customConfig?: any): Promi
  */
 export function sanitizeHtml(html: string, customConfig?: any): string {
   if (!html) return '';
-  
+
   // Check cache first
   const cacheKey = html.substring(0, 100);
   if (fallbackCache.has(cacheKey) && html.length < 1000) {
@@ -53,7 +53,7 @@ export function sanitizeHtml(html: string, customConfig?: any): string {
       return cached;
     }
   }
-  
+
   try {
     // Simple regex-based sanitization as synchronous fallback
     // This is less secure than Rust-side parsing but works synchronously
@@ -65,7 +65,7 @@ export function sanitizeHtml(html: string, customConfig?: any): string {
       .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
       .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
       .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '');
-    
+
     // Add target="_blank" and rel="noopener noreferrer" to links
     sanitized = sanitized.replace(/<a\s+([^>]*?)>/gi, (match, attrs) => {
       if (!attrs.includes('target=')) {
@@ -76,22 +76,24 @@ export function sanitizeHtml(html: string, customConfig?: any): string {
       }
       return `<a ${attrs}>`;
     });
-    
+
     // Cache small results
     if (html.length < 1000) {
       fallbackCache.set(cacheKey, sanitized);
       // Limit cache size
       if (fallbackCache.size > 100) {
         const firstKey = fallbackCache.keys().next().value;
-        fallbackCache.delete(firstKey);
+        if (firstKey !== undefined) {
+          fallbackCache.delete(firstKey);
+        }
       }
     }
-    
+
     logger.debug('sanitization', 'sanitizeHtml', 'HTML sanitized (fallback)', {
       originalLength: html.length,
-      sanitizedLength: sanitized.length
+      sanitizedLength: sanitized.length,
     });
-    
+
     return sanitized;
   } catch (error) {
     logger.error('sanitization', 'sanitizeHtml', 'Failed to sanitize HTML (fallback)', { error });
@@ -104,22 +106,22 @@ export function sanitizeHtml(html: string, customConfig?: any): string {
  */
 export function sanitizeText(text: string): string {
   if (!text) return '';
-  
+
   // Remove HTML tags completely
   const withoutHtml = text.replace(/<[^>]*>/g, '');
-  
+
   // Remove potentially dangerous characters
   const sanitized = withoutHtml
     .replace(/[<>]/g, '') // Remove remaining angle brackets
     .replace(/javascript:/gi, '') // Remove javascript: protocol
     .replace(/on\w+\s*=/gi, '') // Remove event handlers
     .trim();
-  
+
   logger.debug('sanitization', 'sanitizeText', 'Text sanitized', {
     originalLength: text.length,
-    sanitizedLength: sanitized.length
+    sanitizedLength: sanitized.length,
   });
-  
+
   return sanitized;
 }
 
@@ -128,19 +130,19 @@ export function sanitizeText(text: string): string {
  */
 export function sanitizeSearchQuery(query: string): string {
   if (!query) return '';
-  
+
   const sanitized = query
     .trim()
     .replace(/[<>'"]/g, '') // Remove potentially dangerous characters
     .replace(/\\/g, '') // Remove backslashes
     .replace(/javascript:/gi, '') // Remove javascript protocol
     .substring(0, 500); // Limit length
-  
+
   logger.debug('sanitization', 'sanitizeSearchQuery', 'Search query sanitized', {
     original: query,
-    sanitized
+    sanitized,
   });
-  
+
   return sanitized;
 }
 
@@ -149,19 +151,19 @@ export function sanitizeSearchQuery(query: string): string {
  */
 export function sanitizeUrl(url: string): string | null {
   if (!url) return null;
-  
+
   try {
     const urlObj = new URL(url);
-    
+
     // Only allow http, https, and mailto protocols
     if (!['http:', 'https:', 'mailto:'].includes(urlObj.protocol)) {
       logger.warn('sanitization', 'sanitizeUrl', 'Blocked dangerous URL protocol', {
         url,
-        protocol: urlObj.protocol
+        protocol: urlObj.protocol,
       });
       return null;
     }
-    
+
     return urlObj.href;
   } catch (error) {
     logger.warn('sanitization', 'sanitizeUrl', 'Invalid URL', { url, error });
@@ -184,27 +186,37 @@ export function validateFileUpload(
     maxSizeMB?: number;
     allowedTypes?: string[];
     allowedExtensions?: string[];
-  } = {}
+  } = {},
 ): FileValidationResult {
   const {
     maxSizeMB = 50, // Default 50MB
     allowedTypes = [
-      'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+      'image/png',
+      'image/jpeg',
+      'image/gif',
+      'image/webp',
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'text/plain',
-      'text/csv'
+      'text/csv',
     ],
     allowedExtensions = [
-      '.png', '.jpg', '.jpeg', '.gif', '.webp',
+      '.png',
+      '.jpg',
+      '.jpeg',
+      '.gif',
+      '.webp',
       '.pdf',
-      '.doc', '.docx',
-      '.xls', '.xlsx',
-      '.txt', '.csv'
-    ]
+      '.doc',
+      '.docx',
+      '.xls',
+      '.xlsx',
+      '.txt',
+      '.csv',
+    ],
   } = options;
 
   // Check file size
@@ -213,11 +225,11 @@ export function validateFileUpload(
     logger.warn('sanitization', 'validateFileUpload', 'File too large', {
       fileName: file.name,
       size: file.size,
-      maxSize: maxSizeBytes
+      maxSize: maxSizeBytes,
     });
     return {
       valid: false,
-      error: `File size exceeds ${maxSizeMB}MB limit`
+      error: `File size exceeds ${maxSizeMB}MB limit`,
     };
   }
 
@@ -225,11 +237,11 @@ export function validateFileUpload(
   if (!allowedTypes.includes(file.type)) {
     logger.warn('sanitization', 'validateFileUpload', 'Invalid file type', {
       fileName: file.name,
-      type: file.type
+      type: file.type,
     });
     return {
       valid: false,
-      error: 'File type not allowed'
+      error: 'File type not allowed',
     };
   }
 
@@ -238,11 +250,11 @@ export function validateFileUpload(
   if (!allowedExtensions.includes(extension)) {
     logger.warn('sanitization', 'validateFileUpload', 'Invalid file extension', {
       fileName: file.name,
-      extension
+      extension,
     });
     return {
       valid: false,
-      error: 'File extension not allowed'
+      error: 'File extension not allowed',
     };
   }
 
@@ -253,12 +265,12 @@ export function validateFileUpload(
     originalName: file.name,
     sanitizedName,
     size: file.size,
-    type: file.type
+    type: file.type,
   });
 
   return {
     valid: true,
-    sanitizedName
+    sanitizedName,
   };
 }
 
@@ -267,23 +279,23 @@ export function validateFileUpload(
  */
 export function sanitizeFilename(filename: string): string {
   if (!filename) return 'unnamed';
-  
+
   // Remove path traversal attempts
   let sanitized = filename.replace(/\.\.\//g, '').replace(/\.\.\\/g, '');
-  
+
   // Remove potentially dangerous characters
   sanitized = sanitized
     .replace(/[<>:"|?*\x00-\x1f]/g, '') // Windows forbidden chars
     .replace(/^\.+/, '') // Leading dots
     .trim();
-  
+
   // Limit length
   if (sanitized.length > 255) {
     const ext = sanitized.split('.').pop();
     const nameWithoutExt = sanitized.substring(0, sanitized.length - (ext?.length || 0) - 1);
     sanitized = nameWithoutExt.substring(0, 250) + '.' + ext;
   }
-  
+
   return sanitized || 'unnamed';
 }
 
@@ -296,7 +308,7 @@ export function sanitizeJson<T>(data: T): T {
   }
 
   if (Array.isArray(data)) {
-    return data.map(item => sanitizeJson(item)) as T;
+    return data.map((item) => sanitizeJson(item)) as T;
   }
 
   const sanitized: any = {};
@@ -332,9 +344,9 @@ export function escapeHtml(text: string): string {
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
-    "'": '&#039;'
+    "'": '&#039;',
   };
-  return text.replace(/[&<>"']/g, m => map[m]);
+  return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
 /**
@@ -342,7 +354,7 @@ export function escapeHtml(text: string): string {
  */
 export function sanitizeCss(css: string): string {
   if (!css) return '';
-  
+
   // Remove expressions, imports, and potentially dangerous functions
   const dangerous = [
     /expression\s*\(/gi,
@@ -350,14 +362,14 @@ export function sanitizeCss(css: string): string {
     /javascript:/gi,
     /behavior:/gi,
     /-moz-binding:/gi,
-    /eval\(/gi
+    /eval\(/gi,
   ];
-  
+
   let sanitized = css;
-  dangerous.forEach(pattern => {
+  dangerous.forEach((pattern) => {
     sanitized = sanitized.replace(pattern, '');
   });
-  
+
   return sanitized;
 }
 
@@ -366,29 +378,31 @@ export function sanitizeCss(css: string): string {
  */
 export function validateBase64Image(base64: string): { valid: boolean; error?: string } {
   if (!base64) return { valid: false, error: 'Empty data' };
-  
+
   // Check if it's a valid base64 data URL
   const dataUrlPattern = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/;
   if (!dataUrlPattern.test(base64)) {
     return { valid: false, error: 'Invalid image format' };
   }
-  
+
   try {
     // Extract base64 part
     const base64Data = base64.split(',')[1];
-    
+
     // Decode to check size
     const binaryString = atob(base64Data);
     const bytes = binaryString.length;
     const maxSize = 10 * 1024 * 1024; // 10MB
-    
+
     if (bytes > maxSize) {
       return { valid: false, error: 'Image too large' };
     }
-    
+
     return { valid: true };
   } catch (error) {
-    logger.error('sanitization', 'validateBase64Image', 'Failed to validate base64 image', { error });
+    logger.error('sanitization', 'validateBase64Image', 'Failed to validate base64 image', {
+      error,
+    });
     return { valid: false, error: 'Invalid base64 data' };
   }
 }
@@ -403,6 +417,5 @@ export default {
   sanitizeJson,
   escapeHtml,
   sanitizeCss,
-  validateBase64Image
+  validateBase64Image,
 };
-

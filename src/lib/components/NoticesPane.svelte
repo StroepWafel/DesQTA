@@ -39,14 +39,18 @@
         labels = memCached;
         return;
       }
-      
-      const idbCached = await getWithIdbFallback<Label[]>('notices_labels', 'notices_labels', () => null);
+
+      const idbCached = await getWithIdbFallback<Label[]>(
+        'notices_labels',
+        'notices_labels',
+        () => null,
+      );
       if (idbCached) {
         labels = idbCached;
         cache.set('notices_labels', idbCached, 60);
         return;
       }
-      
+
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
         body: { mode: 'labels' },
@@ -72,7 +76,7 @@
       const key = `notices_${formatDate(today)}`;
       const { isOfflineMode } = await import('../../lib/utils/offlineMode');
       const offline = await isOfflineMode();
-      
+
       // If offline, use database only
       if (offline) {
         const memCached = cache.get<Notice[]>(key);
@@ -80,19 +84,19 @@
           notices = memCached.slice(0, 10); // Show only first 10 notices in widget
           return;
         }
-        
+
         const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
         if (idbCached) {
           notices = idbCached.slice(0, 10);
           cache.set(key, idbCached, 30);
           return;
         }
-        
+
         // No cached data when offline
         notices = [];
         return;
       }
-      
+
       // Online: Always fetch from API and save to DB
       const response = await seqtaFetch('/seqta/student/load/notices?', {
         method: 'POST',
@@ -148,21 +152,26 @@
   });
 </script>
 
-<div class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
-  <div class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+<div
+  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+  <div
+    class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
     <h3 class="text-xl font-semibold text-zinc-900 dark:text-white">Notices</h3>
     <a
       href="/notices"
-      class="px-3 py-1.5 text-sm rounded-lg transition-all duration-300 text-nowrap accent-text hover:accent-bg-hover hover:text-white">
+      class="px-3 py-1.5 text-sm rounded-lg transition-all duration-300 text-nowrap accent-text hover:accent-bg-hover hover:text-white text-(--accent)! dark:text-(--accent)!">
       View all
       <Icon src={ArrowTopRightOnSquare} class="inline ml-1 w-4 h-4" />
     </a>
   </div>
-  
-  <div class="overflow-y-auto px-4 py-4 max-h-80 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-zinc-800/10">
+
+  <div
+    class="overflow-y-auto px-4 py-4 max-h-80 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-zinc-800/10">
     {#if loading}
       <div class="p-8 text-center text-(--text-muted)">
-        <div class="w-8 h-8 rounded-full border-4 animate-spin border-accent-500/30 border-t-accent-500 mx-auto"></div>
+        <div
+          class="w-8 h-8 rounded-full border-4 animate-spin border-accent-500/30 border-t-accent-500 mx-auto">
+        </div>
         <p class="mt-4 text-sm">Loading notices...</p>
       </div>
     {:else if notices.length === 0}
@@ -172,8 +181,11 @@
     {:else}
       <div class="space-y-3">
         {#each notices as notice}
-          <div class="rounded-lg shadow-xs bg-white/10 text-(--text) border-l-4 p-3 transition-all duration-200 hover:shadow-md hover:bg-white/20"
-               style="border-left-color: {getLabelColor(notice.labelId)};">
+          {@const noticeDate = new Date().toISOString().split('T')[0]}
+          <a
+            href="/notices?item={notice.id}&category={notice.labelId}&date={noticeDate}"
+            class="block rounded-lg shadow-xs bg-white/10 border-l-4 p-3 transition-all duration-200 hover:shadow-md hover:bg-white/20 text-zinc-900! dark:text-zinc-300!"
+            style="border-left-color: {getLabelColor(notice.labelId)};">
             <div class="flex items-start gap-2 mb-2">
               <span
                 class="px-2 py-1 text-xs font-medium rounded-full text-white shrink-0"
@@ -189,7 +201,7 @@
             <div class="text-xs text-(--text-muted) line-clamp-2">
               {@html notice.content}
             </div>
-          </div>
+          </a>
         {/each}
       </div>
     {/if}
@@ -204,7 +216,7 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  
+
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -212,4 +224,4 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-</style> 
+</style>

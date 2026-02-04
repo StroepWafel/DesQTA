@@ -1,6 +1,7 @@
 <script lang="ts">
   // Svelte imports
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
 
   // $lib/ imports
   import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
@@ -17,6 +18,7 @@
   } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
+  import { updateUrlParams, getUrlParam } from '$lib/utils/urlParams';
 
   // Relative imports
   import { invoke } from '@tauri-apps/api/core';
@@ -42,6 +44,11 @@
   let loading = $state(true);
   let error: string | null = $state(null);
 
+  // Create a unique key that changes when subjects load to force re-render
+  const subjectsKey = $derived(
+    `${loading}-${activeSubjects.length}-${activeSubjects.map((s) => s.code).join(',')}`,
+  );
+
   let expandedFolders: Record<string, boolean> = $state({});
   let selectedSubject: Subject | null = $state(null);
   let coursePayload: CoursePayload | null = $state(null);
@@ -53,6 +60,7 @@
   // Schedule navigation state
   let selectedLesson: Lesson | null = $state(null);
   let selectedLessonContent: WeeklyLessonContent | null = $state(null);
+  let selectedStandaloneContent: WeeklyLessonContent | null = $state(null);
   let showingOverview = $state(true); // Start with overview by default
   let contentScrollContainer: HTMLElement;
 
@@ -82,13 +90,11 @@
           processFolders(foldersData);
           loading = false;
         },
-        shouldSyncInBackground: (foldersData) => {
-          // Don't sync if cached data has no active subjects
-          const testFolders = foldersData;
-          const testActiveFolders = testFolders.filter((f: Folder) => f.active);
-          const testActiveSubjects = testActiveFolders.flatMap((f: Folder) => f.subjects || []);
-          return testActiveSubjects.length > 0;
+        shouldSyncInBackground: () => {
+          // Always sync if online - subjects are critical data and may have been added recently
+          return true;
         },
+        updateOnBackgroundSync: true, // Update UI when fresh data arrives
       });
 
       if (!data) {
@@ -107,6 +113,7 @@
     parsedDocument = null;
     selectedLesson = null;
     selectedLessonContent = null;
+    selectedStandaloneContent = null;
 
     const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
 
@@ -148,11 +155,21 @@
     showingOverview = true; // Reset to overview when selecting a new subject
     selectedLesson = null;
     selectedLessonContent = null;
+    selectedStandaloneContent = null;
     await loadCourseContent(subject);
+    // Update URL with subject code
+    await updateUrlParams({
+      code: subject.code,
+      date: null, // Clear date when selecting subject
+      lesson: null,
+      term: null,
+      week: null,
+    });
   }
 
-  function selectLesson(termSchedule: TermSchedule, lesson: Lesson, lessonIndex: number) {
+  async function selectLesson(termSchedule: TermSchedule, lesson: Lesson, lessonIndex: number) {
     selectedLesson = lesson;
+    selectedStandaloneContent = null;
     showingOverview = false;
 
     // Find the corresponding weekly lesson content
@@ -162,22 +179,85 @@
       selectedLessonContent = null;
     }
 
+    // Update URL with lesson details
+    if (selectedSubject) {
+      await updateUrlParams({
+        code: selectedSubject.code,
+        date: lesson.d,
+        lesson: lessonIndex.toString(),
+        term: termSchedule.t.toString(),
+        week: termSchedule.w.toString(),
+      });
+    }
+
     // Scroll content area to top when new lesson is selected
     if (contentScrollContainer) {
       contentScrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
-  function selectOverview() {
+  async function selectStandaloneContent(content: WeeklyLessonContent) {
+    selectedStandaloneContent = content;
+    selectedLesson = null;
+    selectedLessonContent = null;
+    showingOverview = false;
+
+    // Update URL with content index
+    if (selectedSubject) {
+      await updateUrlParams({
+        code: selectedSubject.code,
+        lesson: content.i.toString(),
+        term: null,
+        week: null,
+        date: null,
+      });
+    }
+
+    // Scroll content area to top when new content is selected
+    if (contentScrollContainer) {
+      contentScrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  async function selectOverview() {
     showingOverview = true;
     selectedLesson = null;
     selectedLessonContent = null;
+    selectedStandaloneContent = null;
+
+    // Update URL - keep code but clear lesson-specific params
+    if (selectedSubject) {
+      await updateUrlParams({
+        code: selectedSubject.code,
+        lesson: null,
+        term: null,
+        week: null,
+        // Keep date if it exists
+      });
+    }
 
     // Scroll content area to top when overview is selected
     if (contentScrollContainer) {
       contentScrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
+
+  // Get standalone content items (when d is empty but w has content)
+  const standaloneContentItems = $derived.by(() => {
+    if (!coursePayload) return [];
+    // Check if d is empty array and w exists and has content
+    if (coursePayload.d && coursePayload.d.length > 0) {
+      return [];
+    }
+    if (!coursePayload.w || !Array.isArray(coursePayload.w)) {
+      return [];
+    }
+    // Flatten the nested arrays and sort by 'i' value (ascending)
+    const flattened = coursePayload.w.flat();
+    // Filter out any null/undefined items and ensure they have a title
+    const validItems = flattened.filter((item) => item && item.t);
+    return validItems.sort((a, b) => (a.i || 0) - (b.i || 0));
+  });
 
   function subjectMatches(subj: Subject) {
     const q = search.trim().toLowerCase();
@@ -195,16 +275,18 @@
   }
 
   function getQueryParams() {
-    const params = new URLSearchParams(window.location.search);
     return {
-      code: params.get('code'),
-      date: params.get('date'),
+      code: getUrlParam('code'),
+      date: getUrlParam('date'),
+      lesson: getUrlParam('lesson'),
+      term: getUrlParam('term'),
+      week: getUrlParam('week'),
     };
   }
 
   async function autoSelectFromQuery() {
-    const { code, date } = getQueryParams();
-    if (!code || !date) return;
+    const { code, date, lesson, term, week } = getQueryParams();
+    if (!code) return;
     // Find the subject by code
     const subject = activeSubjects.find((s) => s.code === code);
     if (!subject) return;
@@ -237,12 +319,8 @@
           }
         }
         loadingCourse = false;
-        // Still need to find the lesson closest to date
-        if (coursePayload?.d && coursePayload?.w) {
-          // Continue with lesson finding logic below
-        } else {
-          return;
-        }
+        // Continue with lesson/content finding logic below
+        // (handled in the main logic after fetching)
       }
     }
 
@@ -280,32 +358,99 @@
         return;
       }
 
-      // Find the lesson closest to the date
-      if (coursePayload?.d && coursePayload?.w) {
-        let closest: {
+      // Handle courses with lessons (d array has items)
+      if (coursePayload?.d && coursePayload.d.length > 0 && coursePayload?.w) {
+        let targetLesson: {
           termSchedule: TermSchedule | null;
           lesson: Lesson | null;
           lessonIndex: number;
-          diff: number;
-        } = {
-          termSchedule: null,
-          lesson: null,
-          lessonIndex: -1,
-          diff: Infinity,
-        };
-        const targetDate = new Date(date);
-        coursePayload.d.forEach((termSchedule, termIdx) => {
-          termSchedule.l.forEach((lesson, lessonIndex) => {
-            const lessonDate = new Date(lesson.d);
-            const diff = Math.abs(lessonDate.getTime() - targetDate.getTime());
-            if (diff < closest.diff) {
-              closest = { termSchedule, lesson, lessonIndex, diff };
-            }
+        } | null = null;
+
+        // Try to find by term/week/lesson parameters
+        if (term && week && lesson !== null) {
+          const termNum = parseInt(term, 10);
+          const weekNum = parseInt(week, 10);
+          const lessonIndex = parseInt(lesson, 10);
+
+          const termSchedule = coursePayload.d.find((ts) => ts.t === termNum && ts.w === weekNum);
+
+          if (termSchedule && termSchedule.l[lessonIndex]) {
+            targetLesson = {
+              termSchedule,
+              lesson: termSchedule.l[lessonIndex],
+              lessonIndex,
+            };
+          }
+        }
+
+        // Fall back to finding by date if term/week/lesson didn't work
+        if (!targetLesson && date) {
+          let closest: {
+            termSchedule: TermSchedule | null;
+            lesson: Lesson | null;
+            lessonIndex: number;
+            diff: number;
+          } = {
+            termSchedule: null,
+            lesson: null,
+            lessonIndex: -1,
+            diff: Infinity,
+          };
+          const targetDate = new Date(date);
+          coursePayload.d.forEach((termSchedule, termIdx) => {
+            termSchedule.l.forEach((lesson, lessonIndex) => {
+              const lessonDate = new Date(lesson.d);
+              const diff = Math.abs(lessonDate.getTime() - targetDate.getTime());
+              if (diff < closest.diff) {
+                closest = { termSchedule, lesson, lessonIndex, diff };
+              }
+            });
           });
-        });
-        if (closest.lesson && closest.termSchedule) {
+          if (closest.lesson && closest.termSchedule) {
+            targetLesson = {
+              termSchedule: closest.termSchedule,
+              lesson: closest.lesson,
+              lessonIndex: closest.lessonIndex,
+            };
+          }
+        }
+
+        if (targetLesson && targetLesson.lesson && targetLesson.termSchedule) {
           selectedSubject = subject;
-          selectLesson(closest.termSchedule, closest.lesson, closest.lessonIndex);
+          // Don't update URL here since we're reading from it
+          selectedLesson = targetLesson.lesson;
+          showingOverview = false;
+          if (coursePayload?.w?.[targetLesson.termSchedule.n]?.[targetLesson.lessonIndex]) {
+            selectedLessonContent =
+              coursePayload.w[targetLesson.termSchedule.n][targetLesson.lessonIndex];
+          } else {
+            selectedLessonContent = null;
+          }
+        } else if (!date && !lesson) {
+          // If no specific lesson params, just show overview
+          selectedSubject = subject;
+          showingOverview = true;
+        }
+      } else if (coursePayload?.w && coursePayload.d.length === 0) {
+        // Handle standalone content items (d is empty but w has content)
+        if (lesson !== null) {
+          const lessonIndex = parseInt(lesson, 10);
+          const flattened = coursePayload.w.flat();
+          const sortedItems = flattened.sort((a, b) => (a.i || 0) - (b.i || 0));
+          const targetContent = sortedItems.find((item) => item.i === lessonIndex);
+
+          if (targetContent) {
+            selectedSubject = subject;
+            selectedStandaloneContent = targetContent;
+            showingOverview = false;
+          } else {
+            selectedSubject = subject;
+            showingOverview = true;
+          }
+        } else {
+          // If no specific content index, just show overview
+          selectedSubject = subject;
+          showingOverview = true;
         }
       }
     } catch (e) {
@@ -404,16 +549,20 @@
                         size="sm" />
                     </div>
                   {:else}
-                    {#each activeSubjects.filter(subjectMatches) as subject}
-                      <button
-                        class="py-3 w-full text-left group"
-                        onclick={() => selectSubject(subject)}>
-                        <div
-                          class="font-semibold text-zinc-900 transition-colors duration-100 dark:text-white group-hover:text-accent">
-                          {subject.title}
+                    {#key subjectsKey}
+                      {#each activeSubjects.filter(subjectMatches) as subject, i}
+                        <div class="subject-item-animate" style="animation-delay: {i * 50}ms;">
+                          <button
+                            class="py-3 w-full text-left group transition-all duration-200 transform hover:scale-[1.02]"
+                            onclick={() => selectSubject(subject)}>
+                            <div
+                              class="font-semibold text-zinc-900 transition-colors duration-200 dark:text-white group-hover:text-accent">
+                              {subject.title}
+                            </div>
+                          </button>
                         </div>
-                      </button>
-                    {/each}
+                      {/each}
+                    {/key}
                   {/if}
                 </div>
               </div>
@@ -440,18 +589,24 @@
                         </button>
                         {#if expandedFolders[folder.code]}
                           <div class="mt-2 ml-4 space-y-2">
-                            {#each folder.subjects.filter(subjectMatches) as subject}
-                              <button
-                                class="px-4 py-3 w-full text-sm text-left bg-zinc-50 rounded-lg border-l-4 border-transparent transition-all duration-200 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-accent/50"
-                                onclick={() => selectSubject(subject)}>
-                                <div class="font-medium text-zinc-800 dark:text-zinc-200">
-                                  {subject.title}
+                            {#key folder.code + expandedFolders[folder.code]}
+                              {#each folder.subjects.filter(subjectMatches) as subject, i}
+                                <div
+                                  class="subject-item-animate"
+                                  style="animation-delay: {i * 50}ms;">
+                                  <button
+                                    class="px-4 py-3 w-full text-sm text-left bg-zinc-50 rounded-lg border-l-4 border-transparent transition-all duration-200 transform dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-accent/50 hover:scale-[1.01]"
+                                    onclick={() => selectSubject(subject)}>
+                                    <div class="font-medium text-zinc-800 dark:text-zinc-200">
+                                      {subject.title}
+                                    </div>
+                                    <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                      {subject.code}
+                                    </div>
+                                  </button>
                                 </div>
-                                <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                                  {subject.code}
-                                </div>
-                              </button>
-                            {/each}
+                              {/each}
+                            {/key}
                           </div>
                         {/if}
                       </div>
@@ -489,7 +644,7 @@
             <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
               <div class="space-y-2">
                 <button
-                  class="w-full px-4 py-3 text-left rounded-lg border transition-all duration-200 {showingOverview
+                  class="w-full px-4 py-3 text-left rounded-lg border transition-all duration-200 transform hover:scale-[1.01] {showingOverview
                     ? 'bg-accent text-white border-accent'
                     : 'bg-accent/10 border-accent/20 hover:bg-accent/20'}"
                   onclick={() => selectOverview()}>
@@ -505,7 +660,7 @@
                 </button>
 
                 <!-- Jump to Today/Latest -->
-                {#if coursePayload?.d}
+                {#if coursePayload?.d && coursePayload.d.length > 0}
                   {@const jumpTarget = (() => {
                     const today = new Date();
                     const todayStr = today.toISOString().split('T')[0];
@@ -534,7 +689,7 @@
 
                   {#if jumpTarget}
                     <button
-                      class="px-4 py-3 w-full text-left bg-green-50 rounded-lg border border-green-200 transition-all duration-200 dark:bg-green-900/20 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30"
+                      class="px-4 py-3 w-full text-left bg-green-50 rounded-lg border border-green-200 transition-all duration-200 transform dark:bg-green-900/20 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 hover:scale-[1.01]"
                       onclick={() =>
                         selectLesson(
                           jumpTarget.termSchedule,
@@ -557,48 +712,77 @@
               </div>
             </div>
 
-            <!-- Lesson Schedule -->
+            <!-- Lesson Schedule or Standalone Content -->
             <div class="overflow-y-auto flex-1">
-              {#each coursePayload.d as termSchedule}
+              {#if coursePayload.d && Array.isArray(coursePayload.d) && coursePayload.d.length > 0}
+                <!-- Regular lessons -->
+                {#each coursePayload.d as termSchedule}
+                  <div>
+                    <div
+                      class="sticky top-0 px-4 py-3 text-sm font-semibold text-white border-b border-zinc-200 accent-bg dark:border-zinc-700">
+                      <T
+                        key="courses.term_week"
+                        fallback={`Term ${termSchedule.t} - Week ${termSchedule.w}`}
+                        values={{ term: termSchedule.t, week: termSchedule.w }} />
+                    </div>
+                    {#each termSchedule.l as lesson, lessonIndex}
+                      {@const isSelected = selectedLesson === lesson && !showingOverview}
+                      {@const lessonContent = coursePayload?.w?.[termSchedule.n]?.[lessonIndex]}
+                      {@const lessonTopic = lessonContent?.t}
+                      <button
+                        class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
+                          ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
+                          : 'border-transparent hover:border-accent/50'}"
+                        onclick={() => selectLesson(termSchedule, lesson, lessonIndex)}>
+                        <div class="font-semibold text-zinc-900 dark:text-white">
+                          {lesson.p}
+                        </div>
+                        {#if lessonTopic}
+                          <div class="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            {lessonTopic}
+                          </div>
+                        {/if}
+                        <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                          {new Date(lesson.d).toLocaleDateString('en-AU', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </div>
+                        <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                          {lesson.s} - {lesson.e}
+                        </div>
+                      </button>
+                    {/each}
+                  </div>
+                {/each}
+              {:else if standaloneContentItems && standaloneContentItems.length > 0}
+                <!-- Standalone content items (no lessons) -->
                 <div>
                   <div
                     class="sticky top-0 px-4 py-3 text-sm font-semibold text-white border-b border-zinc-200 accent-bg dark:border-zinc-700">
-                    <T
-                      key="courses.term_week"
-                      fallback={`Term ${termSchedule.t} - Week ${termSchedule.w}`}
-                      values={{ term: termSchedule.t, week: termSchedule.w }} />
+                    <T key="courses.course_content" fallback="Course Content" />
                   </div>
-                  {#each termSchedule.l as lesson, lessonIndex}
-                    {@const isSelected = selectedLesson === lesson && !showingOverview}
-                    {@const lessonContent = coursePayload?.w?.[termSchedule.n]?.[lessonIndex]}
-                    {@const lessonTopic = lessonContent?.t}
+                  {#each standaloneContentItems as contentItem (contentItem.i || contentItem.t)}
+                    {@const isSelected =
+                      selectedStandaloneContent === contentItem && !showingOverview}
                     <button
-                      class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 {isSelected
+                      class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
                         ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
                         : 'border-transparent hover:border-accent/50'}"
-                      onclick={() => selectLesson(termSchedule, lesson, lessonIndex)}>
+                      onclick={() => selectStandaloneContent(contentItem)}>
                       <div class="font-semibold text-zinc-900 dark:text-white">
-                        {lesson.p}
+                        {contentItem.t || 'Untitled'}
                       </div>
-                      {#if lessonTopic}
-                        <div class="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          {lessonTopic}
+                      {#if contentItem.document}
+                        <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                          <T key="courses.has_content" fallback="Has content" />
                         </div>
                       {/if}
-                      <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                        {new Date(lesson.d).toLocaleDateString('en-AU', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </div>
-                      <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-                        {lesson.s} - {lesson.e}
-                      </div>
                     </button>
                   {/each}
                 </div>
-              {/each}
+              {/if}
             </div>
           {/if}
         </div>
@@ -629,6 +813,7 @@
             {coursePayload}
             {parsedDocument}
             {selectedLessonContent}
+            {selectedStandaloneContent}
             {showingOverview} />
         </div>
       </div>
@@ -769,5 +954,21 @@
   :global(.course-content video) {
     width: 100%;
     border-radius: 0.5rem;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .subject-item-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

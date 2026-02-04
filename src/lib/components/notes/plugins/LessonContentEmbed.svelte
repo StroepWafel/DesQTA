@@ -1,8 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { SeqtaMentionsServiceRust as SeqtaMentionsService } from '../../../services/seqtaMentionsServiceRust';
-  import { Icon, ChevronDown, ChevronUp, DocumentText, PaperClip, ArrowTopRightOnSquare } from 'svelte-hero-icons';
+  import {
+    Icon,
+    ChevronDown,
+    ChevronUp,
+    DocumentText,
+    PaperClip,
+    ArrowTopRightOnSquare,
+  } from 'svelte-hero-icons';
   import { goto } from '$app/navigation';
+  import { fly } from 'svelte/transition';
 
   interface Props {
     programme: number | string | undefined;
@@ -129,12 +137,16 @@
       </div>
       <Icon
         src={expanded ? ChevronUp : ChevronDown}
-        class="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0" />
+        class="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0 transition-transform duration-300 ease-in-out {expanded
+          ? 'rotate-180'
+          : ''}" />
     </button>
 
     <!-- Expanded Content -->
     {#if expanded}
-      <div class="p-4 bg-white dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-700">
+      <div
+        class="p-4 bg-white dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-700 transition-all duration-300 ease-in-out"
+        transition:fly={{ y: -10, duration: 300, easing: (t) => t * (2 - t) }}>
         <!-- Homework/Notes -->
         {#if lessonContent.h}
           <div class="mb-4">
@@ -150,7 +162,8 @@
         <!-- Attachments -->
         {#if lessonContent.r && lessonContent.r.length > 0}
           <div class="mb-4">
-            <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2 flex items-center gap-1">
+            <div
+              class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2 flex items-center gap-1">
               <Icon src={PaperClip} class="w-3 h-3" />
               Attachments ({lessonContent.r.length})
             </div>
@@ -171,7 +184,9 @@
         {#if contentPreview && contentPreview.length > 0}
           <div class="mb-4">
             <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Content</div>
-            <div class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3">{contentPreview}</div>
+            <div class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3">
+              {contentPreview}
+            </div>
           </div>
         {/if}
 
@@ -189,4 +204,3 @@
     {/if}
   </div>
 {/if}
-

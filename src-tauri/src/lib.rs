@@ -125,6 +125,13 @@ fn is_autostart_enabled(window: Window) -> Result<bool, String> {
     }
 }
 
+/// Get the SEQTA base URL from the current session
+#[tauri::command]
+fn get_seqta_base_url() -> String {
+    let session = session::Session::load();
+    session.base_url
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
@@ -242,7 +249,11 @@ pub fn run() {
             login::logout,
             login::force_reload,
             login::cleanup_login_windows,
+            login::has_login_windows,
             login::clear_webview_data,
+            login::direct_login,
+            login::reauthenticate,
+            get_seqta_base_url,
             profiles::get_current_profile,
             profiles::list_profiles,
             profiles::switch_profile,
@@ -364,6 +375,26 @@ pub fn run() {
             database::db_queue_delete,
             database::db_queue_clear,
             database::db_get_assessments_by_year,
+            database::db_search_history_get,
+            database::db_search_history_add,
+            database::db_search_history_clear,
+            database::db_search_favorites_get,
+            database::db_search_favorites_add,
+            database::db_search_favorites_remove,
+            database::db_search_recent_get,
+            database::db_search_recent_add,
+            database::db_search_recent_clear,
+            database::db_search_usage_track,
+            database::db_search_assessments,
+            database::db_search_courses,
+            database::db_notification_schedule,
+            database::db_notification_get_due,
+            database::db_notification_mark_sent,
+            database::db_notification_get_by_assessment,
+            database::db_notification_cleanup_old,
+            database::db_notification_delete_by_assessment,
+            database::db_widget_layout_save,
+            database::db_widget_layout_load,
             assessments::get_processed_assessments,
             courses::get_courses_subjects,
             courses::get_course_content,

@@ -3,7 +3,19 @@
   import { goto } from '$app/navigation';
   import { seqtaFetch } from '../../utils/netUtil';
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
-  import { Icon, ChatBubbleBottomCenterText, ExclamationTriangle, Users, Clock, CheckCircle, ChevronDown, ChevronUp, Folder, MagnifyingGlass, Funnel } from 'svelte-hero-icons';
+  import {
+    Icon,
+    ChatBubbleBottomCenterText,
+    ExclamationTriangle,
+    Users,
+    Clock,
+    CheckCircle,
+    ChevronDown,
+    ChevronUp,
+    Folder,
+    MagnifyingGlass,
+    Funnel,
+  } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
@@ -43,11 +55,12 @@
   async function checkForumsEnabled() {
     const cacheKey = 'forums_settings_enabled';
     const isOnline = navigator.onLine;
-    
+
     // Load from cache first for instant UI
-    const cached = cache.get<boolean>(cacheKey) || 
-      await getWithIdbFallback<boolean>(cacheKey, cacheKey, () => cache.get<boolean>(cacheKey));
-    
+    const cached =
+      cache.get<boolean>(cacheKey) ||
+      (await getWithIdbFallback<boolean>(cacheKey, cacheKey, () => cache.get<boolean>(cacheKey)));
+
     if (cached !== null && cached !== undefined) {
       forumsEnabled = cached;
     }
@@ -84,7 +97,7 @@
       const forumsPageEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
       const forumsGreetingExists = data?.payload?.['coneqt-s.forum.greeting'] !== undefined;
       const enabled = forumsPageEnabled || forumsGreetingExists;
-      
+
       forumsEnabled = enabled;
       cache.set(cacheKey, enabled, 60);
       const { setIdb } = await import('../../lib/services/idbCache');
@@ -101,8 +114,8 @@
   // Separate forums into open and closed
   let openForums = $derived(
     forums
-      .filter(f => !f.closed)
-      .filter(f => {
+      .filter((f) => !f.closed)
+      .filter((f) => {
         // Search filter
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
@@ -130,17 +143,17 @@
             comparison = a.participants - b.participants;
             break;
           case 'unread':
-            comparison = (a.unread + a.unread_comments) - (b.unread + b.unread_comments);
+            comparison = a.unread + a.unread_comments - (b.unread + b.unread_comments);
             break;
         }
         return sortOrder === 'asc' ? comparison : -comparison;
-      })
+      }),
   );
 
   let closedForums = $derived(
     forums
-      .filter(f => f.closed)
-      .filter(f => {
+      .filter((f) => f.closed)
+      .filter((f) => {
         // Search filter
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
@@ -168,23 +181,30 @@
             comparison = a.participants - b.participants;
             break;
           case 'unread':
-            comparison = (a.unread + a.unread_comments) - (b.unread + b.unread_comments);
+            comparison = a.unread + a.unread_comments - (b.unread + b.unread_comments);
             break;
         }
         return sortOrder === 'asc' ? comparison : -comparison;
-      })
+      }),
   );
+
+  // Create unique key for forums to force re-render with animations
+  const forumsKey = $derived.by(() => {
+    const openIds = openForums.map((f) => f.id).join(',');
+    const closedIds = closedForums.map((f) => f.id).join(',');
+    return `${searchQuery}-${filterUnread}-${sortBy}-${sortOrder}-${openForums.length}-${closedForums.length}-${openIds}-${closedIds}`;
+  });
 
   function formatDate(dateString: string | null): string {
     if (!dateString) return '';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
       });
     } catch {
       return dateString;
@@ -198,9 +218,12 @@
     const isOnline = navigator.onLine;
 
     // Load from cache first for instant UI
-    const cached = cache.get<ForumsResponse['payload']>(cacheKey) || 
-      await getWithIdbFallback<ForumsResponse['payload']>(cacheKey, cacheKey, () => cache.get<ForumsResponse['payload']>(cacheKey));
-    
+    const cached =
+      cache.get<ForumsResponse['payload']>(cacheKey) ||
+      (await getWithIdbFallback<ForumsResponse['payload']>(cacheKey, cacheKey, () =>
+        cache.get<ForumsResponse['payload']>(cacheKey),
+      ));
+
     if (cached && cached.forums) {
       forums = cached.forums || [];
       me = cached.me || '';
@@ -303,7 +326,8 @@
   {:else}
     <div class="space-y-6">
       <!-- Filters and Sort -->
-      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+      <div
+        class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
         <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
           <!-- Search -->
           <div class="relative flex-1 sm:flex-none sm:w-64">
@@ -311,7 +335,9 @@
               class="w-full pl-9 pr-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
               placeholder={$_('forums.search_placeholder') || 'Search forums...'}
               bind:value={searchQuery} />
-            <Icon src={MagnifyingGlass} class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Icon
+              src={MagnifyingGlass}
+              class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           </div>
 
           <!-- Unread Filter -->
@@ -342,7 +368,9 @@
           <button
             onclick={() => (sortOrder = sortOrder === 'asc' ? 'desc' : 'asc')}
             class="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-            title={sortOrder === 'asc' ? ($_('forums.sort_desc') || 'Sort descending') : ($_('forums.sort_asc') || 'Sort ascending')}>
+            title={sortOrder === 'asc'
+              ? $_('forums.sort_desc') || 'Sort descending'
+              : $_('forums.sort_asc') || 'Sort ascending'}>
             <Icon src={sortOrder === 'asc' ? ChevronUp : ChevronDown} class="w-4 h-4" />
           </button>
         </div>
@@ -355,9 +383,13 @@
             <T key="forums.open_forums" fallback="Open Forums" />
           </h2>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {#each openForums as forum}
-              {@render forumCard(forum)}
-            {/each}
+            {#key forumsKey}
+              {#each openForums as forum, i}
+                <div class="forum-card-animate" style="animation-delay: {i * 50}ms;">
+                  {@render forumCard(forum)}
+                </div>
+              {/each}
+            {/key}
           </div>
         </div>
       {/if}
@@ -376,9 +408,13 @@
           </button>
           {#if closedForumsExpanded}
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {#each closedForums as forum}
-                {@render forumCard(forum)}
-              {/each}
+              {#key forumsKey + '-closed'}
+                {#each closedForums as forum, i}
+                  <div class="forum-card-animate" style="animation-delay: {i * 50}ms;">
+                    {@render forumCard(forum)}
+                  </div>
+                {/each}
+              {/key}
             </div>
           {/if}
         </div>
@@ -387,7 +423,7 @@
   {/if}
 </div>
 
-{#snippet forumCard(forum)}
+{#snippet forumCard(forum: Forum)}
   <button
     onclick={() => goto(`/forums/${forum.id}`)}
     class="w-full text-left p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
@@ -412,7 +448,8 @@
       <div class="flex items-center gap-2">
         <Icon src={Users} class="w-4 h-4" />
         <span>
-          {forum.participants} {$_('forums.participants') || 'participants'}
+          {forum.participants}
+          {$_('forums.participants') || 'participants'}
         </span>
       </div>
 
@@ -435,11 +472,13 @@
       <div class="pt-2 mt-2 border-t border-zinc-200 dark:border-zinc-700">
         <div class="flex items-center justify-between">
           <span>
-            {forum.read_comments} {$_('forums.read_comments') || 'read'}
+            {forum.read_comments}
+            {$_('forums.read_comments') || 'read'}
           </span>
           {#if forum.unread_comments > 0}
             <span class="font-semibold text-accent">
-              {forum.unread_comments} {$_('forums.unread_comments') || 'unread'}
+              {forum.unread_comments}
+              {$_('forums.unread_comments') || 'unread'}
             </span>
           {/if}
         </div>
@@ -448,3 +487,18 @@
   </button>
 {/snippet}
 
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }  .forum-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

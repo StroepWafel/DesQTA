@@ -57,7 +57,7 @@
     onLogout,
     onShowAbout,
     onClickOutside,
-    disableSchoolPicture = false
+    disableSchoolPicture = false,
   }: Props = $props();
 
   let devSensitiveInfoHider = $state(false);
@@ -79,7 +79,9 @@
 
   onMount(async () => {
     try {
-      const subset = await invoke<any>('get_settings_subset', { keys: ['dev_sensitive_info_hider'] });
+      const subset = await invoke<any>('get_settings_subset', {
+        keys: ['dev_sensitive_info_hider'],
+      });
       devSensitiveInfoHider = subset?.dev_sensitive_info_hider ?? false;
       if (devSensitiveInfoHider) {
         randomAvatarUrl = getRandomDicebearAvatar();
@@ -87,7 +89,7 @@
     } catch (e) {
       devSensitiveInfoHider = false;
     }
-    
+
     // Load custom profile picture
     await loadCustomProfilePicture();
   });
@@ -111,22 +113,23 @@
       <img
         src={customProfilePicture}
         alt=""
-        onerror={() => customProfilePictureError = true}
+        onerror={() => (customProfilePictureError = true)}
         class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else if devSensitiveInfoHider && randomAvatarUrl && !randomAvatarError}
       <img
         src={randomAvatarUrl}
         alt=""
-        onerror={() => randomAvatarError = true}
+        onerror={() => (randomAvatarError = true)}
         class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else if !disableSchoolPicture && userInfo.profilePicture && !schoolPictureError}
       <img
         src={userInfo.profilePicture}
         alt=""
-        onerror={() => schoolPictureError = true}
+        onerror={() => (schoolPictureError = true)}
         class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else}
-      <div class="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
+      <div
+        class="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
         {(userInfo.displayName || userInfo.userName || '?')[0]}
       </div>
     {/if}
@@ -137,10 +140,10 @@
   {#if showUserDropdown}
     <div
       class="absolute right-0 z-50 mt-3 w-56 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/40"
-      transition:fly={{ y: -8, duration: 200, opacity: 0 }}>
+      transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
       <div class="p-2">
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
+          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
           onclick={() => {
             onToggleUserDropdown();
             onShowAbout();
@@ -161,7 +164,9 @@
           </div>
           <div class="flex-1">
             <div class="font-medium"><T key="user.about" fallback="About" /></div>
-            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80"><T key="user.app_information" fallback="App information" /></div>
+            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80">
+              <T key="user.app_information" fallback="App information" />
+            </div>
           </div>
         </button>
 
@@ -179,7 +184,10 @@
           </div>
           <div class="flex-1">
             <div class="font-medium"><T key="user.get_help" fallback="Get Help" /></div>
-            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80"><T key="user.user_guide_faq" fallback="User guide & FAQ" /></div>
+            <div
+              class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80">
+              <T key="user.user_guide_faq" fallback="User guide & FAQ" />
+            </div>
           </div>
         </button>
 
@@ -195,7 +203,7 @@
         <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
 
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
+          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
           onclick={() => {
             onToggleUserDropdown();
             onLogout();
@@ -208,14 +216,16 @@
           </div>
           <div class="flex-1">
             <div class="font-medium"><T key="user.sign_out" fallback="Sign out" /></div>
-            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80"><T key="user.end_session" fallback="End your session" /></div>
+            <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80">
+              <T key="user.end_session" fallback="End your session" />
+            </div>
           </div>
         </button>
 
         <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
 
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-red-600 hover:bg-red-900/20 hover:text-white dark:text-red-400 group"
+          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] text-red-600 hover:bg-red-900/20 hover:text-white dark:text-red-400 group"
           onclick={() => {
             onToggleUserDropdown();
             // Call the quit command
@@ -232,12 +242,15 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              ></path>
             </svg>
           </div>
           <div class="flex-1">
             <div class="font-medium"><T key="user.quit_app" fallback="Quit DesQTA" /></div>
-            <div class="text-xs text-red-500 dark:text-red-400 group-hover:text-white/80"><T key="user.close_application" fallback="Close the application" /></div>
+            <div class="text-xs text-red-500 dark:text-red-400 group-hover:text-white/80">
+              <T key="user.close_application" fallback="Close the application" />
+            </div>
           </div>
         </button>
       </div>

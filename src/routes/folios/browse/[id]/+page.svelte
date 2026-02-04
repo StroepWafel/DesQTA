@@ -80,6 +80,7 @@
   }
 
   let folioData: FolioDetail | null = $state(null);
+  let foliosEnabled = $state<boolean | null>(null);
   let forumData: ForumDetail | null = $state(null);
   let loading = $state(true);
   let loadingComments = $state(false);
@@ -127,7 +128,7 @@
         folioData = data.payload;
         
         // Load forum comments if folio has a forum ID and allows comments
-        if (folioData.forum && folioData.allow_comments) {
+        if (folioData && folioData.forum && folioData.allow_comments) {
           await loadForumComments(folioData.forum);
         }
       } else {

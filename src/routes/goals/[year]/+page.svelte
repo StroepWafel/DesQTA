@@ -11,6 +11,7 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import { logger } from '../../../utils/logger';
+  import { getUrlParam } from '$lib/utils/urlParams';
 
   interface GoalsData {
     overview: string;
@@ -206,7 +207,21 @@
   onMount(async () => {
     await checkGoalsEnabled();
     if (goalsEnabled) {
-      loadGoals();
+      await loadGoals();
+
+      // Check for goal parameter to scroll to specific goal item
+      const goalParam = getUrlParam('goal');
+      if (goalParam && goalItems.length > 0) {
+        const goalIndex = parseInt(goalParam, 10);
+        if (!isNaN(goalIndex) && goalIndex >= 0 && goalIndex < goalItems.length) {
+          setTimeout(() => {
+            const element = document.querySelector(`[data-goal-index="${goalIndex}"]`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 300);
+        }
+      }
     } else {
       loading = false;
     }
@@ -341,49 +356,54 @@
               </thead>
               <tbody>
                 {#if goalItems.length > 0}
-                  {#each goalItems as item, index}
-                    <tr class="border-b border-zinc-200 dark:border-zinc-700">
-                      <td class="px-4 py-3">
-                        <input
-                          type="text"
-                          value={item.goals || ''}
-                          oninput={(e) => updateGoalItem(index, 'goals', e.currentTarget.value)}
-                          placeholder={$_('goals.goal') || 'Goal'}
-                          class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
-                      </td>
-                      <td class="px-4 py-3">
-                        <input
-                          type="text"
-                          value={item.support || ''}
-                          oninput={(e) => updateGoalItem(index, 'support', e.currentTarget.value)}
-                          placeholder={$_('goals.support') || 'Support'}
-                          class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
-                      </td>
-                      <td class="px-4 py-3">
-                        <input
-                          type="text"
-                          value={item.action || ''}
-                          oninput={(e) => updateGoalItem(index, 'action', e.currentTarget.value)}
-                          placeholder={$_('goals.action') || 'Action'}
-                          class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
-                      </td>
-                      <td class="px-4 py-3">
-                        <input
-                          type="text"
-                          value={item.notes || ''}
-                          oninput={(e) => updateGoalItem(index, 'notes', e.currentTarget.value)}
-                          placeholder={$_('goals.my_notes') || 'My notes'}
-                          class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
-                      </td>
-                      <td class="px-4 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={item.done || false}
-                          onchange={(e) => updateGoalItem(index, 'done', e.currentTarget.checked)}
-                          class="w-4 h-4 text-accent bg-white border-zinc-300 rounded focus:ring-accent dark:bg-zinc-700 dark:border-zinc-600" />
-                      </td>
-                    </tr>
-                  {/each}
+                  {#key goalItems.length + goalItems.map((i) => i.uid || i.id).join(',')}
+                    {#each goalItems as item, index}
+                      <tr
+                        data-goal-index={index}
+                        class="border-b border-zinc-200 dark:border-zinc-700 goal-row-animate"
+                        style="animation-delay: {index * 50}ms;">
+                        <td class="px-4 py-3">
+                          <input
+                            type="text"
+                            value={item.goals || ''}
+                            oninput={(e) => updateGoalItem(index, 'goals', e.currentTarget.value)}
+                            placeholder={$_('goals.goal') || 'Goal'}
+                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                        </td>
+                        <td class="px-4 py-3">
+                          <input
+                            type="text"
+                            value={item.support || ''}
+                            oninput={(e) => updateGoalItem(index, 'support', e.currentTarget.value)}
+                            placeholder={$_('goals.support') || 'Support'}
+                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                        </td>
+                        <td class="px-4 py-3">
+                          <input
+                            type="text"
+                            value={item.action || ''}
+                            oninput={(e) => updateGoalItem(index, 'action', e.currentTarget.value)}
+                            placeholder={$_('goals.action') || 'Action'}
+                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                        </td>
+                        <td class="px-4 py-3">
+                          <input
+                            type="text"
+                            value={item.notes || ''}
+                            oninput={(e) => updateGoalItem(index, 'notes', e.currentTarget.value)}
+                            placeholder={$_('goals.my_notes') || 'My notes'}
+                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={item.done || false}
+                            onchange={(e) => updateGoalItem(index, 'done', e.currentTarget.checked)}
+                            class="w-4 h-4 text-accent bg-white border-zinc-300 rounded focus:ring-accent dark:bg-zinc-700 dark:border-zinc-600" />
+                        </td>
+                      </tr>
+                    {/each}
+                  {/key}
                 {:else}
                   <tr>
                     <td colspan="5" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">
@@ -401,3 +421,21 @@
     {/if}
   </div>
 </div>
+
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .goal-row-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

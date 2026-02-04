@@ -12,6 +12,7 @@ export interface DataLoaderOptions<T> {
   onDataLoaded?: (data: T) => void | Promise<void>;
   shouldSyncInBackground?: (data: T) => boolean; // Default: always sync if online
   skipCache?: boolean; // If true, bypass all caching and always fetch fresh data
+  updateOnBackgroundSync?: boolean; // If true, call onDataLoaded again when background sync completes (for critical data)
 }
 
 /**
@@ -31,12 +32,15 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
     onDataLoaded,
     shouldSyncInBackground = () => true,
     skipCache = false,
+    updateOnBackgroundSync = false,
   } = options;
 
   try {
     // If skipCache is true, bypass all caching and always fetch fresh
     if (skipCache) {
-      logger.debug(context, functionName, `Skipping cache - fetching fresh data`, { key: cacheKey });
+      logger.debug(context, functionName, `Skipping cache - fetching fresh data`, {
+        key: cacheKey,
+      });
       const freshData = await fetcher();
       if (onDataLoaded) {
         await onDataLoaded(freshData);
@@ -59,6 +63,9 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
         fetcher,
         shouldSyncInBackground,
         memCached,
+        onDataLoaded,
+        updateOnBackgroundSync,
+        ttlMinutes,
       );
       return memCached;
     }
@@ -80,6 +87,9 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
         fetcher,
         shouldSyncInBackground,
         idbCached,
+        onDataLoaded,
+        updateOnBackgroundSync,
+        ttlMinutes,
       );
       return idbCached;
     }
@@ -111,22 +121,50 @@ async function triggerBackgroundSync<T>(
   fetcher: () => Promise<T>,
   shouldSync: (data: T) => boolean,
   cachedData: T,
+  onDataLoaded?: (data: T) => void | Promise<void>,
+  updateOnBackgroundSync = false,
+  ttlMinutes = 10,
 ): Promise<void> {
   const offline = await isOfflineMode();
-  if (offline || !shouldSync(cachedData)) {
+  if (offline) {
+    logger.debug(context, functionName, 'Skipping background sync - offline', { key: cacheKey });
     return;
   }
 
+  if (!shouldSync(cachedData)) {
+    logger.debug(context, functionName, 'Skipping background sync - shouldSync returned false', {
+      key: cacheKey,
+    });
+    return;
+  }
+
+  logger.debug(context, functionName, 'Starting background sync', { key: cacheKey });
+
   // Sync in background without blocking
   fetcher()
-    .then((freshData) => {
-      cache.set(cacheKey, freshData, 10); // Use default TTL for background sync
-      setIdb(cacheKey, freshData).catch((e) => {
+    .then(async (freshData) => {
+      cache.set(cacheKey, freshData, ttlMinutes);
+      await setIdb(cacheKey, freshData).catch((e) => {
         logger.debug(context, functionName, 'Failed to update IndexedDB in background sync', {
           error: e,
         });
       });
       logger.debug(context, functionName, 'Background sync completed', { key: cacheKey });
+
+      // If updateOnBackgroundSync is true, call onDataLoaded again with fresh data
+      if (updateOnBackgroundSync && onDataLoaded) {
+        try {
+          await onDataLoaded(freshData);
+          logger.debug(context, functionName, 'UI updated with fresh data from background sync', {
+            key: cacheKey,
+          });
+        } catch (e) {
+          logger.error(context, functionName, 'Failed to update UI after background sync', {
+            key: cacheKey,
+            error: e,
+          });
+        }
+      }
     })
     .catch((e) => {
       logger.debug(context, functionName, 'Background sync failed silently', {

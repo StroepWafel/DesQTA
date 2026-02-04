@@ -32,7 +32,7 @@
     return Math.round((sum / grades.length) * 10) / 10;
   });
 
-  const gradeCount = $derived(() => filteredAssessments().length);
+  const gradeCount = $derived(filteredAssessments().length);
 </script>
 
 {#if average !== null && gradeCount > 0}

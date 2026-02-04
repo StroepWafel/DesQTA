@@ -4,7 +4,16 @@
   import { seqtaFetch } from '../../../utils/netUtil';
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import Modal from '$lib/components/Modal.svelte';
-  import { Icon, ChevronLeft, FolderOpen, ExclamationTriangle, CheckCircle, XCircle, Plus, Trash } from 'svelte-hero-icons';
+  import {
+    Icon,
+    ChevronLeft,
+    FolderOpen,
+    ExclamationTriangle,
+    CheckCircle,
+    XCircle,
+    Plus,
+    Trash,
+  } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import { logger } from '../../../utils/logger';
@@ -74,8 +83,8 @@
   }
 
   // Separate published and unpublished folios
-  const publishedFolios = $derived(folios.filter(f => f.published));
-  const unpublishedFolios = $derived(folios.filter(f => !f.published));
+  const publishedFolios = $derived(folios.filter((f) => f.published));
+  const unpublishedFolios = $derived(folios.filter((f) => !f.published));
 
   async function createNewFolio() {
     creating = true;
@@ -142,6 +151,7 @@
   async function confirmDelete() {
     if (!folioToDelete) return;
 
+    const folioId = folioToDelete.id;
     deleting = true;
     try {
       const response = await seqtaFetch('/seqta/student/folio', {
@@ -149,7 +159,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: {
           mode: 'adminDelete',
-          id: folioToDelete.id,
+          id: folioId,
         },
       });
 
@@ -157,7 +167,7 @@
 
       if (data.status === '200') {
         // Remove the folio from the list
-        folios = folios.filter(f => f.id !== folioToDelete.id);
+        folios = folios.filter((f) => f.id !== folioId);
         closeDeleteModal();
         try {
           const { toastStore } = await import('../../../lib/stores/toast');
@@ -231,115 +241,128 @@
         disabled={creating}
         class="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white transition-all duration-200 hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
         <Icon src={Plus} class="w-5 h-5" />
-        {creating ? ($_('folios.creating') || 'Creating...') : ($_('folios.new_folio') || 'New Folio')}
+        {creating ? $_('folios.creating') || 'Creating...' : $_('folios.new_folio') || 'New Folio'}
       </button>
     </div>
 
     {#if loading}
-    <div class="flex justify-center items-center h-64">
-      <LoadingSpinner size="md" message={$_('folios.loading') || 'Loading folios...'} />
-    </div>
-  {:else if error}
-    <div class="flex justify-center items-center h-64">
-      <EmptyState
-        title={$_('folios.error_loading') || 'Error loading folios'}
-        message={error}
-        icon={ExclamationTriangle}
-        size="md" />
-    </div>
-  {:else if folios.length === 0}
-    <div class="flex justify-center items-center h-64">
-      <EmptyState
-        title={$_('folios.no_folios') || 'No folios available'}
-        message={$_('folios.no_folios_message') || 'You have not created any folios yet.'}
-        icon={FolderOpen}
-        size="md" />
-    </div>
-  {:else}
-    <div class="space-y-6">
-      <!-- Published Folios -->
-      {#if publishedFolios.length > 0}
-        <div>
-          <h2 class="text-xl font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-            <Icon src={CheckCircle} class="w-5 h-5 text-green-600 dark:text-green-400" />
-            <T key="folios.published_folios" fallback="Published Folios" /> ({publishedFolios.length})
-          </h2>
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {#each publishedFolios as folio}
-              <div class="relative group">
-                <button
-                  onclick={() => goto(`/folios/edit/${folio.id}`)}
-                  class="w-full text-left p-6 bg-white rounded-lg border border-green-200 dark:border-green-800 transition-all duration-200 transform dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-green-300 dark:hover:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                  <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2 pr-8">
-                    {folio.title}
-                  </h3>
-                  <div class="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                    <div>
-                      <T key="folios.created" fallback="Created" />: {formatDate(folio.created)}
-                    </div>
-                    <div>
-                      <T key="folios.published" fallback="Published" />: {formatDate(folio.published || '')}
-                    </div>
-                    <div>
-                      <T key="folios.updated" fallback="Updated" />: {formatDate(folio.updated)}
-                    </div>
+      <div class="flex justify-center items-center h-64">
+        <LoadingSpinner size="md" message={$_('folios.loading') || 'Loading folios...'} />
+      </div>
+    {:else if error}
+      <div class="flex justify-center items-center h-64">
+        <EmptyState
+          title={$_('folios.error_loading') || 'Error loading folios'}
+          message={error}
+          icon={ExclamationTriangle}
+          size="md" />
+      </div>
+    {:else if folios.length === 0}
+      <div class="flex justify-center items-center h-64">
+        <EmptyState
+          title={$_('folios.no_folios') || 'No folios available'}
+          message={$_('folios.no_folios_message') || 'You have not created any folios yet.'}
+          icon={FolderOpen}
+          size="md" />
+      </div>
+    {:else}
+      <div class="space-y-6">
+        <!-- Published Folios -->
+        {#if publishedFolios.length > 0}
+          <div>
+            <h2
+              class="text-xl font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+              <Icon src={CheckCircle} class="w-5 h-5 text-green-600 dark:text-green-400" />
+              <T key="folios.published_folios" fallback="Published Folios" /> ({publishedFolios.length})
+            </h2>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {#key publishedFolios.length + publishedFolios.map((f) => f.id).join(',')}
+                {#each publishedFolios as folio, i}
+                  <div
+                    class="relative group folio-card-animate"
+                    style="animation-delay: {i * 50}ms;">
+                    <button
+                      onclick={() => goto(`/folios/edit/${folio.id}`)}
+                      class="w-full text-left p-6 bg-white rounded-lg border border-green-200 dark:border-green-800 transition-all duration-200 transform dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-green-300 dark:hover:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2 pr-8">
+                        {folio.title}
+                      </h3>
+                      <div class="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+                        <div>
+                          <T key="folios.created" fallback="Created" />: {formatDate(folio.created)}
+                        </div>
+                        <div>
+                          <T key="folios.published" fallback="Published" />: {formatDate(
+                            folio.published || '',
+                          )}
+                        </div>
+                        <div>
+                          <T key="folios.updated" fallback="Updated" />: {formatDate(folio.updated)}
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onclick={(e) => openDeleteModal(folio, e)}
+                      class="absolute top-4 right-4 p-2 rounded-lg text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      aria-label={$_('folios.delete') || 'Delete folio'}>
+                      <Icon src={Trash} class="w-5 h-5" />
+                    </button>
                   </div>
-                </button>
-                <button
-                  onclick={(e) => openDeleteModal(folio, e)}
-                  class="absolute top-4 right-4 p-2 rounded-lg text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                  aria-label={$_('folios.delete') || 'Delete folio'}>
-                  <Icon src={Trash} class="w-5 h-5" />
-                </button>
-              </div>
-            {/each}
+                {/each}
+              {/key}
+            </div>
           </div>
-        </div>
-      {/if}
+        {/if}
 
-      <!-- Unpublished Folios -->
-      {#if unpublishedFolios.length > 0}
-        <div>
-          <h2 class="text-xl font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-            <Icon src={XCircle} class="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-            <T key="folios.unpublished_folios" fallback="Unpublished Folios" /> ({unpublishedFolios.length})
-          </h2>
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {#each unpublishedFolios as folio}
-              <div class="relative group">
-                <button
-                  onclick={() => goto(`/folios/edit/${folio.id}`)}
-                  class="w-full text-left p-6 bg-white rounded-lg border border-zinc-200 dark:border-zinc-700 transition-all duration-200 transform dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-                  <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2 pr-8">
-                    {folio.title}
-                  </h3>
-                  <div class="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                    <div>
-                      <T key="folios.created" fallback="Created" />: {formatDate(folio.created)}
-                    </div>
-                    <div>
-                      <T key="folios.updated" fallback="Updated" />: {formatDate(folio.updated)}
-                    </div>
-                    <div class="pt-2">
-                      <span class="px-2 py-1 text-xs font-semibold rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
-                        <T key="folios.unpublished" fallback="Unpublished" />
-                      </span>
-                    </div>
+        <!-- Unpublished Folios -->
+        {#if unpublishedFolios.length > 0}
+          <div>
+            <h2
+              class="text-xl font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+              <Icon src={XCircle} class="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+              <T key="folios.unpublished_folios" fallback="Unpublished Folios" /> ({unpublishedFolios.length})
+            </h2>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {#key unpublishedFolios.length + unpublishedFolios.map((f) => f.id).join(',')}
+                {#each unpublishedFolios as folio, i}
+                  <div
+                    class="relative group folio-card-animate"
+                    style="animation-delay: {i * 50}ms;">
+                    <button
+                      onclick={() => goto(`/folios/edit/${folio.id}`)}
+                      class="w-full text-left p-6 bg-white rounded-lg border border-zinc-200 dark:border-zinc-700 transition-all duration-200 transform dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+                      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2 pr-8">
+                        {folio.title}
+                      </h3>
+                      <div class="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+                        <div>
+                          <T key="folios.created" fallback="Created" />: {formatDate(folio.created)}
+                        </div>
+                        <div>
+                          <T key="folios.updated" fallback="Updated" />: {formatDate(folio.updated)}
+                        </div>
+                        <div class="pt-2">
+                          <span
+                            class="px-2 py-1 text-xs font-semibold rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
+                            <T key="folios.unpublished" fallback="Unpublished" />
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onclick={(e) => openDeleteModal(folio, e)}
+                      class="absolute top-4 right-4 p-2 rounded-lg text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      aria-label={$_('folios.delete') || 'Delete folio'}>
+                      <Icon src={Trash} class="w-5 h-5" />
+                    </button>
                   </div>
-                </button>
-                <button
-                  onclick={(e) => openDeleteModal(folio, e)}
-                  class="absolute top-4 right-4 p-2 rounded-lg text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                  aria-label={$_('folios.delete') || 'Delete folio'}>
-                  <Icon src={Trash} class="w-5 h-5" />
-                </button>
-              </div>
-            {/each}
+                {/each}
+              {/key}
+            </div>
           </div>
-        </div>
-      {/if}
-    </div>
-  {/if}
+        {/if}
+      </div>
+    {/if}
   {/if}
 </div>
 
@@ -353,7 +376,9 @@
   closeOnEscape={true}>
   <div class="px-8 pb-8">
     <p class="text-zinc-700 dark:text-zinc-300 mb-6">
-      {$_('folios.delete_confirmation') || 'Are you sure you want to delete'} "{folioToDelete?.title}"? {$_('folios.delete_warning') || 'This action cannot be undone.'}
+      {$_('folios.delete_confirmation') || 'Are you sure you want to delete'} "{folioToDelete
+        ? folioToDelete.title
+        : ''}"? {$_('folios.delete_warning') || 'This action cannot be undone.'}
     </p>
     <div class="flex gap-4 justify-end">
       <button
@@ -366,9 +391,26 @@
         onclick={confirmDelete}
         disabled={deleting}
         class="px-4 py-2 rounded-lg bg-red-600 text-white transition-all duration-200 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-        {deleting ? ($_('folios.deleting') || 'Deleting...') : ($_('folios.delete') || 'Delete')}
+        {deleting ? $_('folios.deleting') || 'Deleting...' : $_('folios.delete') || 'Delete'}
       </button>
     </div>
   </div>
 </Modal>
 
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .folio-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

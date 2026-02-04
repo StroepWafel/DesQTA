@@ -123,54 +123,76 @@
     </div>
 
     {#if loading}
-    <div class="flex justify-center items-center h-64">
-      <LoadingSpinner size="md" message={$_('folios.loading') || 'Loading folios...'} />
-    </div>
-  {:else if error}
-    <div class="flex justify-center items-center h-64">
-      <EmptyState
-        title={$_('folios.error_loading') || 'Error loading folios'}
-        message={error}
-        icon={ExclamationTriangle}
-        size="md" />
-    </div>
-  {:else if folios.length === 0}
-    <div class="flex justify-center items-center h-64">
-      <EmptyState
-        title={$_('folios.no_folios') || 'No folios available'}
-        message={$_('folios.no_folios_message') || 'There are no folios to display.'}
-        icon={FolderOpen}
-        size="md" />
-    </div>
-  {:else}
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {#each folios as folio}
-        <button
-          onclick={() => goto(`/folios/browse/${folio.id}`)}
-          class="w-full text-left p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-          <div class="flex items-start gap-4 mb-4">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
-                <span class="text-lg font-semibold">{initial(folio.student)}</span>
-              </div>
+      <div class="flex justify-center items-center h-64">
+        <LoadingSpinner size="md" message={$_('folios.loading') || 'Loading folios...'} />
+      </div>
+    {:else if error}
+      <div class="flex justify-center items-center h-64">
+        <EmptyState
+          title={$_('folios.error_loading') || 'Error loading folios'}
+          message={error}
+          icon={ExclamationTriangle}
+          size="md" />
+      </div>
+    {:else if folios.length === 0}
+      <div class="flex justify-center items-center h-64">
+        <EmptyState
+          title={$_('folios.no_folios') || 'No folios available'}
+          message={$_('folios.no_folios_message') || 'There are no folios to display.'}
+          icon={FolderOpen}
+          size="md" />
+      </div>
+    {:else}
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {#key folios.length + folios.map((f) => f.id).join(',')}
+          {#each folios as folio, i}
+            <div class="folio-card-animate" style="animation-delay: {i * 50}ms;">
+              <button
+                onclick={() => goto(`/folios/browse/${folio.id}`)}
+                class="w-full text-left p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+                <div class="flex items-start gap-4 mb-4">
+                  <div class="flex-shrink-0">
+                    <div
+                      class="w-12 h-12 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
+                      <span class="text-lg font-semibold">{initial(folio.student)}</span>
+                    </div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-1 truncate">
+                      {folio.title}
+                    </h3>
+                    <div class="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                      <Icon src={User} class="w-4 h-4" />
+                      <span class="truncate">{folio.student}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <T key="folios.published" fallback="Published" />: {formatDate(folio.published)}
+                </div>
+              </button>
             </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-1 truncate">
-                {folio.title}
-              </h3>
-              <div class="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                <Icon src={User} class="w-4 h-4" />
-                <span class="truncate">{folio.student}</span>
-              </div>
-            </div>
-          </div>
-          <div class="text-sm text-zinc-600 dark:text-zinc-400">
-            <T key="folios.published" fallback="Published" />: {formatDate(folio.published)}
-          </div>
-        </button>
-      {/each}
-    </div>
-  {/if}
+          {/each}
+        {/key}
+      </div>
+    {/if}
   {/if}
 </div>
 
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .folio-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

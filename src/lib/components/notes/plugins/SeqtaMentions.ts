@@ -5,57 +5,8 @@ import {
   SeqtaMentionsServiceRust as SeqtaMentionsService,
   type SeqtaMentionItem,
 } from '../../../services/seqtaMentionsServiceRust';
-
-// Helper function to create SVG icon elements
-const createIconSVG = (
-  iconName: string,
-  size: number = 16,
-  className: string = 'text-zinc-500 dark:text-zinc-400',
-): SVGSVGElement => {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('width', size.toString());
-  svg.setAttribute('height', size.toString());
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('class', className);
-
-  // Heroicons paths (outline versions)
-  const iconPaths: Record<string, string> = {
-    clock: 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
-    calendar:
-      'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5',
-    user: 'M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z',
-    mapPin:
-      'M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z',
-    academicCap:
-      'M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443a55.381 55.381 0 0 1 5.25 2.882v3.675m-5.25 0a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z',
-    documentText:
-      'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
-    chartBar:
-      'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
-    clipboard:
-      'M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15a2.25 2.25 0 0 1 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75',
-    bookOpen:
-      'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
-    paperClip:
-      'M18.375 12.739l-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.12 2.122l7.81-7.81a1.5 1.5 0 0 0-2.122-2.122Z',
-    megaphone:
-      'M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 0 0 0 9h2.25c.723 0 1.402-.03 2.09-.09m0-9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46',
-    link: 'M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244',
-    chevronDown: 'm19.5 8.25-7.5 7.5-7.5-7.5',
-    chevronRight: 'm8.25 4.5 7.5 7.5-7.5 7.5',
-  };
-
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', iconPaths[iconName] || iconPaths.link);
-  svg.appendChild(path);
-
-  return svg;
-};
+import { createIconSVG } from '../utils/iconUtils';
+import { logger } from '../../../../utils/logger';
 
 export interface SeqtaMentionOptions {
   HTMLAttributes: Record<string, any>;
@@ -301,7 +252,7 @@ export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
         e.stopImmediatePropagation();
         hideTooltip();
 
-        console.log('Mention mousedown:', {
+        logger.debug('SeqtaMentions', 'handleMouseDown', 'Mention mousedown', {
           mentionId: node.attrs.id,
           mentionType: node.attrs.type,
           title: node.attrs.title || node.attrs.label,
@@ -337,19 +288,29 @@ export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
 
         tooltipTimeout = setTimeout(async () => {
           try {
-            // Fetch mention data
-            const { SeqtaMentionsServiceRust } = await import(
-              '../../../services/seqtaMentionsServiceRust'
-            );
-            mentionData = await SeqtaMentionsServiceRust.updateMentionData(
-              node.attrs.id,
-              node.attrs.type,
-            );
+            // Check cache first
+            const cachedData = getCachedTooltip(node.attrs.id, node.attrs.type);
+            if (cachedData !== undefined) {
+              mentionData = cachedData;
+            } else {
+              // Fetch mention data
+              const { SeqtaMentionsServiceRust } = await import(
+                '../../../services/seqtaMentionsServiceRust'
+              );
+              const fetchedData = await SeqtaMentionsServiceRust.updateMentionData(
+                node.attrs.id,
+                node.attrs.type,
+              );
+              mentionData = fetchedData;
+              // Cache the result
+              setCachedTooltip(node.attrs.id, node.attrs.type, fetchedData);
+            }
 
             const rect = mention.getBoundingClientRect();
             const tooltip = document.createElement('div');
             tooltip.id = `seqta-tooltip-${node.attrs.id}`;
-            tooltip.className = 'fixed z-[9999] pointer-events-none';
+            tooltip.className = `fixed pointer-events-none`;
+            tooltip.style.zIndex = TOOLTIP_Z_INDEX.toString();
             tooltip.style.left = `${rect.left + rect.width / 2}px`;
             tooltip.style.top = `${rect.top - 10}px`;
             tooltip.style.transform = 'translate(-50%, -100%)';
@@ -445,9 +406,12 @@ export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
               tooltip.style.transform = 'translate(-50%, 0)';
             }
           } catch (error) {
-            console.error('Failed to show tooltip:', error);
+            logger.error('SeqtaMentions', 'showTooltip', 'Failed to show tooltip', {
+              error: error instanceof Error ? error.message : String(error),
+              mentionId: node.attrs.id,
+            });
           }
-        }, 300);
+        }, TOOLTIP_DELAY_MS);
       };
 
       const formatTooltipDate = (dateString: string): string => {
@@ -576,6 +540,43 @@ export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
   },
 });
 
+// Tooltip cache
+interface TooltipCacheEntry {
+  data: SeqtaMentionItem | null;
+  timestamp: number;
+}
+
+const tooltipCache = new Map<string, TooltipCacheEntry>();
+const TOOLTIP_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCachedTooltip(
+  mentionId: string,
+  mentionType: string,
+): SeqtaMentionItem | null | undefined {
+  const cacheKey = `${mentionId}-${mentionType}`;
+  const cached = tooltipCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < TOOLTIP_CACHE_TTL_MS) {
+    return cached.data;
+  }
+  return undefined;
+}
+
+function setCachedTooltip(
+  mentionId: string,
+  mentionType: string,
+  data: SeqtaMentionItem | null,
+): void {
+  const cacheKey = `${mentionId}-${mentionType}`;
+  tooltipCache.set(cacheKey, {
+    data,
+    timestamp: Date.now(),
+  });
+}
+
+// Debounce state for search
+let searchDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
+let pendingSearchAbortController: AbortController | null = null;
+
 // Suggestion configuration for SEQTA mentions
 export const seqtaMentionSuggestion = {
   items: async ({
@@ -585,58 +586,104 @@ export const seqtaMentionSuggestion = {
     query: string;
     editor?: any;
   }): Promise<SeqtaMentionItem[]> => {
-    try {
-      // Extract category filter from query (e.g., "assessment" or "assessment math")
-      // TipTap passes the query without the @ symbol
-      const queryParts = query.trim().split(/\s+/);
-      const firstPart = queryParts.length > 0 ? queryParts[0].toLowerCase() : '';
-      const searchQuery = queryParts.length > 1 ? queryParts.slice(1).join(' ') : '';
-
-      // Valid mention types
-      const validTypes = [
-        'assessment',
-        'assignment',
-        'homework',
-        'class',
-        'subject',
-        'teacher',
-        'timetable_slot',
-        'timetable',
-        'notice',
-        'file',
-      ];
-
-      // Check if first part is a category filter
-      const categoryFilter = validTypes.includes(firstPart) ? firstPart : null;
-      const actualSearchQuery = categoryFilter ? searchQuery : query.trim();
-
-      // Get note content for context-aware suggestions
-      let noteContent = '';
-      if (editor) {
-        try {
-          noteContent = editor.getText();
-        } catch (e) {
-          // Ignore errors getting content
-        }
-      }
-
-      // Use context-aware search if we have note content
-      const results = noteContent.trim()
-        ? await SeqtaMentionsService.searchMentionsWithContext(
-            actualSearchQuery || '',
-            noteContent,
-            categoryFilter || undefined,
-          )
-        : await SeqtaMentionsService.searchMentions(
-            actualSearchQuery || '',
-            categoryFilter || undefined,
-          );
-
-      return results.slice(0, 100); // Return all results when filtered by category
-    } catch (error) {
-      console.error('Failed to fetch SEQTA mentions:', error);
-      return [];
+    // Cancel previous debounce and pending request
+    if (searchDebounceTimeout) {
+      clearTimeout(searchDebounceTimeout);
+      searchDebounceTimeout = null;
     }
+    if (pendingSearchAbortController) {
+      pendingSearchAbortController.abort();
+    }
+
+    // Create new abort controller for this request
+    const abortController = new AbortController();
+    pendingSearchAbortController = abortController;
+
+    return new Promise((resolve) => {
+      searchDebounceTimeout = setTimeout(async () => {
+        // Check if request was aborted
+        if (abortController.signal.aborted) {
+          resolve([]);
+          return;
+        }
+
+        try {
+          // Extract category filter from query (e.g., "assessment" or "assessment math")
+          // TipTap passes the query without the @ symbol
+          const queryParts = query.trim().split(/\s+/);
+          const firstPart = queryParts.length > 0 ? queryParts[0].toLowerCase() : '';
+          const searchQuery = queryParts.length > 1 ? queryParts.slice(1).join(' ') : '';
+
+          // Valid mention types
+          const validTypes = [
+            'assessment',
+            'assignment',
+            'homework',
+            'class',
+            'subject',
+            'teacher',
+            'timetable_slot',
+            'timetable',
+            'notice',
+            'file',
+          ];
+
+          // Check if first part is a category filter
+          const categoryFilter = validTypes.includes(firstPart) ? firstPart : null;
+          const actualSearchQuery = categoryFilter ? searchQuery : query.trim();
+
+          // Get note content for context-aware suggestions
+          let noteContent = '';
+          if (editor) {
+            try {
+              noteContent = editor.getText();
+            } catch (e) {
+              // Ignore errors getting content
+            }
+          }
+
+          // Check if aborted before making request
+          if (abortController.signal.aborted) {
+            resolve([]);
+            return;
+          }
+
+          // Use context-aware search if we have note content
+          const results = noteContent.trim()
+            ? await SeqtaMentionsService.searchMentionsWithContext(
+                actualSearchQuery || '',
+                noteContent,
+                categoryFilter || undefined,
+              )
+            : await SeqtaMentionsService.searchMentions(
+                actualSearchQuery || '',
+                categoryFilter || undefined,
+              );
+
+          // Check if aborted after request completes
+          if (abortController.signal.aborted) {
+            resolve([]);
+            return;
+          }
+
+          const finalResults = results.slice(0, 100);
+          resolve(finalResults);
+        } catch (error) {
+          // Don't log if request was aborted
+          if (!abortController.signal.aborted) {
+            logger.error('SeqtaMentions', 'searchMentions', 'Failed to fetch SEQTA mentions', {
+              error: error instanceof Error ? error.message : String(error),
+              query,
+            });
+          }
+          resolve([]);
+        } finally {
+          if (pendingSearchAbortController === abortController) {
+            pendingSearchAbortController = null;
+          }
+        }
+      }, DEBOUNCE_DELAY_MS);
+    });
   },
 
   render: () => {
@@ -689,10 +736,11 @@ export const seqtaMentionSuggestion = {
 
         popup = component.container;
 
-        popup.style.position = 'absolute';
-        popup.style.zIndex = '1000';
-        popup.style.top = `${props.clientRect().bottom}px`;
-        popup.style.left = `${props.clientRect().left}px`;
+        // Store clientRect function for dynamic positioning
+        component.clientRect = props.clientRect || null;
+
+        // Position will be calculated by MentionList using fixed positioning
+        component.updatePosition();
       },
 
       onUpdate(props: any) {
@@ -731,12 +779,9 @@ export const seqtaMentionSuggestion = {
           editor: props.editor,
         });
 
-        if (!props.clientRect) {
-          return;
-        }
-
-        popup.style.top = `${props.clientRect().bottom}px`;
-        popup.style.left = `${props.clientRect().left}px`;
+        // Update clientRect reference and reposition
+        component.clientRect = props.clientRect || null;
+        component.updatePosition();
       },
 
       onKeyDown(props: any) {
@@ -755,6 +800,13 @@ export const seqtaMentionSuggestion = {
   },
 };
 
+// Constants for positioning and styling
+const DROPDOWN_Z_INDEX = 9998;
+const TOOLTIP_Z_INDEX = 9999;
+const DEBOUNCE_DELAY_MS = 300;
+const TOOLTIP_DELAY_MS = 300;
+const VIEWPORT_PADDING = 20;
+
 // Simple DOM-based mention list component
 class MentionList {
   private container: HTMLElement;
@@ -763,18 +815,112 @@ class MentionList {
   private command: (item: SeqtaMentionItem, asCard?: boolean) => void = () => {};
   private editor: any = null;
   private collapsedCategories: Set<string> = new Set();
+  private clientRect: (() => DOMRect) | null = null;
+  private scrollListeners: Array<() => void> = [];
+  private resizeListener: (() => void) | null = null;
 
   constructor(options: { target: HTMLElement; props: any }) {
     const { target, props } = options;
 
     this.container = document.createElement('div');
     this.container.className =
-      'mention-list max-w-sm bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg overflow-y-auto z-50 max-h-96';
+      'mention-list max-w-sm bg-white/95 dark:bg-zinc-800/95 border border-zinc-200/60 dark:border-zinc-700/60 rounded-xl shadow-2xl backdrop-blur-md overflow-y-auto max-h-96 transition-all duration-200';
+    this.container.style.position = 'fixed';
+    this.container.style.zIndex = DROPDOWN_Z_INDEX.toString();
+    this.container.style.pointerEvents = 'auto';
+    this.container.setAttribute('role', 'listbox');
+    this.container.setAttribute('aria-label', 'SEQTA mention suggestions');
 
-    target.appendChild(this.container);
+    // Portal to body to avoid overflow clipping
+    if (this.container.parentNode !== document.body) {
+      document.body.appendChild(this.container);
+    }
+
     this.editor = props.editor;
+    this.clientRect = props.clientRect || null;
+
+    // Set initial position
+    this.updatePosition();
+
+    // Add scroll and resize listeners
+    this.setupPositionListeners();
 
     this.updateList(props);
+  }
+
+  private calculatePosition(): { top: number; left: number } {
+    if (!this.clientRect) {
+      return { top: 0, left: 0 };
+    }
+
+    const rect = this.clientRect();
+    const viewport = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+
+    // Estimate dropdown dimensions (will be adjusted after render)
+    const dropdownWidth = 320; // max-w-sm = 384px, but we'll use 320 as estimate
+    const dropdownHeight = Math.min(400, this.items.length * 50 + 100); // Rough estimate
+
+    let top = rect.bottom + 8;
+    let left = rect.left;
+
+    // Flip above if not enough space below
+    if (top + dropdownHeight > viewport.height - VIEWPORT_PADDING) {
+      top = rect.top - dropdownHeight - 8;
+      // If still doesn't fit above, position at top of viewport
+      if (top < VIEWPORT_PADDING) {
+        top = VIEWPORT_PADDING;
+      }
+    }
+
+    // Adjust horizontal to stay in viewport
+    if (left + dropdownWidth > viewport.width - VIEWPORT_PADDING) {
+      left = viewport.width - dropdownWidth - VIEWPORT_PADDING;
+    }
+    if (left < VIEWPORT_PADDING) {
+      left = VIEWPORT_PADDING;
+    }
+
+    return { top, left };
+  }
+
+  private updatePosition() {
+    const { top, left } = this.calculatePosition();
+    this.container.style.top = `${top}px`;
+    this.container.style.left = `${left}px`;
+  }
+
+  private setupPositionListeners() {
+    // Listen to scroll events on window and editor container
+    const handleScroll = () => {
+      this.updatePosition();
+    };
+
+    window.addEventListener('scroll', handleScroll, true); // Use capture phase
+    this.scrollListeners.push(() => {
+      window.removeEventListener('scroll', handleScroll, true);
+    });
+
+    // Listen to resize events
+    const handleResize = () => {
+      this.updatePosition();
+    };
+
+    window.addEventListener('resize', handleResize);
+    this.resizeListener = () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }
+
+  private cleanupPositionListeners() {
+    this.scrollListeners.forEach((cleanup) => cleanup());
+    this.scrollListeners = [];
+    if (this.resizeListener) {
+      this.resizeListener();
+      this.resizeListener = null;
+    }
   }
 
   updateList(props: any) {
@@ -783,6 +929,11 @@ class MentionList {
     this.command = command;
     this.editor = editor;
     this.selectedIndex = 0;
+
+    // Update clientRect if provided
+    if (props.clientRect) {
+      this.clientRect = props.clientRect;
+    }
 
     this.container.innerHTML = '';
 
@@ -846,7 +997,8 @@ class MentionList {
       // Category header (clickable to toggle)
       const categoryHeader = document.createElement('button');
       categoryHeader.className =
-        'w-full px-3 py-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700 sticky top-0 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer';
+        'w-full px-3 py-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide backdrop-blur-sm bg-zinc-50/80 dark:bg-zinc-800/80 border-b border-zinc-200 dark:border-zinc-700 sticky top-0 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 cursor-pointer';
+      categoryHeader.style.transition = 'background-color 200ms cubic-bezier(0.4, 0, 0.2, 1)';
       const typeInfo = typeLabels[type] || { label: type, icon: 'link' };
 
       const chevronSVG = createIconSVG(isCollapsed ? 'chevronRight' : 'chevronDown', 12, 'w-3 h-3');
@@ -876,11 +1028,16 @@ class MentionList {
       headerContent.appendChild(countSpan);
 
       categoryHeader.appendChild(headerContent);
+      categoryHeader.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+      categoryHeader.setAttribute('aria-label', `Toggle ${typeInfo.label} category`);
+      categoryHeader.setAttribute('role', 'button');
 
       // Category items container
       const categoryItemsContainer = document.createElement('div');
       categoryItemsContainer.className = isCollapsed ? 'hidden' : '';
       categoryItemsContainer.setAttribute('data-category', type);
+      categoryItemsContainer.setAttribute('role', 'group');
+      categoryItemsContainer.setAttribute('aria-label', `${typeInfo.label} items`);
 
       // Toggle collapse on header click
       categoryHeader.addEventListener('click', (e) => {
@@ -902,8 +1059,13 @@ class MentionList {
         itemWrapper.className = 'border-b border-zinc-200 dark:border-zinc-700 last:border-b-0';
 
         const itemEl = document.createElement('button');
-        itemEl.className = `w-full p-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-3 transition-colors ${globalIndex === this.selectedIndex ? 'bg-zinc-100 dark:bg-zinc-700' : ''}`;
+        itemEl.className = `w-full p-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-3 transition-all duration-200 hover:scale-[1.01] ${globalIndex === this.selectedIndex ? 'bg-zinc-100 dark:bg-zinc-700' : ''}`;
+        itemEl.style.transition = 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)';
         itemEl.setAttribute('data-index', globalIndex.toString());
+        itemEl.setAttribute('role', 'option');
+        if (globalIndex === this.selectedIndex) {
+          itemEl.setAttribute('aria-selected', 'true');
+        }
 
         // Type indicator
         const indicator = document.createElement('div');
@@ -957,6 +1119,11 @@ class MentionList {
         globalIndex++;
       });
     });
+
+    // Update position after rendering to account for actual dropdown size
+    requestAnimationFrame(() => {
+      this.updatePosition();
+    });
   }
 
   selectItem(index: number) {
@@ -984,6 +1151,7 @@ class MentionList {
   }
 
   destroy() {
+    this.cleanupPositionListeners();
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
     }

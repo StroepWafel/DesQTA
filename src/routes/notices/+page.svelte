@@ -11,6 +11,7 @@
   import * as Label from '$lib/components/ui/label/index.js';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
+  import { getUrlParam, updateUrlParams } from '$lib/utils/urlParams';
 
   // Relative imports
   import { seqtaFetch } from '../../utils/netUtil';
@@ -156,14 +157,53 @@
     }
   }
 
-  function updateDate(event: Event) {
+  async function updateDate(event: Event) {
     const input = event.target as HTMLInputElement;
     selectedDate = new Date(input.value);
+    await updateUrlParams({
+      date: formatDate(selectedDate),
+      category: selectedLabel ? selectedLabel.toString() : null,
+    });
     fetchNotices();
   }
 
   onMount(async () => {
+    // Read URL parameters
+    const dateParam = getUrlParam('date');
+    if (dateParam) {
+      const parsedDate = new Date(dateParam);
+      if (!isNaN(parsedDate.getTime())) {
+        selectedDate = parsedDate;
+      }
+    }
+
+    const categoryParam = getUrlParam('category');
+    if (categoryParam) {
+      const labelId = parseInt(categoryParam, 10);
+      if (!isNaN(labelId)) {
+        selectedLabel = labelId;
+        selectedLabelString = labelId.toString();
+      }
+    }
+
     await Promise.all([fetchLabels(), fetchNotices()]);
+
+    // Check for item parameter to scroll to specific notice
+    const itemParam = getUrlParam('item');
+    if (itemParam && filteredNotices.length > 0) {
+      const noticeId = parseInt(itemParam, 10);
+      if (!isNaN(noticeId)) {
+        setTimeout(() => {
+          const notice = filteredNotices.find((n) => n.id === noticeId);
+          if (notice) {
+            const element = document.querySelector(`[data-notice-id="${notice.id}"]`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        }, 500);
+      }
+    }
   });
 
   // Get color for a notice from the label
@@ -193,6 +233,12 @@
   const filteredNotices = $derived(
     notices.filter((n) => !selectedLabel || n.labelId === selectedLabel),
   );
+
+  // Create unique key for notices to force re-render with animations
+  const noticesKey = $derived.by(() => {
+    const ids = filteredNotices.map((n) => n.id).join(',');
+    return `${selectedDate.getTime()}-${selectedLabel}-${filteredNotices.length}-${ids}`;
+  });
 </script>
 
 <div class="p-6">
@@ -218,9 +264,13 @@
       <Select.Root
         type="single"
         bind:value={selectedLabelString}
-        onValueChange={(value) => {
+        onValueChange={async (value) => {
           selectedLabelString = value;
           selectedLabel = value === undefined || value === 'all' ? null : +value;
+          await updateUrlParams({
+            category: selectedLabel ? selectedLabel.toString() : null,
+            date: formatDate(selectedDate),
+          });
         }}>
         <Select.Trigger class="w-44">
           <span class="truncate">
@@ -264,25 +314,46 @@
   {:else}
     <!-- Use regular grid -->
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {#each filteredNotices as notice}
-        <div
-          class="rounded-xl shadow-lg bg-white/10 text-(--text) border-t-8 flex flex-col h-96"
-          style={`border-top-color: ${getLabelColor(notice.labelId)}; border-top-width: 8px;`}>
-          <div class="flex overflow-y-auto flex-col flex-1 p-5">
-            <h2 class="mb-1 text-2xl font-bold">{notice.title}</h2>
-            <div
-              class="mb-1 text-sm font-semibold"
-              style={`color: ${getLabelColor(notice.labelId)}`}
-              class:text-white={isColorDark(getLabelColor(notice.labelId))}>
-              {getLabelTitle(notice.labelId)}
+      {#key noticesKey}
+        {#each filteredNotices as notice, i}
+          <div
+            data-notice-id={notice.id}
+            class="rounded-xl shadow-lg bg-white/10 text-(--text) border-t-8 flex flex-col h-96 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-xl notice-card-animate"
+            style={`border-top-color: ${getLabelColor(notice.labelId)}; border-top-width: 8px; animation-delay: ${i * 50}ms;`}>
+            <div class="flex overflow-y-auto flex-col flex-1 p-5">
+              <h2 class="mb-1 text-2xl font-bold">{notice.title}</h2>
+              <div
+                class="mb-1 text-sm font-semibold"
+                style={`color: ${getLabelColor(notice.labelId)}`}
+                class:text-white={isColorDark(getLabelColor(notice.labelId))}>
+                {getLabelTitle(notice.labelId)}
+              </div>
+              <div class="text-xs text-(--text-muted) mb-2 uppercase tracking-wide">
+                {notice.author}
+              </div>
+              <div class="flex-1 text-base">{@html sanitizeHtml(notice.content)}</div>
             </div>
-            <div class="text-xs text-(--text-muted) mb-2 uppercase tracking-wide">
-              {notice.author}
-            </div>
-            <div class="flex-1 text-base">{@html sanitizeHtml(notice.content)}</div>
           </div>
-        </div>
-      {/each}
+        {/each}
+      {/key}
     </div>
   {/if}
 </div>
+
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .notice-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

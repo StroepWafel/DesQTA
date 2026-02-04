@@ -65,7 +65,7 @@
       onkeydown={handleKeydown}
       role="button"
       tabindex="0"
-      transition:fade={{ duration: 200 }}>
+      transition:fade={{ duration: 200, easing: (t) => t * (2 - t) }}>
     </div>
     <div
       class="overflow-hidden relative w-full {maxWidth} {maxHeight} {className} rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/90 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/60"
@@ -75,7 +75,7 @@
       role="button"
       tabindex="0"
       aria-label={ariaLabel}
-      transition:scale={{ duration: 300, start: 0.9 }}>
+      transition:scale={{ duration: 300, start: 0.9, easing: (t) => t * (2 - t) }}>
       {#if showCloseButton}
         <div class="absolute top-6 right-6 z-10">
           <Button
@@ -84,8 +84,7 @@
             icon={XMark}
             onclick={closeModal}
             ariaLabel={$_('modal.close_modal') || 'Close modal'}
-            class="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
-          />
+            class="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95" />
         </div>
       {/if}
 

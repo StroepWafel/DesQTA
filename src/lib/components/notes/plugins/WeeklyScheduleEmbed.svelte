@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { fly } from 'svelte/transition';
   import { SeqtaMentionsServiceRust as SeqtaMentionsService } from '../../../services/seqtaMentionsServiceRust';
   import { Icon, ChevronDown, ChevronUp } from 'svelte-hero-icons';
 
@@ -34,12 +35,15 @@
   });
 
   function groupByDay() {
-    const grouped: Record<string, Array<{ date: string; from: string; until: string; room?: string }>> = {};
-    
+    const grouped: Record<
+      string,
+      Array<{ date: string; from: string; until: string; room?: string }>
+    > = {};
+
     schedule.forEach((entry) => {
       const date = new Date(entry.date);
       const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
-      
+
       if (dayName !== 'Sat' && dayName !== 'Sun') {
         if (!grouped[dayName]) {
           grouped[dayName] = [];
@@ -87,17 +91,22 @@
       <div class="flex items-center gap-2">
         <span class="text-sm font-medium text-zinc-900 dark:text-white">Weekly Schedule</span>
         <span class="text-xs text-zinc-500 dark:text-zinc-400">
-          ({schedule.length} {schedule.length === 1 ? 'lesson' : 'lessons'})
+          ({schedule.length}
+          {schedule.length === 1 ? 'lesson' : 'lessons'})
         </span>
       </div>
       <Icon
         src={expanded ? ChevronUp : ChevronDown}
-        class="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+        class="w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform duration-300 ease-in-out {expanded
+          ? 'rotate-180'
+          : ''}" />
     </button>
 
     <!-- Schedule Grid -->
     {#if expanded}
-      <div class="p-4 bg-white dark:bg-zinc-900/50">
+      <div
+        class="p-4 bg-white dark:bg-zinc-900/50 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        transition:fly={{ y: -10, duration: 300, easing: (t: number) => t * (2 - t) }}>
         <div class="grid grid-cols-5 gap-2">
           {#each dayOrder as day}
             <div class="min-w-0">
@@ -132,4 +141,3 @@
     {/if}
   </div>
 {/if}
-

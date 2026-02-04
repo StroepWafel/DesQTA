@@ -56,6 +56,7 @@
   import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
+  import type { RecentActivity } from '../lib/types/sidebar';
   export const needsSetup = writable(false);
 
   let { children } = $props();
@@ -72,6 +73,7 @@
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
   let showOnboarding = $state(false);
+  let isFullscreen = $state(false);
 
   // Composables
   const weather = useWeather();
@@ -154,6 +156,8 @@
   // Remove duplicate onMount - consolidating below
 
   let unlisten: (() => void) | undefined;
+  let fullscreenCheckInterval: ReturnType<typeof setInterval> | undefined;
+  let checkFullscreenState: (() => Promise<void>) | undefined;
 
   const setupListeners = async () => {
     logger.debug('layout', 'onMount', 'Setting up reload listener');
@@ -163,26 +167,47 @@
     });
 
     // Listen for fullscreen changes from Tauri backend
-    await listen<boolean>('fullscreen-changed', (event) => {
-      const isFullscreen = event.payload;
+    await listen<boolean>('fullscreen-changed', async (event) => {
+      isFullscreen = event.payload;
       logger.debug('layout', 'fullscreen_listener', `Fullscreen changed: ${isFullscreen}`);
-
-      if (isFullscreen) {
-        // Remove rounded corners when entering fullscreen
-        document.body.classList.remove('rounded-xl');
-        const contentDiv = document.querySelector('.overflow-clip.rounded-xl');
-        if (contentDiv) {
-          contentDiv.classList.remove('rounded-xl');
-        }
-      } else {
-        // Add rounded corners when exiting fullscreen
-        document.body.classList.add('rounded-xl');
-        const contentDiv = document.querySelector('.overflow-clip');
-        if (contentDiv) {
-          contentDiv.classList.add('rounded-xl');
-        }
-      }
     });
+
+    // Also check fullscreen state periodically and on window focus to catch any missed events
+    checkFullscreenState = async () => {
+      try {
+        const [currentFullscreen, currentMaximized] = await Promise.all([
+          appWindow.isFullscreen(),
+          appWindow.isMaximized().catch(() => false), // Fallback to false if not supported
+        ]);
+        // Consider both fullscreen and maximized as "fullscreen" for corner removal
+        const shouldRemoveCorners = currentFullscreen || currentMaximized;
+        if (shouldRemoveCorners !== isFullscreen) {
+          isFullscreen = shouldRemoveCorners;
+          logger.debug(
+            'layout',
+            'checkFullscreenState',
+            `Fullscreen/Maximized state updated: ${isFullscreen} (fullscreen: ${currentFullscreen}, maximized: ${currentMaximized})`,
+          );
+        }
+      } catch (e) {
+        logger.debug('layout', 'checkFullscreenState', 'Failed to check fullscreen state', {
+          error: e,
+        });
+      }
+    };
+
+    // Check immediately
+    await checkFullscreenState();
+
+    // Check periodically (every 300ms) to catch any missed events
+    fullscreenCheckInterval = setInterval(checkFullscreenState, 300);
+
+    // Also check on window focus and resize events
+    window.addEventListener('focus', checkFullscreenState);
+    window.addEventListener('resize', checkFullscreenState);
+
+    // Listen to Tauri window events as well
+    appWindow.onResized(checkFullscreenState);
   };
 
   onDestroy(() => {
@@ -190,6 +215,13 @@
     if (unlisten) {
       logger.debug('layout', 'onDestroy', 'Cleaning up reload listener');
       unlisten();
+    }
+    if (fullscreenCheckInterval) {
+      clearInterval(fullscreenCheckInterval);
+    }
+    if (checkFullscreenState) {
+      window.removeEventListener('focus', checkFullscreenState);
+      window.removeEventListener('resize', checkFullscreenState);
     }
     window.removeEventListener('redo-onboarding', handleRedoOnboarding);
   });
@@ -403,7 +435,9 @@
         sidebarOpen = true;
       }
     } catch (e) {
-      logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', { error: e });
+      logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', {
+        error: e,
+      });
     }
   };
 
@@ -500,9 +534,18 @@
       // Send startup analytics
       sendAnalytics();
 
-      // Check and apply initial fullscreen styling
+      // Check and apply initial fullscreen state (also check maximized)
       try {
-        await invoke('handle_fullscreen_change');
+        const [currentFullscreen, currentMaximized] = await Promise.all([
+          appWindow.isFullscreen(),
+          appWindow.isMaximized().catch(() => false),
+        ]);
+        isFullscreen = currentFullscreen || currentMaximized;
+        logger.debug(
+          'layout',
+          'onMount',
+          `Initial fullscreen/maximized state: ${isFullscreen} (fullscreen: ${currentFullscreen}, maximized: ${currentMaximized})`,
+        );
       } catch (e) {
         logger.debug('layout', 'onMount', 'Failed to check initial fullscreen state', { error: e });
       }
@@ -615,33 +658,33 @@
       }
 
       menu = [...DEFAULT_MENU]; // Use default menu configuration
-      
+
       // Filter menu items based on SEQTA config
       if (latestConfig?.payload) {
         const goalsEnabled = latestConfig.payload['coneqt-s.page.goals']?.value === 'enabled';
         if (!goalsEnabled) {
-          menu = menu.filter(item => item.path !== '/goals');
+          menu = menu.filter((item) => item.path !== '/goals');
         }
         const forumsPageEnabled = latestConfig.payload['coneqt-s.page.forums']?.value === 'enabled';
         const forumsGreetingExists = latestConfig.payload['coneqt-s.forum.greeting'] !== undefined;
         const forumsEnabled = forumsPageEnabled || forumsGreetingExists;
         if (!forumsEnabled) {
-          menu = menu.filter(item => item.path !== '/forums');
+          menu = menu.filter((item) => item.path !== '/forums');
         }
         const foliosEnabled = latestConfig.payload['coneqt-s.page.folios']?.value === 'enabled';
         if (!foliosEnabled) {
-          menu = menu.filter(item => item.path !== '/folios');
+          menu = menu.filter((item) => item.path !== '/folios');
         }
       }
-      
+
       // Apply menu order from settings
       await applyMenuOrder();
-      
+
       // Filter RSS feeds menu item based on setting (after menu order is applied)
       const settings = await loadSettings(['separate_rss_feed']);
       const separateRssFeed = settings.separate_rss_feed ?? false;
       if (!separateRssFeed) {
-        menu = menu.filter(item => item.path !== '/rss-feeds');
+        menu = menu.filter((item) => item.path !== '/rss-feeds');
       }
     } catch (e) {
       logger.error('layout', 'loadSeqtaConfigAndMenu', 'Failed to load config/menu', { error: e });
@@ -654,16 +697,16 @@
     try {
       const settings = await loadSettings(['menu_order']);
       const menuOrder = settings.menu_order as string[] | undefined;
-      
+
       // Use current menu state instead of DEFAULT_MENU to preserve filters
       const currentMenu = [...menu];
-      const currentMenuMap = new Map(currentMenu.map(item => [item.path, item]));
-      
+      const currentMenuMap = new Map(currentMenu.map((item) => [item.path, item]));
+
       if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
         // Reorder menu based on saved order, keeping any new items at the end
         const orderedMenu: typeof DEFAULT_MENU = [];
         const addedPaths = new Set<string>();
-        
+
         // Add items in saved order (only if they exist in current menu)
         for (const path of menuOrder) {
           const item = currentMenuMap.get(path);
@@ -672,14 +715,14 @@
             addedPaths.add(path);
           }
         }
-        
+
         // Add any items not in saved order (new items that exist in current menu)
         for (const item of currentMenu) {
           if (!addedPaths.has(item.path)) {
             orderedMenu.push(item);
           }
         }
-        
+
         menu = orderedMenu;
       }
       // If no menu order, keep current menu (already filtered)
@@ -689,13 +732,60 @@
     }
   };
 
+  // Track recent activity when route changes
+  const trackPageVisit = async (path: string) => {
+    // Skip tracking for certain paths
+    if (
+      path === '/settings' ||
+      path.startsWith('/settings/') ||
+      path === '/login' ||
+      path === '/error' ||
+      !path ||
+      path === ''
+    ) {
+      return;
+    }
+
+    try {
+      const settings = await loadSettings(['sidebar_recent_activity']);
+      const currentActivity = (settings.sidebar_recent_activity as RecentActivity[]) || [];
+      const now = Date.now();
+
+      // Remove duplicates and old entries, then add new entry
+      const filtered = currentActivity.filter((item) => item.path !== path);
+      const updated = [{ path, visited_at: now }, ...filtered]
+        .sort((a, b) => b.visited_at - a.visited_at)
+        .slice(0, 15); // Keep only last 15 items
+
+      // Save updated activity
+      await saveSettingsWithQueue({ sidebar_recent_activity: updated });
+    } catch (e) {
+      logger.error('layout', 'trackPageVisit', `Failed to track page visit: ${e}`, {
+        path,
+        error: e,
+      });
+    }
+  };
+
+  // Track page visits when route changes
+  $effect(() => {
+    const currentPath = $page.url.pathname;
+    if (currentPath && !$needsSetup && shellReady) {
+      trackPageVisit(currentPath);
+    }
+  });
+
   // Config/menu loading is handled in checkSession/startLogin
 </script>
 
 {#if !shellReady}
   <LoadingScreen />
 {:else}
-  <div class="flex flex-col h-screen">
+  <div
+    class="flex flex-col h-screen w-screen {isFullscreen
+      ? ''
+      : 'rounded-2xl'} overflow-hidden theme-bg"
+    style="outline: none; border: none; margin: 0; padding: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
     {#if !$needsSetup}
       <AppHeader
         {sidebarOpen}
@@ -703,6 +793,7 @@
         {weatherData}
         {userInfo}
         {showUserDropdown}
+        {isFullscreen}
         onToggleSidebar={() => (sidebarOpen = !sidebarOpen)}
         onToggleUserDropdown={() => (showUserDropdown = !showUserDropdown)}
         onLogout={handleLogout}
@@ -731,9 +822,9 @@
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t rounded-tl-xl {!$needsSetup
-          ? 'border-l'
-          : ''} border-zinc-200 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-900/50 transition-all duration-200"
+        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen
+          ? ''
+          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if contentLoading}
           <div class="flex items-center justify-center w-full h-full py-12">
@@ -752,7 +843,7 @@
       <!-- ThemeBuilder Sidebar -->
       {#if $themeBuilderSidebarOpen}
         <aside
-          class="flex fixed top-0 right-0 z-50 flex-col w-96 h-full bg-white border-l shadow-xl transition-transform duration-200 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700">
+          class="flex fixed top-0 right-0 z-50 flex-col w-96 h-full theme-bg border-l shadow-xl transition-transform duration-200 border-zinc-200 dark:border-zinc-700">
           <ThemeBuilder>
             {#snippet close()}
               <button
@@ -768,29 +859,35 @@
     </div>
   </div>
 {/if}
-<Toaster 
-  position="bottom-right" 
+<Toaster
+  position="bottom-right"
   theme={$theme === 'dark' ? 'dark' : 'light'}
-  richColors 
-  expand={true} 
+  richColors
+  expand={true}
   closeButton
   offset="20px"
   visibleToasts={5}
   toastOptions={{
     unstyled: true,
     classes: {
-      toast: 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-lg border rounded-lg px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-all duration-200',
+      toast:
+        'bg-white/95 dark:bg-zinc-800/95 backdrop-blur-md text-zinc-900 dark:text-zinc-100 shadow-2xl border rounded-xl px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] border-white/20 dark:border-zinc-700/40',
       title: 'text-sm font-semibold flex-1',
       description: 'text-sm text-zinc-600 dark:text-zinc-400 mt-1',
-      success: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-      error: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-      info: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-      warning: 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
-      closeButton: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0',
-      actionButton: 'bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-opacity',
-      cancelButton: 'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-colors'
-    }
-  }}
-/>
+      success:
+        'border-green-200/60 dark:border-green-800/60 bg-green-50/95 dark:bg-green-900/40 backdrop-blur-md text-green-700 dark:text-green-300',
+      error:
+        'border-red-200/60 dark:border-red-800/60 bg-red-50/95 dark:bg-red-900/40 backdrop-blur-md text-red-700 dark:text-red-300',
+      info: 'border-blue-200/60 dark:border-blue-800/60 bg-blue-50/95 dark:bg-blue-900/40 backdrop-blur-md text-blue-700 dark:text-blue-300',
+      warning:
+        'border-yellow-200/60 dark:border-yellow-800/60 bg-yellow-50/95 dark:bg-yellow-900/40 backdrop-blur-md text-yellow-700 dark:text-yellow-300',
+      closeButton:
+        'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-all duration-200 ease-in-out rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0 transform hover:scale-110 active:scale-95',
+      actionButton:
+        'bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95',
+      cancelButton:
+        'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95',
+    },
+  }} />
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />

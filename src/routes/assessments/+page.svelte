@@ -1,6 +1,7 @@
 <script lang="ts">
   // Svelte imports
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
 
   // Tauri imports
   import { invoke } from '@tauri-apps/api/core';
@@ -16,14 +17,15 @@
   import EmptyState from '$lib/components/EmptyState.svelte';
   import { ClipboardDocumentList } from 'svelte-hero-icons';
   import { _ } from '$lib/i18n';
+  import { updateUrlParam, getUrlParam } from '$lib/utils/urlParams';
 
   // Relative imports
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
-  import { notify } from '../../utils/notify';
   import { logger } from '../../utils/logger';
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import { checkAndCalculateNewGrades } from '$lib/services/backgroundGradeService';
+  import { notificationService } from '$lib/services/notificationService';
 
   // Types
   import type { Assessment, Subject, LessonColour, AssessmentsOverviewData } from '$lib/types';
@@ -37,7 +39,6 @@
   let loadingAssessments = $state<boolean>(true);
   let selectedTab = $state<'list' | 'board' | 'calendar' | 'gantt'>('list');
   let subjectFilters: Record<string, boolean> = {};
-  let remindersEnabled = true;
   let groupBy = $state<'subject' | 'month' | 'status'>('subject');
 
   // Year filter state
@@ -111,48 +112,20 @@
         subjectFilters = data.filters;
         availableYears = data.years;
         loadingAssessments = false;
-        
+
         // Check for new marked assessments and auto-calculate in background
         checkAndCalculateNewGrades(data.assessments).catch((e) => {
           logger.error('assessments', '+page', 'Background grade check failed', { error: e });
         });
       },
+      shouldSyncInBackground: () => true, // Always sync if online - subjects are critical
+      updateOnBackgroundSync: true, // Update UI when fresh data arrives
     });
 
     if (!data) {
       loadingAssessments = false;
     }
   }
-
-  function scheduleAssessmentReminders(assessments: Assessment[]) {
-    if (!remindersEnabled) return;
-    const now = Date.now();
-    const scheduled = new Set(
-      JSON.parse(localStorage.getItem('scheduledAssessmentReminders') || '[]'),
-    );
-
-    for (const a of assessments) {
-      const due = new Date(a.due).getTime();
-      const reminderTime = due - 24 * 60 * 60 * 1000; // 1 day before
-      if (reminderTime > now && !scheduled.has(a.id)) {
-        const timeout = reminderTime - now;
-        setTimeout(() => {
-          notify({
-            title: 'Assessment Reminder',
-            body: `${a.title} is due tomorrow!`,
-          });
-        }, timeout);
-        scheduled.add(a.id);
-      }
-    }
-    localStorage.setItem('scheduledAssessmentReminders', JSON.stringify(Array.from(scheduled)));
-  }
-
-  $effect(() => {
-    if (upcomingAssessments.length) {
-      scheduleAssessmentReminders(upcomingAssessments);
-    }
-  });
 
   function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
@@ -196,8 +169,9 @@
     selectedTab = tab;
   }
 
-  function handleYearChange(year: number) {
+  async function handleYearChange(year: number) {
     selectedYear = year;
+    await updateUrlParam('year', year.toString());
   }
 
   function handleGroupByChange(group: 'subject' | 'month' | 'status') {
@@ -216,6 +190,16 @@
       gradeAnalyserEnabled = true;
     }
     await loadAssessments();
+
+    // Read year from URL parameter
+    const yearParam = getUrlParam('year');
+    if (yearParam) {
+      const year = parseInt(yearParam, 10);
+      if (!isNaN(year) && availableYears.includes(year)) {
+        selectedYear = year;
+      }
+    }
+
     highlightAssessmentFromQuery();
   });
 </script>
@@ -381,23 +365,26 @@
           </div>
         </div>
         <AssessmentBoardView
-          assessments={filteredAssessments}
-          subjects={allSubjects}
+          assessments={filteredAssessments as any}
+          subjects={allSubjects as any}
           {activeSubjects}
           {groupBy}
           onGroupByChange={handleGroupByChange} />
       {:else if selectedTab === 'calendar'}
-        <AssessmentCalendarView assessments={filteredAssessments} />
+        <AssessmentCalendarView assessments={filteredAssessments as any} />
       {:else if selectedTab === 'gantt'}
         <AssessmentGanttView
-          assessments={filteredAssessments}
-          subjects={allSubjects}
+          assessments={filteredAssessments as any}
+          subjects={allSubjects as any}
           {activeSubjects} />
       {:else}
         <AssessmentListView
           assessments={filteredAssessments}
           subjects={allSubjects}
-          {activeSubjects} />
+          {activeSubjects}
+          {availableYears}
+          {selectedYear}
+          onYearChange={handleYearChange} />
       {/if}
     {/if}
   </div>

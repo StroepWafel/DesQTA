@@ -1,8 +1,7 @@
 @import 'tailwindcss';
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 @plugin '@tailwindcss/typography';
-
 
 @custom-variant dark (&:is(.dark *));
 
@@ -132,7 +131,6 @@
   --color-accent-bg: var(--accent-color-value);
   --color-accent-border: var(--accent-color-value);
   --color-accent-ring: var(--accent-color-value);
-
 }
 
 @layer base {
@@ -140,7 +138,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: transparent !important;
   }
 }
 
@@ -201,6 +200,18 @@ body {
   }
 }
 
+/* Premium fade and scale animation */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Make calendar icon in date inputs appropriate for theme */
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(0);
@@ -245,18 +256,42 @@ input[type='date']::-webkit-calendar-picker-indicator {
   --accent-color-dark: color-mix(in srgb, var(--accent-color-value) 90%, black);
 }
 
+/* Theme-aware background utility class - applies theme background color */
+/* This works at a higher level and can be used throughout the app */
+/* Handles both solid colors and gradients - themes can override --background-color */
+.theme-bg {
+  /* Use background property to support both solid colors and gradients */
+  /* Themes define --background-color which can be a color or gradient */
+  background: var(--background-color, var(--background, white)) !important;
+  /* Fallback to background-color for solid colors if background doesn't work */
+  background-color: var(--background-color, var(--background, white));
+}
+
+/* Theme-aware root background - uses CSS variable that themes can override */
 #root {
   padding: 1rem;
   border-radius: 50px;
   height: 100vh;
-  background-color: #f3f3f3;
+  background-color: var(--background-color, var(--background));
   border-radius: 5px;
   width: 100%;
   height: 100%;
 }
 
 /* prevent overscrolling on safari based browsers */
-html, body, #app, #svelte {
+html {
+  scroll-behavior: smooth;
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html,
+body,
+#app,
+#svelte,
+body > div,
+body > div > div {
   background: transparent !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -267,7 +302,7 @@ html, body, #app, #svelte {
 
 body {
   height: 100%;
-  overflow: auto;
+  overflow: hidden; /* Prevents scrollbars on the main window for rounded corners */
 }
 
 /* Enhanced Animations */
@@ -308,20 +343,56 @@ body {
 /* Default theme mobile sidebar background fix */
 @media (max-width: 767px) {
   aside.fixed.z-30.w-full {
-    background: rgba(255,255,255,0.8);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(8px);
   }
   html.dark aside.fixed.z-30.w-full {
-    background: rgba(30,41,59,0.8); /* dark:bg-zinc-900/80 */
+    background: rgba(30, 41, 59, 0.8); /* dark:bg-zinc-900/80 */
   }
 }
 
 body > div {
-  background: var(--background-color);
+  background: transparent !important;
 }
 
 button {
   cursor: pointer;
+}
+
+/* Enhanced Focus States for Keyboard Navigation */
+*:focus-visible {
+  outline: 2px solid var(--accent-color, #3b82f6);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+  transition: outline-offset 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent-color, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Smooth scroll behavior for programmatic scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 [data-bits-floating-content-wrapper] {

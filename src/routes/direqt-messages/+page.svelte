@@ -1,6 +1,7 @@
 <script lang="ts">
   // Svelte imports
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
   import { page } from '$app/stores';
 
   // Tauri imports
@@ -23,7 +24,7 @@
   import MobileFolderTabs from './components/MobileFolderTabs.svelte';
 
   // Types
-  import { type Message } from './types';
+  import { type Message, type MessageFile } from './types';
 
   let messages = $state<Message[]>([]);
   let loading = $state(true);
@@ -133,7 +134,7 @@
       msg.folder.includes('RSS') || selectedFolder.includes('RSS') || msg.folder.includes('rss-');
     const cacheKey = isRSSMessage ? `rss_${msg.id}` : `message_${msg.id}`;
 
-    const content = await useDataLoader<string>({
+    const messageData = await useDataLoader<{ content: string; files?: MessageFile[] }>({
       cacheKey,
       ttlMinutes: 1440, // 24 hours
       context: 'direqt-messages',
@@ -141,19 +142,30 @@
       skipCache: isRSSMessage, // Skip caching for RSS feeds to always get fresh content
       fetcher: async () => {
         if (isRSSMessage) {
-          return msg.body; // RSS body is already loaded
+          return { content: msg.body, files: [] }; // RSS body is already loaded
         }
-        const content = await invoke<string>('fetch_message_content', { id: msg.id });
-        return content;
+        const result = await invoke<{ content: string; files?: MessageFile[] }>(
+          'fetch_message_content',
+          { id: msg.id },
+        );
+        return result;
       },
-      onDataLoaded: (content) => {
-        msg.body = content;
+      onDataLoaded: (data) => {
+        msg.body = data.content;
+        if (data.files) {
+          msg.files = data.files;
+        }
       },
     });
 
-    if (!content && !msg.body) {
+    if (!messageData?.content && !msg.body) {
       // Fetch failed or no content
       msg.body = `<em>${$_('messages.no_content') || 'No content.'}</em>`;
+    } else if (messageData?.content) {
+      msg.body = messageData.content;
+      if (messageData.files) {
+        msg.files = messageData.files;
+      }
     }
   }
 
@@ -291,7 +303,7 @@
         onclose={() => (selectedMessage = null)}
         maxWidth="w-full"
         maxHeight="h-full"
-        className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xs rounded-none"
+        className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-none transition-all duration-300"
         showCloseButton={false}
         closeOnBackdrop={false}
         ariaLabel="Message Detail">
@@ -322,7 +334,7 @@
             <!-- Spacer for alignment -->
           </div>
 
-          <div class="overflow-y-auto flex-1">
+          <div class="overflow-y-auto flex-1" in:fade={{ duration: 300 }}>
             <MessageDetail
               {selectedMessage}
               {selectedFolder}
@@ -343,38 +355,3 @@
 </div>
 
 <ComposeModal {showComposeModal} {composeSubject} {composeBody} {closeModal} />
-
-<style>
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slide-in {
-    from {
-      transform: translateX(20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  @keyframes scale-in {
-    from {
-      transform: scale(0.95);
-      opacity: 0;
-    }
-    to {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-</style>

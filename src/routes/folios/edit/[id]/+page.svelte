@@ -153,15 +153,17 @@
 
       if (data.status === '200' && data.payload) {
         folioData = data.payload;
-        content = folioData.contents || '';
-        title = folioData.title || '';
-        tags = folioData.tags || [];
-        allowComments = folioData.allow_comments ?? true;
-        published = folioData.published || null;
+        if (folioData) {
+          content = folioData.contents || '';
+          title = folioData.title || '';
+          tags = folioData.tags || [];
+          allowComments = folioData.allow_comments ?? true;
+          published = folioData.published || null;
 
-        // Load forum comments if folio has a forum ID and allows comments
-        if (folioData.forum?.id && folioData.allow_comments) {
-          await loadForumComments(folioData.forum.id);
+          // Load forum comments if folio has a forum ID and allows comments
+          if (folioData.forum?.id && folioData.allow_comments) {
+            await loadForumComments(folioData.forum.id);
+          }
         }
       } else {
         error = 'Invalid response format';

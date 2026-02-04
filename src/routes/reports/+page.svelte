@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import { getUrlParam } from '$lib/utils/urlParams';
 
   let reports = $state<any[]>([]);
   let loading = $state(true);
@@ -14,11 +16,11 @@
   function formatDate(dateStr: string) {
     let isoDate = dateStr.replace(' ', 'T');
 
-    if (!(isoDate.charAt(isoDate.length-3) == ':')) {
-      isoDate = "".concat(dateStr.replace(' ', 'T'), ':00')
+    if (!(isoDate.charAt(isoDate.length - 3) == ':')) {
+      isoDate = ''.concat(dateStr.replace(' ', 'T'), ':00');
     }
     const date = new Date(isoDate);
-    
+
     return date
       .toLocaleDateString('en-AU', {
         weekday: 'long',
@@ -75,7 +77,28 @@
     }
   }
 
-  onMount(loadReports);
+  onMount(async () => {
+    await loadReports();
+
+    // Check for report parameter to highlight/open specific report
+    const reportParam = getUrlParam('report');
+    if (reportParam && reports.length > 0) {
+      const report = reports.find(
+        (r) => r.uuid === reportParam || r.id?.toString() === reportParam,
+      );
+      if (report) {
+        // Scroll to report and optionally open it
+        setTimeout(() => {
+          const element = document.querySelector(`[data-report-id="${report.uuid || report.id}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Optionally auto-open the report
+            // openReportInBrowser(report);
+          }
+        }, 300);
+      }
+    }
+  });
 </script>
 
 <div class="p-8 min-h-screen">
@@ -101,39 +124,42 @@
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {#each reports as report}
-        <div
-          class="group dark:bg-zinc-800 dark:border-[#333] border border-zinc-200 bg-zinc-100 rounded-2xl p-0 overflow-hidden shadow-md transition-all duration-200 hover:scale-[1.03] hover:shadow-lg focus:outline-hidden">
-          <div class="flex justify-between items-center px-6 pt-6">
-            <div
-              class="px-6 py-2 text-lg font-bold tracking-widest text-white rounded-full transition-colors duration-300 accent-bg group-hover:opacity-90 animate-gradient">
-              {report.year}
+      {#key reports.length + reports.map((r) => r.uuid || r.id).join(',')}
+        {#each reports as report, i}
+          <div
+            data-report-id={report.uuid || report.id}
+            class="group dark:bg-zinc-800 dark:border-[#333] border border-zinc-200 bg-zinc-100 rounded-2xl p-0 overflow-hidden shadow-md transition-all duration-200 hover:scale-[1.03] hover:shadow-lg focus:outline-hidden report-card-animate"
+            style="animation-delay: {i * 50}ms;">
+            <div class="flex justify-between items-center px-6 pt-6">
+              <div
+                class="px-6 py-2 text-lg font-bold tracking-widest text-white rounded-full transition-colors duration-300 accent-bg group-hover:opacity-90 animate-gradient">
+                {report.year}
+              </div>
+              <div
+                class="px-6 py-2 text-sm font-bold tracking-widest text-white rounded-full transition-colors duration-300 accent-bg group-hover:opacity-90 animate-gradient">
+                {report.terms}
+              </div>
             </div>
-            <div
-              class="px-6 py-2 text-sm font-bold tracking-widest text-white rounded-full transition-colors duration-300 accent-bg group-hover:opacity-90 animate-gradient">
-              {report.terms}
+            <div class="flex flex-col flex-1 justify-center items-center py-12">
+              <div
+                class="mb-2 text-2xl font-extrabold text-center text-zinc-900 dark:text-white animate-fade-in">
+                {report.types}
+              </div>
+            </div>
+            <div class="px-6 pb-6">
+              <div
+                class="text-xs font-semibold text-center opacity-80 text-zinc-900 dark:text-white animate-fade-in">
+                {formatDate(report.created_date)}
+              </div>
+              <button
+                class="mt-4 inline-block w-full text-center px-4 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 accent-bg accent-ring text-white"
+                onclick={() => openReportInBrowser(report)}>
+                <T key="reports.download" fallback="Download" />
+              </button>
             </div>
           </div>
-          <div class="flex flex-col flex-1 justify-center items-center py-12">
-            <div
-              class="mb-2 text-2xl font-extrabold text-center text-zinc-900 dark:text-white animate-fade-in">
-              {report.types}
-            </div>
-          </div>
-          <div class="px-6 pb-6">
-            <div
-              class="text-xs font-semibold text-center opacity-80 text-zinc-900 dark:text-white animate-fade-in">
-              {formatDate(report.created_date)}
-            </div>
-            <button
-              class="mt-4 inline-block w-full text-center px-4 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 accent-bg accent-ring text-white"
-              onclick={() => openReportInBrowser(report)}
-            >
-              <T key="reports.download" fallback="Download" />
-            </button>
-          </div>
-        </div>
-      {/each}
+        {/each}
+      {/key}
     </div>
   {/if}
 </div>
@@ -166,5 +192,21 @@
   }
   .animate-fade-in {
     animation: fade-in 0.7s cubic-bezier(0.4, 2.3, 0.3, 1);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .report-card-animate {
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 </style>

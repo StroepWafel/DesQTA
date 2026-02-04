@@ -60,6 +60,8 @@ pub fn save_session(base_url: String, jsessionid: String) -> Result<(), String> 
         base_url,
         jsessionid,
         additional_cookies: Vec::new(),
+        stored_username: None,
+        stored_password: None,
     }
     .save()
     .map_err(|e| e.to_string())
@@ -162,6 +164,33 @@ pub fn cleanup_login_windows(_app: tauri::AppHandle) {
     // No-op on mobile platforms
 }
 
+/// Check if any login windows exist
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+#[tauri::command]
+pub fn has_login_windows(app: tauri::AppHandle) -> bool {
+    // Check the old static window ID
+    if app.get_webview_window("seqta_login").is_some() {
+        return true;
+    }
+
+    // Check any numbered login windows
+    for i in 0..100 {
+        let window_id = format!("seqta_login_{}", i);
+        if app.get_webview_window(&window_id).is_some() {
+            return true;
+        }
+    }
+
+    false
+}
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+#[tauri::command]
+pub fn has_login_windows(_app: tauri::AppHandle) -> bool {
+    // No login windows on mobile platforms
+    false
+}
+
 /// Parse and validate a Seqta Learn SSO deeplink
 fn parse_deeplink(deeplink: &str) -> Result<SeqtaSSOPayload, String> {
     const DEEPLINK_PREFIX: &str = "seqtalearn://sso/";
@@ -222,8 +251,10 @@ fn decode_jwt(token: &str) -> Result<SeqtaJWT, String> {
 
 /// Fetch user info from SEQTA API
 async fn fetch_user_info(base_url: &str, jsessionid: &str) -> Result<UserInfoPayload, String> {
+    use crate::netgrab;
+    
     let login_url = format!("{}/seqta/student/login", base_url);
-    let client = reqwest::Client::builder()
+    let client = netgrab::create_client_builder()
         .cookie_store(true)
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
@@ -293,7 +324,9 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         header::HeaderValue::from_str(&format!("Bearer {}", &token)).unwrap(),
     );
 
-    let client = reqwest::Client::builder()
+    use crate::netgrab;
+    
+    let client = netgrab::create_client_builder()
         .cookie_provider(jar.clone())
         .cookie_store(true)
         .default_headers(headers)
@@ -379,6 +412,8 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         base_url,
         jsessionid: jsessionid.ok_or("Could not get JSESSIONID from response headers")?,
         additional_cookies: vec![], // No additional cookies given by QR auth (same as SSO and normal login now)
+        stored_username: None, // QR auth doesn't store credentials
+        stored_password: None,
     };
 
     Ok(session)
@@ -513,8 +548,10 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
 
                                                 // Validate the session with a subjects request before accepting it
                                                 // This prevents capturing invalid/pre-login sessions
+                                                use crate::netgrab;
+                                                
                                                 let subjects_url = format!("{}/seqta/student/load/subjects", base_url);
-                                                let client = reqwest::Client::builder()
+                                                let client = netgrab::create_client_builder()
                                                     .cookie_store(true)
                                                     .build()
                                                     .unwrap_or_default();
@@ -590,6 +627,8 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
                                                     base_url: base_url.clone(),
                                                     jsessionid: value.clone(),
                                                     additional_cookies,
+                                                    stored_username: None, // Browser login doesn't store credentials
+                                                    stored_password: None,
                                                 };
 
                                                 // Fetch user info to create/get profile
@@ -678,4 +717,146 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
     }
 
     Ok(())
+}
+
+/// Perform direct login with username and password
+#[tauri::command]
+pub async fn direct_login(
+    app: tauri::AppHandle,
+    base_url: String,
+    username: String,
+    password: String,
+) -> Result<(), String> {
+    // Normalize base_url
+    let http_url = if base_url.starts_with("https://") {
+        base_url.clone()
+    } else {
+        format!("https://{}", base_url)
+    };
+
+    use crate::netgrab;
+    
+    let login_url = format!("{}/seqta/student/login", http_url);
+
+    // Create HTTP client with cookie store enabled and school network-friendly config
+    let client = netgrab::create_client_builder()
+        .cookie_store(true)
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    // Prepare login request body
+    let login_body = json!({
+        "username": username,
+        "password": password,
+        "mode": "normal",
+        "query": null
+    });
+
+    // Make login request
+    let response = client
+        .post(&login_url)
+        .header("Content-Type", "application/json; charset=utf-8")
+        .json(&login_body)
+        .send()
+        .await
+        .map_err(|e| format!("Login request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
+            return Err("Invalid username or password".to_string());
+        }
+        return Err(format!("Login failed with status: {}", status));
+    }
+
+    // Extract JSESSIONID from Set-Cookie header
+    let jsessionid = response
+        .headers()
+        .get("Set-Cookie")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|cookie_str| {
+            cookie_str
+                .split(';')
+                .find(|part| part.trim().starts_with("JSESSIONID="))
+                .map(|jsession_part| {
+                    jsession_part
+                        .trim()
+                        .strip_prefix("JSESSIONID=")
+                        .unwrap_or("")
+                        .to_string()
+                })
+        })
+        .ok_or("Could not get JSESSIONID from response headers")?;
+
+    // Validate session with a heartbeat request
+    let heartbeat_url = format!("{}/seqta/student/heartbeat", http_url);
+    let heartbeat_body = json!({ "heartbeat": true });
+
+    let heartbeat_response = client
+        .post(&heartbeat_url)
+        .header("Cookie", format!("JSESSIONID={}", jsessionid))
+        .header("Content-Type", "application/json; charset=utf-8")
+        .json(&heartbeat_body)
+        .send()
+        .await
+        .map_err(|e| format!("Heartbeat request failed: {}", e))?;
+
+    if !heartbeat_response.status().is_success() {
+        return Err("Session validation failed".to_string());
+    }
+
+    // Fetch user info to create/get profile
+    let user_info = fetch_user_info(&http_url, &jsessionid).await?;
+
+    // Create or get profile
+    let profile = profiles::ProfileManager::get_or_create_profile(
+        http_url.clone(),
+        user_info.id,
+        user_info
+            .user_desc
+            .or(user_info.display_name)
+            .or(Some(user_info.user_name.clone())),
+    )
+    .map_err(|e| format!("Failed to create/get profile: {}", e))?;
+
+    // Set as current profile
+    profiles::ProfileManager::set_current_profile(profile.id.clone())
+        .map_err(|e| format!("Failed to set current profile: {}", e))?;
+
+    // Save session with stored credentials for auto-reauth
+    let session = session::Session {
+        base_url: http_url.clone(),
+        jsessionid: jsessionid.clone(),
+        additional_cookies: Vec::new(),
+        stored_username: Some(username.clone()),
+        stored_password: Some(password.clone()),
+    };
+
+    session
+        .save()
+        .map_err(|e| format!("Failed to save session: {}", e))?;
+
+    // Force reload the app
+    force_reload(app);
+    Ok(())
+}
+
+/// Re-authenticate using stored credentials (called when session fails)
+#[tauri::command]
+pub async fn reauthenticate(app: tauri::AppHandle) -> Result<(), String> {
+    let session = session::Session::load();
+
+    if session.base_url.is_empty() {
+        return Err("No base URL found in session".to_string());
+    }
+
+    let username = session
+        .stored_username
+        .ok_or("No stored username found".to_string())?;
+    let password = session
+        .stored_password
+        .ok_or("No stored password found".to_string())?;
+
+    // Use direct_login to re-authenticate
+    direct_login(app, session.base_url, username, password).await
 }

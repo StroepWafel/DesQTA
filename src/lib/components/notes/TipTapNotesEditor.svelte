@@ -13,6 +13,7 @@
   import TableRow from '@tiptap/extension-table-row';
   import TableHeader from '@tiptap/extension-table-header';
   import TableCell from '@tiptap/extension-table-cell';
+  import { logger } from '../../../utils/logger';
 
   // Custom extensions
   import { SeqtaMentions, seqtaMentionSuggestion } from './plugins/SeqtaMentions';
@@ -26,6 +27,23 @@
   import TipTapBubbleMenu from './TipTapBubbleMenu.svelte';
   import TipTapContextMenu from './TipTapContextMenu.svelte';
   import SeqtaMentionDetailModal from './plugins/SeqtaMentionDetailModal.svelte';
+
+  // Portal action to move modal to body (bypasses overflow clipping)
+  function portalAction(node: HTMLElement) {
+    // Only append if not already in body
+    if (node.parentNode !== document.body) {
+      document.body.appendChild(node);
+    }
+
+    return {
+      destroy() {
+        // Clean up when destroyed
+        if (node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+      },
+    };
+  }
 
   // Props
   export let content: string = '<p></p>';
@@ -90,7 +108,10 @@
 
     // Listen for SEQTA mention clicks
     const handleMentionClick = (event: CustomEvent) => {
-      console.log('Received mention click event:', event.detail);
+      logger.debug('TipTapNotesEditor', 'handleMentionClick', 'Received mention click event', {
+        mentionId: event.detail.mentionId,
+        mentionType: event.detail.mentionType,
+      });
       const { mentionId, mentionType, title, subtitle, data } = event.detail;
       mentionModalData = { mentionId, mentionType, title, subtitle, data };
       showMentionModal = true;
@@ -180,12 +201,17 @@
               const subtitle = mentionElement.getAttribute('data-subtitle') || '';
 
               if (mentionId && mentionType && mentionType !== 'seqtaMention') {
-                console.log('TipTap intercepted mention mousedown:', {
-                  mentionId,
-                  mentionType,
-                  title,
-                  subtitle,
-                });
+                logger.debug(
+                  'TipTapNotesEditor',
+                  'mousedown',
+                  'TipTap intercepted mention mousedown',
+                  {
+                    mentionId,
+                    mentionType,
+                    title,
+                    subtitle,
+                  },
+                );
                 mentionModalData = { mentionId, mentionType, title, subtitle };
                 showMentionModal = true;
                 event.preventDefault();
@@ -427,19 +453,21 @@
   on:replaceImage={handleReplaceImage}
   on:close={closeImageModal} />
 
-<!-- SEQTA Mention Detail Modal -->
+<!-- SEQTA Mention Detail Modal - Portaled to body to avoid overflow clipping -->
 {#if mentionModalData}
-  <SeqtaMentionDetailModal
-    bind:open={showMentionModal}
-    mentionId={mentionModalData.mentionId}
-    mentionType={mentionModalData.mentionType}
-    title={mentionModalData.title}
-    subtitle={mentionModalData.subtitle}
-    data={mentionModalData.data}
-    onclose={() => {
-      showMentionModal = false;
-      mentionModalData = null;
-    }} />
+  <div use:portalAction>
+    <SeqtaMentionDetailModal
+      bind:open={showMentionModal}
+      mentionId={mentionModalData.mentionId}
+      mentionType={mentionModalData.mentionType}
+      title={mentionModalData.title}
+      subtitle={mentionModalData.subtitle}
+      data={mentionModalData.data}
+      onclose={() => {
+        showMentionModal = false;
+        mentionModalData = null;
+      }} />
+  </div>
 {/if}
 
 <style>
