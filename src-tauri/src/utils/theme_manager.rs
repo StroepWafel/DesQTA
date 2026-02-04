@@ -138,46 +138,42 @@ impl ThemeManager {
     }
 
     pub fn get_themes_directory(&self) -> Result<PathBuf> {
+        use crate::profiles;
+        
+        // Get current profile directory
+        let profile_id = profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string());
+        
+        let mut profile_dir = profiles::get_profile_dir(&profile_id);
+        
         #[cfg(target_os = "android")]
         {
-            let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
-            dir.push("DesQTA");
-            if !dir.exists() {
-                println!("[ThemeManager] Creating Android data dir: {:?}", dir);
-                fs::create_dir_all(&dir)
-                    .map_err(|e| anyhow!("Unable to create data dir: {}", e))?;
-            }
-            dir.push("themes");
-            if !dir.exists() {
-                println!("[ThemeManager] Creating Android themes dir: {:?}", dir);
-                fs::create_dir_all(&dir)
+            // On Android, profile_dir is already the correct path
+            profile_dir.push("themes");
+            if !profile_dir.exists() {
+                println!("[ThemeManager] Creating Android themes dir: {:?}", profile_dir);
+                fs::create_dir_all(&profile_dir)
                     .map_err(|e| anyhow!("Unable to create themes dir: {}", e))?;
             }
-            println!("[ThemeManager] Using Android themes dir: {:?}", dir);
-            return Ok(dir);
+            println!("[ThemeManager] Using Android themes dir: {:?}", profile_dir);
+            return Ok(profile_dir);
         }
 
         #[cfg(not(target_os = "android"))]
         {
-            let mut base =
-                dirs_next::data_dir().ok_or_else(|| anyhow!("Unable to determine data dir"))?;
-            base.push("DesQTA");
-            if !base.exists() {
-                println!("[ThemeManager] Creating desktop data dir: {:?}", base);
-                fs::create_dir_all(&base)
-                    .map_err(|e| anyhow!("Unable to create data dir: {}", e))?;
-            }
-            let themes_dir = base.join("themes");
-            if !themes_dir.exists() {
+            // On desktop, profile_dir is already the correct path
+            profile_dir.push("themes");
+            if !profile_dir.exists() {
                 println!(
                     "[ThemeManager] Creating desktop themes dir: {:?}",
-                    themes_dir
+                    profile_dir
                 );
-                fs::create_dir_all(&themes_dir)
+                fs::create_dir_all(&profile_dir)
                     .map_err(|e| anyhow!("Unable to create themes dir: {}", e))?;
             }
-            println!("[ThemeManager] Using desktop themes dir: {:?}", themes_dir);
-            Ok(themes_dir)
+            println!("[ThemeManager] Using desktop themes dir: {:?}", profile_dir);
+            Ok(profile_dir)
         }
     }
 

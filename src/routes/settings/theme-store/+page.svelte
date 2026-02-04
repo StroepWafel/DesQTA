@@ -26,6 +26,7 @@
     CheckCircle,
     MagnifyingGlass,
     ChevronRight,
+    XMark,
   } from 'svelte-hero-icons';
   import { fade, fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
@@ -74,9 +75,9 @@
       }
     >(),
   );
-  // Downloads and installed themes
-  let downloadedThemeIds = $state(new Set<string>());
-  let installedThemeSlugs = $state(new Set<string>());
+  // Downloads and installed themes (based on filesystem in profile directory)
+  let downloadedThemeIds = $state(new Set<string>()); // Still track IDs for sync
+  let installedThemeSlugs = $state(new Set<string>()); // Filesystem check for UI
   // Update detection: map theme ID to update info
   let themeUpdates = $state(
     new Map<string, { hasUpdate: boolean; currentVersion?: string; latestVersion?: string }>(),
@@ -86,6 +87,25 @@
   let previewTheme: CloudTheme | null = $state(null);
   let previewManifest: ThemeManifest | null = $state(null);
   let previewOpen = $state(false);
+
+  // Collection modal
+  let selectedCollection: Collection | null = $state(null);
+  let collectionModalOpen = $state(false);
+
+  // Handle Escape key for collection modal
+  $effect(() => {
+    if (collectionModalOpen) {
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          collectionModalOpen = false;
+        }
+      };
+      window.addEventListener('keydown', handleEscape);
+      return () => {
+        window.removeEventListener('keydown', handleEscape);
+      };
+    }
+  });
 
   // Pagination
   let currentPage = $state(1);
@@ -214,12 +234,25 @@
   async function loadCollections() {
     try {
       const response = await themeStoreService.getCollections();
+      logger.debug('theme-store', 'loadCollections', 'Collections response', { response });
       if (response) {
-        collections = response.collections;
+        collections = response.collections || [];
+        logger.debug('theme-store', 'loadCollections', 'Loaded collections', {
+          count: collections.length,
+          collections: collections.map((c) => ({
+            id: c.id,
+            name: c.name,
+            themeCount: c.themes?.length || 0,
+          })),
+        });
         // Extract user status from theme objects in collections (included in API response)
         collections.forEach((collection) => {
-          collection.themes.forEach((theme) => extractUserStatusFromTheme(theme));
+          if (collection.themes) {
+            collection.themes.forEach((theme) => extractUserStatusFromTheme(theme));
+          }
         });
+      } else {
+        logger.warn('theme-store', 'loadCollections', 'No collections response received');
       }
     } catch (e) {
       logger.error('theme-store', 'loadCollections', 'Failed to load collections', { error: e });
@@ -240,13 +273,19 @@
 
   async function loadInstalledThemeSlugs() {
     try {
-      const availableThemes = await themeService.getAvailableThemes();
-      installedThemeSlugs = new Set(availableThemes);
+      // Get only custom themes from profile directory (excludes built-in themes)
+      const customThemes = await themeService.getCustomThemes();
+      installedThemeSlugs = new Set(customThemes);
     } catch (e) {
       logger.error('theme-store', 'loadInstalledThemeSlugs', 'Failed to load installed themes', {
         error: e,
       });
     }
+  }
+
+  // Helper function to check if a cloud theme is downloaded (based on filesystem)
+  function isThemeDownloaded(themeSlug: string): boolean {
+    return installedThemeSlugs.has(themeSlug);
   }
 
   async function checkThemeUpdates() {
@@ -301,10 +340,10 @@
       // Load collections
       await loadCollections();
 
-      // Load downloaded theme IDs
+      // Load downloaded theme IDs (for sync)
       await loadDownloadedThemeIds();
 
-      // Load installed theme slugs (check what's actually installed locally)
+      // Load installed theme slugs from filesystem (profile directory only, excludes built-in)
       await loadInstalledThemeSlugs();
 
       // Check for theme updates
@@ -356,7 +395,7 @@
 
   async function handleDownloadTheme(themeId: string) {
     try {
-      // Check if theme is already installed locally
+      // Check if theme is already installed locally (filesystem check)
       const theme = cloudThemes.find((t) => t.id === themeId);
       if (theme && installedThemeSlugs.has(theme.slug)) {
         // Theme is already installed, just apply it
@@ -366,10 +405,9 @@
 
       // Download and install the theme
       await themeService.loadCloudTheme(themeId);
-      await loadDownloadedThemeIds();
-      await loadInstalledThemeSlugs(); // Refresh installed themes list
+      await loadDownloadedThemeIds(); // Refresh downloaded themes list from settings
+      await loadInstalledThemeSlugs(); // Refresh installed themes list from filesystem
       await checkThemeUpdates(); // Check for updates after download
-      await loadThemes(); // Reload to update UI
     } catch (e) {
       logger.error('theme-store', 'handleDownloadTheme', 'Failed to download theme', {
         error: e,
@@ -744,78 +782,47 @@
     {/if}
 
     <!-- Collections Section -->
-    {#if collections && collections.length > 0 && !searchQuery && selectedCategory === 'all'}
+    {#if collections && collections.length > 0}
       <div class="mb-16">
         <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Collections</h2>
         <div class="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
-          <div class="flex gap-6 min-w-max">
+          <div class="flex gap-4 min-w-max">
             {#each collections as collection, i}
-              <div
-                class="flex-shrink-0 w-[400px]"
+              <button
+                type="button"
+                class="relative flex-shrink-0 w-48 h-48 rounded-2xl overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring transition-all duration-200 transform hover:scale-105 active:scale-95"
+                onclick={() => {
+                  selectedCollection = collection;
+                  collectionModalOpen = true;
+                }}
                 transition:fly={{ x: 20, duration: 300, delay: i * 50, easing: cubicOut }}>
-                <!-- Collection Header with Cover Image -->
-                <div class="relative h-48 rounded-2xl overflow-hidden mb-6 group cursor-pointer">
-                  {#if collection.cover_image_url}
-                    <img
-                      src={resolveImageUrl(collection.cover_image_url)}
-                      alt={collection.name}
-                      class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                  {:else}
-                    <div
-                      class="absolute inset-0 bg-gradient-to-br from-zinc-400 to-zinc-600 dark:from-zinc-700 dark:to-zinc-900">
-                    </div>
-                  {/if}
-                  <!-- Black gradient overlay -->
+                {#if collection.cover_image_url}
+                  <img
+                    src={resolveImageUrl(collection.cover_image_url)}
+                    alt={collection.name}
+                    class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                {:else}
                   <div
-                    class="absolute inset-0 bg-linear-to-b from-black/70 via-black/50 to-black/30">
+                    class="absolute inset-0 bg-gradient-to-br from-zinc-400 to-zinc-600 dark:from-zinc-700 dark:to-zinc-900">
                   </div>
-                  <!-- Collection Title -->
-                  <div class="absolute inset-0 flex items-end p-6">
-                    <div>
-                      <h3 class="text-2xl font-bold text-white mb-1">{collection.name}</h3>
-                      {#if collection.description}
-                        <p class="text-white/90 text-sm line-clamp-2">{collection.description}</p>
-                      {/if}
-                      <p class="text-white/70 text-xs mt-2">
-                        {collection.theme_count}
-                        {collection.theme_count === 1 ? 'theme' : 'themes'}
-                      </p>
-                    </div>
+                {/if}
+                <!-- Black gradient overlay fading behind text -->
+                <div
+                  class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-transparent">
+                </div>
+                <!-- Collection Title -->
+                <div class="absolute inset-0 flex items-end p-4">
+                  <div class="w-full">
+                    <h3 class="text-lg font-bold text-white mb-1 line-clamp-2">
+                      {collection.name}
+                    </h3>
+                    <p class="text-white/80 text-xs">
+                      {collection.theme_count}
+                      {collection.theme_count === 1 ? 'theme' : 'themes'}
+                    </p>
                   </div>
                 </div>
-
-                <!-- Collection Themes Grid -->
-                {#if collection.themes.length > 0}
-                  <div class="grid grid-cols-2 gap-4">
-                    {#each collection.themes.slice(0, 4) as theme, j}
-                      <ThemeCard
-                        {theme}
-                        manifest={cloudManifests.get(theme.id)}
-                        isActive={theme.slug === currentThemeName}
-                        isDownloaded={installedThemeSlugs.has(theme.slug)}
-                        isFavorited={themeUserStatus.get(theme.id)?.is_favorited || false}
-                        hasUpdate={themeUpdates.get(theme.id)?.hasUpdate || false}
-                        updateInfo={themeUpdates.get(theme.id)}
-                        animationDelay={j * 30}
-                        onPreview={handlePreviewTheme}
-                        onDownload={handleDownloadTheme}
-                        onUpdate={handleUpdateTheme}
-                        onFavorite={handleFavoriteTheme}
-                        onApply={handleApplyTheme} />
-                    {/each}
-                  </div>
-                  {#if collection.themes.length > 4}
-                    <button
-                      class="mt-4 w-full px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-                      onclick={() => {
-                        // TODO: Expand collection view
-                      }}>
-                      View All {collection.themes.length} Themes
-                      <Icon src={ChevronRight} class="w-4 h-4" />
-                    </button>
-                  {/if}
-                {/if}
-              </div>
+              </button>
             {/each}
           </div>
         </div>
@@ -997,6 +1004,96 @@
         onclick={cancelThemePreview}>
         <T key="common.cancel" fallback="Cancel" />
       </button>
+    </div>
+  </div>
+{/if}
+
+<!-- Collection Modal -->
+{#if collectionModalOpen && selectedCollection}
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="collection-modal-title"
+    transition:fade={{ duration: 200 }}>
+    <!-- Backdrop -->
+    <button
+      type="button"
+      class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+      onclick={() => (collectionModalOpen = false)}
+      aria-label="Close modal"></button>
+
+    <!-- Modal Content -->
+    <div
+      class="relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden flex flex-col"
+      role="document"
+      transition:fly={{ y: 20, duration: 300, easing: cubicOut }}>
+      <!-- Header -->
+      <div class="relative h-48 overflow-hidden">
+        {#if selectedCollection.cover_image_url}
+          <img
+            src={resolveImageUrl(selectedCollection.cover_image_url)}
+            alt={selectedCollection.name}
+            class="absolute inset-0 w-full h-full object-cover" />
+        {:else}
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-zinc-400 to-zinc-600 dark:from-zinc-700 dark:to-zinc-900">
+          </div>
+        {/if}
+        <!-- Gradient overlay -->
+        <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-transparent">
+        </div>
+        <!-- Header Content -->
+        <div class="relative z-10 p-6 flex items-start justify-between">
+          <div class="flex-1">
+            <h2 id="collection-modal-title" class="text-3xl font-bold text-white mb-2">
+              {selectedCollection.name}
+            </h2>
+            {#if selectedCollection.description}
+              <p class="text-white/90 text-base mb-2">{selectedCollection.description}</p>
+            {/if}
+            <p class="text-white/70 text-sm">
+              {selectedCollection.theme_count}
+              {selectedCollection.theme_count === 1 ? 'theme' : 'themes'}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="p-2 rounded-lg bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-110 active:scale-95"
+            onclick={() => (collectionModalOpen = false)}
+            aria-label="Close modal">
+            <Icon src={XMark} class="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Themes Grid -->
+      <div class="flex-1 overflow-y-auto p-6">
+        {#if selectedCollection.themes && selectedCollection.themes.length > 0}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {#each selectedCollection.themes as theme, j}
+              <ThemeCard
+                {theme}
+                manifest={cloudManifests.get(theme.id)}
+                isActive={theme.slug === currentThemeName}
+                isDownloaded={installedThemeSlugs.has(theme.slug)}
+                isFavorited={themeUserStatus.get(theme.id)?.is_favorited || false}
+                hasUpdate={themeUpdates.get(theme.id)?.hasUpdate || false}
+                updateInfo={themeUpdates.get(theme.id)}
+                animationDelay={j * 30}
+                onPreview={handlePreviewTheme}
+                onDownload={handleDownloadTheme}
+                onUpdate={handleUpdateTheme}
+                onFavorite={handleFavoriteTheme}
+                onApply={handleApplyTheme} />
+            {/each}
+          </div>
+        {:else}
+          <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+            No themes in this collection yet.
+          </div>
+        {/if}
+      </div>
     </div>
   </div>
 {/if}

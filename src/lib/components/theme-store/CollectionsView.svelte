@@ -22,7 +22,7 @@
     collections: CollectionData[];
     manifests?: Map<string, ThemeManifest>;
     currentThemeSlug?: string;
-    installedThemeSlugs?: Set<string>;
+    downloadedThemeIds?: Set<string>;
     themeUserStatus?: Map<
       string,
       {
@@ -46,7 +46,7 @@
     collections,
     manifests = new Map(),
     currentThemeSlug,
-    installedThemeSlugs = new Set(),
+    downloadedThemeIds = new Set(),
     themeUserStatus = new Map(),
     themeUpdates = new Map(),
     onPreview,

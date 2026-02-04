@@ -193,7 +193,49 @@ pub async fn theme_store_search_themes(
 pub async fn theme_store_get_collections(
     base_url: Option<String>,
 ) -> Result<Value, String> {
-    make_request("/collections".to_string(), "GET", None, None, base_url).await
+    // Collections endpoint is at /api/collections, not /api/themes/collections
+    // base_url from frontend is like "https://betterseqta.org" (without /api/themes)
+    let api_base = base_url.unwrap_or_else(|| {
+        // Default to betterseqta.org if not provided
+        "https://betterseqta.org".to_string()
+    });
+    
+    // Construct URL: base_url + /api/collections
+    let url = format!("{}/api/collections", api_base.trim_end_matches('/'));
+    
+    let client = netgrab::create_client();
+    let response: reqwest::Response = tokio::time::timeout(REQUEST_TIMEOUT, client
+        .get(&url)
+        .header("Content-Type", "application/json")
+        .header("Accept", "application/json")
+        .send())
+        .await
+        .map_err(|_| "Request timeout".to_string())?
+        .map_err(|e| format!("Request failed: {}", e))?;
+
+    let text: String = response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read response: {}", e))?;
+
+    let json_data: Value = serde_json::from_str(&text)
+        .unwrap_or_else(|_| Value::String(text.clone()));
+
+    if let Some(success) = json_data.get("success") {
+        if success.as_bool() == Some(false) {
+            let error_msg = json_data
+                .get("error")
+                .and_then(|e| e.as_str())
+                .unwrap_or("API request failed");
+            return Err(error_msg.to_string());
+        }
+    }
+
+    if let Some(data) = json_data.get("data") {
+        Ok(data.clone())
+    } else {
+        Ok(json_data)
+    }
 }
 
 #[tauri::command]

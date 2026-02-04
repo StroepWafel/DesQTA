@@ -106,6 +106,10 @@ pub struct Settings {
     pub sidebar_favorites: Option<Vec<String>>, // Array of paths
     #[serde(default)]
     pub sidebar_recent_activity: Option<Vec<RecentActivity>>,
+    #[serde(default)]
+    pub downloaded_theme_ids: Option<Vec<String>>, // Array of theme UUIDs from cloud store
+    #[serde(default)]
+    pub downloaded_theme_metadata: Option<serde_json::Value>, // Map of theme UUID -> { version, checksum, updated_at }
 }
 
 impl Default for Settings {
@@ -141,6 +145,8 @@ impl Default for Settings {
             sidebar_folders: None,
             sidebar_favorites: None,
             sidebar_recent_activity: None,
+            downloaded_theme_ids: None,
+            downloaded_theme_metadata: None,
         }
     }
 }
@@ -485,6 +491,14 @@ impl Settings {
                 }
             }
             default_settings.sidebar_recent_activity = Some(activities);
+        }
+
+        // Merge downloaded theme IDs
+        default_settings.downloaded_theme_ids = get_opt_string_array(&existing_json, "downloaded_theme_ids");
+
+        // Merge downloaded theme metadata (preserve as JSON value)
+        if let Some(metadata_json) = existing_json.get("downloaded_theme_metadata") {
+            default_settings.downloaded_theme_metadata = Some(metadata_json.clone());
         }
 
         default_settings

@@ -675,8 +675,8 @@ class ThemeService {
     try {
       // Fetch theme details from store
       const themeData = await themeStoreService.getTheme(themeId);
-      if (!themeData) {
-        throw new Error('Theme not found in store');
+      if (!themeData || !themeData.theme || !themeData.theme.slug) {
+        throw new Error('Theme not found in store or invalid structure');
       }
 
       // Get download URL (zip URL)
@@ -815,7 +815,7 @@ class ThemeService {
       for (const themeId of downloadedIds) {
         try {
           const themeData = await themeStoreService.getTheme(themeId);
-          if (themeData) {
+          if (themeData && themeData.theme && themeData.theme.slug) {
             // Check if theme is already installed locally
             const installed = await this.isThemeInstalled(themeData.theme.slug);
             if (!installed) {
@@ -834,9 +834,17 @@ class ThemeService {
               });
             }
           } else {
-            logger.warn('themeService', 'syncDownloadedThemes', 'Theme not found in store', {
-              themeId,
-            });
+            logger.warn(
+              'themeService',
+              'syncDownloadedThemes',
+              'Theme not found in store or invalid structure',
+              {
+                themeId,
+                hasThemeData: !!themeData,
+                hasTheme: !!themeData?.theme,
+                hasSlug: !!themeData?.theme?.slug,
+              },
+            );
           }
         } catch (error) {
           logger.error('themeService', 'syncDownloadedThemes', `Failed to sync theme ${themeId}`, {
@@ -889,7 +897,7 @@ class ThemeService {
 
       // Get latest theme data from store
       const themeData = await themeStoreService.getTheme(themeId);
-      if (!themeData) {
+      if (!themeData || !themeData.theme) {
         return { hasUpdate: false };
       }
 
