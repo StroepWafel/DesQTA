@@ -59,7 +59,26 @@
   let hovered = $state(false);
   let downloading = $state(false);
   let favoriting = $state(false);
+  let previewImageUrls = $state<Map<string, string | null>>(new Map());
   const ROTATE_INTERVAL = 6000; // 6 seconds
+
+  // Load preview images with caching
+  $effect(() => {
+    (async () => {
+      for (const theme of themes) {
+        if (!previewImageUrls.has(theme.id)) {
+          const url = await resolveImageUrl(
+            theme.preview?.thumbnail || null,
+            theme.id,
+            'thumbnail',
+            undefined,
+            theme.updated_at,
+          );
+          previewImageUrls.set(theme.id, url);
+        }
+      }
+    })();
+  });
 
   function nextSlide() {
     if (themes.length > 0) {
@@ -162,7 +181,7 @@
     <div class="relative w-full h-full">
       {#each themes as theme, i}
         {#if i === currentIndex}
-          {@const previewUrl = resolveImageUrl(theme.preview?.thumbnail || '')}
+          {@const previewUrl = previewImageUrls.get(theme.id) || null}
           {@const isDownloaded = installedThemeSlugs.has(theme.slug)}
           {@const isFavorited = themeUserStatus.get(theme.id)?.is_favorited || false}
           {@const hasUpdate = themeUpdates.get(theme.id)?.hasUpdate || false}

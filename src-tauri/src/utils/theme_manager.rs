@@ -1061,3 +1061,197 @@ pub async fn cleanup_temp_theme(
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn cache_theme_image(
+    app: AppHandle,
+    image_url: String,
+    theme_id: String,
+    image_type: String, // "thumbnail" or "screenshot"
+    image_index: Option<usize>, // For screenshots
+) -> Result<String, String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let images_dir = themes_dir.join("images");
+    
+    // Create images directory if it doesn't exist
+    fs::create_dir_all(&images_dir)
+        .map_err(|e| format!("Failed to create images directory: {}", e))?;
+
+    // Generate filename based on theme_id, image_type, and optional index
+    let filename = if let Some(index) = image_index {
+        format!("{}_{}_{}.jpg", theme_id, image_type, index)
+    } else {
+        format!("{}_{}.jpg", theme_id, image_type)
+    };
+    
+    let cached_path = images_dir.join(&filename);
+
+    println!(
+        "[ThemeManager] Caching theme image {} to {:?}",
+        image_url, cached_path
+    );
+
+    // Download image using netgrab client (handles school networks/SSL)
+    use crate::netgrab;
+    let client = netgrab::create_client();
+
+    let response = client
+        .get(&image_url)
+        .timeout(std::time::Duration::from_secs(30))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to download image: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("HTTP error: {}", response.status()));
+    }
+
+    let image_bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read image bytes: {}", e))?;
+
+    // Write image to cache
+    fs::write(&cached_path, &image_bytes)
+        .map_err(|e| format!("Failed to write cached image: {}", e))?;
+
+    println!("[ThemeManager] Image cached successfully to {:?}", cached_path);
+
+    // Return the cached path as a string (relative to themes directory)
+    Ok(format!("images/{}", filename))
+}
+
+#[tauri::command]
+pub async fn get_cached_image_path(
+    app: AppHandle,
+    theme_id: String,
+    image_type: String,
+    image_index: Option<usize>,
+    updated_at: Option<u64>, // Unix timestamp
+) -> Result<Option<String>, String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let images_dir = themes_dir.join("images");
+
+    // Generate filename
+    let filename = if let Some(index) = image_index {
+        format!("{}_{}_{}.jpg", theme_id, image_type, index)
+    } else {
+        format!("{}_{}.jpg", theme_id, image_type)
+    };
+    
+    let cached_path = images_dir.join(&filename);
+
+    // Check if cached image exists
+    if !cached_path.exists() {
+        return Ok(None);
+    }
+
+    // If updated_at is provided, check if cache is stale
+    if let Some(updated_at_ts) = updated_at {
+        if let Ok(metadata) = fs::metadata(&cached_path) {
+            if let Ok(modified_time) = metadata.modified() {
+                if let Ok(duration_since_epoch) = modified_time.duration_since(std::time::UNIX_EPOCH) {
+                    let cached_timestamp = duration_since_epoch.as_secs();
+                    // If cached image is older than updated_at, it's stale
+                    if cached_timestamp < updated_at_ts {
+                        println!(
+                            "[ThemeManager] Cached image is stale (cached: {}, updated: {})",
+                            cached_timestamp, updated_at_ts
+                        );
+                        return Ok(None);
+                    }
+                }
+            }
+        }
+    }
+
+    // Return the cached path (relative to themes directory)
+    Ok(Some(format!("images/{}", filename)))
+}
+
+#[tauri::command]
+pub async fn get_cached_image_url(
+    app: AppHandle,
+    theme_id: String,
+    image_type: String,
+    image_index: Option<usize>,
+) -> Result<Option<String>, String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let themes_dir_str = themes_dir.to_string_lossy().to_string();
+    
+    let images_dir = themes_dir.join("images");
+
+    // Generate filename
+    let filename = if let Some(index) = image_index {
+        format!("{}_{}_{}.jpg", theme_id, image_type, index)
+    } else {
+        format!("{}_{}.jpg", theme_id, image_type)
+    };
+    
+    let cached_path = images_dir.join(&filename);
+
+    // Check if cached image exists
+    if !cached_path.exists() {
+        return Ok(None);
+    }
+
+    // Return file:// URL for the cached image
+    // Convert to absolute path and normalize separators
+    let absolute_path = cached_path.canonicalize()
+        .map_err(|e| format!("Failed to canonicalize path: {}", e))?;
+    let path_str = absolute_path.to_string_lossy().replace('\\', "/");
+    
+    // On Windows, file:// URLs need 3 slashes, on Unix they need 3 slashes too
+    Ok(Some(format!("file:///{}", path_str)))
+}
+
+#[tauri::command]
+pub async fn invalidate_theme_image_cache(
+    app: AppHandle,
+    theme_id: String,
+) -> Result<(), String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let images_dir = themes_dir.join("images");
+
+    if !images_dir.exists() {
+        return Ok(()); // No cache directory, nothing to invalidate
+    }
+
+    println!("[ThemeManager] Invalidating image cache for theme: {}", theme_id);
+
+    // Delete thumbnail
+    let thumbnail_path = images_dir.join(format!("{}_thumbnail.jpg", theme_id));
+    if thumbnail_path.exists() {
+        fs::remove_file(&thumbnail_path)
+            .map_err(|e| format!("Failed to remove thumbnail: {}", e))?;
+        println!("[ThemeManager] Removed cached thumbnail: {:?}", thumbnail_path);
+    }
+
+    // Delete screenshots (try first 20 to cover most cases)
+    for i in 0..20 {
+        let screenshot_path = images_dir.join(format!("{}_screenshot_{}.jpg", theme_id, i));
+        if screenshot_path.exists() {
+            fs::remove_file(&screenshot_path)
+                .map_err(|e| format!("Failed to remove screenshot {}: {}", i, e))?;
+            println!("[ThemeManager] Removed cached screenshot {}: {:?}", i, screenshot_path);
+        }
+    }
+
+    Ok(())
+}

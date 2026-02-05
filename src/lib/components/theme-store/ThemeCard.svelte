@@ -74,15 +74,32 @@
   }
 
 
-  function getPreviewImage(): string | null {
-    if (theme.preview?.thumbnail) {
-      return resolveImageUrl(theme.preview.thumbnail);
-    }
-    if (manifest?.preview?.thumbnail) {
-      return resolveImageUrl(manifest.preview.thumbnail);
-    }
-    return null;
-  }
+  let previewImageUrl = $state<string | null>(null);
+
+  // Load preview image with caching
+  $effect(() => {
+    (async () => {
+      if (theme.preview?.thumbnail) {
+        previewImageUrl = await resolveImageUrl(
+          theme.preview.thumbnail,
+          theme.id,
+          'thumbnail',
+          undefined,
+          theme.updated_at,
+        );
+      } else if (manifest?.preview?.thumbnail) {
+        previewImageUrl = await resolveImageUrl(
+          manifest.preview.thumbnail,
+          theme.id,
+          'thumbnail',
+          undefined,
+          theme.updated_at,
+        );
+      } else {
+        previewImageUrl = null;
+      }
+    })();
+  });
 
   function getPreviewStyle(): string {
     if (manifest?.features?.glassmorphism) {
@@ -109,9 +126,9 @@
     class="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden h-full flex flex-col">
     <!-- Theme Preview -->
     <div class="relative h-48 overflow-hidden" style={getPreviewStyle()}>
-      {#if getPreviewImage()}
+      {#if previewImageUrl}
         <img
-          src={getPreviewImage()}
+          src={previewImageUrl}
           alt={`${theme.name} preview`}
           class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 {hovered
             ? 'scale-105'

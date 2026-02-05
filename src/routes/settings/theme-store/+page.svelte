@@ -38,7 +38,7 @@
   import SpotlightCarousel from '$lib/components/theme-store/SpotlightCarousel.svelte';
   import CollectionsView from '$lib/components/theme-store/CollectionsView.svelte';
   import { logger } from '../../../utils/logger';
-  import { resolveImageUrl } from '$lib/services/themeStoreService';
+  import { resolveImageUrl, resolveImageUrlSync } from '$lib/services/themeStoreService';
 
   // Cloud themes
   let cloudThemes: CloudTheme[] = $state([]);
@@ -617,7 +617,8 @@
 
   function getBuiltInPreviewImage(theme: ThemeManifest): string | null {
     if (theme.preview?.thumbnail) {
-      return resolveImageUrl(theme.preview.thumbnail);
+      // Use sync version for built-in themes (they're local, no caching needed)
+      return resolveImageUrlSync(theme.preview.thumbnail);
     }
     return null;
   }
@@ -843,7 +844,7 @@
                 transition:fly={{ x: 20, duration: 300, delay: i * 50, easing: cubicOut }}>
                 {#if collection.cover_image_url}
                   <img
-                    src={resolveImageUrl(collection.cover_image_url)}
+                    src={resolveImageUrlSync(collection.cover_image_url) || ''}
                     alt={collection.name}
                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                 {:else}
@@ -1092,7 +1093,7 @@
       <div class="relative h-48 overflow-hidden">
         {#if selectedCollection.cover_image_url}
           <img
-            src={resolveImageUrl(selectedCollection.cover_image_url)}
+            src={resolveImageUrlSync(selectedCollection.cover_image_url) || ''}
             alt={selectedCollection.name}
             class="absolute inset-0 w-full h-full object-cover" />
         {:else}

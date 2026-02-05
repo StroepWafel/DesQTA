@@ -694,9 +694,11 @@ class ThemeService {
       }
 
       // Resolve ZIP URL to full URL (handle relative paths)
+      // ZIP URLs don't need caching, use sync version
+      const { resolveImageUrlSync } = await import('./themeStoreService');
       const zipUrl =
-        resolveImageUrl(downloadInfo.zip_download_url) || downloadInfo.zip_download_url;
-      if (!zipUrl.startsWith('http://') && !zipUrl.startsWith('https://')) {
+        resolveImageUrlSync(downloadInfo.zip_download_url) || downloadInfo.zip_download_url;
+      if (!zipUrl || (!zipUrl.startsWith('http://') && !zipUrl.startsWith('https://'))) {
         throw new Error(`Invalid ZIP URL: ${zipUrl}`);
       }
 
@@ -744,9 +746,11 @@ class ThemeService {
       }
 
       // Resolve ZIP URL to full URL (handle relative paths)
+      // ZIP URLs don't need caching, use sync version
+      const { resolveImageUrlSync } = await import('./themeStoreService');
       const zipUrl =
-        resolveImageUrl(downloadInfo.zip_download_url) || downloadInfo.zip_download_url;
-      if (!zipUrl.startsWith('http://') && !zipUrl.startsWith('https://')) {
+        resolveImageUrlSync(downloadInfo.zip_download_url) || downloadInfo.zip_download_url;
+      if (!zipUrl || (!zipUrl.startsWith('http://') && !zipUrl.startsWith('https://'))) {
         throw new Error(`Invalid ZIP URL: ${zipUrl}`);
       }
 
@@ -971,6 +975,21 @@ class ThemeService {
       // Get latest checksum if available
       const downloadInfo = await themeStoreService.downloadTheme(themeId);
       const latestChecksum = downloadInfo?.checksum;
+
+      // If updated_at changed, invalidate image cache
+      if (updatedAtChanged) {
+        try {
+          await invoke('invalidate_theme_image_cache', { themeId });
+          logger.debug('themeService', 'checkThemeUpdate', 'Invalidated image cache', {
+            themeId,
+          });
+        } catch (e) {
+          logger.warn('themeService', 'checkThemeUpdate', 'Failed to invalidate image cache', {
+            error: e,
+            themeId,
+          });
+        }
+      }
 
       return {
         hasUpdate: versionChanged || updatedAtChanged,

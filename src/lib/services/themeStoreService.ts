@@ -18,7 +18,106 @@ function getApiBaseUrl(): string {
 }
 
 // Resolve image URL - convert relative paths to absolute URLs
-export function resolveImageUrl(imagePath: string | null | undefined): string | null {
+// Also checks for cached images first
+export async function resolveImageUrl(
+  imagePath: string | null | undefined,
+  themeId?: string,
+  imageType: 'thumbnail' | 'screenshot' = 'thumbnail',
+  imageIndex?: number,
+  updatedAt?: number,
+): Promise<string | null> {
+  if (!imagePath) return null;
+
+  // Check for cached image first if themeId is provided
+  if (themeId) {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const cachedUrl = await invoke<string | null>('get_cached_image_url', {
+        themeId,
+        imageType,
+        imageIndex: imageIndex ?? null,
+      });
+
+      if (cachedUrl) {
+        // Check if cache is still valid based on updated_at
+        if (updatedAt !== undefined) {
+          const cachedPath = await invoke<string | null>('get_cached_image_path', {
+            themeId,
+            imageType,
+            imageIndex: imageIndex ?? null,
+            updatedAt: updatedAt,
+          });
+
+          if (cachedPath) {
+            return cachedUrl;
+          }
+          // Cache is stale, will download below
+        } else {
+          // No updated_at check, use cached image
+          return cachedUrl;
+        }
+      }
+    } catch (e) {
+      // If cache check fails, fall through to normal URL resolution
+      console.warn('Failed to check image cache:', e);
+    }
+  }
+
+  // If already absolute URL, return as-is (but cache it if themeId provided)
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    // Cache the image in the background if themeId is provided
+    if (themeId) {
+      cacheImageInBackground(imagePath, themeId, imageType, imageIndex).catch((e) => {
+        console.warn('Failed to cache image in background:', e);
+      });
+    }
+    return imagePath;
+  }
+
+  // If relative path starting with /, prepend API base URL
+  if (imagePath.startsWith('/')) {
+    const baseUrl = getApiBaseUrl();
+    // Remove trailing slash from baseUrl if present
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const fullUrl = `${cleanBase}${imagePath}`;
+    
+    // Cache the image in the background if themeId is provided
+    if (themeId) {
+      cacheImageInBackground(fullUrl, themeId, imageType, imageIndex).catch((e) => {
+        console.warn('Failed to cache image in background:', e);
+      });
+    }
+    
+    return fullUrl;
+  }
+
+  // Otherwise return as-is (might be a data URL or other format)
+  return imagePath;
+}
+
+// Cache image in background without blocking
+async function cacheImageInBackground(
+  imageUrl: string,
+  themeId: string,
+  imageType: 'thumbnail' | 'screenshot',
+  imageIndex?: number,
+): Promise<void> {
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('cache_theme_image', {
+      imageUrl,
+      themeId,
+      imageType,
+      imageIndex: imageIndex ?? null,
+    });
+  } catch (e) {
+    // Silently fail - caching is best effort
+    console.debug('Failed to cache image:', e);
+  }
+}
+
+// Synchronous version for backwards compatibility (doesn't check cache)
+export function resolveImageUrlSync(imagePath: string | null | undefined): string | null {
   if (!imagePath) return null;
 
   // If already absolute URL, return as-is
