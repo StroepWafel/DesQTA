@@ -495,14 +495,34 @@
     }
   }
 
+  // Scroll to the top of the grid (useful when applying templates)
+  async function scrollToTop() {
+    if (!gridElement) return;
+
+    // Wait for DOM to be ready
+    await tick();
+    await new Promise((resolve) => setTimeout(resolve, 300)); // Wait for GridStack positioning
+
+    // Scroll the grid element into view at the top
+    gridElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+      inline: 'nearest',
+    });
+    logger.debug('WidgetGrid', 'scrollToTop', 'Scrolled to top of grid');
+  }
+
   // Expose loadLayout for parent component
   async function reloadLayout(widgetIdToScroll?: string) {
     await loadLayout();
     await addWidgetsToGrid();
     
-    // Scroll to the newly added widget if specified
+    // Scroll to the newly added widget if specified, otherwise scroll to top (for templates)
     if (widgetIdToScroll) {
       await scrollToWidget(widgetIdToScroll);
+    } else {
+      // When no specific widget ID is provided (e.g., template applied), scroll to top
+      await scrollToTop();
     }
   }
 

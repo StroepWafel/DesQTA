@@ -61,15 +61,17 @@
       await widgetTemplatesService.applyTemplate(templateId);
       // Close modal first
       onClose();
-      // Wait a bit for the save to complete, then refresh the page
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      window.location.reload();
+      // Trigger layout reload via callback (no page reload needed)
+      if (onApply) {
+        onApply();
+      }
     } catch (e) {
       logger.error('WidgetTemplates', 'handleApplyTemplate', `Failed to apply template: ${e}`, {
         error: e,
       });
-      loading = false;
       alert('Failed to apply template. Please try again.');
+    } finally {
+      loading = false;
     }
   }
 
