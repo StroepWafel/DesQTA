@@ -54,6 +54,23 @@ async function autoSyncToCloud(patch: Record<string, any>): Promise<void> {
 }
 
 export async function saveSettingsWithQueue(patch: Record<string, any>): Promise<void> {
+  // Skip cloud sync if this is just a widget layout update from the timetable page
+  if (patch.dashboard_widgets_layout) {
+    try {
+      const layout = JSON.parse(patch.dashboard_widgets_layout);
+      const widgets = layout?.widgets || [];
+      // If it's only the temporary timetable page widget, don't trigger cloud sync
+      if (widgets.length === 1 && widgets[0]?.id === 'timetable-page-widget') {
+        console.log('Skipping cloud sync for temporary timetable page widget');
+        // Still save locally but don't sync to cloud
+        await invoke('save_settings_merge', { patch });
+        return;
+      }
+    } catch (e) {
+      // If parsing fails, continue with normal flow
+    }
+  }
+  
   try {
     await invoke('save_settings_merge', { patch });
     

@@ -378,7 +378,15 @@
     "export_pdf": "Export as PDF",
     "pdf_description": "Portable document format",
     "export_ical": "Export as iCal",
-    "ical_description": "Calendar (.ics) format"
+    "ical_description": "Calendar (.ics) format",
+    "week": "Week",
+    "month": "Month",
+    "list": "List",
+    "view": "View:",
+    "no_lessons_today": "No Lessons Today",
+    "no_results": "No Results",
+    "try_different_filters": "Try adjusting your search or filters.",
+    "search": "Search lessons..."
   },
   "study": {
     "page_description": "Plan, track, and focus on your upcoming work.",

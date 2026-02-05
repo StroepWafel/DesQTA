@@ -1,450 +1,119 @@
 <script lang="ts">
-  // Svelte imports
-  import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
+  import TimetableWidget from '$lib/components/widgets/TimetableWidget.svelte';
+  import { getUrlParam, updateUrlParam } from '$lib/utils/urlParams';
+  import { getMonday, formatDate, parseDate } from '$lib/utils/timetableUtils';
+  import type { WidgetConfig } from '$lib/types/widgets';
 
-  // External libraries
-  import { ScheduleXCalendar } from '@schedule-x/svelte';
-  import {
-    createCalendar,
-    createViewDay,
-    createViewWeek,
-    createViewMonthGrid,
-    createViewMonthAgenda,
-  } from '@schedule-x/calendar';
-  import { createCalendarControlsPlugin } from '@schedule-x/calendar-controls';
-  import { createCurrentTimePlugin } from '@schedule-x/current-time';
-  import { createEventModalPlugin } from '@schedule-x/event-modal';
-  import '@schedule-x/theme-default/dist/index.css';
-  import 'temporal-polyfill/global';
+  let widgetConfig: WidgetConfig | null = $state(null);
+  let weekStart = $state(getMonday(new Date()));
+  let reloadKey = $state(0);
+  let forceReload = $state(false);
+  let previousDateParam = $state<string | null>(null);
 
-  // $lib/ imports
-  import { setIdb } from '$lib/services/idbCache';
-  import { useDataLoader } from '$lib/utils/useDataLoader';
-  import TimeGridEvent from '$lib/components/timetable/TimeGridEvent.svelte';
-  import { _ } from '$lib/i18n';
-  import { theme } from '$lib/stores/theme';
-  import { updateUrlParam, getUrlParam } from '$lib/utils/urlParams';
-
-  // Relative imports
-  import { seqtaFetch } from '../../utils/netUtil';
-  import { cache } from '../../utils/cache';
-  import { logger } from '../../utils/logger';
-
-  // Types
-  import type { LessonColour } from '$lib/types';
-  import type { CalendarApp } from '@schedule-x/calendar';
-
-  const studentId = 69;
-
-  let calendarApp = $state<CalendarApp | null>(null);
-  let lessons = $state<unknown[]>([]);
-  let lessonColours = $state<LessonColour[]>([]);
-  let loadingLessons = $state(true);
-
-  async function loadLessonColours() {
-    const cachedColours = cache.get<LessonColour[]>('lesson_colours');
-    if (cachedColours) {
-      lessonColours = cachedColours;
-      return lessonColours;
-    }
-
-    try {
-      const res = await seqtaFetch('/seqta/student/load/prefs?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: { request: 'userPrefs', asArray: true, user: studentId },
-      });
-      lessonColours = JSON.parse(res).payload;
-      cache.set('lesson_colours', lessonColours, 30);
-      return lessonColours;
-    } catch (e) {
-      logger.error('timetable', 'loadLessonColours', `Failed to load lesson colours: ${e}`, {
-        error: e,
-      });
-      return [];
-    }
-  }
-
-  async function fetchLessons(from: string, until: string) {
-    const res = await seqtaFetch('/seqta/student/load/timetable?', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: { from, until, student: studentId },
-    });
-    return JSON.parse(res).payload.items;
-  }
-
-  function transformLessonsToEvents(items: unknown[], colours: LessonColour[]) {
-    // @ts-ignore - Temporal is globally available via polyfill
-    const timeZone = Temporal.Now.timeZoneId();
-
-    return items.map((lesson: unknown) => {
-      const lessonObj = lesson as Record<string, unknown>;
-      const colourPrefName = `timetable.subject.colour.${lessonObj.code}`;
-      const subjectColour = colours.find((c) => c.name === colourPrefName);
-      const color = subjectColour ? `${subjectColour.value}` : '#3b82f6';
-
-      // Construct ZonedDateTime objects
-      // lesson.from/until are HH:mm, lesson.date is YYYY-MM-DD
-      // We need to add seconds for strict ISO parsing usually, or let Temporal parse it
-      // Temporal.PlainDateTime.from('2023-01-01T10:00') works
-
-      // @ts-ignore
-      const start = Temporal.PlainDateTime.from(`${lessonObj.date}T${lessonObj.from}`)
-        .toZonedDateTime(timeZone)
-        .toString(); // Schedule-X might want the object or string?
-      // Docs example: start: Temporal.ZonedDateTime.from(...)
-      // The error said "needs to be a Temporal.ZonedDateTime" object.
-
-      // @ts-ignore
-      const startObj = Temporal.PlainDateTime.from(
-        `${lessonObj.date}T${lessonObj.from}`,
-      ).toZonedDateTime(timeZone);
-      // @ts-ignore
-      const endObj = Temporal.PlainDateTime.from(
-        `${lessonObj.date}T${lessonObj.until}`,
-      ).toZonedDateTime(timeZone);
-
-      // Sanitize ID for DOM selector compatibility
-      const rawId =
-        (lessonObj.uid as string | undefined) ||
-        `${lessonObj.date}-${lessonObj.from}-${lessonObj.code}`;
-      // Replace invalid chars with underscore or just use a hash/clean string
-      // Schedule-X needs simple chars: a-z, A-Z, 0-9, -, _
-      // Colons and dots are problematic in querySelector without escaping
-      const id = String(rawId).replace(/[^a-zA-Z0-9-_]/g, '_');
-
-      return {
-        id: id,
-        title: (lessonObj.description as string) || (lessonObj.code as string) || 'Lesson',
-        start: startObj,
-        end: endObj,
-        location: (lessonObj.room as string | undefined) || undefined,
-        staff: (lessonObj.staff as string | undefined) || undefined,
-        color: color,
-        description: lessonObj.staff ? `Teacher: ${lessonObj.staff}` : undefined,
-      };
-    });
-  }
-
-  async function loadLessons() {
-    loadingLessons = true;
-
-    // Load a wide range (e.g., +/- 2 months from now) to populate the calendar
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
-
-    const fromStr = start.toISOString().split('T')[0];
-    const untilStr = end.toISOString().split('T')[0];
-    const cacheKey = `timetable_${fromStr}_${untilStr}`;
-
-    try {
-      const items = await useDataLoader<unknown[]>({
-        cacheKey,
-        ttlMinutes: 30,
-        context: 'timetable',
-        functionName: 'loadLessons',
-        fetcher: async () => {
-          return await fetchLessons(fromStr, untilStr);
-        },
-      });
-
-      if (items) {
-        const colours = await loadLessonColours();
-        const events = transformLessonsToEvents(items || [], colours || []);
-        initCalendar(events);
-      }
-    } catch (e) {
-      logger.error('timetable', 'loadLessons', `Error loading timetable: ${e}`, { error: e });
-    } finally {
-      loadingLessons = false;
-    }
-  }
-
-  function getMonday(date: Date): Date {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    d.setDate(diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  function parseDateFromUrl(): string {
-    // Check for date parameter first
+  // Parse date from URL
+  function parseDateFromUrl(): Date {
     const dateParam = getUrlParam('date');
     if (dateParam) {
-      // Validate date format (YYYY-MM-DD)
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (dateRegex.test(dateParam)) {
-        return dateParam;
+        return parseDate(dateParam);
       }
     }
-
-    // Check for week parameter (Monday date of the week)
-    const weekParam = getUrlParam('week');
-    if (weekParam) {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (dateRegex.test(weekParam)) {
-        return weekParam;
-      }
-    }
-
-    // Default to today
-    return new Date().toISOString().split('T')[0];
+    return new Date();
   }
 
-  async function updateCalendarUrl(date: Date) {
-    const dateStr = date.toISOString().split('T')[0];
+  // Update URL when date changes
+  async function updateUrl(date: Date) {
+    const dateStr = formatDate(date);
     await updateUrlParam('date', dateStr);
-    // Remove week param if date is set
-    const weekParam = getUrlParam('week');
-    if (weekParam) {
-      await updateUrlParam('week', null);
-    }
   }
 
-  function initCalendar(events: ReturnType<typeof transformLessonsToEvents>) {
-    // Determine initial date from URL or today
-    const initialDateStr = parseDateFromUrl();
-    // @ts-ignore
-    const initialDate = Temporal.PlainDate.from(initialDateStr);
-
-    const plugins = [
-      createCalendarControlsPlugin(),
-      createCurrentTimePlugin(),
-      createEventModalPlugin(),
-    ];
-
-    calendarApp = createCalendar({
-      // @ts-ignore
-      selectedDate: initialDate,
-      // Set the calendar timezone to match the user's local time so events appear at the correct wall-clock time
-      // @ts-ignore
-      timezone: Temporal.Now.timeZoneId(),
-      // Configure the week view to show only 5 days (Mon-Fri) which is standard for schools
-      firstDayOfWeek: 1,
-      // Skip heavy validation for performance since data is programmatically generated
-      skipValidation: true,
-
-      weekOptions: {
-        nDays: 5,
-        gridHeight: 1350, // Further reduced height for compact view
-        eventOverlap: false,
-        eventWidth: 98, // Slight gap between events for cleaner look
-        // Clean 24h format for the axis (09:00, 10:00) matches school schedules well
-        timeAxisFormatOptions: { hour: '2-digit', minute: '2-digit' },
-      },
-
-      monthGridOptions: {
-        // Show more events in month view before collapsing to "+X more"
-        // A typical school day has ~6 periods, so 7 ensures we see the full day usually
-        nEventsPerDay: 7,
-      },
-      // Tighten visible hours to standard school day (8am - 4pm)
-      dayBoundaries: {
-        start: '08:00',
-        end: '16:00',
-      },
-      views: [createViewWeek(), createViewDay(), createViewMonthGrid(), createViewMonthAgenda()],
-      events: events,
-      isDark: $theme === 'dark',
-      plugins: plugins,
-      callbacks: {
-        // Update URL when date changes
-        onRangeUpdate: async (range: any) => {
-          if (range?.start) {
-            // @ts-ignore
-            const date = Temporal.PlainDate.from(range.start);
-            const jsDate = new Date(date.year, date.month - 1, date.day);
-            await updateCalendarUrl(jsDate);
-          }
-        },
-      },
-    });
-
-    // Listen for date changes from calendar controls
-    // Schedule-X calendar updates selectedDate when user navigates
-    // We'll use an effect to watch for changes
-    $effect(() => {
-      if (calendarApp) {
-        // @ts-ignore
-        const currentDate = calendarApp.calendarState.value.selectedDate;
-        if (currentDate) {
-          // @ts-ignore
-          const dateStr = `${currentDate.year}-${String(currentDate.month).padStart(2, '0')}-${String(currentDate.day).padStart(2, '0')}`;
-          const urlDate = getUrlParam('date');
-          if (urlDate !== dateStr) {
-            updateCalendarUrl(new Date(dateStr)).catch(() => {
-              // Silently fail if navigation is in progress
-            });
-          }
-        }
-      }
-    });
-  }
-
-  // Handle theme changes
+  // Watch for URL changes (back/forward navigation)
   $effect(() => {
-    if (calendarApp) {
-      calendarApp.setTheme($theme === 'dark' ? 'dark' : 'light');
+    const dateParam = $page.url.searchParams.get('date');
+    
+    // Determine if this is back navigation (going to earlier date) or forward (going to later date)
+    let isBackNavigation = false;
+    if (dateParam && previousDateParam) {
+      const currentDate = parseDate(dateParam);
+      const previousDate = parseDate(previousDateParam);
+      isBackNavigation = currentDate < previousDate;
+    }
+    
+    if (dateParam) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (dateRegex.test(dateParam)) {
+        const urlDate = parseDate(dateParam);
+        const urlWeekStart = getMonday(urlDate);
+        // Only update if the week actually changed
+        if (urlWeekStart.getTime() !== weekStart.getTime()) {
+          weekStart = urlWeekStart;
+          forceReload = isBackNavigation; // Only force reload on back navigation
+          reloadKey++;
+        }
+        previousDateParam = dateParam;
+      }
+    } else {
+      // No date param, use current date
+      const today = new Date();
+      const todayWeekStart = getMonday(today);
+      if (todayWeekStart.getTime() !== weekStart.getTime()) {
+        weekStart = todayWeekStart;
+        forceReload = false; // Default to cached data
+        reloadKey++;
+      }
+      previousDateParam = null;
     }
   });
 
-  onMount(() => {
-    loadLessons();
+  // Create a temporary widget config for the route
+  $effect(() => {
+    if (!widgetConfig) {
+      const initialDate = parseDateFromUrl();
+      weekStart = getMonday(initialDate);
+      // Initialize previousDateParam with current URL param
+      const currentDateParam = $page.url.searchParams.get('date');
+      previousDateParam = currentDateParam;
+
+      // Create a widget config for the timetable page
+      widgetConfig = {
+        id: 'timetable-page-widget',
+        type: 'timetable',
+        enabled: true,
+        position: {
+          x: 0,
+          y: 0,
+          w: 12,
+          h: 12,
+        },
+        settings: {
+          viewMode: 'week',
+          timeRange: { start: '08:00', end: '16:00' },
+          showTeacher: true,
+          showRoom: true,
+          showAttendance: true,
+          showEmptyPeriods: false,
+          density: 'normal',
+          defaultView: 'week',
+        },
+      };
+    }
   });
 </script>
 
-<div class="sx-svelte-calendar-wrapper h-full w-full min-h-[calc(100vh-4rem)] p-4">
-  {#if calendarApp}
-    <div class="calendar-content-animate">
-      <ScheduleXCalendar {calendarApp} timeGridEvent={TimeGridEvent} />
+<div class="h-full w-full min-h-[calc(100vh-4rem)] p-4">
+  {#if widgetConfig}
+    <div class="h-full w-full" transition:fade={{ duration: 400 }}>
+      <TimetableWidget widget={widgetConfig} isTemporary={true} initialWeekStart={weekStart} {reloadKey} {forceReload} />
     </div>
   {:else}
     <div class="flex items-center justify-center h-full">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div
+        class="w-16 h-16 rounded-full border-4 animate-spin border-blue-500/30 border-t-blue-500">
+      </div>
     </div>
   {/if}
 </div>
-
-<style>
-  /* Target the wrapper, internal calendar, and the modal (which attaches to body) */
-  :global(.sx-svelte-calendar-wrapper),
-  :global(.sx-svelte-calendar-wrapper .sx__calendar),
-  :global(.sx-svelte-calendar-wrapper .is-dark),
-  :global(.sx__event-modal) {
-    /* Customization for Schedule-X to match app theme */
-    --sx-color-primary: var(--color-accent);
-    --sx-color-on-primary: var(--color-accent-foreground);
-    --sx-color-primary-container: color-mix(in srgb, var(--color-accent) 20%, transparent);
-    --sx-color-on-primary-container: var(--color-accent);
-
-    --sx-color-secondary: var(--color-secondary);
-    --sx-color-on-secondary: var(--color-secondary-foreground);
-    --sx-color-secondary-container: var(--color-muted);
-    --sx-color-on-secondary-container: var(--color-foreground);
-
-    --sx-color-tertiary: var(--color-chart-1);
-    --sx-color-on-tertiary: var(--color-foreground);
-    --sx-color-tertiary-container: var(--color-chart-1);
-    --sx-color-on-tertiary-container: var(--color-foreground);
-
-    --sx-color-surface: var(--color-card);
-    --sx-color-surface-dim: var(--color-muted);
-    --sx-color-surface-bright: var(--color-card);
-    --sx-color-on-surface: var(--color-card-foreground);
-
-    --sx-color-surface-container: var(--color-card);
-    --sx-color-surface-container-low: var(--color-card);
-    --sx-color-surface-container-high: var(--color-muted);
-
-    --sx-color-background: transparent;
-    --sx-color-on-background: var(--color-foreground);
-
-    --sx-color-outline: var(--color-border);
-    --sx-color-outline-variant: var(--color-border);
-
-    --sx-color-shadow: transparent;
-    --sx-color-surface-tint: var(--color-accent);
-
-    --sx-color-neutral: var(--color-muted);
-    --sx-color-neutral-variant: var(--color-border);
-    --sx-color-on-neutral: var(--color-muted-foreground);
-
-    /* Internal overrides for cleaner look */
-    --sx-internal-color-light-gray: var(--color-muted);
-    --sx-internal-color-text: var(--color-foreground);
-    --sx-internal-color-gray-ripple-background: var(--color-muted);
-
-    font-family: inherit;
-  }
-
-  /* Modal specific overrides for background */
-  :global(.sx__event-modal),
-  :global(.sx__event-modal__content) {
-    background-color: var(--color-card) !important;
-    border: 1px solid var(--color-border);
-    box-shadow:
-      0 20px 25px -5px rgb(0 0 0 / 0.1),
-      0 8px 10px -6px rgb(0 0 0 / 0.1);
-  }
-
-  :global(.sx__event-modal__content) {
-    color: var(--color-foreground) !important;
-  }
-
-  /* Fix date picker popup background and text visibility */
-  :global(.sx__date-picker__popup),
-  :global(.sx__date-picker-popup),
-  :global(.sx__date-picker__wrapper) {
-    background-color: var(--color-card) !important;
-    border: 1px solid var(--color-border);
-    box-shadow:
-      0 10px 15px -3px rgb(0 0 0 / 0.1),
-      0 4px 6px -4px rgb(0 0 0 / 0.1);
-  }
-
-  :global(.sx__date-picker__years-view),
-  :global(.sx__date-picker__months-view),
-  :global(.sx__date-picker__month-view) {
-    background-color: var(--color-card);
-  }
-
-  :global(.sx__date-picker__day.is-selected) {
-    background-color: var(--color-accent) !important;
-    color: var(--color-accent-foreground) !important;
-  }
-
-  /* Ensure all Schedule-X calendar text adapts to theme */
-  :global(.sx__calendar),
-  :global(.sx__calendar *) {
-    color: var(--color-foreground);
-  }
-
-  /* Time grid labels */
-  :global(.sx__time-grid__time),
-  :global(.sx__time-grid__time-label) {
-    color: var(--color-foreground) !important;
-  }
-
-  /* Calendar controls */
-  :global(.sx__calendar-controls),
-  :global(.sx__calendar-controls button),
-  :global(.sx__calendar-controls .sx__button) {
-    color: var(--color-foreground) !important;
-  }
-
-  /* View switcher */
-  :global(.sx__view-switcher),
-  :global(.sx__view-switcher button) {
-    color: var(--color-foreground) !important;
-  }
-
-  /* Month grid day numbers */
-  :global(.sx__month-grid__day),
-  :global(.sx__month-grid__day-number) {
-    color: var(--color-foreground) !important;
-  }
-
-  /* Agenda view */
-  :global(.sx__agenda__event-title),
-  :global(.sx__agenda__event-time) {
-    color: var(--color-foreground) !important;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .calendar-content-animate {
-    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-</style>

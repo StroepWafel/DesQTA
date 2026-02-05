@@ -46,6 +46,12 @@ export const widgetService = {
       // Ensure widgets is always an array (defensive check)
       const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
 
+      // Don't save if layout contains only temporary timetable page widget
+      if (widgets.length === 1 && widgets[0]?.id === 'timetable-page-widget') {
+        logger.debug('widgetService', 'saveLayout', 'Skipping save for temporary timetable page layout');
+        return;
+      }
+
       // Convert Date to ISO string for Rust
       const layoutToSave: WidgetLayout = {
         ...layout,
@@ -61,6 +67,7 @@ export const widgetService = {
       logger.debug('widgetService', 'saveLayout', 'Layout saved successfully', {
         widgetCount: widgets.length,
         version: layoutToSave.version,
+        widgetIds: widgets.map((w) => w.id),
       });
     } catch (e) {
       logger.error('widgetService', 'saveLayout', `Failed to save layout: ${e}`, { error: e });
@@ -141,6 +148,11 @@ export const widgetService = {
   },
 
   async updateWidgetConfig(widgetId: string, updates: Partial<WidgetConfig>): Promise<void> {
+    // Don't save temporary widget configs (e.g., timetable page widget)
+    if (widgetId === 'timetable-page-widget') {
+      logger.debug('widgetService', 'updateWidgetConfig', 'Skipping save for temporary widget', { widgetId });
+      return;
+    }
     const layout = await this.loadLayout();
     const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
     const widget = widgets.find((w) => w.id === widgetId);

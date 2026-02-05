@@ -57,7 +57,6 @@
   import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
-  import type { RecentActivity } from '../lib/types/sidebar';
   export const needsSetup = writable(false);
 
   let { children } = $props();
@@ -727,47 +726,6 @@
   };
 
   // Track recent activity when route changes
-  const trackPageVisit = async (path: string) => {
-    // Skip tracking for certain paths
-    if (
-      path === '/settings' ||
-      path.startsWith('/settings/') ||
-      path === '/login' ||
-      path === '/error' ||
-      !path ||
-      path === ''
-    ) {
-      return;
-    }
-
-    try {
-      const settings = await loadSettings(['sidebar_recent_activity']);
-      const currentActivity = (settings.sidebar_recent_activity as RecentActivity[]) || [];
-      const now = Date.now();
-
-      // Remove duplicates and old entries, then add new entry
-      const filtered = currentActivity.filter((item) => item.path !== path);
-      const updated = [{ path, visited_at: now }, ...filtered]
-        .sort((a, b) => b.visited_at - a.visited_at)
-        .slice(0, 15); // Keep only last 15 items
-
-      // Save updated activity
-      await saveSettingsWithQueue({ sidebar_recent_activity: updated });
-    } catch (e) {
-      logger.error('layout', 'trackPageVisit', `Failed to track page visit: ${e}`, {
-        path,
-        error: e,
-      });
-    }
-  };
-
-  // Track page visits when route changes
-  $effect(() => {
-    const currentPath = $page.url.pathname;
-    if (currentPath && !$needsSetup && shellReady) {
-      trackPageVisit(currentPath);
-    }
-  });
 
   // Config/menu loading is handled in checkSession/startLogin
 </script>
