@@ -9,7 +9,6 @@
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import { AsyncWrapper, SearchInput, Badge } from '$lib/components/ui';
   import Input from '$lib/components/ui/Input.svelte';
-  import * as Popover from '$lib/components/ui/popover/index.js';
   import * as Pagination from '$lib/components/ui/pagination/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
   import T from '$lib/components/T.svelte';
@@ -54,6 +53,9 @@
   let showImageModal = $state(false);
   let selectedImageUrl = $state<string | null>(null);
   let selectedStudentName = $state<string>('');
+
+  // Filters modal state
+  let showFiltersModal = $state(false);
 
   let years: string[] = $state([]);
   let subSchools: string[] = $state([]);
@@ -439,138 +441,12 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <Popover.Root>
-        <Popover.Trigger
-          class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2">
-          <Icon src={Funnel} class="w-4 h-4" />
-          <T key="directory.filters" fallback="Filters" />
-        </Popover.Trigger>
-
-        <Popover.Content class="w-96 p-4 space-y-4">
-          <h3 class="font-medium text-zinc-900 dark:text-white">
-            <T key="directory.filter_students" fallback="Filter Students" />
-          </h3>
-
-          <div class="grid grid-cols-1 gap-4">
-            <!-- Year Filter -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                <T key="directory.year_level" fallback="Year Level" />
-              </label>
-              <Select.Root type="single" bind:value={selectedYear}>
-                <Select.Trigger class="w-full">
-                  <span class="truncate"
-                    >{selectedYear === 'all'
-                      ? $_('directory.all_years') || 'All Years'
-                      : `${$_('directory.year') || 'Year'} ${selectedYear}`}</span>
-                </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="all">
-                    <T key="directory.all_years" fallback="All Years" />
-                  </Select.Item>
-                  {#each years as year}
-                    <Select.Item value={year}>
-                      <T key="directory.year_number" fallback="Year" values={{ number: year }} />
-                    </Select.Item>
-                  {/each}
-                </Select.Content>
-              </Select.Root>
-            </div>
-
-            <!-- Sub School Filter -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                <T key="directory.sub_school" fallback="Sub School" />
-              </label>
-              <Select.Root type="single" bind:value={selectedSubSchool}>
-                <Select.Trigger class="w-full">
-                  <span class="truncate"
-                    >{selectedSubSchool === 'all'
-                      ? $_('directory.all_sub_schools') || 'All Sub Schools'
-                      : selectedSubSchool}</span>
-                </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="all">
-                    <T key="directory.all_sub_schools" fallback="All Sub Schools" />
-                  </Select.Item>
-                  {#each subSchools as subSchool}
-                    <Select.Item value={subSchool}>{subSchool}</Select.Item>
-                  {/each}
-                </Select.Content>
-              </Select.Root>
-            </div>
-
-            <!-- House Filter -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                <T key="directory.house" fallback="House" />
-              </label>
-              <Select.Root type="single" bind:value={selectedHouse}>
-                <Select.Trigger class="w-full">
-                  <span class="truncate"
-                    >{selectedHouse === 'all'
-                      ? $_('directory.all_houses') || 'All Houses'
-                      : selectedHouse}</span>
-                </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="all">
-                    <T key="directory.all_houses" fallback="All Houses" />
-                  </Select.Item>
-                  {#each houses as house}
-                    <Select.Item value={house}>{house}</Select.Item>
-                  {/each}
-                </Select.Content>
-              </Select.Root>
-            </div>
-
-            <!-- Campus Filter -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                <T key="directory.campus" fallback="Campus" />
-              </label>
-              <Select.Root type="single" bind:value={selectedCampus}>
-                <Select.Trigger class="w-full">
-                  <span class="truncate"
-                    >{selectedCampus === 'all'
-                      ? $_('directory.all_campuses') || 'All Campuses'
-                      : `${$_('directory.campus') || 'Campus'} ${selectedCampus}`}</span>
-                </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="all">
-                    <T key="directory.all_campuses" fallback="All Campuses" />
-                  </Select.Item>
-                  {#each campuses as campus}
-                    <Select.Item value={campus}>
-                      <T
-                        key="directory.campus_name"
-                        fallback="Campus {name}"
-                        values={{ name: campus }} />
-                    </Select.Item>
-                  {/each}
-                </Select.Content>
-              </Select.Root>
-            </div>
-
-            <!-- Has Photo Filter -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                <T key="directory.has_photo" fallback="Has Photo" />
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  bind:checked={filterHasPhoto}
-                  class="w-4 h-4 text-accent-600 bg-zinc-100 border-zinc-300 rounded focus:ring-accent-500 focus:ring-2 dark:bg-zinc-700 dark:border-zinc-600" />
-                <span class="text-sm text-zinc-600 dark:text-zinc-400">
-                  <T
-                    key="directory.show_only_with_photos"
-                    fallback="Show only students with photos" />
-                </span>
-              </label>
-            </div>
-          </div>
-        </Popover.Content>
-      </Popover.Root>
+      <button
+        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        onclick={() => (showFiltersModal = true)}>
+        <Icon src={Funnel} class="w-4 h-4" />
+        <T key="directory.filters" fallback="Filters" />
+      </button>
 
       <button
         class="px-4 py-2 text-sm font-medium text-white accent-bg rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
@@ -785,6 +661,134 @@
       </div>
     </div>
   {/if}
+</Modal>
+
+<!-- Filters Modal -->
+<Modal
+  bind:open={showFiltersModal}
+  title={$_('directory.filter_students') || 'Filter Students'}
+  maxWidth="max-w-md"
+  onclose={() => (showFiltersModal = false)}>
+  <div class="p-6 space-y-4">
+    <div class="grid grid-cols-1 gap-4">
+      <!-- Year Filter -->
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <T key="directory.year_level" fallback="Year Level" />
+        </label>
+        <Select.Root type="single" bind:value={selectedYear}>
+          <Select.Trigger class="w-full">
+            <span class="truncate"
+              >{selectedYear === 'all'
+                ? $_('directory.all_years') || 'All Years'
+                : `${$_('directory.year') || 'Year'} ${selectedYear}`}</span>
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="all">
+              <T key="directory.all_years" fallback="All Years" />
+            </Select.Item>
+            {#each years as year}
+              <Select.Item value={year}>
+                <T key="directory.year_number" fallback="Year" values={{ number: year }} />
+              </Select.Item>
+            {/each}
+          </Select.Content>
+        </Select.Root>
+      </div>
+
+      <!-- Sub School Filter -->
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <T key="directory.sub_school" fallback="Sub School" />
+        </label>
+        <Select.Root type="single" bind:value={selectedSubSchool}>
+          <Select.Trigger class="w-full">
+            <span class="truncate"
+              >{selectedSubSchool === 'all'
+                ? $_('directory.all_sub_schools') || 'All Sub Schools'
+                : selectedSubSchool}</span>
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="all">
+              <T key="directory.all_sub_schools" fallback="All Sub Schools" />
+            </Select.Item>
+            {#each subSchools as subSchool}
+              <Select.Item value={subSchool}>{subSchool}</Select.Item>
+            {/each}
+          </Select.Content>
+        </Select.Root>
+      </div>
+
+      <!-- House Filter -->
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <T key="directory.house" fallback="House" />
+        </label>
+        <Select.Root type="single" bind:value={selectedHouse}>
+          <Select.Trigger class="w-full">
+            <span class="truncate"
+              >{selectedHouse === 'all'
+                ? $_('directory.all_houses') || 'All Houses'
+                : selectedHouse}</span>
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="all">
+              <T key="directory.all_houses" fallback="All Houses" />
+            </Select.Item>
+            {#each houses as house}
+              <Select.Item value={house}>{house}</Select.Item>
+            {/each}
+          </Select.Content>
+        </Select.Root>
+      </div>
+
+      <!-- Campus Filter -->
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <T key="directory.campus" fallback="Campus" />
+        </label>
+        <Select.Root type="single" bind:value={selectedCampus}>
+          <Select.Trigger class="w-full">
+            <span class="truncate"
+              >{selectedCampus === 'all'
+                ? $_('directory.all_campuses') || 'All Campuses'
+                : `${$_('directory.campus') || 'Campus'} ${selectedCampus}`}</span>
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="all">
+              <T key="directory.all_campuses" fallback="All Campuses" />
+            </Select.Item>
+            {#each campuses as campus}
+              <Select.Item value={campus}>
+                <T
+                  key="directory.campus_name"
+                  fallback="Campus {name}"
+                  values={{ name: campus }} />
+              </Select.Item>
+            {/each}
+          </Select.Content>
+        </Select.Root>
+      </div>
+
+      <!-- Has Photo Filter -->
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <T key="directory.has_photo" fallback="Has Photo" />
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            bind:checked={filterHasPhoto}
+            class="w-4 h-4 text-accent-600 bg-zinc-100 border-zinc-300 rounded focus:ring-accent-500 focus:ring-2 dark:bg-zinc-700 dark:border-zinc-600" />
+          <span class="text-sm text-zinc-600 dark:text-zinc-400">
+            <T
+              key="directory.show_only_with_photos"
+              fallback="Show only students with photos" />
+          </span>
+        </label>
+      </div>
+    </div>
+  </div>
 </Modal>
 
 <style>

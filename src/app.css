@@ -5,6 +5,20 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Fix for portal-rendered dropdowns and popovers */
+[data-slot="select-content"],
+[data-slot="popover-content"] {
+  background-color: var(--color-popover, var(--color-card, white)) !important;
+  color: var(--color-popover-foreground, var(--color-card-foreground, black)) !important;
+  opacity: 1 !important;
+}
+
+.dark [data-slot="select-content"],
+.dark [data-slot="popover-content"] {
+  background-color: var(--color-popover, var(--color-card, oklch(0.21 0.006 285.885))) !important;
+  color: var(--color-popover-foreground, var(--color-card-foreground, white)) !important;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -414,4 +428,28 @@ html {
 
 [data-bits-floating-content-wrapper] {
   background: transparent !important;
+}
+
+/* Fix for portal-rendered dropdowns and popovers - ensure opaque backgrounds and proper sizing */
+[data-slot="select-content"] {
+  background-color: white !important;
+  color: rgb(24 24 27) !important;
+  opacity: 1 !important;
+  min-width: 8rem !important;
+  max-width: 20rem !important;
+  height: 6rem !important;
+  width: min(var(--bits-select-anchor-width, 11rem), 20rem) !important;
+}
+
+[data-slot="popover-content"] {
+  background-color: white !important;
+  color: rgb(24 24 27) !important;
+  opacity: 1 !important;
+  max-width: 24rem !important;
+}
+
+.dark [data-slot="select-content"],
+.dark [data-slot="popover-content"] {
+  background-color: rgb(39 39 42) !important;
+  color: white !important;
 }
