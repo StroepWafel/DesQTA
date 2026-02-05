@@ -121,7 +121,12 @@
     "step6_desc": "Torna a DesQTA e usa il pulsante \"Carica Codice QR\" per selezionare e caricare la tua immagine del codice QR salvata. DesQTA ti farà accedere automaticamente!",
     "help_title": "Serve Altro Aiuto?",
     "help_desc": "Se non riesci a trovare l'opzione \"Connetti App Mobile\", potrebbe essere chiamata diversamente nella tua scuola, come:",
-    "help_options": ["Registrazione Dispositivo Mobile", "Configurazione App", "Configurazione Codice QR", "Connetti Dispositivo"],
+    "help_options": [
+      "Registrazione Dispositivo Mobile",
+      "Configurazione App",
+      "Configurazione Codice QR",
+      "Connetti Dispositivo"
+    ],
     "help_contact": "Contatta il supporto IT della tua scuola se ancora non riesci a trovare questa opzione.",
     "got_it": "Capito, grazie!"
   },
@@ -163,7 +168,7 @@
     "view_source_code": "Visualizza codice sorgente",
     "website": "Sito web",
     "official_website": "Sito web ufficiale",
-    "copyright": "© 2025 DesQTA. Concesso in licenza sotto Licenza MIT."
+    "copyright": "© 2026 DesQTA. Concesso in licenza sotto Licenza MIT."
   },
   "dashboard": {
     "quick_links": "Link Rapidi",
