@@ -124,10 +124,14 @@
   }
   .timetable-today-label {
     font-size: 0.7rem;
-    color: var(--tw-prose-invert-bullets, #60a5fa);
+    color: #3b82f6;
     margin-top: 0.1rem;
     font-weight: 500;
     letter-spacing: 0.01em;
+  }
+  
+  .timetable-day-label.bg-blue-500 .timetable-today-label {
+    color: rgba(255, 255, 255, 0.9);
   }
   .timetable-time-label {
     width: 56px;

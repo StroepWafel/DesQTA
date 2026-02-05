@@ -3,7 +3,6 @@
   
   // Parse color from event
   const bgColor = calendarEvent.color || 'var(--sx-color-primary)';
-  const textColor = calendarEvent.textColor || '#fff';
   
   // Robust time formatter handling strings and Temporal objects
   function formatTime(val: any): string {
@@ -38,8 +37,8 @@
 
 <!-- Reverted to simpler, cleaner layout without icons, but with time included -->
 <div 
-  class="w-full h-full p-1.5 text-sm rounded-md overflow-hidden hover:opacity-90 transition-opacity border-l-4 flex flex-col justify-start leading-tight"
-  style="background-color: {bgColor}33; border-left-color: {bgColor}; color: {textColor};"
+  class="w-full h-full p-1.5 text-sm rounded-md overflow-hidden hover:opacity-90 transition-opacity border-l-4 flex flex-col justify-start leading-tight text-zinc-900 dark:text-white"
+  style="background-color: {bgColor}33; border-left-color: {bgColor};"
 >
   <div class="font-bold truncate mb-0.5 text-sm">
     {calendarEvent.title}

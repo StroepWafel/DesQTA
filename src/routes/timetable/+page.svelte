@@ -398,6 +398,43 @@
     color: var(--color-accent-foreground) !important;
   }
 
+  /* Ensure all Schedule-X calendar text adapts to theme */
+  :global(.sx__calendar),
+  :global(.sx__calendar *) {
+    color: var(--color-foreground);
+  }
+
+  /* Time grid labels */
+  :global(.sx__time-grid__time),
+  :global(.sx__time-grid__time-label) {
+    color: var(--color-foreground) !important;
+  }
+
+  /* Calendar controls */
+  :global(.sx__calendar-controls),
+  :global(.sx__calendar-controls button),
+  :global(.sx__calendar-controls .sx__button) {
+    color: var(--color-foreground) !important;
+  }
+
+  /* View switcher */
+  :global(.sx__view-switcher),
+  :global(.sx__view-switcher button) {
+    color: var(--color-foreground) !important;
+  }
+
+  /* Month grid day numbers */
+  :global(.sx__month-grid__day),
+  :global(.sx__month-grid__day-number) {
+    color: var(--color-foreground) !important;
+  }
+
+  /* Agenda view */
+  :global(.sx__agenda__event-title),
+  :global(.sx__agenda__event-time) {
+    color: var(--color-foreground) !important;
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
