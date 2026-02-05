@@ -222,6 +222,8 @@ export async function startThemePreview(themeName: string) {
 }
 
 // Cancel a running preview and restore prior look
+// Note: This function doesn't handle temp theme cleanup - that should be done by the caller
+// (e.g., the theme store page) which knows about tempPreviewThemeSlug
 export async function cancelThemePreview() {
   try {
     await themeService.cancelPreview();

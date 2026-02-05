@@ -33,7 +33,7 @@
       string,
       { hasUpdate: boolean; currentVersion?: string; latestVersion?: string }
     >;
-    onPreview?: (themeId: string) => void;
+    onQuickPreview?: (themeId: string) => Promise<void>;
     onDownload?: (themeId: string) => Promise<void>;
     onUpdate?: (themeId: string) => Promise<void>;
     onFavorite?: (themeId: string, favorited: boolean) => Promise<void>;
@@ -47,7 +47,7 @@
     installedThemeSlugs = new Set(),
     themeUserStatus = new Map(),
     themeUpdates = new Map(),
-    onPreview,
+    onQuickPreview,
     onDownload,
     onUpdate,
     onFavorite,
@@ -253,12 +253,18 @@
                           {downloading ? 'Downloading...' : 'Download'}
                         </button>
                       {/if}
-                      <button
-                        type="button"
-                        onclick={() => onPreview?.(theme.id)}
-                        class="px-6 py-3 bg-white/10 backdrop-blur-md text-white font-semibold rounded-xl hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-105 active:scale-95">
-                        Preview
-                      </button>
+                      {#if onQuickPreview}
+                        <button
+                          type="button"
+                          onclick={async () => {
+                            if (onQuickPreview) {
+                              await onQuickPreview(theme.id);
+                            }
+                          }}
+                          class="px-6 py-3 bg-white/10 backdrop-blur-md text-white font-semibold rounded-xl hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-105 active:scale-95">
+                          Preview
+                        </button>
+                      {/if}
                       <button
                         type="button"
                         onclick={() => handleFavorite(theme, !isFavorited)}

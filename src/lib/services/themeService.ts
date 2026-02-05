@@ -258,15 +258,23 @@ class ThemeService {
       return bundled.manifest as unknown as ThemeManifest;
     }
 
+    // Check if this is a temp theme (starts with .temp/)
+    const isTempTheme = themeName.startsWith('.temp/');
+
     try {
-      // First try to load from backend (supports both static and custom themes)
+      // First try to load from backend (supports both static and custom themes, including temp)
       const manifest = await invoke<ThemeManifest>('load_theme_manifest', { themeName });
       this.loadedThemes.set(themeName, manifest);
       return manifest;
     } catch (backendError) {
+      // Don't try static fallback for temp themes - they only exist in the backend
+      if (isTempTheme) {
+        throw backendError;
+      }
+
       console.warn('Backend theme loading failed, trying static fallback:', backendError);
 
-      // Fallback to static themes directory
+      // Fallback to static themes directory (only for non-temp themes)
       const manifestPath = `/themes/${themeName}/theme-manifest.json`;
 
       try {
@@ -717,6 +725,58 @@ class ThemeService {
         themeId,
       });
       throw error;
+    }
+  }
+
+  // Preview a cloud theme by downloading it to temp folder and applying it temporarily
+  async previewCloudTheme(themeId: string): Promise<string> {
+    try {
+      // Fetch theme details from store
+      const themeData = await themeStoreService.getTheme(themeId);
+      if (!themeData || !themeData.theme || !themeData.theme.slug) {
+        throw new Error('Theme not found in store or invalid structure');
+      }
+
+      // Get download URL (zip URL)
+      const downloadInfo = await themeStoreService.downloadTheme(themeId);
+      if (!downloadInfo) {
+        throw new Error('Failed to get download URL');
+      }
+
+      // Resolve ZIP URL to full URL (handle relative paths)
+      const zipUrl =
+        resolveImageUrl(downloadInfo.zip_download_url) || downloadInfo.zip_download_url;
+      if (!zipUrl.startsWith('http://') && !zipUrl.startsWith('https://')) {
+        throw new Error(`Invalid ZIP URL: ${zipUrl}`);
+      }
+
+      // Download ZIP to temp folder
+      const tempThemeName = await invoke<string>('download_theme_to_temp', {
+        zipUrl: zipUrl,
+        themeSlug: themeData.theme.slug,
+        checksum: downloadInfo.checksum,
+      });
+
+      // Return the temp theme name (e.g., ".temp/theme-slug")
+      return tempThemeName;
+    } catch (error) {
+      logger.error('themeService', 'previewCloudTheme', 'Failed to preview cloud theme', {
+        error,
+        themeId,
+      });
+      throw error;
+    }
+  }
+
+  // Cleanup temp theme folder
+  async cleanupTempTheme(themeSlug: string): Promise<void> {
+    try {
+      await invoke('cleanup_temp_theme', { themeSlug });
+    } catch (error) {
+      logger.error('themeService', 'cleanupTempTheme', 'Failed to cleanup temp theme', {
+        error,
+        themeSlug,
+      });
     }
   }
 

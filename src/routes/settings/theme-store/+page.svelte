@@ -34,7 +34,6 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import ThemeCard from '$lib/components/theme-store/ThemeCard.svelte';
-  import ThemePreview from '$lib/components/theme-store/ThemePreview.svelte';
   import ThemeFilters from '$lib/components/theme-store/ThemeFilters.svelte';
   import SpotlightCarousel from '$lib/components/theme-store/SpotlightCarousel.svelte';
   import CollectionsView from '$lib/components/theme-store/CollectionsView.svelte';
@@ -84,10 +83,9 @@
     new Map<string, { hasUpdate: boolean; currentVersion?: string; latestVersion?: string }>(),
   );
 
-  // Preview modal
-  let previewTheme: CloudTheme | null = $state(null);
-  let previewManifest: ThemeManifest | null = $state(null);
-  let previewOpen = $state(false);
+
+  // Temp theme preview tracking
+  let tempPreviewThemeSlug: string | null = $state(null);
 
   // Collection modal
   let selectedCollection: Collection | null = $state(null);
@@ -113,8 +111,14 @@
   let totalPages = $state(1);
   const themesPerPage = 20;
 
-  onDestroy(() => {
-    cancelThemePreview();
+  onDestroy(async () => {
+    // Always cleanup temp theme when leaving the page
+    if (tempPreviewThemeSlug) {
+      await themeService.cleanupTempTheme(tempPreviewThemeSlug);
+      tempPreviewThemeSlug = null;
+    }
+    // Cancel preview to restore previous theme
+    await cancelThemePreview();
   });
 
   async function loadBuiltInThemes() {
@@ -486,26 +490,52 @@
     }
   }
 
-  async function handlePreviewTheme(themeId: string) {
-    const theme = cloudThemes.find((t) => t.id === themeId);
-    if (theme) {
-      previewTheme = theme;
-      previewManifest = cloudManifests.get(themeId) || null;
-      previewOpen = true;
-    }
-  }
-
-  async function handleApplyFromPreview() {
-    if (previewTheme) {
-      const themeSlug = previewTheme.slug;
-      if (installedThemeSlugs.has(themeSlug)) {
-        // Theme is already installed, just apply it
-        await loadAndApplyTheme(themeSlug);
-      } else {
-        // Download and install, then apply
-        await handleDownloadTheme(previewTheme.id);
+  async function handleQuickPreviewTheme(themeId: string) {
+    try {
+      const theme = cloudThemes.find((t) => t.id === themeId);
+      if (!theme) {
+        logger.error('theme-store', 'handleQuickPreviewTheme', 'Theme not found', { themeId });
+        return;
       }
-      previewOpen = false;
+
+      // If already previewing this theme, cancel it
+      if (tempPreviewThemeSlug === theme.slug && get(previewingTheme)) {
+        await cancelThemePreview();
+        if (tempPreviewThemeSlug) {
+          await themeService.cleanupTempTheme(tempPreviewThemeSlug);
+          tempPreviewThemeSlug = null;
+        }
+        return;
+      }
+
+      // Cancel any existing preview first
+      if (get(previewingTheme)) {
+        await cancelThemePreview();
+        if (tempPreviewThemeSlug) {
+          await themeService.cleanupTempTheme(tempPreviewThemeSlug);
+          tempPreviewThemeSlug = null;
+        }
+      }
+
+      // Download theme to temp folder
+      const tempThemeName = await themeService.previewCloudTheme(themeId);
+      
+      // Extract slug from temp theme name (e.g., ".temp/theme-slug" -> "theme-slug")
+      const slug = tempThemeName.replace(/^\.temp\//, '');
+      tempPreviewThemeSlug = slug;
+
+      // Start preview with the temp theme name
+      await startThemePreview(tempThemeName);
+    } catch (e) {
+      logger.error('theme-store', 'handleQuickPreviewTheme', 'Failed to preview theme', {
+        error: e,
+        themeId,
+      });
+      // Cleanup on error
+      if (tempPreviewThemeSlug) {
+        await themeService.cleanupTempTheme(tempPreviewThemeSlug);
+        tempPreviewThemeSlug = null;
+      }
     }
   }
 
@@ -788,7 +818,7 @@
           {installedThemeSlugs}
           {themeUserStatus}
           {themeUpdates}
-          onPreview={handlePreviewTheme}
+          onQuickPreview={handleQuickPreviewTheme}
           onDownload={handleDownloadTheme}
           onUpdate={handleUpdateTheme}
           onFavorite={handleFavoriteTheme}
@@ -862,7 +892,7 @@
                 hasUpdate={themeUpdates.get(theme.id)?.hasUpdate || false}
                 updateInfo={themeUpdates.get(theme.id)}
                 animationDelay={i * 30}
-                onPreview={handlePreviewTheme}
+                onQuickPreview={handleQuickPreviewTheme}
                 onDownload={handleDownloadTheme}
                 onUpdate={handleUpdateTheme}
                 onFavorite={handleFavoriteTheme}
@@ -973,33 +1003,6 @@
   {/if}
 </div>
 
-<!-- Preview Modal -->
-{#if previewTheme}
-  <ThemePreview
-    theme={previewTheme}
-    manifest={previewManifest || undefined}
-    open={previewOpen}
-    onClose={() => (previewOpen = false)}
-    onApply={handleApplyFromPreview}
-    onThemeUpdate={(updatedTheme) => {
-      // Update theme in cloudThemes array
-      const index = cloudThemes.findIndex((t) => t.id === updatedTheme.id);
-      if (index !== -1) {
-        cloudThemes[index] = updatedTheme;
-      }
-      // Update in spotlight themes
-      const spotlightIndex = spotlightThemes.findIndex((t) => t.id === updatedTheme.id);
-      if (spotlightIndex !== -1) {
-        spotlightThemes[spotlightIndex] = updatedTheme;
-      }
-      // Update preview theme if it's the same
-      if (previewTheme?.id === updatedTheme.id) {
-        previewTheme = updatedTheme;
-      }
-      // Update user status from updated theme
-      extractUserStatusFromTheme(updatedTheme);
-    }} />
-{/if}
 
 <!-- Live preview action bar -->
 {#if $previewingTheme}
@@ -1011,12 +1014,54 @@
       <div class="h-5 w-px bg-zinc-300 dark:bg-zinc-700"></div>
       <button
         class="px-3 py-1.5 rounded-lg accent-bg hover:accent-bg-hover text-white text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95"
-        onclick={applyPreviewTheme}>
+        onclick={async () => {
+          const previewThemeName = get(previewingTheme);
+          const isTempTheme = previewThemeName?.startsWith('.temp/') ?? false;
+          const currentTempSlug = tempPreviewThemeSlug; // Capture for TypeScript
+          
+          if (isTempTheme && currentTempSlug) {
+            // If it's a temp theme, we need to download it properly first
+            // Find the theme ID from the slug
+            const theme = cloudThemes.find((t) => t.slug === currentTempSlug);
+            if (theme) {
+              try {
+                // Download and install the theme properly
+                await handleDownloadTheme(theme.id);
+                // Apply the installed theme
+                await handleApplyTheme(currentTempSlug);
+                // Cleanup temp folder
+                await themeService.cleanupTempTheme(currentTempSlug);
+                tempPreviewThemeSlug = null;
+              } catch (e) {
+                logger.error('theme-store', 'applyPreviewTheme', 'Failed to apply temp theme', {
+                  error: e,
+                  themeId: theme.id,
+                });
+                // Still cleanup temp on error
+                await themeService.cleanupTempTheme(currentTempSlug);
+                tempPreviewThemeSlug = null;
+              }
+            } else {
+              // Theme not found, just cleanup
+              await themeService.cleanupTempTheme(currentTempSlug);
+              tempPreviewThemeSlug = null;
+            }
+          } else {
+            // Regular theme preview, just apply it
+            await applyPreviewTheme();
+          }
+        }}>
         <T key="settings.apply" fallback="Apply" />
       </button>
       <button
         class="px-3 py-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95"
-        onclick={cancelThemePreview}>
+        onclick={async () => {
+          await cancelThemePreview();
+          if (tempPreviewThemeSlug) {
+            await themeService.cleanupTempTheme(tempPreviewThemeSlug);
+            tempPreviewThemeSlug = null;
+          }
+        }}>
         <T key="common.cancel" fallback="Cancel" />
       </button>
     </div>
@@ -1096,7 +1141,7 @@
                 hasUpdate={themeUpdates.get(theme.id)?.hasUpdate || false}
                 updateInfo={themeUpdates.get(theme.id)}
                 animationDelay={j * 30}
-                onPreview={handlePreviewTheme}
+                onQuickPreview={handleQuickPreviewTheme}
                 onDownload={handleDownloadTheme}
                 onUpdate={handleUpdateTheme}
                 onFavorite={handleFavoriteTheme}

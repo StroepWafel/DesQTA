@@ -15,7 +15,7 @@
     hasUpdate?: boolean;
     updateInfo?: { hasUpdate: boolean; currentVersion?: string; latestVersion?: string };
     animationDelay?: number;
-    onPreview?: (themeId: string) => void;
+    onQuickPreview?: (themeId: string) => Promise<void>;
     onDownload?: (themeId: string) => Promise<void>;
     onUpdate?: (themeId: string) => Promise<void>;
     onFavorite?: (themeId: string, favorited: boolean) => Promise<void>;
@@ -31,7 +31,7 @@
     hasUpdate = false,
     updateInfo,
     animationDelay = 0,
-    onPreview,
+    onQuickPreview,
     onDownload,
     onUpdate,
     onFavorite,
@@ -73,11 +73,6 @@
     }
   }
 
-  function handlePreview() {
-    if (onPreview && manifest) {
-      onPreview(theme.id);
-    }
-  }
 
   function getPreviewImage(): string | null {
     if (theme.preview?.thumbnail) {
@@ -163,14 +158,18 @@
       </button>
 
       <!-- Overlay on hover -->
-      {#if hovered}
+      {#if hovered && onQuickPreview}
         <div
           class="absolute inset-0 z-10 bg-black/40 backdrop-blur-xs flex items-center justify-center transition-all duration-200"
           transition:fade={{ duration: 200 }}>
           <button
             type="button"
             class="px-4 py-2 rounded-xl bg-white/90 dark:bg-zinc-900/90 text-zinc-900 dark:text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-            onclick={handlePreview}>
+            onclick={async () => {
+              if (onQuickPreview) {
+                await onQuickPreview(theme.id);
+              }
+            }}>
             <Icon src={Eye} class="w-5 h-5 inline mr-2" />
             Preview
           </button>
@@ -269,15 +268,6 @@
               <Icon src={ArrowDownTray} class="w-4 h-4 inline mr-2" />
               Download
             {/if}
-          </button>
-        {/if}
-        {#if manifest && onPreview}
-          <button
-            type="button"
-            class="px-4 py-2 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 font-medium rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-            onclick={handlePreview}>
-            <Icon src={Eye} class="w-4 h-4 inline mr-2" />
-            Preview
           </button>
         {/if}
       </div>

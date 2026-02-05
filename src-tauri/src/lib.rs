@@ -327,6 +327,8 @@ pub fn run() {
             theme_manager::export_theme_to_file,
             theme_manager::read_theme_css,
             theme_manager::download_and_install_theme,
+            theme_manager::download_theme_to_temp,
+            theme_manager::cleanup_temp_theme,
             theme_store::theme_store_request,
             theme_store::theme_store_list_themes,
             theme_store::theme_store_get_theme,
