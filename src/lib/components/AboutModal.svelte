@@ -115,7 +115,7 @@
           <div class="grid grid-cols-2 gap-3 sm:gap-4">
             <div class="col-span-2 flex justify-center">
               <img
-                src="https://contrib.rocks/image?repo=BetterSEQTA/DesQTA&columns=6"
+                src="https://contrib.rocks/image?repo=BetterSEQTA/DesQTA&columns=5"
                 alt={$_('about.contributors_alt') || 'Contributers to DesQTA'}
                 class="w-full max-w-[500px] h-auto object-contain" />
             </div>
@@ -395,7 +395,7 @@
 
     <div class="pt-6 sm:pt-4 mt-2 sm:mt-2">
       <p class="text-center text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-        <T key="about.copyright" fallback="© 2025 DesQTA. Licensed under MIT License." />
+        <T key="about.copyright" fallback="© 2026 DesQTA. Licensed under MIT License." />
       </p>
     </div>
   </div>
