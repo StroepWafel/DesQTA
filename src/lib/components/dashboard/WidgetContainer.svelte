@@ -19,33 +19,32 @@
 
   let containerElement: HTMLDivElement | null = $state(null);
 
-  // Set GridStack attributes after mount
+  // Update GridStack attributes when widget position changes (attributes are set in template for initial render)
   $effect(() => {
     if (containerElement && widget) {
-      tick().then(() => {
-        containerElement?.setAttribute('data-gs-x', widget.position.x.toString());
-        containerElement?.setAttribute('data-gs-y', widget.position.y.toString());
-        containerElement?.setAttribute('data-gs-w', widget.position.w.toString());
-        containerElement?.setAttribute('data-gs-h', widget.position.h.toString());
+      // Update attributes synchronously when position changes (template sets initial values)
+      containerElement.setAttribute('data-gs-x', widget.position.x.toString());
+      containerElement.setAttribute('data-gs-y', widget.position.y.toString());
+      containerElement.setAttribute('data-gs-w', widget.position.w.toString());
+      containerElement.setAttribute('data-gs-h', widget.position.h.toString());
 
-        const definition = widgetRegistry.get(widget.type);
-        containerElement?.setAttribute(
-          'data-gs-min-w',
-          (widget.position.minW || definition?.minSize.w || 1).toString(),
-        );
-        containerElement?.setAttribute(
-          'data-gs-min-h',
-          (widget.position.minH || definition?.minSize.h || 1).toString(),
-        );
-        containerElement?.setAttribute(
-          'data-gs-max-w',
-          (widget.position.maxW || definition?.maxSize.w || 12).toString(),
-        );
-        containerElement?.setAttribute(
-          'data-gs-max-h',
-          (widget.position.maxH || definition?.maxSize.h || 12).toString(),
-        );
-      });
+      const definition = widgetRegistry.get(widget.type);
+      containerElement.setAttribute(
+        'data-gs-min-w',
+        (widget.position.minW || definition?.minSize.w || 1).toString(),
+      );
+      containerElement.setAttribute(
+        'data-gs-min-h',
+        (widget.position.minH || definition?.minSize.h || 1).toString(),
+      );
+      containerElement.setAttribute(
+        'data-gs-max-w',
+        (widget.position.maxW || definition?.maxSize.w || 12).toString(),
+      );
+      containerElement.setAttribute(
+        'data-gs-max-h',
+        (widget.position.maxH || definition?.maxSize.h || 12).toString(),
+      );
     }
   });
 
@@ -103,6 +102,14 @@
   bind:this={containerElement}
   class="grid-stack-item widget-container"
   data-gs-id={widget.id}
+  data-gs-x={widget.position.x}
+  data-gs-y={widget.position.y}
+  data-gs-w={widget.position.w}
+  data-gs-h={widget.position.h}
+  data-gs-min-w={widget.position.minW ?? widgetRegistry.get(widget.type)?.minSize.w ?? 1}
+  data-gs-min-h={widget.position.minH ?? widgetRegistry.get(widget.type)?.minSize.h ?? 1}
+  data-gs-max-w={widget.position.maxW ?? widgetRegistry.get(widget.type)?.maxSize.w ?? 12}
+  data-gs-max-h={widget.position.maxH ?? widgetRegistry.get(widget.type)?.maxSize.h ?? 12}
   role="article"
   aria-label={widget.title || `Widget: ${widget.type}`}>
   <!-- Inner wrapper for smooth hover scale -->

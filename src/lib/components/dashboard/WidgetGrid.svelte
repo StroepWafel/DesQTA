@@ -21,6 +21,7 @@
   let layout: WidgetLayout = $state({ widgets: [], version: 1, lastModified: new Date() });
   let saveTimeout: ReturnType<typeof setTimeout> | null = $state(null);
   let isAddingWidgets = $state(false); // Flag to prevent change events during initial load
+  let previousWidgetIds = $state<Set<string>>(new Set()); // Track widgets from previous layout load
 
   // Debounced save function
   async function debouncedSave() {
@@ -114,11 +115,14 @@
         });
 
       if (widgetsChanged || currentWidgets.length === 0) {
+        // Capture previousWidgetIds BEFORE updating layout (so we can detect truly new widgets)
+        previousWidgetIds = new Set(currentWidgets.filter((w) => w.enabled).map((w) => w.id));
         layout = { ...loadedLayout, widgets: loadedWidgets };
         logger.debug('WidgetGrid', 'loadLayout', 'Layout loaded successfully', {
           widgetCount: loadedWidgets.length,
           version: loadedLayout.version,
           widgetIds: loadedWidgets.map((w) => w.id),
+          previousWidgetIds: Array.from(previousWidgetIds),
         });
       } else {
         logger.debug('WidgetGrid', 'loadLayout', 'Layout unchanged, skipping update');
@@ -318,10 +322,18 @@
     const existingIds = new Set(
       existingElements.map((el) => el.getAttribute('data-gs-id')).filter(Boolean),
     );
+    
+    // Determine which widgets are truly new (not in previous layout)
+    const currentWidgetIds = new Set(widgets.filter((w) => w.enabled).map((w) => w.id));
+    const trulyNewWidgetIds = new Set(
+      Array.from(currentWidgetIds).filter((id) => !previousWidgetIds.has(id))
+    );
 
     logger.debug('WidgetGrid', 'addWidgetsToGrid', 'Found existing elements', {
       existingCount: existingElements.length,
       existingIds: Array.from(existingIds),
+      previousWidgetIds: Array.from(previousWidgetIds),
+      trulyNewWidgetIds: Array.from(trulyNewWidgetIds),
     });
 
     // Remove widgets that are no longer in layout
@@ -350,12 +362,6 @@
       if (element) {
         const definition = widgetRegistry.get(widget.type);
 
-        // Check current GridStack position to avoid overwriting if user is dragging/resizing
-        const currentX = parseInt(element.getAttribute('data-gs-x') || '0');
-        const currentY = parseInt(element.getAttribute('data-gs-y') || '0');
-        const currentW = parseInt(element.getAttribute('data-gs-w') || '1');
-        const currentH = parseInt(element.getAttribute('data-gs-h') || '1');
-
         // CRITICAL FIX: Always call grid.update() or makeWidget() to ensure GridStack applies positions
         // GridStack may have initialized before attributes were set, so we need to force it to read current attributes
         const gridItem = {
@@ -380,13 +386,24 @@
         element.setAttribute('data-gs-max-w', gridItem.maxW.toString());
         element.setAttribute('data-gs-max-h', gridItem.maxH.toString());
 
-        if (!existingIds.has(widget.id)) {
-          // Widget not in GridStack yet - must add it
+        // Check if element is already a GridStack widget (GridStack might auto-initialize)
+        // GridStack stores widget data in element.gridstackNode
+        const isAlreadyWidget = (element as any).gridstackNode !== undefined;
+        const isTrulyNewWidget = trulyNewWidgetIds.has(widget.id);
+        
+        if (isTrulyNewWidget) {
+          // Widget is new to the layout - always force re-initialization if GridStack already knows about it
+          // This handles the case where GridStack auto-initialized before we could set attributes
+          if (isAlreadyWidget) {
+            // GridStack auto-initialized this widget - remove and re-add to force correct position
+            grid?.removeWidget(element, false);
+            await tick();
+          }
+          // Add widget with correct attributes (already set in template)
           grid?.makeWidget(element);
           grid?.update(element, gridItem);
         } else {
-          // CRITICAL FIX: Always call grid.update() even if attributes match
-          // GridStack initialized before attributes were set, so we need to force it to apply positions
+          // Existing widget - just update position
           grid?.update(element, gridItem);
         }
       } else {
@@ -401,6 +418,9 @@
     // Wait a bit for GridStack to finish positioning before re-enabling change events
     await new Promise((resolve) => setTimeout(resolve, 200));
     isAddingWidgets = false;
+    
+    // Update previousWidgetIds for next call
+    previousWidgetIds = new Set(widgets.filter((w) => w.enabled).map((w) => w.id));
 
     logger.debug('WidgetGrid', 'addWidgetsToGrid', 'Finished adding widgets');
   }
@@ -450,10 +470,40 @@
     }
   });
 
+  // Scroll to a specific widget by ID
+  async function scrollToWidget(widgetId: string) {
+    if (!gridElement) return;
+
+    // Wait for DOM to be ready
+    await tick();
+    await new Promise((resolve) => setTimeout(resolve, 300)); // Wait for GridStack positioning
+
+    const widgetElement = gridElement.querySelector(
+      `[data-gs-id="${widgetId}"]`,
+    ) as HTMLElement;
+
+    if (widgetElement) {
+      // Scroll the widget into view with smooth behavior and some offset from top
+      widgetElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      });
+      logger.debug('WidgetGrid', 'scrollToWidget', `Scrolled to widget ${widgetId}`);
+    } else {
+      logger.warn('WidgetGrid', 'scrollToWidget', `Widget ${widgetId} element not found`);
+    }
+  }
+
   // Expose loadLayout for parent component
-  async function reloadLayout() {
+  async function reloadLayout(widgetIdToScroll?: string) {
     await loadLayout();
     await addWidgetsToGrid();
+    
+    // Scroll to the newly added widget if specified
+    if (widgetIdToScroll) {
+      await scrollToWidget(widgetIdToScroll);
+    }
   }
 
   // Expose reloadLayout method for parent component

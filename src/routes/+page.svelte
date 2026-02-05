@@ -6,7 +6,7 @@
   import WidgetSettings from '$lib/components/dashboard/WidgetSettings.svelte';
   import { migrateToWidgetSystem, validateAndFixLayout } from '$lib/services/widgetMigration';
   import { logger } from '../utils/logger';
-  import type { WidgetConfig } from '$lib/types/widgets';
+  import type { WidgetConfig, WidgetLayout } from '$lib/types/widgets';
 
   let isEditing = $state(false);
   let selectedWidget = $state<WidgetConfig | null>(null);
@@ -17,12 +17,18 @@
     isEditing = editing;
   }
 
-  function handleLayoutChange() {
-    // Layout changed, reload grid
-    logger.debug('dashboard', 'handleLayoutChange', 'Layout changed');
+  function handleLayoutChange(widgetId?: string) {
+    // Layout changed, reload grid (called from EditModeToggle)
+    logger.debug('dashboard', 'handleLayoutChange', 'Layout changed', { widgetId });
     if (widgetGridRef && typeof widgetGridRef.reloadLayout === 'function') {
-      widgetGridRef.reloadLayout();
+      widgetGridRef.reloadLayout(widgetId);
     }
+  }
+
+  function handleGridLayoutChange(layout: WidgetLayout) {
+    // Called from WidgetGrid when layout changes (e.g., drag/resize)
+    // We don't need to do anything here since WidgetGrid handles its own state
+    logger.debug('dashboard', 'handleGridLayoutChange', 'Grid layout changed');
   }
 
   function handleWidgetSettings(widget: WidgetConfig | null) {
@@ -63,7 +69,7 @@
     <WidgetGrid
       bind:this={widgetGridRef}
       {isEditing}
-      onLayoutChange={handleLayoutChange}
+      onLayoutChange={handleGridLayoutChange}
       onWidgetSettings={handleWidgetSettings} />
   </div>
 </div>

@@ -9,7 +9,7 @@
   interface Props {
     isEditing: boolean;
     onToggle: (editing: boolean) => void;
-    onLayoutChange?: () => void;
+    onLayoutChange?: (widgetId?: string) => void;
   }
 
   let { isEditing = $bindable(false), onToggle, onLayoutChange }: Props = $props();
@@ -90,7 +90,11 @@
 <AddWidgetDialog
   bind:open={showAddWidgetDialog}
   onClose={() => (showAddWidgetDialog = false)}
-  onAdd={onLayoutChange} />
+  onAdd={(widget) => {
+    if (onLayoutChange) {
+      onLayoutChange(widget.id);
+    }
+  }} />
 
 <WidgetTemplates
   bind:open={showTemplatesDialog}
