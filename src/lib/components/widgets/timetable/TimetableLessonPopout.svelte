@@ -3,7 +3,15 @@
   import { fly } from 'svelte/transition';
   import { cubicInOut } from 'svelte/easing';
   import { Button } from '../../ui';
-  import { Icon, BookOpen, DocumentText, CalendarDays, AcademicCap, BuildingOffice, Clock } from 'svelte-hero-icons';
+  import {
+    Icon,
+    BookOpen,
+    DocumentText,
+    CalendarDays,
+    AcademicCap,
+    BuildingOffice,
+    Clock,
+  } from 'svelte-hero-icons';
   import type { TimetableLesson } from '$lib/types/timetable';
   import { formatDate, parseDate } from '$lib/utils/timetableUtils';
   import { tick } from 'svelte';
@@ -56,14 +64,20 @@
     // Check if it fits below
     const fitsBelow = top + popoutRect.height <= viewportHeight - margin;
     let direction: 'up' | 'down' = 'down';
-    
+
     // If it doesn't fit below, try above
     if (!fitsBelow) {
       top = anchorRect.top - popoutRect.height - spacing;
       direction = 'up';
       // If it doesn't fit above either, center it vertically in viewport
       if (top < margin) {
-        top = Math.max(margin, Math.min(viewportHeight - popoutRect.height - margin, (viewportHeight - popoutRect.height) / 2));
+        top = Math.max(
+          margin,
+          Math.min(
+            viewportHeight - popoutRect.height - margin,
+            (viewportHeight - popoutRect.height) / 2,
+          ),
+        );
         direction = 'down'; // Default direction when centered
       }
     }
@@ -74,7 +88,13 @@
       left = anchorRect.right - popoutRect.width;
       // If still doesn't fit, center horizontally
       if (left < margin) {
-        left = Math.max(margin, Math.min(viewportWidth - popoutRect.width - margin, (viewportWidth - popoutRect.width) / 2));
+        left = Math.max(
+          margin,
+          Math.min(
+            viewportWidth - popoutRect.width - margin,
+            (viewportWidth - popoutRect.width) / 2,
+          ),
+        );
       }
     }
 
@@ -165,104 +185,111 @@
       bind:this={popoutElement}
       class="fixed z-50 w-80 max-w-[calc(100vw-2rem)] rounded-xl border shadow-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200 dark:border-zinc-700 max-h-[calc(100vh-2rem)] overflow-y-auto"
       style="top: {position.top}px; left: {position.left}px; border-left-color: {lesson.colour}; border-left-width: 4px;"
-      transition:fly={{ y: transitionDirection === 'down' ? -10 : 10, duration: 200, easing: cubicInOut }}
+      transition:fly={{
+        y: transitionDirection === 'down' ? -10 : 10,
+        duration: 200,
+        easing: cubicInOut,
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="lesson-popout-title">
-    <!-- Header -->
-    <div class="flex items-start justify-between p-4 border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-      <div class="flex-1 min-w-0 pr-2">
-        <h2
-          id="lesson-popout-title"
-          class="text-lg font-bold text-zinc-900 dark:text-white mb-0.5 truncate">
-          {lesson.description}
-        </h2>
-        <p class="text-xs text-zinc-600 dark:text-zinc-400 truncate">{lesson.code}</p>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <div class="p-4 space-y-3">
-      <!-- Date and Time -->
-      <div class="flex items-start gap-2">
-        <div
-          class="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shrink-0">
-          <Icon src={Clock} class="w-4 h-4" />
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Date & Time</p>
-          <p class="text-sm text-zinc-900 dark:text-white">{formatLessonDate(lesson.date)}</p>
-          <p class="text-xs text-zinc-600 dark:text-zinc-400">
-            {lesson.from} - {lesson.until}
-          </p>
+      <!-- Header -->
+      <div
+        class="flex items-start justify-between p-4 border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+        <div class="flex-1 min-w-0 pr-2">
+          <h2
+            id="lesson-popout-title"
+            class="text-lg font-bold text-zinc-900 dark:text-white mb-0.5 truncate">
+            {lesson.description}
+          </h2>
+          <p class="text-xs text-zinc-600 dark:text-zinc-400 truncate">{lesson.code}</p>
         </div>
       </div>
 
-      <!-- Teacher -->
-      {#if lesson.staff}
+      <!-- Content -->
+      <div class="p-4 space-y-3">
+        <!-- Date and Time -->
         <div class="flex items-start gap-2">
           <div
-            class="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 shrink-0">
-            <Icon src={AcademicCap} class="w-4 h-4" />
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shrink-0">
+            <Icon src={Clock} class="w-4 h-4" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Teacher</p>
-            <p class="text-sm text-zinc-900 dark:text-white truncate">{lesson.staff}</p>
+            <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Date & Time</p>
+            <p class="text-sm text-zinc-900 dark:text-white">{formatLessonDate(lesson.date)}</p>
+            <p class="text-xs text-zinc-600 dark:text-zinc-400">
+              {lesson.from} - {lesson.until}
+            </p>
           </div>
         </div>
-      {/if}
 
-      <!-- Room -->
-      {#if lesson.room}
-        <div class="flex items-start gap-2">
+        <!-- Teacher -->
+        {#if lesson.staff}
+          <div class="flex items-start gap-2">
+            <div
+              class="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 shrink-0">
+              <Icon src={AcademicCap} class="w-4 h-4" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Teacher</p>
+              <p class="text-sm text-zinc-900 dark:text-white truncate">{lesson.staff}</p>
+            </div>
+          </div>
+        {/if}
+
+        <!-- Room -->
+        {#if lesson.room}
+          <div class="flex items-start gap-2">
+            <div
+              class="flex items-center justify-center w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 shrink-0">
+              <Icon src={BuildingOffice} class="w-4 h-4" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Room</p>
+              <p class="text-sm text-zinc-900 dark:text-white">Room {lesson.room}</p>
+            </div>
+          </div>
+        {/if}
+
+        <!-- Attendance -->
+        {#if lesson.attendanceTitle && lesson.attendanceTitle.trim()}
           <div
-            class="flex items-center justify-center w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 shrink-0">
-            <Icon src={BuildingOffice} class="w-4 h-4" />
+            class="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <p class="text-xs font-medium text-amber-800 dark:text-amber-200 mb-0.5">
+              Attendance Status
+            </p>
+            <p class="text-xs text-amber-700 dark:text-amber-300">{lesson.attendanceTitle}</p>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Room</p>
-            <p class="text-sm text-zinc-900 dark:text-white">Room {lesson.room}</p>
-          </div>
-        </div>
-      {/if}
+        {/if}
+      </div>
 
-      <!-- Attendance -->
-      {#if lesson.attendanceTitle && lesson.attendanceTitle.trim()}
-        <div class="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-          <p class="text-xs font-medium text-amber-800 dark:text-amber-200 mb-0.5">
-            Attendance Status
-          </p>
-          <p class="text-xs text-amber-700 dark:text-amber-300">{lesson.attendanceTitle}</p>
-        </div>
-      {/if}
-    </div>
-
-    <!-- Actions -->
-    <div class="p-4 border-t border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md space-y-2">
-      {#if lesson.programmeID !== 0}
+      <!-- Actions -->
+      <div
+        class="p-4 border-t border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md space-y-2">
+        {#if lesson.programmeID !== 0}
+          <Button
+            variant="primary"
+            class="w-full justify-center gap-2 text-sm py-2"
+            icon={BookOpen}
+            onclick={handleViewCourse}>
+            View Course
+          </Button>
+          <Button
+            variant="secondary"
+            class="w-full justify-center gap-2 text-sm py-2"
+            icon={DocumentText}
+            onclick={handleViewAssessments}>
+            View Assessments
+          </Button>
+        {/if}
         <Button
-          variant="primary"
+          variant="ghost"
           class="w-full justify-center gap-2 text-sm py-2"
-          icon={BookOpen}
-          onclick={handleViewCourse}>
-          View Course
+          icon={CalendarDays}
+          onclick={handleViewTimetable}>
+          View Full Timetable
         </Button>
-        <Button
-          variant="secondary"
-          class="w-full justify-center gap-2 text-sm py-2"
-          icon={DocumentText}
-          onclick={handleViewAssessments}>
-          View Assessments
-        </Button>
-      {/if}
-      <Button
-        variant="ghost"
-        class="w-full justify-center gap-2 text-sm py-2"
-        icon={CalendarDays}
-        onclick={handleViewTimetable}>
-        View Full Timetable
-      </Button>
-    </div>
+      </div>
     </div>
   {/key}
 {/if}

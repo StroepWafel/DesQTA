@@ -75,6 +75,7 @@ pub struct Settings {
     pub weather_city: String,
     pub weather_country: String,
     pub reminders_enabled: bool,
+    pub auto_dismiss_message_notifications: bool,
     pub force_use_location: bool,
     pub accent_color: String,
     pub theme: String,
@@ -124,6 +125,7 @@ impl Default for Settings {
             weather_city: String::new(),
             weather_country: String::new(),
             reminders_enabled: true,
+            auto_dismiss_message_notifications: false,
             accent_color: "#3b82f6".to_string(), // Default to blue-500
             theme: "default".to_string(),        // Default to DesQTA theme
             disable_school_picture: false,
@@ -359,6 +361,11 @@ impl Settings {
             &existing_json,
             "reminders_enabled",
             default_settings.reminders_enabled,
+        );
+        default_settings.auto_dismiss_message_notifications = get_bool(
+            &existing_json,
+            "auto_dismiss_message_notifications",
+            default_settings.auto_dismiss_message_notifications,
         );
         default_settings.force_use_location = get_bool(
             &existing_json,

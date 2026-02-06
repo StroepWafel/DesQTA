@@ -84,6 +84,7 @@
   let aiProvider: 'gemini' | 'cerebras' = 'gemini';
 
   let remindersEnabled = true;
+  let autoDismissMessageNotifications = false;
   let showCloudSyncModal = false;
   let showTroubleshootingModal = false;
   let aiIntegrationsEnabled = false;
@@ -123,6 +124,7 @@
     weatherCity: string;
     weatherCountry: string;
     remindersEnabled: boolean;
+    autoDismissMessageNotifications: boolean;
     forceUseLocation: boolean;
     accentColor: string;
     theme: string;
@@ -245,6 +247,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'weather_city',
           'weather_country',
           'reminders_enabled',
+          'auto_dismiss_message_notifications',
           'force_use_location',
           'accent_color',
           'theme',
@@ -271,6 +274,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       weatherCity = settings.weather_city ?? '';
       weatherCountry = settings.weather_country ?? '';
       remindersEnabled = settings.reminders_enabled ?? true;
+      autoDismissMessageNotifications = settings.auto_dismiss_message_notifications ?? false;
       disableSchoolPicture = settings.disable_school_picture ?? false;
       enhancedAnimations = settings.enhanced_animations ?? true;
       geminiApiKey = settings.gemini_api_key ?? '';
@@ -297,6 +301,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         weatherCity,
         weatherCountry,
         remindersEnabled,
+        autoDismissMessageNotifications,
         forceUseLocation,
         accentColor: settings.accent_color ?? '#3b82f6',
         theme: settings.theme ?? 'dark',
@@ -334,6 +339,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       weatherCity = '';
       weatherCountry = '';
       remindersEnabled = true;
+      autoDismissMessageNotifications = false;
       disableSchoolPicture = false;
       enhancedAnimations = true;
       geminiApiKey = '';
@@ -402,6 +408,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         weather_city: weatherCity,
         weather_country: weatherCountry,
         reminders_enabled: remindersEnabled,
+        auto_dismiss_message_notifications: autoDismissMessageNotifications,
         force_use_location: forceUseLocation,
         accent_color: $accentColor,
         theme: $theme,
@@ -1723,6 +1730,17 @@ The Company reserves the right to terminate your access to the Service at any ti
                 ><T
                   key="settings.enable_reminder_notifications"
                   fallback="Enable assessment reminder notifications" /></label>
+            </div>
+            <div class="flex gap-3 items-center">
+              <input
+                id="auto-dismiss-message-notifications"
+                type="checkbox"
+                class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                bind:checked={autoDismissMessageNotifications} />
+              <label
+                for="auto-dismiss-message-notifications"
+                class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
+                >Auto-dismiss message notifications when clicked</label>
             </div>
             <button
               class="px-4 py-2 w-full text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
