@@ -8,7 +8,7 @@
   import { invoke } from '@tauri-apps/api/core';
 
   // $lib/ imports
-  import { setIdb } from '$lib/services/idbCache';
+  import { setIdb, getWithIdbFallback } from '$lib/services/idbCache';
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import Modal from '$lib/components/Modal.svelte';
   import T from '$lib/components/T.svelte';
@@ -55,6 +55,8 @@
   onMount(async () => {
     // Always enable both tabs regardless of SEQTA config
     seqtaMessagesEnabled = true;
+    // Initial load: fetch inbox messages (skip cache to ensure fresh data)
+    fetchMessages('inbox', '', true);
   });
 
   // Watch URL for messageID parameter and store it until messages load
@@ -63,7 +65,7 @@
     pendingMessageId = idParam ? Number(idParam) : null;
   });
 
-  async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '') {
+  async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '', forceSkipCache: boolean = false) {
     loading = true;
     error = null;
     seqtaLoadFailed = false;
@@ -71,7 +73,52 @@
 
     const cacheKey = `messages_${folderLabel}`;
     const isRSSFeed = folderLabel.includes('rss-');
+    const isOnline = navigator.onLine;
 
+    // For inbox, try API first (when online), then fall back to cache if unavailable
+    // For other folders, use normal caching behavior
+    if (folderLabel === 'inbox' && isOnline && !isRSSFeed) {
+      try {
+        // Try to fetch fresh data first
+        const msgs = await invoke<Message[]>('fetch_messages', {
+          folder: folderLabel,
+          rssUrl: null,
+        });
+        
+        // Success - update cache and messages
+        messages = msgs;
+        cache.set(cacheKey, msgs, 10);
+        await setIdb(cacheKey, msgs);
+        loading = false;
+        return;
+      } catch (e) {
+        // API failed - fall back to cache
+        logger.debug('messages', 'fetchMessages', `API fetch failed, falling back to cache`, {
+          error: e,
+          folder: folderLabel,
+        });
+        
+        const cached =
+          cache.get<Message[]>(cacheKey) ||
+          (await getWithIdbFallback<Message[]>(cacheKey, cacheKey, () =>
+            cache.get<Message[]>(cacheKey),
+          ));
+        
+        if (cached) {
+          // Use cache even if empty (empty inbox is valid)
+          messages = cached;
+          loading = false;
+          return;
+        }
+        
+        // No cache available - show error
+        error = 'Failed to load messages and no cached data available';
+        loading = false;
+        return;
+      }
+    }
+
+    // Normal behavior for other folders or RSS feeds
     const data = await useDataLoader<Message[]>({
       cacheKey,
       ttlMinutes: 10,
@@ -109,10 +156,6 @@
     }
     loading = false;
   }
-
-  $effect(() => {
-    fetchMessages('inbox');
-  });
 
   // When messages are loaded and a target ID exists, open it
   $effect(() => {
@@ -170,6 +213,7 @@
   }
 
   function openFolder(folder: any) {
+    // Always fetch, even if folder is already selected (to refresh the list)
     selectedFolder = folder.name;
     selectedMessage = null;
     logger.debug('messages', 'openFolder', `Opening folder: ${folder.name}`, {
@@ -178,7 +222,11 @@
     if (folder.id.includes('rss-')) {
       selectedRSS = folder.id;
       fetchMessages(folder.id, folder.name);
-    } else fetchMessages(folder.id);
+    } else {
+      // For inbox, fetchMessages will try API first then fall back to cache
+      // For other folders, use normal caching
+      fetchMessages(folder.id);
+    }
   }
 
   function openCompose() {
