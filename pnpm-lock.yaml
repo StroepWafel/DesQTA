@@ -11,27 +11,12 @@ importers:
       7.css:
         specifier: ^0.18.0
         version: 0.18.0
+      '@humanspeak/svelte-virtual-list':
+        specifier: ^0.3.10
+        version: 0.3.10(svelte@5.43.3)
       '@preact/signals':
         specifier: ^2.5.1
         version: 2.5.1(preact@10.27.3)
-      '@schedule-x/calendar':
-        specifier: ^3.4.2
-        version: 3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0)
-      '@schedule-x/calendar-controls':
-        specifier: ^3.4.2
-        version: 3.4.2
-      '@schedule-x/current-time':
-        specifier: ^3.4.2
-        version: 3.4.2
-      '@schedule-x/event-modal':
-        specifier: ^3.4.2
-        version: 3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)
-      '@schedule-x/svelte':
-        specifier: ^3.0.0
-        version: 3.0.0(@schedule-x/calendar@3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0))(@schedule-x/shared@3.4.2(@preact/signals@2.5.1(preact@10.27.3)))(svelte@5.43.3)
-      '@schedule-x/theme-default':
-        specifier: ^3.4.2
-        version: 3.4.2
       '@tailwindcss/typography':
         specifier: ^0.5.16
         version: 0.5.19(tailwindcss@4.1.16)
@@ -179,9 +164,6 @@ importers:
       svelte-sonner:
         specifier: ^1.0.7
         version: 1.0.7(svelte@5.43.3)
-      temporal-polyfill:
-        specifier: ^0.3.0
-        version: 0.3.0
       wx-svelte-gantt:
         specifier: ^2.2.1
         version: 2.3.0
@@ -609,6 +591,11 @@ packages:
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
 
+  '@humanspeak/svelte-virtual-list@0.3.10':
+    resolution: {integrity: sha512-mcbHfFnHHsNqG0oxN7vU9A3U32MXD3spp6bkiLVYTM645TlULm3BQawLUzhrYriF5WBIHtJXFXfKWU4V4YMshw==}
+    peerDependencies:
+      svelte: ^5.0.0
+
   '@internationalized/date@3.10.0':
     resolution: {integrity: sha512-oxDR/NTEJ1k+UFVQElaNIk65E/Z83HK1z1WI3lQyhTtnNg4R5oVXaPzK3jcpKG8UHKDVuDQHzn+wsxSz8RP3aw==}
 
@@ -844,40 +831,6 @@ packages:
     resolution: {integrity: sha512-TAcgQh2sSkykPRWLrdyy2AiceMckNf5loITqXxFI5VuQjS5tSuw3WlwdN8qv8vzjLAUTvYaH/mVjSFpbkFbpTg==}
     cpu: [x64]
     os: [win32]
-
-  '@schedule-x/calendar-controls@3.4.2':
-    resolution: {integrity: sha512-r/3v/B8mPyZL+45jes/dChndYIuZfGci/GScEEk/0ihDu6pnRdDDLaRotIj7+RrmlGxEF3HhnUOoRdY32F0eAw==}
-
-  '@schedule-x/calendar@3.4.2':
-    resolution: {integrity: sha512-TOL3SM2dXBgS94n1t3cY7OAE3Eh0qFG6g/LcxaDIwyJ0a1NT9wi/YOr3BwzBCt5+XsfdAbeVMVIaQdQnKnLboQ==}
-    peerDependencies:
-      '@preact/signals': ^2.0.2
-      preact: ^10.19.2
-      temporal-polyfill: 0.3.0
-
-  '@schedule-x/current-time@3.4.2':
-    resolution: {integrity: sha512-ySOHESHTpsEurNvMi18xx1TwQVpInyl9cXksZ1ALkRnqf2qvHEbbnvztvT/BG8ulbzKeLi6slr8ZvQAsSzqvFQ==}
-
-  '@schedule-x/event-modal@3.4.2':
-    resolution: {integrity: sha512-kJBdEDQ8qsx11ZEuvg9bSyPn4LHrZukTtnxil27Dx5XGGt+OWHWbx1/00pYNwUtHnUIEV3eUafpEmWwUR53mvg==}
-    peerDependencies:
-      '@preact/signals': ^2.0.2
-      preact: ^10.19.2
-
-  '@schedule-x/shared@3.4.2':
-    resolution: {integrity: sha512-l7TV14tx+17wCyuTwc0Dk3gKua5R7wo6itY5owUnUq4NgKegZM0S7Odw6A2zAnr/7+X47K/MFSWoYVEPCC+Hmg==}
-    peerDependencies:
-      '@preact/signals': ^2.0.2
-
-  '@schedule-x/svelte@3.0.0':
-    resolution: {integrity: sha512-/p91n/sl3iR/pdgvu3QwWTU3OiQoZCm4ftchU8NUcG1exReSxyKnWkiLWc00eK0eS2oTC+cG2v8H8pwggIzIng==}
-    peerDependencies:
-      '@schedule-x/calendar': ^3.0.0
-      '@schedule-x/shared': ^3.0.0
-      svelte: ^4 || ^5
-
-  '@schedule-x/theme-default@3.4.2':
-    resolution: {integrity: sha512-/pc/f2DUgIGdEoQOj1rTzOSGQ/rkb/fOq4iyWVeM+74jJiF5rVAZ63UBeBWzjDD3TTVCAckt0/F5h+diHhAe2w==}
 
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
@@ -2244,12 +2197,6 @@ packages:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
 
-  temporal-polyfill@0.3.0:
-    resolution: {integrity: sha512-qNsTkX9K8hi+FHDfHmf22e/OGuXmfBm9RqNismxBrnSmZVJKegQ+HYYXT+R7Ha8F/YSm2Y34vmzD4cxMu2u95g==}
-
-  temporal-spec@0.3.0:
-    resolution: {integrity: sha512-n+noVpIqz4hYgFSMOSiINNOUOMFtV5cZQNCmmszA6GiVFVRt3G7AqVyhXjhCSmowvQn+NsGn+jMDMKJYHd3bSQ==}
-
   terser@5.44.0:
     resolution: {integrity: sha512-nIVck8DK+GM/0Frwd+nIhZ84pR/BX7rmXMfYwyg+Sri5oGVE99/E3KvXqpC2xHFxyqXyGHTKBSioxxplrO4I4w==}
     engines: {node: '>=10'}
@@ -2578,6 +2525,11 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  '@humanspeak/svelte-virtual-list@0.3.10(svelte@5.43.3)':
+    dependencies:
+      esm-env: 1.2.2
+      svelte: 5.43.3
+
   '@internationalized/date@3.10.0':
     dependencies:
       '@swc/helpers': 0.5.17
@@ -2761,33 +2713,6 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.52.5':
     optional: true
-
-  '@schedule-x/calendar-controls@3.4.2': {}
-
-  '@schedule-x/calendar@3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0)':
-    dependencies:
-      '@preact/signals': 2.5.1(preact@10.27.3)
-      preact: 10.27.3
-      temporal-polyfill: 0.3.0
-
-  '@schedule-x/current-time@3.4.2': {}
-
-  '@schedule-x/event-modal@3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)':
-    dependencies:
-      '@preact/signals': 2.5.1(preact@10.27.3)
-      preact: 10.27.3
-
-  '@schedule-x/shared@3.4.2(@preact/signals@2.5.1(preact@10.27.3))':
-    dependencies:
-      '@preact/signals': 2.5.1(preact@10.27.3)
-
-  '@schedule-x/svelte@3.0.0(@schedule-x/calendar@3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0))(@schedule-x/shared@3.4.2(@preact/signals@2.5.1(preact@10.27.3)))(svelte@5.43.3)':
-    dependencies:
-      '@schedule-x/calendar': 3.4.2(@preact/signals@2.5.1(preact@10.27.3))(preact@10.27.3)(temporal-polyfill@0.3.0)
-      '@schedule-x/shared': 3.4.2(@preact/signals@2.5.1(preact@10.27.3))
-      svelte: 5.43.3
-
-  '@schedule-x/theme-default@3.4.2': {}
 
   '@standard-schema/spec@1.0.0': {}
 
@@ -4252,12 +4177,6 @@ snapshots:
   tailwindcss@4.1.16: {}
 
   tapable@2.3.0: {}
-
-  temporal-polyfill@0.3.0:
-    dependencies:
-      temporal-spec: 0.3.0
-
-  temporal-spec@0.3.0: {}
 
   terser@5.44.0:
     dependencies:

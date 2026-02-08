@@ -167,8 +167,54 @@ pub fn run() {
             // Handle deep link in single instance
             if let Some(url) = argv.get(1) {
                 println!("[Desqta] Processing deep link in single instance: {}", url);
-                if url.starts_with("desqta://auth") {
-                    // Extract cookie and URL from the deep link
+                if url.starts_with("desqta://auth/callback") {
+                    // Handle Discord OAuth callback
+                    let mut token = None;
+                    let mut user_id = None;
+                    
+                    // Parse URL parameters
+                    if let Some(query) = url.split('?').nth(1) {
+                        println!("[Desqta] Discord OAuth callback query string: {}", query);
+                        for param in query.split('&') {
+                            if let Some((key, value)) = param.split_once('=') {
+                                match key {
+                                    "token" => {
+                                        // URL decode the token
+                                        let decoded = urlencoding::decode(value)
+                                            .map(|s| s.to_string())
+                                            .unwrap_or_else(|_| value.to_string());
+                                        token = Some(decoded);
+                                        println!("[Desqta] Found Discord OAuth token");
+                                    },
+                                    "user_id" => {
+                                        let decoded = urlencoding::decode(value)
+                                            .map(|s| s.to_string())
+                                            .unwrap_or_else(|_| value.to_string());
+                                        user_id = Some(decoded);
+                                        println!("[Desqta] Found Discord OAuth user_id");
+                                    },
+                                    _ => {
+                                        println!("[Desqta] Unknown Discord OAuth parameter: {}", key);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Emit event to frontend with token and user_id
+                    if let (Some(token_val), Some(user_id_val)) = (token, user_id) {
+                        println!("[Desqta] Emitting Discord OAuth callback event");
+                        if let Some(window) = app.webview_windows().get("main") {
+                            let _ = window.emit("discord-oauth-callback", serde_json::json!({
+                                "token": token_val,
+                                "user_id": user_id_val
+                            }));
+                        }
+                    } else {
+                        eprintln!("[Desqta] Missing required Discord OAuth parameters. Need both token and user_id.");
+                    }
+                } else if url.starts_with("desqta://auth") {
+                    // Extract cookie and URL from the deep link (legacy SEQTA auth)
                     let mut cookie = None;
                     let mut base_url = None;
                     
@@ -520,7 +566,45 @@ pub fn run() {
                         for url in urls {
                             println!("[Desqta] Processing URL from deep link: {}", url);
                             
-                            if url.starts_with("seqtalearn://") {
+                            if url.starts_with("desqta://auth/callback") {
+                                // Handle Discord OAuth callback on mobile
+                                let mut token = None;
+                                let mut user_id = None;
+                                
+                                if let Some(query) = url.split('?').nth(1) {
+                                    println!("[Desqta] Discord OAuth callback query string: {}", query);
+                                    for param in query.split('&') {
+                                        if let Some((key, value)) = param.split_once('=') {
+                                            match key {
+                                                "token" => {
+                                                    let decoded = urlencoding::decode(value)
+                                                        .map(|s| s.to_string())
+                                                        .unwrap_or_else(|_| value.to_string());
+                                                    token = Some(decoded);
+                                                },
+                                                "user_id" => {
+                                                    let decoded = urlencoding::decode(value)
+                                                        .map(|s| s.to_string())
+                                                        .unwrap_or_else(|_| value.to_string());
+                                                    user_id = Some(decoded);
+                                                },
+                                                _ => {}
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Emit event to frontend
+                                if let (Some(token_val), Some(user_id_val)) = (token, user_id) {
+                                    println!("[Desqta] Emitting Discord OAuth callback event (mobile)");
+                                    if let Some(window) = app_handle.webview_windows().get("main") {
+                                        let _ = window.emit("discord-oauth-callback", serde_json::json!({
+                                            "token": token_val,
+                                            "user_id": user_id_val
+                                        }));
+                                    }
+                                }
+                            } else if url.starts_with("seqtalearn://") {
                                 println!("[Desqta] Processing SEQTA Learn SSO deeplink: {}", url);
                                 let app_handle_clone = app_handle.clone();
                                 tauri::async_runtime::spawn(async move {

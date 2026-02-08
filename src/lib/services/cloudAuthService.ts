@@ -1,7 +1,10 @@
 import { writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 
 const API_URL = 'https://accounts.betterseqta.org';
+const DESQTA_CLIENT_ID = 'afa43ee2-397d-4f56-ae0f-ae3f7520bc0d';
+const DESQTA_REDIRECT_URI = 'desqta://auth/callback';
 
 export interface CloudUser {
   id: string;
@@ -119,5 +122,36 @@ export const cloudAuthService = {
     cloudUserStore.set(data);
 
     return data;
+  },
+
+  /**
+   * Initiates Discord OAuth flow for DesQTA.
+   * Opens the user's browser to authenticate with Discord.
+   */
+  async loginWithDiscord() {
+    // Construct the Discord OAuth URL
+    const authUrl = new URL(`${API_URL}/api/oauth/desqta/discord`);
+    authUrl.searchParams.set('client_id', DESQTA_CLIENT_ID);
+    authUrl.searchParams.set('redirect_uri', DESQTA_REDIRECT_URI);
+
+    // Open browser for Discord authentication
+    await openUrl(authUrl.toString());
+    
+    // The user will be redirected back to desqta://auth/callback with token and user_id
+    // Handle the callback in the deep link handler (see lib.rs)
+  },
+
+  /**
+   * Handles the Discord OAuth callback.
+   * Call this when your app receives the callback with token and user_id.
+   */
+  async handleDiscordCallback(token: string, userId: string) {
+    // Save token to backend (profile-specific)
+    // This will also fetch and save the user profile
+    const user = await invoke<CloudUser>('save_cloud_token', { token });
+    
+    cloudUserStore.set(user);
+
+    return user;
   },
 };

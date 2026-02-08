@@ -760,10 +760,7 @@
             </Select.Item>
             {#each campuses as campus}
               <Select.Item value={campus}>
-                <T
-                  key="directory.campus_name"
-                  fallback="Campus {name}"
-                  values={{ name: campus }} />
+                <T key="directory.campus_name" fallback="Campus {name}" values={{ name: campus }} />
               </Select.Item>
             {/each}
           </Select.Content>
@@ -781,9 +778,7 @@
             bind:checked={filterHasPhoto}
             class="w-4 h-4 text-accent-600 bg-zinc-100 border-zinc-300 rounded focus:ring-accent-500 focus:ring-2 dark:bg-zinc-700 dark:border-zinc-600" />
           <span class="text-sm text-zinc-600 dark:text-zinc-400">
-            <T
-              key="directory.show_only_with_photos"
-              fallback="Show only students with photos" />
+            <T key="directory.show_only_with_photos" fallback="Show only students with photos" />
           </span>
         </label>
       </div>
