@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { fade, fly } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import { page } from '$app/stores';
   import { seqtaFetch } from '../../../../utils/netUtil';
   import AssessmentHeader from '../../../../lib/components/AssessmentHeader.svelte';
@@ -7,6 +9,7 @@
   import AssessmentOverview from '../../../../lib/components/AssessmentOverview.svelte';
   import AssessmentDetails from '../../../../lib/components/AssessmentDetails.svelte';
   import AssessmentSubmissions from '../../../../lib/components/AssessmentSubmissions.svelte';
+  import { ClipboardDocumentList, ChartBar, FolderArrowDown } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../../lib/i18n';
 
@@ -19,13 +22,13 @@
   // Define available tabs based on assessment data
   const availableTabs = $derived((() => {
     const tabs = [
-      { id: 'overview', label: $_('assessments.overview') || 'Overview', icon: '📋' },
-      { id: 'details', label: $_('assessments.details') || 'Details', icon: '📊' },
+      { id: 'overview', label: $_('assessments.overview') || 'Overview', icon: ClipboardDocumentList },
+      { id: 'details', label: $_('assessments.details') || 'Details', icon: ChartBar },
     ];
     
     // Only show submissions tab if file submission is enabled
     if (assessmentData?.submissionSettings?.fileSubmissionEnabled) {
-      tabs.push({ id: 'submissions', label: $_('assessments.submissions') || 'Submissions', icon: '📁' });
+      tabs.push({ id: 'submissions', label: $_('assessments.submissions') || 'Submissions', icon: FolderArrowDown });
     }
     
     return tabs;
@@ -120,30 +123,38 @@
   <!-- Content -->
   <div class="container px-6 py-8 mx-auto">
     {#if loading}
-      <div class="flex justify-center items-center h-64">
+      <div class="flex justify-center items-center h-64" in:fade={{ duration: 200, easing: cubicOut }}>
         <div class="w-12 h-12 rounded-full border-t-2 border-b-2 border-accent-500 animate-spin">
         </div>
       </div>
     {:else if error}
-      <div class="flex justify-center items-center h-64">
+      <div 
+        class="flex justify-center items-center h-64" 
+        in:fly={{ y: 20, duration: 300, easing: cubicOut }}>
         <div class="text-red-500 animate-pulse">{error}</div>
       </div>
     {:else if assessmentData}
       {#if tab === 'overview'}
-        <AssessmentOverview 
-          {assessmentData} 
-          assessmentId={parseInt($page.params.id!)}
-          onRatingUpdate={loadAssessmentDetails}
-        />
+        <div in:fly={{ y: 20, duration: 400, easing: cubicOut }}>
+          <AssessmentOverview 
+            {assessmentData} 
+            assessmentId={parseInt($page.params.id!)}
+            onRatingUpdate={loadAssessmentDetails}
+          />
+        </div>
       {:else if tab === 'details'}
-        <AssessmentDetails {assessmentData} />
+        <div in:fly={{ y: 20, duration: 400, easing: cubicOut }}>
+          <AssessmentDetails {assessmentData} />
+        </div>
       {:else if tab === 'submissions'}
-        <AssessmentSubmissions 
-          submissions={allSubmissions}
-          assessmentId={parseInt($page.params.id!)}
-          metaclassId={parseInt($page.params.metaclass!)}
-          onUploadComplete={loadAssessmentDetails}
-        />
+        <div in:fly={{ y: 20, duration: 400, easing: cubicOut }}>
+          <AssessmentSubmissions 
+            submissions={allSubmissions}
+            assessmentId={parseInt($page.params.id!)}
+            metaclassId={parseInt($page.params.metaclass!)}
+            onUploadComplete={loadAssessmentDetails}
+          />
+        </div>
       {/if}
     {/if}
   </div>

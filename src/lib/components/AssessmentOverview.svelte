@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { fade, fly } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import { Icon } from 'svelte-hero-icons';
   import { DocumentText } from 'svelte-hero-icons';
   import FileCard from './FileCard.svelte';
@@ -109,14 +111,17 @@
   }
 </script>
 
-<div class="grid gap-8 animate-fade-in">
+<div class="grid gap-8">
   <div
-    class="grid gap-6 p-6 rounded-2xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10">
-    <h1 class="mb-2 text-2xl font-bold">Assessment Overview</h1>
+    class="grid gap-6 p-6 rounded-2xl transition-all duration-300 ease-in-out dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10"
+    in:fly={{ y: 20, duration: 400, easing: cubicOut }}>
+    <h1 class="mb-2 text-2xl font-bold transition-all duration-200">Assessment Overview</h1>
     
     <!-- Engagement Rating Section -->
     {#if hasExpectedRating}
-      <div class="p-4 rounded-xl border dark:bg-zinc-800 bg-zinc-200 dark:border-zinc-700 border-zinc-200">
+      <div 
+        class="p-4 rounded-xl border dark:bg-zinc-800 bg-zinc-200 dark:border-zinc-700 border-zinc-200 transition-all duration-300 ease-in-out hover:shadow-md"
+        in:fly={{ y: 10, duration: 300, delay: 100, easing: cubicOut }}>
         <h2 class="text-lg font-semibold mb-3 text-zinc-900 dark:text-white">Expected Rating</h2>
         <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
           Rate how difficult you expect this assessment to be.
@@ -129,7 +134,7 @@
             onRatingChange={handleRatingChange}
           />
           {#if savingRating}
-            <div class="w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full animate-spin"></div>
+            <div class="w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full animate-spin transition-opacity duration-200"></div>
           {/if}
         </div>
       </div>
@@ -137,52 +142,41 @@
     
     <!-- Description Section -->
     {#if assessmentData.description}
-      <h2 class="text-lg font-semibold mb-3">Description</h2>
-      <div class="max-w-none prose prose-invert">
-        <div class="whitespace-pre-line text-zinc-300">
-          {@html sanitizeHtml(assessmentData.description)}
+      <div in:fly={{ y: 10, duration: 300, delay: 200, easing: cubicOut }}>
+        <h2 class="text-lg font-semibold mb-3">Description</h2>
+        <div class="max-w-none prose prose-invert">
+          <div class="whitespace-pre-line text-zinc-300">
+            {@html sanitizeHtml(assessmentData.description)}
+          </div>
         </div>
       </div>
     {/if}
 </div>
-
-<style>
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
-  }
-</style>
   
   {#if assessmentData.resources?.length}
     <div
-      class="grid gap-6 p-6 rounded-2xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10">
-      <h2 class="text-xl font-bold">Resources</h2>
+      class="grid gap-6 p-6 rounded-2xl transition-all duration-300 ease-in-out dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10"
+      in:fly={{ y: 20, duration: 400, delay: 300, easing: cubicOut }}>
+      <h2 class="text-xl font-bold transition-all duration-200">Resources</h2>
       <div class="grid gap-4">
-        {#each assessmentData.resources.filter((r): r is Resource & { userfile: NonNullable<Resource['userfile']> } => r.userfile !== null) as resource}
-          <FileCard 
-            file={{
-              name: resource.name,
-              mimetype: resource.userfile.mimetype,
-              size: resource.userfile.size,
-              uuid: resource.userfile.uuid
-            }}
-            variant="resource"
-          />
+        {#each assessmentData.resources.filter((r): r is Resource & { userfile: NonNullable<Resource['userfile']> } => r.userfile !== null) as resource, index}
+          <div in:fly={{ y: 10, duration: 300, delay: 400 + (index * 50), easing: cubicOut }}>
+            <FileCard 
+              file={{
+                name: resource.name,
+                mimetype: resource.userfile.mimetype,
+                size: resource.userfile.size,
+                uuid: resource.userfile.uuid
+              }}
+              variant="resource"
+            />
+          </div>
         {/each}
-        {#each assessmentData.resources.filter(r => r.userfile === null) as resource}
+        {#each assessmentData.resources.filter(r => r.userfile === null) as resource, index}
           <div
-            class="flex items-center gap-4 p-4 rounded-xl dark:bg-zinc-800 bg-zinc-200 transition-all duration-300">
-            <Icon src={DocumentText} class="w-6 h-6 text-accent-400" />
+            class="flex items-center gap-4 p-4 rounded-xl dark:bg-zinc-800 bg-zinc-200 transition-all duration-300 ease-in-out hover:shadow-md hover:scale-[1.02] transform origin-center"
+            in:fly={{ y: 10, duration: 300, delay: 400 + (index * 50), easing: cubicOut }}>
+            <Icon src={DocumentText} class="w-6 h-6 text-accent-400 transition-transform duration-200" />
             <div class="flex-1 min-w-0">
               <div class="text-sm font-medium truncate">
                 {resource.name}
@@ -197,11 +191,12 @@
     </div>
   {:else}
     <div
-      class="grid gap-6 p-6 rounded-2xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10">
-      <h2 class="text-xl font-bold">Resources</h2>
+      class="grid gap-6 p-6 rounded-2xl transition-all duration-300 ease-in-out dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10"
+      in:fly={{ y: 20, duration: 400, delay: 300, easing: cubicOut }}>
+      <h2 class="text-xl font-bold transition-all duration-200">Resources</h2>
       <div class="flex flex-col items-center justify-center py-8 text-center">
-        <div class="w-16 h-16 mb-4 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
-          <Icon src={DocumentText} class="w-8 h-8 text-zinc-400" />
+        <div class="w-16 h-16 mb-4 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center transition-all duration-300 hover:scale-110">
+          <Icon src={DocumentText} class="w-8 h-8 text-zinc-400 transition-transform duration-200" />
         </div>
         <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">No Resources Available</h3>
         <p class="text-zinc-600 dark:text-zinc-400">
