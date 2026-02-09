@@ -86,6 +86,15 @@
     }
   });
 
+  // Check if assessment has been marked and has a grade
+  function hasGrade(): boolean {
+    if (!assessmentData?.marked) return false;
+    const firstCriterion = assessmentData?.criteria?.[0];
+    if (!firstCriterion?.results) return false;
+    // Check if there's a grade or percentage
+    return !!(firstCriterion.results.grade || firstCriterion.results.percentage !== undefined);
+  }
+
   onMount(async () => {
     await loadAssessmentDetails();
     
@@ -100,8 +109,12 @@
       if (assessmentData?.submissionSettings?.fileSubmissionEnabled) {
         tab = tabParam;
       } else {
-        tab = 'overview'; // Fallback to overview if submissions disabled
+        // Fallback: if marked with grade, go to details, otherwise overview
+        tab = hasGrade() ? 'details' : 'overview';
       }
+    } else {
+      // No tab param: default to details if marked with grade, otherwise overview
+      tab = hasGrade() ? 'details' : 'overview';
     }
     
     // Scroll to top

@@ -7,6 +7,18 @@
   import { getMonday, formatDate, parseDate } from '$lib/utils/timetableUtils';
   import type { WidgetConfig } from '$lib/types/widgets';
 
+  // Check if mobile synchronously
+  function checkMobile(): boolean {
+    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
+    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
+    const mql = window.matchMedia('(max-width: 640px)');
+    const isSmallViewport = mql.matches;
+    return isNativeMobile || isSmallViewport;
+  }
+
+  const isMobile = checkMobile();
+  const initialViewMode: 'week' | 'day' | 'month' | 'list' = isMobile ? 'day' : 'week';
+
   let widgetConfig: WidgetConfig | null = $state(null);
   let weekStart = $state(getMonday(new Date()));
   let reloadKey = $state(0);
@@ -90,14 +102,14 @@
           h: 12,
         },
         settings: {
-          viewMode: 'week',
+          viewMode: initialViewMode,
           timeRange: { start: '08:00', end: '16:00' },
           showTeacher: true,
           showRoom: true,
           showAttendance: true,
           showEmptyPeriods: false,
           density: 'normal',
-          defaultView: 'week',
+          defaultView: initialViewMode,
         },
       };
     }
@@ -107,7 +119,7 @@
 <div class="h-full w-full min-h-[calc(100vh-4rem)] p-4">
   {#if widgetConfig}
     <div class="h-full w-full" transition:fade={{ duration: 400 }}>
-      <TimetableWidget widget={widgetConfig} isTemporary={true} initialWeekStart={weekStart} {reloadKey} {forceReload} />
+      <TimetableWidget widget={widgetConfig} isTemporary={true} initialWeekStart={weekStart} initialViewMode={initialViewMode} {reloadKey} {forceReload} />
     </div>
   {:else}
     <div class="flex items-center justify-center h-full">

@@ -23,11 +23,12 @@
     widget: WidgetConfig;
     isTemporary?: boolean; // If true, don't save widget config changes
     initialWeekStart?: Date; // Initial week start date
+    initialViewMode?: 'week' | 'day' | 'month' | 'list'; // Initial view mode
     reloadKey?: number; // Key to force reload when changed
     forceReload?: boolean; // If true, force fresh API query (for back navigation)
   }
 
-  let { widget, isTemporary = false, initialWeekStart, reloadKey = 0, forceReload = false }: Props = $props();
+  let { widget, isTemporary = false, initialWeekStart, initialViewMode, reloadKey = 0, forceReload = false }: Props = $props();
 
   const studentId = 69; // From existing code
 
@@ -54,9 +55,11 @@
     defaultView: widget.settings?.defaultView || 'week',
   });
 
-  // Initialize view mode from settings (only if not temporary)
+  // Initialize view mode: use initialViewMode if provided, otherwise use settings (only if not temporary)
   $effect(() => {
-    if (!isTemporary && settings.viewMode) {
+    if (initialViewMode) {
+      viewMode = initialViewMode;
+    } else if (!isTemporary && settings.viewMode) {
       viewMode = settings.viewMode;
     }
   });

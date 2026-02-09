@@ -105,7 +105,7 @@
 <div class="relative user-dropdown-container">
   <button
     data-onboarding="user-dropdown"
-    class="flex gap-3 items-center px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 dark:hover:bg-zinc-800/80 focus:outline-hidden focus:ring-2 focus:ring-zinc-500/50"
+    class="flex gap-3 items-center px-2 md:px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 dark:hover:bg-zinc-800/80 focus:outline-hidden focus:ring-2 focus:ring-zinc-500/50 md:size-auto size-12 justify-center md:justify-start"
     onclick={onToggleUserDropdown}
     aria-label={$_('user.user_menu') || 'User menu'}
     tabindex="0">
@@ -114,22 +114,22 @@
         src={customProfilePicture}
         alt=""
         onerror={() => (customProfilePictureError = true)}
-        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
+        class="object-cover w-8 h-8 md:w-8 md:h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else if devSensitiveInfoHider && randomAvatarUrl && !randomAvatarError}
       <img
         src={randomAvatarUrl}
         alt=""
         onerror={() => (randomAvatarError = true)}
-        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
+        class="object-cover w-8 h-8 md:w-8 md:h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else if !disableSchoolPicture && userInfo.profilePicture && !schoolPictureError}
       <img
         src={userInfo.profilePicture}
         alt=""
         onerror={() => (schoolPictureError = true)}
-        class="object-cover w-8 h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
+        class="object-cover w-8 h-8 md:w-8 md:h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
     {:else}
       <div
-        class="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
+        class="flex items-center justify-center w-8 h-8 md:w-8 md:h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
         {(userInfo.displayName || userInfo.userName || '?')[0]}
       </div>
     {/if}
@@ -139,7 +139,7 @@
   </button>
   {#if showUserDropdown}
     <div
-      class="absolute right-0 z-50 mt-3 w-56 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/40"
+      class="absolute right-0 z-50 mt-3 w-56 md:w-56 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/40"
       transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
       <div class="p-2">
         <button

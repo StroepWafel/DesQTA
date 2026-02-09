@@ -33,6 +33,16 @@
   }: Props = $props();
 
   let showExportMenu = $state(false);
+  let isMobile = $state(false);
+
+  // Check if mobile
+  function checkMobile() {
+    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
+    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
+    const mql = window.matchMedia('(max-width: 640px)');
+    const isSmallViewport = mql.matches;
+    isMobile = isNativeMobile || isSmallViewport;
+  }
 
   function weekRangeLabel(): string {
     const end = new Date(weekStart.valueOf() + 4 * 86400000);
@@ -55,9 +65,31 @@
   }
 
   onMount(() => {
+    checkMobile();
     document.addEventListener('click', handleExportClickOutside);
+    
+    const mql = window.matchMedia('(max-width: 640px)');
+    const onMqlChange = () => checkMobile();
+    
+    try {
+      mql.addEventListener('change', onMqlChange);
+    } catch {
+      // Safari fallback
+      // @ts-ignore
+      mql.addListener(onMqlChange);
+    }
+    
+    window.addEventListener('resize', checkMobile);
+    
     return () => {
       document.removeEventListener('click', handleExportClickOutside);
+      window.removeEventListener('resize', checkMobile);
+      try {
+        mql.removeEventListener('change', onMqlChange);
+      } catch {
+        // @ts-ignore
+        mql.removeListener(onMqlChange);
+      }
     };
   });
 
@@ -70,8 +102,9 @@
 </script>
 
 <div class="flex justify-between items-center gap-4 px-4 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
-  <!-- Week Navigation -->
-  <div class="flex gap-2 items-center">
+  <!-- Week Navigation (hidden on mobile when in day view) -->
+  {#if !(isMobile && viewMode === 'day')}
+    <div class="flex gap-2 items-center">
     <Button
       variant="ghost"
       size="sm"
@@ -106,6 +139,7 @@
       {$_('timetable.today') || 'Today'}
     </Button>
   </div>
+  {/if}
 
   <!-- View Mode Switcher -->
   <div class="flex gap-2 items-center">

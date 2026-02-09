@@ -313,6 +313,158 @@
     }
   };
 
+  const autoDownloadSettingsFromCloud = async () => {
+    try {
+      const cloudUser = await cloudAuthService.getUser();
+      if (!cloudUser) {
+        // User not logged in, skip download
+        return;
+      }
+
+      // Check if offline mode is forced
+      const { isOfflineMode } = await import('$lib/utils/offlineMode');
+      const offline = await isOfflineMode();
+      if (offline) {
+        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Skipping download (offline mode)');
+        return;
+      }
+
+      // Check if we just reloaded (prevent infinite loop)
+      const lastReloadTime = sessionStorage.getItem('settings_last_reload');
+      const now = Date.now();
+      if (lastReloadTime && now - parseInt(lastReloadTime) < 5000) {
+        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Skipping download (recently reloaded)');
+        return;
+      }
+
+      // Check if we've already synced these exact settings (prevent re-downloading same settings)
+      const lastSyncedHash = sessionStorage.getItem('settings_last_synced_hash');
+
+      logger.info('layout', 'autoDownloadSettingsFromCloud', 'Checking for cloud settings...');
+
+      // Fetch cloud settings first
+      const cloudSettings = await cloudSettingsService.getSettings();
+      if (!cloudSettings) {
+        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'No cloud settings found');
+        return;
+      }
+
+      // Get all keys from cloud settings to fetch local settings
+      const allKeys = Object.keys(cloudSettings);
+      
+      // Get current local settings for comparison (using all keys from cloud)
+      const localSettings = await invoke<any>('get_settings_subset', {
+        keys: allKeys,
+      });
+
+      // Compare settings more robustly
+      // Only compare keys that exist in both objects, and handle undefined/null properly
+      const compareSettings = (local: any, cloud: any): boolean => {
+        const allKeysSet = new Set([...Object.keys(local || {}), ...Object.keys(cloud || {})]);
+        const differences: string[] = [];
+
+        for (const key of allKeysSet) {
+          const localValue = local?.[key];
+          const cloudValue = cloud?.[key];
+
+          // Normalize values for comparison (handle undefined, null, empty arrays/objects)
+          const normalizeValue = (val: any): any => {
+            if (val === undefined || val === null) return null;
+            if (Array.isArray(val) && val.length === 0) return [];
+            if (typeof val === 'object' && Object.keys(val).length === 0) return {};
+            return val;
+          };
+
+          const normalizedLocal = normalizeValue(localValue);
+          const normalizedCloud = normalizeValue(cloudValue);
+
+          // Compare JSON strings
+          const localStr = JSON.stringify(normalizedLocal);
+          const cloudStr = JSON.stringify(normalizedCloud);
+
+          if (localStr !== cloudStr) {
+            differences.push(key);
+          }
+        }
+
+        if (differences.length > 0) {
+          logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Settings differ', {
+            differentKeys: differences,
+            count: differences.length,
+          });
+          return true;
+        }
+
+        return false;
+      };
+
+      // Create a hash of cloud settings to check if we've already synced this exact version
+      const cloudSettingsHash = btoa(JSON.stringify(cloudSettings)).slice(0, 32);
+      
+      if (lastSyncedHash === cloudSettingsHash) {
+        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Settings already synced (hash match), skipping download');
+        return;
+      }
+
+      const settingsChanged = compareSettings(localSettings, cloudSettings);
+
+      if (!settingsChanged) {
+        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Settings are identical, skipping download');
+        // Store hash even if identical to prevent re-checking
+        sessionStorage.setItem('settings_last_synced_hash', cloudSettingsHash);
+        return;
+      }
+
+      logger.info('layout', 'autoDownloadSettingsFromCloud', 'Cloud settings differ from local, downloading...');
+
+      // Download and apply cloud settings
+      await invoke('save_settings_merge', {
+        patch: cloudSettings,
+      });
+
+      logger.info('layout', 'autoDownloadSettingsFromCloud', 'Settings downloaded and applied from cloud');
+
+      // Store hash of synced settings and mark reload time BEFORE reload
+      sessionStorage.setItem('settings_last_synced_hash', cloudSettingsHash);
+      sessionStorage.setItem('settings_last_reload', now.toString());
+
+      // Reload the page to apply the new settings
+      logger.info('layout', 'autoDownloadSettingsFromCloud', 'Reloading page to apply settings...');
+      
+      // Use a small delay to ensure settings are saved, then reload
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          try {
+            if (typeof window !== 'undefined' && window.location) {
+              logger.info('layout', 'autoDownloadSettingsFromCloud', 'Executing reload now...');
+              window.location.reload();
+            } else if (typeof location !== 'undefined') {
+              logger.info('layout', 'autoDownloadSettingsFromCloud', 'Using fallback location.reload()');
+              location.reload();
+            } else {
+              logger.error('layout', 'autoDownloadSettingsFromCloud', 'Cannot reload - neither window.location nor location available');
+            }
+          } catch (reloadError) {
+            logger.error('layout', 'autoDownloadSettingsFromCloud', 'Error during reload', { error: reloadError });
+            // Last resort: try direct location.reload()
+            try {
+              if (typeof location !== 'undefined') {
+                location.reload();
+              }
+            } catch (e) {
+              logger.error('layout', 'autoDownloadSettingsFromCloud', 'Fallback reload also failed', { error: e });
+            }
+          }
+        }, 300);
+      });
+    } catch (e) {
+      // Silently fail - don't block startup if cloud download fails
+      logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Failed to download settings from cloud (non-critical)', {
+        error: e,
+      });
+    }
+  };
+
   const syncCloudSettings = async () => {
     try {
       // Initialize cloud auth from current profile
@@ -471,6 +623,11 @@
         reloadSidebarSettings(),
         syncCloudSettings(),
       ]);
+
+      // Auto-download settings from cloud in background (non-blocking)
+      autoDownloadSettingsFromCloud().catch((e) => {
+        logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
+      });
 
       // Check if user needs onboarding - DISABLED: Only show when button is pressed in settings
       // try {

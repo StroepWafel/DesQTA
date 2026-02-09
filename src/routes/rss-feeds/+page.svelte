@@ -12,7 +12,7 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
   import { Icon } from 'svelte-hero-icons';
-  import { Rss } from 'svelte-hero-icons';
+  import { Rss, Bars3, XMark } from 'svelte-hero-icons';
 
   // Relative imports
   import { logger } from '../../utils/logger';
@@ -30,6 +30,8 @@
   let selectedFeed = $state<string | null>(null);
   let selectedMessage = $state<Message | null>(null);
   let feeds = $state<Array<{ url: string; name: string }>>([]);
+  let sidebarOpen = $state(false);
+  let isMobile = $state(false);
 
   // Derived state for mobile modal
   let showMobileModal = $derived(!!selectedMessage);
@@ -104,6 +106,11 @@
     selectedMessage = null;
     logger.debug('rss-feeds', 'openFeed', `Opening feed: ${feed.name}`);
     fetchMessages(feed.url, feed.name);
+    
+    // Close sidebar on mobile when feed is selected
+    if (isMobile) {
+      sidebarOpen = false;
+    }
   }
 
   async function openMessage(msg: Message) {
@@ -131,8 +138,48 @@
     }
   }
 
+  // Check if mobile
+  function checkMobile() {
+    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
+    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
+    const mql = window.matchMedia('(max-width: 1024px)'); // xl breakpoint
+    const isSmallViewport = mql.matches;
+    isMobile = isNativeMobile || isSmallViewport;
+    
+    // Close sidebar on mobile by default
+    if (isMobile) {
+      sidebarOpen = false;
+    } else {
+      sidebarOpen = true;
+    }
+  }
+
   onMount(() => {
     loadFeeds();
+    checkMobile();
+    
+    const mql = window.matchMedia('(max-width: 1024px)');
+    const onMqlChange = () => checkMobile();
+    
+    try {
+      mql.addEventListener('change', onMqlChange);
+    } catch {
+      // Safari fallback
+      // @ts-ignore
+      mql.addListener(onMqlChange);
+    }
+    
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      try {
+        mql.removeEventListener('change', onMqlChange);
+      } catch {
+        // @ts-ignore
+        mql.removeListener(onMqlChange);
+      }
+    };
   });
 </script>
 
@@ -162,13 +209,51 @@
         </p>
       </div>
     {:else}
+      <!-- Mobile Sidebar Toggle Button -->
+      {#if isMobile}
+        <div class="sticky top-0 z-30 flex justify-between items-center p-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
+          <button
+            class="flex gap-2 items-center px-4 py-2 rounded-xl transition-all duration-200 ease-in-out transform bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 shadow-md"
+            onclick={() => (sidebarOpen = !sidebarOpen)}
+            aria-label={$_('navigation.toggle_sidebar') || 'Toggle sidebar'}>
+            <Icon src={sidebarOpen ? XMark : Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+            <span class="font-medium text-zinc-900 dark:text-white">
+              {selectedFeed || $_('rss_feeds.select_feed') || 'Select Feed'}
+            </span>
+          </button>
+        </div>
+      {/if}
+
+      <!-- Mobile Sidebar Overlay -->
+      {#if isMobile && sidebarOpen}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          class="fixed inset-0 z-20 bg-black/50 xl:hidden"
+          onclick={() => (sidebarOpen = false)}
+          role="button"
+          tabindex="0"
+          aria-label={$_('navigation.close_sidebar') || 'Close sidebar overlay'}></div>
+      {/if}
+
       <!-- Sidebar -->
       <aside
-        class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs overflow-y-scroll xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900">
-        <div class="p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
+        class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs overflow-y-scroll xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900 {isMobile
+          ? `fixed top-0 left-0 z-30 w-80 h-full ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+          : ''} transition-transform duration-300">
+        <div class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900">
           <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
             <T key="rss_feeds.title" fallback="RSS Feeds" />
           </h2>
+          {#if isMobile}
+            <button
+              onclick={() => (sidebarOpen = false)}
+              class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+              title={$_('navigation.close_sidebar') || 'Close sidebar'}
+              aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
+              <Icon src={XMark} class="w-5 h-5" />
+            </button>
+          {/if}
         </div>
         <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
           {#key feeds.length + feeds.map((f) => f.url).join(',')}
@@ -191,13 +276,15 @@
       </aside>
 
       <!-- Message List -->
-      <MessageList
-        selectedFolder={selectedFeed || ''}
-        {messages}
-        {loading}
-        {error}
-        {selectedMessage}
-        {openMessage} />
+      <div class="flex-1 {isMobile ? 'w-full' : ''}">
+        <MessageList
+          selectedFolder={selectedFeed || ''}
+          {messages}
+          {loading}
+          {error}
+          {selectedMessage}
+          {openMessage} />
+      </div>
 
       <!-- Message detail view - full screen on desktop -->
       <div class="hidden flex-1 xl:block">
