@@ -17,11 +17,19 @@
   let allSubmissions: any[] = $state([]);
 
   // Define available tabs based on assessment data
-  const availableTabs = $derived([
-    { id: 'overview', label: $_('assessments.overview') || 'Overview', icon: '📋' },
-    { id: 'details', label: $_('assessments.details') || 'Details', icon: '📊' },
-    { id: 'submissions', label: $_('assessments.submissions') || 'Submissions', icon: '📁' }
-  ]);
+  const availableTabs = $derived((() => {
+    const tabs = [
+      { id: 'overview', label: $_('assessments.overview') || 'Overview', icon: '📋' },
+      { id: 'details', label: $_('assessments.details') || 'Details', icon: '📊' },
+    ];
+    
+    // Only show submissions tab if file submission is enabled
+    if (assessmentData?.submissionSettings?.fileSubmissionEnabled) {
+      tabs.push({ id: 'submissions', label: $_('assessments.submissions') || 'Submissions', icon: '📁' });
+    }
+    
+    return tabs;
+  })());
 
   async function loadAssessmentDetails() {
     try {
@@ -36,18 +44,22 @@
       });
       assessmentData = JSON.parse(res).payload;
 
-      // Fetch teacher files (submissions)
-      const subRes = await seqtaFetch('/seqta/student/assessment/submissions/get?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {
-          assessment: parseInt($page.params.id!),
-          student: 69,
-          metaclass: parseInt($page.params.metaclass!),
-        },
-      });
-      const submissions = JSON.parse(subRes).payload;
-      allSubmissions = submissions;
+      // Only fetch submissions if file submission is enabled
+      if (assessmentData?.submissionSettings?.fileSubmissionEnabled) {
+        const subRes = await seqtaFetch('/seqta/student/assessment/submissions/get?', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: {
+            assessment: parseInt($page.params.id!),
+            student: 69,
+            metaclass: parseInt($page.params.metaclass!),
+          },
+        });
+        const submissions = JSON.parse(subRes).payload;
+        allSubmissions = submissions;
+      } else {
+        allSubmissions = [];
+      }
     } catch (e) {
       console.error('Failed to load assessment details:', e);
       error = $_('assessments.failed_to_load') || 'Failed to load assessment details';
@@ -57,17 +69,38 @@
   }
 
   function handleTabChange(tabId: string) {
+    // Prevent switching to submissions if it's not enabled
+    if (tabId === 'submissions' && !assessmentData?.submissionSettings?.fileSubmissionEnabled) {
+      return;
+    }
     tab = tabId;
   }
 
+  // Redirect away from submissions tab if it becomes unavailable
+  $effect(() => {
+    if (tab === 'submissions' && !assessmentData?.submissionSettings?.fileSubmissionEnabled) {
+      tab = 'overview';
+    }
+  });
+
   onMount(async () => {
-    // Pick tab based on query param, default handled later if missing
+    await loadAssessmentDetails();
+    
+    // Pick tab based on query param, but validate it's available
     const url = new URL(window.location.href);
     const tabParam = url.searchParams.get('tab');
-    if (tabParam === 'details' || tabParam === 'overview' || tabParam === 'submissions') {
+    
+    if (tabParam === 'details' || tabParam === 'overview') {
       tab = tabParam;
+    } else if (tabParam === 'submissions') {
+      // Only allow submissions tab if file submission is enabled
+      if (assessmentData?.submissionSettings?.fileSubmissionEnabled) {
+        tab = tabParam;
+      } else {
+        tab = 'overview'; // Fallback to overview if submissions disabled
+      }
     }
-    await loadAssessmentDetails();
+    
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
@@ -97,7 +130,11 @@
       </div>
     {:else if assessmentData}
       {#if tab === 'overview'}
-        <AssessmentOverview {assessmentData} />
+        <AssessmentOverview 
+          {assessmentData} 
+          assessmentId={parseInt($page.params.id!)}
+          onRatingUpdate={loadAssessmentDetails}
+        />
       {:else if tab === 'details'}
         <AssessmentDetails {assessmentData} />
       {:else if tab === 'submissions'}
