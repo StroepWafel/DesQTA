@@ -83,6 +83,18 @@
     showPortalModal = false;
   }
 
+  // Portal action to move modal to body (bypasses overflow clipping in widget)
+  function portalAction(node: HTMLElement) {
+    if (node.parentNode !== document.body) {
+      document.body.appendChild(node);
+    }
+    return {
+      destroy() {
+        if (node.parentNode) node.parentNode.removeChild(node);
+      },
+    };
+  }
+
   onMount(async () => {
     await loadPortal();
   });
@@ -179,13 +191,15 @@
   </div>
 </div>
 
-<Modal
-  bind:open={showPortalModal}
-  onclose={closeModal}
-  maxWidth="w-[80%]"
-  maxHeight="h-[80%]"
-  className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl"
-  ariaLabel={$_('welcome_portal.modal_aria_label') || 'Welcome Portal Modal'}>
+<!-- Portaled to body to escape widget overflow constraints -->
+<div use:portalAction>
+  <Modal
+    bind:open={showPortalModal}
+    onclose={closeModal}
+    maxWidth="w-[80%]"
+    maxHeight="h-[80%]"
+    className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl"
+    ariaLabel={$_('welcome_portal.modal_aria_label') || 'Welcome Portal Modal'}>
   {#if showDefaultContent}
     <div class="h-full overflow-y-auto p-6 text-white">
       <div class="space-y-6">
@@ -242,4 +256,5 @@
     <iframe src={portalUrl} class="w-full h-full rounded-2xl border-0" title="Welcome Portal"
     ></iframe>
   {/if}
-</Modal>
+  </Modal>
+</div>
