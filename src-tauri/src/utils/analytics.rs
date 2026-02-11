@@ -278,6 +278,12 @@ fn extract_letter_grade(assessment: &Value) -> Option<String> {
 /// Sync analytics data - fetches new assessments and merges with existing
 #[tauri::command]
 pub async fn sync_analytics_data() -> Result<String, String> {
+    // Check if we have a valid session before proceeding
+    let session = crate::session::Session::load();
+    if session.jsessionid.is_empty() || session.base_url.is_empty() {
+        return Err("No active session found. Please log in first.".to_string());
+    }
+    
     if let Some(logger) = logger::get_logger() {
         let _ = logger.log(
             logger::LogLevel::INFO,
@@ -351,6 +357,26 @@ pub async fn sync_analytics_data() -> Result<String, String> {
 
     // Process requests at rate of 10 per second (100ms delay between requests)
     for (index, (programme, metaclass)) in subjects.iter().enumerate() {
+        // Check if session is still valid before each request
+        let current_session = crate::session::Session::load();
+        if current_session.jsessionid.is_empty() || current_session.base_url.is_empty() {
+            // Session was cleared during sync (e.g., during login) - abort the sync
+            if let Some(logger) = logger::get_logger() {
+                let _ = logger.log(
+                    logger::LogLevel::WARN,
+                    "analytics",
+                    "sync_analytics_data",
+                    &format!("Session cleared during sync, aborting at subject {}/{}", index, total_subjects),
+                    json!({
+                        "processed": index,
+                        "total": total_subjects,
+                        "reason": "Session cleared during sync"
+                    }),
+                );
+            }
+            return Err(format!("Session was cleared during sync. Please try again after login completes. Processed {}/{} subjects.", index, total_subjects));
+        }
+
         // Fetch the assessment data
         match fetch_past_assessments(*programme, *metaclass).await {
             Ok(assessments) => {
@@ -373,7 +399,26 @@ pub async fn sync_analytics_data() -> Result<String, String> {
                 }
             }
             Err(e) => {
-                // Log error but continue processing other subjects
+                // Check if error indicates session was cleared
+                if e.contains("Session was cleared") || e.contains("No active session") {
+                    // Session was cleared - abort the sync
+                    if let Some(logger) = logger::get_logger() {
+                        let _ = logger.log(
+                            logger::LogLevel::WARN,
+                            "analytics",
+                            "sync_analytics_data",
+                            &format!("Session cleared during sync, aborting at subject {}/{}", index, total_subjects),
+                            json!({
+                                "processed": index,
+                                "total": total_subjects,
+                                "error": e
+                            }),
+                        );
+                    }
+                    return Err(format!("Session was cleared during sync. Please try again after login completes. Processed {}/{} subjects.", index, total_subjects));
+                }
+                
+                // Log error but continue processing other subjects (for transient errors)
                 if let Some(logger) = logger::get_logger() {
                     let _ = logger.log(
                         logger::LogLevel::WARN,

@@ -298,6 +298,9 @@
         clearInterval(timer);
         needsSetup.set(false);
         await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
+        // Trigger background sync now that user has logged in (was skipped during init on login screen)
+        const { triggerBackgroundSync } = await import('$lib/services/startupService');
+        triggerBackgroundSync();
       }
     }, 1000);
 
@@ -643,16 +646,9 @@
       //   logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
       // }
 
-      // Load cached data from SQLite immediately for instant UI
-      const { initializeApp } = await import('$lib/services/startupService');
-      await initializeApp();
-
-      // Background tasks (warmup already triggered by startupService)
-      if (weatherEnabled) {
-        fetchWeather(!forceUseLocation);
-      }
-
-      // Validate SEQTA session on app launch
+      // Validate SEQTA session BEFORE starting background sync
+      // This prevents sync_analytics_data (and other warmup) from running in parallel with
+      // session invalidation - which could clear the session mid-sync and cause 401 errors
       if (!devMockEnabled && !$needsSetup) {
         try {
           const response = await seqtaFetch('/seqta/student/login', {
@@ -664,18 +660,32 @@
           const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
           const isAuthenticated = responseStr.includes('site.name.abbrev');
 
-          if (
+          // Only logout on explicit auth failures (401, unauthorized), NOT on 404 or generic errors
+          // 404 and other non-auth errors can include "error" in the response and would incorrectly invalidate the session
+          const isAuthFailure =
             !isAuthenticated &&
-            (responseStr.includes('error') ||
+            (responseStr.includes('"status":"401"') ||
+              responseStr.includes('"status": "401"') ||
               responseStr.includes('unauthorized') ||
-              responseStr.includes('401'))
-          ) {
+              responseStr.toLowerCase().includes('authentication failed'));
+
+          if (isAuthFailure) {
             logger.warn('layout', 'onMount', 'Session invalid, logging out');
             await handleLogout();
           }
         } catch (e) {
           logger.error('layout', 'onMount', 'SEQTA session check failed', { error: e });
         }
+      }
+
+      // Load cached data from SQLite immediately for instant UI
+      // Pass needsSetup so we skip background sync when user is on login screen (or after session invalidation)
+      const { initializeApp } = await import('$lib/services/startupService');
+      await initializeApp(get(needsSetup));
+
+      // Background tasks (warmup already triggered by startupService)
+      if (weatherEnabled) {
+        fetchWeather(!forceUseLocation);
       }
 
       // Run a one-time heartbeat health check on app open

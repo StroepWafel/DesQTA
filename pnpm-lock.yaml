@@ -11,9 +11,6 @@ importers:
       7.css:
         specifier: ^0.18.0
         version: 0.18.0
-      '@humanspeak/svelte-virtual-list':
-        specifier: ^0.3.10
-        version: 0.3.10(svelte@5.43.3)
       '@preact/signals':
         specifier: ^2.5.1
         version: 2.5.1(preact@10.27.3)
@@ -590,11 +587,6 @@ packages:
 
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
-
-  '@humanspeak/svelte-virtual-list@0.3.10':
-    resolution: {integrity: sha512-mcbHfFnHHsNqG0oxN7vU9A3U32MXD3spp6bkiLVYTM645TlULm3BQawLUzhrYriF5WBIHtJXFXfKWU4V4YMshw==}
-    peerDependencies:
-      svelte: ^5.0.0
 
   '@internationalized/date@3.10.0':
     resolution: {integrity: sha512-oxDR/NTEJ1k+UFVQElaNIk65E/Z83HK1z1WI3lQyhTtnNg4R5oVXaPzK3jcpKG8UHKDVuDQHzn+wsxSz8RP3aw==}
@@ -2524,11 +2516,6 @@ snapshots:
   '@formatjs/intl-localematcher@0.6.2':
     dependencies:
       tslib: 2.8.1
-
-  '@humanspeak/svelte-virtual-list@0.3.10(svelte@5.43.3)':
-    dependencies:
-      esm-env: 1.2.2
-      svelte: 5.43.3
 
   '@internationalized/date@3.10.0':
     dependencies:

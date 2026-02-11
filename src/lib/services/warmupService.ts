@@ -271,6 +271,18 @@ async function prefetchTodayNotices(): Promise<void> {
 async function prefetchAnalyticsSync(): Promise<void> {
   try {
     const { invoke } = await import('@tauri-apps/api/core');
+    const { authService } = await import('./authService');
+
+    // Check if we have a valid session before attempting sync
+    const sessionExists = await authService.checkSession();
+    if (!sessionExists) {
+      logger.debug(
+        'warmup',
+        'prefetchAnalyticsSync',
+        'No active session, skipping analytics sync',
+      );
+      return;
+    }
 
     // Check if analytics data already exists in cache
     try {
@@ -293,7 +305,7 @@ async function prefetchAnalyticsSync(): Promise<void> {
       );
     }
 
-    // Only sync if no data exists
+    // Only sync if no data exists and we have a valid session
     await invoke<string>('sync_analytics_data');
     logger.info('warmup', 'prefetchAnalyticsSync', 'Analytics data synced successfully');
 

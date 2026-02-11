@@ -275,8 +275,9 @@ async function checkForUpdatesOnStartup(): Promise<void> {
 
 /**
  * Initialize startup sequence: load cached data → show UI → sync in background → check for updates
+ * @param needsSetup - When true, user is on login screen; skip background sync to avoid 401 race with session
  */
-export async function initializeApp(): Promise<void> {
+export async function initializeApp(needsSetup = false): Promise<void> {
   // Step 1: Load cached data from SQLite immediately (blocks until loaded)
   await loadCachedDataOnStartup();
 
@@ -305,8 +306,12 @@ export async function initializeApp(): Promise<void> {
     });
   }
 
-  // Step 3: Trigger background sync (non-blocking)
-  triggerBackgroundSync();
+  // Step 3: Trigger background sync (non-blocking) - skip when on login screen to avoid session race
+  if (!needsSetup) {
+    triggerBackgroundSync();
+  } else {
+    logger.debug('startup', 'initializeApp', 'Skipping background sync (user on login screen)');
+  }
 
   // Step 5: Download theme store images in background (non-blocking)
   downloadThemeStoreImages().catch((e) => {
