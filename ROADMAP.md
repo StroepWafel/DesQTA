@@ -85,13 +85,13 @@ DesQTA is a **privacy-sensitive education app** that:
 
 ### 2.1 Immediate Fixes (Overhaul Half-Implemented Features)
 
-| Priority | Item | Action |
-|----------|------|--------|
-| **P1** | Implement window management commands | Use Tauri v2 `Window` API: `minimize()`, `maximize()`, `unmaximize()`, `set_fullscreen()`, etc. Replace `println!` with actual calls |
-| **P1** | Implement `show_notification` | Use `tauri_plugin_notification` to emit native notifications instead of `println!` |
-| **P2** | Reports `openReportInBrowser` error handling | Add toast or inline error message on failure; optionally retry |
-| **P2** | Plugin store backend | Either: (a) add Tauri commands for plugin install/uninstall/verify, or (b) clearly mark as "Coming Soon" and remove install/uninstall UI until ready |
-| **P3** | Zoom commands | Implement frontend zoom via CSS transform or `document.body.style.zoom` and wire SearchActions to it; or document that zoom is intentionally frontend-only |
+| Priority | Item | Action | Status |
+|----------|------|--------|--------|
+| **P1** | Implement window management commands | Use Tauri v2 `Window` API: `minimize()`, `maximize()`, `unmaximize()`, `set_fullscreen()`, etc. Replace `println!` with actual calls | Done |
+| **P1** | Implement `show_notification` | Use `tauri_plugin_notification` to emit native notifications instead of `println!` | Done |
+| **P2** | Reports `openReportInBrowser` error handling | Add toast or inline error message on failure; optionally retry | Done |
+| **P2** | Plugin store backend | Either: (a) add Tauri commands for plugin install/uninstall/verify, or (b) clearly mark as "Coming Soon" and remove install/uninstall UI until ready | Done (b) |
+| **P3** | Zoom commands | Implement frontend zoom via CSS transform or `document.body.style.zoom` and wire SearchActions to it; or document that zoom is intentionally frontend-only | Done |
 
 ### 2.2 Strategic Overhauls
 

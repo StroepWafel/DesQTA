@@ -8,6 +8,7 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { getUrlParam } from '$lib/utils/urlParams';
+  import { toastStore } from '$lib/stores/toast';
 
   let reports = $state<any[]>([]);
   let loading = $state(true);
@@ -73,7 +74,8 @@
         await openUrl(url);
       }
     } catch (e) {
-      // Optionally handle error (e.g., show a toast)
+      const message = e instanceof Error ? e.message : String(e);
+      toastStore.error($_('reports.open_failed') || 'Failed to open report');
     }
   }
 

@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { goto } from '$app/navigation';
 import type { SearchItem } from './SearchData';
+import { zoomIn, zoomOut, zoomReset } from '$lib/utils/zoom';
 
 export async function toggleSetting(settingKey: string, inverted: boolean = false) {
   try {
@@ -40,6 +41,21 @@ export async function handleAction(item: SearchItem) {
     case 'action-close':
       await invoke('quit').catch(console.warn);
       break;
+    case 'action-zoom-in': {
+      const level = zoomIn();
+      invoke('save_settings_merge', { patch: { zoom_level: level } }).catch(console.warn);
+      break;
+    }
+    case 'action-zoom-out': {
+      const level = zoomOut();
+      invoke('save_settings_merge', { patch: { zoom_level: level } }).catch(console.warn);
+      break;
+    }
+    case 'action-zoom-reset': {
+      zoomReset();
+      invoke('save_settings_merge', { patch: { zoom_level: 1 } }).catch(console.warn);
+      break;
+    }
     case 'action-sidebar-toggle':
       // This should be handled by the parent component
       break;

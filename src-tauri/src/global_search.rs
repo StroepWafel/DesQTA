@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::command;
+use tauri::Emitter;
 
 #[cfg(not(target_os = "android"))]
 use dirs_next;
@@ -252,13 +253,13 @@ pub fn reset_search_data() -> Result<(), String> {
 
 // Window Management Commands - Desktop only
 #[command]
-pub async fn toggle_fullscreen(_window: tauri::Window) -> Result<(), String> {
+pub async fn toggle_fullscreen(window: tauri::Window) -> Result<(), String> {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        // Note: fullscreen methods might not be available in all Tauri versions
-        // Using a placeholder implementation
-        println!("Toggle fullscreen requested");
-        Ok(())
+        let is_fullscreen = window.is_fullscreen().map_err(|e| e.to_string())?;
+        window
+            .set_fullscreen(!is_fullscreen)
+            .map_err(|e| e.to_string())
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
     {
@@ -267,13 +268,10 @@ pub async fn toggle_fullscreen(_window: tauri::Window) -> Result<(), String> {
 }
 
 #[command]
-pub async fn minimize_window(_window: tauri::Window) -> Result<(), String> {
+pub async fn minimize_window(window: tauri::Window) -> Result<(), String> {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        // Note: minimize method might not be available in all Tauri versions
-        // Using a placeholder implementation
-        println!("Minimize window requested");
-        Ok(())
+        window.minimize().map_err(|e| e.to_string())
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
     {
@@ -282,13 +280,15 @@ pub async fn minimize_window(_window: tauri::Window) -> Result<(), String> {
 }
 
 #[command]
-pub async fn maximize_window(_window: tauri::Window) -> Result<(), String> {
+pub async fn maximize_window(window: tauri::Window) -> Result<(), String> {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        // Note: maximize method might not be available in all Tauri versions
-        // Using a placeholder implementation
-        println!("Maximize window requested");
-        Ok(())
+        let is_maximized = window.is_maximized().map_err(|e| e.to_string())?;
+        if is_maximized {
+            window.unmaximize().map_err(|e| e.to_string())
+        } else {
+            window.maximize().map_err(|e| e.to_string())
+        }
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
     {
@@ -297,13 +297,10 @@ pub async fn maximize_window(_window: tauri::Window) -> Result<(), String> {
 }
 
 #[command]
-pub async fn unmaximize_window(_window: tauri::Window) -> Result<(), String> {
+pub async fn unmaximize_window(window: tauri::Window) -> Result<(), String> {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        // Note: unmaximize method might not be available in all Tauri versions
-        // Using a placeholder implementation
-        println!("Unmaximize window requested");
-        Ok(())
+        window.unmaximize().map_err(|e| e.to_string())
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
     {
@@ -312,13 +309,10 @@ pub async fn unmaximize_window(_window: tauri::Window) -> Result<(), String> {
 }
 
 #[command]
-pub async fn close_window(_window: tauri::Window) -> Result<(), String> {
+pub async fn close_window(window: tauri::Window) -> Result<(), String> {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        // Note: close method might not be available in all Tauri versions
-        // Using a placeholder implementation for now
-        println!("Close window requested");
-        Ok(())
+        window.close().map_err(|e| e.to_string())
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
     {
@@ -354,25 +348,22 @@ pub async fn close_devtools(_window: tauri::Window) -> Result<(), String> {
     }
 }
 
-// Zoom Commands - Using webview evaluation since direct zoom API is not available
+// Zoom Commands - Emit event to frontend; zoom is applied via CSS (document.documentElement.style.zoom)
 #[command]
-pub async fn zoom_in(_window: tauri::Window) -> Result<(), String> {
-    // In Tauri v2, zoom is typically handled by the frontend
-    println!("Zoom in requested - implement on frontend with CSS transform or zoom");
+pub async fn zoom_in(window: tauri::Window) -> Result<(), String> {
+    let _ = window.emit("zoom", "in");
     Ok(())
 }
 
 #[command]
-pub async fn zoom_out(_window: tauri::Window) -> Result<(), String> {
-    // In Tauri v2, zoom is typically handled by the frontend
-    println!("Zoom out requested - implement on frontend with CSS transform or zoom");
+pub async fn zoom_out(window: tauri::Window) -> Result<(), String> {
+    let _ = window.emit("zoom", "out");
     Ok(())
 }
 
 #[command]
-pub async fn zoom_reset(_window: tauri::Window) -> Result<(), String> {
-    // In Tauri v2, zoom is typically handled by the frontend
-    println!("Zoom reset requested - implement on frontend with CSS transform or zoom");
+pub async fn zoom_reset(window: tauri::Window) -> Result<(), String> {
+    let _ = window.emit("zoom", "reset");
     Ok(())
 }
 
@@ -441,13 +432,11 @@ pub async fn restart_app(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[command]
-pub async fn show_window(_window: tauri::Window) -> Result<(), String> {
+pub async fn show_window(window: tauri::Window) -> Result<(), String> {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        // Note: show/focus methods might not be available in all Tauri versions
-        // Using a placeholder implementation
-        println!("Show window requested");
-        Ok(())
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
     {
@@ -456,13 +445,10 @@ pub async fn show_window(_window: tauri::Window) -> Result<(), String> {
 }
 
 #[command]
-pub async fn hide_window(_window: tauri::Window) -> Result<(), String> {
+pub async fn hide_window(window: tauri::Window) -> Result<(), String> {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        // Note: hide method might not be available in all Tauri versions
-        // Using a placeholder implementation
-        println!("Hide window requested");
-        Ok(())
+        window.hide().map_err(|e| e.to_string())
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
     {
@@ -472,10 +458,14 @@ pub async fn hide_window(_window: tauri::Window) -> Result<(), String> {
 
 // Notification Commands
 #[command]
-pub async fn show_notification(title: String, body: String) -> Result<(), String> {
-    // This would integrate with the notification plugin
-    println!("Notification: {} - {}", title, body);
-    Ok(())
+pub async fn show_notification(app: tauri::AppHandle, title: String, body: String) -> Result<(), String> {
+    use tauri_plugin_notification::NotificationExt;
+    app.notification()
+        .builder()
+        .title(title)
+        .body(body)
+        .show()
+        .map_err(|e| e.to_string())
 }
 
 // File System Commands

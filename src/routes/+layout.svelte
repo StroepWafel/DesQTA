@@ -171,6 +171,14 @@
       logger.debug('layout', 'fullscreen_listener', `Window state changed: ${isFullscreen}`);
     });
 
+    // Listen for zoom events from backend (e.g. when zoom_in/zoom_out/zoom_reset commands are invoked)
+    await listen<string>('zoom', async (event) => {
+      const { zoomIn, zoomOut, zoomReset } = await import('$lib/utils/zoom');
+      if (event.payload === 'in') zoomIn();
+      else if (event.payload === 'out') zoomOut();
+      else if (event.payload === 'reset') zoomReset();
+    });
+
     // Check fullscreen state only when window state actually changes (event-driven)
     checkFullscreenState = async () => {
       try {
@@ -587,6 +595,19 @@
   onMount(async () => {
     logger.logComponentMount('layout');
     setupListeners();
+
+    // Restore saved zoom level (from settings backend first, else localStorage)
+    const { restoreZoom, restoreZoomFromLevel } = await import('$lib/utils/zoom');
+    try {
+      const settings = await loadSettings(['zoom_level']);
+      if (settings.zoom_level != null && settings.zoom_level >= 0.5 && settings.zoom_level <= 2) {
+        restoreZoomFromLevel(settings.zoom_level);
+      } else {
+        restoreZoom();
+      }
+    } catch {
+      restoreZoom();
+    }
 
     // Set up redo onboarding listener
     window.addEventListener('redo-onboarding', handleRedoOnboarding);

@@ -188,6 +188,8 @@
           'dev_force_offline_mode',
           'accepted_cloud_eula',
           'language',
+          'separate_rss_feed',
+          'zoom_level',
         ],
       });
 

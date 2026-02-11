@@ -115,6 +115,9 @@ pub struct Settings {
     pub downloaded_theme_ids: Option<Vec<String>>, // Array of theme UUIDs from cloud store
     #[serde(default)]
     pub downloaded_theme_metadata: Option<serde_json::Value>, // Map of theme UUID -> { version, checksum, updated_at }
+    /// Interface zoom level (0.5 to 2.0, default 1.0)
+    #[serde(default)]
+    pub zoom_level: Option<f64>,
 }
 
 impl Default for Settings {
@@ -155,6 +158,7 @@ impl Default for Settings {
             sidebar_recent_activity: None,
             downloaded_theme_ids: None,
             downloaded_theme_metadata: None,
+            zoom_level: None,
         }
     }
 }

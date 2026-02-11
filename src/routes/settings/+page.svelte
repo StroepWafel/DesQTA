@@ -38,6 +38,8 @@
     Flag,
     ChatBubbleBottomCenterText,
     FolderOpen,
+    MagnifyingGlass,
+    Minus,
   } from 'svelte-hero-icons';
   import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
@@ -53,6 +55,7 @@
   import { toastStore } from '../../lib/stores/toast';
   import { cloudSettingsService } from '../../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
+  import { setZoom } from '../../lib/utils/zoom';
   import { CacheManager } from '../../utils/cacheManager';
   import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
   import Modal from '../../lib/components/Modal.svelte';
@@ -98,6 +101,7 @@
   let devForceOfflineMode = false;
   let showDevSettings = false;
   let separateRssFeed = false;
+  let zoomLevel = 1;
   let keyBuffer = '';
   let acceptedCloudEula = false;
   let showEulaModal = false;
@@ -143,6 +147,7 @@
     devForceOfflineMode: boolean;
     acceptedCloudEula: boolean;
     separateRssFeed: boolean;
+    zoomLevel: number;
   } | null = null;
 
   // Menu configuration (same as in layout)
@@ -265,6 +270,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'accepted_cloud_eula',
           'language',
           'separate_rss_feed',
+          'zoom_level',
         ],
       });
       shortcuts = settings.shortcuts || [];
@@ -292,6 +298,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
       separateRssFeed = settings.separate_rss_feed ?? false;
+      zoomLevel = typeof settings.zoom_level === 'number' ? settings.zoom_level : 1;
 
       // Store initial state for comparison
       initialSettings = {
@@ -320,6 +327,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         devForceOfflineMode,
         acceptedCloudEula,
         separateRssFeed,
+        zoomLevel,
       };
 
       console.log('Loading settings', {
@@ -357,6 +365,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devForceOfflineMode = false;
       acceptedCloudEula = false;
       separateRssFeed = false;
+      zoomLevel = 1;
       showDevSettings = false;
     }
     loading = false;
@@ -427,6 +436,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
         separate_rss_feed: separateRssFeed,
+        zoom_level: zoomLevel,
       };
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
@@ -467,6 +477,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
         initialSettings.devForceOfflineMode = devForceOfflineMode;
         initialSettings.acceptedCloudEula = acceptedCloudEula;
+        initialSettings.separateRssFeed = separateRssFeed;
+        initialSettings.zoomLevel = zoomLevel;
       }
 
       if (!options.skipReload) {
@@ -583,6 +595,8 @@ The Company reserves the right to terminate your access to the Service at any ti
     globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
+    separateRssFeed = cloudSettings.separate_rss_feed ?? false;
+    zoomLevel = cloudSettings.zoom_level ?? 1;
 
     // Reload settings
     await loadSettings();
@@ -610,7 +624,12 @@ The Company reserves the right to terminate your access to the Service at any ti
       initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
       initialSettings.devForceOfflineMode = devForceOfflineMode;
       initialSettings.acceptedCloudEula = acceptedCloudEula;
+      initialSettings.separateRssFeed = separateRssFeed;
+      initialSettings.zoomLevel = zoomLevel;
     }
+
+    // Apply zoom immediately after cloud download
+    setZoom(zoomLevel);
   }
 
   function handleKeydown(event: KeyboardEvent) {
@@ -656,7 +675,9 @@ The Company reserves the right to terminate your access to the Service at any ti
       globalSearchEnabled !== initialSettings.globalSearchEnabled ||
       devSensitiveInfoHider !== initialSettings.devSensitiveInfoHider ||
       devForceOfflineMode !== initialSettings.devForceOfflineMode ||
-      acceptedCloudEula !== initialSettings.acceptedCloudEula
+      acceptedCloudEula !== initialSettings.acceptedCloudEula ||
+      separateRssFeed !== initialSettings.separateRssFeed ||
+      zoomLevel !== initialSettings.zoomLevel
     );
   }
 
@@ -1698,6 +1719,62 @@ The Company reserves the right to terminate your access to the Service at any ti
               for="enhanced-animations"
               class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
               >Enhanced Animations</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Zoom Settings -->
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+          <h2 class="text-base font-semibold sm:text-lg">
+            <T key="settings.zoom" fallback="Interface Zoom" />
+          </h2>
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+            <T
+              key="settings.zoom_description"
+              fallback="Adjust the size of interface elements (50%–200%)" />
+          </p>
+        </div>
+        <div class="p-4 sm:p-6">
+          <div
+            class="flex flex-col gap-4 p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
+            <div class="flex gap-4 items-center">
+              <button
+                type="button"
+                class="flex justify-center items-center w-10 h-10 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50"
+                onclick={() => {
+                  zoomLevel = Math.max(0.5, zoomLevel - 0.1);
+                  zoomLevel = Math.round(zoomLevel * 10) / 10;
+                  setZoom(zoomLevel);
+                }}
+                aria-label="Zoom out">
+                <Icon src={Minus} class="w-5 h-5" />
+              </button>
+              <span class="text-sm font-medium text-zinc-900 dark:text-white min-w-[4rem] text-center">
+                {Math.round(zoomLevel * 100)}%
+              </span>
+              <button
+                type="button"
+                class="flex justify-center items-center w-10 h-10 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50"
+                onclick={() => {
+                  zoomLevel = Math.min(2, zoomLevel + 0.1);
+                  zoomLevel = Math.round(zoomLevel * 10) / 10;
+                  setZoom(zoomLevel);
+                }}
+                aria-label="Zoom in">
+                <Icon src={Plus} class="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1 text-sm rounded-lg bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-500 transition-all duration-200"
+                onclick={() => {
+                  zoomLevel = 1;
+                  setZoom(1);
+                }}>
+                <T key="settings.zoom_reset" fallback="Reset" />
+              </button>
+            </div>
           </div>
         </div>
       </section>

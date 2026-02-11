@@ -40,6 +40,7 @@ async function autoSyncToCloud(patch: Record<string, any>): Promise<void> {
           'dev_force_offline_mode',
           'accepted_cloud_eula',
           'language',
+          'zoom_level',
         ],
       });
 

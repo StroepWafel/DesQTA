@@ -538,6 +538,9 @@
     "theme_mode_description": "Choose between light mode, dark mode, or follow your system preference.",
     "notifications": "Notifications",
     "notifications_description": "Manage your notification preferences",
+    "zoom": "Interface Zoom",
+    "zoom_description": "Adjust the size of interface elements (50%–200%)",
+    "zoom_reset": "Reset",
     "enable_reminder_notifications": "Enable assessment reminder notifications",
     "send_test_notification": "Send Test Notification",
     "ai_features": "AI Features",
@@ -716,7 +719,8 @@
     "failed_to_load": "Failed to load reports.",
     "error_loading": "Error loading reports.",
     "loading": "Loading reports...",
-    "download": "Download"
+    "download": "Download",
+    "open_failed": "Failed to open report"
   },
   "performance": {
     "title": "Performance Test Results - DesQTA",
