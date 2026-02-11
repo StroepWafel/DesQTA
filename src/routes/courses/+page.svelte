@@ -535,7 +535,7 @@
   <!-- Mobile Sidebar Toggle Button -->
   {#if isMobile}
     <button
-      class="fixed top-20 left-4 z-40 flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 shadow-lg"
+      class="fixed top-20 left-4 z-40 flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform theme-bg hover:accent-bg focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 shadow-lg"
       onclick={() => (sidebarOpen = !sidebarOpen)}
       aria-label={$_('navigation.toggle_sidebar') || 'Toggle sidebar'}>
       <Icon src={sidebarOpen ? XMark : Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
@@ -556,12 +556,12 @@
 
   <!-- Unified Navigation Sidebar -->
   <div
-    class="flex flex-col w-80 h-full border-r border-zinc-200 transition-all duration-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 {isMobile
+    class="flex flex-col w-80 h-full border-r border-zinc-200 transition-all duration-300 dark:border-zinc-700 theme-bg {isMobile
       ? `fixed top-0 left-0 z-40 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
       : ''}">
     <!-- Navigation Header -->
     <div
-      class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+      class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
       <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
         {#if selectedSubject}
           {selectedSubject.title}
@@ -742,7 +742,7 @@
           {:else if coursePayload}
             <!-- Back to Courses Button (Mobile) -->
             {#if isMobile}
-              <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+              <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
                 <button
                   onclick={() => {
                     selectedSubject = null;
@@ -911,7 +911,7 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="overflow-y-auto flex-1 {isMobile ? 'w-full' : ''} bg-white dark:bg-zinc-900" bind:this={contentScrollContainer}>
+  <div class="overflow-y-auto flex-1 {isMobile ? 'w-full' : ''} theme-bg" bind:this={contentScrollContainer}>
     {#if loadingCourse}
       <div class="flex justify-center items-center h-full">
         <LoadingSpinner

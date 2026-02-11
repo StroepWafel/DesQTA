@@ -1,11 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy, tick } from 'svelte';
   import { fly } from 'svelte/transition';
-  import { 
+  import {
     Icon,
-    Bold, 
-    Italic, 
-    Underline, 
+    Bold,
+    Italic,
+    Underline,
     Strikethrough,
     CodeBracket,
     Link,
@@ -19,7 +19,7 @@
     ArrowRight,
     ArrowUp,
     ArrowDown,
-    Trash
+    Trash,
   } from 'svelte-hero-icons';
 
   export let editor: any = null;
@@ -41,14 +41,14 @@
     if (node.parentNode !== document.body) {
       document.body.appendChild(node);
     }
-    
+
     return {
       destroy() {
         // Clean up when destroyed
         if (node.parentNode) {
           node.parentNode.removeChild(node);
         }
-      }
+      },
     };
   }
 
@@ -65,7 +65,7 @@
         const rect = menuElement.getBoundingClientRect();
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        
+
         if (x + rect.width > viewportWidth) {
           adjustedX = viewportWidth - rect.width - 10;
         }
@@ -82,7 +82,7 @@
 
   function executeCommand(command: string, value?: any) {
     if (!editor) return;
-    
+
     switch (command) {
       case 'bold':
         editor.chain().focus().toggleBold().run();
@@ -151,7 +151,7 @@
         editor.chain().focus().toggleHeaderRow().run();
         break;
     }
-    
+
     closeMenu();
   }
 
@@ -194,20 +194,19 @@
     bind:this={menuElement}
     use:portalAction
     class="fixed z-50 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-2 min-w-48"
-    style="left: {adjustedX}px; top: {adjustedY}px; pointer-events: auto;"
-  >
+    style="left: {adjustedX}px; top: {adjustedY}px; pointer-events: auto;">
     {#if !isInTable}
       <!-- Text Formatting Options -->
-      <div class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide border-b border-zinc-100 dark:border-zinc-700 mb-1">
+      <div
+        class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide border-b border-zinc-100 dark:border-zinc-700 mb-1">
         Format Text
       </div>
-      
+
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('bold')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('bold')}
-        on:click={() => executeCommand('bold')}
-      >
+        on:click={() => executeCommand('bold')}>
         <Icon src={Bold} class="w-4 h-4 mr-3" />
         Bold
         <span class="ml-auto text-xs text-zinc-400">Ctrl+B</span>
@@ -217,8 +216,7 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('italic')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('italic')}
-        on:click={() => executeCommand('italic')}
-      >
+        on:click={() => executeCommand('italic')}>
         <Icon src={Italic} class="w-4 h-4 mr-3" />
         Italic
         <span class="ml-auto text-xs text-zinc-400">Ctrl+I</span>
@@ -228,8 +226,7 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('underline')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('underline')}
-        on:click={() => executeCommand('underline')}
-      >
+        on:click={() => executeCommand('underline')}>
         <Icon src={Underline} class="w-4 h-4 mr-3" />
         Underline
         <span class="ml-auto text-xs text-zinc-400">Ctrl+U</span>
@@ -239,8 +236,7 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('strike')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('strike')}
-        on:click={() => executeCommand('strikethrough')}
-      >
+        on:click={() => executeCommand('strikethrough')}>
         <Icon src={Strikethrough} class="w-4 h-4 mr-3" />
         Strikethrough
       </button>
@@ -249,8 +245,7 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('code')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('code')}
-        on:click={() => executeCommand('code')}
-      >
+        on:click={() => executeCommand('code')}>
         <Icon src={CodeBracket} class="w-4 h-4 mr-3" />
         Inline Code
       </button>
@@ -262,8 +257,7 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('blockquote')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('blockquote')}
-        on:click={() => executeCommand('blockquote')}
-      >
+        on:click={() => executeCommand('blockquote')}>
         <Icon src={ChatBubbleLeftRight} class="w-4 h-4 mr-3" />
         Quote
       </button>
@@ -272,8 +266,7 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('bulletList')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('bulletList')}
-        on:click={() => executeCommand('bulletList')}
-      >
+        on:click={() => executeCommand('bulletList')}>
         <Icon src={ListBullet} class="w-4 h-4 mr-3" />
         Bullet List
       </button>
@@ -282,16 +275,14 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('orderedList')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('orderedList')}
-        on:click={() => executeCommand('orderedList')}
-      >
+        on:click={() => executeCommand('orderedList')}>
         <Icon src={NumberedList} class="w-4 h-4 mr-3" />
         Numbered List
       </button>
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('link')}
-      >
+        on:click={() => executeCommand('link')}>
         <Icon src={Link} class="w-4 h-4 mr-3" />
         Add Link
       </button>
@@ -299,44 +290,42 @@
       <div class="border-t border-zinc-100 dark:border-zinc-700 my-1"></div>
 
       <!-- Insert Options -->
-      <div class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+      <div
+        class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
         Insert
       </div>
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('insertTable')}
-      >
+        on:click={() => executeCommand('insertTable')}>
         <Icon src={TableCells} class="w-4 h-4 mr-3" />
         Insert Table
       </button>
     {:else}
       <!-- Table-specific options -->
-      <div class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide border-b border-zinc-100 dark:border-zinc-700 mb-1">
+      <div
+        class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide border-b border-zinc-100 dark:border-zinc-700 mb-1">
         Table Options
       </div>
 
       <!-- Column Operations -->
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('addColumnBefore')}
-      >
+        on:click={() => executeCommand('addColumnBefore')}>
         <Icon src={ArrowLeft} class="w-4 h-4 mr-3" />
         Add Column Before
       </button>
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('addColumnAfter')}
-      >
+        on:click={() => executeCommand('addColumnAfter')}>
         <Icon src={ArrowRight} class="w-4 h-4 mr-3" />
         Add Column After
       </button>
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left text-red-600 dark:text-red-400"
-        on:click={() => executeCommand('deleteColumn')}
-      >
+        on:click={() => executeCommand('deleteColumn')}>
         <Icon src={Minus} class="w-4 h-4 mr-3" />
         Delete Column
       </button>
@@ -346,24 +335,21 @@
       <!-- Row Operations -->
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('addRowBefore')}
-      >
+        on:click={() => executeCommand('addRowBefore')}>
         <Icon src={ArrowUp} class="w-4 h-4 mr-3" />
         Add Row Above
       </button>
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('addRowAfter')}
-      >
+        on:click={() => executeCommand('addRowAfter')}>
         <Icon src={ArrowDown} class="w-4 h-4 mr-3" />
         Add Row Below
       </button>
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left text-red-600 dark:text-red-400"
-        on:click={() => executeCommand('deleteRow')}
-      >
+        on:click={() => executeCommand('deleteRow')}>
         <Icon src={Minus} class="w-4 h-4 mr-3" />
         Delete Row
       </button>
@@ -373,32 +359,28 @@
       <!-- Table Structure -->
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('toggleHeaderRow')}
-      >
+        on:click={() => executeCommand('toggleHeaderRow')}>
         <Icon src={TableCells} class="w-4 h-4 mr-3" />
         Toggle Header Row
       </button>
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('toggleHeaderColumn')}
-      >
+        on:click={() => executeCommand('toggleHeaderColumn')}>
         <Icon src={TableCells} class="w-4 h-4 mr-3" />
         Toggle Header Column
       </button>
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('mergeCells')}
-      >
+        on:click={() => executeCommand('mergeCells')}>
         <Icon src={Plus} class="w-4 h-4 mr-3" />
         Merge Cells
       </button>
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
-        on:click={() => executeCommand('splitCell')}
-      >
+        on:click={() => executeCommand('splitCell')}>
         <Icon src={Minus} class="w-4 h-4 mr-3" />
         Split Cell
       </button>
@@ -407,8 +389,7 @@
 
       <button
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left text-red-600 dark:text-red-400"
-        on:click={() => executeCommand('deleteTable')}
-      >
+        on:click={() => executeCommand('deleteTable')}>
         <Icon src={Trash} class="w-4 h-4 mr-3" />
         Delete Table
       </button>
@@ -416,7 +397,8 @@
       <div class="border-t border-zinc-100 dark:border-zinc-700 my-1"></div>
 
       <!-- Text Formatting (available in table too) -->
-      <div class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+      <div
+        class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
         Format Text
       </div>
 
@@ -424,8 +406,7 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('bold')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('bold')}
-        on:click={() => executeCommand('bold')}
-      >
+        on:click={() => executeCommand('bold')}>
         <Icon src={Bold} class="w-4 h-4 mr-3" />
         Bold
       </button>
@@ -434,8 +415,7 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('italic')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('italic')}
-        on:click={() => executeCommand('italic')}
-      >
+        on:click={() => executeCommand('italic')}>
         <Icon src={Italic} class="w-4 h-4 mr-3" />
         Italic
       </button>
@@ -444,8 +424,7 @@
         class="w-full flex items-center px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
         class:bg-blue-50={editor && editor.isActive && editor.isActive('underline')}
         class:dark:bg-blue-900={editor && editor.isActive && editor.isActive('underline')}
-        on:click={() => executeCommand('underline')}
-      >
+        on:click={() => executeCommand('underline')}>
         <Icon src={Underline} class="w-4 h-4 mr-3" />
         Underline
       </button>
