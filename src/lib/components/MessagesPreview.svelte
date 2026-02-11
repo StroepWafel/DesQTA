@@ -4,7 +4,7 @@
   import { cubicInOut } from 'svelte/easing';
   import { goto } from '$app/navigation';
   import { Icon } from 'svelte-hero-icons';
-  import { ArrowPath, PencilSquare, User } from 'svelte-hero-icons';
+  import { ArrowPath, PencilSquare, User, ChatBubbleLeftRight } from 'svelte-hero-icons';
   import { logger } from '../../utils/logger';
   import { seqtaFetch } from '../../utils/netUtil';
   import { invoke } from '@tauri-apps/api/core';
@@ -154,11 +154,16 @@
     class="flex items-center justify-between shrink-0 transition-all duration-300"
     in:fade={{ duration: 200, delay: 0 }}
     style="transform-origin: left center;">
-    <h3
-      class="text-base sm:text-lg font-semibold transition-all duration-300"
-      in:fade={{ duration: 300, delay: 150 }}>
-      <T key="navigation.messages" fallback="Messages" />
-    </h3>
+    <div class="flex items-center gap-2">
+      <Icon
+        src={ChatBubbleLeftRight}
+        class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300 shrink-0" />
+      <h3
+        class="text-base sm:text-lg font-semibold transition-all duration-300"
+        in:fade={{ duration: 300, delay: 150 }}>
+        <T key="navigation.messages" fallback="Messages" />
+      </h3>
+    </div>
     <div class="flex gap-2">
       <button
         class="px-3 py-1.5 rounded-lg bg-zinc-800/80 text-white hover:bg-zinc-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
+  import { Icon, Clock } from 'svelte-hero-icons';
 
   let timeLeft = $state(25 * 60); // 25 minutes in seconds
   let isRunning = $state(false);
@@ -64,13 +66,18 @@
   });
 </script>
 
-<div
-  class="overflow-hidden relative rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+<div class="flex flex-col h-full min-h-0 w-full">
   <div
-    class="flex justify-between items-center px-4 py-3 bg-linear-to-br border-b from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
-    <h3 class="text-xl font-semibold text-zinc-900 dark:text-white">Focus Timer</h3>
+    class="flex items-center gap-2 mb-2 sm:mb-3 shrink-0 transition-all duration-300"
+    in:fade={{ duration: 200 }}>
+    <Icon
+      src={Clock}
+      class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300" />
+    <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300">
+      Focus Timer
+    </h3>
   </div>
-  <div class="p-6">
+  <div class="flex-1 min-h-0 overflow-y-auto p-2 sm:p-4">
     <div class="flex flex-col items-center gap-6">
       <!-- Timer Display -->
       <div

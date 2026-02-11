@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
   import { seqtaFetch } from '../../utils/netUtil';
-  import { Card, AsyncWrapper } from '$lib/components/ui';
+  import { Icon, BookOpen } from 'svelte-hero-icons';
+  import { AsyncWrapper } from '$lib/components/ui';
 
   interface HomeworkItem {
     meta: number;
@@ -42,16 +44,20 @@
   });
 </script>
 
-<Card
-  variant="elevated"
-  padding="none"
-  class="h-full flex flex-col min-h-0"
-  contentClass="flex-1 min-h-0 overflow-y-auto p-6">
-  {#snippet header()}
-    <h3 class="text-xl font-semibold text-zinc-900 dark:text-white shrink-0">Homework</h3>
-  {/snippet}
+<div class="flex flex-col h-full min-h-0 w-full">
+  <div
+    class="flex items-center gap-2 mb-2 sm:mb-3 shrink-0 transition-all duration-300"
+    in:fade={{ duration: 200 }}>
+    <Icon
+      src={BookOpen}
+      class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300" />
+    <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300">
+      Homework
+    </h3>
+  </div>
 
-  <AsyncWrapper
+  <div class="flex-1 min-h-0 overflow-y-auto">
+    <AsyncWrapper
       loading={loadingHomework}
       error={homeworkError}
       data={homeworkData?.payload}
@@ -59,30 +65,28 @@
       emptyTitle="No homework found"
       emptyMessage="You're all caught up!"
       emptyIcon="📚"
-      componentName="Homework"
-    >
+      componentName="Homework">
       {#snippet children(homeworkItems)}
-        <div class="flex flex-col gap-6">
-          {#each homeworkItems as homework}
-            <Card 
-              variant="outlined" 
-              padding="md"
-              class="border-l-8 shadow-lg border-l-accent-500"
-            >
-              <h3 class="mb-2 text-lg font-bold text-zinc-900 dark:text-white">
+        <div class="flex flex-col gap-3">
+          {#each homeworkItems as homework (homework.id)}
+            <div
+              class="p-3 sm:p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-sm transition-all duration-200 hover:border-accent-500/40 dark:hover:border-accent-500/40"
+              in:fade={{ duration: 200 }}>
+              <h4 class="mb-2 text-sm font-semibold text-zinc-900 dark:text-white">
                 {homework.title}
-              </h3>
-              <div class="flex flex-col gap-3">
-                {#each homework.items as item}
-                  <div class="flex gap-2 items-start px-4 py-3 rounded-lg border backdrop-blur-xs border-zinc-300 bg-zinc-200/80 dark:bg-zinc-700/50 dark:border-zinc-600">
-                    <span class="mt-1 text-xl accent-text">•</span>
-                    <span class="text-zinc-800 dark:text-zinc-50">{item}</span>
+              </h4>
+              <div class="flex flex-col gap-2">
+                {#each homework.items as item, i (i)}
+                  <div class="flex gap-2 items-start px-3 py-2 rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 transition-colors duration-200 hover:border-accent-500/40">
+                    <span class="mt-0.5 text-accent-600 dark:text-accent-400 shrink-0">•</span>
+                    <span class="text-sm text-zinc-800 dark:text-zinc-200">{item}</span>
                   </div>
                 {/each}
               </div>
-            </Card>
+            </div>
           {/each}
         </div>
       {/snippet}
     </AsyncWrapper>
-</Card> 
+  </div>
+</div> 

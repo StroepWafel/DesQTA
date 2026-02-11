@@ -125,11 +125,16 @@
     class="flex justify-between items-center mb-2 sm:mb-3 shrink-0 transition-all duration-300"
     in:fade={{ duration: 200, delay: 0 }}
     style="transform-origin: left center;">
-    <h3
-      class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300"
-      in:fade={{ duration: 300, delay: 150 }}>
-      Upcoming Assessments
-    </h3>
+    <div class="flex items-center gap-2">
+      <Icon
+        src={DocumentText}
+        class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300 shrink-0" />
+      <h3
+        class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300"
+        in:fade={{ duration: 300, delay: 150 }}>
+        Upcoming Assessments
+      </h3>
+    </div>
     <div
       class="flex overflow-x-scroll gap-1.5 sm:gap-2 scrollbar-hide transition-all duration-300"
       id="upcoming-filters"

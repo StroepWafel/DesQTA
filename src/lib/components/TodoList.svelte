@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { fly, fade, scale } from 'svelte/transition';
+  import { Icon, CheckCircle } from 'svelte-hero-icons';
+  import { fly, fade } from 'svelte/transition';
   import { quintOut, cubicOut } from 'svelte/easing';
 
   interface Subtask {
@@ -183,18 +184,22 @@
   }
 </style>
 
-<div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md" 
-     in:fade={{ duration: 400, easing: quintOut }}>
-  <!-- Header -->
-  <div class="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-700"
-       in:fly={{ y: -20, duration: 300, easing: quintOut }}>
-    <div>
-      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Quick Tasks</h3>
-      <p class="text-sm text-zinc-600 dark:text-zinc-300">{todos.filter(t => !t.completed).length} active tasks</p>
-    </div>
+<div class="flex flex-col h-full min-h-0 w-full" in:fade={{ duration: 400, easing: quintOut }}>
+  <div
+    class="flex items-center gap-2 mb-2 sm:mb-3 shrink-0 transition-all duration-300"
+    in:fly={{ y: -10, duration: 300, easing: quintOut }}>
+    <Icon
+      src={CheckCircle}
+      class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300" />
+    <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300">
+      Quick Tasks
+    </h3>
+    <span class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 ml-1">
+      ({todos.filter(t => !t.completed).length} active)
+    </span>
   </div>
 
-  <div class="p-4 space-y-4">
+  <div class="flex-1 min-h-0 overflow-y-auto space-y-4">
     <!-- Add New Task Form -->
     <form
       onsubmit={(e) => {
@@ -208,7 +213,7 @@
           type="text"
           bind:value={newTodoText}
           placeholder="Add a quick task..."
-          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" />
+          class="flex-1 px-3 py-2 rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm transition-colors duration-200" />
         <button
           type="submit"
           class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium">
@@ -219,10 +224,10 @@
         <input
           type="date"
           bind:value={newTodoDueDate}
-          class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm" />
+          class="flex-1 px-3 py-2 rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm transition-colors duration-200" />
         <select
           bind:value={newTodoPriority}
-          class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm">
+          class="px-3 py-2 rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm transition-colors duration-200">
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
@@ -232,7 +237,7 @@
         type="text"
         bind:value={newTodoTags}
         placeholder="Tags (comma separated)"
-        class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm" />
+        class="w-full px-3 py-2 rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm transition-colors duration-200" />
     </form>
 
     <!-- Tasks List -->
@@ -251,7 +256,7 @@
         {/if}
         
         {#each todos.filter(t => !t.completed).slice(0, 5) as todo (todo.id)}
-          <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 enhanced-hover {completingTasks.has(todo.id) ? 'completion-animation' : ''} {deletingTasks.has(todo.id) ? 'opacity-50 scale-95' : ''}"
+          <div class="rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 p-3 transition-all duration-200 hover:border-accent-500/40 hover:shadow-md enhanced-hover {completingTasks.has(todo.id) ? 'completion-animation' : ''} {deletingTasks.has(todo.id) ? 'opacity-50 scale-95' : ''}"
                in:fly={{ y: 20, duration: 300, delay: todos.indexOf(todo) * 50, easing: quintOut }}
                out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
             <div class="flex items-start gap-3">
