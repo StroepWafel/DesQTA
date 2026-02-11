@@ -48,7 +48,11 @@ export const widgetService = {
 
       // Don't save if layout contains only temporary timetable page widget
       if (widgets.length === 1 && widgets[0]?.id === 'timetable-page-widget') {
-        logger.debug('widgetService', 'saveLayout', 'Skipping save for temporary timetable page layout');
+        logger.debug(
+          'widgetService',
+          'saveLayout',
+          'Skipping save for temporary timetable page layout',
+        );
         return;
       }
 
@@ -150,7 +154,9 @@ export const widgetService = {
   async updateWidgetConfig(widgetId: string, updates: Partial<WidgetConfig>): Promise<void> {
     // Don't save temporary widget configs (e.g., timetable page widget)
     if (widgetId === 'timetable-page-widget') {
-      logger.debug('widgetService', 'updateWidgetConfig', 'Skipping save for temporary widget', { widgetId });
+      logger.debug('widgetService', 'updateWidgetConfig', 'Skipping save for temporary widget', {
+        widgetId,
+      });
       return;
     }
     const layout = await this.loadLayout();

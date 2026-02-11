@@ -39,6 +39,7 @@
     "notices": "Notices",
     "news": "News",
     "directory": "Directory",
+    "documents": "Documents",
     "reports": "Reports",
     "analytics": "Analytics",
     "settings": "Settings",
@@ -716,6 +717,12 @@
     "all": "All",
     "loading": "Loading notices...",
     "no_notices_found": "No notices found for the selected criteria."
+  },
+  "documents": {
+    "loading": "Loading documents...",
+    "failed_to_load": "Failed to load documents",
+    "error_loading": "Error loading documents",
+    "no_documents": "No documents available"
   },
   "reports": {
     "failed_to_load": "Failed to load reports.",
