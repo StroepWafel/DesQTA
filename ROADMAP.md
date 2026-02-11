@@ -1,6 +1,6 @@
 # DesQTA Strategic Roadmap
 
-> **Last Updated:** February 2025  
+> **Last Updated:** February 2026  
 > **Document Type:** Technical Audit & Product Roadmap  
 > **App Nature:** Education-focused, privacy-sensitive SEQTA student portal client (Tauri + SvelteKit)
 
@@ -97,7 +97,7 @@ DesQTA is a **privacy-sensitive education app** that:
 
 | Area | Change | Rationale |
 |------|--------|-----------|
-| **Layout Complexity** | Refactor `+layout.svelte` | File is large and handles auth, settings, cloud sync, health check, theme, onboarding. Extract into composables or dedicated services (e.g., `layoutAuthService`, `layoutCloudService`) |
+| **Layout Complexity** | Refactor `+layout.svelte` | **Done.** Extracted into `layoutAuthService`, `layoutCloudService`, `useLayoutListeners`, `useLayoutSettings`. Layout now wires services and keeps UI-focused. |
 | **Type-Safe Tauri API** | Create `$lib/api/tauri.ts` wrapper | Centralize `invoke` calls with typed wrappers per domain (auth, settings, database, etc.) to reduce duplication and improve error handling |
 | **Mock vs. Real API** | Clarify `dev_sensitive_info_hider` semantics | Currently conflates "PII masking for demos" with "mock API for dev." Consider splitting: `dev_mock_api` (full mock) vs. `dev_sensitive_info_hider` (real API + masked output) |
 | **Offline UX** | Add explicit offline indicator | Show banner or subtle UI when offline; surface "queued for sync" state for messages/settings |
@@ -122,8 +122,8 @@ DesQTA is a **privacy-sensitive education app** that:
 
 | Priority | Item | Effort |
 |----------|------|--------|
-| **High** | Implement window management + notification commands | Medium |
-| **Medium** | Refactor `+layout.svelte` | Medium |
+| **High** | Implement window management + notification commands | ✅ Done |
+| **Medium** | Refactor `+layout.svelte` | ✅ Done |
 | **Medium** | Replace `console.log`/`console.error` with `logger` in components | Small |
 | **Medium** | Add type-safe Tauri API wrapper | Medium |
 | **Low** | Migrate remaining `$:` reactive statements to Svelte 5 runes where applicable | Small |
@@ -163,6 +163,8 @@ DesQTA is a **privacy-sensitive education app** that:
 
 **Key Paths:**
 - Layout: `src/routes/+layout.svelte`
+- Layout services: `layoutAuthService.ts`, `layoutCloudService.ts`
+- Layout composables: `useLayoutListeners.ts`, `useLayoutSettings.ts`
 - Services: `src/lib/services/`
 - Backend: `src-tauri/src/`
 - Widgets: `src/lib/components/dashboard/`, `src/lib/components/widgets/`

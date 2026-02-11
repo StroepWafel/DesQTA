@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
   import { Window } from '@tauri-apps/api/window';
   const appWindow = Window.getCurrent();
@@ -11,8 +10,16 @@
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import { Toaster } from 'svelte-sonner';
   import Onboarding from '../lib/components/Onboarding.svelte';
-  import { cloudAuthService } from '../lib/services/cloudAuthService';
-  import { cloudSettingsService } from '../lib/services/cloudSettingsService';
+  import {
+    checkSession as checkSessionAuth,
+    loadUserInfo as loadUserInfoAuth,
+    handleLogout as handleLogoutAuth,
+    startLogin as startLoginAuth,
+  } from '../lib/services/layoutAuthService';
+  import {
+    autoDownloadSettingsFromCloud,
+    syncCloudSettings,
+  } from '../lib/services/layoutCloudService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../lib/services/settingsSync';
   import { authService, type UserInfo } from '../lib/services/authService';
   import { warmUpCommonData } from '../lib/services/warmupService';
@@ -21,6 +28,11 @@
   import { useWeather } from '../lib/composables/useWeather';
   import { useSidebar } from '../lib/composables/useSidebar';
   import { usePlatform } from '../lib/composables/usePlatform';
+  import { useLayoutListeners } from '../lib/composables/useLayoutListeners';
+  import {
+    loadSettings,
+    loadEnhancedAnimationsSetting as loadEnhancedAnimationsSettingFn,
+  } from '../lib/composables/useLayoutSettings';
   import '../app.css';
   import {
     accentColor,
@@ -129,122 +141,39 @@
     }
   };
 
+  let unlistenLayout: (() => void) | undefined;
+
   const checkSession = async () => {
-    logger.logFunctionEntry('layout', 'checkSession');
-    try {
-      if (devMockEnabled) {
-        needsSetup.set(false);
-        logger.info('layout', 'checkSession', 'Dev mock enabled; bypassing login');
-        await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
-        logger.logFunctionExit('layout', 'checkSession', { sessionExists: true });
-      } else {
-        const sessionExists = await authService.checkSession();
-        needsSetup.set(!sessionExists);
-        logger.info('layout', 'checkSession', `Session exists: ${sessionExists}`, {
-          sessionExists,
-        });
-        if (sessionExists) {
-          await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
-        }
-        logger.logFunctionExit('layout', 'checkSession', { sessionExists });
-      }
-    } catch (error) {
-      logger.error('layout', 'checkSession', `Failed to check session: ${error}`, { error });
-    }
-  };
-
-  // Remove duplicate onMount - consolidating below
-
-  let unlisten: (() => void) | undefined;
-  let checkFullscreenState: (() => Promise<void>) | undefined;
-
-  const setupListeners = async () => {
-    logger.debug('layout', 'onMount', 'Setting up reload listener');
-    unlisten = await listen<string>('reload', () => {
-      logger.info('layout', 'reload_listener', 'Received reload event');
-      location.reload();
+    await checkSessionAuth({
+      devMockEnabled,
+      needsSetupSet: (v) => needsSetup.set(v),
+      loadUserInfo: () => loadUserInfo(),
+      loadSeqtaConfigAndMenu,
     });
-
-    // Listen for fullscreen/maximized changes from Tauri backend
-    await listen<boolean>('fullscreen-changed', async (event) => {
-      isFullscreen = event.payload;
-      logger.debug('layout', 'fullscreen_listener', `Window state changed: ${isFullscreen}`);
-    });
-
-    // Listen for zoom events from backend (e.g. when zoom_in/zoom_out/zoom_reset commands are invoked)
-    await listen<string>('zoom', async (event) => {
-      const { zoomIn, zoomOut, zoomReset } = await import('$lib/utils/zoom');
-      if (event.payload === 'in') zoomIn();
-      else if (event.payload === 'out') zoomOut();
-      else if (event.payload === 'reset') zoomReset();
-    });
-
-    // Check fullscreen state only when window state actually changes (event-driven)
-    checkFullscreenState = async () => {
-      try {
-        const [currentFullscreen, currentMaximized] = await Promise.all([
-          appWindow.isFullscreen(),
-          appWindow.isMaximized().catch(() => false), // Fallback to false if not supported
-        ]);
-        // Consider both fullscreen and maximized as "fullscreen" for corner removal
-        const shouldRemoveCorners = currentFullscreen || currentMaximized;
-        if (shouldRemoveCorners !== isFullscreen) {
-          isFullscreen = shouldRemoveCorners;
-          logger.debug(
-            'layout',
-            'checkFullscreenState',
-            `Window state updated: ${isFullscreen} (fullscreen: ${currentFullscreen}, maximized: ${currentMaximized})`,
-          );
-        }
-      } catch (e) {
-        logger.debug('layout', 'checkFullscreenState', 'Failed to check window state', {
-          error: e,
-        });
-      }
-    };
-
-    // Check initial state once
-    await checkFullscreenState();
-
-    // Listen to Tauri window events - these fire when window state actually changes
-    // The backend also emits 'fullscreen-changed' events on Resized/Moved, so we rely on that
-    // plus these frontend events as a backup
-    appWindow.onResized(checkFullscreenState);
-    appWindow.onMoved(checkFullscreenState);
   };
 
   onDestroy(() => {
     logger.logComponentUnmount('layout');
-    if (unlisten) {
-      logger.debug('layout', 'onDestroy', 'Cleaning up reload listener');
-      unlisten();
-    }
+    unlistenLayout?.();
     window.removeEventListener('redo-onboarding', handleRedoOnboarding);
   });
 
-  // Consolidated settings loader
-  const loadSettings = async (keys: string[]) => {
-    try {
-      const subset = await invoke<any>('get_settings_subset', { keys });
-      return subset || {};
-    } catch (e) {
-      logger.error('layout', 'loadSettings', `Failed to load settings: ${e}`, { keys, error: e });
-      return {};
-    }
-  };
-
-  const reloadEnhancedAnimationsSetting = async () => {
-    const settings = await loadSettings(['enhanced_animations']);
-    enhancedAnimations = settings.enhanced_animations ?? true;
-    logger.debug(
-      'layout',
-      'reloadEnhancedAnimationsSetting',
-      `Enhanced animations: ${enhancedAnimations}`,
-    );
-  };
-
   const reloadSidebarSettings = async () => {
     await sidebar.loadSettings();
+  };
+
+  const loadUserInfo = async () => {
+    await loadUserInfoAuth({
+      loadSettings,
+      onDisableSchoolPicture: (v) => (disableSchoolPicture = v),
+      onUserInfo: (info) => (userInfo = info),
+    });
+  };
+
+  const loadEnhancedAnimationsSetting = async () => {
+    await loadEnhancedAnimationsSettingFn({
+      onEnhancedAnimations: (v) => (enhancedAnimations = v),
+    });
   };
 
   const handlePageNavigation = () => {
@@ -292,222 +221,35 @@
   };
 
   const startLogin = async () => {
-    if (!seqtaUrl) {
-      logger.error('layout', 'startLogin', 'No valid SEQTA URL found');
-      return;
-    }
-
-    logger.info('layout', 'startLogin', 'Starting authentication', { url: seqtaUrl });
-    await authService.startLogin(seqtaUrl);
-
-    const timer = setInterval(async () => {
-      const sessionExists = await authService.checkSession();
-      if (sessionExists) {
-        clearInterval(timer);
-        needsSetup.set(false);
-        await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
-        // Trigger background sync now that user has logged in (was skipped during init on login screen)
-        const { triggerBackgroundSync } = await import('$lib/services/startupService');
-        triggerBackgroundSync();
-      }
-    }, 1000);
-
-    setTimeout(() => clearInterval(timer), 5 * 60 * 1000);
+    await startLoginAuth({
+      seqtaUrl,
+      needsSetupSet: (v) => needsSetup.set(v),
+      loadUserInfo,
+      loadSeqtaConfigAndMenu,
+    });
   };
 
   const handleLogout = async () => {
-    const success = await authService.logout();
-    if (success) {
-      userInfo = undefined;
-      showUserDropdown = false;
-      await checkSession();
-    }
+    await handleLogoutAuth({
+      onClearUser: () => (userInfo = undefined),
+      onCloseDropdown: () => (showUserDropdown = false),
+      checkSession,
+    });
   };
 
-  const autoDownloadSettingsFromCloud = async () => {
-    try {
-      const cloudUser = await cloudAuthService.getUser();
-      if (!cloudUser) {
-        // User not logged in, skip download
-        return;
-      }
-
-      // Check if offline mode is forced
-      const { isOfflineMode } = await import('$lib/utils/offlineMode');
-      const offline = await isOfflineMode();
-      if (offline) {
-        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Skipping download (offline mode)');
-        return;
-      }
-
-      // Check if we just reloaded (prevent infinite loop)
-      const lastReloadTime = sessionStorage.getItem('settings_last_reload');
-      const now = Date.now();
-      if (lastReloadTime && now - parseInt(lastReloadTime) < 5000) {
-        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Skipping download (recently reloaded)');
-        return;
-      }
-
-      // Check if we've already synced these exact settings (prevent re-downloading same settings)
-      const lastSyncedHash = sessionStorage.getItem('settings_last_synced_hash');
-
-      logger.info('layout', 'autoDownloadSettingsFromCloud', 'Checking for cloud settings...');
-
-      // Fetch cloud settings first
-      const cloudSettings = await cloudSettingsService.getSettings();
-      if (!cloudSettings) {
-        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'No cloud settings found');
-        return;
-      }
-
-      // Get all keys from cloud settings to fetch local settings
-      const allKeys = Object.keys(cloudSettings);
-      
-      // Get current local settings for comparison (using all keys from cloud)
-      const localSettings = await invoke<any>('get_settings_subset', {
-        keys: allKeys,
-      });
-
-      // Compare settings more robustly
-      // Only compare keys that exist in both objects, and handle undefined/null properly
-      const compareSettings = (local: any, cloud: any): boolean => {
-        const allKeysSet = new Set([...Object.keys(local || {}), ...Object.keys(cloud || {})]);
-        const differences: string[] = [];
-
-        for (const key of allKeysSet) {
-          const localValue = local?.[key];
-          const cloudValue = cloud?.[key];
-
-          // Normalize values for comparison (handle undefined, null, empty arrays/objects)
-          const normalizeValue = (val: any): any => {
-            if (val === undefined || val === null) return null;
-            if (Array.isArray(val) && val.length === 0) return [];
-            if (typeof val === 'object' && Object.keys(val).length === 0) return {};
-            return val;
-          };
-
-          const normalizedLocal = normalizeValue(localValue);
-          const normalizedCloud = normalizeValue(cloudValue);
-
-          // Compare JSON strings
-          const localStr = JSON.stringify(normalizedLocal);
-          const cloudStr = JSON.stringify(normalizedCloud);
-
-          if (localStr !== cloudStr) {
-            differences.push(key);
-          }
-        }
-
-        if (differences.length > 0) {
-          logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Settings differ', {
-            differentKeys: differences,
-            count: differences.length,
-          });
-          return true;
-        }
-
-        return false;
-      };
-
-      // Create a hash of cloud settings to check if we've already synced this exact version
-      const cloudSettingsHash = btoa(JSON.stringify(cloudSettings)).slice(0, 32);
-      
-      if (lastSyncedHash === cloudSettingsHash) {
-        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Settings already synced (hash match), skipping download');
-        return;
-      }
-
-      const settingsChanged = compareSettings(localSettings, cloudSettings);
-
-      if (!settingsChanged) {
-        logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Settings are identical, skipping download');
-        // Store hash even if identical to prevent re-checking
-        sessionStorage.setItem('settings_last_synced_hash', cloudSettingsHash);
-        return;
-      }
-
-      logger.info('layout', 'autoDownloadSettingsFromCloud', 'Cloud settings differ from local, downloading...');
-
-      // Download and apply cloud settings
-      await invoke('save_settings_merge', {
-        patch: cloudSettings,
-      });
-
-      logger.info('layout', 'autoDownloadSettingsFromCloud', 'Settings downloaded and applied from cloud');
-
-      // Store hash of synced settings and mark reload time BEFORE reload
-      sessionStorage.setItem('settings_last_synced_hash', cloudSettingsHash);
-      sessionStorage.setItem('settings_last_reload', now.toString());
-
-      // Reload the page to apply the new settings
-      logger.info('layout', 'autoDownloadSettingsFromCloud', 'Reloading page to apply settings...');
-      
-      // Use a small delay to ensure settings are saved, then reload
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          try {
-            if (typeof window !== 'undefined' && window.location) {
-              logger.info('layout', 'autoDownloadSettingsFromCloud', 'Executing reload now...');
-              window.location.reload();
-            } else if (typeof location !== 'undefined') {
-              logger.info('layout', 'autoDownloadSettingsFromCloud', 'Using fallback location.reload()');
-              location.reload();
-            } else {
-              logger.error('layout', 'autoDownloadSettingsFromCloud', 'Cannot reload - neither window.location nor location available');
-            }
-          } catch (reloadError) {
-            logger.error('layout', 'autoDownloadSettingsFromCloud', 'Error during reload', { error: reloadError });
-            // Last resort: try direct location.reload()
-            try {
-              if (typeof location !== 'undefined') {
-                location.reload();
-              }
-            } catch (e) {
-              logger.error('layout', 'autoDownloadSettingsFromCloud', 'Fallback reload also failed', { error: e });
-            }
-          }
-        }, 300);
-      });
-    } catch (e) {
-      // Silently fail - don't block startup if cloud download fails
-      logger.debug('layout', 'autoDownloadSettingsFromCloud', 'Failed to download settings from cloud (non-critical)', {
-        error: e,
-      });
-    }
+  const loadWeatherSettings = async () => {
+    await weather.loadSettings();
   };
 
-  const syncCloudSettings = async () => {
-    try {
-      // Initialize cloud auth from current profile
-      const cloudUser = await cloudAuthService.init();
-      if (cloudUser) {
-        logger.info('layout', 'syncCloudSettings', 'Cloud user found, fetching settings');
-        const settings = await cloudSettingsService.getSettings();
-        if (settings) {
-          logger.info('layout', 'syncCloudSettings', 'Applying cloud settings');
-          // Save merged settings
-          await invoke('save_settings_merge', { patch: settings });
-
-          // Reload settings relevant to layout immediately
-          await Promise.all([
-            loadAccentColor(),
-            loadTheme(),
-            loadCurrentTheme(),
-            (async () => {
-              if (settings.language && settings.language !== get(locale)) {
-                locale.set(settings.language);
-              }
-            })(),
-            loadWeatherSettings(),
-            loadEnhancedAnimationsSetting(),
-            reloadSidebarSettings(),
-          ]);
-        }
-      }
-    } catch (e) {
-      logger.error('layout', 'syncCloudSettings', 'Failed to sync cloud settings', { error: e });
-    }
+  const cloudSyncOptions = {
+    loadWeatherSettings,
+    loadEnhancedAnimationsSetting,
+    reloadSidebarSettings,
   };
+
+  const runSyncCloudSettings = () => syncCloudSettings(cloudSyncOptions);
+
+  const runAutoDownloadSettingsFromCloud = () => autoDownloadSettingsFromCloud();
 
   // Language change handler
   const changeLanguage = async (languageCode: string) => {
@@ -521,16 +263,6 @@
         error: e,
       });
     }
-  };
-
-  const loadUserInfo = async () => {
-    const settings = await loadSettings(['disable_school_picture']);
-    disableSchoolPicture = settings.disable_school_picture ?? false;
-    userInfo = await authService.loadUserInfo({ disableSchoolPicture });
-  };
-
-  const loadWeatherSettings = async () => {
-    await weather.loadSettings();
   };
 
   const fetchWeather = async (useIP = false) => {
@@ -557,14 +289,6 @@
       accent: $accentColor,
     });
   });
-
-  const loadEnhancedAnimationsSetting = async () => {
-    const settings = await loadSettings(['enhanced_animations']);
-    enhancedAnimations = settings.enhanced_animations ?? true;
-    logger.info('layout', 'loadEnhancedAnimationsSetting', 'Setting loaded', {
-      enhancedAnimations,
-    });
-  };
 
   $effect(() => {
     logger.debug('layout', '$effect', 'Enhanced animations effect triggered', {
@@ -594,14 +318,18 @@
 
   onMount(async () => {
     logger.logComponentMount('layout');
-    setupListeners();
+    unlistenLayout = await useLayoutListeners({
+      appWindow,
+      onFullscreenChange: (v) => (isFullscreen = v),
+    });
 
     // Restore saved zoom level (from settings backend first, else localStorage)
     const { restoreZoom, restoreZoomFromLevel } = await import('$lib/utils/zoom');
     try {
       const settings = await loadSettings(['zoom_level']);
-      if (settings.zoom_level != null && settings.zoom_level >= 0.5 && settings.zoom_level <= 2) {
-        restoreZoomFromLevel(settings.zoom_level);
+      const zoomLevel = settings.zoom_level;
+      if (typeof zoomLevel === 'number' && zoomLevel >= 0.5 && zoomLevel <= 2) {
+        restoreZoomFromLevel(zoomLevel);
       } else {
         restoreZoom();
       }
@@ -626,8 +354,9 @@
       // Load saved language preference
       try {
         const settings = await loadSettings(['language']);
-        if (settings.language && availableLocales.some((l) => l.code === settings.language)) {
-          locale.set(settings.language);
+        const lang = settings.language;
+        if (typeof lang === 'string' && availableLocales.some((l) => l.code === lang)) {
+          locale.set(lang);
         }
       } catch (e) {
         logger.debug('layout', 'onMount', 'Could not load language preference', { error: e });
@@ -636,7 +365,7 @@
       // Load dev mock flag early to control session flow
       try {
         const settings = await loadSettings(['dev_sensitive_info_hider']);
-        devMockEnabled = settings.dev_sensitive_info_hider ?? false;
+        devMockEnabled = settings.dev_sensitive_info_hider === true;
       } catch {}
 
       // Load all settings and check session
@@ -645,11 +374,11 @@
         loadWeatherSettings(),
         loadEnhancedAnimationsSetting(),
         reloadSidebarSettings(),
-        syncCloudSettings(),
+        runSyncCloudSettings(),
       ]);
 
       // Auto-download settings from cloud in background (non-blocking)
-      autoDownloadSettingsFromCloud().catch((e) => {
+      runAutoDownloadSettingsFromCloud().catch((e) => {
         logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
       });
 
