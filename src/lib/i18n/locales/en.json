@@ -20,7 +20,9 @@
     "close_theme_builder": "Close Theme Builder",
     "move_up": "Move up",
     "move_down": "Move down",
-    "add_folder": "Add Folder"
+    "add_folder": "Add Folder",
+    "retry": "Retry",
+    "retrying": "Retrying..."
   },
   "navigation": {
     "dashboard": "Dashboard",

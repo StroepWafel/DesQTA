@@ -67,6 +67,11 @@ export async function queueAll(): Promise<QueueItem[]> {
   }
 }
 
+export async function queueCountByType(type: QueueItem['type']): Promise<number> {
+  const items = await queueAll();
+  return items.filter((item) => item.type === type).length;
+}
+
 export async function queueDelete(id: number): Promise<void> {
   try {
     await invoke('db_queue_delete', { id });

@@ -280,6 +280,7 @@
       closeModal();
       errorMessage = '';
       toastStore.info('Message queued for sending when online');
+      window.dispatchEvent(new CustomEvent('message-queued'));
     } finally {
       isSubmitting = false;
     }

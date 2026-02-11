@@ -22,6 +22,7 @@
   import MessageDetail from './components/Message.svelte';
   import ComposeModal from './components/ComposeModal.svelte';
   import MobileFolderTabs from './components/MobileFolderTabs.svelte';
+  import MessageQueueBanner from '$lib/components/MessageQueueBanner.svelte';
 
   // Types
   import { type Message, type MessageFile } from './types';
@@ -324,7 +325,14 @@
         <Sidebar {selectedFolder} {openFolder} {openCompose} />
       </div>
       <MobileFolderTabs {selectedFolder} {openFolder} {openCompose} />
-      <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
+      <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="shrink-0 px-4 pt-2 pb-1">
+          <MessageQueueBanner />
+        </div>
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
+        </div>
+      </div>
       <!-- Message detail view - full screen on mobile -->
       <div class="hidden flex-1 xl:block">
         <MessageDetail

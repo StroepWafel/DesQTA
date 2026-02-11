@@ -2,11 +2,41 @@ import { invoke } from '@tauri-apps/api/core';
 import { cache } from '../../utils/cache';
 import { logger } from '../../utils/logger';
 
+export interface ForecastDay {
+  date: string;
+  tempMax: number;
+  tempMin: number;
+  weathercode: number;
+}
+
+function parseDailyForecast(json: {
+  daily?: { time?: string[]; temperature_2m_max?: number[]; temperature_2m_min?: number[]; weathercode?: number[] };
+}): ForecastDay[] {
+  const daily = json.daily;
+  if (!daily?.time?.length) return [];
+
+  const result: ForecastDay[] = [];
+  const maxes = daily.temperature_2m_max || [];
+  const mins = daily.temperature_2m_min || [];
+  const codes = daily.weathercode || [];
+
+  for (let i = 0; i < daily.time.length; i++) {
+    result.push({
+      date: daily.time[i],
+      tempMax: maxes[i] ?? 0,
+      tempMin: mins[i] ?? 0,
+      weathercode: codes[i] ?? 0,
+    });
+  }
+  return result;
+}
+
 export interface WeatherData {
   temperature: number;
   weathercode: number;
   location: string;
   country: string;
+  forecast?: ForecastDay[];
 }
 
 export interface WeatherSettings {
@@ -65,14 +95,16 @@ export const weatherService = {
       }
 
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`,
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto`,
       );
       const weatherJson = await weatherRes.json();
 
+      const forecast = parseDailyForecast(weatherJson);
       const weatherData: WeatherData = {
         ...weatherJson.current_weather,
         location: name,
         country,
+        forecast,
       };
 
       cache.set('weather', weatherData, 15 * 60 * 1000);
@@ -104,14 +136,16 @@ export const weatherService = {
 
       const { latitude, longitude, name, country } = geoJson.results[0];
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`,
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto`,
       );
       const weatherJson = await weatherRes.json();
 
+      const forecast = parseDailyForecast(weatherJson);
       const weatherData: WeatherData = {
         ...weatherJson.current_weather,
         location: name,
         country,
+        forecast,
       };
 
       cache.set('weather', weatherData, 15 * 60 * 1000);

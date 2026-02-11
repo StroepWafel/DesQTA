@@ -42,13 +42,16 @@
   });
 </script>
 
-<Card variant="elevated" padding="none">
+<Card
+  variant="elevated"
+  padding="none"
+  class="h-full flex flex-col min-h-0"
+  contentClass="flex-1 min-h-0 overflow-y-auto p-6">
   {#snippet header()}
-    <h3 class="text-xl font-semibold text-zinc-900 dark:text-white">Homework</h3>
+    <h3 class="text-xl font-semibold text-zinc-900 dark:text-white shrink-0">Homework</h3>
   {/snippet}
 
-  <div class="p-6">
-    <AsyncWrapper
+  <AsyncWrapper
       loading={loadingHomework}
       error={homeworkError}
       data={homeworkData?.payload}
@@ -82,5 +85,4 @@
         </div>
       {/snippet}
     </AsyncWrapper>
-  </div>
 </Card> 

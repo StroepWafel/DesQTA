@@ -112,8 +112,8 @@ DesQTA is a **privacy-sensitive education app** that:
 | 3 | **Homework due-date reminders** | Uses existing notification infrastructure; high student value | |
 | 4 | **Export timetable to calendar (.ics)** | Complements PDF export; common student workflow | |
 | 5 | **Full plugin system** | Completes plugin store; enables extensions without app updates | |
-| 6 | **Multi-day weather forecast** | Completes WeatherWidget; already fetches single-day data | |
-| 7 | **Offline message queue status** | Show "X messages queued" with retry; improves offline trust | |
+| 6 | **Multi-day weather forecast** | Completes WeatherWidget; already fetches single-day data | ✅ Done — 7-day forecast in WeatherWidget; Open-Meteo daily API |
+| 7 | **Offline message queue status** | Show "X messages queued" with retry; improves offline trust | ✅ Done — MessageQueueBanner on messages page; Retry button |
 | 8 | **Grade goal tracking** | Goals page exists; link to analytics and target grades | |
 | 9 | **Quick add assessment from dashboard** | Add assessment from widget without full assessments page | |
 | 10 | **Accessibility audit** | Align with AGENTS.md focus rings and ARIA; important for education | |

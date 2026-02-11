@@ -4,7 +4,7 @@
   import { cubicInOut } from 'svelte/easing';
   import { Icon, Cloud } from 'svelte-hero-icons';
   import { weatherService } from '../../services/weatherService';
-  import type { WeatherData } from '../../services/weatherService';
+  import type { WeatherData, ForecastDay } from '../../services/weatherService';
   import { logger } from '../../../utils/logger';
 
   interface Props {
@@ -46,6 +46,13 @@
     return units === 'fahrenheit' ? '°F' : '°C';
   }
 
+  function formatForecastDate(isoDate: string): string {
+    const d = new Date(isoDate + 'T12:00:00');
+    const today = new Date();
+    if (d.toDateString() === today.toDateString()) return 'Today';
+    return d.toLocaleDateString(undefined, { weekday: 'short' });
+  }
+
   async function loadWeather() {
     loading = true;
     error = null;
@@ -80,9 +87,9 @@
   });
 </script>
 
-<div class="flex flex-col h-full min-h-0">
+<div class="flex flex-col h-full min-h-0 w-full">
   <div
-    class="flex items-center gap-2 mb-2 sm:mb-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+    class="flex items-center gap-2 mb-2 sm:mb-3 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
     in:fade={{ duration: 200, delay: 0 }}
     style="transform-origin: left center;">
     <div
@@ -127,7 +134,7 @@
     </div>
   {:else if weatherData}
     <div
-      class="flex flex-col gap-3 sm:gap-4 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
+      class="flex flex-col gap-3 sm:gap-4 flex-1 min-h-0 w-full transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
       in:fade={{ duration: 400, delay: 100 }}
       style="transform-origin: center center;">
       <!-- Current Weather -->
@@ -151,11 +158,28 @@
         </div>
       </div>
 
-      {#if showForecast}
+      {#if showForecast && weatherData.forecast?.length}
         <div
-          class="pt-3 sm:pt-4 border-t border-zinc-200 dark:border-zinc-800 transition-all duration-300"
+          class="pt-3 sm:pt-4 border-t border-zinc-200 dark:border-zinc-800 flex-1 min-h-0 transition-all duration-300"
           in:fade={{ duration: 300, delay: 200 }}>
-          <p class="text-xs text-zinc-500 dark:text-zinc-500 mb-2">Forecast coming soon</p>
+          <p class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2 shrink-0">7-day forecast</p>
+          <div class="grid grid-cols-7 gap-1 sm:gap-2 flex-1 min-w-0">
+            {#each weatherData.forecast.slice(0, 7) as day}
+              <div
+                class="flex flex-col items-center justify-center min-w-0 w-full px-1 sm:px-2 py-1.5 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 transition-all duration-200">
+                <span class="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 truncate w-full text-center">
+                  {formatForecastDate(day.date)}
+                </span>
+                <span class="text-base sm:text-lg mt-0.5 shrink-0">{getWeatherIcon(day.weathercode)}</span>
+                <span class="text-[10px] sm:text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate w-full text-center">
+                  {convertTemperature(day.tempMax)}°
+                </span>
+                <span class="text-[10px] text-zinc-500 dark:text-zinc-500 truncate w-full text-center">
+                  {convertTemperature(day.tempMin)}°
+                </span>
+              </div>
+            {/each}
+          </div>
         </div>
       {/if}
     </div>
