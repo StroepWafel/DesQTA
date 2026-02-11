@@ -410,9 +410,11 @@ The Company reserves the right to terminate your access to the Service at any ti
       enhancedAnimations,
     });
     try {
+      // Filter out feeds with empty URLs before saving
+      const validFeeds = feeds.filter((f) => f.url?.trim());
       const patch = {
         shortcuts,
-        feeds,
+        feeds: validFeeds,
         weather_enabled: weatherEnabled,
         weather_city: weatherCity,
         weather_country: weatherCountry,
@@ -453,6 +455,9 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       // Show success toast
       toastStore.success('Settings saved successfully');
+
+      // Sync feeds to valid only (empty URLs were filtered out)
+      feeds = validFeeds;
 
       // Update initial settings after successful save
       if (initialSettings) {

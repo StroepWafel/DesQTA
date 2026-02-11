@@ -12,7 +12,8 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
   import { Icon } from 'svelte-hero-icons';
-  import { Rss, Bars3, XMark } from 'svelte-hero-icons';
+  import { Rss, Bars3, XMark, Cog6Tooth } from 'svelte-hero-icons';
+  import { goto } from '$app/navigation';
 
   // Relative imports
   import { logger } from '../../utils/logger';
@@ -186,8 +187,8 @@
 <div class="flex h-full">
   <div class="flex w-full h-full max-xl:flex-col">
     {#if error && feeds.length === 0}
-      <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
-        <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">
+      <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center gap-4">
+        <div class="text-lg font-semibold text-red-500 dark:text-red-400">
           <T key="rss_feeds.error_loading" fallback="Failed to load RSS feeds." />
         </div>
         <p class="text-sm text-zinc-600 dark:text-zinc-400">
@@ -195,18 +196,32 @@
             key="rss_feeds.add_feeds_in_settings"
             fallback="Add RSS feeds in Settings to get started." />
         </p>
+        <a
+          href="/settings"
+          class="flex gap-2 items-center px-4 py-2 rounded-lg transition-all duration-200 accent-bg hover:opacity-90 text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring transform hover:scale-105 active:scale-95"
+          onclick={(e) => { e.preventDefault(); goto('/settings'); }}>
+          <Icon src={Cog6Tooth} class="w-5 h-5" />
+          <span>Manage Feeds in Settings</span>
+        </a>
       </div>
     {:else if feeds.length === 0}
-      <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
-        <Icon src={Rss} class="mb-4 w-16 h-16 text-zinc-400 dark:text-zinc-600" />
-        <div class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">
+      <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center gap-4">
+        <Icon src={Rss} class="w-16 h-16 text-zinc-400 dark:text-zinc-600" />
+        <div class="text-lg font-semibold text-zinc-900 dark:text-white">
           <T key="rss_feeds.no_feeds" fallback="No RSS Feeds" />
         </div>
         <p class="text-sm text-zinc-600 dark:text-zinc-400">
           <T
             key="rss_feeds.add_feeds_in_settings"
-            fallback="Add RSS feeds in Settings to get started." />
+            fallback="Add, edit, or remove RSS feeds in Settings." />
         </p>
+        <a
+          href="/settings"
+          class="flex gap-2 items-center px-4 py-2 rounded-lg transition-all duration-200 accent-bg hover:opacity-90 text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring transform hover:scale-105 active:scale-95"
+          onclick={(e) => { e.preventDefault(); goto('/settings'); }}>
+          <Icon src={Cog6Tooth} class="w-5 h-5" />
+          <span>Manage Feeds in Settings</span>
+        </a>
       </div>
     {:else}
       <!-- Mobile Sidebar Toggle Button -->
@@ -241,19 +256,29 @@
         class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs overflow-y-scroll xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900 {isMobile
           ? `fixed top-0 left-0 z-30 w-80 h-full ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
           : ''} transition-transform duration-300">
-        <div class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900">
-          <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+        <div class="flex justify-between items-center gap-2 p-4 border-b border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900">
+          <h2 class="text-lg font-semibold shrink-0 text-zinc-900 dark:text-white">
             <T key="rss_feeds.title" fallback="RSS Feeds" />
           </h2>
-          {#if isMobile}
-            <button
-              onclick={() => (sidebarOpen = false)}
-              class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-              title={$_('navigation.close_sidebar') || 'Close sidebar'}
-              aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
-              <Icon src={XMark} class="w-5 h-5" />
-            </button>
-          {/if}
+          <div class="flex gap-1 items-center shrink-0">
+            <a
+              href="/settings"
+              class="p-2 text-zinc-600 rounded-lg transition-all duration-200 dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+              title={$_('rss_feeds.manage_feeds') || 'Manage feeds'}
+              aria-label={$_('rss_feeds.manage_feeds') || 'Manage feeds'}
+              onclick={(e) => { e.preventDefault(); goto('/settings'); }}>
+              <Icon src={Cog6Tooth} class="w-5 h-5" />
+            </a>
+            {#if isMobile}
+              <button
+                onclick={() => (sidebarOpen = false)}
+                class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                title={$_('navigation.close_sidebar') || 'Close sidebar'}
+                aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
+                <Icon src={XMark} class="w-5 h-5" />
+              </button>
+            {/if}
+          </div>
         </div>
         <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
           {#key feeds.length + feeds.map((f) => f.url).join(',')}

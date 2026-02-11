@@ -170,7 +170,20 @@ export async function warmUpCommonData(): Promise<void> {
 // Assessments Overview warm-up: uses Rust backend for processing
 async function prefetchAssessmentsOverview(): Promise<void> {
   try {
-    if (cache.get('assessments_overview_data')) return;
+    const cached = cache.get<{ assessments?: unknown[] }>('assessments_overview_data');
+    if (cached?.assessments?.length) {
+      // Cache exists - still schedule push notifications from cached data
+      const { invoke } = await import('@tauri-apps/api/core');
+      const remindersEnabled =
+        ((await invoke<Record<string, unknown>>('get_settings_subset', {
+          keys: ['reminders_enabled'],
+        }))?.reminders_enabled ?? true) as boolean;
+      if (remindersEnabled) {
+        const { notificationService } = await import('./notificationService');
+        await notificationService.scheduleNotifications(cached.assessments as import('$lib/types').Assessment[]);
+      }
+      return;
+    }
 
     // Use Rust backend to process all assessments data
     const { invoke } = await import('@tauri-apps/api/core');
@@ -202,6 +215,16 @@ async function prefetchAssessmentsOverview(): Promise<void> {
         subjects: result.subjects?.length,
       },
     );
+
+    // Schedule push notifications for assessments (respects reminders_enabled)
+    const remindersEnabled =
+      (await invoke<Record<string, unknown>>('get_settings_subset', {
+        keys: ['reminders_enabled'],
+      }))?.reminders_enabled ?? true;
+    if (remindersEnabled && result.assessments?.length) {
+      const { notificationService } = await import('./notificationService');
+      await notificationService.scheduleNotifications(result.assessments);
+    }
   } catch {
     // ignore warmup errors
   }

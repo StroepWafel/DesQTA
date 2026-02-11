@@ -105,18 +105,18 @@ DesQTA is a **privacy-sensitive education app** that:
 
 ### 2.3 Feature Backlog (5–10 High-Value Items)
 
-| # | Feature | Alignment |
-|---|---------|-----------|
-| 1 | **Push notifications for assessments** | DB notification schedule exists; wire to `show_notification` and system notifications |
-| 2 | **RSS feed management** | RSS feeds route exists; add add/edit/remove feeds and persistence |
-| 3 | **Homework due-date reminders** | Uses existing notification infrastructure; high student value |
-| 4 | **Export timetable to calendar (.ics)** | Complements PDF export; common student workflow |
-| 5 | **Full plugin system** | Completes plugin store; enables extensions without app updates |
-| 6 | **Multi-day weather forecast** | Completes WeatherWidget; already fetches single-day data |
-| 7 | **Offline message queue status** | Show "X messages queued" with retry; improves offline trust |
-| 8 | **Grade goal tracking** | Goals page exists; link to analytics and target grades |
-| 9 | **Quick add assessment from dashboard** | Add assessment from widget without full assessments page |
-| 10 | **Accessibility audit** | Align with AGENTS.md focus rings and ARIA; important for education |
+| # | Feature | Alignment | Status |
+|---|---------|-----------|--------|
+| 1 | **Push notifications for assessments** | DB notification schedule exists; wire to `show_notification` and system notifications | ✅ Done — `scheduleNotifications` now runs on warmup (cache hit or fresh fetch); respects `reminders_enabled` |
+| 2 | **RSS feed management** | RSS feeds route exists; add add/edit/remove feeds and persistence | ✅ Done — Add/edit/remove in Settings; feeds filtered on save; "Manage feeds" link on RSS page |
+| 3 | **Homework due-date reminders** | Uses existing notification infrastructure; high student value | |
+| 4 | **Export timetable to calendar (.ics)** | Complements PDF export; common student workflow | |
+| 5 | **Full plugin system** | Completes plugin store; enables extensions without app updates | |
+| 6 | **Multi-day weather forecast** | Completes WeatherWidget; already fetches single-day data | |
+| 7 | **Offline message queue status** | Show "X messages queued" with retry; improves offline trust | |
+| 8 | **Grade goal tracking** | Goals page exists; link to analytics and target grades | |
+| 9 | **Quick add assessment from dashboard** | Add assessment from widget without full assessments page | |
+| 10 | **Accessibility audit** | Align with AGENTS.md focus rings and ARIA; important for education | |
 
 ### 2.4 Technical Debt Log (Prioritized)
 
