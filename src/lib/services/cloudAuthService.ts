@@ -18,33 +18,74 @@ export interface CloudUser {
 interface CloudUserWithToken {
   user: CloudUser | null;
   token: string | null;
+  refresh_token?: string | null;
+}
+
+interface DesqtaConfig {
+  client_id: string;
+  api_url: string;
+  refresh_url: string;
+  discord_auth_url: string;
+}
+
+interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  user: CloudUser;
+}
+
+interface RefreshResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_token: string;
+  user: CloudUser;
 }
 
 export const cloudUserStore = writable<CloudUser | null>(null);
 
 export const cloudAuthService = {
   /**
-   * Logs in the user and saves the session token to the current profile.
+   * Fetches config from the DesQTA config endpoint (optional, for dynamic URLs).
+   */
+  async getConfig(): Promise<DesqtaConfig> {
+    const res = await fetch(`${API_URL}/api/desqta/config?client_id=${DESQTA_CLIENT_ID}`);
+    if (!res.ok) throw new Error('Failed to fetch config');
+    return res.json();
+  },
+
+  /**
+   * Logs in the user via email/password using the DesQTA auth endpoint.
+   * Returns access_token, refresh_token, and user for persistent sessions.
    */
   async login(login: string, password: string) {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
+    const response = await fetch(`${API_URL}/api/desqta/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login, password }),
+      body: JSON.stringify({
+        client_id: DESQTA_CLIENT_ID,
+        redirect_uri: DESQTA_REDIRECT_URI,
+        login,
+        password,
+      }),
     });
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || 'Login failed');
+      throw new Error((err as { error?: string }).error || 'Login failed');
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as LoginResponse;
 
-    // Save token to backend (profile-specific)
-    const user = await invoke<CloudUser>('save_cloud_token', { token: data.token });
-    
+    // Save tokens and user to backend (profile-specific)
+    const user = await invoke<CloudUser>('save_cloud_token', {
+      token: data.access_token,
+      refreshToken: data.refresh_token ?? null,
+      userJson: data.user ? JSON.stringify(normalizeUserForBackend(data.user)) : null,
+    });
+
     cloudUserStore.set(user);
-
     return { ...data, user };
   },
 
@@ -60,7 +101,7 @@ export const cloudAuthService = {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || 'Registration failed');
+      throw new Error((err as { error?: string }).error || 'Registration failed');
     }
 
     return await response.json();
@@ -75,11 +116,19 @@ export const cloudAuthService = {
   },
 
   /**
-   * Gets the stored JWT token for the current profile.
+   * Gets the stored access token for the current profile.
    */
   async getToken(): Promise<string | null> {
     const result = await invoke<CloudUserWithToken>('get_cloud_user');
     return result.token;
+  },
+
+  /**
+   * Gets the stored refresh token for the current profile.
+   */
+  async getRefreshToken(): Promise<string | null> {
+    const result = await invoke<CloudUserWithToken>('get_cloud_user');
+    return result.refresh_token ?? null;
   },
 
   /**
@@ -100,6 +149,40 @@ export const cloudAuthService = {
   },
 
   /**
+   * Refreshes the access token using the refresh token (rolling sessions).
+   * On failure, clears tokens and throws.
+   */
+  async refresh(): Promise<string> {
+    const refreshToken = await this.getRefreshToken();
+    if (!refreshToken) throw new Error('No refresh token');
+
+    const res = await fetch(`${API_URL}/api/desqta/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        refresh_token: refreshToken,
+        client_id: DESQTA_CLIENT_ID,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      await this.logout();
+      throw new Error((err as { error?: string }).error || 'Refresh failed');
+    }
+
+    const data = (await res.json()) as RefreshResponse;
+    const user = await invoke<CloudUser>('save_cloud_token', {
+      token: data.access_token,
+      refreshToken: data.refresh_token ?? null,
+      userJson: data.user ? JSON.stringify(normalizeUserForBackend(data.user)) : null,
+    });
+
+    cloudUserStore.set(user);
+    return data.access_token;
+  },
+
+  /**
    * Fetches the latest user profile from the server and updates the current profile.
    */
   async getProfile(): Promise<CloudUser> {
@@ -117,10 +200,13 @@ export const cloudAuthService = {
     const data = await response.json();
 
     // Update backend (profile-specific) with latest user data
-    await invoke<CloudUser>('save_cloud_token', { token });
-    
-    cloudUserStore.set(data);
+    await invoke<CloudUser>('save_cloud_token', {
+      token,
+      refreshToken: null,
+      userJson: data ? JSON.stringify(normalizeUserForBackend(data)) : null,
+    });
 
+    cloudUserStore.set(data);
     return data;
   },
 
@@ -129,29 +215,55 @@ export const cloudAuthService = {
    * Opens the user's browser to authenticate with Discord.
    */
   async loginWithDiscord() {
-    // Construct the Discord OAuth URL
     const authUrl = new URL(`${API_URL}/api/oauth/desqta/discord`);
     authUrl.searchParams.set('client_id', DESQTA_CLIENT_ID);
     authUrl.searchParams.set('redirect_uri', DESQTA_REDIRECT_URI);
 
-    // Open browser for Discord authentication
     await openUrl(authUrl.toString());
-    
-    // The user will be redirected back to desqta://auth/callback with token and user_id
-    // Handle the callback in the deep link handler (see lib.rs)
   },
 
   /**
    * Handles the Discord OAuth callback.
-   * Call this when your app receives the callback with token and user_id.
+   * Stores both access token and refresh_token when provided (rolling sessions).
    */
-  async handleDiscordCallback(token: string, userId: string) {
-    // Save token to backend (profile-specific)
-    // This will also fetch and save the user profile
-    const user = await invoke<CloudUser>('save_cloud_token', { token });
-    
-    cloudUserStore.set(user);
+  async handleDiscordCallback(token: string, userId: string, refreshToken?: string | null) {
+    const user = await this.getProfileWithToken(token);
+    await invoke<CloudUser>('save_cloud_token', {
+      token,
+      refreshToken: refreshToken ?? null,
+      userJson: user ? JSON.stringify(normalizeUserForBackend(user)) : null,
+    });
 
+    cloudUserStore.set(user);
     return user;
   },
+
+  /**
+   * Fetches user profile using a specific token (e.g. from OAuth callback).
+   */
+  async getProfileWithToken(token: string): Promise<CloudUser> {
+    const response = await fetch(`${API_URL}/api/auth/me`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch profile');
+    return response.json();
+  },
 };
+
+/**
+ * Normalizes user object for backend (Rust expects displayName -> display_name, etc).
+ */
+function normalizeUserForBackend(user: CloudUser): Record<string, unknown> {
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    displayName: user.displayName,
+    pfpUrl: user.pfpUrl ?? null,
+    is_admin: user.is_admin ?? null,
+  };
+}

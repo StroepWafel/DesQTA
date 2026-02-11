@@ -36,6 +36,8 @@ fn cloud_token_file() -> PathBuf {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CloudToken {
     pub token: Option<String>,
+    #[serde(default)]
+    pub refresh_token: Option<String>,
     pub user: Option<CloudUser>,
     #[serde(default)]
     pub base_url: Option<String>,
@@ -204,6 +206,8 @@ pub struct CloudUser {
 pub struct CloudUserWithToken {
     pub user: Option<CloudUser>,
     pub token: Option<String>,
+    #[serde(default)]
+    pub refresh_token: Option<String>,
 }
 
 // Cloud API types
@@ -646,44 +650,53 @@ pub fn save_settings_merge(patch: serde_json::Value) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn save_cloud_token(token: String) -> Result<CloudUser, String> {
+pub async fn save_cloud_token(
+    token: String,
+    refresh_token: Option<String>,
+    user_json: Option<String>,
+) -> Result<CloudUser, String> {
     let base_url = get_base_api_url();
-    let client = reqwest::Client::new();
-    let response = client
-        .get(&format!("{}/auth/me", base_url))
-        .header("Authorization", format!("Bearer {}", token))
-        .send()
-        .await
-        .map_err(|e| format!("Network error: {}", e))?;
-    let status = response.status();
-    if !status.is_success() {
-        let error_text = response
-            .text()
+    let user: CloudUser = if let Some(json) = user_json {
+        serde_json::from_str(&json).map_err(|e| format!("Failed to parse user: {}", e))?
+    } else {
+        let client = reqwest::Client::new();
+        let response = client
+            .get(&format!("{}/auth/me", base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .send()
             .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        if let Ok(api_error) = serde_json::from_str::<APIError>(&error_text) {
+            .map_err(|e| format!("Network error: {}", e))?;
+        let status = response.status();
+        if !status.is_success() {
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            if let Ok(api_error) = serde_json::from_str::<APIError>(&error_text) {
+                return Err(format!(
+                    "API Error {}: {}",
+                    api_error.statusCode, api_error.statusMessage
+                ));
+            }
             return Err(format!(
-                "API Error {}: {}",
-                api_error.statusCode, api_error.statusMessage
+                "Authentication failed: {} - {}",
+                status, error_text
             ));
         }
-        return Err(format!(
-            "Authentication failed: {} - {}",
-            status, error_text
-        ));
-    }
-    let user_text = response
-        .text()
-        .await
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-    let user: CloudUser = serde_json::from_str(&user_text).map_err(|e| {
-        format!(
-            "Failed to parse user response: {} - Raw response: {}",
-            e, user_text
-        )
-    })?;
+        let user_text = response
+            .text()
+            .await
+            .map_err(|e| format!("Failed to read response: {}", e))?;
+        serde_json::from_str(&user_text).map_err(|e| {
+            format!(
+                "Failed to parse user response: {} - Raw response: {}",
+                e, user_text
+            )
+        })?
+    };
     let mut cloud_token = CloudToken::load();
     cloud_token.token = Some(token);
+    cloud_token.refresh_token = refresh_token;
     cloud_token.user = Some(user.clone());
     // This uses cloud_token_file(), which saves to the correct Android folder on Android
     cloud_token.save().map_err(|e| e.to_string())?;
@@ -696,6 +709,7 @@ pub fn get_cloud_user() -> CloudUserWithToken {
     CloudUserWithToken {
         user: cloud_token.user,
         token: cloud_token.token,
+        refresh_token: cloud_token.refresh_token,
     }
 }
 

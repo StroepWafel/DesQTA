@@ -40,9 +40,9 @@
     // Listen for Discord OAuth callback
     const { listen } = await import('@tauri-apps/api/event');
     const unlisten = await listen('discord-oauth-callback', async (event: any) => {
-      const { token, user_id } = event.payload;
+      const { token, user_id, refresh_token } = event.payload;
       if (token && user_id) {
-        await handleDiscordCallback(token, user_id);
+        await handleDiscordCallback(token, user_id, refresh_token);
       }
     });
     unlistenDiscordCallback = unlisten;
@@ -110,9 +110,9 @@
     }
   }
 
-  async function handleDiscordCallback(token: string, userId: string) {
+  async function handleDiscordCallback(token: string, userId: string, refreshToken?: string | null) {
     try {
-      await cloudAuthService.handleDiscordCallback(token, userId);
+      await cloudAuthService.handleDiscordCallback(token, userId, refreshToken);
       cloudUser = await cloudAuthService.getUser();
       isAuthenticated = true;
       success = 'Successfully authenticated with Discord';

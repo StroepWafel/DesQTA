@@ -172,6 +172,8 @@ pub fn run() {
                     let mut token = None;
                     let mut user_id = None;
                     
+                    let mut refresh_token = None;
+
                     // Parse URL parameters
                     if let Some(query) = url.split('?').nth(1) {
                         println!("[Desqta] Discord OAuth callback query string: {}", query);
@@ -193,6 +195,13 @@ pub fn run() {
                                         user_id = Some(decoded);
                                         println!("[Desqta] Found Discord OAuth user_id");
                                     },
+                                    "refresh_token" => {
+                                        let decoded = urlencoding::decode(value)
+                                            .map(|s| s.to_string())
+                                            .unwrap_or_else(|_| value.to_string());
+                                        refresh_token = Some(decoded);
+                                        println!("[Desqta] Found Discord OAuth refresh_token");
+                                    },
                                     _ => {
                                         println!("[Desqta] Unknown Discord OAuth parameter: {}", key);
                                     }
@@ -201,14 +210,20 @@ pub fn run() {
                         }
                     }
                     
-                    // Emit event to frontend with token and user_id
+                    // Emit event to frontend with token, user_id, and optional refresh_token
                     if let (Some(token_val), Some(user_id_val)) = (token, user_id) {
                         println!("[Desqta] Emitting Discord OAuth callback event");
                         if let Some(window) = app.webview_windows().get("main") {
-                            let _ = window.emit("discord-oauth-callback", serde_json::json!({
+                            let mut payload = serde_json::json!({
                                 "token": token_val,
                                 "user_id": user_id_val
-                            }));
+                            });
+                            if let Some(rt) = refresh_token {
+                                if let Some(obj) = payload.as_object_mut() {
+                                    obj.insert("refresh_token".to_string(), serde_json::json!(rt));
+                                }
+                            }
+                            let _ = window.emit("discord-oauth-callback", payload);
                         }
                     } else {
                         eprintln!("[Desqta] Missing required Discord OAuth parameters. Need both token and user_id.");
@@ -570,7 +585,8 @@ pub fn run() {
                                 // Handle Discord OAuth callback on mobile
                                 let mut token = None;
                                 let mut user_id = None;
-                                
+                                let mut refresh_token = None;
+
                                 if let Some(query) = url.split('?').nth(1) {
                                     println!("[Desqta] Discord OAuth callback query string: {}", query);
                                     for param in query.split('&') {
@@ -588,20 +604,32 @@ pub fn run() {
                                                         .unwrap_or_else(|_| value.to_string());
                                                     user_id = Some(decoded);
                                                 },
+                                                "refresh_token" => {
+                                                    let decoded = urlencoding::decode(value)
+                                                        .map(|s| s.to_string())
+                                                        .unwrap_or_else(|_| value.to_string());
+                                                    refresh_token = Some(decoded);
+                                                },
                                                 _ => {}
                                             }
                                         }
                                     }
                                 }
-                                
+
                                 // Emit event to frontend
                                 if let (Some(token_val), Some(user_id_val)) = (token, user_id) {
                                     println!("[Desqta] Emitting Discord OAuth callback event (mobile)");
                                     if let Some(window) = app_handle.webview_windows().get("main") {
-                                        let _ = window.emit("discord-oauth-callback", serde_json::json!({
+                                        let mut payload = serde_json::json!({
                                             "token": token_val,
                                             "user_id": user_id_val
-                                        }));
+                                        });
+                                        if let Some(rt) = refresh_token {
+                                            if let Some(obj) = payload.as_object_mut() {
+                                                obj.insert("refresh_token".to_string(), serde_json::json!(rt));
+                                            }
+                                        }
+                                        let _ = window.emit("discord-oauth-callback", payload);
                                     }
                                 }
                             } else if url.starts_with("seqtalearn://") {
