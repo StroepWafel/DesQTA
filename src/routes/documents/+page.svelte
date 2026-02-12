@@ -9,6 +9,7 @@
   import { fade, fly } from 'svelte/transition';
   import { DocumentDuplicate } from 'svelte-hero-icons';
   import { Icon } from 'svelte-hero-icons';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
 
   interface DocItem {
     file: number;
@@ -41,24 +42,34 @@
   async function loadDocuments() {
     loading = true;
     error = null;
-    try {
-      const response = await seqtaFetch('/seqta/student/load/documents?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {},
-      });
-      const data: DocumentsResponse =
-        typeof response === 'string' ? JSON.parse(response) : response;
-      if (data.status === '200' && Array.isArray(data.payload)) {
-        categories = data.payload;
-      } else {
-        error = $_('documents.failed_to_load') || 'Failed to load documents';
-      }
-    } catch (e) {
-      error =
-        e instanceof Error ? e.message : $_('documents.error_loading') || 'Error loading documents';
-      console.error('Error loading documents:', e);
-    } finally {
+
+    const data = await useDataLoader<DocCategory[]>({
+      cacheKey: 'documents',
+      ttlMinutes: 10,
+      context: 'documents',
+      functionName: 'loadDocuments',
+      fetcher: async () => {
+        const response = await seqtaFetch('/seqta/student/load/documents?', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: {},
+        });
+        const data: DocumentsResponse =
+          typeof response === 'string' ? JSON.parse(response) : response;
+        if (data.status === '200' && Array.isArray(data.payload)) {
+          return data.payload;
+        }
+        throw new Error($_('documents.failed_to_load') || 'Failed to load documents');
+      },
+      onDataLoaded: (data) => {
+        categories = data;
+        loading = false;
+      },
+      updateOnBackgroundSync: true,
+    });
+
+    if (!data) {
+      error = $_('documents.error_loading') || 'Error loading documents';
       loading = false;
     }
   }
