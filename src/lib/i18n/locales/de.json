@@ -19,6 +19,67 @@
     "settings": "Einstellungen",
     "close_theme_builder": "Themen-Builder Schließen"
   },
+  "focus_timer": {
+    "title": "Fokus-Timer",
+    "start": "Start",
+    "pause": "Pause",
+    "reset": "Zurücksetzen",
+    "duration_25": "25m",
+    "duration_45": "45m",
+    "duration_60": "60m",
+    "custom_placeholder_min": "mm",
+    "custom_placeholder_sec": "ss",
+    "set": "Setzen",
+    "break_time": "Pause!",
+    "focus_time": "Fokuszeit",
+    "break_message": "Machen Sie eine kurze Pause",
+    "focus_message": "Bleiben Sie fokussiert und produktiv"
+  },
+  "error_page": {
+    "title": "Fehler {status} - DesQTA",
+    "error_id": "Fehler-ID",
+    "hide_details": "Ausblenden",
+    "show_details": "Anzeigen",
+    "details": "Details",
+    "error_message": "Fehlermeldung",
+    "system_health_overview": "Systemstatus-Übersicht",
+    "overall_health": "Gesamtstatus",
+    "network": "Netzwerk",
+    "storage": "Speicher",
+    "items": "Elemente",
+    "online": "Online",
+    "offline": "Offline",
+    "go_to_login": "Zum Login",
+    "go_back": "Zurück",
+    "retry_operation": "Vorgang wiederholen",
+    "refresh_page": "Seite aktualisieren",
+    "advanced_troubleshooting": "Erweiterte Fehlerbehebung",
+    "go_home": "Startseite",
+    "mark_as_resolved": "Als behoben markieren",
+    "recommended_actions": "Empfohlene Aktionen",
+    "performance_issues_detected": "Leistungsprobleme erkannt",
+    "recent_errors": "Letzte Fehler",
+    "detailed_error_info": "Detaillierte Fehlerinformationen",
+    "error_context": "Fehlerkontext",
+    "environment": "Umgebung",
+    "stack_trace": "Stack-Trace",
+    "complete_error_report": "Vollständiger Fehlerbericht",
+    "dev_debug_info": "Entwicklungs-Debug-Informationen:",
+    "type_auth": "Authentifizierungsfehler",
+    "type_not_found": "Seite nicht gefunden",
+    "type_network": "Netzwerkfehler",
+    "type_performance": "Leistungsproblem",
+    "type_server": "Serverfehler",
+    "type_critical": "Kritischer Fehler",
+    "type_app": "Anwendungsfehler",
+    "desc_auth": "Sie müssen sich anmelden, um auf diese Seite zuzugreifen.",
+    "desc_not_found": "Die gesuchte Seite existiert nicht.",
+    "desc_network": "Verbindung zum Server nicht möglich. Bitte überprüfen Sie Ihre Internetverbindung.",
+    "desc_performance": "Die Anwendung hat Leistungsprobleme.",
+    "desc_server": "Auf unserer Seite ist etwas schiefgelaufen. Bitte versuchen Sie es später erneut.",
+    "desc_critical": "Ein kritischer Fehler ist aufgetreten und erfordert sofortige Aufmerksamkeit.",
+    "desc_default": "Something unexpected happened. Please try again."
+  },
   "connectivity": {
     "offline": "Sie sind offline",
     "offline_desc": "Einige Funktionen sind möglicherweise eingeschränkt. Daten stammen aus dem Cache.",
@@ -50,6 +111,11 @@
     "menu": "Menü",
     "qr_signin": "QR-Anmeldung",
     "welcome": "Willkommen"
+  },
+  "pages_menu": {
+    "search_placeholder": "Seiten suchen...",
+    "navigate": "Navigieren",
+    "select": "Auswählen"
   },
   "header": {
     "toggle_sidebar": "Seitenleiste umschalten",
@@ -95,7 +161,9 @@
     "feature_assessments_desc": "Aufgaben anzeigen",
     "feature_timetable_desc": "Klassenplan",
     "feature_analytics_desc": "Leistungsdaten",
-    "feature_settings_desc": "App-Einstellungen"
+    "feature_settings_desc": "App-Einstellungen",
+    "fill_all_fields": "Bitte füllen Sie alle Felder aus",
+    "failed_credentials": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten."
   },
   "about": {
     "title": "Über DesQTA",
@@ -191,6 +259,8 @@
     "lesson_resources": "Stundenressourcen"
   },
   "goals": {
+    "no_cached_data": "Keine gecachten Daten verfügbar",
+    "invalid_response": "Ungültiges Antwortformat",
     "loading_years": "Jahre werden geladen...",
     "error_loading_years": "Fehler beim Laden der Jahre",
     "no_years_available": "Keine Jahre verfügbar",
@@ -237,6 +307,8 @@
     "sort_unread": "Anzahl ungelesener",
     "sort_asc": "Aufsteigend sortieren",
     "sort_desc": "Absteigend sortieren",
+    "no_cached_data": "Keine gecachten Daten verfügbar",
+    "invalid_response": "Ungültiges Antwortformat",
     "sort_recent_first": "Neueste zuerst",
     "sort_oldest_first": "Älteste zuerst",
     "sort_by_author": "Nach Autor",
@@ -245,6 +317,7 @@
     "not_enabled_message": "Foren sind für Ihre Schule nicht aktiviert. Bitte wenden Sie sich an Ihren Administrator, wenn Sie glauben, dass dies ein Fehler ist."
   },
   "folios": {
+    "invalid_response": "Ungültiges Antwortformat",
     "edit_my_folios": "Meine Portfolios bearbeiten",
     "edit_my_folios_description": "Erstellen und verwalten Sie Ihre persönlichen Portfolios",
     "browse_folios": "Portfolios durchsuchen",
@@ -263,6 +336,7 @@
     "save_error": "Portfolio konnte nicht gespeichert werden",
     "new_folio": "Neues Portfolio",
     "creating": "Wird erstellt...",
+    "created_success": "Portfolio erfolgreich erstellt",
     "create_error": "Portfolio konnte nicht erstellt werden",
     "tags": "TAGS",
     "add_tag_placeholder": "Tag hinzufügen...",
@@ -289,6 +363,11 @@
     "not_enabled_message": "Portfolios sind für Ihr Konto nicht aktiviert."
   },
   "assessments": {
+    "back_to_assessments": "Zurück zu Bewertungen",
+    "status_marked": "Bewertet",
+    "status_overdue": "Überfällig",
+    "status_due_soon": "Demnächst fällig",
+    "status_upcoming": "Bevorstehend",
     "year": "Jahr:",
     "view": "Ansicht:",
     "list_view": "Listenansicht",
@@ -392,6 +471,7 @@
   },
   "messages": {
     "failed_to_load": "Fehler beim Laden der Nachrichten.",
+    "failed_to_load_no_cache": "Fehler beim Laden der Nachrichten, keine gecachten Daten verfügbar",
     "failed_to_load_message": "Fehler beim Laden der Nachricht.",
     "no_content": "Kein Inhalt.",
     "seqta_messages": "SEQTA Nachrichten",
@@ -430,7 +510,15 @@
     "sending": "Senden...",
     "send": "Senden",
     "failed_to_load_recipients": "Fehler beim Laden der Empfänger. Bitte versuchen Sie es erneut.",
-    "failed_to_send": "Fehler beim Senden der Nachricht. Bitte versuchen Sie es erneut."
+    "failed_to_send": "Fehler beim Senden der Nachricht. Bitte versuchen Sie es erneut.",
+    "message_starred": "Nachricht mit Stern markiert",
+    "message_unstarred": "Stern von Nachricht entfernt",
+    "failed_to_update_star": "Fehler beim Aktualisieren des Stern-Status",
+    "deleted_success": "Nachricht erfolgreich gelöscht",
+    "delete_failed": "Nachricht konnte nicht gelöscht werden",
+    "restored_success": "Nachricht erfolgreich wiederhergestellt",
+    "restore_failed": "Nachricht konnte nicht wiederhergestellt werden",
+    "message_detail": "Nachrichtendetails"
   },
   "settings": {
     "saved": "Gespeichert!",
@@ -533,6 +621,16 @@
   },
   "analytics": {
     "description": "Verfolgen Sie Ihre akademische Leistung und Ihren Fortschritt über die Zeit",
+    "syncing": "Synchronisierung...",
+    "last_updated": "Zuletzt aktualisiert",
+    "sync_failed": "Synchronisierung fehlgeschlagen. Cache-Daten werden angezeigt.",
+    "sync_success": "Analysedaten erfolgreich synchronisiert",
+    "sync_error": "Synchronisierung der Analysedaten fehlgeschlagen",
+    "syncing_automatically": "Daten werden beim Besuch dieser Seite automatisch synchronisiert.",
+    "time_just_now": "Gerade eben",
+    "time_minutes_ago": "vor {count} Minute(n)",
+    "time_hours_ago": "vor {count} Stunde(n)",
+    "time_days_ago": "vor {count} Tag(en)",
     "failed_to_grab_data": "Fehler beim Abrufen und Speichern der Analysedaten.",
     "failed_to_delete_data": "Fehler beim Löschen der Analysedaten",
     "delete_data": "Daten Löschen",
@@ -612,6 +710,7 @@
   },
   "directory": {
     "description": "Durchsuchen und suchen Sie alle Schüler",
+    "failed_to_load": "Schüler konnten nicht geladen werden",
     "filters": "Filter",
     "filter_students": "Schüler Filtern",
     "year_level": "Jahrgangsstufe",
@@ -642,7 +741,9 @@
     "label": "Label:",
     "all": "Alle",
     "loading": "Mitteilungen werden geladen...",
-    "no_notices_found": "Keine Mitteilungen für die ausgewählten Kriterien gefunden."
+    "no_notices_found": "Keine Mitteilungen für die ausgewählten Kriterien gefunden.",
+    "view_all": "Alle anzeigen",
+    "no_notices_today": "Heute sind keine Mitteilungen verfügbar."
   },
   "reports": {
     "failed_to_load": "Fehler beim Laden der Berichte.",

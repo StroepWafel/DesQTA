@@ -18,6 +18,7 @@
   import Editor from '../../../components/Editor/Editor.svelte';
   import GoalsToolbar from '../../goals/components/GoalsToolbar.svelte';
   import { Editor as TipTapEditor } from '@tiptap/core';
+  import { get } from 'svelte/store';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import { logger } from '../../../utils/logger';
@@ -195,7 +196,7 @@
         // Load photos for all messages
         await loadMessagePhotos();
       } else {
-        error = 'Invalid response format';
+        error = get(_)('forums.invalid_response');
         logger.error('forums', 'loadForum', 'Invalid response format', { data });
       }
     } catch (e) {
@@ -252,7 +253,7 @@
           replySection?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }, 200);
       } else {
-        error = 'Failed to send reply';
+        error = get(_)('forums.reply_error');
         logger.error('forums', 'sendReply', 'Failed to send reply', { data });
         try {
           const { toastStore } = await import('../../../lib/stores/toast');

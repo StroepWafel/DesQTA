@@ -22,7 +22,71 @@
     "move_down": "Move down",
     "add_folder": "Add Folder",
     "retry": "Retry",
-    "retrying": "Retrying..."
+    "retrying": "Retrying...",
+    "try_again": "Try Again",
+    "saving": "Saving...",
+    "back": "Back"
+  },
+  "focus_timer": {
+    "title": "Focus Timer",
+    "start": "Start",
+    "pause": "Pause",
+    "reset": "Reset",
+    "duration_25": "25m",
+    "duration_45": "45m",
+    "duration_60": "60m",
+    "custom_placeholder_min": "mm",
+    "custom_placeholder_sec": "ss",
+    "set": "Set",
+    "break_time": "Break Time!",
+    "focus_time": "Focus Time",
+    "break_message": "Take a short break",
+    "focus_message": "Stay focused and productive"
+  },
+  "error_page": {
+    "title": "Error {status} - DesQTA",
+    "error_id": "Error ID",
+    "hide_details": "Hide",
+    "show_details": "Show",
+    "details": "Details",
+    "error_message": "Error Message",
+    "system_health_overview": "System Health Overview",
+    "overall_health": "Overall Health",
+    "network": "Network",
+    "storage": "Storage",
+    "items": "items",
+    "online": "Online",
+    "offline": "Offline",
+    "go_to_login": "Go to Login",
+    "go_back": "Go Back",
+    "retry_operation": "Retry Operation",
+    "refresh_page": "Refresh Page",
+    "advanced_troubleshooting": "Advanced Troubleshooting",
+    "go_home": "Go Home",
+    "mark_as_resolved": "Mark as Resolved",
+    "recommended_actions": "Recommended Actions",
+    "performance_issues_detected": "Performance Issues Detected",
+    "recent_errors": "Recent Errors",
+    "detailed_error_info": "Detailed Error Information",
+    "error_context": "Error Context",
+    "environment": "Environment",
+    "stack_trace": "Stack Trace",
+    "complete_error_report": "Complete Error Report",
+    "dev_debug_info": "Development Debug Information:",
+    "type_auth": "Authentication Error",
+    "type_not_found": "Page Not Found",
+    "type_network": "Network Error",
+    "type_performance": "Performance Issue",
+    "type_server": "Server Error",
+    "type_critical": "Critical Error",
+    "type_app": "Application Error",
+    "desc_auth": "You need to log in to access this page.",
+    "desc_not_found": "The page you're looking for doesn't exist.",
+    "desc_network": "Unable to connect to the server. Please check your internet connection.",
+    "desc_performance": "The application is experiencing performance issues.",
+    "desc_server": "Something went wrong on our end. Please try again later.",
+    "desc_critical": "A critical error has occurred that requires immediate attention.",
+    "desc_default": "Something unexpected happened. Please try again."
   },
   "connectivity": {
     "offline": "You're offline",
@@ -54,9 +118,15 @@
     "analytics": "Analytics",
     "settings": "Settings",
     "close_sidebar": "Close sidebar overlay",
+    "toggle_sidebar": "Toggle sidebar",
     "menu": "Menu",
     "qr_signin": "QR Sign In",
     "welcome": "Welcome"
+  },
+  "pages_menu": {
+    "search_placeholder": "Search pages...",
+    "navigate": "Navigate",
+    "select": "Select"
   },
   "forums": {
     "loading": "Loading forums...",
@@ -85,6 +155,8 @@
     "sort_unread": "Unread Count",
     "sort_asc": "Sort ascending",
     "sort_desc": "Sort descending",
+    "no_cached_data": "No cached data available",
+    "invalid_response": "Invalid response format",
     "sort_recent_first": "Most recent first",
     "sort_oldest_first": "Oldest first",
     "sort_by_author": "By author",
@@ -93,6 +165,7 @@
     "not_enabled_message": "Forums are not enabled for your school. Please contact your administrator if you believe this is an error."
   },
   "folios": {
+    "invalid_response": "Invalid response format",
     "edit_my_folios": "Edit My Folios",
     "edit_my_folios_description": "Create and manage your personal folios",
     "browse_folios": "Browse Folios",
@@ -111,6 +184,7 @@
     "save_error": "Failed to save folio",
     "new_folio": "New Folio",
     "creating": "Creating...",
+    "created_success": "Folio created successfully",
     "create_error": "Failed to create folio",
     "tags": "TAGS",
     "add_tag_placeholder": "Add a tag...",
@@ -182,7 +256,9 @@
     "feature_assessments_desc": "View assignments",
     "feature_timetable_desc": "Class schedule",
     "feature_analytics_desc": "Performance data",
-    "feature_settings_desc": "App preferences"
+    "feature_settings_desc": "App preferences",
+    "fill_all_fields": "Please fill in all fields",
+    "failed_credentials": "Login failed. Please check your credentials."
   },
   "features": {
     "lightning_fast": "Lightning-fast performance",
@@ -318,6 +394,8 @@
     "lesson_resources": "Lesson Resources"
   },
   "goals": {
+    "no_cached_data": "No cached data available",
+    "invalid_response": "Invalid response format",
     "loading_years": "Loading years...",
     "error_loading_years": "Error loading years",
     "no_years_available": "No years available",
@@ -338,6 +416,11 @@
     "not_enabled_message": "Goals are not enabled for your school. Please contact your administrator if you believe this is an error."
   },
   "assessments": {
+    "back_to_assessments": "Back to Assessments",
+    "status_marked": "Marked",
+    "status_overdue": "Overdue",
+    "status_due_soon": "Due Soon",
+    "status_upcoming": "Upcoming",
     "year": "Year:",
     "view": "View:",
     "list_view": "List View",
@@ -452,11 +535,17 @@
     "title": "RSS Feeds",
     "no_feeds": "No RSS Feeds",
     "add_feeds_in_settings": "Add RSS feeds in Settings to get started.",
+    "add_feeds_in_settings_empty": "Add, edit, or remove RSS feeds in Settings.",
     "error_loading": "Failed to load RSS feeds.",
-    "feed_item": "Feed Item"
+    "feed_item": "Feed Item",
+    "feed_item_detail": "RSS Feed Item Detail",
+    "manage_feeds_in_settings": "Manage Feeds in Settings",
+    "manage_feeds": "Manage feeds",
+    "select_feed": "Select Feed"
   },
   "messages": {
     "failed_to_load": "Failed to load messages.",
+    "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message.",
     "no_content": "No content.",
     "seqta_messages": "SEQTA Messages",
@@ -495,7 +584,15 @@
     "sending": "Sending...",
     "send": "Send",
     "failed_to_load_recipients": "Failed to load recipients. Please try again.",
-    "failed_to_send": "Failed to send message. Please try again."
+    "failed_to_send": "Failed to send message. Please try again.",
+    "message_starred": "Message starred",
+    "message_unstarred": "Message unstarred",
+    "failed_to_update_star": "Failed to update star status",
+    "deleted_success": "Message deleted successfully",
+    "delete_failed": "Failed to delete message",
+    "restored_success": "Message restored successfully",
+    "restore_failed": "Failed to restore message",
+    "message_detail": "Message Detail"
   },
   "settings": {
     "saved": "Saved!",
@@ -617,6 +714,16 @@
   },
   "analytics": {
     "description": "Track your academic performance and progress over time",
+    "syncing": "Syncing...",
+    "last_updated": "Last updated",
+    "sync_failed": "Failed to sync analytics data, showing cached data.",
+    "sync_success": "Analytics data synced successfully",
+    "sync_error": "Failed to sync analytics data",
+    "syncing_automatically": "Data syncs automatically when you visit this page. If you have assessments with released marks, they will appear here.",
+    "time_just_now": "Just now",
+    "time_minutes_ago": "{count} minute(s) ago",
+    "time_hours_ago": "{count} hour(s) ago",
+    "time_days_ago": "{count} day(s) ago",
     "failed_to_grab_data": "Failed to grab and save analytics data.",
     "failed_to_delete_data": "Failed to delete analytics data",
     "delete_data": "Delete Data",
@@ -675,7 +782,8 @@
     "power_portal": "Power Portal",
     "loading_content": "Loading portal content...",
     "no_content": "No content available for this portal.",
-    "failed_to_load_content": "Failed to load portal content"
+    "failed_to_load_content": "Failed to load portal content",
+    "portal_content": "Portal Content"
   },
   "welcome_portal": {
     "title": "Welcome Portal",
@@ -696,6 +804,7 @@
   },
   "directory": {
     "description": "Browse and search through all students",
+    "failed_to_load": "Failed to load students",
     "filters": "Filters",
     "filter_students": "Filter Students",
     "year_level": "Year Level",
@@ -726,7 +835,9 @@
     "label": "Label:",
     "all": "All",
     "loading": "Loading notices...",
-    "no_notices_found": "No notices found for the selected criteria."
+    "no_notices_found": "No notices found for the selected criteria.",
+    "view_all": "View all",
+    "no_notices_today": "No notices available today."
   },
   "documents": {
     "loading": "Loading documents...",
@@ -784,6 +895,10 @@
     "slowest_page": "Slowest Page",
     "error_summary": "Error Summary",
     "error_description": "JavaScript errors and warnings detected",
+    "errors_label": "Errors:",
+    "warnings_label": "Warnings:",
+    "overall_test_errors": "Overall Test Errors",
+    "overall_errors_description": "Errors that occurred during the performance test",
     "js_errors": "JavaScript Errors",
     "warnings": "Warnings",
     "overall_errors": "Overall Errors",

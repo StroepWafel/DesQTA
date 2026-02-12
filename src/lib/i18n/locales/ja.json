@@ -19,6 +19,67 @@
     "settings": "設定",
     "close_theme_builder": "テーマビルダーを閉じる"
   },
+  "focus_timer": {
+    "title": "集中タイマー",
+    "start": "開始",
+    "pause": "一時停止",
+    "reset": "リセット",
+    "duration_25": "25分",
+    "duration_45": "45分",
+    "duration_60": "60分",
+    "custom_placeholder_min": "分",
+    "custom_placeholder_sec": "秒",
+    "set": "設定",
+    "break_time": "休憩時間！",
+    "focus_time": "集中時間",
+    "break_message": "少し休憩しましょう",
+    "focus_message": "集中して生産的に"
+  },
+  "error_page": {
+    "title": "エラー {status} - DesQTA",
+    "error_id": "エラーID",
+    "hide_details": "非表示",
+    "show_details": "表示",
+    "details": "詳細",
+    "error_message": "エラーメッセージ",
+    "system_health_overview": "システム状態概要",
+    "overall_health": "総合状態",
+    "network": "ネットワーク",
+    "storage": "ストレージ",
+    "items": "件",
+    "online": "オンライン",
+    "offline": "オフライン",
+    "go_to_login": "ログインへ",
+    "go_back": "戻る",
+    "retry_operation": "再試行",
+    "refresh_page": "ページを更新",
+    "advanced_troubleshooting": "高度なトラブルシューティング",
+    "go_home": "ホームへ",
+    "mark_as_resolved": "解決済みにする",
+    "recommended_actions": "推奨アクション",
+    "performance_issues_detected": "パフォーマンス問題を検出",
+    "recent_errors": "最近のエラー",
+    "detailed_error_info": "詳細なエラー情報",
+    "error_context": "エラーコンテキスト",
+    "environment": "環境",
+    "stack_trace": "スタックトレース",
+    "complete_error_report": "完全なエラーレポート",
+    "dev_debug_info": "開発デバッグ情報:",
+    "type_auth": "認証エラー",
+    "type_not_found": "ページが見つかりません",
+    "type_network": "ネットワークエラー",
+    "type_performance": "パフォーマンスの問題",
+    "type_server": "サーバーエラー",
+    "type_critical": "重大なエラー",
+    "type_app": "アプリケーションエラー",
+    "desc_auth": "このページにアクセスするにはログインしてください。",
+    "desc_not_found": "お探しのページは存在しません。",
+    "desc_network": "サーバーに接続できません。インターネット接続を確認してください。",
+    "desc_performance": "アプリケーションでパフォーマンスの問題が発生しています。",
+    "desc_server": "サーバー側で問題が発生しました。後でもう一度お試しください。",
+    "desc_critical": "重大なエラーが発生し、直ちに対応が必要です。",
+    "desc_default": "予期しないエラーが発生しました。もう一度お試しください。"
+  },
   "connectivity": {
     "offline": "オフラインです",
     "offline_desc": "一部の機能が制限される場合があります。データはキャッシュから取得されます。",
@@ -50,6 +111,11 @@
     "menu": "メニュー",
     "qr_signin": "QRサインイン",
     "welcome": "ようこそ"
+  },
+  "pages_menu": {
+    "search_placeholder": "ページを検索...",
+    "navigate": "移動",
+    "select": "選択"
   },
   "header": {
     "toggle_sidebar": "サイドバーを切り替え",
@@ -95,7 +161,9 @@
     "feature_assessments_desc": "課題を表示",
     "feature_timetable_desc": "授業スケジュール",
     "feature_analytics_desc": "パフォーマンスデータ",
-    "feature_settings_desc": "アプリ設定"
+    "feature_settings_desc": "アプリ設定",
+    "fill_all_fields": "すべての項目を入力してください",
+    "failed_credentials": "ログインに失敗しました。認証情報を確認してください。"
   },
   "about": {
     "title": "DesQTAについて",
@@ -191,6 +259,8 @@
     "lesson_resources": "授業リソース"
   },
   "goals": {
+    "no_cached_data": "キャッシュされたデータがありません",
+    "invalid_response": "無効な応答形式",
     "loading_years": "年度を読み込み中...",
     "error_loading_years": "年度の読み込みエラー",
     "no_years_available": "利用可能な年度がありません",
@@ -237,6 +307,8 @@
     "sort_unread": "未読数",
     "sort_asc": "昇順で並べ替え",
     "sort_desc": "降順で並べ替え",
+    "no_cached_data": "キャッシュされたデータがありません",
+    "invalid_response": "無効な応答形式",
     "sort_recent_first": "最新を先に",
     "sort_oldest_first": "古いものを先に",
     "sort_by_author": "作成者別",
@@ -245,6 +317,7 @@
     "not_enabled_message": "フォーラムが学校で有効になっていません。これがエラーだと思われる場合は、管理者にお問い合わせください。"
   },
   "folios": {
+    "invalid_response": "無効な応答形式",
     "edit_my_folios": "マイポートフォリオを編集",
     "edit_my_folios_description": "個人のポートフォリオを作成および管理",
     "browse_folios": "ポートフォリオを閲覧",
@@ -263,6 +336,7 @@
     "save_error": "ポートフォリオの保存に失敗しました",
     "new_folio": "新しいポートフォリオ",
     "creating": "作成中...",
+    "created_success": "ポートフォリオを作成しました",
     "create_error": "ポートフォリオの作成に失敗しました",
     "tags": "タグ",
     "add_tag_placeholder": "タグを追加...",
@@ -289,6 +363,11 @@
     "not_enabled_message": "ポートフォリオがアカウントで有効になっていません。"
   },
   "assessments": {
+    "back_to_assessments": "評価に戻る",
+    "status_marked": "採点済み",
+    "status_overdue": "期限切れ",
+    "status_due_soon": "締切間近",
+    "status_upcoming": "予定",
     "year": "年度：",
     "view": "表示：",
     "list_view": "リスト表示",
@@ -392,6 +471,7 @@
   },
   "messages": {
     "failed_to_load": "メッセージの読み込みに失敗しました。",
+    "failed_to_load_no_cache": "メッセージの読み込みに失敗し、キャッシュデータもありません",
     "failed_to_load_message": "メッセージの読み込みに失敗しました。",
     "no_content": "コンテンツがありません。",
     "seqta_messages": "SEQTAメッセージ",
@@ -430,7 +510,15 @@
     "sending": "送信中...",
     "send": "送信",
     "failed_to_load_recipients": "受信者の読み込みに失敗しました。もう一度お試しください。",
-    "failed_to_send": "メッセージの送信に失敗しました。もう一度お試しください。"
+    "failed_to_send": "メッセージの送信に失敗しました。もう一度お試しください。",
+    "message_starred": "メッセージにスターを付けました",
+    "message_unstarred": "メッセージのスターを外しました",
+    "failed_to_update_star": "スターの更新に失敗しました",
+    "deleted_success": "メッセージを削除しました",
+    "delete_failed": "メッセージの削除に失敗しました",
+    "restored_success": "メッセージを復元しました",
+    "restore_failed": "メッセージの復元に失敗しました",
+    "message_detail": "メッセージの詳細"
   },
   "settings": {
     "saved": "保存しました！",
@@ -533,6 +621,16 @@
   },
   "analytics": {
     "description": "学業成績と時間経過による進歩を追跡",
+    "syncing": "同期中...",
+    "last_updated": "最終更新",
+    "sync_failed": "同期に失敗しました。キャッシュデータを表示しています。",
+    "sync_success": "分析データの同期が完了しました",
+    "sync_error": "分析データの同期に失敗しました",
+    "syncing_automatically": "このページにアクセスするとデータが自動的に同期されます。",
+    "time_just_now": "たった今",
+    "time_minutes_ago": "{count}分前",
+    "time_hours_ago": "{count}時間前",
+    "time_days_ago": "{count}日前",
     "failed_to_grab_data": "分析データの取得と保存に失敗しました。",
     "failed_to_delete_data": "分析データの削除に失敗しました",
     "delete_data": "データを削除",
@@ -612,6 +710,7 @@
   },
   "directory": {
     "description": "すべての学生を閲覧・検索",
+    "failed_to_load": "学生の読み込みに失敗しました",
     "filters": "フィルター",
     "filter_students": "学生をフィルター",
     "year_level": "学年",
@@ -642,7 +741,9 @@
     "label": "ラベル：",
     "all": "すべて",
     "loading": "通知を読み込み中...",
-    "no_notices_found": "選択した条件に該当する通知が見つかりません。"
+    "no_notices_found": "選択した条件に該当する通知が見つかりません。",
+    "view_all": "すべて表示",
+    "no_notices_today": "本日の通知はありません。"
   },
   "reports": {
     "failed_to_load": "レポートの読み込みに失敗しました。",

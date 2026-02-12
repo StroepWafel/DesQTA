@@ -8,6 +8,7 @@
   import Editor from '../../../components/Editor/Editor.svelte';
   import GoalsToolbar from '../components/GoalsToolbar.svelte';
   import { Editor as TipTapEditor } from '@tiptap/core';
+  import { get } from 'svelte/store';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import { logger } from '../../../utils/logger';
@@ -120,7 +121,7 @@
           goalItems = [];
         }
       } else {
-        error = 'Invalid response format';
+        error = get(_)('goals.invalid_response');
         logger.error('goals', 'loadGoals', 'Invalid response format', { data });
       }
     } catch (e) {
@@ -175,7 +176,7 @@
           // Toast store not available, skip
         }
       } else {
-        throw new Error('Failed to save notes');
+        throw new Error(get(_)('goals.save_error'));
       }
     } catch (e) {
       logger.error('goals', 'saveNotes', `Failed to save notes: ${e}`, { error: e });

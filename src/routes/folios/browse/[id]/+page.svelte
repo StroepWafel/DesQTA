@@ -15,6 +15,7 @@
   import Editor from '../../../../components/Editor/Editor.svelte';
   import GoalsToolbar from '../../../goals/components/GoalsToolbar.svelte';
   import { Editor as TipTapEditor } from '@tiptap/core';
+  import { get } from 'svelte/store';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../../lib/i18n';
   import { logger } from '../../../../utils/logger';
@@ -139,7 +140,7 @@
           await loadForumComments(folioData.forum);
         }
       } else {
-        error = 'Invalid response format';
+        error = get(_)('folios.invalid_response');
         logger.error('folios', 'loadFolio', 'Invalid response format', { data });
       }
     } catch (e) {
@@ -234,7 +235,7 @@
 
         try {
           const { toastStore } = await import('../../../../lib/stores/toast');
-          toastStore.success($_('forums.reply_sent') || 'Reply sent successfully');
+          toastStore.success(get(_)('forums.reply_sent'));
         } catch {
           // Toast store not available, skip
         }
@@ -243,7 +244,7 @@
       logger.error('folios', 'sendReply', `Failed to send reply: ${e}`, { error: e });
       try {
         const { toastStore } = await import('../../../../lib/stores/toast');
-        toastStore.error($_('forums.reply_error') || 'Failed to send reply');
+        toastStore.error(get(_)('forums.reply_error'));
       } catch {
         // Toast store not available, skip
       }

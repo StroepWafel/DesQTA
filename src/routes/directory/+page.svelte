@@ -12,6 +12,7 @@
   import * as Pagination from '$lib/components/ui/pagination/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
   import T from '$lib/components/T.svelte';
+  import { get } from 'svelte/store';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
   import { forumPhotoService } from '../../lib/services/forumPhotoService';
@@ -153,7 +154,7 @@
       });
 
       if (!data) {
-        error = 'Failed to load students';
+        error = get(_)('directory.failed_to_load');
         loading = false;
       }
     } catch (e) {

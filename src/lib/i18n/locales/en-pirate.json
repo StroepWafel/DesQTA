@@ -19,6 +19,67 @@
     "settings": "Ship's orders",
     "close_theme_builder": "Furl the theme sails"
   },
+  "focus_timer": {
+    "title": "Focus Timer",
+    "start": "Start",
+    "pause": "Pause",
+    "reset": "Reset",
+    "duration_25": "25m",
+    "duration_45": "45m",
+    "duration_60": "60m",
+    "custom_placeholder_min": "mm",
+    "custom_placeholder_sec": "ss",
+    "set": "Set",
+    "break_time": "Break Time!",
+    "focus_time": "Focus Time",
+    "break_message": "Take a short break",
+    "focus_message": "Stay focused and productive"
+  },
+  "error_page": {
+    "title": "Error {status} - DesQTA",
+    "error_id": "Error ID",
+    "hide_details": "Hide",
+    "show_details": "Show",
+    "details": "Details",
+    "error_message": "Error Message",
+    "system_health_overview": "System Health Overview",
+    "overall_health": "Overall Health",
+    "network": "Network",
+    "storage": "Storage",
+    "items": "items",
+    "online": "Online",
+    "offline": "Offline",
+    "go_to_login": "Go to Login",
+    "go_back": "Go Back",
+    "retry_operation": "Retry Operation",
+    "refresh_page": "Refresh Page",
+    "advanced_troubleshooting": "Advanced Troubleshooting",
+    "go_home": "Go Home",
+    "mark_as_resolved": "Mark as Resolved",
+    "recommended_actions": "Recommended Actions",
+    "performance_issues_detected": "Performance Issues Detected",
+    "recent_errors": "Recent Errors",
+    "detailed_error_info": "Detailed Error Information",
+    "error_context": "Error Context",
+    "environment": "Environment",
+    "stack_trace": "Stack Trace",
+    "complete_error_report": "Complete Error Report",
+    "dev_debug_info": "Development Debug Information:",
+    "type_auth": "Authentication Error",
+    "type_not_found": "Page Not Found",
+    "type_network": "Network Error",
+    "type_performance": "Performance Issue",
+    "type_server": "Server Error",
+    "type_critical": "Critical Error",
+    "type_app": "Application Error",
+    "desc_auth": "Ye need to log in to access this page.",
+    "desc_not_found": "The page ye be lookin' for doesn't exist.",
+    "desc_network": "Unable to connect to the server. Check yer internet connection.",
+    "desc_performance": "The application be experiencin' performance issues.",
+    "desc_server": "Somethin' went wrong on our end. Please try again later.",
+    "desc_critical": "A critical error has occurred that requires immediate attention.",
+    "desc_default": "Somethin' unexpected happened. Please try again."
+  },
   "connectivity": {
     "offline": "Ye be offline",
     "offline_desc": "Some features may be limited. Data be from cache.",
@@ -50,6 +111,11 @@
     "menu": "Ship's menu",
     "qr_signin": "Treasure map signin",
     "welcome": "Welcome aboard"
+  },
+  "pages_menu": {
+    "search_placeholder": "Search pages...",
+    "navigate": "Navigate",
+    "select": "Select"
   },
   "header": {
     "toggle_sidebar": "Toggle the ship's panel",
@@ -86,7 +152,12 @@
     "need_help": "Need a hand, matey?",
     "visit_github": "Visit our ship's harbor",
     "live_scanner": "Live treasure map scanner",
-    "position_qr": "Position the treasure map within the spyglass to scan"
+    "position_qr": "Position the treasure map within the spyglass to scan",
+    "camera_error": "No spyglass found on this vessel.",
+    "camera_permission": "Unable to access yer spyglass. Check yer permissions, matey.",
+    "live_scan_error": "Failed to start live scan.",
+    "fill_all_fields": "Fill in all fields, ye scallywag!",
+    "failed_credentials": "Boarding failed. Check yer credentials, matey."
   },
   "features": {
     "lightning_fast": "Swift as a Caribbean wind",
@@ -194,6 +265,8 @@
     "lesson_resources": "Lesson Treasure"
   },
   "goals": {
+    "no_cached_data": "No cached data available",
+    "invalid_response": "Invalid response format",
     "loading_years": "Loadin' years...",
     "error_loading_years": "Error loadin' years",
     "no_years_available": "No years available",
@@ -240,6 +313,8 @@
     "sort_unread": "Unread Count",
     "sort_asc": "Sort ascending",
     "sort_desc": "Sort descending",
+    "no_cached_data": "No cached data available",
+    "invalid_response": "Invalid response format",
     "sort_recent_first": "Most recent first",
     "sort_oldest_first": "Oldest first",
     "sort_by_author": "By author",
@@ -248,6 +323,7 @@
     "not_enabled_message": "Crew forums be not enabled for yer school. Please contact yer administrator if ye believe this be an error."
   },
   "folios": {
+    "invalid_response": "Invalid response format",
     "edit_my_folios": "Edit Me Treasure Folios",
     "edit_my_folios_description": "Create and manage yer personal treasure folios",
     "browse_folios": "Browse Treasure Folios",
@@ -266,6 +342,7 @@
     "save_error": "Failed to save treasure folio",
     "new_folio": "New Treasure Folio",
     "creating": "Creatin'...",
+    "created_success": "Folio created successfully",
     "create_error": "Failed to create treasure folio",
     "tags": "TAGS",
     "add_tag_placeholder": "Add a tag...",
@@ -292,6 +369,11 @@
     "not_enabled_message": "Treasure folios be not enabled for yer account."
   },
   "assessments": {
+    "back_to_assessments": "Back to Assessments",
+    "status_marked": "Marked",
+    "status_overdue": "Overdue",
+    "status_due_soon": "Due Soon",
+    "status_upcoming": "Upcoming",
     "year": "Voyage Year:",
     "view": "Ship's View:",
     "list_view": "Manifest View",
@@ -395,6 +477,7 @@
   },
   "messages": {
     "failed_to_load": "Failed to load messages, matey.",
+    "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message, savvy.",
     "no_content": "No treasure in this bottle.",
     "seqta_messages": "SEQTA Ship Mail",
@@ -433,7 +516,15 @@
     "sending": "Sendin' to sea...",
     "send": "Send Message",
     "failed_to_load_recipients": "Failed to load the crew list. Try again, matey.",
-    "failed_to_send": "Failed to send yer message to sea. Try again, savvy."
+    "failed_to_send": "Failed to send yer message to sea. Try again, savvy.",
+    "message_starred": "Message starred",
+    "message_unstarred": "Message unstarred",
+    "failed_to_update_star": "Failed to update star status",
+    "deleted_success": "Message deleted successfully",
+    "delete_failed": "Failed to delete message",
+    "restored_success": "Message restored successfully",
+    "restore_failed": "Failed to restore message",
+    "message_detail": "Message Detail"
   },
   "settings": {
     "saved": "Saved to the ship's log!",
@@ -536,6 +627,16 @@
   },
   "analytics": {
     "description": "Chart yer academic voyage and treasure progress over time",
+    "syncing": "Syncin'...",
+    "last_updated": "Last updated",
+    "sync_failed": "Failed to sync analytics data, showin' cached data.",
+    "sync_success": "Analytics data synced successfully",
+    "sync_error": "Failed to sync analytics data",
+    "syncing_automatically": "Data syncs automatically when ye visit this page.",
+    "time_just_now": "Just now",
+    "time_minutes_ago": "{count} minute(s) ago",
+    "time_hours_ago": "{count} hour(s) ago",
+    "time_days_ago": "{count} day(s) ago",
     "failed_to_grab_data": "Failed to plunder and stash the analytics treasure.",
     "failed_to_delete_data": "Failed to scuttle the analytics treasure",
     "delete_data": "Scuttle Data",
@@ -615,6 +716,7 @@
   },
   "directory": {
     "description": "Browse and search through all crew members aboard",
+    "failed_to_load": "Failed to load ye crew manifest",
     "filters": "Search Filters",
     "filter_students": "Filter Crew Members",
     "year_level": "Experience Level",
@@ -645,7 +747,9 @@
     "label": "Ship Notice Type:",
     "all": "All Ship Notices",
     "loading": "Loading ship announcements...",
-    "no_notices_found": "No ship announcements found for the selected criteria."
+    "no_notices_found": "No ship announcements found for the selected criteria.",
+    "view_all": "View all",
+    "no_notices_today": "No notices available today."
   },
   "reports": {
     "failed_to_load": "Failed to load treasure reports.",

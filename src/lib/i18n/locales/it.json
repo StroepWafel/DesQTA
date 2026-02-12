@@ -19,6 +19,67 @@
     "settings": "Impostazioni",
     "close_theme_builder": "Chiudi Generatore Temi"
   },
+  "focus_timer": {
+    "title": "Timer di concentrazione",
+    "start": "Avvia",
+    "pause": "Pausa",
+    "reset": "Reimposta",
+    "duration_25": "25m",
+    "duration_45": "45m",
+    "duration_60": "60m",
+    "custom_placeholder_min": "mm",
+    "custom_placeholder_sec": "ss",
+    "set": "Imposta",
+    "break_time": "Tempo di pausa!",
+    "focus_time": "Tempo di concentrazione",
+    "break_message": "Fai una breve pausa",
+    "focus_message": "Resta concentrato e produttivo"
+  },
+  "error_page": {
+    "title": "Errore {status} - DesQTA",
+    "error_id": "ID errore",
+    "hide_details": "Nascondi",
+    "show_details": "Mostra",
+    "details": "Dettagli",
+    "error_message": "Messaggio di errore",
+    "system_health_overview": "Panoramica stato sistema",
+    "overall_health": "Stato generale",
+    "network": "Rete",
+    "storage": "Archiviazione",
+    "items": "elementi",
+    "online": "Online",
+    "offline": "Offline",
+    "go_to_login": "Vai al login",
+    "go_back": "Indietro",
+    "retry_operation": "Riprova operazione",
+    "refresh_page": "Aggiorna pagina",
+    "advanced_troubleshooting": "Risoluzione avanzata problemi",
+    "go_home": "Torna alla home",
+    "mark_as_resolved": "Segna come risolto",
+    "recommended_actions": "Azioni consigliate",
+    "performance_issues_detected": "Problemi di prestazioni rilevati",
+    "recent_errors": "Errori recenti",
+    "detailed_error_info": "Informazioni dettagliate errore",
+    "error_context": "Contesto errore",
+    "environment": "Ambiente",
+    "stack_trace": "Stack trace",
+    "complete_error_report": "Rapporto errore completo",
+    "dev_debug_info": "Info debug sviluppo:",
+    "type_auth": "Errore di autenticazione",
+    "type_not_found": "Pagina non trovata",
+    "type_network": "Errore di rete",
+    "type_performance": "Problema prestazioni",
+    "type_server": "Errore server",
+    "type_critical": "Errore critico",
+    "type_app": "Errore applicazione",
+    "desc_auth": "Devi accedere per visualizzare questa pagina.",
+    "desc_not_found": "La pagina che cerchi non esiste.",
+    "desc_network": "Impossibile connettersi al server. Controlla la connessione internet.",
+    "desc_performance": "L'applicazione sta riscontrando problemi di prestazioni.",
+    "desc_server": "Qualcosa è andato storto. Riprova più tardi.",
+    "desc_critical": "Si è verificato un errore critico che richiede attenzione immediata.",
+    "desc_default": "Qualcosa è andato storto. Riprova."
+  },
   "connectivity": {
     "offline": "Sei offline",
     "offline_desc": "Alcune funzionalità potrebbero essere limitate. I dati provengono dalla cache.",
@@ -50,6 +111,11 @@
     "menu": "Menu",
     "qr_signin": "Accedi con QR",
     "welcome": "Benvenuto"
+  },
+  "pages_menu": {
+    "search_placeholder": "Cerca pagine...",
+    "navigate": "Naviga",
+    "select": "Seleziona"
   },
   "header": {
     "toggle_sidebar": "Mostra/nascondi barra laterale",
@@ -97,7 +163,9 @@
     "feature_assessments_desc": "View assignments",
     "feature_timetable_desc": "Class schedule",
     "feature_analytics_desc": "Performance data",
-    "feature_settings_desc": "App preferences"
+    "feature_settings_desc": "App preferences",
+    "fill_all_fields": "Compila tutti i campi",
+    "failed_credentials": "Accesso fallito. Verifica le tue credenziali."
   },
   "features": {
     "lightning_fast": "Prestazioni fulminee",
@@ -238,6 +306,8 @@
     "lesson_resources": "Risorse della Lezione"
   },
   "goals": {
+    "no_cached_data": "Nessun dato in cache disponibile",
+    "invalid_response": "Formato di risposta non valido",
     "loading_years": "Caricamento anni...",
     "error_loading_years": "Errore nel caricamento degli anni",
     "no_years_available": "Nessun anno disponibile",
@@ -284,6 +354,8 @@
     "sort_unread": "Conteggio Non Letti",
     "sort_asc": "Ordina crescente",
     "sort_desc": "Ordina decrescente",
+    "no_cached_data": "Nessun dato in cache disponibile",
+    "invalid_response": "Formato di risposta non valido",
     "sort_recent_first": "Più recenti prima",
     "sort_oldest_first": "Più vecchi prima",
     "sort_by_author": "Per autore",
@@ -292,6 +364,7 @@
     "not_enabled_message": "I forum non sono abilitati per la tua scuola. Contatta l'amministratore se ritieni che si tratti di un errore."
   },
   "folios": {
+    "invalid_response": "Formato di risposta non valido",
     "edit_my_folios": "Modifica i Miei Portfolio",
     "edit_my_folios_description": "Crea e gestisci i tuoi portfolio personali",
     "browse_folios": "Sfoglia Portfolio",
@@ -310,6 +383,7 @@
     "save_error": "Impossibile salvare il portfolio",
     "new_folio": "Nuovo Portfolio",
     "creating": "Creazione...",
+    "created_success": "Portfolio creato con successo",
     "create_error": "Impossibile creare il portfolio",
     "tags": "TAG",
     "add_tag_placeholder": "Aggiungi un tag...",
@@ -336,6 +410,11 @@
     "not_enabled_message": "I portfolio non sono abilitati per il tuo account."
   },
   "assessments": {
+    "back_to_assessments": "Torna alle valutazioni",
+    "status_marked": "Valutato",
+    "status_overdue": "Scaduto",
+    "status_due_soon": "In scadenza",
+    "status_upcoming": "In programma",
     "year": "Anno:",
     "view": "Visualizzazione:",
     "list_view": "Visualizzazione Elenco",
@@ -440,6 +519,7 @@
   },
   "messages": {
     "failed_to_load": "Impossibile caricare i messaggi.",
+    "failed_to_load_no_cache": "Impossibile caricare i messaggi e nessun dato in cache disponibile",
     "failed_to_load_message": "Impossibile caricare il messaggio.",
     "no_content": "Nessun contenuto.",
     "seqta_messages": "Messaggi SEQTA",
@@ -478,7 +558,15 @@
     "sending": "Invio...",
     "send": "Invia",
     "failed_to_load_recipients": "Impossibile caricare i destinatari. Riprova.",
-    "failed_to_send": "Impossibile inviare il messaggio. Riprova."
+    "failed_to_send": "Impossibile inviare il messaggio. Riprova.",
+    "message_starred": "Messaggio contrassegnato con stella",
+    "message_unstarred": "Stella rimossa dal messaggio",
+    "failed_to_update_star": "Impossibile aggiornare lo stato della stella",
+    "deleted_success": "Messaggio eliminato con successo",
+    "delete_failed": "Impossibile eliminare il messaggio",
+    "restored_success": "Messaggio ripristinato con successo",
+    "restore_failed": "Impossibile ripristinare il messaggio",
+    "message_detail": "Dettaglio messaggio"
   },
   "settings": {
     "saved": "Salvato!",
@@ -581,6 +669,16 @@
   },
   "analytics": {
     "description": "Monitora le tue prestazioni accademiche e i progressi nel tempo",
+    "syncing": "Sincronizzazione...",
+    "last_updated": "Ultimo aggiornamento",
+    "sync_failed": "Sincronizzazione fallita. Mostrando dati in cache.",
+    "sync_success": "Dati di analisi sincronizzati",
+    "sync_error": "Sincronizzazione dati di analisi fallita",
+    "syncing_automatically": "I dati si sincronizzano automaticamente visitando questa pagina.",
+    "time_just_now": "Proprio ora",
+    "time_minutes_ago": "{count} minuto/i fa",
+    "time_hours_ago": "{count} ora/e fa",
+    "time_days_ago": "{count} giorno/i fa",
     "failed_to_grab_data": "Impossibile ottenere e salvare i dati di analisi.",
     "failed_to_delete_data": "Impossibile eliminare i dati di analisi",
     "delete_data": "Elimina Dati",
@@ -660,6 +758,7 @@
   },
   "directory": {
     "description": "Sfoglia e cerca tutti gli studenti",
+    "failed_to_load": "Impossibile caricare gli studenti",
     "filters": "Filtri",
     "filter_students": "Filtra Studenti",
     "year_level": "Livello Anno",
@@ -690,7 +789,9 @@
     "label": "Etichetta:",
     "all": "Tutti",
     "loading": "Caricamento avvisi...",
-    "no_notices_found": "Nessun avviso trovato per i criteri selezionati."
+    "no_notices_found": "Nessun avviso trovato per i criteri selezionati.",
+    "view_all": "Visualizza tutti",
+    "no_notices_today": "Nessun avviso disponibile oggi."
   },
   "reports": {
     "failed_to_load": "Impossibile caricare i report.",

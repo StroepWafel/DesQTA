@@ -19,6 +19,67 @@
     "settings": "Configurações",
     "close_theme_builder": "Fechar Construtor de Temas"
   },
+  "focus_timer": {
+    "title": "Timer de foco",
+    "start": "Iniciar",
+    "pause": "Pausar",
+    "reset": "Reiniciar",
+    "duration_25": "25m",
+    "duration_45": "45m",
+    "duration_60": "60m",
+    "custom_placeholder_min": "mm",
+    "custom_placeholder_sec": "ss",
+    "set": "Definir",
+    "break_time": "Hora do intervalo!",
+    "focus_time": "Tempo de foco",
+    "break_message": "Faça uma pausa curta",
+    "focus_message": "Mantenha-se focado e produtivo"
+  },
+  "error_page": {
+    "title": "Erro {status} - DesQTA",
+    "error_id": "ID do erro",
+    "hide_details": "Ocultar",
+    "show_details": "Mostrar",
+    "details": "Detalhes",
+    "error_message": "Mensagem de erro",
+    "system_health_overview": "Visão geral do sistema",
+    "overall_health": "Estado geral",
+    "network": "Rede",
+    "storage": "Armazenamento",
+    "items": "itens",
+    "online": "Online",
+    "offline": "Offline",
+    "go_to_login": "Ir para login",
+    "go_back": "Voltar",
+    "retry_operation": "Tentar novamente",
+    "refresh_page": "Atualizar página",
+    "advanced_troubleshooting": "Solução avançada de problemas",
+    "go_home": "Início",
+    "mark_as_resolved": "Marcar como resolvido",
+    "recommended_actions": "Ações recomendadas",
+    "performance_issues_detected": "Problemas de desempenho detectados",
+    "recent_errors": "Erros recentes",
+    "detailed_error_info": "Informações detalhadas do erro",
+    "error_context": "Contexto do erro",
+    "environment": "Ambiente",
+    "stack_trace": "Rastreamento de pilha",
+    "complete_error_report": "Relatório completo do erro",
+    "dev_debug_info": "Informações de depuração:",
+    "type_auth": "Erro de autenticação",
+    "type_not_found": "Página não encontrada",
+    "type_network": "Erro de rede",
+    "type_performance": "Problema de desempenho",
+    "type_server": "Erro do servidor",
+    "type_critical": "Erro crítico",
+    "type_app": "Erro da aplicação",
+    "desc_auth": "Você precisa fazer login para acessar esta página.",
+    "desc_not_found": "A página que você procura não existe.",
+    "desc_network": "Não foi possível conectar ao servidor. Verifique sua conexão com a internet.",
+    "desc_performance": "A aplicação está enfrentando problemas de desempenho.",
+    "desc_server": "Algo deu errado. Tente novamente mais tarde.",
+    "desc_critical": "Ocorreu um erro crítico que requer atenção imediata.",
+    "desc_default": "Algo inesperado aconteceu. Tente novamente."
+  },
   "connectivity": {
     "offline": "Você está offline",
     "offline_desc": "Algumas funcionalidades podem estar limitadas. Os dados são do cache.",
@@ -50,6 +111,11 @@
     "menu": "Menu",
     "qr_signin": "Entrar com QR",
     "welcome": "Bem-vindo"
+  },
+  "pages_menu": {
+    "search_placeholder": "Pesquisar páginas...",
+    "navigate": "Navegar",
+    "select": "Selecionar"
   },
   "header": {
     "toggle_sidebar": "Alternar barra lateral",
@@ -97,7 +163,9 @@
     "feature_assessments_desc": "Ver tarefas",
     "feature_timetable_desc": "Horário de aulas",
     "feature_analytics_desc": "Dados de desempenho",
-    "feature_settings_desc": "Preferências do aplicativo"
+    "feature_settings_desc": "Preferências do aplicativo",
+    "fill_all_fields": "Por favor, preencha todos os campos",
+    "failed_credentials": "Falha no login. Verifique suas credenciais."
   },
   "features": {
     "lightning_fast": "Desempenho ultrarrápido",
@@ -238,6 +306,8 @@
     "lesson_resources": "Recursos da Aula"
   },
   "goals": {
+    "no_cached_data": "Nenhum dado em cache disponível",
+    "invalid_response": "Formato de resposta inválido",
     "loading_years": "Carregando anos...",
     "error_loading_years": "Erro ao carregar anos",
     "no_years_available": "Nenhum ano disponível",
@@ -284,6 +354,8 @@
     "sort_unread": "Contagem de Não Lidos",
     "sort_asc": "Ordenar crescente",
     "sort_desc": "Ordenar decrescente",
+    "no_cached_data": "Nenhum dado em cache disponível",
+    "invalid_response": "Formato de resposta inválido",
     "sort_recent_first": "Mais recentes primeiro",
     "sort_oldest_first": "Mais antigos primeiro",
     "sort_by_author": "Por autor",
@@ -292,6 +364,7 @@
     "not_enabled_message": "Fóruns não estão habilitados para sua escola. Entre em contato com o administrador se acredita que isso é um erro."
   },
   "folios": {
+    "invalid_response": "Formato de resposta inválido",
     "edit_my_folios": "Editar Meus Portfólios",
     "edit_my_folios_description": "Crie e gerencie seus portfólios pessoais",
     "browse_folios": "Navegar Portfólios",
@@ -310,6 +383,7 @@
     "save_error": "Falha ao salvar portfólio",
     "new_folio": "Novo Portfólio",
     "creating": "Criando...",
+    "created_success": "Portfólio criado com sucesso",
     "create_error": "Falha ao criar portfólio",
     "tags": "TAGS",
     "add_tag_placeholder": "Adicionar uma tag...",
@@ -336,6 +410,11 @@
     "not_enabled_message": "Portfólios não estão habilitados para sua conta."
   },
   "assessments": {
+    "back_to_assessments": "Voltar às avaliações",
+    "status_marked": "Avaliado",
+    "status_overdue": "Atrasado",
+    "status_due_soon": "Em breve",
+    "status_upcoming": "Próximo",
     "year": "Ano:",
     "view": "Visualização:",
     "list_view": "Visualização em Lista",
@@ -440,6 +519,7 @@
   },
   "messages": {
     "failed_to_load": "Falha ao carregar mensagens.",
+    "failed_to_load_no_cache": "Falha ao carregar mensagens e nenhum dado em cache disponível",
     "failed_to_load_message": "Falha ao carregar mensagem.",
     "no_content": "Sem conteúdo.",
     "seqta_messages": "Mensagens SEQTA",
@@ -478,7 +558,15 @@
     "sending": "Enviando...",
     "send": "Enviar",
     "failed_to_load_recipients": "Falha ao carregar destinatários. Por favor, tente novamente.",
-    "failed_to_send": "Falha ao enviar mensagem. Por favor, tente novamente."
+    "failed_to_send": "Falha ao enviar mensagem. Por favor, tente novamente.",
+    "message_starred": "Mensagem marcada com estrela",
+    "message_unstarred": "Estrela removida da mensagem",
+    "failed_to_update_star": "Falha ao atualizar status de estrela",
+    "deleted_success": "Mensagem excluída com sucesso",
+    "delete_failed": "Falha ao excluir mensagem",
+    "restored_success": "Mensagem restaurada com sucesso",
+    "restore_failed": "Falha ao restaurar mensagem",
+    "message_detail": "Detalhe da mensagem"
   },
   "settings": {
     "saved": "Salvo!",
@@ -581,6 +669,16 @@
   },
   "analytics": {
     "description": "Acompanhe seu desempenho acadêmico e progresso ao longo do tempo",
+    "syncing": "Sincronizando...",
+    "last_updated": "Última atualização",
+    "sync_failed": "Falha na sincronização. Exibindo dados em cache.",
+    "sync_success": "Dados de análise sincronizados com sucesso",
+    "sync_error": "Falha ao sincronizar dados de análise",
+    "syncing_automatically": "Os dados são sincronizados automaticamente ao visitar esta página.",
+    "time_just_now": "Agora mesmo",
+    "time_minutes_ago": "há {count} minuto(s)",
+    "time_hours_ago": "há {count} hora(s)",
+    "time_days_ago": "há {count} dia(s)",
     "failed_to_grab_data": "Falha ao capturar e salvar dados de análise.",
     "failed_to_delete_data": "Falha ao excluir dados de análise",
     "delete_data": "Excluir Dados",
@@ -660,6 +758,7 @@
   },
   "directory": {
     "description": "Navegue e pesquise todos os alunos",
+    "failed_to_load": "Falha ao carregar alunos",
     "filters": "Filtros",
     "filter_students": "Filtrar Alunos",
     "year_level": "Nível do Ano",
@@ -690,7 +789,9 @@
     "label": "Etiqueta:",
     "all": "Todos",
     "loading": "Carregando avisos...",
-    "no_notices_found": "Nenhum aviso encontrado para os critérios selecionados."
+    "no_notices_found": "Nenhum aviso encontrado para os critérios selecionados.",
+    "view_all": "Ver todos",
+    "no_notices_today": "Nenhum aviso disponível hoje."
   },
   "reports": {
     "failed_to_load": "Falha ao carregar relatórios.",

@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { get } from 'svelte/store';
   import { Badge } from '$lib/components/ui';
+  import { _ } from '$lib/i18n';
 
   interface Assessment {
     id: number;
@@ -24,14 +26,13 @@
     const now = new Date();
 
     if (status === 'MARKS_RELEASED') {
-      return { text: 'Marked', variant: 'success' as const };
+      return { text: get(_)('assessments.status_marked'), variant: 'success' as const };
     } else if (dueDate < now) {
-      return { text: 'Overdue', variant: 'danger' as const };
+      return { text: get(_)('assessments.status_overdue'), variant: 'danger' as const };
     } else if (dueDate.getTime() - now.getTime() < 7 * 24 * 60 * 60 * 1000) {
-      // Within 7 days
-      return { text: 'Due Soon', variant: 'warning' as const };
+      return { text: get(_)('assessments.status_due_soon'), variant: 'warning' as const };
     } else {
-      return { text: 'Upcoming', variant: 'info' as const };
+      return { text: get(_)('assessments.status_upcoming'), variant: 'info' as const };
     }
   }
 

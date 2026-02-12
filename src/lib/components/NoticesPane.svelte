@@ -5,6 +5,7 @@
   import { getWithIdbFallback, setIdb } from '../services/idbCache';
   import { fade } from 'svelte/transition';
   import { Icon, ArrowTopRightOnSquare, Bell } from 'svelte-hero-icons';
+  import { _ } from '$lib/i18n';
 
   interface Notice {
     id: number;
@@ -162,13 +163,13 @@
         src={Bell}
         class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300" />
       <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300">
-        Notices
+        {$_('navigation.notices')}
       </h3>
     </div>
     <a
       href="/notices"
       class="px-3 py-1.5 text-sm rounded-lg transition-all duration-200 text-nowrap accent-text hover:accent-bg-hover hover:text-white text-(--accent)! dark:text-(--accent)! flex items-center gap-1">
-      View all
+      {$_('notices.view_all')}
       <Icon src={ArrowTopRightOnSquare} class="w-4 h-4" />
     </a>
   </div>
@@ -180,11 +181,11 @@
         <div
           class="w-8 h-8 rounded-full border-4 animate-spin border-accent-500/30 border-t-accent-500">
         </div>
-        <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Loading notices...</p>
+        <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">{$_('notices.loading')}</p>
       </div>
     {:else if notices.length === 0}
       <div class="py-8 text-center">
-        <p class="text-sm text-zinc-600 dark:text-zinc-400">No notices available today.</p>
+        <p class="text-sm text-zinc-600 dark:text-zinc-400">{$_('notices.no_notices_today')}</p>
       </div>
     {:else}
       <div class="space-y-3">

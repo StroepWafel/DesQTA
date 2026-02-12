@@ -12,6 +12,7 @@
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import Modal from '$lib/components/Modal.svelte';
   import T from '$lib/components/T.svelte';
+  import { get } from 'svelte/store';
   import { _ } from '$lib/i18n';
 
   // Relative imports
@@ -112,7 +113,7 @@
         }
         
         // No cache available - show error
-        error = 'Failed to load messages and no cached data available';
+        error = get(_)('messages.failed_to_load_no_cache');
         loading = false;
         return;
       }
@@ -258,11 +259,11 @@
         }
       }
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.success(newStarred ? 'Message starred' : 'Message unstarred');
+      toastStore.success(newStarred ? get(_)('messages.message_starred') : get(_)('messages.message_unstarred'));
     } catch (e) {
       logger.error('messages', 'starMessage', 'Failed to star message', { error: e });
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.error('Failed to update star status');
+      toastStore.error(get(_)('messages.failed_to_update_star'));
     } finally {
       starring = false;
     }
@@ -279,11 +280,11 @@
         selectedMessage = null;
       }
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.success('Message deleted successfully');
+      toastStore.success(get(_)('messages.deleted_success'));
     } catch (e) {
       logger.error('messages', 'deleteMessage', 'Failed to delete message', { error: e });
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.error('Failed to delete message');
+      toastStore.error(get(_)('messages.delete_failed'));
     } finally {
       deleting = false;
     }
@@ -300,11 +301,11 @@
         selectedMessage = null;
       }
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.success('Message restored successfully');
+      toastStore.success(get(_)('messages.restored_success'));
     } catch (e) {
       logger.error('messages', 'restoreMessage', 'Failed to restore message', { error: e });
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.error('Failed to restore message');
+      toastStore.error(get(_)('messages.restore_failed'));
     } finally {
       restoring = false;
     }
@@ -358,7 +359,7 @@
         className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-none transition-all duration-300"
         showCloseButton={false}
         closeOnBackdrop={false}
-        ariaLabel="Message Detail">
+        ariaLabel={$_( 'messages.message_detail' )}>
         <div class="flex flex-col h-full">
           <div
             class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">

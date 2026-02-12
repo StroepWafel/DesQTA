@@ -19,6 +19,67 @@
     "settings": "Настройки",
     "close_theme_builder": "Закрыть конструктор тем"
   },
+  "focus_timer": {
+    "title": "Таймер фокуса",
+    "start": "Старт",
+    "pause": "Пауза",
+    "reset": "Сброс",
+    "duration_25": "25м",
+    "duration_45": "45м",
+    "duration_60": "60м",
+    "custom_placeholder_min": "мм",
+    "custom_placeholder_sec": "сс",
+    "set": "Установить",
+    "break_time": "Перерыв!",
+    "focus_time": "Время фокуса",
+    "break_message": "Сделайте короткий перерыв",
+    "focus_message": "Оставайтесь сосредоточенными и продуктивными"
+  },
+  "error_page": {
+    "title": "Ошибка {status} - DesQTA",
+    "error_id": "ID ошибки",
+    "hide_details": "Скрыть",
+    "show_details": "Показать",
+    "details": "Подробности",
+    "error_message": "Сообщение об ошибке",
+    "system_health_overview": "Обзор состояния системы",
+    "overall_health": "Общее состояние",
+    "network": "Сеть",
+    "storage": "Хранилище",
+    "items": "элементов",
+    "online": "В сети",
+    "offline": "Не в сети",
+    "go_to_login": "Перейти к входу",
+    "go_back": "Назад",
+    "retry_operation": "Повторить",
+    "refresh_page": "Обновить страницу",
+    "advanced_troubleshooting": "Расширенная диагностика",
+    "go_home": "На главную",
+    "mark_as_resolved": "Отметить как решённое",
+    "recommended_actions": "Рекомендуемые действия",
+    "performance_issues_detected": "Обнаружены проблемы производительности",
+    "recent_errors": "Недавние ошибки",
+    "detailed_error_info": "Подробная информация об ошибке",
+    "error_context": "Контекст ошибки",
+    "environment": "Среда",
+    "stack_trace": "Трассировка стека",
+    "complete_error_report": "Полный отчёт об ошибке",
+    "dev_debug_info": "Отладочная информация:",
+    "type_auth": "Ошибка аутентификации",
+    "type_not_found": "Страница не найдена",
+    "type_network": "Сетевая ошибка",
+    "type_performance": "Проблема производительности",
+    "type_server": "Ошибка сервера",
+    "type_critical": "Критическая ошибка",
+    "type_app": "Ошибка приложения",
+    "desc_auth": "Войдите для доступа к этой странице.",
+    "desc_not_found": "Страница, которую вы ищете, не существует.",
+    "desc_network": "Не удалось подключиться к серверу. Проверьте подключение к интернету.",
+    "desc_performance": "В приложении возникают проблемы с производительностью.",
+    "desc_server": "Что-то пошло не так. Попробуйте позже.",
+    "desc_critical": "Произошла критическая ошибка, требующая немедленного внимания.",
+    "desc_default": "Произошла непредвиденная ошибка. Попробуйте снова."
+  },
   "connectivity": {
     "offline": "Вы в автономном режиме",
     "offline_desc": "Некоторые функции могут быть ограничены. Данные из кэша.",
@@ -50,6 +111,11 @@
     "menu": "Меню",
     "qr_signin": "Вход по QR",
     "welcome": "Добро пожаловать"
+  },
+  "pages_menu": {
+    "search_placeholder": "Поиск страниц...",
+    "navigate": "Навигация",
+    "select": "Выбрать"
   },
   "header": {
     "toggle_sidebar": "Переключить боковую панель",
@@ -97,7 +163,9 @@
     "feature_assessments_desc": "View assignments",
     "feature_timetable_desc": "Class schedule",
     "feature_analytics_desc": "Performance data",
-    "feature_settings_desc": "App preferences"
+    "feature_settings_desc": "App preferences",
+    "fill_all_fields": "Пожалуйста, заполните все поля",
+    "failed_credentials": "Ошибка входа. Проверьте учетные данные."
   },
   "features": {
     "lightning_fast": "Молниеносная производительность",
@@ -238,6 +306,8 @@
     "lesson_resources": "Ресурсы урока"
   },
   "goals": {
+    "no_cached_data": "Нет кэшированных данных",
+    "invalid_response": "Неверный формат ответа",
     "loading_years": "Загрузка годов...",
     "error_loading_years": "Ошибка загрузки годов",
     "no_years_available": "Годы недоступны",
@@ -284,6 +354,8 @@
     "sort_unread": "Количество непрочитанных",
     "sort_asc": "Сортировать по возрастанию",
     "sort_desc": "Сортировать по убыванию",
+    "no_cached_data": "Нет кэшированных данных",
+    "invalid_response": "Неверный формат ответа",
     "sort_recent_first": "Сначала новые",
     "sort_oldest_first": "Сначала старые",
     "sort_by_author": "По автору",
@@ -292,6 +364,7 @@
     "not_enabled_message": "Форумы не включены для вашей школы. Свяжитесь с администратором, если считаете, что это ошибка."
   },
   "folios": {
+    "invalid_response": "Неверный формат ответа",
     "edit_my_folios": "Редактировать мои портфолио",
     "edit_my_folios_description": "Создавайте и управляйте своими личными портфолио",
     "browse_folios": "Просмотр портфолио",
@@ -310,6 +383,7 @@
     "save_error": "Не удалось сохранить портфолио",
     "new_folio": "Новое портфолио",
     "creating": "Создание...",
+    "created_success": "Портфолио успешно создано",
     "create_error": "Не удалось создать портфолио",
     "tags": "ТЕГИ",
     "add_tag_placeholder": "Добавить тег...",
@@ -336,6 +410,11 @@
     "not_enabled_message": "Портфолио не включены для вашей учетной записи."
   },
   "assessments": {
+    "back_to_assessments": "Назад к оценкам",
+    "status_marked": "Оценено",
+    "status_overdue": "Просрочено",
+    "status_due_soon": "Скоро срок",
+    "status_upcoming": "Предстоящий",
     "year": "Год:",
     "view": "Вид:",
     "list_view": "Вид списка",
@@ -440,6 +519,7 @@
   },
   "messages": {
     "failed_to_load": "Не удалось загрузить сообщения.",
+    "failed_to_load_no_cache": "Не удалось загрузить сообщения, кэшированные данные отсутствуют",
     "failed_to_load_message": "Не удалось загрузить сообщение.",
     "no_content": "Нет содержимого.",
     "seqta_messages": "Сообщения SEQTA",
@@ -478,7 +558,15 @@
     "sending": "Отправка...",
     "send": "Отправить",
     "failed_to_load_recipients": "Не удалось загрузить получателей. Пожалуйста, попробуйте снова.",
-    "failed_to_send": "Не удалось отправить сообщение. Пожалуйста, попробуйте снова."
+    "failed_to_send": "Не удалось отправить сообщение. Пожалуйста, попробуйте снова.",
+    "message_starred": "Сообщение отмечено звездой",
+    "message_unstarred": "Звезда снята с сообщения",
+    "failed_to_update_star": "Не удалось обновить статус звезды",
+    "deleted_success": "Сообщение успешно удалено",
+    "delete_failed": "Не удалось удалить сообщение",
+    "restored_success": "Сообщение успешно восстановлено",
+    "restore_failed": "Не удалось восстановить сообщение",
+    "message_detail": "Детали сообщения"
   },
   "settings": {
     "saved": "Сохранено!",
@@ -581,6 +669,16 @@
   },
   "analytics": {
     "description": "Отслеживайте свою академическую успеваемость и прогресс с течением времени",
+    "syncing": "Синхронизация...",
+    "last_updated": "Последнее обновление",
+    "sync_failed": "Синхронизация не удалась. Показываются кэшированные данные.",
+    "sync_success": "Данные аналитики успешно синхронизированы",
+    "sync_error": "Не удалось синхронизировать данные аналитики",
+    "syncing_automatically": "Данные синхронизируются автоматически при посещении этой страницы.",
+    "time_just_now": "Только что",
+    "time_minutes_ago": "{count} мин. назад",
+    "time_hours_ago": "{count} ч. назад",
+    "time_days_ago": "{count} дн. назад",
     "failed_to_grab_data": "Не удалось получить и сохранить данные аналитики.",
     "failed_to_delete_data": "Не удалось удалить данные аналитики",
     "delete_data": "Удалить данные",
@@ -660,6 +758,7 @@
   },
   "directory": {
     "description": "Просматривайте и ищите всех учеников",
+    "failed_to_load": "Не удалось загрузить учеников",
     "filters": "Фильтры",
     "filter_students": "Фильтровать учеников",
     "year_level": "Уровень года",
@@ -690,7 +789,9 @@
     "label": "Метка:",
     "all": "Все",
     "loading": "Загрузка уведомлений...",
-    "no_notices_found": "Уведомления не найдены для выбранных критериев."
+    "no_notices_found": "Уведомления не найдены для выбранных критериев.",
+    "view_all": "Показать все",
+    "no_notices_today": "Сегодня нет доступных уведомлений."
   },
   "reports": {
     "failed_to_load": "Не удалось загрузить отчеты.",

@@ -19,6 +19,67 @@
     "settings": "Paramètres",
     "close_theme_builder": "Fermer le Constructeur de Thèmes"
   },
+  "focus_timer": {
+    "title": "Minuteur de concentration",
+    "start": "Démarrer",
+    "pause": "Pause",
+    "reset": "Réinitialiser",
+    "duration_25": "25m",
+    "duration_45": "45m",
+    "duration_60": "60m",
+    "custom_placeholder_min": "mm",
+    "custom_placeholder_sec": "ss",
+    "set": "Définir",
+    "break_time": "Pause !",
+    "focus_time": "Temps de concentration",
+    "break_message": "Prenez une courte pause",
+    "focus_message": "Restez concentré et productif"
+  },
+  "error_page": {
+    "title": "Erreur {status} - DesQTA",
+    "error_id": "ID d'erreur",
+    "hide_details": "Masquer",
+    "show_details": "Afficher",
+    "details": "Détails",
+    "error_message": "Message d'erreur",
+    "system_health_overview": "Aperçu de l'état du système",
+    "overall_health": "État global",
+    "network": "Réseau",
+    "storage": "Stockage",
+    "items": "éléments",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "go_to_login": "Aller à la connexion",
+    "go_back": "Retour",
+    "retry_operation": "Réessayer l'opération",
+    "refresh_page": "Actualiser la page",
+    "advanced_troubleshooting": "Dépannage avancé",
+    "go_home": "Accueil",
+    "mark_as_resolved": "Marquer comme résolu",
+    "recommended_actions": "Actions recommandées",
+    "performance_issues_detected": "Problèmes de performances détectés",
+    "recent_errors": "Erreurs récentes",
+    "detailed_error_info": "Informations détaillées sur l'erreur",
+    "error_context": "Contexte de l'erreur",
+    "environment": "Environnement",
+    "stack_trace": "Trace de pile",
+    "complete_error_report": "Rapport d'erreur complet",
+    "dev_debug_info": "Informations de débogage:",
+    "type_auth": "Erreur d'authentification",
+    "type_not_found": "Page non trouvée",
+    "type_network": "Erreur réseau",
+    "type_performance": "Problème de performance",
+    "type_server": "Erreur serveur",
+    "type_critical": "Erreur critique",
+    "type_app": "Erreur d'application",
+    "desc_auth": "Vous devez vous connecter pour accéder à cette page.",
+    "desc_not_found": "La page que vous recherchez n'existe pas.",
+    "desc_network": "Impossible de se connecter au serveur. Vérifiez votre connexion internet.",
+    "desc_performance": "L'application rencontre des problèmes de performance.",
+    "desc_server": "Une erreur s'est produite côté serveur. Veuillez réessayer plus tard.",
+    "desc_critical": "Une erreur critique s'est produite et nécessite une attention immédiate.",
+    "desc_default": "Something unexpected happened. Please try again."
+  },
   "connectivity": {
     "offline": "Vous êtes hors ligne",
     "offline_desc": "Certaines fonctionnalités peuvent être limitées. Les données proviennent du cache.",
@@ -50,6 +111,11 @@
     "menu": "Menu",
     "qr_signin": "Connexion QR",
     "welcome": "Bienvenue"
+  },
+  "pages_menu": {
+    "search_placeholder": "Rechercher des pages...",
+    "navigate": "Naviguer",
+    "select": "Sélectionner"
   },
   "header": {
     "toggle_sidebar": "Basculer la barre latérale",
@@ -95,7 +161,9 @@
     "feature_assessments_desc": "Voir les devoirs",
     "feature_timetable_desc": "Emploi du temps",
     "feature_analytics_desc": "Données de performance",
-    "feature_settings_desc": "Préférences de l'application"
+    "feature_settings_desc": "Préférences de l'application",
+    "fill_all_fields": "Veuillez remplir tous les champs",
+    "failed_credentials": "Échec de la connexion. Vérifiez vos identifiants."
   },
   "about": {
     "title": "À propos de DesQTA",
@@ -191,6 +259,8 @@
     "lesson_resources": "Ressources du Cours"
   },
   "goals": {
+    "no_cached_data": "Aucune donnée en cache disponible",
+    "invalid_response": "Format de réponse invalide",
     "loading_years": "Chargement des années...",
     "error_loading_years": "Erreur lors du chargement des années",
     "no_years_available": "Aucune année disponible",
@@ -237,6 +307,8 @@
     "sort_unread": "Nombre de Non Lus",
     "sort_asc": "Trier par ordre croissant",
     "sort_desc": "Trier par ordre décroissant",
+    "no_cached_data": "Aucune donnée en cache disponible",
+    "invalid_response": "Format de réponse invalide",
     "sort_recent_first": "Plus récents en premier",
     "sort_oldest_first": "Plus anciens en premier",
     "sort_by_author": "Par auteur",
@@ -245,6 +317,7 @@
     "not_enabled_message": "Les forums ne sont pas activés pour votre école. Veuillez contacter votre administrateur si vous pensez qu'il s'agit d'une erreur."
   },
   "folios": {
+    "invalid_response": "Format de réponse invalide",
     "edit_my_folios": "Modifier Mes Portfolios",
     "edit_my_folios_description": "Créez et gérez vos portfolios personnels",
     "browse_folios": "Parcourir les Portfolios",
@@ -263,6 +336,7 @@
     "save_error": "Échec de l'enregistrement du portfolio",
     "new_folio": "Nouveau Portfolio",
     "creating": "Création...",
+    "created_success": "Portfolio créé avec succès",
     "create_error": "Échec de la création du portfolio",
     "tags": "ÉTIQUETTES",
     "add_tag_placeholder": "Ajouter une étiquette...",
@@ -289,6 +363,11 @@
     "not_enabled_message": "Les portfolios ne sont pas activés pour votre compte."
   },
   "assessments": {
+    "back_to_assessments": "Retour aux évaluations",
+    "status_marked": "Noté",
+    "status_overdue": "En retard",
+    "status_due_soon": "À faire bientôt",
+    "status_upcoming": "À venir",
     "year": "Année :",
     "view": "Vue :",
     "list_view": "Vue Liste",
@@ -392,6 +471,7 @@
   },
   "messages": {
     "failed_to_load": "Échec du chargement des messages.",
+    "failed_to_load_no_cache": "Échec du chargement des messages et aucune donnée en cache disponible",
     "failed_to_load_message": "Échec du chargement du message.",
     "no_content": "Aucun contenu.",
     "seqta_messages": "Messages SEQTA",
@@ -430,7 +510,15 @@
     "sending": "Envoi en cours...",
     "send": "Envoyer",
     "failed_to_load_recipients": "Échec du chargement des destinataires. Veuillez réessayer.",
-    "failed_to_send": "Échec de l'envoi du message. Veuillez réessayer."
+    "failed_to_send": "Échec de l'envoi du message. Veuillez réessayer.",
+    "message_starred": "Message mis en favori",
+    "message_unstarred": "Message retiré des favoris",
+    "failed_to_update_star": "Échec de la mise à jour du statut favori",
+    "deleted_success": "Message supprimé avec succès",
+    "delete_failed": "Échec de la suppression du message",
+    "restored_success": "Message restauré avec succès",
+    "restore_failed": "Échec de la restauration du message",
+    "message_detail": "Détail du message"
   },
   "settings": {
     "saved": "Enregistré !",
@@ -533,6 +621,16 @@
   },
   "analytics": {
     "description": "Suivez vos performances académiques et vos progrès au fil du temps",
+    "syncing": "Synchronisation...",
+    "last_updated": "Dernière mise à jour",
+    "sync_failed": "Échec de la synchronisation. Affichage des données en cache.",
+    "sync_success": "Données d'analyse synchronisées",
+    "sync_error": "Échec de la synchronisation des données",
+    "syncing_automatically": "Les données se synchronisent automatiquement à la visite de cette page.",
+    "time_just_now": "À l'instant",
+    "time_minutes_ago": "il y a {count} minute(s)",
+    "time_hours_ago": "il y a {count} heure(s)",
+    "time_days_ago": "il y a {count} jour(s)",
     "failed_to_grab_data": "Échec de la récupération et de la sauvegarde des données d'analyse.",
     "failed_to_delete_data": "Échec de la suppression des données d'analyse",
     "delete_data": "Supprimer les Données",
@@ -612,6 +710,7 @@
   },
   "directory": {
     "description": "Parcourir et rechercher parmi tous les étudiants",
+    "failed_to_load": "Échec du chargement des étudiants",
     "filters": "Filtres",
     "filter_students": "Filtrer les Étudiants",
     "year_level": "Niveau d'Année",
@@ -642,7 +741,9 @@
     "label": "Étiquette :",
     "all": "Tous",
     "loading": "Chargement des avis...",
-    "no_notices_found": "Aucun avis trouvé pour les critères sélectionnés."
+    "no_notices_found": "Aucun avis trouvé pour les critères sélectionnés.",
+    "view_all": "Voir tout",
+    "no_notices_today": "Aucun avis disponible aujourd'hui."
   },
   "reports": {
     "failed_to_load": "Échec du chargement des rapports.",

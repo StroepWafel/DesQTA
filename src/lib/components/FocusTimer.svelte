@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
   import { Icon, Clock } from 'svelte-hero-icons';
+  import { _ } from '$lib/i18n';
 
   let timeLeft = $state(25 * 60); // 25 minutes in seconds
   let isRunning = $state(false);
@@ -74,7 +75,7 @@
       src={Clock}
       class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300" />
     <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300">
-      Focus Timer
+      {$_('focus_timer.title')}
     </h3>
   </div>
   <div class="flex-1 min-h-0 overflow-y-auto p-2 sm:p-4">
@@ -93,19 +94,19 @@
           <button
             onclick={startTimer}
             class="px-6 py-2 text-white rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 bg-accent hover:bg-accent/90 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2">
-            Start
+            {$_('focus_timer.start')}
           </button>
         {:else}
           <button
             onclick={pauseTimer}
             class="px-6 py-2 text-white rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 bg-yellow-500 hover:bg-yellow-600 focus:outline-hidden focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2">
-            Pause
+            {$_('focus_timer.pause')}
           </button>
         {/if}
         <button
           onclick={resetTimer}
           class="px-6 py-2 text-white rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 bg-red-500 hover:bg-red-600 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-          Reset
+          {$_('focus_timer.reset')}
         </button>
       </div>
 
@@ -116,21 +117,21 @@
           class="px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 {selectedDuration === 25
             ? 'accent-bg text-white'
             : 'bg-transparent accent-text border-2 accent-border hover:accent-bg/10'}">
-          25m
+          {$_('focus_timer.duration_25')}
         </button>
         <button
           onclick={() => setDuration(45)}
           class="px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 {selectedDuration === 45
             ? 'accent-bg text-white'
             : 'bg-transparent accent-text border-2 accent-border hover:accent-bg/10'}">
-          45m
+          {$_('focus_timer.duration_45')}
         </button>
         <button
           onclick={() => setDuration(60)}
           class="px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 {selectedDuration === 60
             ? 'accent-bg text-white'
             : 'bg-transparent accent-text border-2 accent-border hover:accent-bg/10'}">
-          60m
+          {$_('focus_timer.duration_60')}
         </button>
       </div>
       <!-- Custom Timer Entry -->
@@ -139,7 +140,7 @@
           type="number"
           min="0"
           max="99"
-          placeholder="mm"
+          placeholder={$_('focus_timer.custom_placeholder_min')}
           bind:value={customMinutes}
           class="w-14 px-2 py-2 rounded-lg border-2 accent-border bg-transparent accent-text focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-center"
         />
@@ -148,7 +149,7 @@
           type="number"
           min="0"
           max="59"
-          placeholder="ss"
+          placeholder={$_('focus_timer.custom_placeholder_sec')}
           bind:value={customSeconds}
           class="w-14 px-2 py-2 rounded-lg border-2 accent-border bg-transparent accent-text focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-center"
         />
@@ -159,17 +160,17 @@
             if (min > 0 || sec > 0) setDuration(min + sec / 60);
           }}
           class="px-3 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 accent-bg text-white ml-1">
-          Set
+          {$_('focus_timer.set')}
         </button>
       </div>
 
       <!-- Status -->
       <div class="text-center">
         <p class="text-lg font-medium text-zinc-900 dark:text-white">
-          {isBreak ? 'Break Time!' : 'Focus Time'}
+          {isBreak ? $_('focus_timer.break_time') : $_('focus_timer.focus_time')}
         </p>
         <p class="text-sm text-zinc-600 dark:text-zinc-400">
-          {isBreak ? 'Take a short break' : 'Stay focused and productive'}
+          {isBreak ? $_('focus_timer.break_message') : $_('focus_timer.focus_message')}
         </p>
       </div>
     </div>

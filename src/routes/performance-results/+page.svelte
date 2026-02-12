@@ -830,7 +830,7 @@
                       {#if page.errors.length > 0}
                         <div class="mb-3">
                           <h5 class="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
-                            Errors:
+                            <T key="performance.errors_label" fallback="Errors:" />
                           </h5>
                           <ul class="space-y-1">
                             {#each page.errors as error}
@@ -845,7 +845,7 @@
                       {#if page.warnings.length > 0}
                         <div>
                           <h5 class="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">
-                            Warnings:
+                            <T key="performance.warnings_label" fallback="Warnings:" />
                           </h5>
                           <ul class="space-y-1">
                             {#each page.warnings as warning}
@@ -874,9 +874,11 @@
           <Card.Header>
             <Card.Title class="flex items-center gap-2">
               <Icon src={ExclamationTriangle} class="w-5 h-5 text-red-500" />
-              Overall Test Errors
+              <T key="performance.overall_test_errors" fallback="Overall Test Errors" />
             </Card.Title>
-            <Card.Description>Errors that occurred during the performance test</Card.Description>
+            <Card.Description>
+              <T key="performance.overall_errors_description" fallback="Errors that occurred during the performance test" />
+            </Card.Description>
           </Card.Header>
           <Card.Content>
             <ul class="space-y-2">

@@ -6,6 +6,7 @@
   import { fade, fly } from 'svelte/transition';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
   import Modal from '$lib/components/Modal.svelte';
+  import { get } from 'svelte/store';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import ModuleList from '$lib/components/ModuleList.svelte';
@@ -66,7 +67,7 @@
         if (parsed.status === '200' && parsed.payload) {
           return parsed.payload.sort((a, b) => a.priority - b.priority);
         }
-        throw new Error($_('portals.failed_to_load') || 'Failed to load portals');
+        throw new Error(get(_)('portals.failed_to_load'));
       },
       onDataLoaded: (data) => {
         portals = data;
@@ -76,7 +77,7 @@
     });
 
     if (!data) {
-      error = $_('portals.failed_to_load') || 'Failed to load portals';
+      error = get(_)('portals.failed_to_load');
       loading = false;
     }
   }
@@ -369,7 +370,7 @@
 <!-- Portal Content Modal -->
 <Modal
   bind:open={showPortalModal}
-  title={selectedPortal?.label || 'Portal Content'}
+  title={selectedPortal?.label || $_( 'portals.portal_content' )}
   maxWidth="max-w-7xl"
   maxHeight="max-h-[85vh]"
   onclose={closePortalModal}>

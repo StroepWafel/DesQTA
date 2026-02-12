@@ -19,6 +19,67 @@
     "settings": "Ayarlar",
     "close_theme_builder": "Tema Oluşturucuyu Kapat"
   },
+  "focus_timer": {
+    "title": "Odak Zamanlayıcı",
+    "start": "Başlat",
+    "pause": "Duraklat",
+    "reset": "Sıfırla",
+    "duration_25": "25d",
+    "duration_45": "45d",
+    "duration_60": "60d",
+    "custom_placeholder_min": "dk",
+    "custom_placeholder_sec": "sn",
+    "set": "Ayarla",
+    "break_time": "Mola zamanı!",
+    "focus_time": "Odak zamanı",
+    "break_message": "Kısa bir mola verin",
+    "focus_message": "Odaklı ve üretken kalın"
+  },
+  "error_page": {
+    "title": "Hata {status} - DesQTA",
+    "error_id": "Hata ID",
+    "hide_details": "Gizle",
+    "show_details": "Göster",
+    "details": "Detaylar",
+    "error_message": "Hata mesajı",
+    "system_health_overview": "Sistem durumu özeti",
+    "overall_health": "Genel durum",
+    "network": "Ağ",
+    "storage": "Depolama",
+    "items": "öğe",
+    "online": "Çevrimiçi",
+    "offline": "Çevrimdışı",
+    "go_to_login": "Girişe git",
+    "go_back": "Geri",
+    "retry_operation": "Yeniden dene",
+    "refresh_page": "Sayfayı yenile",
+    "advanced_troubleshooting": "Gelişmiş sorun giderme",
+    "go_home": "Ana sayfa",
+    "mark_as_resolved": "Çözüldü olarak işaretle",
+    "recommended_actions": "Önerilen eylemler",
+    "performance_issues_detected": "Performans sorunları tespit edildi",
+    "recent_errors": "Son hatalar",
+    "detailed_error_info": "Detaylı hata bilgisi",
+    "error_context": "Hata bağlamı",
+    "environment": "Ortam",
+    "stack_trace": "Yığın izleme",
+    "complete_error_report": "Tam hata raporu",
+    "dev_debug_info": "Geliştirme hata ayıklama bilgisi:",
+    "type_auth": "Kimlik doğrulama hatası",
+    "type_not_found": "Sayfa bulunamadı",
+    "type_network": "Ağ hatası",
+    "type_performance": "Performans sorunu",
+    "type_server": "Sunucu hatası",
+    "type_critical": "Kritik hata",
+    "type_app": "Uygulama hatası",
+    "desc_auth": "Bu sayfaya erişmek için giriş yapmalısınız.",
+    "desc_not_found": "Aradığınız sayfa mevcut değil.",
+    "desc_network": "Sunucuya bağlanılamıyor. İnternet bağlantınızı kontrol edin.",
+    "desc_performance": "Uygulama performans sorunları yaşıyor.",
+    "desc_server": "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+    "desc_critical": "Acil müdahale gerektiren kritik bir hata oluştu.",
+    "desc_default": "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
+  },
   "connectivity": {
     "offline": "Çevrimdışısınız",
     "offline_desc": "Bazı özellikler sınırlı olabilir. Veriler önbellekten gelir.",
@@ -50,6 +111,11 @@
     "menu": "Menü",
     "qr_signin": "QR ile Giriş",
     "welcome": "Hoş Geldiniz"
+  },
+  "pages_menu": {
+    "search_placeholder": "Sayfaları ara...",
+    "navigate": "Gezin",
+    "select": "Seç"
   },
   "header": {
     "toggle_sidebar": "Kenar çubuğunu aç/kapat",
@@ -97,7 +163,9 @@
     "feature_assessments_desc": "Ödevleri görüntüle",
     "feature_timetable_desc": "Ders programı",
     "feature_analytics_desc": "Performans verileri",
-    "feature_settings_desc": "Uygulama tercihleri"
+    "feature_settings_desc": "Uygulama tercihleri",
+    "fill_all_fields": "Lütfen tüm alanları doldurun",
+    "failed_credentials": "Giriş başarısız. Lütfen kimlik bilgilerinizi kontrol edin."
   },
   "features": {
     "lightning_fast": "Yıldırım hızında performans",
@@ -233,6 +301,8 @@
     "lesson_resources": "Lesson Resources"
   },
   "goals": {
+    "no_cached_data": "Önbelleğe alınmış veri yok",
+    "invalid_response": "Geçersiz yanıt formatı",
     "loading_years": "Yıllar yükleniyor...",
     "error_loading_years": "Yıllar yüklenirken hata",
     "no_years_available": "Yıl mevcut değil",
@@ -279,6 +349,8 @@
     "sort_unread": "Okunmamış Sayısı",
     "sort_asc": "Artan sıralama",
     "sort_desc": "Azalan sıralama",
+    "no_cached_data": "Önbelleğe alınmış veri yok",
+    "invalid_response": "Geçersiz yanıt formatı",
     "sort_recent_first": "En yeniler önce",
     "sort_oldest_first": "En eskiler önce",
     "sort_by_author": "Yazara göre",
@@ -287,6 +359,7 @@
     "not_enabled_message": "Forumlar okulunuz için etkinleştirilmemiş. Bunun bir hata olduğunu düşünüyorsanız lütfen yöneticinizle iletişime geçin."
   },
   "folios": {
+    "invalid_response": "Geçersiz yanıt formatı",
     "edit_my_folios": "Portföylerimi Düzenle",
     "edit_my_folios_description": "Kişisel portföylerinizi oluşturun ve yönetin",
     "browse_folios": "Portföyleri Gözat",
@@ -305,6 +378,7 @@
     "save_error": "Portföy kaydedilemedi",
     "new_folio": "Yeni Portföy",
     "creating": "Oluşturuluyor...",
+    "created_success": "Portföy başarıyla oluşturuldu",
     "create_error": "Portföy oluşturulamadı",
     "tags": "ETİKETLER",
     "add_tag_placeholder": "Etiket ekle...",
@@ -331,6 +405,11 @@
     "not_enabled_message": "Portföyler hesabınız için etkinleştirilmemiş."
   },
   "assessments": {
+    "back_to_assessments": "Değerlendirmelere dön",
+    "status_marked": "Değerlendirildi",
+    "status_overdue": "Gecikmiş",
+    "status_due_soon": "Yakında",
+    "status_upcoming": "Yaklaşan",
     "year": "Year:",
     "view": "View:",
     "list_view": "List View",
@@ -435,6 +514,7 @@
   },
   "messages": {
     "failed_to_load": "Failed to load messages.",
+    "failed_to_load_no_cache": "Mesajlar yüklenemedi ve önbelleğe alınmış veri yok",
     "failed_to_load_message": "Failed to load message.",
     "no_content": "No content.",
     "seqta_messages": "SEQTA Messages",
@@ -473,7 +553,15 @@
     "sending": "Sending...",
     "send": "Send",
     "failed_to_load_recipients": "Failed to load recipients. Please try again.",
-    "failed_to_send": "Failed to send message. Please try again."
+    "failed_to_send": "Failed to send message. Please try again.",
+    "message_starred": "Mesaj yıldızlandı",
+    "message_unstarred": "Mesajdan yıldız kaldırıldı",
+    "failed_to_update_star": "Yıldız durumu güncellenemedi",
+    "deleted_success": "Mesaj başarıyla silindi",
+    "delete_failed": "Mesaj silinemedi",
+    "restored_success": "Mesaj başarıyla geri yüklendi",
+    "restore_failed": "Mesaj geri yüklenemedi",
+    "message_detail": "Mesaj Detayı"
   },
   "settings": {
     "saved": "Saved!",
@@ -576,6 +664,16 @@
   },
   "analytics": {
     "description": "Track your academic performance and progress over time",
+    "syncing": "Senkronize ediliyor...",
+    "last_updated": "Son güncelleme",
+    "sync_failed": "Senkronizasyon başarısız. Önbelleğe alınmış veriler gösteriliyor.",
+    "sync_success": "Analiz verileri başarıyla senkronize edildi",
+    "sync_error": "Analiz verileri senkronize edilemedi",
+    "syncing_automatically": "Bu sayfayı ziyaret ettiğinizde veriler otomatik olarak senkronize edilir.",
+    "time_just_now": "Az önce",
+    "time_minutes_ago": "{count} dakika önce",
+    "time_hours_ago": "{count} saat önce",
+    "time_days_ago": "{count} gün önce",
     "failed_to_grab_data": "Failed to grab and save analytics data.",
     "failed_to_delete_data": "Failed to delete analytics data",
     "delete_data": "Delete Data",
@@ -655,6 +753,7 @@
   },
   "directory": {
     "description": "Tüm öğrencileri gözden geçirin ve arayın",
+    "failed_to_load": "Öğrenciler yüklenemedi",
     "filters": "Filtreler",
     "filter_students": "Öğrencileri Filtrele",
     "year_level": "Yıl Seviyesi",
@@ -685,7 +784,9 @@
     "label": "Etiket:",
     "all": "Tümü",
     "loading": "Duyurular yükleniyor...",
-    "no_notices_found": "Seçilen kriterler için duyuru bulunamadı."
+    "no_notices_found": "Seçilen kriterler için duyuru bulunamadı.",
+    "view_all": "Tümünü görüntüle",
+    "no_notices_today": "Bugün için duyuru bulunmuyor."
   },
   "reports": {
     "failed_to_load": "Raporlar yüklenemedi.",

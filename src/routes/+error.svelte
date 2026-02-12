@@ -25,6 +25,8 @@
   import TroubleshootingModal from '../lib/components/TroubleshootingModal.svelte';
   import { logger } from '../utils/logger';
   import { ErrorCategory, ErrorSeverity, errorService } from '../lib/services/errorService';
+  import { get } from 'svelte/store';
+  import { _ } from '../lib/i18n';
 
   let { error, status } = $props<{
     error: Error & { status?: number; message?: string };
@@ -35,7 +37,7 @@
   let errorId = $derived($page.url.searchParams.get('errorId') || 'unknown');
   let errorCategory = $derived($page.url.searchParams.get('category') as ErrorCategory || ErrorCategory.UNKNOWN);
   let errorSeverity = $derived($page.url.searchParams.get('severity') as ErrorSeverity || ErrorSeverity.MEDIUM);
-  let errorMessage = $derived(decodeURIComponent($page.url.searchParams.get('message') || error?.message || 'An unexpected error occurred'));
+  let errorMessage = $derived(decodeURIComponent($page.url.searchParams.get('message') || error?.message || get(_)('error_page.desc_default')));
   let errorReportJson = $derived($page.url.searchParams.get('report'));
   
   // Parse error report if available
@@ -50,23 +52,23 @@
   let isPerformanceError = $derived(errorCategory === ErrorCategory.RUNTIME);
   let isCriticalError = $derived(errorSeverity === ErrorSeverity.CRITICAL);
 
-  // Error type classification
-  let errorType = $derived(isAuthError ? 'Authentication Error' :
-                 isNotFoundError ? 'Page Not Found' :
-                 isNetworkError ? 'Network Error' :
-                 isPerformanceError ? 'Performance Issue' :
-                 isServerError ? 'Server Error' :
-                 isCriticalError ? 'Critical Error' :
-                 'Application Error');
+  // Error type key for i18n
+  let errorTypeKey = $derived(isAuthError ? 'error_page.type_auth' :
+                 isNotFoundError ? 'error_page.type_not_found' :
+                 isNetworkError ? 'error_page.type_network' :
+                 isPerformanceError ? 'error_page.type_performance' :
+                 isServerError ? 'error_page.type_server' :
+                 isCriticalError ? 'error_page.type_critical' :
+                 'error_page.type_app');
 
-  // Error description based on type
-  let errorDescription = $derived(isAuthError ? 'You need to log in to access this page.' :
-                       isNotFoundError ? 'The page you\'re looking for doesn\'t exist.' :
-                       isNetworkError ? 'Unable to connect to the server. Please check your internet connection.' :
-                       isPerformanceError ? 'The application is experiencing performance issues.' :
-                       isServerError ? 'Something went wrong on our end. Please try again later.' :
-                       isCriticalError ? 'A critical error has occurred that requires immediate attention.' :
-                       'Something unexpected happened. Please try again.');
+  // Error description key for i18n
+  let errorDescKey = $derived(isAuthError ? 'error_page.desc_auth' :
+                       isNotFoundError ? 'error_page.desc_not_found' :
+                       isNetworkError ? 'error_page.desc_network' :
+                       isPerformanceError ? 'error_page.desc_performance' :
+                       isServerError ? 'error_page.desc_server' :
+                       isCriticalError ? 'error_page.desc_critical' :
+                       'error_page.desc_default');
 
   // System health indicators
   let systemHealth = $derived(errorReport?.diagnostics?.systemHealth);
@@ -111,7 +113,7 @@
     logger.info('errorPage', 'openTroubleshooting', 'Opening troubleshooting modal from comprehensive error page', {
       errorId,
       errorStatus,
-      errorType,
+      errorTypeKey,
       errorMessage,
       errorCategory,
       errorSeverity,
@@ -187,7 +189,7 @@
 </script>
 
 <svelte:head>
-  <title>Error {errorStatus} - DesQTA</title>
+  <title>{$_('error_page.title', { values: { status: errorStatus } })}</title>
 </svelte:head>
 
 <div class="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center p-8">
@@ -206,9 +208,9 @@
             </div>
             <div>
               <h1 class="text-4xl font-bold text-red-500 dark:text-red-400 mb-2">{errorStatus}</h1>
-              <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">{errorType}</h2>
+              <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">{$_(errorTypeKey)}</h2>
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-sm text-zinc-500 dark:text-zinc-400">Error ID: {errorId}</span>
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">{$_('error_page.error_id')}: {errorId}</span>
                 <span class="text-sm px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
                   {errorCategory}
                 </span>
@@ -223,17 +225,17 @@
             class="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 hover:bg-zinc-200 dark:hover:bg-zinc-700"
           >
             <Icon src={InformationCircle} size="16" class="inline mr-1" />
-            {showDetailedInfo ? 'Hide' : 'Show'} Details
+            {showDetailedInfo ? $_('error_page.hide_details') : $_('error_page.show_details')} {$_('error_page.details')}
           </button>
         </div>
 
         <!-- Error Description -->
         <div class="mb-6">
-          <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed text-lg">{errorDescription}</p>
+          <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed text-lg">{$_(errorDescKey)}</p>
           {#if !isAuthError && !isNotFoundError}
             <div class="mt-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
               <p class="text-sm text-zinc-700 dark:text-zinc-300">
-                <span class="font-medium">Error Message:</span> {errorMessage}
+                <span class="font-medium">{$_('error_page.error_message')}:</span> {errorMessage}
               </p>
             </div>
           {/if}
@@ -244,13 +246,13 @@
           <div class="mb-6 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
             <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
               <Icon src={ComputerDesktop} size="16" />
-              System Health Overview
+              {$_('error_page.system_health_overview')}
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               {#if systemHealth}
                 <div class="flex items-center gap-2">
                   <Icon src={ChartBar} size="16" class="text-zinc-500" />
-                  <span class="text-sm text-zinc-600 dark:text-zinc-400">Overall Health:</span>
+                  <span class="text-sm text-zinc-600 dark:text-zinc-400">{$_('error_page.overall_health')}:</span>
                   <span class="text-sm font-medium {getHealthColor(systemHealth.overallHealth)}">
                     {systemHealth.overallHealth}
                   </span>
@@ -259,18 +261,18 @@
               {#if networkStatus}
                 <div class="flex items-center gap-2">
                   <Icon src={Wifi} size="16" class="text-zinc-500" />
-                  <span class="text-sm text-zinc-600 dark:text-zinc-400">Network:</span>
+                  <span class="text-sm text-zinc-600 dark:text-zinc-400">{$_('error_page.network')}:</span>
                   <span class="text-sm font-medium {networkStatus.isOnline ? 'text-green-500' : 'text-red-500'}">
-                    {networkStatus.isOnline ? 'Online' : 'Offline'}
+                    {networkStatus.isOnline ? $_('error_page.online') : $_('error_page.offline')}
                   </span>
                 </div>
               {/if}
               {#if storageStatus}
                 <div class="flex items-center gap-2">
                   <Icon src={CircleStack} size="16" class="text-zinc-500" />
-                  <span class="text-sm text-zinc-600 dark:text-zinc-400">Storage:</span>
+                  <span class="text-sm text-zinc-600 dark:text-zinc-400">{$_('error_page.storage')}:</span>
                   <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {storageStatus.localStorage} items
+                    {storageStatus.localStorage} {$_('error_page.items')}
                   </span>
                 </div>
               {/if}
@@ -287,7 +289,7 @@
             class="px-4 py-3 bg-accent-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 hover:bg-accent-600"
           >
             <Icon src={Home} size="20" class="inline mr-2" />
-            Go to Login
+            {$_('error_page.go_to_login')}
           </button>
         {:else}
           <button
@@ -295,7 +297,7 @@
             class="px-4 py-3 bg-accent-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 hover:bg-accent-600"
           >
             <Icon src={ArrowLeft} size="20" class="inline mr-2" />
-            Go Back
+            {$_('error_page.go_back')}
           </button>
         {/if}
 
@@ -304,7 +306,7 @@
           class="px-4 py-3 bg-blue-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-blue-600"
         >
           <Icon src={ArrowPath} size="20" class="inline mr-2" />
-          Retry Operation
+          {$_('error_page.retry_operation')}
         </button>
 
         <button
@@ -312,7 +314,7 @@
           class="px-4 py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 hover:bg-zinc-200 dark:hover:bg-zinc-700"
         >
           <Icon src={ArrowPath} size="20" class="inline mr-2" />
-          Refresh Page
+          {$_('error_page.refresh_page')}
         </button>
 
         <button
@@ -320,7 +322,7 @@
           class="px-4 py-3 bg-purple-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 hover:bg-purple-600"
         >
           <Icon src={Cog} size="20" class="inline mr-2" />
-          Advanced Troubleshooting
+          {$_('error_page.advanced_troubleshooting')}
         </button>
 
         <button
@@ -328,7 +330,7 @@
           class="px-4 py-3 bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
         >
           <Icon src={Home} size="20" class="inline mr-2" />
-          Go Home
+          {$_('error_page.go_home')}
         </button>
 
         {#if errorId !== 'unknown'}
@@ -337,7 +339,7 @@
             class="px-4 py-3 bg-green-500 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:bg-green-600"
           >
             <Icon src={CheckCircle} size="20" class="inline mr-2" />
-            Mark as Resolved
+            {$_('error_page.mark_as_resolved')}
           </button>
         {/if}
       </div>
@@ -347,7 +349,7 @@
         <div class="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <h3 class="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2">
             <Icon src={LightBulb} size="16" />
-            Recommended Actions
+            {$_('error_page.recommended_actions')}
           </h3>
           <ul class="space-y-2">
             {#each recommendations as recommendation}
@@ -365,7 +367,7 @@
         <div class="mb-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
           <h3 class="text-sm font-semibold text-yellow-700 dark:text-yellow-400 mb-3 flex items-center gap-2">
             <Icon src={ExclamationCircle} size="16" />
-            Performance Issues Detected
+            {$_('error_page.performance_issues_detected')}
           </h3>
           <ul class="space-y-2">
             {#each performanceIssues as issue}
@@ -383,7 +385,7 @@
         <div class="mb-8 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
           <h3 class="text-sm font-semibold text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
             <Icon src={ExclamationTriangle} size="16" />
-            Recent Errors ({recentErrors.length})
+            {$_('error_page.recent_errors')} ({recentErrors.length})
           </h3>
           <div class="space-y-2 max-h-32 overflow-y-auto">
             {#each recentErrors.slice(-5) as recentError}
@@ -406,13 +408,13 @@
         <div class="mt-8 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
           <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
             <Icon src={DocumentText} size="16" />
-            Detailed Error Information
+            {$_('error_page.detailed_error_info')}
           </h3>
           
           <!-- Error Context -->
           {#if errorReport?.error?.context}
             <div class="mb-4">
-              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">Error Context</h4>
+              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">{$_('error_page.error_context')}</h4>
               <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700">{JSON.stringify(errorReport.error.context, null, 2)}</pre>
             </div>
           {/if}
@@ -420,7 +422,7 @@
           <!-- Environment Information -->
           {#if errorReport?.environment}
             <div class="mb-4">
-              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">Environment</h4>
+              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">{$_('error_page.environment')}</h4>
               <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700">{JSON.stringify(errorReport.environment, null, 2)}</pre>
             </div>
           {/if}
@@ -428,7 +430,7 @@
           <!-- Stack Trace -->
           {#if error?.stack}
             <div class="mb-4">
-              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">Stack Trace</h4>
+              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">{$_('error_page.stack_trace')}</h4>
               <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700 max-h-48">{error.stack}</pre>
             </div>
           {/if}
@@ -436,7 +438,7 @@
           <!-- Full Error Report -->
           {#if errorReport}
             <div>
-              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">Complete Error Report</h4>
+              <h4 class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">{$_('error_page.complete_error_report')}</h4>
               <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700 max-h-64">{JSON.stringify(errorReport, null, 2)}</pre>
             </div>
           {/if}
@@ -446,7 +448,7 @@
       <!-- Debug Info (only in development) -->
       {#if import.meta.env.DEV}
         <div class="mt-8 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg text-left border border-zinc-200 dark:border-zinc-700">
-          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Development Debug Information:</h3>
+          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">{$_('error_page.dev_debug_info')}</h3>
           <pre class="text-xs text-zinc-600 dark:text-zinc-400 overflow-auto bg-white dark:bg-zinc-900 p-3 rounded-sm border border-zinc-200 dark:border-zinc-700">{JSON.stringify({
             errorId,
             status: errorStatus,

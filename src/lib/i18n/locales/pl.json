@@ -19,6 +19,67 @@
     "settings": "Ustawienia",
     "close_theme_builder": "Zamknij Konstruktor Motywów"
   },
+  "focus_timer": {
+    "title": "Zegar koncentracji",
+    "start": "Start",
+    "pause": "Wstrzymaj",
+    "reset": "Resetuj",
+    "duration_25": "25m",
+    "duration_45": "45m",
+    "duration_60": "60m",
+    "custom_placeholder_min": "mm",
+    "custom_placeholder_sec": "ss",
+    "set": "Ustaw",
+    "break_time": "Czas przerwy!",
+    "focus_time": "Czas koncentracji",
+    "break_message": "Zrób krótką przerwę",
+    "focus_message": "Zachowaj koncentrację i produktywność"
+  },
+  "error_page": {
+    "title": "Błąd {status} - DesQTA",
+    "error_id": "ID błędu",
+    "hide_details": "Ukryj",
+    "show_details": "Pokaż",
+    "details": "Szczegóły",
+    "error_message": "Komunikat błędu",
+    "system_health_overview": "Przegląd stanu systemu",
+    "overall_health": "Ogólny stan",
+    "network": "Sieć",
+    "storage": "Pamięć",
+    "items": "elementów",
+    "online": "Online",
+    "offline": "Offline",
+    "go_to_login": "Przejdź do logowania",
+    "go_back": "Wstecz",
+    "retry_operation": "Ponów operację",
+    "refresh_page": "Odśwież stronę",
+    "advanced_troubleshooting": "Zaawansowane rozwiązywanie problemów",
+    "go_home": "Strona główna",
+    "mark_as_resolved": "Oznacz jako rozwiązane",
+    "recommended_actions": "Zalecane działania",
+    "performance_issues_detected": "Wykryto problemy z wydajnością",
+    "recent_errors": "Ostatnie błędy",
+    "detailed_error_info": "Szczegółowe informacje o błędzie",
+    "error_context": "Kontekst błędu",
+    "environment": "Środowisko",
+    "stack_trace": "Ślad stosu",
+    "complete_error_report": "Pełny raport błędu",
+    "dev_debug_info": "Informacje debugowania:",
+    "type_auth": "Błąd uwierzytelniania",
+    "type_not_found": "Strona nie znaleziona",
+    "type_network": "Błąd sieci",
+    "type_performance": "Problem z wydajnością",
+    "type_server": "Błąd serwera",
+    "type_critical": "Błąd krytyczny",
+    "type_app": "Błąd aplikacji",
+    "desc_auth": "Musisz się zalogować, aby uzyskać dostęp do tej strony.",
+    "desc_not_found": "Szukana strona nie istnieje.",
+    "desc_network": "Nie można połączyć się z serwerem. Sprawdź połączenie internetowe.",
+    "desc_performance": "Aplikacja doświadcza problemów z wydajnością.",
+    "desc_server": "Coś poszło nie tak. Spróbuj ponownie później.",
+    "desc_critical": "Wystąpił krytyczny błąd wymagający natychmiastowej uwagi.",
+    "desc_default": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
+  },
   "connectivity": {
     "offline": "Jesteś offline",
     "offline_desc": "Niektóre funkcje mogą być ograniczone. Dane pochodzą z pamięci podręcznej.",
@@ -50,6 +111,11 @@
     "menu": "Menu",
     "qr_signin": "Logowanie QR",
     "welcome": "Witaj"
+  },
+  "pages_menu": {
+    "search_placeholder": "Szukaj stron...",
+    "navigate": "Nawiguj",
+    "select": "Wybierz"
   },
   "header": {
     "toggle_sidebar": "Przełącz boczny pasek",
@@ -97,7 +163,9 @@
     "feature_assessments_desc": "Wyświetl zadania",
     "feature_timetable_desc": "Plan zajęć",
     "feature_analytics_desc": "Dane o wydajności",
-    "feature_settings_desc": "Preferencje aplikacji"
+    "feature_settings_desc": "Preferencje aplikacji",
+    "fill_all_fields": "Wypełnij wszystkie pola",
+    "failed_credentials": "Logowanie nie powiodło się. Sprawdź swoje dane uwierzytelniające."
   },
   "features": {
     "lightning_fast": "Błyskawiczna wydajność",
@@ -233,6 +301,8 @@
     "lesson_resources": "Lesson Resources"
   },
   "goals": {
+    "no_cached_data": "Brak danych w pamięci podręcznej",
+    "invalid_response": "Nieprawidłowy format odpowiedzi",
     "loading_years": "Ładowanie lat...",
     "error_loading_years": "Błąd ładowania lat",
     "no_years_available": "Brak dostępnych lat",
@@ -279,6 +349,8 @@
     "sort_unread": "Liczba nieprzeczytanych",
     "sort_asc": "Sortuj rosnąco",
     "sort_desc": "Sortuj malejąco",
+    "no_cached_data": "Brak danych w pamięci podręcznej",
+    "invalid_response": "Nieprawidłowy format odpowiedzi",
     "sort_recent_first": "Najnowsze najpierw",
     "sort_oldest_first": "Najstarsze najpierw",
     "sort_by_author": "Według autora",
@@ -287,6 +359,7 @@
     "not_enabled_message": "Fora nie są włączone dla Twojej szkoły. Skontaktuj się z administratorem, jeśli uważasz, że to błąd."
   },
   "folios": {
+    "invalid_response": "Nieprawidłowy format odpowiedzi",
     "edit_my_folios": "Edytuj moje portfele",
     "edit_my_folios_description": "Twórz i zarządzaj swoimi osobistymi portfelami",
     "browse_folios": "Przeglądaj portfele",
@@ -305,6 +378,7 @@
     "save_error": "Nie udało się zapisać portfela",
     "new_folio": "Nowy portfel",
     "creating": "Tworzenie...",
+    "created_success": "Portfel utworzony pomyślnie",
     "create_error": "Nie udało się utworzyć portfela",
     "tags": "TAGI",
     "add_tag_placeholder": "Dodaj tag...",
@@ -331,6 +405,11 @@
     "not_enabled_message": "Portfele nie są włączone dla Twojego konta."
   },
   "assessments": {
+    "back_to_assessments": "Powrót do ocen",
+    "status_marked": "Oceniono",
+    "status_overdue": "Zaległe",
+    "status_due_soon": "Wkrótce",
+    "status_upcoming": "Nadchodzące",
     "year": "Year:",
     "view": "View:",
     "list_view": "List View",
@@ -435,6 +514,7 @@
   },
   "messages": {
     "failed_to_load": "Failed to load messages.",
+    "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message.",
     "no_content": "No content.",
     "seqta_messages": "SEQTA Messages",
@@ -473,7 +553,15 @@
     "sending": "Sending...",
     "send": "Send",
     "failed_to_load_recipients": "Failed to load recipients. Please try again.",
-    "failed_to_send": "Failed to send message. Please try again."
+    "failed_to_send": "Failed to send message. Please try again.",
+    "message_starred": "Wiadomość oznaczona gwiazdką",
+    "message_unstarred": "Gwiazdka usunięta z wiadomości",
+    "failed_to_update_star": "Nie udało się zaktualizować statusu gwiazdki",
+    "deleted_success": "Wiadomość usunięta pomyślnie",
+    "delete_failed": "Nie udało się usunąć wiadomości",
+    "restored_success": "Wiadomość przywrócona pomyślnie",
+    "restore_failed": "Nie udało się przywrócić wiadomości",
+    "message_detail": "Szczegóły wiadomości"
   },
   "settings": {
     "saved": "Saved!",
@@ -576,6 +664,16 @@
   },
   "analytics": {
     "description": "Track your academic performance and progress over time",
+    "syncing": "Synchronizowanie...",
+    "last_updated": "Ostatnia aktualizacja",
+    "sync_failed": "Synchronizacja nie powiodła się. Wyświetlanie danych z pamięci podręcznej.",
+    "sync_success": "Dane analityczne zsynchronizowane pomyślnie",
+    "sync_error": "Nie udało się zsynchronizować danych analitycznych",
+    "syncing_automatically": "Dane synchronizują się automatycznie po odwiedzeniu tej strony.",
+    "time_just_now": "Przed chwilą",
+    "time_minutes_ago": "{count} minut(y) temu",
+    "time_hours_ago": "{count} godzin(y) temu",
+    "time_days_ago": "{count} dni temu",
     "failed_to_grab_data": "Failed to grab and save analytics data.",
     "failed_to_delete_data": "Failed to delete analytics data",
     "delete_data": "Delete Data",
@@ -655,6 +753,7 @@
   },
   "directory": {
     "description": "Przeglądaj i wyszukuj wszystkich uczniów",
+    "failed_to_load": "Nie udało się załadować uczniów",
     "filters": "Filtry",
     "filter_students": "Filtruj Uczniów",
     "year_level": "Poziom Roku",
@@ -685,7 +784,9 @@
     "label": "Etykieta:",
     "all": "Wszystkie",
     "loading": "Ładowanie ogłoszeń...",
-    "no_notices_found": "Nie znaleziono ogłoszeń dla wybranych kryteriów."
+    "no_notices_found": "Nie znaleziono ogłoszeń dla wybranych kryteriów.",
+    "view_all": "Pokaż wszystkie",
+    "no_notices_today": "Brak dostępnych ogłoszeń na dziś."
   },
   "reports": {
     "failed_to_load": "Nie udało się załadować raportów.",

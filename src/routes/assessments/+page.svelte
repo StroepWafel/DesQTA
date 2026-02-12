@@ -313,10 +313,7 @@
     {:else if filteredAssessments.length === 0}
       <div class="py-12">
         <EmptyState
-          title={$_('assessments.no_assessments_year')?.replace(
-            '{year}',
-            selectedYear.toString(),
-          ) || `No assessments for ${selectedYear}!`}
+          title={$_('assessments.no_assessments_year', { values: { year: selectedYear } })}
           message={$_('assessments.try_different_year') || 'Try selecting a different year.'}
           icon={ClipboardDocumentList} />
       </div>

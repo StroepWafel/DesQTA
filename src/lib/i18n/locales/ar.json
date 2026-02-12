@@ -19,6 +19,67 @@
     "settings": "الإعدادات",
     "close_theme_builder": "إغلاق منشئ المظهر"
   },
+  "focus_timer": {
+    "title": "مؤقت التركيز",
+    "start": "بدء",
+    "pause": "إيقاف مؤقت",
+    "reset": "إعادة تعيين",
+    "duration_25": "25د",
+    "duration_45": "45د",
+    "duration_60": "60د",
+    "custom_placeholder_min": "دق",
+    "custom_placeholder_sec": "ث",
+    "set": "تعيين",
+    "break_time": "وقت الاستراحة!",
+    "focus_time": "وقت التركيز",
+    "break_message": "خذ استراحة قصيرة",
+    "focus_message": "ابقَ مركزاً ومنتجاً"
+  },
+  "error_page": {
+    "title": "خطأ {status} - DesQTA",
+    "error_id": "معرف الخطأ",
+    "hide_details": "إخفاء",
+    "show_details": "عرض",
+    "details": "التفاصيل",
+    "error_message": "رسالة الخطأ",
+    "system_health_overview": "نظرة عامة على صحة النظام",
+    "overall_health": "الصحة العامة",
+    "network": "الشبكة",
+    "storage": "التخزين",
+    "items": "عناصر",
+    "online": "متصل",
+    "offline": "غير متصل",
+    "go_to_login": "الذهاب لتسجيل الدخول",
+    "go_back": "رجوع",
+    "retry_operation": "إعادة المحاولة",
+    "refresh_page": "تحديث الصفحة",
+    "advanced_troubleshooting": "استكشاف الأخطاء المتقدم",
+    "go_home": "الصفحة الرئيسية",
+    "mark_as_resolved": "وضع علامة كمحلول",
+    "recommended_actions": "الإجراءات الموصى بها",
+    "performance_issues_detected": "تم اكتشاف مشاكل في الأداء",
+    "recent_errors": "الأخطاء الأخيرة",
+    "detailed_error_info": "معلومات الخطأ التفصيلية",
+    "error_context": "سياق الخطأ",
+    "environment": "البيئة",
+    "stack_trace": "تتبع المكدس",
+    "complete_error_report": "تقرير الخطأ الكامل",
+    "dev_debug_info": "معلومات التصحيح:",
+    "type_auth": "خطأ في المصادقة",
+    "type_not_found": "الصفحة غير موجودة",
+    "type_network": "خطأ في الشبكة",
+    "type_performance": "مشكلة في الأداء",
+    "type_server": "خطأ في الخادم",
+    "type_critical": "خطأ حرج",
+    "type_app": "خطأ في التطبيق",
+    "desc_auth": "يجب تسجيل الدخول للوصول إلى هذه الصفحة.",
+    "desc_not_found": "الصفحة التي تبحث عنها غير موجودة.",
+    "desc_network": "تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت.",
+    "desc_performance": "يواجه التطبيق مشاكل في الأداء.",
+    "desc_server": "حدث خطأ من جانبنا. يرجى المحاولة مرة أخرى لاحقاً.",
+    "desc_critical": "حدث خطأ حرج يتطلب اهتماماً فورياً.",
+    "desc_default": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى."
+  },
   "connectivity": {
     "offline": "أنت غير متصل",
     "offline_desc": "قد تكون بعض الميزات محدودة. البيانات من الذاكرة المؤقتة.",
@@ -50,6 +111,11 @@
     "menu": "القائمة",
     "qr_signin": "تسجيل الدخول برمز QR",
     "welcome": "مرحباً"
+  },
+  "pages_menu": {
+    "search_placeholder": "البحث في الصفحات...",
+    "navigate": "انتقل",
+    "select": "اختر"
   },
   "header": {
     "toggle_sidebar": "تبديل لوحة الجانب",
@@ -97,7 +163,9 @@
     "feature_assessments_desc": "عرض المهام",
     "feature_timetable_desc": "جدول الحصص",
     "feature_analytics_desc": "بيانات الأداء",
-    "feature_settings_desc": "تفضيلات التطبيق"
+    "feature_settings_desc": "تفضيلات التطبيق",
+    "fill_all_fields": "يرجى ملء جميع الحقول",
+    "failed_credentials": "فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد."
   },
   "features": {
     "lightning_fast": "أداء سريع كالبرق",
@@ -233,6 +301,8 @@
     "lesson_resources": "Lesson Resources"
   },
   "goals": {
+    "no_cached_data": "لا توجد بيانات مخزنة مؤقتاً",
+    "invalid_response": "تنسيق استجابة غير صالح",
     "loading_years": "جاري تحميل السنوات...",
     "error_loading_years": "خطأ في تحميل السنوات",
     "no_years_available": "لا توجد سنوات متاحة",
@@ -279,6 +349,8 @@
     "sort_unread": "عدد غير المقروء",
     "sort_asc": "ترتيب تصاعدي",
     "sort_desc": "ترتيب تنازلي",
+    "no_cached_data": "لا توجد بيانات مخزنة مؤقتاً",
+    "invalid_response": "تنسيق استجابة غير صالح",
     "sort_recent_first": "الأحدث أولاً",
     "sort_oldest_first": "الأقدم أولاً",
     "sort_by_author": "حسب المؤلف",
@@ -287,6 +359,7 @@
     "not_enabled_message": "المنتديات غير مفعلة لمدرستك. يرجى الاتصال بالمسؤول إذا كنت تعتقد أن هذا خطأ."
   },
   "folios": {
+    "invalid_response": "تنسيق استجابة غير صالح",
     "edit_my_folios": "تحرير محافظي",
     "edit_my_folios_description": "إنشاء وإدارة محافظك الشخصية",
     "browse_folios": "تصفح المحافظ",
@@ -305,6 +378,7 @@
     "save_error": "فشل حفظ المحفظة",
     "new_folio": "محفظة جديدة",
     "creating": "جاري الإنشاء...",
+    "created_success": "تم إنشاء المحفظة بنجاح",
     "create_error": "فشل إنشاء المحفظة",
     "tags": "العلامات",
     "add_tag_placeholder": "إضافة علامة...",
@@ -331,6 +405,11 @@
     "not_enabled_message": "المحافظ غير مفعلة لحسابك."
   },
   "assessments": {
+    "back_to_assessments": "العودة إلى التقييمات",
+    "status_marked": "مُقيّم",
+    "status_overdue": "متأخر",
+    "status_due_soon": "قريب الموعد",
+    "status_upcoming": "قادم",
     "year": "Year:",
     "view": "View:",
     "list_view": "List View",
@@ -435,6 +514,7 @@
   },
   "messages": {
     "failed_to_load": "Failed to load messages.",
+    "failed_to_load_no_cache": "فشل تحميل الرسائل ولا توجد بيانات مخزنة مؤقتًا",
     "failed_to_load_message": "Failed to load message.",
     "no_content": "No content.",
     "seqta_messages": "SEQTA Messages",
@@ -473,7 +553,15 @@
     "sending": "Sending...",
     "send": "Send",
     "failed_to_load_recipients": "Failed to load recipients. Please try again.",
-    "failed_to_send": "Failed to send message. Please try again."
+    "failed_to_send": "Failed to send message. Please try again.",
+    "message_starred": "تم وضع نجمة على الرسالة",
+    "message_unstarred": "تمت إزالة النجمة من الرسالة",
+    "failed_to_update_star": "فشل تحديث حالة النجمة",
+    "deleted_success": "تم حذف الرسالة بنجاح",
+    "delete_failed": "فشل حذف الرسالة",
+    "restored_success": "تم استعادة الرسالة بنجاح",
+    "restore_failed": "فشل استعادة الرسالة",
+    "message_detail": "تفاصيل الرسالة"
   },
   "settings": {
     "saved": "Saved!",
@@ -576,6 +664,16 @@
   },
   "analytics": {
     "description": "تتبع أدائك الأكاديمي وتقدمك مع مرور الوقت",
+    "syncing": "جاري المزامنة...",
+    "last_updated": "آخر تحديث",
+    "sync_failed": "فشل التزامن. عرض البيانات المخزنة مؤقتاً.",
+    "sync_success": "تم مزامنة بيانات التحليلات بنجاح",
+    "sync_error": "فشل مزامنة بيانات التحليلات",
+    "syncing_automatically": "يتم مزامنة البيانات تلقائياً عند زيارة هذه الصفحة.",
+    "time_just_now": "الآن",
+    "time_minutes_ago": "منذ {count} دقيقة",
+    "time_hours_ago": "منذ {count} ساعة",
+    "time_days_ago": "منذ {count} يوم",
     "failed_to_grab_data": "فشل في جلب وحفظ بيانات التحليلات.",
     "failed_to_delete_data": "فشل في حذف بيانات التحليلات",
     "delete_data": "حذف البيانات",
@@ -655,6 +753,7 @@
   },
   "directory": {
     "description": "تصفح والبحث في جميع الطلاب",
+    "failed_to_load": "فشل تحميل الطلاب",
     "filters": "الفلاتر",
     "filter_students": "تصفية الطلاب",
     "year_level": "مستوى السنة",
@@ -685,7 +784,9 @@
     "label": "التسمية:",
     "all": "الكل",
     "loading": "جاري تحميل الإشعارات...",
-    "no_notices_found": "لم يتم العثور على إشعارات للمعايير المحددة."
+    "no_notices_found": "لم يتم العثور على إشعارات للمعايير المحددة.",
+    "view_all": "عرض الكل",
+    "no_notices_today": "لا توجد إشعارات متاحة اليوم."
   },
   "reports": {
     "failed_to_load": "فشل في تحميل التقارير.",
