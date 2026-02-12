@@ -3,8 +3,24 @@ import { invoke } from '@tauri-apps/api/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
 
 const API_URL = 'https://accounts.betterseqta.org';
-const DESQTA_CLIENT_ID = 'afa43ee2-397d-4f56-ae0f-ae3f7520bc0d';
 const DESQTA_REDIRECT_URI = 'desqta://auth/callback';
+
+/** Detects if a failed response indicates an expired/invalid client_id (7-day inactivity). */
+function isClientIdExpired(status: number, errMsg?: string): boolean {
+  if (status === 401 || status === 404) return true;
+  const msg = (errMsg ?? '').toLowerCase();
+  return msg.includes('invalid client_id') || msg.includes('invalid client id');
+}
+
+interface ReservedClientResult {
+  client_id: string;
+  redirect_uri: string;
+  api_url?: string;
+  config_url?: string;
+  refresh_url?: string;
+  login_url?: string;
+  discord_auth_url?: string;
+}
 
 export interface CloudUser {
   id: string;
@@ -47,38 +63,99 @@ export const cloudUserStore = writable<CloudUser | null>(null);
 
 export const cloudAuthService = {
   /**
+   * Ensures we have a reserved client_id. Calls reserve endpoint if not stored.
+   * Returns { client_id, redirect_uri } for use in login, refresh, Discord OAuth.
+   */
+  async ensureClientId(): Promise<{ client_id: string; redirect_uri: string }> {
+    const stored = await invoke<{ client_id: string; redirect_uri: string } | null>('get_reserved_client');
+    if (stored?.client_id) {
+      return { client_id: stored.client_id, redirect_uri: stored.redirect_uri };
+    }
+
+    const res = await fetch(`${API_URL}/api/desqta/client/reserve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ redirect_uri: DESQTA_REDIRECT_URI }),
+    });
+    if (!res.ok) throw new Error('Failed to reserve client');
+    const data = (await res.json()) as ReservedClientResult;
+
+    await invoke('save_reserved_client', {
+      clientId: data.client_id,
+      redirectUri: data.redirect_uri,
+    });
+    return { client_id: data.client_id, redirect_uri: data.redirect_uri };
+  },
+
+  /**
+   * Clears the stored reserved client (e.g. when expired). Next ensureClientId() will reserve a new one.
+   */
+  async clearReservedClient(): Promise<void> {
+    await invoke('clear_reserved_client');
+  },
+
+  /**
    * Fetches config from the DesQTA config endpoint (optional, for dynamic URLs).
+   * Retries with a fresh client_id if the stored one has expired.
    */
   async getConfig(): Promise<DesqtaConfig> {
-    const res = await fetch(`${API_URL}/api/desqta/config?client_id=${DESQTA_CLIENT_ID}`);
-    if (!res.ok) throw new Error('Failed to fetch config');
+    const { client_id } = await this.ensureClientId();
+    const res = await fetch(`${API_URL}/api/desqta/config?client_id=${client_id}`);
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      const errMsg = (errBody as { error?: string }).error ?? 'Failed to fetch config';
+      if (isClientIdExpired(res.status, errMsg)) {
+        await this.clearReservedClient();
+        const { client_id: newId } = await this.ensureClientId();
+        const retryRes = await fetch(`${API_URL}/api/desqta/config?client_id=${newId}`);
+        if (!retryRes.ok) throw new Error('Failed to fetch config');
+        return retryRes.json();
+      }
+      throw new Error(errMsg);
+    }
     return res.json();
   },
 
   /**
    * Logs in the user via email/password using the DesQTA auth endpoint.
    * Returns access_token, refresh_token, and user for persistent sessions.
+   * Retries with a fresh client_id if the stored one has expired.
    */
   async login(login: string, password: string) {
-    const response = await fetch(`${API_URL}/api/desqta/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: DESQTA_CLIENT_ID,
-        redirect_uri: DESQTA_REDIRECT_URI,
-        login,
-        password,
-      }),
-    });
+    const doLogin = async (clientId: string, redirectUri: string) => {
+      const response = await fetch(`${API_URL}/api/desqta/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          login,
+          password,
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        const errMsg = (err as { error?: string }).error || 'Login failed';
+        return { ok: false as const, status: response.status, errMsg };
+      }
+      const data = (await response.json()) as LoginResponse;
+      return { ok: true as const, data };
+    };
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error((err as { error?: string }).error || 'Login failed');
+    const { client_id, redirect_uri } = await this.ensureClientId();
+    let result = await doLogin(client_id, redirect_uri);
+
+    if (!result.ok && isClientIdExpired(result.status, result.errMsg)) {
+      await this.clearReservedClient();
+      const { client_id: newId, redirect_uri: newUri } = await this.ensureClientId();
+      result = await doLogin(newId, newUri);
     }
 
-    const data = (await response.json()) as LoginResponse;
+    if (!result.ok) {
+      throw new Error(result.errMsg);
+    }
 
-    // Save tokens and user to backend (profile-specific)
+    const data = result.data;
     const user = await invoke<CloudUser>('save_cloud_token', {
       token: data.access_token,
       refreshToken: data.refresh_token ?? null,
@@ -151,27 +228,45 @@ export const cloudAuthService = {
   /**
    * Refreshes the access token using the refresh token (rolling sessions).
    * On failure, clears tokens and throws.
+   * Retries with a fresh client_id if the stored one has expired.
    */
   async refresh(): Promise<string> {
     const refreshToken = await this.getRefreshToken();
     if (!refreshToken) throw new Error('No refresh token');
 
-    const res = await fetch(`${API_URL}/api/desqta/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        refresh_token: refreshToken,
-        client_id: DESQTA_CLIENT_ID,
-      }),
-    });
+    const doRefresh = async (clientId: string) => {
+      const res = await fetch(`${API_URL}/api/desqta/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          refresh_token: refreshToken,
+          client_id: clientId,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const errMsg = (err as { error?: string }).error || 'Refresh failed';
+        return { ok: false as const, status: res.status, errMsg };
+      }
+      const data = (await res.json()) as RefreshResponse;
+      return { ok: true as const, data };
+    };
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      await this.logout();
-      throw new Error((err as { error?: string }).error || 'Refresh failed');
+    const { client_id } = await this.ensureClientId();
+    let result = await doRefresh(client_id);
+
+    if (!result.ok && isClientIdExpired(result.status, result.errMsg)) {
+      await this.clearReservedClient();
+      const { client_id: newId } = await this.ensureClientId();
+      result = await doRefresh(newId);
     }
 
-    const data = (await res.json()) as RefreshResponse;
+    if (!result.ok) {
+      await this.logout();
+      throw new Error(result.errMsg);
+    }
+
+    const data = result.data;
     const user = await invoke<CloudUser>('save_cloud_token', {
       token: data.access_token,
       refreshToken: data.refresh_token ?? null,
@@ -213,11 +308,14 @@ export const cloudAuthService = {
   /**
    * Initiates Discord OAuth flow for DesQTA.
    * Opens the user's browser to authenticate with Discord.
+   * Validates client_id first (refreshes if expired) since we don't get a response from opening the URL.
    */
   async loginWithDiscord() {
+    await this.getConfig();
+    const { client_id, redirect_uri } = await this.ensureClientId();
     const authUrl = new URL(`${API_URL}/api/oauth/desqta/discord`);
-    authUrl.searchParams.set('client_id', DESQTA_CLIENT_ID);
-    authUrl.searchParams.set('redirect_uri', DESQTA_REDIRECT_URI);
+    authUrl.searchParams.set('client_id', client_id);
+    authUrl.searchParams.set('redirect_uri', redirect_uri);
 
     await openUrl(authUrl.toString());
   },

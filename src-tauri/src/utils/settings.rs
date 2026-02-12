@@ -33,6 +33,17 @@ fn cloud_token_file() -> PathBuf {
     dir
 }
 
+/// Per-profile storage for DesQTA reserved client ID.
+fn reserved_client_file() -> PathBuf {
+    let mut dir = profiles::get_profile_dir(
+        &profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string()),
+    );
+    dir.push("reserved_client.json");
+    dir
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CloudToken {
     pub token: Option<String>,
@@ -62,6 +73,41 @@ impl CloudToken {
     }
     pub fn clear_file() -> io::Result<()> {
         let path = cloud_token_file();
+        if path.exists() {
+            fs::remove_file(path)?;
+        }
+        Ok(())
+    }
+}
+
+/// Reserved DesQTA client ID (per app instance, stored at app level).
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct ReservedClient {
+    pub client_id: String,
+    pub redirect_uri: String,
+}
+
+impl ReservedClient {
+    pub fn load() -> Option<Self> {
+        let path = reserved_client_file();
+        if let Ok(mut file) = fs::File::open(path) {
+            let mut contents = String::new();
+            if file.read_to_string(&mut contents).is_ok() {
+                if let Ok(rc) = serde_json::from_str::<ReservedClient>(&contents) {
+                    if !rc.client_id.is_empty() {
+                        return Some(rc);
+                    }
+                }
+            }
+        }
+        None
+    }
+    pub fn save(&self) -> io::Result<()> {
+        let path = reserved_client_file();
+        fs::write(path, serde_json::to_string(self).unwrap())
+    }
+    pub fn clear_file() -> io::Result<()> {
+        let path = reserved_client_file();
         if path.exists() {
             fs::remove_file(path)?;
         }
@@ -720,6 +766,28 @@ pub fn get_cloud_user() -> CloudUserWithToken {
 #[tauri::command]
 pub fn clear_cloud_token() -> Result<(), String> {
     CloudToken::clear_file().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_reserved_client() -> Option<ReservedClient> {
+    ReservedClient::load()
+}
+
+#[tauri::command]
+pub fn clear_reserved_client() -> Result<(), String> {
+    ReservedClient::clear_file().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn save_reserved_client(client_id: String, redirect_uri: String) -> Result<(), String> {
+    if client_id.is_empty() {
+        return Err("client_id cannot be empty".to_string());
+    }
+    let rc = ReservedClient {
+        client_id,
+        redirect_uri,
+    };
+    rc.save().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
