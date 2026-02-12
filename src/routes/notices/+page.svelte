@@ -3,7 +3,6 @@
   import { onMount } from 'svelte';
 
   // $lib/ imports
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import { EmptyState, LoadingSpinner } from '$lib/components/ui';
   import { ExclamationTriangle, DocumentText } from 'svelte-hero-icons';
@@ -15,7 +14,6 @@
 
   // Relative imports
   import { seqtaFetch } from '../../utils/netUtil';
-  import { cache } from '../../utils/cache';
   import { sanitizeHtml } from '../../utils/sanitization';
   import { logger } from '../../utils/logger';
 
@@ -89,71 +87,49 @@
 
     const key = `notices_${formatDate(selectedDate)}`;
     const { isOfflineMode } = await import('../../lib/utils/offlineMode');
-    const offline = await isOfflineMode();
 
-    // If offline, manually check cache only
-    if (offline) {
-      const memCached = cache.get<Notice[]>(key);
-      if (memCached) {
-        notices = memCached;
+    const data = await useDataLoader<Notice[]>({
+      cacheKey: key,
+      ttlMinutes: 30,
+      context: 'notices',
+      functionName: 'fetchNotices',
+      fetcher: async () => {
+        const response = await seqtaFetch('/seqta/student/load/notices?', {
+          method: 'POST',
+          body: { date: formatDate(selectedDate) },
+        });
+        const data = typeof response === 'string' ? JSON.parse(response) : response;
+        if (Array.isArray(data?.payload)) {
+          return data.payload.map((n: any, i: number) => ({
+            id: i + 1,
+            title: n.title,
+            subtitle: n.label_title,
+            author: n.staff,
+            color: n.colour,
+            labelId: n.label,
+            content: n.contents,
+          }));
+        }
+        return [];
+      },
+      onDataLoaded: (data) => {
+        notices = data;
         loading = false;
-        return;
-      }
+      },
+      reportSyncState: (state) => {
+        if (state === 'failed') loading = false;
+      },
+    });
 
-      const idbCached = await getWithIdbFallback<Notice[]>(key, key, () => null);
-      if (idbCached) {
-        notices = idbCached;
-        cache.set(key, idbCached, 30);
-        loading = false;
-        return;
-      }
-
+    if (!data) {
+      loading = false;
+      const offline = await isOfflineMode();
       error =
-        $_('notices.offline_no_cache') ||
-        'No cached notices available. Please go online to fetch notices.';
+        offline
+          ? ($_('notices.offline_no_cache') ||
+            'No cached notices available. Please go online to fetch notices.')
+          : ($_('notices.failed_to_load') || 'Failed to load notices.');
       notices = [];
-      loading = false;
-      return;
-    }
-
-    // Online: Use useDataLoader but always fetch fresh (skip cache for fresh data)
-    try {
-      // First check cache for instant display
-      const cached =
-        cache.get<Notice[]>(key) || (await getWithIdbFallback<Notice[]>(key, key, () => null));
-      if (cached) {
-        notices = cached;
-        loading = false;
-        // Fetch fresh in background
-      }
-
-      // Always fetch fresh when online
-      const response = await seqtaFetch('/seqta/student/load/notices?', {
-        method: 'POST',
-        body: { date: formatDate(selectedDate) },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (Array.isArray(data?.payload)) {
-        notices = data.payload.map((n: any, i: number) => ({
-          id: i + 1,
-          title: n.title,
-          subtitle: n.label_title,
-          author: n.staff,
-          color: n.colour,
-          labelId: n.label,
-          content: n.contents,
-        }));
-        cache.set(key, notices, 30);
-        await setIdb(key, notices);
-      } else {
-        notices = [];
-      }
-      loading = false;
-    } catch (e) {
-      logger.error('notices', 'fetchNotices', 'notices fetch failed', { key, error: e });
-      error = $_('notices.failed_to_load') || 'Failed to load notices.';
-      notices = [];
-      loading = false;
     }
   }
 

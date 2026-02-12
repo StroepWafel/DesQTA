@@ -323,10 +323,11 @@
     selectedLesson = null;
     selectedLessonContent = null;
     const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
-    const isOnline = navigator.onLine;
+    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+    const offline = await isOfflineMode();
 
     // Only use cache when offline - always fetch fresh data when online
-    if (!isOnline) {
+    if (offline) {
       const cached =
         cache.get<CoursePayload>(cacheKey) ||
         (await getWithIdbFallback<CoursePayload>(cacheKey, cacheKey, () =>

@@ -83,7 +83,6 @@
     new Map<string, { hasUpdate: boolean; currentVersion?: string; latestVersion?: string }>(),
   );
 
-
   // Temp theme preview tracking
   let tempPreviewThemeSlug: string | null = $state(null);
 
@@ -519,7 +518,7 @@
 
       // Download theme to temp folder
       const tempThemeName = await themeService.previewCloudTheme(themeId);
-      
+
       // Extract slug from temp theme name (e.g., ".temp/theme-slug" -> "theme-slug")
       const slug = tempThemeName.replace(/^\.temp\//, '');
       tempPreviewThemeSlug = slug;
@@ -1004,7 +1003,6 @@
   {/if}
 </div>
 
-
 <!-- Live preview action bar -->
 {#if $previewingTheme}
   <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
@@ -1019,7 +1017,7 @@
           const previewThemeName = get(previewingTheme);
           const isTempTheme = previewThemeName?.startsWith('.temp/') ?? false;
           const currentTempSlug = tempPreviewThemeSlug; // Capture for TypeScript
-          
+
           if (isTempTheme && currentTempSlug) {
             // If it's a temp theme, we need to download it properly first
             // Find the theme ID from the slug

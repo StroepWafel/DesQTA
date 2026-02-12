@@ -10,6 +10,7 @@
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import { Toaster } from 'svelte-sonner';
   import Onboarding from '../lib/components/Onboarding.svelte';
+  import OfflineBanner from '../lib/components/OfflineBanner.svelte';
   import {
     checkSession as checkSessionAuth,
     loadUserInfo as loadUserInfoAuth,
@@ -466,6 +467,18 @@
     }
   });
 
+  // Initialize connectivity and queue service when user is logged in
+  $effect(() => {
+    if (shellReady && !$needsSetup) {
+      import('$lib/stores/connectivity').then(({ initConnectivity }) =>
+        import('$lib/services/queueService').then(({ initQueueService, getQueueSummary }) => {
+          initConnectivity(() => getQueueSummary().then((s) => s.total));
+          initQueueService();
+        }),
+      );
+    }
+  });
+
   // Consolidated effects
   $effect(() => {
     if (autoCollapseSidebar) handlePageNavigation();
@@ -697,6 +710,9 @@
           ? ''
           : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
+        {#if !$needsSetup}
+          <OfflineBanner />
+        {/if}
         {#if contentLoading}
           <div class="flex items-center justify-center w-full h-full py-12">
             <LoadingScreen inline />

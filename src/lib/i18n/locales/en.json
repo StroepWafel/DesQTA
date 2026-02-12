@@ -24,6 +24,16 @@
     "retry": "Retry",
     "retrying": "Retrying..."
   },
+  "connectivity": {
+    "offline": "You're offline",
+    "offline_desc": "Some features may be limited. Data is from cache.",
+    "degraded": "Can't reach SEQTA",
+    "degraded_desc": "Showing cached data. Retry when connection improves.",
+    "queued": "{{count}} item(s) queued for sync",
+    "syncing": "Syncing...",
+    "retry": "Retry",
+    "connected": "Connected"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "courses": "Courses",

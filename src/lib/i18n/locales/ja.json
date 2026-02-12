@@ -19,6 +19,16 @@
     "settings": "設定",
     "close_theme_builder": "テーマビルダーを閉じる"
   },
+  "connectivity": {
+    "offline": "オフラインです",
+    "offline_desc": "一部の機能が制限される場合があります。データはキャッシュから取得されます。",
+    "degraded": "SEQTAに接続できません",
+    "degraded_desc": "キャッシュされたデータを表示しています。接続が改善したら再試行してください。",
+    "queued": "{{count}}件の項目が同期待ちです",
+    "syncing": "同期中...",
+    "retry": "再試行",
+    "connected": "接続済み"
+  },
   "navigation": {
     "dashboard": "ダッシュボード",
     "courses": "コース",

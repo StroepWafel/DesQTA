@@ -19,6 +19,16 @@
     "settings": "Ustawienia",
     "close_theme_builder": "Zamknij Konstruktor Motywów"
   },
+  "connectivity": {
+    "offline": "Jesteś offline",
+    "offline_desc": "Niektóre funkcje mogą być ograniczone. Dane pochodzą z pamięci podręcznej.",
+    "degraded": "Nie można połączyć się z SEQTA",
+    "degraded_desc": "Wyświetlane są dane z pamięci podręcznej. Spróbuj ponownie, gdy połączenie się poprawi.",
+    "queued": "{{count}} element(ów) w kolejce do synchronizacji",
+    "syncing": "Synchronizacja...",
+    "retry": "Ponów",
+    "connected": "Połączono"
+  },
   "navigation": {
     "dashboard": "Pulpit",
     "courses": "Kursy",

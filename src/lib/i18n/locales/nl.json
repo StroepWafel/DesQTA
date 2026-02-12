@@ -19,6 +19,16 @@
     "settings": "Instellingen",
     "close_theme_builder": "Thema Builder Sluiten"
   },
+  "connectivity": {
+    "offline": "U bent offline",
+    "offline_desc": "Sommige functies kunnen beperkt zijn. Gegevens komen uit de cache.",
+    "degraded": "Kan SEQTA niet bereiken",
+    "degraded_desc": "Gecachte gegevens worden weergegeven. Probeer opnieuw wanneer de verbinding verbetert.",
+    "queued": "{{count}} item(s) in wachtrij voor synchronisatie",
+    "syncing": "Synchroniseren...",
+    "retry": "Opnieuw proberen",
+    "connected": "Verbonden"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "courses": "Cursussen",

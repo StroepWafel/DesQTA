@@ -257,11 +257,6 @@ export async function autoDownloadSettingsFromCloud(): Promise<void> {
   }
 }
 
-// Optional: flush on regain connectivity
-if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    flushSettingsQueue().catch(() => {});
-  });
-}
+// Online handler moved to queueService - single coalesced handler
 
 

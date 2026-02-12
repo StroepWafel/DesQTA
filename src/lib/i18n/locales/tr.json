@@ -19,6 +19,16 @@
     "settings": "Ayarlar",
     "close_theme_builder": "Tema Oluşturucuyu Kapat"
   },
+  "connectivity": {
+    "offline": "Çevrimdışısınız",
+    "offline_desc": "Bazı özellikler sınırlı olabilir. Veriler önbellekten gelir.",
+    "degraded": "SEQTA'ya ulaşılamıyor",
+    "degraded_desc": "Önbellek verileri gösteriliyor. Bağlantı iyileşince tekrar deneyin.",
+    "queued": "{{count}} öğe senkronizasyon için sırada",
+    "syncing": "Senkronize ediliyor...",
+    "retry": "Tekrar dene",
+    "connected": "Bağlı"
+  },
   "navigation": {
     "dashboard": "Pano",
     "courses": "Dersler",

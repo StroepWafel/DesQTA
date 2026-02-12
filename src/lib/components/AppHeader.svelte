@@ -375,7 +375,7 @@
       goto('/reports');
     } else if (notification.type === 'message' && notification.message) {
       const id = notification.message.messageID;
-      
+
       // If auto-dismiss is enabled, dismiss the notification before navigating
       if (autoDismissMessageNotifications) {
         try {
@@ -384,7 +384,7 @@
             (n) => n.notificationID !== notification.notificationID,
           );
           unreadNotifications = Math.max(0, unreadNotifications - 1);
-          
+
           // Dismiss on server
           await seqtaFetch('/seqta/student/notification/dismiss', {
             method: 'POST',
@@ -397,7 +397,7 @@
             'handleNotificationClick',
             `Dismissed message notification ${notification.notificationID}`,
           );
-          
+
           // Refresh notifications list in background to ensure sync
           fetchNotifications().catch((error) => {
             logger.error(
@@ -418,7 +418,7 @@
           await fetchNotifications();
         }
       }
-      
+
       showNotifications = false;
       showNotificationsModal = false;
       goto(`/direqt-messages?messageID=${id}`);

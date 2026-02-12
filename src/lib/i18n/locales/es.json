@@ -19,6 +19,16 @@
     "settings": "Configuración",
     "close_theme_builder": "Cerrar Constructor de Temas"
   },
+  "connectivity": {
+    "offline": "Estás desconectado",
+    "offline_desc": "Algunas funciones pueden estar limitadas. Los datos son de la caché.",
+    "degraded": "No se puede conectar con SEQTA",
+    "degraded_desc": "Mostrando datos en caché. Reintenta cuando la conexión mejore.",
+    "queued": "{{count}} elemento(s) en cola para sincronizar",
+    "syncing": "Sincronizando...",
+    "retry": "Reintentar",
+    "connected": "Conectado"
+  },
   "navigation": {
     "dashboard": "Panel",
     "courses": "Cursos",

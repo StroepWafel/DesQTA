@@ -19,6 +19,16 @@
     "settings": "设置",
     "close_theme_builder": "关闭主题构建器"
   },
+  "connectivity": {
+    "offline": "您已离线",
+    "offline_desc": "部分功能可能受限。数据来自缓存。",
+    "degraded": "无法连接 SEQTA",
+    "degraded_desc": "显示缓存数据。连接改善后请重试。",
+    "queued": "{{count}} 个项目等待同步",
+    "syncing": "同步中...",
+    "retry": "重试",
+    "connected": "已连接"
+  },
   "navigation": {
     "dashboard": "仪表板",
     "courses": "课程",

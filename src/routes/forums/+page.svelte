@@ -54,7 +54,8 @@
 
   async function checkForumsEnabled() {
     const cacheKey = 'forums_settings_enabled';
-    const isOnline = navigator.onLine;
+    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+    const offline = await isOfflineMode();
 
     // Load from cache first for instant UI
     const cached =
@@ -66,7 +67,7 @@
     }
 
     // Always fetch fresh data when online (even if we have cache)
-    if (isOnline) {
+    if (!offline) {
       try {
         await fetchForumsSettings();
       } catch (e) {
@@ -215,7 +216,8 @@
     loading = true;
     error = null;
     const cacheKey = 'forums_list';
-    const isOnline = navigator.onLine;
+    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+    const offline = await isOfflineMode();
 
     // Load from cache first for instant UI
     const cached =
@@ -231,7 +233,7 @@
     }
 
     // Always fetch fresh data when online (even if we have cache)
-    if (isOnline) {
+    if (!offline) {
       try {
         await fetchForums();
       } catch (e) {

@@ -17,7 +17,8 @@
 
   async function checkGoalsEnabled() {
     const cacheKey = 'goals_settings_enabled';
-    const isOnline = navigator.onLine;
+    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+    const offline = await isOfflineMode();
 
     // Load from cache first for instant UI
     const cached =
@@ -29,7 +30,7 @@
     }
 
     // Always fetch fresh data when online (even if we have cache)
-    if (isOnline) {
+    if (!offline) {
       try {
         await fetchGoalsSettings();
       } catch (e) {
@@ -72,7 +73,8 @@
     loading = true;
     error = null;
     const cacheKey = 'goals_years';
-    const isOnline = navigator.onLine;
+    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+    const offline = await isOfflineMode();
 
     // Load from cache first for instant UI
     const cached =
@@ -85,7 +87,7 @@
     }
 
     // Always fetch fresh data when online (even if we have cache)
-    if (isOnline) {
+    if (!offline) {
       try {
         await fetchYears();
       } catch (e) {

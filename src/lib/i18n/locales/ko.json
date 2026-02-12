@@ -19,6 +19,16 @@
     "settings": "설정",
     "close_theme_builder": "테마 빌더 닫기"
   },
+  "connectivity": {
+    "offline": "오프라인입니다",
+    "offline_desc": "일부 기능이 제한될 수 있습니다. 데이터는 캐시에서 가져옵니다.",
+    "degraded": "SEQTA에 연결할 수 없습니다",
+    "degraded_desc": "캐시된 데이터를 표시합니다. 연결이 개선되면 다시 시도하세요.",
+    "queued": "{{count}}개 항목 동기화 대기 중",
+    "syncing": "동기화 중...",
+    "retry": "다시 시도",
+    "connected": "연결됨"
+  },
   "navigation": {
     "dashboard": "대시보드",
     "courses": "강좌",

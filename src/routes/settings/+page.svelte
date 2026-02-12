@@ -448,7 +448,9 @@ The Company reserves the right to terminate your access to the Service at any ti
       // Invalidate offline mode cache if setting changed
       if (patch.dev_force_offline_mode !== undefined) {
         const { invalidateOfflineModeCache } = await import('../../lib/utils/offlineMode');
+        const { invalidateConnectivity } = await import('$lib/stores/connectivity');
         invalidateOfflineModeCache();
+        invalidateConnectivity();
       }
 
       saveSuccess = true;

@@ -324,9 +324,7 @@
           <!-- Plugin Footer - Install/Uninstall disabled until plugin system is ready -->
           <div class="p-6 border-t bg-zinc-800 border-zinc-700">
             <p class="text-center text-sm text-zinc-400">
-              <T
-                key="settings.plugin_store_coming_soon"
-                fallback="Plugin Store Coming Soon" />
+              <T key="settings.plugin_store_coming_soon" fallback="Plugin Store Coming Soon" />
             </p>
           </div>
         </div>

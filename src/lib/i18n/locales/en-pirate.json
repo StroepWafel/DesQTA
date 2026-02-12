@@ -19,6 +19,16 @@
     "settings": "Ship's orders",
     "close_theme_builder": "Furl the theme sails"
   },
+  "connectivity": {
+    "offline": "Ye be offline",
+    "offline_desc": "Some features may be limited. Data be from cache.",
+    "degraded": "Can't reach SEQTA",
+    "degraded_desc": "Showin' cached data. Retry when connection improves.",
+    "queued": "{{count}} item(s) queued for sync",
+    "syncing": "Syncin'...",
+    "retry": "Retry",
+    "connected": "Connected"
+  },
   "navigation": {
     "dashboard": "Captain's quarters",
     "courses": "Navigational charts",

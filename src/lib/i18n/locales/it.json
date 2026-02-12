@@ -19,6 +19,16 @@
     "settings": "Impostazioni",
     "close_theme_builder": "Chiudi Generatore Temi"
   },
+  "connectivity": {
+    "offline": "Sei offline",
+    "offline_desc": "Alcune funzionalità potrebbero essere limitate. I dati provengono dalla cache.",
+    "degraded": "Impossibile raggiungere SEQTA",
+    "degraded_desc": "Visualizzazione dati in cache. Riprova quando la connessione migliora.",
+    "queued": "{{count}} elemento/i in coda per la sincronizzazione",
+    "syncing": "Sincronizzazione...",
+    "retry": "Riprova",
+    "connected": "Connesso"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "courses": "Corsi",
