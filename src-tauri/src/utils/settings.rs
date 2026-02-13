@@ -135,6 +135,7 @@ pub struct Settings {
     pub ai_integrations_enabled: Option<bool>,
     pub grade_analyser_enabled: Option<bool>,
     pub lesson_summary_analyser_enabled: Option<bool>,
+    pub quiz_generator_enabled: Option<bool>,
     pub auto_collapse_sidebar: bool,
     pub auto_expand_sidebar_hover: bool,
     pub global_search_enabled: bool,
@@ -187,6 +188,7 @@ impl Default for Settings {
             ai_integrations_enabled: Some(false),
             grade_analyser_enabled: Some(true),
             lesson_summary_analyser_enabled: Some(true),
+            quiz_generator_enabled: Some(true),
             auto_collapse_sidebar: false,
             auto_expand_sidebar_hover: false,
             global_search_enabled: false,
@@ -451,6 +453,8 @@ impl Settings {
             get_opt_bool(&existing_json, "grade_analyser_enabled");
         default_settings.lesson_summary_analyser_enabled =
             get_opt_bool(&existing_json, "lesson_summary_analyser_enabled");
+        default_settings.quiz_generator_enabled =
+            get_opt_bool(&existing_json, "quiz_generator_enabled");
         default_settings.auto_collapse_sidebar = get_bool(
             &existing_json,
             "auto_collapse_sidebar",

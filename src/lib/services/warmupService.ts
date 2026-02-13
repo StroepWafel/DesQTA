@@ -174,13 +174,16 @@ async function prefetchAssessmentsOverview(): Promise<void> {
     if (cached?.assessments?.length) {
       // Cache exists - still schedule push notifications from cached data
       const { invoke } = await import('@tauri-apps/api/core');
-      const remindersEnabled =
-        ((await invoke<Record<string, unknown>>('get_settings_subset', {
+      const remindersEnabled = ((
+        await invoke<Record<string, unknown>>('get_settings_subset', {
           keys: ['reminders_enabled'],
-        }))?.reminders_enabled ?? true) as boolean;
+        })
+      )?.reminders_enabled ?? true) as boolean;
       if (remindersEnabled) {
         const { notificationService } = await import('./notificationService');
-        await notificationService.scheduleNotifications(cached.assessments as import('$lib/types').Assessment[]);
+        await notificationService.scheduleNotifications(
+          cached.assessments as import('$lib/types').Assessment[],
+        );
       }
       return;
     }
@@ -218,9 +221,11 @@ async function prefetchAssessmentsOverview(): Promise<void> {
 
     // Schedule push notifications for assessments (respects reminders_enabled)
     const remindersEnabled =
-      (await invoke<Record<string, unknown>>('get_settings_subset', {
-        keys: ['reminders_enabled'],
-      }))?.reminders_enabled ?? true;
+      (
+        await invoke<Record<string, unknown>>('get_settings_subset', {
+          keys: ['reminders_enabled'],
+        })
+      )?.reminders_enabled ?? true;
     if (remindersEnabled && result.assessments?.length) {
       const { notificationService } = await import('./notificationService');
       await notificationService.scheduleNotifications(result.assessments);
@@ -299,11 +304,7 @@ async function prefetchAnalyticsSync(): Promise<void> {
     // Check if we have a valid session before attempting sync
     const sessionExists = await authService.checkSession();
     if (!sessionExists) {
-      logger.debug(
-        'warmup',
-        'prefetchAnalyticsSync',
-        'No active session, skipping analytics sync',
-      );
+      logger.debug('warmup', 'prefetchAnalyticsSync', 'No active session, skipping analytics sync');
       return;
     }
 
@@ -354,7 +355,7 @@ async function prefetchFoliosSettings(): Promise<void> {
 
     const data = typeof response === 'string' ? JSON.parse(response) : response;
     const enabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
-    
+
     cache.set(cacheKey, enabled, 60); // 60 min TTL
     await setIdb(cacheKey, enabled);
     logger.info('warmup', 'prefetchFoliosSettings', 'Cached folios settings (mem+idb)', {
@@ -380,7 +381,7 @@ async function prefetchGoalsSettings(): Promise<void> {
 
     const data = typeof response === 'string' ? JSON.parse(response) : response;
     const enabled = data?.payload?.['coneqt-s.page.goals']?.value === 'enabled';
-    
+
     cache.set(cacheKey, enabled, 60); // 60 min TTL
     await setIdb(cacheKey, enabled);
     logger.info('warmup', 'prefetchGoalsSettings', 'Cached goals settings (mem+idb)', {
@@ -396,7 +397,8 @@ async function prefetchGoalsSettings(): Promise<void> {
         body: { mode: 'years' },
       });
 
-      const yearsData = typeof yearsResponse === 'string' ? JSON.parse(yearsResponse) : yearsResponse;
+      const yearsData =
+        typeof yearsResponse === 'string' ? JSON.parse(yearsResponse) : yearsResponse;
       if (yearsData.status === '200' && Array.isArray(yearsData.payload)) {
         const yearsKey = 'goals_years';
         cache.set(yearsKey, yearsData.payload, 30); // 30 min TTL
@@ -428,7 +430,7 @@ async function prefetchForumsSettings(): Promise<void> {
     const forumsPageEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
     const forumsGreetingExists = data?.payload?.['coneqt-s.forum.greeting'] !== undefined;
     const enabled = forumsPageEnabled || forumsGreetingExists;
-    
+
     cache.set(cacheKey, enabled, 60); // 60 min TTL
     await setIdb(cacheKey, enabled);
     logger.info('warmup', 'prefetchForumsSettings', 'Cached forums settings (mem+idb)', {

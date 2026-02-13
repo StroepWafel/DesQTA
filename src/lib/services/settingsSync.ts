@@ -33,6 +33,7 @@ async function autoSyncToCloud(patch: Record<string, any>): Promise<void> {
           'ai_integrations_enabled',
           'grade_analyser_enabled',
           'lesson_summary_analyser_enabled',
+          'quiz_generator_enabled',
           'auto_collapse_sidebar',
           'auto_expand_sidebar_hover',
           'global_search_enabled',

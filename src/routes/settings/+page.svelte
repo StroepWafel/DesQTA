@@ -70,55 +70,55 @@
     url: string;
   }
 
-  let shortcuts: Shortcut[] = [];
-  let loading = true;
-  let saving = false;
-  let saveSuccess = false;
-  let saveError = '';
-  let weatherEnabled = false;
-  let forceUseLocation = false;
-  let weatherCity = '';
-  let feeds: Feed[] = [];
-  let weatherCountry = '';
-  let disableSchoolPicture = false;
-  let enhancedAnimations = true;
-  let geminiApiKey = '';
-  let cerebrasApiKey = '';
-  let aiProvider: 'gemini' | 'cerebras' = 'gemini';
+  let shortcuts = $state<Shortcut[]>([]);
+  let loading = $state(true);
+  let saving = $state(false);
+  let saveSuccess = $state(false);
+  let saveError = $state('');
+  let weatherEnabled = $state(false);
+  let forceUseLocation = $state(false);
+  let weatherCity = $state('');
+  let feeds = $state<Feed[]>([]);
+  let weatherCountry = $state('');
+  let disableSchoolPicture = $state(false);
+  let enhancedAnimations = $state(true);
+  let geminiApiKey = $state('');
+  let cerebrasApiKey = $state('');
+  let aiProvider = $state<'gemini' | 'cerebras'>('gemini');
 
-  let remindersEnabled = true;
-  let autoDismissMessageNotifications = false;
-  let showCloudSyncModal = false;
-  let showTroubleshootingModal = false;
-  let aiIntegrationsEnabled = false;
-  let clearingCache = false;
-  let gradeAnalyserEnabled = true;
-  let lessonSummaryAnalyserEnabled = true;
-  let autoCollapseSidebar = false;
-  let autoExpandSidebarHover = false;
-  let globalSearchEnabled = true;
-  let devSensitiveInfoHider = false;
-  let devForceOfflineMode = false;
-  let showDevSettings = false;
-  let separateRssFeed = false;
-  let zoomLevel = 1;
+  let remindersEnabled = $state(true);
+  let autoDismissMessageNotifications = $state(false);
+  let showCloudSyncModal = $state(false);
+  let showTroubleshootingModal = $state(false);
+  let aiIntegrationsEnabled = $state(false);
+  let clearingCache = $state(false);
+  let lessonSummaryAnalyserEnabled = $state(true);
+  let quizGeneratorEnabled = $state(true);
+  let autoCollapseSidebar = $state(false);
+  let autoExpandSidebarHover = $state(false);
+  let globalSearchEnabled = $state(true);
+  let devSensitiveInfoHider = $state(false);
+  let devForceOfflineMode = $state(false);
+  let showDevSettings = $state(false);
+  let separateRssFeed = $state(false);
+  let zoomLevel = $state(1);
   let keyBuffer = '';
-  let acceptedCloudEula = false;
-  let showEulaModal = false;
+  let acceptedCloudEula = $state(false);
+  let showEulaModal = $state(false);
   let cloudBaseUrl: string = '';
   let cloudBaseUrlSaving = false;
   let cloudBaseUrlError: string | null = null;
   let cloudBaseUrlChanged = false;
-  let performanceTestRunning = false;
-  let checkingUpdates = false;
-  let updateAvailable = false;
-  let updateVersion = '';
-  let updateNotes = '';
-  let isDesktop = false;
-  let showSidebarSettingsDialog = false;
-  let showUnsavedChangesModal = false;
+  let performanceTestRunning = $state(false);
+  let checkingUpdates = $state(false);
+  let updateAvailable = $state(false);
+  let updateVersion = $state('');
+  let updateNotes = $state('');
+  let isDesktop = $state(false);
+  let showSidebarSettingsDialog = $state(false);
+  let showUnsavedChangesModal = $state(false);
   let pendingNavigationUrl: string | null = null;
-  let resettingOnboarding = false;
+  let resettingOnboarding = $state(false);
 
   // Store initial settings state for comparison
   let initialSettings: {
@@ -138,8 +138,8 @@
     cerebrasApiKey: string;
     aiProvider: 'gemini' | 'cerebras';
     aiIntegrationsEnabled: boolean;
-    gradeAnalyserEnabled: boolean;
     lessonSummaryAnalyserEnabled: boolean;
+    quizGeneratorEnabled: boolean;
     autoCollapseSidebar: boolean;
     autoExpandSidebarHover: boolean;
     globalSearchEnabled: boolean;
@@ -206,15 +206,15 @@ In no event shall the Company be liable for any direct, indirect, incidental, sp
 The Company reserves the right to terminate your access to the Service at any time, with or without cause, with or without notice, effective immediately.`;
 
   // Cloud user state
-  let cloudUser: any = null;
-  let cloudUserLoading = true;
+  let cloudUser = $state<any>(null);
+  let cloudUserLoading = $state(true);
 
   // Set the API URL for cloud sync
   const CLOUD_API_URL = 'https://accounts.betterseqta.org';
 
   // Profile picture state
-  let customProfilePicture: string | null = null;
-  let uploading = false;
+  let customProfilePicture = $state<string | null>(null);
+  let uploading = $state(false);
   let fileInput: HTMLInputElement;
 
   async function loadCloudUser() {
@@ -259,9 +259,11 @@ The Company reserves the right to terminate your access to the Service at any ti
           'disable_school_picture',
           'enhanced_animations',
           'gemini_api_key',
+          'cerebras_api_key',
+          'ai_provider',
           'ai_integrations_enabled',
-          'grade_analyser_enabled',
           'lesson_summary_analyser_enabled',
+          'quiz_generator_enabled',
           'auto_collapse_sidebar',
           'auto_expand_sidebar_hover',
           'global_search_enabled',
@@ -289,8 +291,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       accentColor.set(settings.accent_color ?? '#3b82f6');
       theme.set(settings.theme ?? 'dark');
       aiIntegrationsEnabled = settings.ai_integrations_enabled ?? false;
-      gradeAnalyserEnabled = settings.grade_analyser_enabled ?? true;
       lessonSummaryAnalyserEnabled = settings.lesson_summary_analyser_enabled ?? true;
+      quizGeneratorEnabled = settings.quiz_generator_enabled ?? true;
       autoCollapseSidebar = settings.auto_collapse_sidebar ?? false;
       autoExpandSidebarHover = settings.auto_expand_sidebar_hover ?? false;
       globalSearchEnabled = settings.global_search_enabled ?? true;
@@ -318,8 +320,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         cerebrasApiKey,
         aiProvider,
         aiIntegrationsEnabled,
-        gradeAnalyserEnabled,
         lessonSummaryAnalyserEnabled,
+        quizGeneratorEnabled,
         autoCollapseSidebar,
         autoExpandSidebarHover,
         globalSearchEnabled,
@@ -356,8 +358,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       accentColor.set('#3b82f6');
       theme.set('dark');
       aiIntegrationsEnabled = false;
-      gradeAnalyserEnabled = true;
       lessonSummaryAnalyserEnabled = true;
+      quizGeneratorEnabled = true;
       autoCollapseSidebar = false;
       autoExpandSidebarHover = false;
       globalSearchEnabled = true;
@@ -429,8 +431,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         cerebras_api_key: cerebrasApiKey,
         ai_provider: aiProvider,
         ai_integrations_enabled: aiIntegrationsEnabled,
-        grade_analyser_enabled: gradeAnalyserEnabled,
         lesson_summary_analyser_enabled: lessonSummaryAnalyserEnabled,
+        quiz_generator_enabled: quizGeneratorEnabled,
         auto_collapse_sidebar: autoCollapseSidebar,
         auto_expand_sidebar_hover: autoExpandSidebarHover,
         global_search_enabled: globalSearchEnabled,
@@ -476,8 +478,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.enhancedAnimations = enhancedAnimations;
         initialSettings.geminiApiKey = geminiApiKey;
         initialSettings.aiIntegrationsEnabled = aiIntegrationsEnabled;
-        initialSettings.gradeAnalyserEnabled = gradeAnalyserEnabled;
         initialSettings.lessonSummaryAnalyserEnabled = lessonSummaryAnalyserEnabled;
+        initialSettings.quizGeneratorEnabled = quizGeneratorEnabled;
         initialSettings.autoCollapseSidebar = autoCollapseSidebar;
         initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
         initialSettings.globalSearchEnabled = globalSearchEnabled;
@@ -595,8 +597,8 @@ The Company reserves the right to terminate your access to the Service at any ti
     accentColor.set(cloudSettings.accent_color ?? '#3b82f6');
     theme.set(cloudSettings.theme ?? 'dark');
     aiIntegrationsEnabled = cloudSettings.ai_integrations_enabled ?? false;
-    gradeAnalyserEnabled = cloudSettings.grade_analyser_enabled ?? true;
     lessonSummaryAnalyserEnabled = cloudSettings.lesson_summary_analyser_enabled ?? true;
+    quizGeneratorEnabled = cloudSettings.quiz_generator_enabled ?? true;
     autoCollapseSidebar = cloudSettings.auto_collapse_sidebar ?? false;
     autoExpandSidebarHover = cloudSettings.auto_expand_sidebar_hover ?? false;
     globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
@@ -623,8 +625,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       initialSettings.enhancedAnimations = enhancedAnimations;
       initialSettings.geminiApiKey = geminiApiKey;
       initialSettings.aiIntegrationsEnabled = aiIntegrationsEnabled;
-      initialSettings.gradeAnalyserEnabled = gradeAnalyserEnabled;
       initialSettings.lessonSummaryAnalyserEnabled = lessonSummaryAnalyserEnabled;
+      initialSettings.quizGeneratorEnabled = quizGeneratorEnabled;
       initialSettings.autoCollapseSidebar = autoCollapseSidebar;
       initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
       initialSettings.globalSearchEnabled = globalSearchEnabled;
@@ -675,8 +677,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       cerebrasApiKey !== initialSettings.cerebrasApiKey ||
       aiProvider !== initialSettings.aiProvider ||
       aiIntegrationsEnabled !== initialSettings.aiIntegrationsEnabled ||
-      gradeAnalyserEnabled !== initialSettings.gradeAnalyserEnabled ||
       lessonSummaryAnalyserEnabled !== initialSettings.lessonSummaryAnalyserEnabled ||
+      quizGeneratorEnabled !== initialSettings.quizGeneratorEnabled ||
       autoCollapseSidebar !== initialSettings.autoCollapseSidebar ||
       autoExpandSidebarHover !== initialSettings.autoExpandSidebarHover ||
       globalSearchEnabled !== initialSettings.globalSearchEnabled ||
@@ -2029,18 +2031,6 @@ The Company reserves the right to terminate your access to the Service at any ti
             <div class="pl-6 mt-3 space-y-3 sm:space-y-4">
               <div class="flex gap-3 items-center">
                 <input
-                  id="grade-analyser-enabled"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={gradeAnalyserEnabled} />
-                <label
-                  for="grade-analyser-enabled"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  <T key="settings.grade_analyser" fallback="Grade Analyser" />
-                </label>
-              </div>
-              <div class="flex gap-3 items-center">
-                <input
                   id="lesson-summary-analyser-enabled"
                   type="checkbox"
                   class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
@@ -2049,6 +2039,18 @@ The Company reserves the right to terminate your access to the Service at any ti
                   for="lesson-summary-analyser-enabled"
                   class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
                   <T key="settings.lesson_summary_analyser" fallback="Lesson Summary Analyser" />
+                </label>
+              </div>
+              <div class="flex gap-3 items-center">
+                <input
+                  id="quiz-generator-enabled"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={quizGeneratorEnabled} />
+                <label
+                  for="quiz-generator-enabled"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  <T key="settings.quiz_generator" fallback="Quiz Generator" />
                 </label>
               </div>
               <div class="mt-6 space-y-4">

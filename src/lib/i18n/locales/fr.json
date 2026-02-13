@@ -384,7 +384,10 @@
     "overview": "Aperçu",
     "details": "Détails",
     "submissions": "Soumissions",
-    "failed_to_load": "Échec du chargement des détails de l'évaluation"
+    "failed_to_load": "Échec du chargement des détails de l'évaluation",
+    "related_lessons": "Leçons connexes",
+    "related_lessons_empty": "Aucune leçon connexe",
+    "related_lessons_empty_desc": "Aucune leçon trouvée pour ce cours."
   },
   "timetable": {
     "monday": "Lundi",
@@ -581,6 +584,7 @@
     "enable_ai_features": "Activer les Fonctionnalités IA",
     "grade_analyser": "Analyseur de Notes",
     "lesson_summary_analyser": "Analyseur de Résumé de Leçon",
+    "quiz_generator": "Générateur de Quiz",
     "gemini_api_key": "Clé API Gemini",
     "gemini_placeholder": "Collez votre clé API Gemini ici",
     "plugins": "Plugins",
@@ -826,7 +830,36 @@
     "screenshot_alt": "Capture d'écran de l'extension"
   },
   "study": {
-    "tabs_label": "Sections d'Étude"
+    "tabs_label": "Sections d'Étude",
+    "quizzes": "Quiz",
+    "select_assessment": "Sélectionner une évaluation",
+    "custom_topic": "Sujet personnalisé",
+    "what_to_study": "Que voulez-vous étudier ?",
+    "question_count": "Nombre de questions",
+    "generate_quiz": "Générer un quiz",
+    "submit_answers": "Soumettre les réponses",
+    "raw_feedback": "Résultats",
+    "ai_feedback": "Retour IA",
+    "try_again": "Réessayer",
+    "no_api_key": "Ajoutez votre clé API dans Paramètres pour utiliser les outils d'étude IA.",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "correct_answer": "Bonne réponse",
+    "generating_feedback": "Génération du retour...",
+    "ai_feedback_unavailable": "Impossible de générer le retour IA.",
+    "configure_and_generate": "Configurez votre sujet et cliquez sur Générer un quiz pour commencer.",
+    "ai_quiz_setup": "Activer les quiz IA",
+    "quiz_preview": "Voici à quoi pourrait ressembler votre quiz IA :",
+    "get_free_api_key": "Obtenez une clé API Cerebras gratuite (1 minute) :",
+    "cerebras_step_1": "Allez sur",
+    "cerebras_step_2": "Inscrivez-vous (gratuit, sans carte bancaire)",
+    "cerebras_step_3": "Cliquez sur \"Copy api key\" sur le tableau de bord qui s'ouvre",
+    "cerebras_step_4": "Collez-la ci-dessous et cliquez sur Enregistrer",
+    "cerebras_free_tier": "Gratuit : 1 million de tokens par jour.",
+    "cerebras_api_key": "Clé API Cerebras",
+    "paste_api_key": "Collez votre clé API ici",
+    "save_and_enable": "Enregistrer et activer les quiz IA",
+    "api_key_required": "Veuillez entrer votre clé API."
   },
   "toast": {
     "close_notification": "Fermer la notification",

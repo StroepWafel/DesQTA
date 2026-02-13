@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import type { QuizQuestion, QuizFeedback } from '$lib/types/studyTools';
 
 interface AssessmentData {
   id: number;
@@ -388,5 +389,163 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
       );
       return null;
     }
+  }
+
+  /**
+   * Generic AI call that returns parsed JSON. Used by study tools (quiz, feedback).
+   */
+  static async callAIForJSON<T>(
+    prompt: string,
+    options?: { maxTokens?: number },
+  ): Promise<T | null> {
+    const provider = await this.getProvider();
+    const apiKey = await this.getApiKey(provider);
+    if (!apiKey) {
+      const providerName = provider === 'cerebras' ? 'Cerebras' : 'Gemini';
+      throw new Error(`No ${providerName} API key set. Please add your API key in Settings.`);
+    }
+    const maxTokens = options?.maxTokens ?? 2048;
+    try {
+      if (provider === 'cerebras') {
+        const response = await fetch(CEREBRAS_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+            'User-Agent': 'DesQTA/1.0',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.3,
+            max_tokens: maxTokens,
+            top_p: 0.95,
+          }),
+        });
+        if (!response.ok) throw new Error(`Cerebras API error: ${response.status}`);
+        const data = await response.json();
+        if (!data.choices?.[0]?.message?.content)
+          throw new Error('Invalid response from Cerebras API');
+        const text = data.choices[0].message.content;
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in response');
+        return JSON.parse(jsonMatch[0]) as T;
+      } else {
+        const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.3,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: maxTokens,
+            },
+          }),
+        });
+        if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+        const data = await response.json();
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text)
+          throw new Error('Invalid response from Gemini API');
+        const text = data.candidates[0].content.parts[0].text;
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in response');
+        return JSON.parse(jsonMatch[0]) as T;
+      }
+    } catch (error) {
+      console.error('Error in callAIForJSON:', error);
+      throw error;
+    }
+  }
+
+  static async generateQuizContent(params: {
+    topic: string;
+    numQuestions: number;
+    assessmentContext?: string;
+  }): Promise<{ questions: QuizQuestion[] } | null> {
+    const { topic, numQuestions, assessmentContext } = params;
+    const contextBlock = assessmentContext
+      ? `\nAdditional context from the assessment:\n${assessmentContext}\n`
+      : '';
+
+    const prompt = `You are an AI educational assistant creating a multiple-choice quiz for a student.
+
+Topic to quiz on: ${topic}
+${contextBlock}
+
+Generate exactly ${numQuestions} multiple-choice questions. Each question must have exactly 4 options (A, B, C, D). The correct answer should be at correctIndex (0-3).
+
+Respond ONLY with a JSON object in this exact format (no markdown, no code blocks):
+{
+  "questions": [
+    {
+      "question": "The question text here",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctIndex": 0
+    }
+  ]
+}
+
+Rules:
+- correctIndex must be 0, 1, 2, or 3 (index of the correct option)
+- Each question must have exactly 4 options
+- Questions should test understanding of the topic
+- Vary difficulty appropriately`;
+
+    const result = await this.callAIForJSON<{ questions: QuizQuestion[] }>(prompt, {
+      maxTokens: 4096,
+    });
+    if (!result?.questions || !Array.isArray(result.questions)) return null;
+    // Validate each question
+    const valid = result.questions.every(
+      (q) =>
+        typeof q.question === 'string' &&
+        Array.isArray(q.options) &&
+        q.options.length === 4 &&
+        typeof q.correctIndex === 'number' &&
+        q.correctIndex >= 0 &&
+        q.correctIndex < 4,
+    );
+    return valid ? result : null;
+  }
+
+  static async generateQuizFeedback(params: {
+    questions: QuizQuestion[];
+    userAnswers: number[];
+    topic: string;
+  }): Promise<QuizFeedback | null> {
+    const { questions, userAnswers, topic } = params;
+    const results = questions.map((q, i) => {
+      const correct = userAnswers[i] === q.correctIndex;
+      return {
+        question: q.question,
+        correctAnswer: q.options[q.correctIndex],
+        userAnswer: q.options[userAnswers[i] ?? -1] ?? 'No answer',
+        correct,
+      };
+    });
+    const correctCount = results.filter((r) => r.correct).length;
+    const total = questions.length;
+    const score = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+    const prompt = `You are an AI educational assistant providing personalized feedback on a student's quiz results.
+
+Topic: ${topic}
+Score: ${correctCount}/${total} (${score}%)
+
+Question-by-question results:
+${results.map((r, i) => `${i + 1}. ${r.question}\n   Correct: ${r.correctAnswer}\n   Student: ${r.userAnswer}\n   ${r.correct ? 'Correct' : 'Incorrect'}`).join('\n\n')}
+
+Provide encouraging, constructive feedback. Be specific about what they got right and what to review.
+
+Respond ONLY with a JSON object in this exact format (no markdown, no code blocks):
+{
+  "summary": "A 2-3 sentence overall summary of their performance",
+  "suggestions": ["Specific suggestion 1", "Specific suggestion 2", "..."],
+  "encouragement": "A brief encouraging closing message"
+}`;
+
+    return this.callAIForJSON<QuizFeedback>(prompt);
   }
 }
