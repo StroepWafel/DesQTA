@@ -17,6 +17,7 @@
   import { get } from 'svelte/store';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
+  import { analyticsCrunching } from '../../lib/stores/analyticsOnboarding';
 
   let analyticsData: AnalyticsData | null = $state(null);
   let loading = $state(true);
@@ -205,10 +206,15 @@
     }
   });
 
+  $effect(() => {
+    analyticsCrunching.set(loading || syncing);
+  });
+
   onDestroy(() => {
     if (timestampInterval) {
       clearInterval(timestampInterval);
     }
+    analyticsCrunching.set(false);
   });
 
   // Derived unique values for filter options
@@ -399,7 +405,7 @@
     </div>
 
     <!-- Main Analytics Charts -->
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" data-onboarding="analytics-chart">
       {#key filteredData().length + filteredData()
           .map((d) => d.id)
           .join(',')}

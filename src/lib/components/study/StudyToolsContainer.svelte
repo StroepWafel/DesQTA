@@ -213,7 +213,7 @@
   }
 </script>
 
-<div class="h-full flex flex-col min-h-0" in:fade={{ duration: 300 }}>
+<div class="h-full flex flex-col min-h-0" in:fade={{ duration: 300 }} data-onboarding="study-tools">
   <div
     class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col"
     in:fly={{ y: 20, duration: 300, delay: 100, easing: quintOut }}>

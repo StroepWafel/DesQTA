@@ -150,6 +150,7 @@
       {#each viewModeOptions as option}
         <button
           type="button"
+          data-onboarding-view={option.value}
           class="flex gap-1.5 items-center px-3 py-1.5 rounded-lg transition-all duration-200 font-medium text-xs sm:text-sm {viewMode === option.value 
             ? 'bg-accent-500 text-white shadow-sm' 
             : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'} hover:scale-105 active:scale-95"

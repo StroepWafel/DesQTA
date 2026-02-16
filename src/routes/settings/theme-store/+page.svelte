@@ -640,6 +640,7 @@
 <!-- Minimal Store Header -->
 <div
   class="sticky top-0 z-30 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700 shadow-sm"
+  data-onboarding="theme-store"
   transition:fade={{ duration: 200 }}>
   <div class="max-w-7xl mx-auto px-6 py-4">
     <div class="flex items-center justify-between gap-4">

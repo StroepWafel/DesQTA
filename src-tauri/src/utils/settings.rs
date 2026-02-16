@@ -149,6 +149,8 @@ pub struct Settings {
     #[serde(default)]
     pub has_been_through_onboarding: bool,
     #[serde(default)]
+    pub has_completed_setup_assistant: bool,
+    #[serde(default)]
     pub separate_rss_feed: bool,
     #[serde(default)]
     pub dashboard_widgets_layout: Option<String>,
@@ -179,7 +181,7 @@ impl Default for Settings {
             reminders_enabled: true,
             auto_dismiss_message_notifications: false,
             accent_color: "#3b82f6".to_string(), // Default to blue-500
-            theme: "default".to_string(),        // Default to DesQTA theme
+            theme: "dark".to_string(),            // Default color mode: dark (light/dark/system)
             disable_school_picture: false,
             enhanced_animations: true,
             gemini_api_key: None,
@@ -199,6 +201,7 @@ impl Default for Settings {
             language: "en".to_string(), // Default to English
             menu_order: None,
             has_been_through_onboarding: false,
+            has_completed_setup_assistant: false,
             separate_rss_feed: false,
             dashboard_widgets_layout: None,
             sidebar_folders: None,
@@ -493,6 +496,11 @@ impl Settings {
             &existing_json,
             "has_been_through_onboarding",
             default_settings.has_been_through_onboarding,
+        );
+        default_settings.has_completed_setup_assistant = get_bool(
+            &existing_json,
+            "has_completed_setup_assistant",
+            default_settings.has_completed_setup_assistant,
         );
         default_settings.separate_rss_feed = get_bool(
             &existing_json,

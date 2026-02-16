@@ -6,6 +6,7 @@
   import AppHeader from '../lib/components/AppHeader.svelte';
   import AppSidebar from '../lib/components/AppSidebar.svelte';
   import LoginScreen from '../lib/components/LoginScreen.svelte';
+  import SetupAssistant from '../lib/components/SetupAssistant.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import { Toaster } from 'svelte-sonner';
@@ -87,6 +88,7 @@
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
   let showOnboarding = $state(false);
+  let hasCompletedSetupAssistant = $state(false);
   let isFullscreen = $state(false);
 
   // Composables
@@ -380,24 +382,32 @@
         runSyncCloudSettings(),
       ]);
 
+      // Load setup assistant completion status (for first-launch flow)
+      try {
+        const setupSettings = await loadSettings(['has_completed_setup_assistant']);
+        hasCompletedSetupAssistant = setupSettings.has_completed_setup_assistant === true;
+      } catch (e) {
+        logger.debug('layout', 'onMount', 'Could not load setup assistant status', { error: e });
+      }
+
       // Auto-download settings from cloud in background (non-blocking)
       runAutoDownloadSettingsFromCloud().catch((e) => {
         logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
       });
 
-      // Check if user needs onboarding - DISABLED: Only show when button is pressed in settings
-      // try {
-      //   const settings = await loadSettings(['has_been_through_onboarding']);
-      //   if (!settings.has_been_through_onboarding) {
-      //     // Wait a bit for UI to settle
-      //     setTimeout(() => {
-      //       showOnboarding = true;
-      //       sidebarOpen = true; // Ensure sidebar is open for first step
-      //     }, 1000);
-      //   }
-      // } catch (e) {
-      //   logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
-      // }
+      // Check if user needs onboarding - show tour for first-time users
+      try {
+        const settings = await loadSettings(['has_been_through_onboarding']);
+        if (!settings.has_been_through_onboarding && !get(needsSetup)) {
+          // Wait a bit for UI to settle
+          setTimeout(() => {
+            showOnboarding = true;
+            sidebarOpen = true; // Ensure sidebar is open for first step
+          }, 1000);
+        }
+      } catch (e) {
+        logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
+      }
 
       // Validate SEQTA session BEFORE starting background sync
       // This prevents sync_analytics_data (and other warmup) from running in parallel with
@@ -718,10 +728,14 @@
             <LoadingScreen inline />
           </div>
         {:else if $needsSetup}
-          <LoginScreen
-            {seqtaUrl}
-            onStartLogin={startLogin}
-            onUrlChange={(url) => (seqtaUrl = url)} />
+          {#if !hasCompletedSetupAssistant}
+            <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />
+          {:else}
+            <LoginScreen
+              {seqtaUrl}
+              onStartLogin={startLogin}
+              onUrlChange={(url) => (seqtaUrl = url)} />
+          {/if}
         {:else}
           {@render children()}
         {/if}

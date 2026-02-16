@@ -57,7 +57,7 @@
   }
 </script>
 
-<div class="flex items-center gap-2 mb-4">
+<div class="flex items-center gap-2 mb-4" data-onboarding="dashboard-edit">
   {#if isEditing}
     <Button onclick={handleDone} class="gap-2">
       <Icon src={Check} class="w-4 h-4" />

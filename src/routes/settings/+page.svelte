@@ -289,7 +289,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       cerebrasApiKey = settings.cerebras_api_key ?? '';
       aiProvider = (settings.ai_provider as 'gemini' | 'cerebras') || 'gemini';
       accentColor.set(settings.accent_color ?? '#3b82f6');
-      theme.set(settings.theme ?? 'dark');
+      theme.set(settings.theme === 'default' ? 'dark' : (settings.theme ?? 'dark'));
       aiIntegrationsEnabled = settings.ai_integrations_enabled ?? false;
       lessonSummaryAnalyserEnabled = settings.lesson_summary_analyser_enabled ?? true;
       quizGeneratorEnabled = settings.quiz_generator_enabled ?? true;
@@ -313,7 +313,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         autoDismissMessageNotifications,
         forceUseLocation,
         accentColor: settings.accent_color ?? '#3b82f6',
-        theme: settings.theme ?? 'dark',
+        theme: settings.theme === 'default' ? 'dark' : (settings.theme ?? 'dark'),
         disableSchoolPicture,
         enhancedAnimations,
         geminiApiKey,
