@@ -910,6 +910,12 @@
     "close_notification": "Fermer la notification",
     "notifications": "Notifications"
   },
+  "profile": {
+    "delete_profile": "Supprimer le profil",
+    "delete_confirm": "Supprimer ce profil ?",
+    "delete_warning": "Toutes les données de ce compte seront supprimées. Cette action est irréversible.",
+    "delete_failed": "Échec de la suppression du profil"
+  },
   "user": {
     "user_menu": "Menu utilisateur",
     "about": "À propos",

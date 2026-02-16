@@ -219,9 +219,7 @@
                 <T key="setup_assistant.login_qr" fallback="QR Code" />
               </p>
               <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                <T
-                  key="setup_assistant.login_qr_desc"
-                  fallback="Scan from SEQTA Learn" />
+                <T key="setup_assistant.login_qr_desc" fallback="Scan from SEQTA Learn" />
               </p>
             </div>
             {#if !isMobile}
@@ -234,9 +232,7 @@
                   <T key="setup_assistant.login_url" fallback="Manual URL" />
                 </p>
                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                  <T
-                    key="setup_assistant.login_url_desc"
-                    fallback="Enter school URL" />
+                  <T key="setup_assistant.login_url_desc" fallback="Enter school URL" />
                 </p>
               </div>
               <div
@@ -248,9 +244,7 @@
                   <T key="setup_assistant.login_direct" fallback="Direct Login" />
                 </p>
                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                  <T
-                    key="setup_assistant.login_direct_desc"
-                    fallback="Username & password" />
+                  <T key="setup_assistant.login_direct_desc" fallback="Username & password" />
                 </p>
               </div>
             {/if}

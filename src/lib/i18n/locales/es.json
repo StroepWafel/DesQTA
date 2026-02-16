@@ -907,6 +907,12 @@
     "close_notification": "Cerrar notificación",
     "notifications": "Notificaciones"
   },
+  "profile": {
+    "delete_profile": "Eliminar perfil",
+    "delete_confirm": "¿Eliminar este perfil?",
+    "delete_warning": "Se eliminarán todos los datos de esta cuenta. Esta acción no se puede deshacer.",
+    "delete_failed": "Error al eliminar el perfil"
+  },
   "user": {
     "user_menu": "Menú de usuario",
     "about": "Acerca de",

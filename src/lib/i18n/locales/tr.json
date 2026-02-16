@@ -947,6 +947,12 @@
     "close_notification": "Close notification",
     "notifications": "Notifications"
   },
+  "profile": {
+    "delete_profile": "Profili sil",
+    "delete_confirm": "Bu profil silinsin mi?",
+    "delete_warning": "Bu hesabın tüm verileri kaldırılacak. Bu işlem geri alınamaz.",
+    "delete_failed": "Profil silinemedi"
+  },
   "user": {
     "user_menu": "User menu",
     "about": "About",

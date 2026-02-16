@@ -947,6 +947,12 @@
     "close_notification": "Close notification",
     "notifications": "Notifications"
   },
+  "profile": {
+    "delete_profile": "Usuń profil",
+    "delete_confirm": "Usunąć ten profil?",
+    "delete_warning": "Wszystkie dane tego konta zostaną usunięte. Tej operacji nie można cofnąć.",
+    "delete_failed": "Nie udało się usunąć profilu"
+  },
   "user": {
     "user_menu": "User menu",
     "about": "About",

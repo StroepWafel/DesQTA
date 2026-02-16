@@ -907,6 +907,12 @@
     "close_notification": "关闭通知",
     "notifications": "通知"
   },
+  "profile": {
+    "delete_profile": "删除配置文件",
+    "delete_confirm": "删除此配置文件？",
+    "delete_warning": "此帐户的所有数据将被删除。此操作无法撤销。",
+    "delete_failed": "删除配置文件失败"
+  },
   "user": {
     "user_menu": "用户菜单",
     "about": "关于",

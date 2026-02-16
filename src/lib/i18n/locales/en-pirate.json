@@ -913,6 +913,12 @@
     "close_notification": "Close notification",
     "notifications": "Notifications"
   },
+  "profile": {
+    "delete_profile": "Delete profile",
+    "delete_confirm": "Delete this profile?",
+    "delete_warning": "All data fer this account will be removed. This cannot be undone.",
+    "delete_failed": "Failed to delete profile"
+  },
   "user": {
     "user_menu": "User menu",
     "about": "About",

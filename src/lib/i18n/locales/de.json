@@ -907,6 +907,12 @@
     "close_notification": "Benachrichtigung schließen",
     "notifications": "Benachrichtigungen"
   },
+  "profile": {
+    "delete_profile": "Profil löschen",
+    "delete_confirm": "Dieses Profil löschen?",
+    "delete_warning": "Alle Daten dieses Kontos werden entfernt. Dies kann nicht rückgängig gemacht werden.",
+    "delete_failed": "Profil konnte nicht gelöscht werden"
+  },
   "user": {
     "user_menu": "Benutzermenü",
     "about": "Über",

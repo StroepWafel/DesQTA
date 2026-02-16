@@ -947,6 +947,12 @@
     "close_notification": "Close notification",
     "notifications": "Notifications"
   },
+  "profile": {
+    "delete_profile": "Profiel verwijderen",
+    "delete_confirm": "Dit profiel verwijderen?",
+    "delete_warning": "Alle gegevens van dit account worden verwijderd. Dit kan niet ongedaan worden gemaakt.",
+    "delete_failed": "Profiel verwijderen mislukt"
+  },
   "user": {
     "user_menu": "User menu",
     "about": "About",

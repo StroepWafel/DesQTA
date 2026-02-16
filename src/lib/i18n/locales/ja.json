@@ -907,6 +907,12 @@
     "close_notification": "通知を閉じる",
     "notifications": "通知"
   },
+  "profile": {
+    "delete_profile": "プロファイルを削除",
+    "delete_confirm": "このプロファイルを削除しますか？",
+    "delete_warning": "このアカウントのすべてのデータが削除されます。元に戻せません。",
+    "delete_failed": "プロファイルの削除に失敗しました"
+  },
   "user": {
     "user_menu": "ユーザーメニュー",
     "about": "について",

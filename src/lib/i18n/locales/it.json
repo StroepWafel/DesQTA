@@ -952,6 +952,12 @@
     "close_notification": "Chiudi notifica",
     "notifications": "Notifiche"
   },
+  "profile": {
+    "delete_profile": "Elimina profilo",
+    "delete_confirm": "Eliminare questo profilo?",
+    "delete_warning": "Tutti i dati di questo account verranno rimossi. Questa azione non può essere annullata.",
+    "delete_failed": "Impossibile eliminare il profilo"
+  },
   "user": {
     "user_menu": "Menu utente",
     "about": "Informazioni",

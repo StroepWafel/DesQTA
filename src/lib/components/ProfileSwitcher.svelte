@@ -1,9 +1,10 @@
 <script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
-  import { Icon, UserCircle, Check, Plus } from 'svelte-hero-icons';
+  import { Icon, UserCircle, Check, Plus, Trash } from 'svelte-hero-icons';
   import { fly, fade } from 'svelte/transition';
   import { onMount } from 'svelte';
   import { clickOutside } from '$lib/actions/clickOutside';
+  import { _ } from '../i18n';
 
   interface Profile {
     id: string;
@@ -28,6 +29,7 @@
   let showAddAccountModal = $state(false);
   let seqtaUrl = $state('');
   let addingAccount = $state(false);
+  let deletingProfileId = $state<string | null>(null);
 
   function closeSwitcher() {
     showSwitcher = false;
@@ -139,6 +141,32 @@
     seqtaUrl = '';
   }
 
+  async function deleteProfile(profileId: string, profileName: string) {
+    const confirmMsg = `${$_('profile.delete_confirm', { default: 'Delete this profile?' })} ${profileName}\n\n${$_('profile.delete_warning', { default: 'All data for this account will be removed. This cannot be undone.' })}`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      deletingProfileId = profileId;
+      await invoke('delete_profile', { profileId });
+
+      const wasCurrentProfile = profileId === currentProfile?.id;
+      await loadProfiles();
+
+      if (wasCurrentProfile || profiles.length === 0) {
+        if (onProfileSwitch) {
+          onProfileSwitch();
+        } else {
+          window.location.reload();
+        }
+      }
+    } catch (e) {
+      console.error('Failed to delete profile:', e);
+      alert($_('profile.delete_failed', { default: 'Failed to delete profile' }) + `: ${e}`);
+    } finally {
+      deletingProfileId = null;
+    }
+  }
+
   onMount(() => {
     loadProfiles();
   });
@@ -186,31 +214,50 @@
       <div class="p-2">
         {#if profiles.length > 0}
           {#each profiles as profile (profile.id)}
-            <button
-              class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:bg-accent-500/10 hover:text-accent-600 dark:text-zinc-200 dark:hover:text-accent-400 group disabled:opacity-50 disabled:cursor-not-allowed"
-              onclick={() => switchProfile(profile.id)}
-              disabled={switching || profile.id === currentProfile?.id}>
-              <div
-                class="flex justify-center items-center w-8 h-8 rounded-lg transition-colors bg-accent-100 group-hover:bg-accent-500/20 dark:bg-accent-900/30">
-                {#if profile.id === currentProfile?.id}
-                  <Icon src={Check} class="w-4 h-4 text-accent-600 dark:text-accent-400" />
-                {:else}
-                  <div class="w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600"></div>
+            <div
+              class="flex gap-3 items-center px-4 py-3 w-full rounded-xl transition-all duration-200 text-zinc-700 hover:bg-accent-500/10 hover:text-accent-600 dark:text-zinc-200 dark:hover:text-accent-400 group">
+              <button
+                class="flex gap-3 items-center flex-1 min-w-0 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                onclick={() => switchProfile(profile.id)}
+                disabled={switching || profile.id === currentProfile?.id}>
+                <div
+                  class="flex justify-center items-center w-8 h-8 shrink-0 rounded-lg transition-colors bg-accent-100 group-hover:bg-accent-500/20 dark:bg-accent-900/30">
+                  {#if profile.id === currentProfile?.id}
+                    <Icon src={Check} class="w-4 h-4 text-accent-600 dark:text-accent-400" />
+                  {:else}
+                    <div class="w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600"></div>
+                  {/if}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium truncate">{formatProfileName(profile)}</div>
+                  <div
+                    class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80 truncate">
+                    {profile.base_url}
+                  </div>
+                </div>
+                {#if switching && profile.id !== currentProfile?.id}
+                  <div
+                    class="w-4 h-4 shrink-0 border-2 border-accent-600 border-t-transparent rounded-full animate-spin">
+                  </div>
                 {/if}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="font-medium truncate">{formatProfileName(profile)}</div>
-                <div
-                  class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80 truncate">
-                  {profile.base_url}
-                </div>
-              </div>
-              {#if switching && profile.id !== currentProfile?.id}
-                <div
-                  class="w-4 h-4 border-2 border-accent-600 border-t-transparent rounded-full animate-spin">
-                </div>
-              {/if}
-            </button>
+              </button>
+              <button
+                type="button"
+                class="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-500/10 dark:hover:text-red-400 dark:hover:bg-red-500/20 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  deleteProfile(profile.id, formatProfileName(profile));
+                }}
+                disabled={deletingProfileId !== null}
+                aria-label={$_('profile.delete_profile', { default: 'Delete profile' })}>
+                {#if deletingProfileId === profile.id}
+                  <div
+                    class="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                {:else}
+                  <Icon src={Trash} class="w-4 h-4" />
+                {/if}
+              </button>
+            </div>
           {/each}
         {/if}
 

@@ -947,6 +947,12 @@
     "close_notification": "Close notification",
     "notifications": "Notifications"
   },
+  "profile": {
+    "delete_profile": "حذف الملف الشخصي",
+    "delete_confirm": "حذف هذا الملف الشخصي؟",
+    "delete_warning": "ستتم إزالة جميع بيانات هذا الحساب. لا يمكن التراجع عن هذا الإجراء.",
+    "delete_failed": "فشل حذف الملف الشخصي"
+  },
   "user": {
     "user_menu": "User menu",
     "about": "About",
