@@ -223,7 +223,7 @@ export class PerformanceTester {
           peakMemoryUsage,
         },
         timestamp: new Date().toISOString(),
-        version: '1.0.0-rc.7', // Match Cargo.toml version
+        version: '1.0.0-rc.8', // Match Cargo.toml version
       };
 
       logger.info('PerformanceTester', 'startPerformanceTest', 'Performance testing completed', {

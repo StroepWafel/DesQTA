@@ -170,7 +170,23 @@ export async function warmUpCommonData(): Promise<void> {
 // Assessments Overview warm-up: uses Rust backend for processing
 async function prefetchAssessmentsOverview(): Promise<void> {
   try {
-    if (cache.get('assessments_overview_data')) return;
+    const cached = cache.get<{ assessments?: unknown[] }>('assessments_overview_data');
+    if (cached?.assessments?.length) {
+      // Cache exists - still schedule push notifications from cached data
+      const { invoke } = await import('@tauri-apps/api/core');
+      const remindersEnabled = ((
+        await invoke<Record<string, unknown>>('get_settings_subset', {
+          keys: ['reminders_enabled'],
+        })
+      )?.reminders_enabled ?? true) as boolean;
+      if (remindersEnabled) {
+        const { notificationService } = await import('./notificationService');
+        await notificationService.scheduleNotifications(
+          cached.assessments as import('$lib/types').Assessment[],
+        );
+      }
+      return;
+    }
 
     // Use Rust backend to process all assessments data
     const { invoke } = await import('@tauri-apps/api/core');
@@ -202,6 +218,18 @@ async function prefetchAssessmentsOverview(): Promise<void> {
         subjects: result.subjects?.length,
       },
     );
+
+    // Schedule push notifications for assessments (respects reminders_enabled)
+    const remindersEnabled =
+      (
+        await invoke<Record<string, unknown>>('get_settings_subset', {
+          keys: ['reminders_enabled'],
+        })
+      )?.reminders_enabled ?? true;
+    if (remindersEnabled && result.assessments?.length) {
+      const { notificationService } = await import('./notificationService');
+      await notificationService.scheduleNotifications(result.assessments);
+    }
   } catch {
     // ignore warmup errors
   }
@@ -271,6 +299,14 @@ async function prefetchTodayNotices(): Promise<void> {
 async function prefetchAnalyticsSync(): Promise<void> {
   try {
     const { invoke } = await import('@tauri-apps/api/core');
+    const { authService } = await import('./authService');
+
+    // Check if we have a valid session before attempting sync
+    const sessionExists = await authService.checkSession();
+    if (!sessionExists) {
+      logger.debug('warmup', 'prefetchAnalyticsSync', 'No active session, skipping analytics sync');
+      return;
+    }
 
     // Check if analytics data already exists in cache
     try {
@@ -293,7 +329,7 @@ async function prefetchAnalyticsSync(): Promise<void> {
       );
     }
 
-    // Only sync if no data exists
+    // Only sync if no data exists and we have a valid session
     await invoke<string>('sync_analytics_data');
     logger.info('warmup', 'prefetchAnalyticsSync', 'Analytics data synced successfully');
 
@@ -319,7 +355,7 @@ async function prefetchFoliosSettings(): Promise<void> {
 
     const data = typeof response === 'string' ? JSON.parse(response) : response;
     const enabled = data?.payload?.['coneqt-s.page.folios']?.value === 'enabled';
-    
+
     cache.set(cacheKey, enabled, 60); // 60 min TTL
     await setIdb(cacheKey, enabled);
     logger.info('warmup', 'prefetchFoliosSettings', 'Cached folios settings (mem+idb)', {
@@ -345,7 +381,7 @@ async function prefetchGoalsSettings(): Promise<void> {
 
     const data = typeof response === 'string' ? JSON.parse(response) : response;
     const enabled = data?.payload?.['coneqt-s.page.goals']?.value === 'enabled';
-    
+
     cache.set(cacheKey, enabled, 60); // 60 min TTL
     await setIdb(cacheKey, enabled);
     logger.info('warmup', 'prefetchGoalsSettings', 'Cached goals settings (mem+idb)', {
@@ -361,7 +397,8 @@ async function prefetchGoalsSettings(): Promise<void> {
         body: { mode: 'years' },
       });
 
-      const yearsData = typeof yearsResponse === 'string' ? JSON.parse(yearsResponse) : yearsResponse;
+      const yearsData =
+        typeof yearsResponse === 'string' ? JSON.parse(yearsResponse) : yearsResponse;
       if (yearsData.status === '200' && Array.isArray(yearsData.payload)) {
         const yearsKey = 'goals_years';
         cache.set(yearsKey, yearsData.payload, 30); // 30 min TTL
@@ -393,7 +430,7 @@ async function prefetchForumsSettings(): Promise<void> {
     const forumsPageEnabled = data?.payload?.['coneqt-s.page.forums']?.value === 'enabled';
     const forumsGreetingExists = data?.payload?.['coneqt-s.forum.greeting'] !== undefined;
     const enabled = forumsPageEnabled || forumsGreetingExists;
-    
+
     cache.set(cacheKey, enabled, 60); // 60 min TTL
     await setIdb(cacheKey, enabled);
     logger.info('warmup', 'prefetchForumsSettings', 'Cached forums settings (mem+idb)', {

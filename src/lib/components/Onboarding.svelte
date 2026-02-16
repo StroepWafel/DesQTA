@@ -4,10 +4,24 @@
   import { page } from '$app/stores';
   import { invoke } from '@tauri-apps/api/core';
   import { fade, scale } from 'svelte/transition';
+  import { cubicInOut } from 'svelte/easing';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../services/settingsSync';
-  import { Icon, XMark, ChevronRight, ChevronLeft } from 'svelte-hero-icons';
+  import {
+    Icon,
+    XMark,
+    ChevronRight,
+    ChevronLeft,
+    Squares2x2,
+    Sparkles,
+    ChartBar,
+    CalendarDays,
+    PaintBrush,
+    Cloud,
+    UserCircle,
+  } from 'svelte-hero-icons';
   import { _ } from '../i18n';
   import T from './T.svelte';
+  import { analyticsCrunching } from '../stores/analyticsOnboarding';
 
   interface Props {
     open: boolean;
@@ -21,50 +35,85 @@
   let overlayVisible = $state(false);
   let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
   let hasInitialized = $state(false);
+  let timetableViewCycleInterval: ReturnType<typeof setInterval> | null = null;
 
   const steps = [
     {
-      id: 'nav',
-      title: 'Welcome to DesQTA!',
-      description: 'Use the navigation sidebar to access all your pages and features.',
-      targetSelector: 'aside nav',
+      id: 'dashboard',
+      titleKey: 'onboarding.step_dashboard_title',
+      descKey: 'onboarding.step_dashboard_desc',
+      titleFallback: 'Your Dashboard',
+      descFallback: 'Customize widgets, add shortcuts, pick templates. Your command center.',
+      targetSelector: '[data-onboarding="dashboard-edit"]',
       page: '/',
       scrollTo: null,
+      icon: Squares2x2,
     },
     {
-      id: 'assessments',
-      title: 'Your SEQTA Data',
-      description: 'All your SEQTA data is here. View assessments, grades, and more.',
-      targetSelector: null,
-      page: '/assessments',
+      id: 'study',
+      titleKey: 'onboarding.step_study_title',
+      descKey: 'onboarding.step_study_desc',
+      titleFallback: 'AI Study Tools',
+      descFallback: 'Generate quizzes from assessments, use flashcards, take notes.',
+      targetSelector: '[data-onboarding="study-tools"]',
+      page: '/study',
       scrollTo: null,
+      icon: Sparkles,
+    },
+    {
+      id: 'analytics',
+      titleKey: 'onboarding.step_analytics_title',
+      descKey: 'onboarding.step_analytics_desc',
+      titleFallback: 'Track Your Progress',
+      descFallback: 'See grade trends and performance over time.',
+      targetSelector: '[data-onboarding="analytics-chart"]',
+      page: '/analytics',
+      scrollTo: null,
+      icon: ChartBar,
+    },
+    {
+      id: 'timetable',
+      titleKey: 'onboarding.step_timetable_title',
+      descKey: 'onboarding.step_timetable_desc',
+      titleFallback: 'View Your Timetable in New Ways',
+      descFallback: 'Switch between week, day, month, and list views.',
+      targetSelector: '[data-onboarding="timetable-color"]',
+      page: '/timetable',
+      scrollTo: null,
+      icon: CalendarDays,
     },
     {
       id: 'theme-store',
-      title: 'Customize Your Experience',
-      description:
-        'Scroll down to find the Theme Store where you can customize your app appearance.',
+      titleKey: 'onboarding.step_theme_title',
+      descKey: 'onboarding.step_theme_desc',
+      titleFallback: 'Make It Yours',
+      descFallback: 'Themes, accent colors, dark mode.',
       targetSelector: '[data-onboarding="theme-store"]',
-      page: '/settings',
-      scrollTo: 'theme-store',
+      page: '/settings/theme-store',
+      scrollTo: null,
+      icon: PaintBrush,
     },
     {
       id: 'cloud-sync',
-      title: 'Cloud Sync',
-      description:
-        'Scroll up to find Cloud Sync settings to keep your data synchronized across devices.',
+      titleKey: 'onboarding.step_cloud_title',
+      descKey: 'onboarding.step_cloud_desc',
+      titleFallback: 'Sync Across Devices',
+      descFallback: 'Keep data in sync on all your devices.',
       targetSelector: '[data-onboarding="cloud-sync"]',
       page: '/settings',
       scrollTo: 'cloud-sync',
+      icon: Cloud,
     },
     {
       id: 'user-dropdown',
-      title: 'Your Profile',
-      description:
-        'Click on your profile picture in the header to access your account settings and preferences.',
+      titleKey: 'onboarding.step_profile_title',
+      descKey: 'onboarding.step_profile_desc',
+      titleFallback: 'Your Profile',
+      descFallback: 'Account, preferences, and more.',
       targetSelector: '[data-onboarding="user-dropdown"]',
       page: '/',
       scrollTo: null,
+      icon: UserCircle,
     },
   ];
 
@@ -84,21 +133,43 @@
     }
   }
 
+  function clearTimetableViewCycle() {
+    if (timetableViewCycleInterval) {
+      clearInterval(timetableViewCycleInterval);
+      timetableViewCycleInterval = null;
+    }
+  }
+
+  function cycleTimetableView() {
+    const viewOrder = ['week', 'day', 'month', 'list'];
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-onboarding-view]');
+    if (buttons.length === 0) return;
+    const currentPressed = document.querySelector('[data-onboarding-view][aria-pressed="true"]');
+    const currentIdx = currentPressed
+      ? viewOrder.indexOf((currentPressed as HTMLElement).dataset.onboardingView || 'week')
+      : -1;
+    const nextIdx = (currentIdx + 1) % viewOrder.length;
+    const nextView = viewOrder[nextIdx];
+    const nextBtn = document.querySelector<HTMLButtonElement>(`[data-onboarding-view="${nextView}"]`);
+    nextBtn?.click();
+  }
+
   async function navigateToStep() {
     overlayVisible = false;
     highlightElement = null;
+    clearTimetableViewCycle();
 
     const step = steps[currentStep];
 
     // Navigate to the required page
     if ($page.url.pathname !== step.page) {
       await goto(step.page);
-      // Wait for navigation
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Wait for navigation and DOM to settle
+      await new Promise((resolve) => setTimeout(resolve, 600));
     }
 
-    // Wait a bit for DOM to settle
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Wait for DOM to fully render
+    await new Promise((resolve) => setTimeout(resolve, 400));
 
     // Scroll to element if needed
     if (step.scrollTo) {
@@ -153,10 +224,16 @@
         await new Promise((resolve) => setTimeout(resolve, 400));
       }
     }
+
+    // Timetable step: cycle view modes every second
+    if (step.id === 'timetable') {
+      timetableViewCycleInterval = setInterval(cycleTimetableView, 1000);
+    }
   }
 
   async function completeOnboarding() {
     try {
+      clearTimetableViewCycle();
       await saveSettingsWithQueue({ has_been_through_onboarding: true });
       await flushSettingsQueue();
       overlayVisible = false;
@@ -195,6 +272,7 @@
     if (scrollTimeout) {
       clearTimeout(scrollTimeout);
     }
+    clearTimetableViewCycle();
   });
 
   function getHighlightRect() {
@@ -240,13 +318,13 @@
 </script>
 
 {#if open}
-  <!-- Fullscreen Overlay -->
+  <!-- Fullscreen Overlay (z-index above header/sidebar) -->
   <div
-    class="fixed inset-0 z-[9998] transition-opacity duration-300"
+    class="fixed inset-0 z-99999999 transition-opacity duration-300"
     class:opacity-0={!overlayVisible}
     class:opacity-100={overlayVisible}
     style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5);"
-    transition:fade={{ duration: 300 }}>
+    transition:fade={{ duration: 300, easing: cubicInOut }}>
     <!-- Highlight cutout -->
     {#if highlightRect && overlayVisible}
       <svg class="absolute inset-0 w-full h-full pointer-events-none">
@@ -281,24 +359,49 @@
 
   <!-- Tooltip Card -->
   <div
-    class="fixed z-[9999] transition-all duration-300"
+    class="fixed z-99999999 transition-all duration-300"
     style={tooltipStyle}
-    transition:scale={{ duration: 300 }}>
+    transition:scale={{ duration: 300, easing: cubicInOut }}>
     <div
       class="bg-white dark:bg-zinc-800 rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-700 p-6 max-w-md w-[90vw] sm:w-[400px]">
       <!-- Header -->
       <div class="flex items-start justify-between mb-4">
-        <div class="flex-1">
-          <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
-            {steps[currentStep].title}
-          </h2>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400">
-            {steps[currentStep].description}
-          </p>
+        <div class="flex items-start gap-3 flex-1">
+          <div
+            class="shrink-0 p-2 rounded-lg bg-[var(--accent)]/10"
+            aria-hidden="true">
+            {#if steps[currentStep].id === 'analytics' && $analyticsCrunching}
+              <div
+                class="w-6 h-6 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin"
+                aria-hidden="true"></div>
+            {:else}
+              <Icon src={steps[currentStep].icon} class="w-6 h-6 text-[var(--accent)]" />
+            {/if}
+          </div>
+          <div class="flex-1 min-w-0">
+            {#if steps[currentStep].id === 'analytics' && $analyticsCrunching}
+              <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+                <T key="onboarding.analytics_crunching" fallback="Hold on, crunching the numbers" />
+              </h2>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                <T
+                  key="onboarding.analytics_crunching_desc"
+                  fallback="Your grade data is syncing. This will only take a moment." />
+              </p>
+            {:else}
+              <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+                <T key={steps[currentStep].titleKey} fallback={steps[currentStep].titleFallback} />
+              </h2>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                <T key={steps[currentStep].descKey} fallback={steps[currentStep].descFallback} />
+              </p>
+            {/if}
+          </div>
         </div>
         <button
           onclick={skipOnboarding}
-          class="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
+          class="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+          aria-label={$_('onboarding.skip_tour', { default: 'Skip tour' })}>
           <Icon src={XMark} class="w-5 h-5" />
         </button>
       </div>
@@ -308,7 +411,7 @@
         <div class="flex gap-2">
           {#each steps as _, i}
             <div
-              class="h-1 flex-1 rounded-full transition-colors"
+              class="h-1 flex-1 rounded-full transition-colors duration-300"
               style={i <= currentStep ? 'background-color: var(--accent);' : ''}
               class:bg-zinc-200={i > currentStep}
               class:dark:bg-zinc-700={i > currentStep}>
@@ -316,7 +419,10 @@
           {/each}
         </div>
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-2 text-center">
-          Step {currentStep + 1} of {steps.length}
+          {$_('onboarding.step_x_of_y', {
+            default: `Step ${currentStep + 1} of ${steps.length}`,
+            values: { current: currentStep + 1, total: steps.length },
+          })}
         </p>
       </div>
 
@@ -325,7 +431,7 @@
         <button
           onclick={skipOnboarding}
           class="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
-          Skip
+          <T key="onboarding.skip_tour" fallback="Skip tour" />
         </button>
         <div class="flex items-center gap-3">
           <button
@@ -333,7 +439,7 @@
             disabled={currentStep === 0}
             class="flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
             <Icon src={ChevronLeft} class="w-4 h-4" />
-            <span>Previous</span>
+            <span><T key="common.back" fallback="Back" /></span>
           </button>
           <button
             onclick={nextStep}
@@ -345,7 +451,9 @@
             onmouseleave={(e) => {
               e.currentTarget.style.opacity = '1';
             }}>
-            <span>{currentStep === steps.length - 1 ? 'Complete' : 'Next'}</span>
+            <span>{currentStep === steps.length - 1
+              ? $_('onboarding.finish', { default: 'Finish' })
+              : $_('onboarding.next', { default: 'Next' })}</span>
             {#if currentStep < steps.length - 1}
               <Icon src={ChevronRight} class="w-4 h-4" />
             {/if}

@@ -74,8 +74,11 @@ class NotificationService {
     const reminder1Day = dueTimestamp - 1 * 24 * 60 * 60; // 1 day before
     const dueDateTimestamp = dueTimestamp;
 
-    // Check if overdue
-    const isOverdue = assessment.overdue || dueDate.getTime() < Date.now();
+    // Check if overdue (only within last 7 days - ignore assessments overdue by more than 7 days)
+    const nowMs = Date.now();
+    const sevenDaysAgoMs = nowMs - 7 * 24 * 60 * 60 * 1000;
+    const isOverdue =
+      (assessment.overdue || dueDate.getTime() < nowMs) && dueDate.getTime() >= sevenDaysAgoMs;
 
     // Schedule reminders only if they're in the future
     if (reminder3Days > now) {
@@ -177,9 +180,23 @@ class NotificationService {
       }
 
       // Send notifications with spacing to prevent batch sending
+      const sevenDaysAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
       for (let i = 0; i < dueNotifications.length; i++) {
         const notification = dueNotifications[i];
         const assessment = assessmentsMap.get(notification.assessment_id);
+
+        // Skip overdue notifications for assessments due more than 7 days ago
+        if (notification.notification_type === 'overdue') {
+          if (!assessment) {
+            await invoke('db_notification_mark_sent', { notificationId: notification.id });
+            continue;
+          }
+          const dueMs = new Date(assessment.due).getTime();
+          if (dueMs < sevenDaysAgoMs) {
+            await invoke('db_notification_mark_sent', { notificationId: notification.id });
+            continue;
+          }
+        }
 
         if (assessment) {
           await this.sendNotification(notification, assessment);

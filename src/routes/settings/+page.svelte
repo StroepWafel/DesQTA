@@ -38,6 +38,8 @@
     Flag,
     ChatBubbleBottomCenterText,
     FolderOpen,
+    MagnifyingGlass,
+    Minus,
   } from 'svelte-hero-icons';
   import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
@@ -53,6 +55,7 @@
   import { toastStore } from '../../lib/stores/toast';
   import { cloudSettingsService } from '../../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
+  import { setZoom } from '../../lib/utils/zoom';
   import { CacheManager } from '../../utils/cacheManager';
   import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
   import Modal from '../../lib/components/Modal.svelte';
@@ -67,51 +70,55 @@
     url: string;
   }
 
-  let shortcuts: Shortcut[] = [];
-  let loading = true;
-  let saving = false;
-  let saveSuccess = false;
-  let saveError = '';
-  let weatherEnabled = false;
-  let forceUseLocation = false;
-  let weatherCity = '';
-  let feeds: Feed[] = [];
-  let weatherCountry = '';
-  let disableSchoolPicture = false;
-  let enhancedAnimations = true;
-  let geminiApiKey = '';
+  let shortcuts = $state<Shortcut[]>([]);
+  let loading = $state(true);
+  let saving = $state(false);
+  let saveSuccess = $state(false);
+  let saveError = $state('');
+  let weatherEnabled = $state(false);
+  let forceUseLocation = $state(false);
+  let weatherCity = $state('');
+  let feeds = $state<Feed[]>([]);
+  let weatherCountry = $state('');
+  let disableSchoolPicture = $state(false);
+  let enhancedAnimations = $state(true);
+  let geminiApiKey = $state('');
+  let cerebrasApiKey = $state('');
+  let aiProvider = $state<'gemini' | 'cerebras'>('gemini');
 
-  let remindersEnabled = true;
-  let showCloudSyncModal = false;
-  let showTroubleshootingModal = false;
-  let aiIntegrationsEnabled = false;
-  let clearingCache = false;
-  let gradeAnalyserEnabled = true;
-  let lessonSummaryAnalyserEnabled = true;
-  let autoCollapseSidebar = false;
-  let autoExpandSidebarHover = false;
-  let globalSearchEnabled = true;
-  let devSensitiveInfoHider = false;
-  let devForceOfflineMode = false;
-  let showDevSettings = false;
-  let separateRssFeed = false;
+  let remindersEnabled = $state(true);
+  let autoDismissMessageNotifications = $state(false);
+  let showCloudSyncModal = $state(false);
+  let showTroubleshootingModal = $state(false);
+  let aiIntegrationsEnabled = $state(false);
+  let clearingCache = $state(false);
+  let lessonSummaryAnalyserEnabled = $state(true);
+  let quizGeneratorEnabled = $state(true);
+  let autoCollapseSidebar = $state(false);
+  let autoExpandSidebarHover = $state(false);
+  let globalSearchEnabled = $state(true);
+  let devSensitiveInfoHider = $state(false);
+  let devForceOfflineMode = $state(false);
+  let showDevSettings = $state(false);
+  let separateRssFeed = $state(false);
+  let zoomLevel = $state(1);
   let keyBuffer = '';
-  let acceptedCloudEula = false;
-  let showEulaModal = false;
+  let acceptedCloudEula = $state(false);
+  let showEulaModal = $state(false);
   let cloudBaseUrl: string = '';
   let cloudBaseUrlSaving = false;
   let cloudBaseUrlError: string | null = null;
   let cloudBaseUrlChanged = false;
-  let performanceTestRunning = false;
-  let checkingUpdates = false;
-  let updateAvailable = false;
-  let updateVersion = '';
-  let updateNotes = '';
-  let isDesktop = false;
-  let showSidebarSettingsDialog = false;
-  let showUnsavedChangesModal = false;
+  let performanceTestRunning = $state(false);
+  let checkingUpdates = $state(false);
+  let updateAvailable = $state(false);
+  let updateVersion = $state('');
+  let updateNotes = $state('');
+  let isDesktop = $state(false);
+  let showSidebarSettingsDialog = $state(false);
+  let showUnsavedChangesModal = $state(false);
   let pendingNavigationUrl: string | null = null;
-  let resettingOnboarding = false;
+  let resettingOnboarding = $state(false);
 
   // Store initial settings state for comparison
   let initialSettings: {
@@ -121,15 +128,18 @@
     weatherCity: string;
     weatherCountry: string;
     remindersEnabled: boolean;
+    autoDismissMessageNotifications: boolean;
     forceUseLocation: boolean;
     accentColor: string;
     theme: string;
     disableSchoolPicture: boolean;
     enhancedAnimations: boolean;
     geminiApiKey: string;
+    cerebrasApiKey: string;
+    aiProvider: 'gemini' | 'cerebras';
     aiIntegrationsEnabled: boolean;
-    gradeAnalyserEnabled: boolean;
     lessonSummaryAnalyserEnabled: boolean;
+    quizGeneratorEnabled: boolean;
     autoCollapseSidebar: boolean;
     autoExpandSidebarHover: boolean;
     globalSearchEnabled: boolean;
@@ -137,6 +147,7 @@
     devForceOfflineMode: boolean;
     acceptedCloudEula: boolean;
     separateRssFeed: boolean;
+    zoomLevel: number;
   } | null = null;
 
   // Menu configuration (same as in layout)
@@ -195,15 +206,15 @@ In no event shall the Company be liable for any direct, indirect, incidental, sp
 The Company reserves the right to terminate your access to the Service at any time, with or without cause, with or without notice, effective immediately.`;
 
   // Cloud user state
-  let cloudUser: any = null;
-  let cloudUserLoading = true;
+  let cloudUser = $state<any>(null);
+  let cloudUserLoading = $state(true);
 
   // Set the API URL for cloud sync
   const CLOUD_API_URL = 'https://accounts.betterseqta.org';
 
   // Profile picture state
-  let customProfilePicture: string | null = null;
-  let uploading = false;
+  let customProfilePicture = $state<string | null>(null);
+  let uploading = $state(false);
   let fileInput: HTMLInputElement;
 
   async function loadCloudUser() {
@@ -241,15 +252,18 @@ The Company reserves the right to terminate your access to the Service at any ti
           'weather_city',
           'weather_country',
           'reminders_enabled',
+          'auto_dismiss_message_notifications',
           'force_use_location',
           'accent_color',
           'theme',
           'disable_school_picture',
           'enhanced_animations',
           'gemini_api_key',
+          'cerebras_api_key',
+          'ai_provider',
           'ai_integrations_enabled',
-          'grade_analyser_enabled',
           'lesson_summary_analyser_enabled',
+          'quiz_generator_enabled',
           'auto_collapse_sidebar',
           'auto_expand_sidebar_hover',
           'global_search_enabled',
@@ -258,6 +272,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'accepted_cloud_eula',
           'language',
           'separate_rss_feed',
+          'zoom_level',
         ],
       });
       shortcuts = settings.shortcuts || [];
@@ -267,14 +282,17 @@ The Company reserves the right to terminate your access to the Service at any ti
       weatherCity = settings.weather_city ?? '';
       weatherCountry = settings.weather_country ?? '';
       remindersEnabled = settings.reminders_enabled ?? true;
+      autoDismissMessageNotifications = settings.auto_dismiss_message_notifications ?? false;
       disableSchoolPicture = settings.disable_school_picture ?? false;
       enhancedAnimations = settings.enhanced_animations ?? true;
       geminiApiKey = settings.gemini_api_key ?? '';
+      cerebrasApiKey = settings.cerebras_api_key ?? '';
+      aiProvider = (settings.ai_provider as 'gemini' | 'cerebras') || 'gemini';
       accentColor.set(settings.accent_color ?? '#3b82f6');
-      theme.set(settings.theme ?? 'dark');
+      theme.set(settings.theme === 'default' ? 'dark' : (settings.theme ?? 'dark'));
       aiIntegrationsEnabled = settings.ai_integrations_enabled ?? false;
-      gradeAnalyserEnabled = settings.grade_analyser_enabled ?? true;
       lessonSummaryAnalyserEnabled = settings.lesson_summary_analyser_enabled ?? true;
+      quizGeneratorEnabled = settings.quiz_generator_enabled ?? true;
       autoCollapseSidebar = settings.auto_collapse_sidebar ?? false;
       autoExpandSidebarHover = settings.auto_expand_sidebar_hover ?? false;
       globalSearchEnabled = settings.global_search_enabled ?? true;
@@ -282,6 +300,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
       separateRssFeed = settings.separate_rss_feed ?? false;
+      zoomLevel = typeof settings.zoom_level === 'number' ? settings.zoom_level : 1;
 
       // Store initial state for comparison
       initialSettings = {
@@ -291,15 +310,18 @@ The Company reserves the right to terminate your access to the Service at any ti
         weatherCity,
         weatherCountry,
         remindersEnabled,
+        autoDismissMessageNotifications,
         forceUseLocation,
         accentColor: settings.accent_color ?? '#3b82f6',
-        theme: settings.theme ?? 'dark',
+        theme: settings.theme === 'default' ? 'dark' : (settings.theme ?? 'dark'),
         disableSchoolPicture,
         enhancedAnimations,
         geminiApiKey,
+        cerebrasApiKey,
+        aiProvider,
         aiIntegrationsEnabled,
-        gradeAnalyserEnabled,
         lessonSummaryAnalyserEnabled,
+        quizGeneratorEnabled,
         autoCollapseSidebar,
         autoExpandSidebarHover,
         globalSearchEnabled,
@@ -307,6 +329,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         devForceOfflineMode,
         acceptedCloudEula,
         separateRssFeed,
+        zoomLevel,
       };
 
       console.log('Loading settings', {
@@ -326,14 +349,17 @@ The Company reserves the right to terminate your access to the Service at any ti
       weatherCity = '';
       weatherCountry = '';
       remindersEnabled = true;
+      autoDismissMessageNotifications = false;
       disableSchoolPicture = false;
       enhancedAnimations = true;
       geminiApiKey = '';
+      cerebrasApiKey = '';
+      aiProvider = 'gemini';
       accentColor.set('#3b82f6');
       theme.set('dark');
       aiIntegrationsEnabled = false;
-      gradeAnalyserEnabled = true;
       lessonSummaryAnalyserEnabled = true;
+      quizGeneratorEnabled = true;
       autoCollapseSidebar = false;
       autoExpandSidebarHover = false;
       globalSearchEnabled = true;
@@ -341,6 +367,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devForceOfflineMode = false;
       acceptedCloudEula = false;
       separateRssFeed = false;
+      zoomLevel = 1;
       showDevSettings = false;
     }
     loading = false;
@@ -385,22 +412,27 @@ The Company reserves the right to terminate your access to the Service at any ti
       enhancedAnimations,
     });
     try {
+      // Filter out feeds with empty URLs before saving
+      const validFeeds = feeds.filter((f) => f.url?.trim());
       const patch = {
         shortcuts,
-        feeds,
+        feeds: validFeeds,
         weather_enabled: weatherEnabled,
         weather_city: weatherCity,
         weather_country: weatherCountry,
         reminders_enabled: remindersEnabled,
+        auto_dismiss_message_notifications: autoDismissMessageNotifications,
         force_use_location: forceUseLocation,
         accent_color: $accentColor,
         theme: $theme,
         disable_school_picture: disableSchoolPicture,
         enhanced_animations: enhancedAnimations,
         gemini_api_key: geminiApiKey,
+        cerebras_api_key: cerebrasApiKey,
+        ai_provider: aiProvider,
         ai_integrations_enabled: aiIntegrationsEnabled,
-        grade_analyser_enabled: gradeAnalyserEnabled,
         lesson_summary_analyser_enabled: lessonSummaryAnalyserEnabled,
+        quiz_generator_enabled: quizGeneratorEnabled,
         auto_collapse_sidebar: autoCollapseSidebar,
         auto_expand_sidebar_hover: autoExpandSidebarHover,
         global_search_enabled: globalSearchEnabled,
@@ -408,6 +440,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
         separate_rss_feed: separateRssFeed,
+        zoom_level: zoomLevel,
       };
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
@@ -417,13 +450,18 @@ The Company reserves the right to terminate your access to the Service at any ti
       // Invalidate offline mode cache if setting changed
       if (patch.dev_force_offline_mode !== undefined) {
         const { invalidateOfflineModeCache } = await import('../../lib/utils/offlineMode');
+        const { invalidateConnectivity } = await import('$lib/stores/connectivity');
         invalidateOfflineModeCache();
+        invalidateConnectivity();
       }
 
       saveSuccess = true;
 
       // Show success toast
       toastStore.success('Settings saved successfully');
+
+      // Sync feeds to valid only (empty URLs were filtered out)
+      feeds = validFeeds;
 
       // Update initial settings after successful save
       if (initialSettings) {
@@ -440,14 +478,16 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.enhancedAnimations = enhancedAnimations;
         initialSettings.geminiApiKey = geminiApiKey;
         initialSettings.aiIntegrationsEnabled = aiIntegrationsEnabled;
-        initialSettings.gradeAnalyserEnabled = gradeAnalyserEnabled;
         initialSettings.lessonSummaryAnalyserEnabled = lessonSummaryAnalyserEnabled;
+        initialSettings.quizGeneratorEnabled = quizGeneratorEnabled;
         initialSettings.autoCollapseSidebar = autoCollapseSidebar;
         initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
         initialSettings.globalSearchEnabled = globalSearchEnabled;
         initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
         initialSettings.devForceOfflineMode = devForceOfflineMode;
         initialSettings.acceptedCloudEula = acceptedCloudEula;
+        initialSettings.separateRssFeed = separateRssFeed;
+        initialSettings.zoomLevel = zoomLevel;
       }
 
       if (!options.skipReload) {
@@ -552,16 +592,20 @@ The Company reserves the right to terminate your access to the Service at any ti
     disableSchoolPicture = cloudSettings.disable_school_picture ?? false;
     enhancedAnimations = cloudSettings.enhanced_animations ?? true;
     geminiApiKey = cloudSettings.gemini_api_key ?? '';
+    cerebrasApiKey = cloudSettings.cerebras_api_key ?? '';
+    aiProvider = (cloudSettings.ai_provider as 'gemini' | 'cerebras') || 'gemini';
     accentColor.set(cloudSettings.accent_color ?? '#3b82f6');
     theme.set(cloudSettings.theme ?? 'dark');
     aiIntegrationsEnabled = cloudSettings.ai_integrations_enabled ?? false;
-    gradeAnalyserEnabled = cloudSettings.grade_analyser_enabled ?? true;
     lessonSummaryAnalyserEnabled = cloudSettings.lesson_summary_analyser_enabled ?? true;
+    quizGeneratorEnabled = cloudSettings.quiz_generator_enabled ?? true;
     autoCollapseSidebar = cloudSettings.auto_collapse_sidebar ?? false;
     autoExpandSidebarHover = cloudSettings.auto_expand_sidebar_hover ?? false;
     globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
+    separateRssFeed = cloudSettings.separate_rss_feed ?? false;
+    zoomLevel = cloudSettings.zoom_level ?? 1;
 
     // Reload settings
     await loadSettings();
@@ -581,15 +625,20 @@ The Company reserves the right to terminate your access to the Service at any ti
       initialSettings.enhancedAnimations = enhancedAnimations;
       initialSettings.geminiApiKey = geminiApiKey;
       initialSettings.aiIntegrationsEnabled = aiIntegrationsEnabled;
-      initialSettings.gradeAnalyserEnabled = gradeAnalyserEnabled;
       initialSettings.lessonSummaryAnalyserEnabled = lessonSummaryAnalyserEnabled;
+      initialSettings.quizGeneratorEnabled = quizGeneratorEnabled;
       initialSettings.autoCollapseSidebar = autoCollapseSidebar;
       initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
       initialSettings.globalSearchEnabled = globalSearchEnabled;
       initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
       initialSettings.devForceOfflineMode = devForceOfflineMode;
       initialSettings.acceptedCloudEula = acceptedCloudEula;
+      initialSettings.separateRssFeed = separateRssFeed;
+      initialSettings.zoomLevel = zoomLevel;
     }
+
+    // Apply zoom immediately after cloud download
+    setZoom(zoomLevel);
   }
 
   function handleKeydown(event: KeyboardEvent) {
@@ -625,15 +674,19 @@ The Company reserves the right to terminate your access to the Service at any ti
       disableSchoolPicture !== initialSettings.disableSchoolPicture ||
       enhancedAnimations !== initialSettings.enhancedAnimations ||
       geminiApiKey !== initialSettings.geminiApiKey ||
+      cerebrasApiKey !== initialSettings.cerebrasApiKey ||
+      aiProvider !== initialSettings.aiProvider ||
       aiIntegrationsEnabled !== initialSettings.aiIntegrationsEnabled ||
-      gradeAnalyserEnabled !== initialSettings.gradeAnalyserEnabled ||
       lessonSummaryAnalyserEnabled !== initialSettings.lessonSummaryAnalyserEnabled ||
+      quizGeneratorEnabled !== initialSettings.quizGeneratorEnabled ||
       autoCollapseSidebar !== initialSettings.autoCollapseSidebar ||
       autoExpandSidebarHover !== initialSettings.autoExpandSidebarHover ||
       globalSearchEnabled !== initialSettings.globalSearchEnabled ||
       devSensitiveInfoHider !== initialSettings.devSensitiveInfoHider ||
       devForceOfflineMode !== initialSettings.devForceOfflineMode ||
-      acceptedCloudEula !== initialSettings.acceptedCloudEula
+      acceptedCloudEula !== initialSettings.acceptedCloudEula ||
+      separateRssFeed !== initialSettings.separateRssFeed ||
+      zoomLevel !== initialSettings.zoomLevel
     );
   }
 
@@ -901,7 +954,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             totalWarnings: 0,
           },
           timestamp: new Date().toISOString(),
-          version: '1.0.0-rc.7',
+          version: '1.0.0-rc.8',
         };
 
         await invoke('save_performance_test_results', { results: errorResults });
@@ -1679,6 +1732,62 @@ The Company reserves the right to terminate your access to the Service at any ti
         </div>
       </section>
 
+      <!-- Zoom Settings -->
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+          <h2 class="text-base font-semibold sm:text-lg">
+            <T key="settings.zoom" fallback="Interface Zoom" />
+          </h2>
+          <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+            <T
+              key="settings.zoom_description"
+              fallback="Adjust the size of interface elements (50%–200%)" />
+          </p>
+        </div>
+        <div class="p-4 sm:p-6">
+          <div
+            class="flex flex-col gap-4 p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
+            <div class="flex gap-4 items-center">
+              <button
+                type="button"
+                class="flex justify-center items-center w-10 h-10 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50"
+                onclick={() => {
+                  zoomLevel = Math.max(0.5, zoomLevel - 0.1);
+                  zoomLevel = Math.round(zoomLevel * 10) / 10;
+                  setZoom(zoomLevel);
+                }}
+                aria-label="Zoom out">
+                <Icon src={Minus} class="w-5 h-5" />
+              </button>
+              <span class="text-sm font-medium text-zinc-900 dark:text-white min-w-[4rem] text-center">
+                {Math.round(zoomLevel * 100)}%
+              </span>
+              <button
+                type="button"
+                class="flex justify-center items-center w-10 h-10 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring disabled:opacity-50"
+                onclick={() => {
+                  zoomLevel = Math.min(2, zoomLevel + 0.1);
+                  zoomLevel = Math.round(zoomLevel * 10) / 10;
+                  setZoom(zoomLevel);
+                }}
+                aria-label="Zoom in">
+                <Icon src={Plus} class="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1 text-sm rounded-lg bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-500 transition-all duration-200"
+                onclick={() => {
+                  zoomLevel = 1;
+                  setZoom(1);
+                }}>
+                <T key="settings.zoom_reset" fallback="Reset" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Notification Settings -->
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
@@ -1707,6 +1816,17 @@ The Company reserves the right to terminate your access to the Service at any ti
                 ><T
                   key="settings.enable_reminder_notifications"
                   fallback="Enable assessment reminder notifications" /></label>
+            </div>
+            <div class="flex gap-3 items-center">
+              <input
+                id="auto-dismiss-message-notifications"
+                type="checkbox"
+                class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                bind:checked={autoDismissMessageNotifications} />
+              <label
+                for="auto-dismiss-message-notifications"
+                class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
+                >Auto-dismiss message notifications when clicked</label>
             </div>
             <button
               class="px-4 py-2 w-full text-white rounded-lg shadow-xs transition-all duration-200 sm:w-auto accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105"
@@ -1911,18 +2031,6 @@ The Company reserves the right to terminate your access to the Service at any ti
             <div class="pl-6 mt-3 space-y-3 sm:space-y-4">
               <div class="flex gap-3 items-center">
                 <input
-                  id="grade-analyser-enabled"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={gradeAnalyserEnabled} />
-                <label
-                  for="grade-analyser-enabled"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  <T key="settings.grade_analyser" fallback="Grade Analyser" />
-                </label>
-              </div>
-              <div class="flex gap-3 items-center">
-                <input
                   id="lesson-summary-analyser-enabled"
                   type="checkbox"
                   class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
@@ -1933,31 +2041,88 @@ The Company reserves the right to terminate your access to the Service at any ti
                   <T key="settings.lesson_summary_analyser" fallback="Lesson Summary Analyser" />
                 </label>
               </div>
-              <div class="mt-6">
-                <label
-                  for="gemini-api-key"
-                  class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  <T key="settings.gemini_api_key" fallback="Gemini API Key" />
-                </label>
+              <div class="flex gap-3 items-center">
                 <input
-                  id="gemini-api-key"
-                  type="text"
-                  class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  placeholder={$_('settings.gemini_placeholder') ||
-                    'Paste your Gemini API key here'}
-                  bind:value={geminiApiKey}
-                  autocomplete="off"
-                  spellcheck="false" />
-                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  Get your API key from
-                  <a
-                    href="https://aistudio.google.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-blue-600 dark:text-blue-400 hover:underline">
-                    Google AI Studio
-                  </a>
-                </p>
+                  id="quiz-generator-enabled"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={quizGeneratorEnabled} />
+                <label
+                  for="quiz-generator-enabled"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  <T key="settings.quiz_generator" fallback="Quiz Generator" />
+                </label>
+              </div>
+              <div class="mt-6 space-y-4">
+                <div>
+                  <label
+                    for="ai-provider"
+                    class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                    <T key="settings.ai_provider" fallback="AI Provider" />
+                  </label>
+                  <select
+                    id="ai-provider"
+                    bind:value={aiProvider}
+                    class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500">
+                    <option value="gemini">Gemini</option>
+                    <option value="cerebras">Cerebras</option>
+                  </select>
+                </div>
+                {#if aiProvider === 'gemini'}
+                  <div>
+                    <label
+                      for="gemini-api-key"
+                      class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                      <T key="settings.gemini_api_key" fallback="Gemini API Key" />
+                    </label>
+                    <input
+                      id="gemini-api-key"
+                      type="text"
+                      class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      placeholder={$_('settings.gemini_placeholder') ||
+                        'Paste your Gemini API key here'}
+                      bind:value={geminiApiKey}
+                      autocomplete="off"
+                      spellcheck="false" />
+                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                      Get your API key from
+                      <a
+                        href="https://aistudio.google.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-blue-600 dark:text-blue-400 hover:underline">
+                        Google AI Studio
+                      </a>
+                    </p>
+                  </div>
+                {:else}
+                  <div>
+                    <label
+                      for="cerebras-api-key"
+                      class="block mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                      <T key="settings.cerebras_api_key" fallback="Cerebras API Key" />
+                    </label>
+                    <input
+                      id="cerebras-api-key"
+                      type="text"
+                      class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      placeholder={$_('settings.cerebras_placeholder') ||
+                        'Paste your Cerebras API key here'}
+                      bind:value={cerebrasApiKey}
+                      autocomplete="off"
+                      spellcheck="false" />
+                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                      Get your API key from
+                      <a
+                        href="https://cloud.cerebras.ai"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-blue-600 dark:text-blue-400 hover:underline">
+                        Cerebras Cloud
+                      </a>
+                    </p>
+                  </div>
+                {/if}
               </div>
             </div>
           {/if}

@@ -33,6 +33,7 @@ import StudyTimeTrackerWidget from '../components/widgets/StudyTimeTrackerWidget
 import DeadlinesCalendarWidget from '../components/widgets/DeadlinesCalendarWidget.svelte';
 import QuickNotesWidget from '../components/widgets/QuickNotesWidget.svelte';
 import WeatherWidget from '../components/widgets/WeatherWidget.svelte';
+import TimetableWidget from '../components/widgets/TimetableWidget.svelte';
 
 export const widgetRegistry = new Map<WidgetType, WidgetDefinition>([
   [
@@ -351,6 +352,67 @@ export const widgetRegistry = new Map<WidgetType, WidgetDefinition>([
           type: 'boolean',
           label: 'Show forecast',
           default: true,
+        },
+      },
+    },
+  ],
+  [
+    'timetable',
+    {
+      type: 'timetable',
+      name: 'Timetable',
+      description: 'View your weekly class schedule with multiple view modes',
+      icon: CalendarDays,
+      defaultSize: { w: 12, h: 8 },
+      minSize: { w: 6, h: 6 },
+      maxSize: { w: 12, h: 12 },
+      component: TimetableWidget,
+      defaultSettings: {
+        viewMode: 'week',
+        timeRange: { start: '08:00', end: '16:00' },
+        showTeacher: true,
+        showRoom: true,
+        showAttendance: true,
+        showEmptyPeriods: false,
+        density: 'normal',
+        defaultView: 'week',
+      },
+      settingsSchema: {
+        viewMode: {
+          type: 'select',
+          label: 'Default view mode',
+          default: 'week',
+          options: [
+            { value: 'week', label: 'Week' },
+            { value: 'day', label: 'Day' },
+            { value: 'month', label: 'Month' },
+            { value: 'list', label: 'List' },
+          ],
+        },
+        showTeacher: {
+          type: 'boolean',
+          label: 'Show teacher names',
+          default: true,
+        },
+        showRoom: {
+          type: 'boolean',
+          label: 'Show room numbers',
+          default: true,
+        },
+        showAttendance: {
+          type: 'boolean',
+          label: 'Show attendance status',
+          default: true,
+        },
+        density: {
+          type: 'select',
+          label: 'Display density',
+          default: 'normal',
+          options: [
+            { value: 'compact', label: 'Compact' },
+            { value: 'normal', label: 'Normal' },
+            { value: 'comfortable', label: 'Comfortable' },
+          ],
         },
       },
     },

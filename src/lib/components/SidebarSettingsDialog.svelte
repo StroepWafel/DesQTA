@@ -408,7 +408,6 @@
         sidebar_folders: [],
         sidebar_favorites: [],
         menu_order: menu.map((item) => item.path),
-        sidebar_recent_activity: [],
       });
       await flushSettingsQueue();
     } catch (e) {

@@ -4,34 +4,43 @@ import { goto } from '$app/navigation';
 import { writable, derived } from 'svelte/store';
 import { Icon, Squares2x2 } from 'svelte-hero-icons';
 import { scale } from 'svelte/transition';
+import { _ } from '$lib/i18n';
 
 const dispatch = createEventDispatcher();
 
 const pages = [
-  { name: 'Dashboard', path: '/dashboard' },
-  { name: 'Analytics', path: '/analytics' },
-  { name: 'Assessments', path: '/assessments' },
-  { name: 'Courses', path: '/courses' },
-  { name: 'Directory', path: '/directory' },
-  { name: 'Direqt Messages', path: '/direqt-messages' },
-  { name: 'News', path: '/news' },
-  { name: 'Notices', path: '/notices' },
-  { name: 'QR Sign In', path: '/qrsignin' },
-  { name: 'Reports', path: '/reports' },
-  { name: 'Settings', path: '/settings' },
-  { name: 'Timetable', path: '/timetable' },
-  { name: 'Welcome', path: '/welcome' },
+  { labelKey: 'navigation.dashboard', path: '/' },
+  { labelKey: 'navigation.analytics', path: '/analytics' },
+  { labelKey: 'navigation.assessments', path: '/assessments' },
+  { labelKey: 'navigation.courses', path: '/courses' },
+  { labelKey: 'navigation.directory', path: '/directory' },
+  { labelKey: 'navigation.messages', path: '/direqt-messages' },
+  { labelKey: 'navigation.news', path: '/news' },
+  { labelKey: 'navigation.notices', path: '/notices' },
+  { labelKey: 'navigation.qr_signin', path: '/qrsignin' },
+  { labelKey: 'navigation.reports', path: '/reports' },
+  { labelKey: 'navigation.settings', path: '/settings' },
+  { labelKey: 'navigation.timetable', path: '/timetable' },
+  { labelKey: 'navigation.welcome', path: '/welcome' },
 ];
 
 const searchStore = writable('');
 const showDropdownStore = writable(true);
-const filteredPages = derived(searchStore, ($search) =>
-  $search ? pages.filter((p) => p.name.toLowerCase().includes($search.toLowerCase())) : pages
-);
-let selectedIndex = 0;
+const filteredPages = derived([searchStore, _], ([$search, $format]) => {
+  if (!$search) return pages;
+  const query = $search.toLowerCase();
+  return pages.filter((p) => $format(p.labelKey).toLowerCase().includes(query));
+});
+let selectedIndex = $state(0);
 let searchInput: HTMLInputElement | null = null;
 
-function handleSelect(page: { name: string; path: string }) {
+$effect(() => {
+  if ($filteredPages.length > 0 && selectedIndex >= $filteredPages.length) {
+    selectedIndex = 0;
+  }
+});
+
+function handleSelect(page: { labelKey: string; path: string }) {
   searchStore.set('');
   showDropdownStore.set(false);
   dispatch('close');
@@ -80,7 +89,7 @@ onMount(() => {
         bind:this={searchInput}
         type="text"
         class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-zinc-800/60 text-zinc-900 dark:text-white border border-accent-500/40 focus:outline-hidden focus:ring-2 accent-ring transition-all duration-200 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-lg shadow-md"
-        placeholder="Search pages..."
+        placeholder={$_( 'pages_menu.search_placeholder' )}
         bind:value={$searchStore}
         onkeydown={handleKeydown}
         autocomplete="off"
@@ -92,7 +101,7 @@ onMount(() => {
         class="w-full mt-2 mb-4 px-2 space-y-1 max-h-96 overflow-y-auto"
         role="listbox"
       >
-        {#each $filteredPages as page, i}
+        {#each $filteredPages as page, i (page.path)}
           <button
             type="button"
             role="option"
@@ -104,15 +113,15 @@ onMount(() => {
             <span class="w-5 h-5 shrink-0 rounded-lg bg-accent-500/20 flex items-center justify-center">
               <!-- Optionally add an icon here in the future -->
             </span>
-            {page.name}
+            {$_( page.labelKey )}
           </button>
         {/each}
       </ul>
     {/if}
     <div class="flex items-center gap-4 px-6 pb-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↑</kbd><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↓</kbd> Navigate</span>
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">⏎</kbd> Select</span>
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">Esc</kbd> Close</span>
+      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↑</kbd><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↓</kbd> {$_( 'pages_menu.navigate' )}</span>
+      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">⏎</kbd> {$_( 'pages_menu.select' )}</span>
+      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">Esc</kbd> {$_( 'common.close' )}</span>
     </div>
   </div>
 </div> 

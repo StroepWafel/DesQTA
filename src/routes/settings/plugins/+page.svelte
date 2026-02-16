@@ -1,7 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { invoke } from '@tauri-apps/api/core';
-  import { notify } from '../../../utils/notify';
   import { marked } from 'marked';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
@@ -68,50 +66,6 @@
       plugins = [];
     }
     loading = false;
-  }
-
-  async function installPlugin(pluginId: string) {
-    try {
-      // For now, just update the UI state
-      plugins = plugins.map((plugin) =>
-        plugin.id === pluginId ? { ...plugin, installed: true } : plugin,
-      );
-      await notify({
-        title: $_('plugins.installed_title', { default: 'Plugin Installed' }),
-        body: $_('plugins.installed_body', {
-          default: 'The plugin has been successfully installed.',
-        }),
-      });
-    } catch (e) {
-      await notify({
-        title: $_('plugins.install_failed_title', { default: 'Installation Failed' }),
-        body: $_('plugins.install_failed_body', {
-          default: 'Failed to install the plugin. Please try again.',
-        }),
-      });
-    }
-  }
-
-  async function uninstallPlugin(pluginId: string) {
-    try {
-      // For now, just update the UI state
-      plugins = plugins.map((plugin) =>
-        plugin.id === pluginId ? { ...plugin, installed: false } : plugin,
-      );
-      await notify({
-        title: $_('plugins.uninstalled_title', { default: 'Plugin Uninstalled' }),
-        body: $_('plugins.uninstalled_body', {
-          default: 'The plugin has been successfully uninstalled.',
-        }),
-      });
-    } catch (e) {
-      await notify({
-        title: $_('plugins.uninstall_failed_title', { default: 'Uninstallation Failed' }),
-        body: $_('plugins.uninstall_failed_body', {
-          default: 'Failed to uninstall the plugin. Please try again.',
-        }),
-      });
-    }
   }
 
   function openPluginDetails(plugin: Plugin) {
@@ -367,21 +321,11 @@
             </div>
           </div>
 
-          <!-- Plugin Footer -->
+          <!-- Plugin Footer - Install/Uninstall disabled until plugin system is ready -->
           <div class="p-6 border-t bg-zinc-800 border-zinc-700">
-            {#if selectedPlugin.installed}
-              <button
-                class="px-6 py-3 w-full text-white bg-red-600 rounded-sm shadow-xs transition-transform duration-200 hover:bg-red-700 focus:ring-2 focus:ring-red-400 active:scale-95 hover:scale-105"
-                on:click={() => selectedPlugin && uninstallPlugin(selectedPlugin.id)}>
-                <T key="settings.uninstall_plugin" fallback="Uninstall Plugin" />
-              </button>
-            {:else}
-              <button
-                class="px-6 py-3 w-full text-white bg-blue-600 rounded-sm shadow-xs transition-transform duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 active:scale-95 hover:scale-105"
-                on:click={() => selectedPlugin && installPlugin(selectedPlugin.id)}>
-                <T key="settings.install_plugin" fallback="Install Plugin" />
-              </button>
-            {/if}
+            <p class="text-center text-sm text-zinc-400">
+              <T key="settings.plugin_store_coming_soon" fallback="Plugin Store Coming Soon" />
+            </p>
           </div>
         </div>
       </div>

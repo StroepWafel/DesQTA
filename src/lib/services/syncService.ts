@@ -63,11 +63,6 @@ export async function flushAll(): Promise<void> {
   }
 }
 
-// Auto-flush when connection is restored
-if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    flushAll().catch(() => {});
-  });
-}
+// Online handler moved to queueService - single coalesced handler
 
 

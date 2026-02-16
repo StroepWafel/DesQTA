@@ -3,43 +3,74 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
+use zip::ZipArchive;
+use sha2::{Sha256, Digest};
+use hex;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ThemeManifest {
     pub name: String,
+    #[serde(default = "default_display_name")]
     pub display_name: String,
     pub description: String,
     pub version: String,
     pub author: String,
+    #[serde(default = "default_category")]
     pub category: String,
+    #[serde(default)]
     pub tags: Vec<String>,
     pub preview: ThemePreview,
     pub settings: ThemeSettings,
     pub custom_properties: std::collections::HashMap<String, String>,
+    #[serde(default)]
     pub features: ThemeFeatures,
     pub fonts: ThemeFonts,
+    #[serde(default)]
     pub animations: ThemeAnimations,
+    #[serde(default)]
     pub color_schemes: ThemeColorSchemes,
+    #[serde(default)]
     pub accessibility: ThemeAccessibility,
+    #[serde(default)]
     pub responsive: ThemeResponsive,
+}
+
+fn default_display_name() -> String {
+    String::new() // Will be set from name if empty
+}
+
+fn default_category() -> String {
+    "uncategorized".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ThemePreview {
+    #[serde(default)]
     pub thumbnail: String,
+    #[serde(default)]
     pub screenshots: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ThemeSettings {
+    #[serde(default = "default_theme_mode")]
     pub default_theme: String,
+    #[serde(default = "default_accent_color_value")]
     pub default_accent_color: String,
     #[serde(default)]
     pub allow_user_customization: bool,
     pub auto_switch_time: Option<AutoSwitchTime>,
+}
+
+fn default_theme_mode() -> String {
+    "dark".to_string()
+}
+
+fn default_accent_color_value() -> String {
+    "#3b82f6".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -76,13 +107,20 @@ pub struct ThemeFonts {
     pub primary: String,
     pub secondary: String,
     pub monospace: String,
+    #[serde(default = "default_display_font")]
     pub display: String,
+}
+
+fn default_display_font() -> String {
+    "system-ui, -apple-system, sans-serif".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ThemeAnimations {
+    #[serde(default = "default_animation_duration")]
     pub duration: String,
+    #[serde(default = "default_animation_easing")]
     pub easing: String,
     #[serde(default)]
     pub scale: String,
@@ -90,6 +128,26 @@ pub struct ThemeAnimations {
     pub fade_in: String,
     #[serde(default)]
     pub slide_in: String,
+}
+
+impl Default for ThemeAnimations {
+    fn default() -> Self {
+        Self {
+            duration: default_animation_duration(),
+            easing: default_animation_easing(),
+            scale: String::new(),
+            fade_in: String::new(),
+            slide_in: String::new(),
+        }
+    }
+}
+
+fn default_animation_duration() -> String {
+    "200ms".to_string()
+}
+
+fn default_animation_easing() -> String {
+    "ease-in-out".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -135,46 +193,42 @@ impl ThemeManager {
     }
 
     pub fn get_themes_directory(&self) -> Result<PathBuf> {
+        use crate::profiles;
+        
+        // Get current profile directory
+        let profile_id = profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string());
+        
+        let mut profile_dir = profiles::get_profile_dir(&profile_id);
+        
         #[cfg(target_os = "android")]
         {
-            let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
-            dir.push("DesQTA");
-            if !dir.exists() {
-                println!("[ThemeManager] Creating Android data dir: {:?}", dir);
-                fs::create_dir_all(&dir)
-                    .map_err(|e| anyhow!("Unable to create data dir: {}", e))?;
-            }
-            dir.push("themes");
-            if !dir.exists() {
-                println!("[ThemeManager] Creating Android themes dir: {:?}", dir);
-                fs::create_dir_all(&dir)
+            // On Android, profile_dir is already the correct path
+            profile_dir.push("themes");
+            if !profile_dir.exists() {
+                println!("[ThemeManager] Creating Android themes dir: {:?}", profile_dir);
+                fs::create_dir_all(&profile_dir)
                     .map_err(|e| anyhow!("Unable to create themes dir: {}", e))?;
             }
-            println!("[ThemeManager] Using Android themes dir: {:?}", dir);
-            return Ok(dir);
+            println!("[ThemeManager] Using Android themes dir: {:?}", profile_dir);
+            return Ok(profile_dir);
         }
 
         #[cfg(not(target_os = "android"))]
         {
-            let mut base =
-                dirs_next::data_dir().ok_or_else(|| anyhow!("Unable to determine data dir"))?;
-            base.push("DesQTA");
-            if !base.exists() {
-                println!("[ThemeManager] Creating desktop data dir: {:?}", base);
-                fs::create_dir_all(&base)
-                    .map_err(|e| anyhow!("Unable to create data dir: {}", e))?;
-            }
-            let themes_dir = base.join("themes");
-            if !themes_dir.exists() {
+            // On desktop, profile_dir is already the correct path
+            profile_dir.push("themes");
+            if !profile_dir.exists() {
                 println!(
                     "[ThemeManager] Creating desktop themes dir: {:?}",
-                    themes_dir
+                    profile_dir
                 );
-                fs::create_dir_all(&themes_dir)
+                fs::create_dir_all(&profile_dir)
                     .map_err(|e| anyhow!("Unable to create themes dir: {}", e))?;
             }
-            println!("[ThemeManager] Using desktop themes dir: {:?}", themes_dir);
-            Ok(themes_dir)
+            println!("[ThemeManager] Using desktop themes dir: {:?}", profile_dir);
+            Ok(profile_dir)
         }
     }
 
@@ -289,7 +343,10 @@ impl ThemeManager {
     pub fn load_theme_manifest(&self, theme_name: &str) -> Result<ThemeManifest> {
         // First try to load from custom themes directory
         if let Ok(themes_dir) = self.get_themes_directory() {
-            let custom_manifest_path = themes_dir.join(theme_name).join("theme-manifest.json");
+            // Normalize path separators (handle .temp/theme-slug format)
+            // Convert forward slashes to platform-specific separators
+            let normalized_path = PathBuf::from(theme_name.replace('/', &std::path::MAIN_SEPARATOR.to_string()));
+            let custom_manifest_path = themes_dir.join(normalized_path).join("theme-manifest.json");
             if custom_manifest_path.exists() {
                 println!(
                     "[ThemeManager] Loading custom manifest: {:?}",
@@ -297,25 +354,36 @@ impl ThemeManager {
                 );
                 let content = fs::read_to_string(&custom_manifest_path)
                     .map_err(|e| anyhow!("Failed to read custom theme manifest: {}", e))?;
-                let manifest: ThemeManifest = serde_json::from_str(&content)
+                let mut manifest: ThemeManifest = serde_json::from_str(&content)
                     .map_err(|e| anyhow!("Failed to parse custom theme manifest: {}", e))?;
+                // Set display_name from name if it's empty (default from deserialization)
+                if manifest.display_name.is_empty() {
+                    manifest.display_name = manifest.name.clone();
+                }
                 return Ok(manifest);
             }
         }
 
-        // Then try static themes directory
-        let static_dir = self.get_static_themes_directory();
-        let static_manifest_path = static_dir.join(theme_name).join("theme-manifest.json");
-        if static_manifest_path.exists() {
-            println!(
-                "[ThemeManager] Loading static manifest: {:?}",
-                static_manifest_path
-            );
-            let content = fs::read_to_string(&static_manifest_path)
-                .map_err(|e| anyhow!("Failed to read static theme manifest: {}", e))?;
-            let manifest: ThemeManifest = serde_json::from_str(&content)
-                .map_err(|e| anyhow!("Failed to parse static theme manifest: {}", e))?;
-            return Ok(manifest);
+        // Then try static themes directory (skip for temp themes)
+        if !theme_name.starts_with(".temp/") && !theme_name.starts_with(".temp\\") {
+            let static_dir = self.get_static_themes_directory();
+            let normalized_path = PathBuf::from(theme_name.replace('/', &std::path::MAIN_SEPARATOR.to_string()));
+            let static_manifest_path = static_dir.join(normalized_path).join("theme-manifest.json");
+            if static_manifest_path.exists() {
+                println!(
+                    "[ThemeManager] Loading static manifest: {:?}",
+                    static_manifest_path
+                );
+                let content = fs::read_to_string(&static_manifest_path)
+                    .map_err(|e| anyhow!("Failed to read static theme manifest: {}", e))?;
+                let mut manifest: ThemeManifest = serde_json::from_str(&content)
+                    .map_err(|e| anyhow!("Failed to parse static theme manifest: {}", e))?;
+                // Set display_name from name if it's empty (default from deserialization)
+                if manifest.display_name.is_empty() {
+                    manifest.display_name = manifest.name.clone();
+                }
+                return Ok(manifest);
+            }
         }
 
         Err(anyhow!("Theme '{}' not found", theme_name))
@@ -324,7 +392,9 @@ impl ThemeManager {
     pub fn read_theme_css(&self, theme_name: &str, file_name: &str) -> Result<String> {
         // Prefer custom theme CSS in app data
         if let Ok(themes_dir) = self.get_themes_directory() {
-            let path = themes_dir.join(theme_name).join("styles").join(file_name);
+            // Normalize path separators (handle .temp/theme-slug format)
+            let normalized_path = PathBuf::from(theme_name.replace('/', &std::path::MAIN_SEPARATOR.to_string()));
+            let path = themes_dir.join(normalized_path).join("styles").join(file_name);
             if path.exists() {
                 println!("[ThemeManager] Reading custom CSS: {:?}", path);
                 return fs::read_to_string(&path)
@@ -332,13 +402,16 @@ impl ThemeManager {
             }
         }
 
-        // Fallback to static themes CSS
-        let static_dir = self.get_static_themes_directory();
-        let static_path = static_dir.join(theme_name).join("styles").join(file_name);
-        if static_path.exists() {
-            println!("[ThemeManager] Reading static CSS: {:?}", static_path);
-            return fs::read_to_string(&static_path)
-                .map_err(|e| anyhow!("Failed to read static CSS: {}", e));
+        // Fallback to static themes CSS (skip for temp themes)
+        if !theme_name.starts_with(".temp/") && !theme_name.starts_with(".temp\\") {
+            let static_dir = self.get_static_themes_directory();
+            let normalized_path = PathBuf::from(theme_name.replace('/', &std::path::MAIN_SEPARATOR.to_string()));
+            let static_path = static_dir.join(normalized_path).join("styles").join(file_name);
+            if static_path.exists() {
+                println!("[ThemeManager] Reading static CSS: {:?}", static_path);
+                return fs::read_to_string(&static_path)
+                    .map_err(|e| anyhow!("Failed to read static CSS: {}", e));
+            }
         }
 
         Err(anyhow!(
@@ -578,9 +651,8 @@ impl ThemeManager {
             return Err(anyhow!("Theme name cannot be empty"));
         }
 
-        if theme_data.display_name.is_empty() {
-            return Err(anyhow!("Theme display name cannot be empty"));
-        }
+        // Display name defaults to name if empty (handled in deserialization)
+        // We don't need to validate it separately
 
         if theme_data.version.is_empty() {
             return Err(anyhow!("Theme version cannot be empty"));
@@ -698,6 +770,488 @@ pub async fn export_theme_to_file(
         .map_err(|e| format!("Failed to serialize theme data: {}", e))?;
 
     fs::write(&file_path, theme_json).map_err(|e| format!("Failed to write theme file: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn download_and_install_theme(
+    app: AppHandle,
+    zip_url: String,
+    _theme_id: String,
+    theme_slug: String,
+    checksum: Option<String>,
+) -> Result<String, String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let theme_dir = themes_dir.join(&theme_slug);
+
+    println!(
+        "[ThemeManager] Downloading theme {} from {}",
+        theme_slug, zip_url
+    );
+
+    // 1. Download ZIP from URL using the global client (handles school networks/SSL)
+    use crate::netgrab;
+    let client = netgrab::create_client();
+
+    let response = client
+        .get(&zip_url)
+        .timeout(std::time::Duration::from_secs(60))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to download ZIP: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("HTTP error: {}", response.status()));
+    }
+
+    let zip_bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read ZIP bytes: {}", e))?;
+
+    // 2. Verify checksum if provided
+    if let Some(expected_checksum) = checksum {
+        let mut hasher = Sha256::new();
+        hasher.update(&zip_bytes);
+        let computed_hash = hex::encode(hasher.finalize());
+        
+        // Remove "sha256:" prefix if present
+        let expected_hash = expected_checksum
+            .strip_prefix("sha256:")
+            .unwrap_or(&expected_checksum)
+            .to_lowercase();
+
+        if computed_hash.to_lowercase() != expected_hash {
+            return Err(format!(
+                "Checksum mismatch. Expected: {}, Got: {}",
+                expected_hash, computed_hash
+            ));
+        }
+        println!("[ThemeManager] Checksum verified successfully");
+    }
+
+    // 3. Extract ZIP to app data themes directory
+    let mut archive = ZipArchive::new(std::io::Cursor::new(&zip_bytes))
+        .map_err(|e| format!("Failed to open ZIP archive: {}", e))?;
+
+    // Remove existing theme directory if it exists
+    if theme_dir.exists() {
+        println!("[ThemeManager] Removing existing theme directory: {:?}", theme_dir);
+        fs::remove_dir_all(&theme_dir)
+            .map_err(|e| format!("Failed to remove existing theme: {}", e))?;
+    }
+
+    // Create theme directory
+    fs::create_dir_all(&theme_dir)
+        .map_err(|e| format!("Failed to create theme directory: {}", e))?;
+
+    // Extract all files from ZIP
+    for i in 0..archive.len() {
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| format!("Failed to read file {} from ZIP: {}", i, e))?;
+
+        let file_path = match file.enclosed_name() {
+            Some(path) => path,
+            None => continue,
+        };
+
+        // Remove the root folder name if ZIP contains {theme-slug}/ structure
+        let relative_path = if file_path.starts_with(&theme_slug) {
+            file_path.strip_prefix(&format!("{}/", theme_slug))
+                .unwrap_or(file_path)
+        } else {
+            file_path
+        };
+
+        let outpath = theme_dir.join(relative_path);
+
+        // Create parent directories if needed
+        if let Some(parent) = outpath.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create directory {:?}: {}", parent, e))?;
+        }
+
+        // Skip directories
+        if file.is_dir() {
+            fs::create_dir_all(&outpath)
+                .map_err(|e| format!("Failed to create directory {:?}: {}", outpath, e))?;
+            continue;
+        }
+
+        // Extract file
+        let mut outfile = fs::File::create(&outpath)
+            .map_err(|e| format!("Failed to create file {:?}: {}", outpath, e))?;
+        std::io::copy(&mut file, &mut outfile)
+            .map_err(|e| format!("Failed to write file {:?}: {}", outpath, e))?;
+    }
+
+    println!("[ThemeManager] Theme extracted successfully to: {:?}", theme_dir);
+
+    // 4. Validate structure (check for theme-manifest.json)
+    let manifest_path = theme_dir.join("theme-manifest.json");
+    if !manifest_path.exists() {
+        return Err(format!(
+            "Theme manifest not found at {:?}. Invalid theme structure.",
+            manifest_path
+        ));
+    }
+
+    // 5. Return theme slug - frontend will load manifest using existing load_theme_manifest command
+    Ok(theme_slug)
+}
+
+#[tauri::command]
+pub async fn download_theme_to_temp(
+    app: AppHandle,
+    zip_url: String,
+    theme_slug: String,
+    checksum: Option<String>,
+) -> Result<String, String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    // Use .temp subfolder for temporary preview themes
+    let temp_dir = themes_dir.join(".temp");
+    let theme_dir = temp_dir.join(&theme_slug);
+
+    println!(
+        "[ThemeManager] Downloading theme {} to temp folder from {}",
+        theme_slug, zip_url
+    );
+
+    // 1. Download ZIP from URL using the global client (handles school networks/SSL)
+    use crate::netgrab;
+    let client = netgrab::create_client();
+
+    let response = client
+        .get(&zip_url)
+        .timeout(std::time::Duration::from_secs(60))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to download ZIP: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("HTTP error: {}", response.status()));
+    }
+
+    let zip_bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read ZIP bytes: {}", e))?;
+
+    // 2. Verify checksum if provided
+    if let Some(expected_checksum) = checksum {
+        let mut hasher = Sha256::new();
+        hasher.update(&zip_bytes);
+        let computed_hash = hex::encode(hasher.finalize());
+        
+        // Remove "sha256:" prefix if present
+        let expected_hash = expected_checksum
+            .strip_prefix("sha256:")
+            .unwrap_or(&expected_checksum)
+            .to_lowercase();
+
+        if computed_hash.to_lowercase() != expected_hash {
+            return Err(format!(
+                "Checksum mismatch. Expected: {}, Got: {}",
+                expected_hash, computed_hash
+            ));
+        }
+        println!("[ThemeManager] Checksum verified successfully");
+    }
+
+    // 3. Extract ZIP to temp directory
+    let mut archive = ZipArchive::new(std::io::Cursor::new(&zip_bytes))
+        .map_err(|e| format!("Failed to open ZIP archive: {}", e))?;
+
+    // Remove existing temp theme directory if it exists
+    if theme_dir.exists() {
+        println!("[ThemeManager] Removing existing temp theme directory: {:?}", theme_dir);
+        fs::remove_dir_all(&theme_dir)
+            .map_err(|e| format!("Failed to remove existing temp theme: {}", e))?;
+    }
+
+    // Create temp directory
+    fs::create_dir_all(&theme_dir)
+        .map_err(|e| format!("Failed to create temp theme directory: {}", e))?;
+
+    // Extract all files from ZIP
+    for i in 0..archive.len() {
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| format!("Failed to read file {} from ZIP: {}", i, e))?;
+
+        let file_path = match file.enclosed_name() {
+            Some(path) => path,
+            None => continue,
+        };
+
+        // Remove the root folder name if ZIP contains {theme-slug}/ structure
+        let relative_path = if file_path.starts_with(&theme_slug) {
+            file_path.strip_prefix(&format!("{}/", theme_slug))
+                .unwrap_or(file_path)
+        } else {
+            file_path
+        };
+
+        let outpath = theme_dir.join(relative_path);
+
+        // Create parent directories if needed
+        if let Some(parent) = outpath.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create directory {:?}: {}", parent, e))?;
+        }
+
+        // Skip directories
+        if file.is_dir() {
+            fs::create_dir_all(&outpath)
+                .map_err(|e| format!("Failed to create directory {:?}: {}", outpath, e))?;
+            continue;
+        }
+
+        // Extract file
+        let mut outfile = fs::File::create(&outpath)
+            .map_err(|e| format!("Failed to create file {:?}: {}", outpath, e))?;
+        std::io::copy(&mut file, &mut outfile)
+            .map_err(|e| format!("Failed to write file {:?}: {}", outpath, e))?;
+    }
+
+    println!("[ThemeManager] Theme extracted successfully to temp: {:?}", theme_dir);
+
+    // 4. Validate structure (check for theme-manifest.json)
+    let manifest_path = theme_dir.join("theme-manifest.json");
+    if !manifest_path.exists() {
+        return Err(format!(
+            "Theme manifest not found at {:?}. Invalid theme structure.",
+            manifest_path
+        ));
+    }
+
+    // 5. Return theme slug with .temp prefix for identification
+    Ok(format!(".temp/{}", theme_slug))
+}
+
+#[tauri::command]
+pub async fn cleanup_temp_theme(
+    app: AppHandle,
+    theme_slug: String,
+) -> Result<(), String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let temp_dir = themes_dir.join(".temp");
+    let theme_dir = temp_dir.join(&theme_slug);
+
+    if theme_dir.exists() {
+        println!("[ThemeManager] Cleaning up temp theme: {:?}", theme_dir);
+        fs::remove_dir_all(&theme_dir)
+            .map_err(|e| format!("Failed to remove temp theme: {}", e))?;
+        println!("[ThemeManager] Temp theme cleaned up successfully");
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn cache_theme_image(
+    app: AppHandle,
+    image_url: String,
+    theme_id: String,
+    image_type: String, // "thumbnail" or "screenshot"
+    image_index: Option<usize>, // For screenshots
+) -> Result<String, String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let images_dir = themes_dir.join("images");
+    
+    // Create images directory if it doesn't exist
+    fs::create_dir_all(&images_dir)
+        .map_err(|e| format!("Failed to create images directory: {}", e))?;
+
+    // Generate filename based on theme_id, image_type, and optional index
+    let filename = if let Some(index) = image_index {
+        format!("{}_{}_{}.jpg", theme_id, image_type, index)
+    } else {
+        format!("{}_{}.jpg", theme_id, image_type)
+    };
+    
+    let cached_path = images_dir.join(&filename);
+
+    println!(
+        "[ThemeManager] Caching theme image {} to {:?}",
+        image_url, cached_path
+    );
+
+    // Download image using netgrab client (handles school networks/SSL)
+    use crate::netgrab;
+    let client = netgrab::create_client();
+
+    let response = client
+        .get(&image_url)
+        .timeout(std::time::Duration::from_secs(30))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to download image: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("HTTP error: {}", response.status()));
+    }
+
+    let image_bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read image bytes: {}", e))?;
+
+    // Write image to cache
+    fs::write(&cached_path, &image_bytes)
+        .map_err(|e| format!("Failed to write cached image: {}", e))?;
+
+    println!("[ThemeManager] Image cached successfully to {:?}", cached_path);
+
+    // Return the cached path as a string (relative to themes directory)
+    Ok(format!("images/{}", filename))
+}
+
+#[tauri::command]
+pub async fn get_cached_image_path(
+    app: AppHandle,
+    theme_id: String,
+    image_type: String,
+    image_index: Option<usize>,
+    updated_at: Option<u64>, // Unix timestamp
+) -> Result<Option<String>, String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let images_dir = themes_dir.join("images");
+
+    // Generate filename
+    let filename = if let Some(index) = image_index {
+        format!("{}_{}_{}.jpg", theme_id, image_type, index)
+    } else {
+        format!("{}_{}.jpg", theme_id, image_type)
+    };
+    
+    let cached_path = images_dir.join(&filename);
+
+    // Check if cached image exists
+    if !cached_path.exists() {
+        return Ok(None);
+    }
+
+    // If updated_at is provided, check if cache is stale
+    if let Some(updated_at_ts) = updated_at {
+        if let Ok(metadata) = fs::metadata(&cached_path) {
+            if let Ok(modified_time) = metadata.modified() {
+                if let Ok(duration_since_epoch) = modified_time.duration_since(std::time::UNIX_EPOCH) {
+                    let cached_timestamp = duration_since_epoch.as_secs();
+                    // If cached image is older than updated_at, it's stale
+                    if cached_timestamp < updated_at_ts {
+                        println!(
+                            "[ThemeManager] Cached image is stale (cached: {}, updated: {})",
+                            cached_timestamp, updated_at_ts
+                        );
+                        return Ok(None);
+                    }
+                }
+            }
+        }
+    }
+
+    // Return the cached path (relative to themes directory)
+    Ok(Some(format!("images/{}", filename)))
+}
+
+#[tauri::command]
+pub async fn get_cached_image_url(
+    app: AppHandle,
+    theme_id: String,
+    image_type: String,
+    image_index: Option<usize>,
+) -> Result<Option<String>, String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let themes_dir_str = themes_dir.to_string_lossy().to_string();
+    
+    let images_dir = themes_dir.join("images");
+
+    // Generate filename
+    let filename = if let Some(index) = image_index {
+        format!("{}_{}_{}.jpg", theme_id, image_type, index)
+    } else {
+        format!("{}_{}.jpg", theme_id, image_type)
+    };
+    
+    let cached_path = images_dir.join(&filename);
+
+    // Check if cached image exists
+    if !cached_path.exists() {
+        return Ok(None);
+    }
+
+    // Return file:// URL for the cached image
+    // Convert to absolute path and normalize separators
+    let absolute_path = cached_path.canonicalize()
+        .map_err(|e| format!("Failed to canonicalize path: {}", e))?;
+    let path_str = absolute_path.to_string_lossy().replace('\\', "/");
+    
+    // On Windows, file:// URLs need 3 slashes, on Unix they need 3 slashes too
+    Ok(Some(format!("file:///{}", path_str)))
+}
+
+#[tauri::command]
+pub async fn invalidate_theme_image_cache(
+    app: AppHandle,
+    theme_id: String,
+) -> Result<(), String> {
+    let theme_manager = ThemeManager::new(app.clone());
+    let themes_dir = theme_manager
+        .get_themes_directory()
+        .map_err(|e| format!("Failed to get themes directory: {}", e))?;
+
+    let images_dir = themes_dir.join("images");
+
+    if !images_dir.exists() {
+        return Ok(()); // No cache directory, nothing to invalidate
+    }
+
+    println!("[ThemeManager] Invalidating image cache for theme: {}", theme_id);
+
+    // Delete thumbnail
+    let thumbnail_path = images_dir.join(format!("{}_thumbnail.jpg", theme_id));
+    if thumbnail_path.exists() {
+        fs::remove_file(&thumbnail_path)
+            .map_err(|e| format!("Failed to remove thumbnail: {}", e))?;
+        println!("[ThemeManager] Removed cached thumbnail: {:?}", thumbnail_path);
+    }
+
+    // Delete screenshots (try first 20 to cover most cases)
+    for i in 0..20 {
+        let screenshot_path = images_dir.join(format!("{}_screenshot_{}.jpg", theme_id, i));
+        if screenshot_path.exists() {
+            fs::remove_file(&screenshot_path)
+                .map_err(|e| format!("Failed to remove screenshot {}: {}", i, e))?;
+            println!("[ThemeManager] Removed cached screenshot {}: {:?}", i, screenshot_path);
+        }
+    }
 
     Ok(())
 }

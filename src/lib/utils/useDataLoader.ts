@@ -3,6 +3,8 @@ import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
 import { logger } from '../../utils/logger';
 import { isOfflineMode } from './offlineMode';
 
+export type SyncState = 'cached' | 'fresh' | 'syncing' | 'failed';
+
 export interface DataLoaderOptions<T> {
   cacheKey: string;
   ttlMinutes?: number;
@@ -13,6 +15,8 @@ export interface DataLoaderOptions<T> {
   shouldSyncInBackground?: (data: T) => boolean; // Default: always sync if online
   skipCache?: boolean; // If true, bypass all caching and always fetch fresh data
   updateOnBackgroundSync?: boolean; // If true, call onDataLoaded again when background sync completes (for critical data)
+  /** Optional callback for sync state changes - enables "Showing cached data" / "Syncing..." UI */
+  reportSyncState?: (state: SyncState) => void;
 }
 
 /**
@@ -33,6 +37,7 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
     shouldSyncInBackground = () => true,
     skipCache = false,
     updateOnBackgroundSync = false,
+    reportSyncState,
   } = options;
 
   try {
@@ -52,6 +57,7 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
     const memCached = cache.get<T>(cacheKey);
     if (memCached) {
       logger.debug(context, functionName, `Cache hit (memory)`, { key: cacheKey });
+      reportSyncState?.('cached');
       if (onDataLoaded) {
         await onDataLoaded(memCached);
       }
@@ -66,6 +72,7 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
         onDataLoaded,
         updateOnBackgroundSync,
         ttlMinutes,
+        reportSyncState,
       );
       return memCached;
     }
@@ -74,6 +81,7 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
     const idbCached = await getWithIdbFallback<T>(cacheKey, cacheKey, () => cache.get<T>(cacheKey));
     if (idbCached) {
       logger.debug(context, functionName, `Cache hit (IndexedDB)`, { key: cacheKey });
+      reportSyncState?.('cached');
       // Restore to memory cache
       cache.set(cacheKey, idbCached, ttlMinutes);
       if (onDataLoaded) {
@@ -90,6 +98,7 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
         onDataLoaded,
         updateOnBackgroundSync,
         ttlMinutes,
+        reportSyncState,
       );
       return idbCached;
     }
@@ -102,6 +111,7 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
     cache.set(cacheKey, freshData, ttlMinutes);
     await setIdb(cacheKey, freshData);
     logger.debug(context, functionName, `Data cached (mem+idb)`, { key: cacheKey });
+    reportSyncState?.('fresh');
 
     if (onDataLoaded) {
       await onDataLoaded(freshData);
@@ -110,6 +120,7 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
     return freshData;
   } catch (e) {
     logger.error(context, functionName, `Failed to load data: ${e}`, { key: cacheKey, error: e });
+    reportSyncState?.('failed');
     return null;
   }
 }
@@ -124,6 +135,7 @@ async function triggerBackgroundSync<T>(
   onDataLoaded?: (data: T) => void | Promise<void>,
   updateOnBackgroundSync = false,
   ttlMinutes = 10,
+  reportSyncState?: (state: SyncState) => void,
 ): Promise<void> {
   const offline = await isOfflineMode();
   if (offline) {
@@ -139,6 +151,7 @@ async function triggerBackgroundSync<T>(
   }
 
   logger.debug(context, functionName, 'Starting background sync', { key: cacheKey });
+  reportSyncState?.('syncing');
 
   // Sync in background without blocking
   fetcher()
@@ -150,6 +163,7 @@ async function triggerBackgroundSync<T>(
         });
       });
       logger.debug(context, functionName, 'Background sync completed', { key: cacheKey });
+      reportSyncState?.('fresh');
 
       // If updateOnBackgroundSync is true, call onDataLoaded again with fresh data
       if (updateOnBackgroundSync && onDataLoaded) {
@@ -171,5 +185,6 @@ async function triggerBackgroundSync<T>(
         key: cacheKey,
         error: e,
       });
+      reportSyncState?.('cached');
     });
 }

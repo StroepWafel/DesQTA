@@ -92,66 +92,82 @@
     return 'bg-red-100 dark:bg-red-900/30';
   }
 
-  $: sortedPages = results ? [...results.pages].sort((a, b) => b.loadTime - a.loadTime) : [];
+  let sortedPages = $derived(
+    results ? [...results.pages].sort((a, b) => b.loadTime - a.loadTime) : [],
+  );
 
   // Chart data processing
-  $: loadTimeChartData = results
-    ? results.pages.map((page, index) => ({
-        name: page.pageName,
-        value: page.loadTime,
-        time: index,
-      }))
-    : [];
-
-  $: memoryChartData = results
-    ? results.pages
-        .filter((page) => page.memoryUsage)
-        .map((page, index) => ({
+  let loadTimeChartData = $derived(
+    results
+      ? results.pages.map((page, index) => ({
           name: page.pageName,
-          value: (page.memoryUsage || 0) / 1024 / 1024, // Convert to MB
+          value: page.loadTime,
           time: index,
         }))
-    : [];
+      : [],
+  );
 
-  $: networkRequestsChartData = results
-    ? results.pages.map((page, index) => ({
-        name: page.pageName,
-        value: page.networkRequests,
-        time: index,
-      }))
-    : [];
+  let memoryChartData = $derived(
+    results
+      ? results.pages
+          .filter((page) => page.memoryUsage)
+          .map((page, index) => ({
+            name: page.pageName,
+            value: (page.memoryUsage || 0) / 1024 / 1024, // Convert to MB
+            time: index,
+          }))
+      : [],
+  );
 
-  $: domContentLoadedChartData = results
-    ? results.pages.map((page, index) => ({
-        name: page.pageName,
-        value: page.domContentLoaded,
-        time: index,
-      }))
-    : [];
+  let networkRequestsChartData = $derived(
+    results
+      ? results.pages.map((page, index) => ({
+          name: page.pageName,
+          value: page.networkRequests,
+          time: index,
+        }))
+      : [],
+  );
+
+  let domContentLoadedChartData = $derived(
+    results
+      ? results.pages.map((page, index) => ({
+          name: page.pageName,
+          value: page.domContentLoaded,
+          time: index,
+        }))
+      : [],
+  );
 
   // System metrics chart data
-  $: cpuChartData = results?.systemMetricsHistory
-    ? results.systemMetricsHistory.map((m) => ({
-        timestamp: m.timestamp,
-        value: m.cpu.usage_percent,
-      }))
-    : [];
-
-  $: memoryChartDataSystem = results?.systemMetricsHistory
-    ? results.systemMetricsHistory.map((m) => ({
-        timestamp: m.timestamp,
-        value: m.memory.usage_percent,
-      }))
-    : [];
-
-  $: gpuChartData = results?.systemMetricsHistory
-    ? results.systemMetricsHistory
-        .filter((m) => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined)
-        .map((m) => ({
+  let cpuChartData = $derived(
+    results?.systemMetricsHistory
+      ? results.systemMetricsHistory.map((m) => ({
           timestamp: m.timestamp,
-          value: m.gpu.usage_percent!,
+          value: m.cpu.usage_percent,
         }))
-    : [];
+      : [],
+  );
+
+  let memoryChartDataSystem = $derived(
+    results?.systemMetricsHistory
+      ? results.systemMetricsHistory.map((m) => ({
+          timestamp: m.timestamp,
+          value: m.memory.usage_percent,
+        }))
+      : [],
+  );
+
+  let gpuChartData = $derived(
+    results?.systemMetricsHistory
+      ? results.systemMetricsHistory
+          .filter((m) => m.gpu.usage_percent !== null && m.gpu.usage_percent !== undefined)
+          .map((m) => ({
+            timestamp: m.timestamp,
+            value: m.gpu.usage_percent!,
+          }))
+      : [],
+  );
 </script>
 
 <svelte:head>
@@ -814,7 +830,7 @@
                       {#if page.errors.length > 0}
                         <div class="mb-3">
                           <h5 class="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
-                            Errors:
+                            <T key="performance.errors_label" fallback="Errors:" />
                           </h5>
                           <ul class="space-y-1">
                             {#each page.errors as error}
@@ -829,7 +845,7 @@
                       {#if page.warnings.length > 0}
                         <div>
                           <h5 class="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">
-                            Warnings:
+                            <T key="performance.warnings_label" fallback="Warnings:" />
                           </h5>
                           <ul class="space-y-1">
                             {#each page.warnings as warning}
@@ -858,9 +874,11 @@
           <Card.Header>
             <Card.Title class="flex items-center gap-2">
               <Icon src={ExclamationTriangle} class="w-5 h-5 text-red-500" />
-              Overall Test Errors
+              <T key="performance.overall_test_errors" fallback="Overall Test Errors" />
             </Card.Title>
-            <Card.Description>Errors that occurred during the performance test</Card.Description>
+            <Card.Description>
+              <T key="performance.overall_errors_description" fallback="Errors that occurred during the performance test" />
+            </Card.Description>
           </Card.Header>
           <Card.Content>
             <ul class="space-y-2">

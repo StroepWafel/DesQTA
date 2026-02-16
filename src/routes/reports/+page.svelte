@@ -2,12 +2,13 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { seqtaFetch } from '../../utils/netUtil';
-  import { cache } from '../../utils/cache';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { getUrlParam } from '$lib/utils/urlParams';
+  import { toastStore } from '$lib/stores/toast';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
 
   let reports = $state<any[]>([]);
   let loading = $state(true);
@@ -35,30 +36,31 @@
     loading = true;
     error = '';
 
-    // Check cache first
-    const cachedReports = cache.get<any[]>('reports');
-    if (cachedReports) {
-      reports = cachedReports;
-      loading = false;
-      return;
-    }
+    const data = await useDataLoader<any[]>({
+      cacheKey: 'reports',
+      ttlMinutes: 5,
+      context: 'reports',
+      functionName: 'loadReports',
+      fetcher: async () => {
+        const response = await seqtaFetch('/seqta/student/load/reports?', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        });
+        const data = typeof response === 'string' ? JSON.parse(response) : response;
+        if (data.status === '200' && Array.isArray(data.payload)) {
+          return data.payload;
+        }
+        throw new Error($_('reports.failed_to_load') || 'Failed to load reports.');
+      },
+      onDataLoaded: (data) => {
+        reports = data;
+        loading = false;
+      },
+      updateOnBackgroundSync: true,
+    });
 
-    try {
-      const response = await seqtaFetch('/seqta/student/load/reports?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      });
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
-      if (data.status === '200' && Array.isArray(data.payload)) {
-        reports = data.payload;
-        // Cache reports for 5 minutes
-        cache.set('reports', reports);
-      } else {
-        error = $_('reports.failed_to_load') || 'Failed to load reports.';
-      }
-    } catch (e) {
+    if (!data) {
       error = $_('reports.error_loading') || 'Error loading reports.';
-    } finally {
       loading = false;
     }
   }
@@ -73,7 +75,8 @@
         await openUrl(url);
       }
     } catch (e) {
-      // Optionally handle error (e.g., show a toast)
+      const message = e instanceof Error ? e.message : String(e);
+      toastStore.error($_('reports.open_failed') || 'Failed to open report');
     }
   }
 

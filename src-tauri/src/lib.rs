@@ -34,6 +34,8 @@ mod html_parser;
 mod seqta_config;
 #[path = "services/seqta_mentions.rs"]
 mod seqta_mentions;
+#[path = "services/theme_store.rs"]
+mod theme_store;
 #[path = "utils/session.rs"]
 mod session;
 #[path = "utils/settings.rs"]
@@ -165,8 +167,69 @@ pub fn run() {
             // Handle deep link in single instance
             if let Some(url) = argv.get(1) {
                 println!("[Desqta] Processing deep link in single instance: {}", url);
-                if url.starts_with("desqta://auth") {
-                    // Extract cookie and URL from the deep link
+                if url.starts_with("desqta://auth/callback") {
+                    // Handle Discord OAuth callback
+                    let mut token = None;
+                    let mut user_id = None;
+                    
+                    let mut refresh_token = None;
+
+                    // Parse URL parameters
+                    if let Some(query) = url.split('?').nth(1) {
+                        println!("[Desqta] Discord OAuth callback query string: {}", query);
+                        for param in query.split('&') {
+                            if let Some((key, value)) = param.split_once('=') {
+                                match key {
+                                    "token" => {
+                                        // URL decode the token
+                                        let decoded = urlencoding::decode(value)
+                                            .map(|s| s.to_string())
+                                            .unwrap_or_else(|_| value.to_string());
+                                        token = Some(decoded);
+                                        println!("[Desqta] Found Discord OAuth token");
+                                    },
+                                    "user_id" => {
+                                        let decoded = urlencoding::decode(value)
+                                            .map(|s| s.to_string())
+                                            .unwrap_or_else(|_| value.to_string());
+                                        user_id = Some(decoded);
+                                        println!("[Desqta] Found Discord OAuth user_id");
+                                    },
+                                    "refresh_token" => {
+                                        let decoded = urlencoding::decode(value)
+                                            .map(|s| s.to_string())
+                                            .unwrap_or_else(|_| value.to_string());
+                                        refresh_token = Some(decoded);
+                                        println!("[Desqta] Found Discord OAuth refresh_token");
+                                    },
+                                    _ => {
+                                        println!("[Desqta] Unknown Discord OAuth parameter: {}", key);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Emit event to frontend with token, user_id, and optional refresh_token
+                    if let (Some(token_val), Some(user_id_val)) = (token, user_id) {
+                        println!("[Desqta] Emitting Discord OAuth callback event");
+                        if let Some(window) = app.webview_windows().get("main") {
+                            let mut payload = serde_json::json!({
+                                "token": token_val,
+                                "user_id": user_id_val
+                            });
+                            if let Some(rt) = refresh_token {
+                                if let Some(obj) = payload.as_object_mut() {
+                                    obj.insert("refresh_token".to_string(), serde_json::json!(rt));
+                                }
+                            }
+                            let _ = window.emit("discord-oauth-callback", payload);
+                        }
+                    } else {
+                        eprintln!("[Desqta] Missing required Discord OAuth parameters. Need both token and user_id.");
+                    }
+                } else if url.starts_with("desqta://auth") {
+                    // Extract cookie and URL from the deep link (legacy SEQTA auth)
                     let mut cookie = None;
                     let mut base_url = None;
                     
@@ -267,6 +330,9 @@ pub fn run() {
             settings::save_cloud_token,
             settings::get_cloud_user,
             settings::clear_cloud_token,
+            settings::get_reserved_client,
+            settings::clear_reserved_client,
+            settings::save_reserved_client,
             settings::get_cloud_base_url,
             settings::set_cloud_base_url,
             settings::upload_settings_to_cloud,
@@ -324,6 +390,26 @@ pub fn run() {
             theme_manager::get_themes_directory_path,
             theme_manager::export_theme_to_file,
             theme_manager::read_theme_css,
+            theme_manager::download_and_install_theme,
+            theme_manager::download_theme_to_temp,
+            theme_manager::cleanup_temp_theme,
+            theme_manager::cache_theme_image,
+            theme_manager::get_cached_image_path,
+            theme_manager::get_cached_image_url,
+            theme_manager::invalidate_theme_image_cache,
+            theme_store::theme_store_request,
+            theme_store::theme_store_list_themes,
+            theme_store::theme_store_get_theme,
+            theme_store::theme_store_search_themes,
+            theme_store::theme_store_get_collections,
+            theme_store::theme_store_get_collection,
+            theme_store::theme_store_get_spotlight,
+            theme_store::theme_store_download_theme,
+            theme_store::theme_store_favorite_theme,
+            theme_store::theme_store_unfavorite_theme,
+            theme_store::theme_store_get_favorites,
+            theme_store::theme_store_get_user_status,
+            theme_store::theme_store_rate_theme,
             news::get_news_australia,
             todolist::load_todos,
             todolist::save_todos,
@@ -498,7 +584,58 @@ pub fn run() {
                         for url in urls {
                             println!("[Desqta] Processing URL from deep link: {}", url);
                             
-                            if url.starts_with("seqtalearn://") {
+                            if url.starts_with("desqta://auth/callback") {
+                                // Handle Discord OAuth callback on mobile
+                                let mut token = None;
+                                let mut user_id = None;
+                                let mut refresh_token = None;
+
+                                if let Some(query) = url.split('?').nth(1) {
+                                    println!("[Desqta] Discord OAuth callback query string: {}", query);
+                                    for param in query.split('&') {
+                                        if let Some((key, value)) = param.split_once('=') {
+                                            match key {
+                                                "token" => {
+                                                    let decoded = urlencoding::decode(value)
+                                                        .map(|s| s.to_string())
+                                                        .unwrap_or_else(|_| value.to_string());
+                                                    token = Some(decoded);
+                                                },
+                                                "user_id" => {
+                                                    let decoded = urlencoding::decode(value)
+                                                        .map(|s| s.to_string())
+                                                        .unwrap_or_else(|_| value.to_string());
+                                                    user_id = Some(decoded);
+                                                },
+                                                "refresh_token" => {
+                                                    let decoded = urlencoding::decode(value)
+                                                        .map(|s| s.to_string())
+                                                        .unwrap_or_else(|_| value.to_string());
+                                                    refresh_token = Some(decoded);
+                                                },
+                                                _ => {}
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Emit event to frontend
+                                if let (Some(token_val), Some(user_id_val)) = (token, user_id) {
+                                    println!("[Desqta] Emitting Discord OAuth callback event (mobile)");
+                                    if let Some(window) = app_handle.webview_windows().get("main") {
+                                        let mut payload = serde_json::json!({
+                                            "token": token_val,
+                                            "user_id": user_id_val
+                                        });
+                                        if let Some(rt) = refresh_token {
+                                            if let Some(obj) = payload.as_object_mut() {
+                                                obj.insert("refresh_token".to_string(), serde_json::json!(rt));
+                                            }
+                                        }
+                                        let _ = window.emit("discord-oauth-callback", payload);
+                                    }
+                                }
+                            } else if url.starts_with("seqtalearn://") {
                                 println!("[Desqta] Processing SEQTA Learn SSO deeplink: {}", url);
                                 let app_handle_clone = app_handle.clone();
                                 tauri::async_runtime::spawn(async move {
@@ -531,16 +668,33 @@ pub fn run() {
                     
                     let window_clone = window.clone();
                     let current_fullscreen = Cell::new(window.is_fullscreen().unwrap_or(false));
+                    let current_maximized = Cell::new(window.is_maximized().unwrap_or(false));
+                    
+                    // Helper function to check and emit window state changes
+                    let check_and_emit_state = {
+                        let window_ref = window_clone.clone();
+                        move || {
+                            let is_fullscreen = window_ref.is_fullscreen().unwrap_or(false);
+                            let is_maximized = window_ref.is_maximized().unwrap_or(false);
+                            let should_remove_corners = is_fullscreen || is_maximized;
+                            
+                            let fullscreen_changed = is_fullscreen != current_fullscreen.get();
+                            let maximized_changed = is_maximized != current_maximized.get();
+                            
+                            if fullscreen_changed || maximized_changed {
+                                current_fullscreen.set(is_fullscreen);
+                                current_maximized.set(is_maximized);
+                                println!("[DesQTA] Window state changed: fullscreen={}, maximized={}, remove_corners={}", 
+                                    is_fullscreen, is_maximized, should_remove_corners);
+                                let _ = window_ref.emit("fullscreen-changed", should_remove_corners);
+                            }
+                        }
+                    };
+                    
                     window.on_window_event(move |event| {
                         match event {
                             WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
-                                if let Ok(is_fullscreen) = window_clone.is_fullscreen() {
-                                    if is_fullscreen != current_fullscreen.get() {
-                                        println!("[DesQTA] Fullscreen state changed: {}", is_fullscreen);
-                                        let _ = window_clone.emit("fullscreen-changed", is_fullscreen);
-                                        current_fullscreen.set(is_fullscreen);
-                                    }
-                                }
+                                check_and_emit_state();
                             }
                             _ => {}
                         }

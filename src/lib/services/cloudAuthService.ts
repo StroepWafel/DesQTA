@@ -1,7 +1,26 @@
 import { writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 
 const API_URL = 'https://accounts.betterseqta.org';
+const DESQTA_REDIRECT_URI = 'desqta://auth/callback';
+
+/** Detects if a failed response indicates an expired/invalid client_id (7-day inactivity). */
+function isClientIdExpired(status: number, errMsg?: string): boolean {
+  if (status === 401 || status === 404) return true;
+  const msg = (errMsg ?? '').toLowerCase();
+  return msg.includes('invalid client_id') || msg.includes('invalid client id');
+}
+
+interface ReservedClientResult {
+  client_id: string;
+  redirect_uri: string;
+  api_url?: string;
+  config_url?: string;
+  refresh_url?: string;
+  login_url?: string;
+  discord_auth_url?: string;
+}
 
 export interface CloudUser {
   id: string;
@@ -15,33 +34,135 @@ export interface CloudUser {
 interface CloudUserWithToken {
   user: CloudUser | null;
   token: string | null;
+  refresh_token?: string | null;
+}
+
+interface DesqtaConfig {
+  client_id: string;
+  api_url: string;
+  refresh_url: string;
+  discord_auth_url: string;
+}
+
+interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  user: CloudUser;
+}
+
+interface RefreshResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_token: string;
+  user: CloudUser;
 }
 
 export const cloudUserStore = writable<CloudUser | null>(null);
 
 export const cloudAuthService = {
   /**
-   * Logs in the user and saves the session token to the current profile.
+   * Ensures we have a reserved client_id. Calls reserve endpoint if not stored.
+   * Returns { client_id, redirect_uri } for use in login, refresh, Discord OAuth.
    */
-  async login(login: string, password: string) {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login, password }),
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || 'Login failed');
+  async ensureClientId(): Promise<{ client_id: string; redirect_uri: string }> {
+    const stored = await invoke<{ client_id: string; redirect_uri: string } | null>('get_reserved_client');
+    if (stored?.client_id) {
+      return { client_id: stored.client_id, redirect_uri: stored.redirect_uri };
     }
 
-    const data = await response.json();
+    const res = await fetch(`${API_URL}/api/desqta/client/reserve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ redirect_uri: DESQTA_REDIRECT_URI }),
+    });
+    if (!res.ok) throw new Error('Failed to reserve client');
+    const data = (await res.json()) as ReservedClientResult;
 
-    // Save token to backend (profile-specific)
-    const user = await invoke<CloudUser>('save_cloud_token', { token: data.token });
-    
+    await invoke('save_reserved_client', {
+      clientId: data.client_id,
+      redirectUri: data.redirect_uri,
+    });
+    return { client_id: data.client_id, redirect_uri: data.redirect_uri };
+  },
+
+  /**
+   * Clears the stored reserved client (e.g. when expired). Next ensureClientId() will reserve a new one.
+   */
+  async clearReservedClient(): Promise<void> {
+    await invoke('clear_reserved_client');
+  },
+
+  /**
+   * Fetches config from the DesQTA config endpoint (optional, for dynamic URLs).
+   * Retries with a fresh client_id if the stored one has expired.
+   */
+  async getConfig(): Promise<DesqtaConfig> {
+    const { client_id } = await this.ensureClientId();
+    const res = await fetch(`${API_URL}/api/desqta/config?client_id=${client_id}`);
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      const errMsg = (errBody as { error?: string }).error ?? 'Failed to fetch config';
+      if (isClientIdExpired(res.status, errMsg)) {
+        await this.clearReservedClient();
+        const { client_id: newId } = await this.ensureClientId();
+        const retryRes = await fetch(`${API_URL}/api/desqta/config?client_id=${newId}`);
+        if (!retryRes.ok) throw new Error('Failed to fetch config');
+        return retryRes.json();
+      }
+      throw new Error(errMsg);
+    }
+    return res.json();
+  },
+
+  /**
+   * Logs in the user via email/password using the DesQTA auth endpoint.
+   * Returns access_token, refresh_token, and user for persistent sessions.
+   * Retries with a fresh client_id if the stored one has expired.
+   */
+  async login(login: string, password: string) {
+    const doLogin = async (clientId: string, redirectUri: string) => {
+      const response = await fetch(`${API_URL}/api/desqta/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          login,
+          password,
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        const errMsg = (err as { error?: string }).error || 'Login failed';
+        return { ok: false as const, status: response.status, errMsg };
+      }
+      const data = (await response.json()) as LoginResponse;
+      return { ok: true as const, data };
+    };
+
+    const { client_id, redirect_uri } = await this.ensureClientId();
+    let result = await doLogin(client_id, redirect_uri);
+
+    if (!result.ok && isClientIdExpired(result.status, result.errMsg)) {
+      await this.clearReservedClient();
+      const { client_id: newId, redirect_uri: newUri } = await this.ensureClientId();
+      result = await doLogin(newId, newUri);
+    }
+
+    if (!result.ok) {
+      throw new Error(result.errMsg);
+    }
+
+    const data = result.data;
+    const user = await invoke<CloudUser>('save_cloud_token', {
+      token: data.access_token,
+      refreshToken: data.refresh_token ?? null,
+      userJson: data.user ? JSON.stringify(normalizeUserForBackend(data.user)) : null,
+    });
+
     cloudUserStore.set(user);
-
     return { ...data, user };
   },
 
@@ -57,7 +178,7 @@ export const cloudAuthService = {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || 'Registration failed');
+      throw new Error((err as { error?: string }).error || 'Registration failed');
     }
 
     return await response.json();
@@ -72,11 +193,19 @@ export const cloudAuthService = {
   },
 
   /**
-   * Gets the stored JWT token for the current profile.
+   * Gets the stored access token for the current profile.
    */
   async getToken(): Promise<string | null> {
     const result = await invoke<CloudUserWithToken>('get_cloud_user');
     return result.token;
+  },
+
+  /**
+   * Gets the stored refresh token for the current profile.
+   */
+  async getRefreshToken(): Promise<string | null> {
+    const result = await invoke<CloudUserWithToken>('get_cloud_user');
+    return result.refresh_token ?? null;
   },
 
   /**
@@ -97,6 +226,58 @@ export const cloudAuthService = {
   },
 
   /**
+   * Refreshes the access token using the refresh token (rolling sessions).
+   * On failure, clears tokens and throws.
+   * Retries with a fresh client_id if the stored one has expired.
+   */
+  async refresh(): Promise<string> {
+    const refreshToken = await this.getRefreshToken();
+    if (!refreshToken) throw new Error('No refresh token');
+
+    const doRefresh = async (clientId: string) => {
+      const res = await fetch(`${API_URL}/api/desqta/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          refresh_token: refreshToken,
+          client_id: clientId,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const errMsg = (err as { error?: string }).error || 'Refresh failed';
+        return { ok: false as const, status: res.status, errMsg };
+      }
+      const data = (await res.json()) as RefreshResponse;
+      return { ok: true as const, data };
+    };
+
+    const { client_id } = await this.ensureClientId();
+    let result = await doRefresh(client_id);
+
+    if (!result.ok && isClientIdExpired(result.status, result.errMsg)) {
+      await this.clearReservedClient();
+      const { client_id: newId } = await this.ensureClientId();
+      result = await doRefresh(newId);
+    }
+
+    if (!result.ok) {
+      await this.logout();
+      throw new Error(result.errMsg);
+    }
+
+    const data = result.data;
+    const user = await invoke<CloudUser>('save_cloud_token', {
+      token: data.access_token,
+      refreshToken: data.refresh_token ?? null,
+      userJson: data.user ? JSON.stringify(normalizeUserForBackend(data.user)) : null,
+    });
+
+    cloudUserStore.set(user);
+    return data.access_token;
+  },
+
+  /**
    * Fetches the latest user profile from the server and updates the current profile.
    */
   async getProfile(): Promise<CloudUser> {
@@ -114,10 +295,73 @@ export const cloudAuthService = {
     const data = await response.json();
 
     // Update backend (profile-specific) with latest user data
-    await invoke<CloudUser>('save_cloud_token', { token });
-    
-    cloudUserStore.set(data);
+    await invoke<CloudUser>('save_cloud_token', {
+      token,
+      refreshToken: null,
+      userJson: data ? JSON.stringify(normalizeUserForBackend(data)) : null,
+    });
 
+    cloudUserStore.set(data);
     return data;
   },
+
+  /**
+   * Initiates Discord OAuth flow for DesQTA.
+   * Opens the user's browser to authenticate with Discord.
+   * Validates client_id first (refreshes if expired) since we don't get a response from opening the URL.
+   */
+  async loginWithDiscord() {
+    await this.getConfig();
+    const { client_id, redirect_uri } = await this.ensureClientId();
+    const authUrl = new URL(`${API_URL}/api/oauth/desqta/discord`);
+    authUrl.searchParams.set('client_id', client_id);
+    authUrl.searchParams.set('redirect_uri', redirect_uri);
+
+    await openUrl(authUrl.toString());
+  },
+
+  /**
+   * Handles the Discord OAuth callback.
+   * Stores both access token and refresh_token when provided (rolling sessions).
+   */
+  async handleDiscordCallback(token: string, userId: string, refreshToken?: string | null) {
+    const user = await this.getProfileWithToken(token);
+    await invoke<CloudUser>('save_cloud_token', {
+      token,
+      refreshToken: refreshToken ?? null,
+      userJson: user ? JSON.stringify(normalizeUserForBackend(user)) : null,
+    });
+
+    cloudUserStore.set(user);
+    return user;
+  },
+
+  /**
+   * Fetches user profile using a specific token (e.g. from OAuth callback).
+   */
+  async getProfileWithToken(token: string): Promise<CloudUser> {
+    const response = await fetch(`${API_URL}/api/auth/me`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch profile');
+    return response.json();
+  },
 };
+
+/**
+ * Normalizes user object for backend (Rust expects displayName -> display_name, etc).
+ */
+function normalizeUserForBackend(user: CloudUser): Record<string, unknown> {
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    displayName: user.displayName,
+    pfpUrl: user.pfpUrl ?? null,
+    is_admin: user.is_admin ?? null,
+  };
+}

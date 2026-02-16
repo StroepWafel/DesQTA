@@ -4,6 +4,7 @@
   import { seqtaFetch } from '../../utils/netUtil';
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import { Icon, Flag, ExclamationTriangle } from 'svelte-hero-icons';
+  import { get } from 'svelte/store';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
@@ -17,7 +18,8 @@
 
   async function checkGoalsEnabled() {
     const cacheKey = 'goals_settings_enabled';
-    const isOnline = navigator.onLine;
+    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+    const offline = await isOfflineMode();
 
     // Load from cache first for instant UI
     const cached =
@@ -29,7 +31,7 @@
     }
 
     // Always fetch fresh data when online (even if we have cache)
-    if (isOnline) {
+    if (!offline) {
       try {
         await fetchGoalsSettings();
       } catch (e) {
@@ -72,7 +74,8 @@
     loading = true;
     error = null;
     const cacheKey = 'goals_years';
-    const isOnline = navigator.onLine;
+    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+    const offline = await isOfflineMode();
 
     // Load from cache first for instant UI
     const cached =
@@ -85,7 +88,7 @@
     }
 
     // Always fetch fresh data when online (even if we have cache)
-    if (isOnline) {
+    if (!offline) {
       try {
         await fetchYears();
       } catch (e) {
@@ -98,7 +101,7 @@
       }
     } else if (!cached || cached.length === 0) {
       // Offline and no cache
-      error = 'No cached data available';
+      error = get(_)('goals.no_cached_data');
       loading = false;
     }
   }
@@ -122,7 +125,7 @@
         await setIdb(cacheKey, data.payload);
         loading = false;
       } else {
-        error = 'Invalid response format';
+        error = get(_)('goals.invalid_response');
         logger.error('goals', 'fetchYears', 'Invalid response format', { data });
         loading = false;
       }

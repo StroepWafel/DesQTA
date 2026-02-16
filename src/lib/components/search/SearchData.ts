@@ -299,6 +299,35 @@ const ACTIONS: SearchItem[] = [
     description: 'Show or hide the sidebar',
     keywords: ['sidebar', 'navigation', 'menu'],
   },
+  {
+    id: 'action-zoom-in',
+    name: 'Zoom In',
+    path: '#',
+    category: 'action',
+    icon: MagnifyingGlass,
+    description: 'Increase the interface zoom level',
+    keywords: ['zoom', 'magnify', 'scale', 'larger'],
+    shortcut: 'Ctrl+Plus',
+  },
+  {
+    id: 'action-zoom-out',
+    name: 'Zoom Out',
+    path: '#',
+    category: 'action',
+    icon: MagnifyingGlass,
+    description: 'Decrease the interface zoom level',
+    keywords: ['zoom', 'reduce', 'scale', 'smaller'],
+    shortcut: 'Ctrl+Minus',
+  },
+  {
+    id: 'action-zoom-reset',
+    name: 'Reset Zoom',
+    path: '#',
+    category: 'action',
+    icon: MagnifyingGlass,
+    description: 'Reset zoom to 100%',
+    keywords: ['zoom', 'reset', 'default', '100%'],
+  },
 ];
 
 // Settings

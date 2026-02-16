@@ -4,6 +4,7 @@
   import { seqtaFetch } from '../../../utils/netUtil';
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import { Icon, ChevronLeft, FolderOpen, ExclamationTriangle, User } from 'svelte-hero-icons';
+  import { get } from 'svelte/store';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
   import { logger } from '../../../utils/logger';
@@ -66,7 +67,7 @@
         folios = data.payload.list || [];
         me = data.payload.me || '';
       } else {
-        error = 'Invalid response format';
+        error = get(_)('folios.invalid_response');
         logger.error('folios', 'loadFolios', 'Invalid response format', { data });
       }
     } catch (e) {

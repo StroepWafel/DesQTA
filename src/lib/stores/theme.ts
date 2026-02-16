@@ -7,7 +7,7 @@ import { themeService, type ThemeManifest } from '../services/themeService';
 export const accentColor = writable('#3b82f6');
 
 // Create a writable store for the theme
-export const theme = writable<'light' | 'dark' | 'system'>('system');
+export const theme = writable<'light' | 'dark' | 'system'>('dark');
 
 // New theme system stores
 export const currentTheme = writable('default');
@@ -68,7 +68,8 @@ export async function loadAccentColor() {
 export async function loadTheme() {
   try {
     const subset = await invoke<any>('get_settings_subset', { keys: ['theme'] });
-    const loadedTheme = subset?.theme || 'system';
+    const raw = subset?.theme || 'dark';
+    const loadedTheme = raw === 'default' ? 'dark' : raw;
     theme.set(loadedTheme);
     applyTheme(loadedTheme);
 
@@ -90,9 +91,9 @@ export async function loadTheme() {
     }
   } catch (e) {
     console.error('Failed to load theme:', e);
-    // Fallback to system theme
-    theme.set('system');
-    applyTheme('system');
+    // Fallback to dark theme
+    theme.set('dark');
+    applyTheme('dark');
   }
 }
 
@@ -222,6 +223,8 @@ export async function startThemePreview(themeName: string) {
 }
 
 // Cancel a running preview and restore prior look
+// Note: This function doesn't handle temp theme cleanup - that should be done by the caller
+// (e.g., the theme store page) which knows about tempPreviewThemeSlug
 export async function cancelThemePreview() {
   try {
     await themeService.cancelPreview();

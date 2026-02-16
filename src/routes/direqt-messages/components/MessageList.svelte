@@ -38,7 +38,8 @@
     {selectedFolder}
   </div>
 
-  <div class="overflow-y-scroll flex-1 p-1">
+  <div
+    class="overflow-y-auto flex-1 p-1 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent">
     {#if loading}
       <div class="p-2 space-y-2">
         {#each Array(6) as _, i}
@@ -92,8 +93,7 @@
         </p>
       </div>
     {:else}
-      <div
-        class="overflow-y-scroll p-2 scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-zinc-800/10">
+      <div class="p-2">
         {#key messagesKey}
           {#each filteredMessages as message, i (message.id)}
             <div class="message-item-animate" style="animation-delay: {i * 50}ms;">
@@ -117,12 +117,26 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(99, 102, 241, 0.3);
+    background: color-mix(in srgb, var(--accent-color-value, #3b82f6) 30%, transparent);
     border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(99, 102, 241, 0.5);
+    background: color-mix(in srgb, var(--accent-color-value, #3b82f6) 50%, transparent);
+  }
+
+  /* Hide native scrollbar buttons (up/down arrows) */
+  .scrollbar-thin::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /* Firefox - hide scrollbar buttons */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--accent-color-value, #3b82f6) 30%, transparent)
+      transparent;
   }
 
   @keyframes gradient {

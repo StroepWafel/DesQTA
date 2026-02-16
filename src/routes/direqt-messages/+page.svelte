@@ -8,10 +8,11 @@
   import { invoke } from '@tauri-apps/api/core';
 
   // $lib/ imports
-  import { setIdb } from '$lib/services/idbCache';
+  import { setIdb, getWithIdbFallback } from '$lib/services/idbCache';
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import Modal from '$lib/components/Modal.svelte';
   import T from '$lib/components/T.svelte';
+  import { get } from 'svelte/store';
   import { _ } from '$lib/i18n';
 
   // Relative imports
@@ -55,6 +56,8 @@
   onMount(async () => {
     // Always enable both tabs regardless of SEQTA config
     seqtaMessagesEnabled = true;
+    // Initial load: fetch inbox messages (skip cache to ensure fresh data)
+    fetchMessages('inbox', '', true);
   });
 
   // Watch URL for messageID parameter and store it until messages load
@@ -63,7 +66,7 @@
     pendingMessageId = idParam ? Number(idParam) : null;
   });
 
-  async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '') {
+  async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '', forceSkipCache: boolean = false) {
     loading = true;
     error = null;
     seqtaLoadFailed = false;
@@ -71,7 +74,52 @@
 
     const cacheKey = `messages_${folderLabel}`;
     const isRSSFeed = folderLabel.includes('rss-');
+    const isOnline = navigator.onLine;
 
+    // For inbox, try API first (when online), then fall back to cache if unavailable
+    // For other folders, use normal caching behavior
+    if (folderLabel === 'inbox' && isOnline && !isRSSFeed) {
+      try {
+        // Try to fetch fresh data first
+        const msgs = await invoke<Message[]>('fetch_messages', {
+          folder: folderLabel,
+          rssUrl: null,
+        });
+        
+        // Success - update cache and messages
+        messages = msgs;
+        cache.set(cacheKey, msgs, 10);
+        await setIdb(cacheKey, msgs);
+        loading = false;
+        return;
+      } catch (e) {
+        // API failed - fall back to cache
+        logger.debug('messages', 'fetchMessages', `API fetch failed, falling back to cache`, {
+          error: e,
+          folder: folderLabel,
+        });
+        
+        const cached =
+          cache.get<Message[]>(cacheKey) ||
+          (await getWithIdbFallback<Message[]>(cacheKey, cacheKey, () =>
+            cache.get<Message[]>(cacheKey),
+          ));
+        
+        if (cached) {
+          // Use cache even if empty (empty inbox is valid)
+          messages = cached;
+          loading = false;
+          return;
+        }
+        
+        // No cache available - show error
+        error = get(_)('messages.failed_to_load_no_cache');
+        loading = false;
+        return;
+      }
+    }
+
+    // Normal behavior for other folders or RSS feeds
     const data = await useDataLoader<Message[]>({
       cacheKey,
       ttlMinutes: 10,
@@ -109,10 +157,6 @@
     }
     loading = false;
   }
-
-  $effect(() => {
-    fetchMessages('inbox');
-  });
 
   // When messages are loaded and a target ID exists, open it
   $effect(() => {
@@ -170,6 +214,7 @@
   }
 
   function openFolder(folder: any) {
+    // Always fetch, even if folder is already selected (to refresh the list)
     selectedFolder = folder.name;
     selectedMessage = null;
     logger.debug('messages', 'openFolder', `Opening folder: ${folder.name}`, {
@@ -178,7 +223,11 @@
     if (folder.id.includes('rss-')) {
       selectedRSS = folder.id;
       fetchMessages(folder.id, folder.name);
-    } else fetchMessages(folder.id);
+    } else {
+      // For inbox, fetchMessages will try API first then fall back to cache
+      // For other folders, use normal caching
+      fetchMessages(folder.id);
+    }
   }
 
   function openCompose() {
@@ -210,11 +259,11 @@
         }
       }
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.success(newStarred ? 'Message starred' : 'Message unstarred');
+      toastStore.success(newStarred ? get(_)('messages.message_starred') : get(_)('messages.message_unstarred'));
     } catch (e) {
       logger.error('messages', 'starMessage', 'Failed to star message', { error: e });
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.error('Failed to update star status');
+      toastStore.error(get(_)('messages.failed_to_update_star'));
     } finally {
       starring = false;
     }
@@ -231,11 +280,11 @@
         selectedMessage = null;
       }
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.success('Message deleted successfully');
+      toastStore.success(get(_)('messages.deleted_success'));
     } catch (e) {
       logger.error('messages', 'deleteMessage', 'Failed to delete message', { error: e });
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.error('Failed to delete message');
+      toastStore.error(get(_)('messages.delete_failed'));
     } finally {
       deleting = false;
     }
@@ -252,11 +301,11 @@
         selectedMessage = null;
       }
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.success('Message restored successfully');
+      toastStore.success(get(_)('messages.restored_success'));
     } catch (e) {
       logger.error('messages', 'restoreMessage', 'Failed to restore message', { error: e });
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.error('Failed to restore message');
+      toastStore.error(get(_)('messages.restore_failed'));
     } finally {
       restoring = false;
     }
@@ -276,7 +325,11 @@
         <Sidebar {selectedFolder} {openFolder} {openCompose} />
       </div>
       <MobileFolderTabs {selectedFolder} {openFolder} {openCompose} />
-      <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
+      <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
+        </div>
+      </div>
       <!-- Message detail view - full screen on mobile -->
       <div class="hidden flex-1 xl:block">
         <MessageDetail
@@ -306,7 +359,7 @@
         className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-none transition-all duration-300"
         showCloseButton={false}
         closeOnBackdrop={false}
-        ariaLabel="Message Detail">
+        ariaLabel={$_( 'messages.message_detail' )}>
         <div class="flex flex-col h-full">
           <div
             class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">

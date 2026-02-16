@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
   import { Window } from '@tauri-apps/api/window';
   const appWindow = Window.getCurrent();
@@ -7,12 +6,22 @@
   import AppHeader from '../lib/components/AppHeader.svelte';
   import AppSidebar from '../lib/components/AppSidebar.svelte';
   import LoginScreen from '../lib/components/LoginScreen.svelte';
+  import SetupAssistant from '../lib/components/SetupAssistant.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import { Toaster } from 'svelte-sonner';
   import Onboarding from '../lib/components/Onboarding.svelte';
-  import { cloudAuthService } from '../lib/services/cloudAuthService';
-  import { cloudSettingsService } from '../lib/services/cloudSettingsService';
+  import OfflineBanner from '../lib/components/OfflineBanner.svelte';
+  import {
+    checkSession as checkSessionAuth,
+    loadUserInfo as loadUserInfoAuth,
+    handleLogout as handleLogoutAuth,
+    startLogin as startLoginAuth,
+  } from '../lib/services/layoutAuthService';
+  import {
+    autoDownloadSettingsFromCloud,
+    syncCloudSettings,
+  } from '../lib/services/layoutCloudService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../lib/services/settingsSync';
   import { authService, type UserInfo } from '../lib/services/authService';
   import { warmUpCommonData } from '../lib/services/warmupService';
@@ -21,6 +30,11 @@
   import { useWeather } from '../lib/composables/useWeather';
   import { useSidebar } from '../lib/composables/useSidebar';
   import { usePlatform } from '../lib/composables/usePlatform';
+  import { useLayoutListeners } from '../lib/composables/useLayoutListeners';
+  import {
+    loadSettings,
+    loadEnhancedAnimationsSetting as loadEnhancedAnimationsSettingFn,
+  } from '../lib/composables/useLayoutSettings';
   import '../app.css';
   import {
     accentColor,
@@ -29,6 +43,7 @@
     loadTheme,
     loadCurrentTheme,
   } from '../lib/stores/theme';
+  import { themeService } from '../lib/services/themeService';
   import { initI18n, locale, availableLocales, _ } from '../lib/i18n';
   import T from '../lib/components/T.svelte';
   import { themeBuilderSidebarOpen } from '../lib/stores/themeBuilderSidebar';
@@ -40,6 +55,7 @@
     BookOpen,
     ChatBubbleLeftRight,
     DocumentText,
+    DocumentDuplicate,
     AcademicCap,
     ChartBar,
     Cog6Tooth,
@@ -56,7 +72,6 @@
   import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
-  import type { RecentActivity } from '../lib/types/sidebar';
   export const needsSetup = writable(false);
 
   let { children } = $props();
@@ -73,6 +88,7 @@
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
   let showOnboarding = $state(false);
+  let hasCompletedSetupAssistant = $state(false);
   let isFullscreen = $state(false);
 
   // Composables
@@ -109,6 +125,7 @@
     { labelKey: 'navigation.notices', icon: DocumentText, path: '/notices' },
     { labelKey: 'navigation.news', icon: Newspaper, path: '/news' },
     { labelKey: 'navigation.directory', icon: User, path: '/directory' },
+    { labelKey: 'navigation.documents', icon: DocumentDuplicate, path: '/documents' },
     { labelKey: 'navigation.reports', icon: ChartBar, path: '/reports' },
     { labelKey: 'navigation.analytics', icon: AcademicCap, path: '/analytics' },
     { labelKey: 'navigation.settings', icon: Cog6Tooth, path: '/settings' },
@@ -129,126 +146,39 @@
     }
   };
 
+  let unlistenLayout: (() => void) | undefined;
+
   const checkSession = async () => {
-    logger.logFunctionEntry('layout', 'checkSession');
-    try {
-      if (devMockEnabled) {
-        needsSetup.set(false);
-        logger.info('layout', 'checkSession', 'Dev mock enabled; bypassing login');
-        await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
-        logger.logFunctionExit('layout', 'checkSession', { sessionExists: true });
-      } else {
-        const sessionExists = await authService.checkSession();
-        needsSetup.set(!sessionExists);
-        logger.info('layout', 'checkSession', `Session exists: ${sessionExists}`, {
-          sessionExists,
-        });
-        if (sessionExists) {
-          await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
-        }
-        logger.logFunctionExit('layout', 'checkSession', { sessionExists });
-      }
-    } catch (error) {
-      logger.error('layout', 'checkSession', `Failed to check session: ${error}`, { error });
-    }
-  };
-
-  // Remove duplicate onMount - consolidating below
-
-  let unlisten: (() => void) | undefined;
-  let fullscreenCheckInterval: ReturnType<typeof setInterval> | undefined;
-  let checkFullscreenState: (() => Promise<void>) | undefined;
-
-  const setupListeners = async () => {
-    logger.debug('layout', 'onMount', 'Setting up reload listener');
-    unlisten = await listen<string>('reload', () => {
-      logger.info('layout', 'reload_listener', 'Received reload event');
-      location.reload();
+    await checkSessionAuth({
+      devMockEnabled,
+      needsSetupSet: (v) => needsSetup.set(v),
+      loadUserInfo: () => loadUserInfo(),
+      loadSeqtaConfigAndMenu,
     });
-
-    // Listen for fullscreen changes from Tauri backend
-    await listen<boolean>('fullscreen-changed', async (event) => {
-      isFullscreen = event.payload;
-      logger.debug('layout', 'fullscreen_listener', `Fullscreen changed: ${isFullscreen}`);
-    });
-
-    // Also check fullscreen state periodically and on window focus to catch any missed events
-    checkFullscreenState = async () => {
-      try {
-        const [currentFullscreen, currentMaximized] = await Promise.all([
-          appWindow.isFullscreen(),
-          appWindow.isMaximized().catch(() => false), // Fallback to false if not supported
-        ]);
-        // Consider both fullscreen and maximized as "fullscreen" for corner removal
-        const shouldRemoveCorners = currentFullscreen || currentMaximized;
-        if (shouldRemoveCorners !== isFullscreen) {
-          isFullscreen = shouldRemoveCorners;
-          logger.debug(
-            'layout',
-            'checkFullscreenState',
-            `Fullscreen/Maximized state updated: ${isFullscreen} (fullscreen: ${currentFullscreen}, maximized: ${currentMaximized})`,
-          );
-        }
-      } catch (e) {
-        logger.debug('layout', 'checkFullscreenState', 'Failed to check fullscreen state', {
-          error: e,
-        });
-      }
-    };
-
-    // Check immediately
-    await checkFullscreenState();
-
-    // Check periodically (every 300ms) to catch any missed events
-    fullscreenCheckInterval = setInterval(checkFullscreenState, 300);
-
-    // Also check on window focus and resize events
-    window.addEventListener('focus', checkFullscreenState);
-    window.addEventListener('resize', checkFullscreenState);
-
-    // Listen to Tauri window events as well
-    appWindow.onResized(checkFullscreenState);
   };
 
   onDestroy(() => {
     logger.logComponentUnmount('layout');
-    if (unlisten) {
-      logger.debug('layout', 'onDestroy', 'Cleaning up reload listener');
-      unlisten();
-    }
-    if (fullscreenCheckInterval) {
-      clearInterval(fullscreenCheckInterval);
-    }
-    if (checkFullscreenState) {
-      window.removeEventListener('focus', checkFullscreenState);
-      window.removeEventListener('resize', checkFullscreenState);
-    }
+    unlistenLayout?.();
     window.removeEventListener('redo-onboarding', handleRedoOnboarding);
   });
 
-  // Consolidated settings loader
-  const loadSettings = async (keys: string[]) => {
-    try {
-      const subset = await invoke<any>('get_settings_subset', { keys });
-      return subset || {};
-    } catch (e) {
-      logger.error('layout', 'loadSettings', `Failed to load settings: ${e}`, { keys, error: e });
-      return {};
-    }
-  };
-
-  const reloadEnhancedAnimationsSetting = async () => {
-    const settings = await loadSettings(['enhanced_animations']);
-    enhancedAnimations = settings.enhanced_animations ?? true;
-    logger.debug(
-      'layout',
-      'reloadEnhancedAnimationsSetting',
-      `Enhanced animations: ${enhancedAnimations}`,
-    );
-  };
-
   const reloadSidebarSettings = async () => {
     await sidebar.loadSettings();
+  };
+
+  const loadUserInfo = async () => {
+    await loadUserInfoAuth({
+      loadSettings,
+      onDisableSchoolPicture: (v) => (disableSchoolPicture = v),
+      onUserInfo: (info) => (userInfo = info),
+    });
+  };
+
+  const loadEnhancedAnimationsSetting = async () => {
+    await loadEnhancedAnimationsSettingFn({
+      onEnhancedAnimations: (v) => (enhancedAnimations = v),
+    });
   };
 
   const handlePageNavigation = () => {
@@ -296,67 +226,35 @@
   };
 
   const startLogin = async () => {
-    if (!seqtaUrl) {
-      logger.error('layout', 'startLogin', 'No valid SEQTA URL found');
-      return;
-    }
-
-    logger.info('layout', 'startLogin', 'Starting authentication', { url: seqtaUrl });
-    await authService.startLogin(seqtaUrl);
-
-    const timer = setInterval(async () => {
-      const sessionExists = await authService.checkSession();
-      if (sessionExists) {
-        clearInterval(timer);
-        needsSetup.set(false);
-        await Promise.all([loadUserInfo(), loadSeqtaConfigAndMenu()]);
-      }
-    }, 1000);
-
-    setTimeout(() => clearInterval(timer), 5 * 60 * 1000);
+    await startLoginAuth({
+      seqtaUrl,
+      needsSetupSet: (v) => needsSetup.set(v),
+      loadUserInfo,
+      loadSeqtaConfigAndMenu,
+    });
   };
 
   const handleLogout = async () => {
-    const success = await authService.logout();
-    if (success) {
-      userInfo = undefined;
-      showUserDropdown = false;
-      await checkSession();
-    }
+    await handleLogoutAuth({
+      onClearUser: () => (userInfo = undefined),
+      onCloseDropdown: () => (showUserDropdown = false),
+      checkSession,
+    });
   };
 
-  const syncCloudSettings = async () => {
-    try {
-      // Initialize cloud auth from current profile
-      const cloudUser = await cloudAuthService.init();
-      if (cloudUser) {
-        logger.info('layout', 'syncCloudSettings', 'Cloud user found, fetching settings');
-        const settings = await cloudSettingsService.getSettings();
-        if (settings) {
-          logger.info('layout', 'syncCloudSettings', 'Applying cloud settings');
-          // Save merged settings
-          await invoke('save_settings_merge', { patch: settings });
-
-          // Reload settings relevant to layout immediately
-          await Promise.all([
-            loadAccentColor(),
-            loadTheme(),
-            loadCurrentTheme(),
-            (async () => {
-              if (settings.language && settings.language !== get(locale)) {
-                locale.set(settings.language);
-              }
-            })(),
-            loadWeatherSettings(),
-            loadEnhancedAnimationsSetting(),
-            reloadSidebarSettings(),
-          ]);
-        }
-      }
-    } catch (e) {
-      logger.error('layout', 'syncCloudSettings', 'Failed to sync cloud settings', { error: e });
-    }
+  const loadWeatherSettings = async () => {
+    await weather.loadSettings();
   };
+
+  const cloudSyncOptions = {
+    loadWeatherSettings,
+    loadEnhancedAnimationsSetting,
+    reloadSidebarSettings,
+  };
+
+  const runSyncCloudSettings = () => syncCloudSettings(cloudSyncOptions);
+
+  const runAutoDownloadSettingsFromCloud = () => autoDownloadSettingsFromCloud();
 
   // Language change handler
   const changeLanguage = async (languageCode: string) => {
@@ -370,16 +268,6 @@
         error: e,
       });
     }
-  };
-
-  const loadUserInfo = async () => {
-    const settings = await loadSettings(['disable_school_picture']);
-    disableSchoolPicture = settings.disable_school_picture ?? false;
-    userInfo = await authService.loadUserInfo({ disableSchoolPicture });
-  };
-
-  const loadWeatherSettings = async () => {
-    await weather.loadSettings();
   };
 
   const fetchWeather = async (useIP = false) => {
@@ -406,14 +294,6 @@
       accent: $accentColor,
     });
   });
-
-  const loadEnhancedAnimationsSetting = async () => {
-    const settings = await loadSettings(['enhanced_animations']);
-    enhancedAnimations = settings.enhanced_animations ?? true;
-    logger.info('layout', 'loadEnhancedAnimationsSetting', 'Setting loaded', {
-      enhancedAnimations,
-    });
-  };
 
   $effect(() => {
     logger.debug('layout', '$effect', 'Enhanced animations effect triggered', {
@@ -443,7 +323,24 @@
 
   onMount(async () => {
     logger.logComponentMount('layout');
-    setupListeners();
+    unlistenLayout = await useLayoutListeners({
+      appWindow,
+      onFullscreenChange: (v) => (isFullscreen = v),
+    });
+
+    // Restore saved zoom level (from settings backend first, else localStorage)
+    const { restoreZoom, restoreZoomFromLevel } = await import('$lib/utils/zoom');
+    try {
+      const settings = await loadSettings(['zoom_level']);
+      const zoomLevel = settings.zoom_level;
+      if (typeof zoomLevel === 'number' && zoomLevel >= 0.5 && zoomLevel <= 2) {
+        restoreZoomFromLevel(zoomLevel);
+      } else {
+        restoreZoom();
+      }
+    } catch {
+      restoreZoom();
+    }
 
     // Set up redo onboarding listener
     window.addEventListener('redo-onboarding', handleRedoOnboarding);
@@ -451,14 +348,20 @@
     // Initialize theme and i18n first
     await Promise.all([loadAccentColor(), loadTheme(), loadCurrentTheme(), initI18n()]);
 
+    // Initialize theme sync in background (don't block startup)
+    themeService.initializeThemeSync().catch((e) => {
+      logger.error('layout', 'onMount', 'Failed to initialize theme sync', { error: e });
+    });
+
     shellReady = true;
 
     try {
       // Load saved language preference
       try {
         const settings = await loadSettings(['language']);
-        if (settings.language && availableLocales.some((l) => l.code === settings.language)) {
-          locale.set(settings.language);
+        const lang = settings.language;
+        if (typeof lang === 'string' && availableLocales.some((l) => l.code === lang)) {
+          locale.set(lang);
         }
       } catch (e) {
         logger.debug('layout', 'onMount', 'Could not load language preference', { error: e });
@@ -467,7 +370,7 @@
       // Load dev mock flag early to control session flow
       try {
         const settings = await loadSettings(['dev_sensitive_info_hider']);
-        devMockEnabled = settings.dev_sensitive_info_hider ?? false;
+        devMockEnabled = settings.dev_sensitive_info_hider === true;
       } catch {}
 
       // Load all settings and check session
@@ -476,33 +379,39 @@
         loadWeatherSettings(),
         loadEnhancedAnimationsSetting(),
         reloadSidebarSettings(),
-        syncCloudSettings(),
+        runSyncCloudSettings(),
       ]);
 
-      // Check if user needs onboarding - DISABLED: Only show when button is pressed in settings
-      // try {
-      //   const settings = await loadSettings(['has_been_through_onboarding']);
-      //   if (!settings.has_been_through_onboarding) {
-      //     // Wait a bit for UI to settle
-      //     setTimeout(() => {
-      //       showOnboarding = true;
-      //       sidebarOpen = true; // Ensure sidebar is open for first step
-      //     }, 1000);
-      //   }
-      // } catch (e) {
-      //   logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
-      // }
-
-      // Load cached data from SQLite immediately for instant UI
-      const { initializeApp } = await import('$lib/services/startupService');
-      await initializeApp();
-
-      // Background tasks (warmup already triggered by startupService)
-      if (weatherEnabled) {
-        fetchWeather(!forceUseLocation);
+      // Load setup assistant completion status (for first-launch flow)
+      try {
+        const setupSettings = await loadSettings(['has_completed_setup_assistant']);
+        hasCompletedSetupAssistant = setupSettings.has_completed_setup_assistant === true;
+      } catch (e) {
+        logger.debug('layout', 'onMount', 'Could not load setup assistant status', { error: e });
       }
 
-      // Validate SEQTA session on app launch
+      // Auto-download settings from cloud in background (non-blocking)
+      runAutoDownloadSettingsFromCloud().catch((e) => {
+        logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
+      });
+
+      // Check if user needs onboarding - show tour for first-time users
+      try {
+        const settings = await loadSettings(['has_been_through_onboarding']);
+        if (!settings.has_been_through_onboarding && !get(needsSetup)) {
+          // Wait a bit for UI to settle
+          setTimeout(() => {
+            showOnboarding = true;
+            sidebarOpen = true; // Ensure sidebar is open for first step
+          }, 1000);
+        }
+      } catch (e) {
+        logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
+      }
+
+      // Validate SEQTA session BEFORE starting background sync
+      // This prevents sync_analytics_data (and other warmup) from running in parallel with
+      // session invalidation - which could clear the session mid-sync and cause 401 errors
       if (!devMockEnabled && !$needsSetup) {
         try {
           const response = await seqtaFetch('/seqta/student/login', {
@@ -514,18 +423,32 @@
           const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
           const isAuthenticated = responseStr.includes('site.name.abbrev');
 
-          if (
+          // Only logout on explicit auth failures (401, unauthorized), NOT on 404 or generic errors
+          // 404 and other non-auth errors can include "error" in the response and would incorrectly invalidate the session
+          const isAuthFailure =
             !isAuthenticated &&
-            (responseStr.includes('error') ||
+            (responseStr.includes('"status":"401"') ||
+              responseStr.includes('"status": "401"') ||
               responseStr.includes('unauthorized') ||
-              responseStr.includes('401'))
-          ) {
+              responseStr.toLowerCase().includes('authentication failed'));
+
+          if (isAuthFailure) {
             logger.warn('layout', 'onMount', 'Session invalid, logging out');
             await handleLogout();
           }
         } catch (e) {
           logger.error('layout', 'onMount', 'SEQTA session check failed', { error: e });
         }
+      }
+
+      // Load cached data from SQLite immediately for instant UI
+      // Pass needsSetup so we skip background sync when user is on login screen (or after session invalidation)
+      const { initializeApp } = await import('$lib/services/startupService');
+      await initializeApp(get(needsSetup));
+
+      // Background tasks (warmup already triggered by startupService)
+      if (weatherEnabled) {
+        fetchWeather(!forceUseLocation);
       }
 
       // Run a one-time heartbeat health check on app open
@@ -551,6 +474,18 @@
       }
     } finally {
       contentLoading = false;
+    }
+  });
+
+  // Initialize connectivity and queue service when user is logged in
+  $effect(() => {
+    if (shellReady && !$needsSetup) {
+      import('$lib/stores/connectivity').then(({ initConnectivity }) =>
+        import('$lib/services/queueService').then(({ initQueueService, getQueueSummary }) => {
+          initConnectivity(() => getQueueSummary().then((s) => s.total));
+          initQueueService();
+        }),
+      );
     }
   });
 
@@ -733,47 +668,6 @@
   };
 
   // Track recent activity when route changes
-  const trackPageVisit = async (path: string) => {
-    // Skip tracking for certain paths
-    if (
-      path === '/settings' ||
-      path.startsWith('/settings/') ||
-      path === '/login' ||
-      path === '/error' ||
-      !path ||
-      path === ''
-    ) {
-      return;
-    }
-
-    try {
-      const settings = await loadSettings(['sidebar_recent_activity']);
-      const currentActivity = (settings.sidebar_recent_activity as RecentActivity[]) || [];
-      const now = Date.now();
-
-      // Remove duplicates and old entries, then add new entry
-      const filtered = currentActivity.filter((item) => item.path !== path);
-      const updated = [{ path, visited_at: now }, ...filtered]
-        .sort((a, b) => b.visited_at - a.visited_at)
-        .slice(0, 15); // Keep only last 15 items
-
-      // Save updated activity
-      await saveSettingsWithQueue({ sidebar_recent_activity: updated });
-    } catch (e) {
-      logger.error('layout', 'trackPageVisit', `Failed to track page visit: ${e}`, {
-        path,
-        error: e,
-      });
-    }
-  };
-
-  // Track page visits when route changes
-  $effect(() => {
-    const currentPath = $page.url.pathname;
-    if (currentPath && !$needsSetup && shellReady) {
-      trackPageVisit(currentPath);
-    }
-  });
 
   // Config/menu loading is handled in checkSession/startLogin
 </script>
@@ -826,15 +720,22 @@
           ? ''
           : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
+        {#if !$needsSetup}
+          <OfflineBanner />
+        {/if}
         {#if contentLoading}
           <div class="flex items-center justify-center w-full h-full py-12">
             <LoadingScreen inline />
           </div>
         {:else if $needsSetup}
-          <LoginScreen
-            {seqtaUrl}
-            onStartLogin={startLogin}
-            onUrlChange={(url) => (seqtaUrl = url)} />
+          {#if !hasCompletedSetupAssistant}
+            <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />
+          {:else}
+            <LoginScreen
+              {seqtaUrl}
+              onStartLogin={startLogin}
+              onUrlChange={(url) => (seqtaUrl = url)} />
+          {/if}
         {:else}
           {@render children()}
         {/if}

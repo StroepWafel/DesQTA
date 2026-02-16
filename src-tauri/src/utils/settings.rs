@@ -33,9 +33,22 @@ fn cloud_token_file() -> PathBuf {
     dir
 }
 
+/// Per-profile storage for DesQTA reserved client ID.
+fn reserved_client_file() -> PathBuf {
+    let mut dir = profiles::get_profile_dir(
+        &profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string()),
+    );
+    dir.push("reserved_client.json");
+    dir
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CloudToken {
     pub token: Option<String>,
+    #[serde(default)]
+    pub refresh_token: Option<String>,
     pub user: Option<CloudUser>,
     #[serde(default)]
     pub base_url: Option<String>,
@@ -67,6 +80,41 @@ impl CloudToken {
     }
 }
 
+/// Reserved DesQTA client ID (per app instance, stored at app level).
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct ReservedClient {
+    pub client_id: String,
+    pub redirect_uri: String,
+}
+
+impl ReservedClient {
+    pub fn load() -> Option<Self> {
+        let path = reserved_client_file();
+        if let Ok(mut file) = fs::File::open(path) {
+            let mut contents = String::new();
+            if file.read_to_string(&mut contents).is_ok() {
+                if let Ok(rc) = serde_json::from_str::<ReservedClient>(&contents) {
+                    if !rc.client_id.is_empty() {
+                        return Some(rc);
+                    }
+                }
+            }
+        }
+        None
+    }
+    pub fn save(&self) -> io::Result<()> {
+        let path = reserved_client_file();
+        fs::write(path, serde_json::to_string(self).unwrap())
+    }
+    pub fn clear_file() -> io::Result<()> {
+        let path = reserved_client_file();
+        if path.exists() {
+            fs::remove_file(path)?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub shortcuts: Vec<Shortcut>,
@@ -75,15 +123,19 @@ pub struct Settings {
     pub weather_city: String,
     pub weather_country: String,
     pub reminders_enabled: bool,
+    pub auto_dismiss_message_notifications: bool,
     pub force_use_location: bool,
     pub accent_color: String,
     pub theme: String,
     pub disable_school_picture: bool,
     pub enhanced_animations: bool,
     pub gemini_api_key: Option<String>,
+    pub cerebras_api_key: Option<String>,
+    pub ai_provider: Option<String>, // "gemini" or "cerebras"
     pub ai_integrations_enabled: Option<bool>,
     pub grade_analyser_enabled: Option<bool>,
     pub lesson_summary_analyser_enabled: Option<bool>,
+    pub quiz_generator_enabled: Option<bool>,
     pub auto_collapse_sidebar: bool,
     pub auto_expand_sidebar_hover: bool,
     pub global_search_enabled: bool,
@@ -97,6 +149,8 @@ pub struct Settings {
     #[serde(default)]
     pub has_been_through_onboarding: bool,
     #[serde(default)]
+    pub has_completed_setup_assistant: bool,
+    #[serde(default)]
     pub separate_rss_feed: bool,
     #[serde(default)]
     pub dashboard_widgets_layout: Option<String>,
@@ -106,6 +160,13 @@ pub struct Settings {
     pub sidebar_favorites: Option<Vec<String>>, // Array of paths
     #[serde(default)]
     pub sidebar_recent_activity: Option<Vec<RecentActivity>>,
+    #[serde(default)]
+    pub downloaded_theme_ids: Option<Vec<String>>, // Array of theme UUIDs from cloud store
+    #[serde(default)]
+    pub downloaded_theme_metadata: Option<serde_json::Value>, // Map of theme UUID -> { version, checksum, updated_at }
+    /// Interface zoom level (0.5 to 2.0, default 1.0)
+    #[serde(default)]
+    pub zoom_level: Option<f64>,
 }
 
 impl Default for Settings {
@@ -118,14 +179,18 @@ impl Default for Settings {
             weather_city: String::new(),
             weather_country: String::new(),
             reminders_enabled: true,
+            auto_dismiss_message_notifications: false,
             accent_color: "#3b82f6".to_string(), // Default to blue-500
-            theme: "default".to_string(),        // Default to DesQTA theme
+            theme: "dark".to_string(),            // Default color mode: dark (light/dark/system)
             disable_school_picture: false,
             enhanced_animations: true,
             gemini_api_key: None,
+            cerebras_api_key: None,
+            ai_provider: Some("gemini".to_string()), // Default to Gemini
             ai_integrations_enabled: Some(false),
             grade_analyser_enabled: Some(true),
             lesson_summary_analyser_enabled: Some(true),
+            quiz_generator_enabled: Some(true),
             auto_collapse_sidebar: false,
             auto_expand_sidebar_hover: false,
             global_search_enabled: false,
@@ -136,11 +201,15 @@ impl Default for Settings {
             language: "en".to_string(), // Default to English
             menu_order: None,
             has_been_through_onboarding: false,
+            has_completed_setup_assistant: false,
             separate_rss_feed: false,
             dashboard_widgets_layout: None,
             sidebar_folders: None,
             sidebar_favorites: None,
             sidebar_recent_activity: None,
+            downloaded_theme_ids: None,
+            downloaded_theme_metadata: None,
+            zoom_level: None,
         }
     }
 }
@@ -192,6 +261,8 @@ pub struct CloudUser {
 pub struct CloudUserWithToken {
     pub user: Option<CloudUser>,
     pub token: Option<String>,
+    #[serde(default)]
+    pub refresh_token: Option<String>,
 }
 
 // Cloud API types
@@ -350,6 +421,11 @@ impl Settings {
             "reminders_enabled",
             default_settings.reminders_enabled,
         );
+        default_settings.auto_dismiss_message_notifications = get_bool(
+            &existing_json,
+            "auto_dismiss_message_notifications",
+            default_settings.auto_dismiss_message_notifications,
+        );
         default_settings.force_use_location = get_bool(
             &existing_json,
             "force_use_location",
@@ -372,12 +448,16 @@ impl Settings {
             default_settings.enhanced_animations,
         );
         default_settings.gemini_api_key = get_opt_string(&existing_json, "gemini_api_key");
+        default_settings.cerebras_api_key = get_opt_string(&existing_json, "cerebras_api_key");
+        default_settings.ai_provider = get_opt_string(&existing_json, "ai_provider").or_else(|| Some("gemini".to_string()));
         default_settings.ai_integrations_enabled =
             get_opt_bool(&existing_json, "ai_integrations_enabled");
         default_settings.grade_analyser_enabled =
             get_opt_bool(&existing_json, "grade_analyser_enabled");
         default_settings.lesson_summary_analyser_enabled =
             get_opt_bool(&existing_json, "lesson_summary_analyser_enabled");
+        default_settings.quiz_generator_enabled =
+            get_opt_bool(&existing_json, "quiz_generator_enabled");
         default_settings.auto_collapse_sidebar = get_bool(
             &existing_json,
             "auto_collapse_sidebar",
@@ -416,6 +496,11 @@ impl Settings {
             &existing_json,
             "has_been_through_onboarding",
             default_settings.has_been_through_onboarding,
+        );
+        default_settings.has_completed_setup_assistant = get_bool(
+            &existing_json,
+            "has_completed_setup_assistant",
+            default_settings.has_completed_setup_assistant,
         );
         default_settings.separate_rss_feed = get_bool(
             &existing_json,
@@ -485,6 +570,14 @@ impl Settings {
                 }
             }
             default_settings.sidebar_recent_activity = Some(activities);
+        }
+
+        // Merge downloaded theme IDs
+        default_settings.downloaded_theme_ids = get_opt_string_array(&existing_json, "downloaded_theme_ids");
+
+        // Merge downloaded theme metadata (preserve as JSON value)
+        if let Some(metadata_json) = existing_json.get("downloaded_theme_metadata") {
+            default_settings.downloaded_theme_metadata = Some(metadata_json.clone());
         }
 
         default_settings
@@ -619,44 +712,53 @@ pub fn save_settings_merge(patch: serde_json::Value) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn save_cloud_token(token: String) -> Result<CloudUser, String> {
+pub async fn save_cloud_token(
+    token: String,
+    refresh_token: Option<String>,
+    user_json: Option<String>,
+) -> Result<CloudUser, String> {
     let base_url = get_base_api_url();
-    let client = reqwest::Client::new();
-    let response = client
-        .get(&format!("{}/auth/me", base_url))
-        .header("Authorization", format!("Bearer {}", token))
-        .send()
-        .await
-        .map_err(|e| format!("Network error: {}", e))?;
-    let status = response.status();
-    if !status.is_success() {
-        let error_text = response
-            .text()
+    let user: CloudUser = if let Some(json) = user_json {
+        serde_json::from_str(&json).map_err(|e| format!("Failed to parse user: {}", e))?
+    } else {
+        let client = reqwest::Client::new();
+        let response = client
+            .get(&format!("{}/auth/me", base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .send()
             .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        if let Ok(api_error) = serde_json::from_str::<APIError>(&error_text) {
+            .map_err(|e| format!("Network error: {}", e))?;
+        let status = response.status();
+        if !status.is_success() {
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            if let Ok(api_error) = serde_json::from_str::<APIError>(&error_text) {
+                return Err(format!(
+                    "API Error {}: {}",
+                    api_error.statusCode, api_error.statusMessage
+                ));
+            }
             return Err(format!(
-                "API Error {}: {}",
-                api_error.statusCode, api_error.statusMessage
+                "Authentication failed: {} - {}",
+                status, error_text
             ));
         }
-        return Err(format!(
-            "Authentication failed: {} - {}",
-            status, error_text
-        ));
-    }
-    let user_text = response
-        .text()
-        .await
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-    let user: CloudUser = serde_json::from_str(&user_text).map_err(|e| {
-        format!(
-            "Failed to parse user response: {} - Raw response: {}",
-            e, user_text
-        )
-    })?;
+        let user_text = response
+            .text()
+            .await
+            .map_err(|e| format!("Failed to read response: {}", e))?;
+        serde_json::from_str(&user_text).map_err(|e| {
+            format!(
+                "Failed to parse user response: {} - Raw response: {}",
+                e, user_text
+            )
+        })?
+    };
     let mut cloud_token = CloudToken::load();
     cloud_token.token = Some(token);
+    cloud_token.refresh_token = refresh_token;
     cloud_token.user = Some(user.clone());
     // This uses cloud_token_file(), which saves to the correct Android folder on Android
     cloud_token.save().map_err(|e| e.to_string())?;
@@ -669,12 +771,35 @@ pub fn get_cloud_user() -> CloudUserWithToken {
     CloudUserWithToken {
         user: cloud_token.user,
         token: cloud_token.token,
+        refresh_token: cloud_token.refresh_token,
     }
 }
 
 #[tauri::command]
 pub fn clear_cloud_token() -> Result<(), String> {
     CloudToken::clear_file().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_reserved_client() -> Option<ReservedClient> {
+    ReservedClient::load()
+}
+
+#[tauri::command]
+pub fn clear_reserved_client() -> Result<(), String> {
+    ReservedClient::clear_file().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn save_reserved_client(client_id: String, redirect_uri: String) -> Result<(), String> {
+    if client_id.is_empty() {
+        return Err("client_id cannot be empty".to_string());
+    }
+    let rc = ReservedClient {
+        client_id,
+        redirect_uri,
+    };
+    rc.save().map_err(|e| e.to_string())
 }
 
 #[tauri::command]

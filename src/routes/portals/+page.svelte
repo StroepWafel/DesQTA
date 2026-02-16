@@ -6,11 +6,13 @@
   import { fade, fly } from 'svelte/transition';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
   import Modal from '$lib/components/Modal.svelte';
+  import { get } from 'svelte/store';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
   import ModuleList from '$lib/components/ModuleList.svelte';
   import { sanitizeHtml } from '../../utils/sanitization';
   import type { ParsedDocument } from '../courses/types';
+  import { useDataLoader } from '$lib/utils/useDataLoader';
 
   interface Portal {
     is_power_portal: boolean;
@@ -28,14 +30,14 @@
     status: string;
   }
 
-  let loading = true;
-  let error: string | null = null;
-  let portals: Portal[] = [];
-  let selectedPortal: Portal | null = null;
-  let portalContent: any = null;
-  let parsedPortalDocument: ParsedDocument | null = null;
-  let loadingContent = false;
-  let showPortalModal = false;
+  let loading = $state(true);
+  let error = $state<string | null>(null);
+  let portals = $state<Portal[]>([]);
+  let selectedPortal = $state<Portal | null>(null);
+  let portalContent = $state<any>(null);
+  let parsedPortalDocument = $state<ParsedDocument | null>(null);
+  let loadingContent = $state(false);
+  let showPortalModal = $state(false);
 
   onMount(async () => {
     await loadPortals();
@@ -45,29 +47,37 @@
     loading = true;
     error = null;
 
-    try {
-      const responseText = await seqtaFetch('/seqta/student/load/portals', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: {},
-      });
+    const data = await useDataLoader<Portal[]>({
+      cacheKey: 'portals',
+      ttlMinutes: 10,
+      context: 'portals',
+      functionName: 'loadPortals',
+      fetcher: async () => {
+        const response = await seqtaFetch('/seqta/student/load/portals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: {},
+        });
 
-      const data: PortalsResponse = JSON.parse(responseText);
+        const parsed: PortalsResponse =
+          typeof response === 'string' ? JSON.parse(response) : response;
 
-      if (data.status === '200' && data.payload) {
-        portals = data.payload.sort((a, b) => a.priority - b.priority);
-      } else {
-        error = $_('portals.failed_to_load') || 'Failed to load portals';
-      }
-    } catch (err) {
-      error =
-        err instanceof Error
-          ? err.message
-          : $_('portals.failed_to_load') || 'Failed to load portals';
-      console.error('Error loading portals:', err);
-    } finally {
+        if (parsed.status === '200' && parsed.payload) {
+          return parsed.payload.sort((a, b) => a.priority - b.priority);
+        }
+        throw new Error(get(_)('portals.failed_to_load'));
+      },
+      onDataLoaded: (data) => {
+        portals = data;
+        loading = false;
+      },
+      updateOnBackgroundSync: true,
+    });
+
+    if (!data) {
+      error = get(_)('portals.failed_to_load');
       loading = false;
     }
   }
@@ -360,7 +370,7 @@
 <!-- Portal Content Modal -->
 <Modal
   bind:open={showPortalModal}
-  title={selectedPortal?.label || 'Portal Content'}
+  title={selectedPortal?.label || $_( 'portals.portal_content' )}
   maxWidth="max-w-7xl"
   maxHeight="max-h-[85vh]"
   onclose={closePortalModal}>

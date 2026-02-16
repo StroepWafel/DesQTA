@@ -15,6 +15,8 @@
     Clock,
     BookOpen,
     AcademicCap,
+    XMark,
+    Bars3,
   } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
@@ -63,6 +65,8 @@
   let selectedStandaloneContent: WeeklyLessonContent | null = $state(null);
   let showingOverview = $state(true); // Start with overview by default
   let contentScrollContainer: HTMLElement;
+  let sidebarOpen = $state(false);
+  let isMobile = $state(false);
 
   async function loadSubjects() {
     loading = true;
@@ -156,6 +160,12 @@
     selectedLesson = null;
     selectedLessonContent = null;
     selectedStandaloneContent = null;
+    
+    // Close sidebar on mobile when subject is selected
+    if (isMobile) {
+      sidebarOpen = false;
+    }
+    
     await loadCourseContent(subject);
     // Update URL with subject code
     await updateUrlParams({
@@ -190,6 +200,11 @@
       });
     }
 
+    // Close sidebar on mobile when lesson is selected
+    if (isMobile) {
+      sidebarOpen = false;
+    }
+
     // Scroll content area to top when new lesson is selected
     if (contentScrollContainer) {
       contentScrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
@@ -213,6 +228,11 @@
       });
     }
 
+    // Close sidebar on mobile when content is selected
+    if (isMobile) {
+      sidebarOpen = false;
+    }
+
     // Scroll content area to top when new content is selected
     if (contentScrollContainer) {
       contentScrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
@@ -224,6 +244,11 @@
     selectedLesson = null;
     selectedLessonContent = null;
     selectedStandaloneContent = null;
+
+    // Close sidebar on mobile when overview is selected
+    if (isMobile) {
+      sidebarOpen = false;
+    }
 
     // Update URL - keep code but clear lesson-specific params
     if (selectedSubject) {
@@ -298,10 +323,11 @@
     selectedLesson = null;
     selectedLessonContent = null;
     const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
-    const isOnline = navigator.onLine;
+    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
+    const offline = await isOfflineMode();
 
     // Only use cache when offline - always fetch fresh data when online
-    if (!isOnline) {
+    if (offline) {
       const cached =
         cache.get<CoursePayload>(cacheKey) ||
         (await getWithIdbFallback<CoursePayload>(cacheKey, cacheKey, () =>
@@ -460,19 +486,83 @@
     }
   }
 
+  // Check if mobile
+  function checkMobile() {
+    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
+    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
+    const mql = window.matchMedia('(max-width: 640px)');
+    const isSmallViewport = mql.matches;
+    isMobile = isNativeMobile || isSmallViewport;
+    
+    // Close sidebar on mobile by default
+    if (isMobile) {
+      sidebarOpen = false;
+    } else {
+      sidebarOpen = true;
+    }
+  }
+
   onMount(() => {
     loadSubjects();
     autoSelectFromQuery();
+    checkMobile();
+    
+    const mql = window.matchMedia('(max-width: 640px)');
+    const onMqlChange = () => checkMobile();
+    
+    try {
+      mql.addEventListener('change', onMqlChange);
+    } catch {
+      // Safari fallback
+      // @ts-ignore
+      mql.addListener(onMqlChange);
+    }
+    
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      try {
+        mql.removeEventListener('change', onMqlChange);
+      } catch {
+        // @ts-ignore
+        mql.removeListener(onMqlChange);
+      }
+    };
   });
 </script>
 
-<div class="flex overflow-hidden w-full h-full">
+<div class="flex overflow-hidden w-full h-full relative">
+  <!-- Mobile Sidebar Toggle Button -->
+  {#if isMobile}
+    <button
+      class="fixed top-20 left-4 z-40 flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform theme-bg hover:accent-bg focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 shadow-lg"
+      onclick={() => (sidebarOpen = !sidebarOpen)}
+      aria-label={$_('navigation.toggle_sidebar') || 'Toggle sidebar'}>
+      <Icon src={sidebarOpen ? XMark : Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+    </button>
+  {/if}
+
+  <!-- Mobile Sidebar Overlay -->
+  {#if isMobile && sidebarOpen}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="fixed inset-0 z-30 bg-black/50 sm:hidden"
+      onclick={() => (sidebarOpen = false)}
+      role="button"
+      tabindex="0"
+      aria-label={$_('navigation.close_sidebar') || 'Close sidebar overlay'}></div>
+  {/if}
+
   <!-- Unified Navigation Sidebar -->
   <div
-    class="flex flex-col w-80 h-full border-r border-zinc-200 transition-all duration-300 dark:border-zinc-700">
+    class="flex flex-col w-80 h-full border-r border-zinc-200 transition-all duration-300 dark:border-zinc-700 theme-bg {isMobile
+      ? `fixed top-0 left-0 z-40 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+      : ''}">
     <!-- Navigation Header -->
     <div
-      class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
+      class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
       <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
         {#if selectedSubject}
           {selectedSubject.title}
@@ -480,22 +570,33 @@
           <T key="navigation.courses" fallback="Courses" />
         {/if}
       </h2>
-      {#if selectedSubject}
-        <button
-          onclick={() => {
-            // Always go back to subject selection, but keep course content visible
-            selectedSubject = null;
-            // Don't clear coursePayload, parsedDocument to keep content visible
-            selectedLesson = null;
-            selectedLessonContent = null;
-            showingOverview = true;
-          }}
-          class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-          title={$_('courses.back_to_subjects') || 'Back to subjects'}
-          aria-label={$_('courses.back_to_subjects') || 'Back to subjects'}>
-          <Icon src={ChevronLeft} class="w-5 h-5" />
-        </button>
-      {/if}
+      <div class="flex gap-2 items-center">
+        {#if isMobile}
+          <button
+            onclick={() => (sidebarOpen = false)}
+            class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            title={$_('navigation.close_sidebar') || 'Close sidebar'}
+            aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
+            <Icon src={XMark} class="w-5 h-5" />
+          </button>
+        {/if}
+        {#if selectedSubject}
+          <button
+            onclick={() => {
+              // Always go back to subject selection, but keep course content visible
+              selectedSubject = null;
+              // Don't clear coursePayload, parsedDocument to keep content visible
+              selectedLesson = null;
+              selectedLessonContent = null;
+              showingOverview = true;
+            }}
+            class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            title={$_('courses.back_to_subjects') || 'Back to subjects'}
+            aria-label={$_('courses.back_to_subjects') || 'Back to subjects'}>
+            <Icon src={ChevronLeft} class="w-5 h-5" />
+          </button>
+        {/if}
+      </div>
     </div>
 
     <!-- Content Area with Transition -->
@@ -640,6 +741,26 @@
                 size="sm" />
             </div>
           {:else if coursePayload}
+            <!-- Back to Courses Button (Mobile) -->
+            {#if isMobile}
+              <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
+                <button
+                  onclick={() => {
+                    selectedSubject = null;
+                    selectedLesson = null;
+                    selectedLessonContent = null;
+                    selectedStandaloneContent = null;
+                    showingOverview = true;
+                    sidebarOpen = false;
+                  }}
+                  class="flex gap-2 items-center w-full px-4 py-2 text-left rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]">
+                  <Icon src={ChevronLeft} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+                  <span class="font-medium text-zinc-900 dark:text-white">
+                    <T key="courses.back_to_courses" fallback="Back to Courses" />
+                  </span>
+                </button>
+              </div>
+            {/if}
             <!-- Quick Actions -->
             <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
               <div class="space-y-2">
@@ -791,7 +912,7 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="overflow-y-auto flex-1" bind:this={contentScrollContainer}>
+  <div class="overflow-y-auto flex-1 {isMobile ? 'w-full' : ''} theme-bg" bind:this={contentScrollContainer}>
     {#if loadingCourse}
       <div class="flex justify-center items-center h-full">
         <LoadingSpinner

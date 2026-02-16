@@ -11,6 +11,7 @@ import { logger } from '../../utils/logger';
 import { idbCacheGet } from '../services/idb';
 import { isOfflineMode } from '../utils/offlineMode';
 import { notificationService } from './notificationService';
+import { themeStoreService, resolveImageUrl } from './themeStoreService';
 
 /**
  * Load all cached data from SQLite into memory cache for instant access
@@ -142,6 +143,80 @@ export async function triggerBackgroundSync(): Promise<void> {
 }
 
 /**
+ * Download theme store images in the background
+ * Fetches featured/spotlight themes and caches their thumbnails and screenshots
+ */
+async function downloadThemeStoreImages(): Promise<void> {
+  try {
+    // Check if offline mode is forced
+    const offline = await isOfflineMode();
+    if (offline) {
+      logger.debug('startup', 'downloadThemeStoreImages', 'Skipping theme image download (offline mode)');
+      return;
+    }
+
+    logger.info('startup', 'downloadThemeStoreImages', 'Starting theme store image download');
+
+    // Fetch spotlight themes (featured themes)
+    const spotlightResponse = await themeStoreService.getSpotlight();
+    if (!spotlightResponse || !spotlightResponse.themes) {
+      logger.debug('startup', 'downloadThemeStoreImages', 'No spotlight themes found');
+      return;
+    }
+
+    const themes = spotlightResponse.themes;
+    logger.debug('startup', 'downloadThemeStoreImages', `Found ${themes.length} themes to cache images for`);
+
+    // Download images for each theme in parallel (but don't await - let it run in background)
+    const imagePromises: Promise<void>[] = [];
+
+    for (const theme of themes) {
+      // Cache thumbnail if available
+      if (theme.preview?.thumbnail) {
+        imagePromises.push(
+          resolveImageUrl(theme.preview.thumbnail, theme.id, 'thumbnail', undefined, theme.updated_at)
+            .then(() => {
+              logger.debug('startup', 'downloadThemeStoreImages', `Cached thumbnail for theme ${theme.id}`);
+            })
+            .catch((e) => {
+              logger.debug('startup', 'downloadThemeStoreImages', `Failed to cache thumbnail for theme ${theme.id}`, { error: e });
+            })
+        );
+      }
+
+      // Cache screenshots if available
+      if (theme.preview?.screenshots && Array.isArray(theme.preview.screenshots)) {
+        theme.preview.screenshots.forEach((screenshot, index) => {
+          imagePromises.push(
+            resolveImageUrl(screenshot, theme.id, 'screenshot', index, theme.updated_at)
+              .then(() => {
+                logger.debug('startup', 'downloadThemeStoreImages', `Cached screenshot ${index} for theme ${theme.id}`);
+              })
+              .catch((e) => {
+                logger.debug('startup', 'downloadThemeStoreImages', `Failed to cache screenshot ${index} for theme ${theme.id}`, { error: e });
+              })
+          );
+        });
+      }
+    }
+
+    // Wait for all images to be cached (but don't block startup)
+    Promise.allSettled(imagePromises)
+      .then(() => {
+        logger.info('startup', 'downloadThemeStoreImages', 'Finished downloading theme store images');
+      })
+      .catch((e) => {
+        logger.debug('startup', 'downloadThemeStoreImages', 'Some theme images failed to download (non-critical)', { error: e });
+      });
+  } catch (e) {
+    // Silently fail - don't block startup if theme store is unavailable
+    logger.debug('startup', 'downloadThemeStoreImages', 'Theme image download failed (non-critical)', {
+      error: e,
+    });
+  }
+}
+
+/**
  * Check for app updates and install automatically in the background (desktop only)
  */
 async function checkForUpdatesOnStartup(): Promise<void> {
@@ -200,8 +275,9 @@ async function checkForUpdatesOnStartup(): Promise<void> {
 
 /**
  * Initialize startup sequence: load cached data → show UI → sync in background → check for updates
+ * @param needsSetup - When true, user is on login screen; skip background sync to avoid 401 race with session
  */
-export async function initializeApp(): Promise<void> {
+export async function initializeApp(needsSetup = false): Promise<void> {
   // Step 1: Load cached data from SQLite immediately (blocks until loaded)
   await loadCachedDataOnStartup();
 
@@ -230,10 +306,19 @@ export async function initializeApp(): Promise<void> {
     });
   }
 
-  // Step 3: Trigger background sync (non-blocking)
-  triggerBackgroundSync();
+  // Step 3: Trigger background sync (non-blocking) - skip when on login screen to avoid session race
+  if (!needsSetup) {
+    triggerBackgroundSync();
+  } else {
+    logger.debug('startup', 'initializeApp', 'Skipping background sync (user on login screen)');
+  }
 
-  // Step 4: Check for updates silently in background (non-blocking, desktop only)
+  // Step 5: Download theme store images in background (non-blocking)
+  downloadThemeStoreImages().catch((e) => {
+    logger.debug('startup', 'initializeApp', 'Theme image download error (non-critical)', { error: e });
+  });
+
+  // Step 6: Check for updates silently in background (non-blocking, desktop only)
   checkForUpdatesOnStartup().catch((e) => {
     logger.debug('startup', 'initializeApp', 'Update check error (non-critical)', { error: e });
   });

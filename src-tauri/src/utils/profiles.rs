@@ -23,8 +23,9 @@ pub struct ProfilesMetadata {
     pub migration_completed: bool,
 }
 
-/// Get the base data directory (DesQTA root)
-fn base_data_dir() -> PathBuf {
+/// Get the base data directory (DesQTA root).
+/// Public for app-level storage (e.g. reserved DesQTA client ID).
+pub fn get_base_data_dir() -> PathBuf {
     #[cfg(target_os = "android")]
     {
         let mut dir = PathBuf::from("/data/data/com.desqta.app/files");
@@ -47,14 +48,14 @@ fn base_data_dir() -> PathBuf {
 
 /// Get the profiles.json file path
 fn profiles_metadata_file() -> PathBuf {
-    let mut dir = base_data_dir();
+    let mut dir = get_base_data_dir();
     dir.push("profiles.json");
     dir
 }
 
 /// Get the profiles directory
 fn profiles_dir() -> PathBuf {
-    let mut dir = base_data_dir();
+    let mut dir = get_base_data_dir();
     dir.push("profiles");
     if !dir.exists() {
         fs::create_dir_all(&dir).expect("Unable to create profiles dir");

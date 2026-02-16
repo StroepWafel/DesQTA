@@ -1,5 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { BUNDLED_THEMES } from '../generated/themes';
+import { themeStoreService, resolveImageUrl } from './themeStoreService';
+import { logger } from '../../utils/logger';
 
 export interface ThemeManifest {
   name: string;
@@ -256,15 +258,23 @@ class ThemeService {
       return bundled.manifest as unknown as ThemeManifest;
     }
 
+    // Check if this is a temp theme (starts with .temp/)
+    const isTempTheme = themeName.startsWith('.temp/');
+
     try {
-      // First try to load from backend (supports both static and custom themes)
+      // First try to load from backend (supports both static and custom themes, including temp)
       const manifest = await invoke<ThemeManifest>('load_theme_manifest', { themeName });
       this.loadedThemes.set(themeName, manifest);
       return manifest;
     } catch (backendError) {
+      // Don't try static fallback for temp themes - they only exist in the backend
+      if (isTempTheme) {
+        throw backendError;
+      }
+
       console.warn('Backend theme loading failed, trying static fallback:', backendError);
 
-      // Fallback to static themes directory
+      // Fallback to static themes directory (only for non-temp themes)
       const manifestPath = `/themes/${themeName}/theme-manifest.json`;
 
       try {
@@ -665,6 +675,349 @@ class ThemeService {
     const existingPreview = document.getElementById('theme-preview-styles');
     if (existingPreview) {
       existingPreview.remove();
+    }
+  }
+
+  // Cloud theme management methods
+  async loadCloudTheme(themeId: string): Promise<void> {
+    try {
+      // Fetch theme details from store
+      const themeData = await themeStoreService.getTheme(themeId);
+      if (!themeData || !themeData.theme || !themeData.theme.slug) {
+        throw new Error('Theme not found in store or invalid structure');
+      }
+
+      // Get download URL (zip URL)
+      const downloadInfo = await themeStoreService.downloadTheme(themeId);
+      if (!downloadInfo) {
+        throw new Error('Failed to get download URL');
+      }
+
+      // Resolve ZIP URL to full URL (handle relative paths)
+      // ZIP URLs don't need caching, use sync version
+      const { resolveImageUrlSync } = await import('./themeStoreService');
+      const zipUrl =
+        resolveImageUrlSync(downloadInfo.zip_download_url) || downloadInfo.zip_download_url;
+      if (!zipUrl || (!zipUrl.startsWith('http://') && !zipUrl.startsWith('https://'))) {
+        throw new Error(`Invalid ZIP URL: ${zipUrl}`);
+      }
+
+      // Download ZIP, extract to app directory, and save theme UUID to settings
+      const installedThemeName = await invoke<string>('download_and_install_theme', {
+        zipUrl: zipUrl,
+        themeId: themeId, // UUID from server
+        themeSlug: themeData.theme.slug,
+        checksum: downloadInfo.checksum,
+      });
+
+      // Save downloaded theme UUID and metadata to settings for cross-device sync and update detection
+      await this.saveDownloadedThemeId(themeId, {
+        version: themeData.theme.version,
+        checksum: downloadInfo.checksum,
+        updated_at: themeData.theme.updated_at,
+      });
+
+      // Load and apply the newly installed theme (this applies accent color and default theme)
+      // loadAndApplyTheme will use the existing loadThemeManifest which handles manifest parsing correctly
+      const { loadAndApplyTheme } = await import('../stores/theme');
+      await loadAndApplyTheme(installedThemeName);
+    } catch (error) {
+      logger.error('themeService', 'loadCloudTheme', 'Failed to load cloud theme', {
+        error,
+        themeId,
+      });
+      throw error;
+    }
+  }
+
+  // Preview a cloud theme by downloading it to temp folder and applying it temporarily
+  async previewCloudTheme(themeId: string): Promise<string> {
+    try {
+      // Fetch theme details from store
+      const themeData = await themeStoreService.getTheme(themeId);
+      if (!themeData || !themeData.theme || !themeData.theme.slug) {
+        throw new Error('Theme not found in store or invalid structure');
+      }
+
+      // Get download URL (zip URL)
+      const downloadInfo = await themeStoreService.downloadTheme(themeId);
+      if (!downloadInfo) {
+        throw new Error('Failed to get download URL');
+      }
+
+      // Resolve ZIP URL to full URL (handle relative paths)
+      // ZIP URLs don't need caching, use sync version
+      const { resolveImageUrlSync } = await import('./themeStoreService');
+      const zipUrl =
+        resolveImageUrlSync(downloadInfo.zip_download_url) || downloadInfo.zip_download_url;
+      if (!zipUrl || (!zipUrl.startsWith('http://') && !zipUrl.startsWith('https://'))) {
+        throw new Error(`Invalid ZIP URL: ${zipUrl}`);
+      }
+
+      // Download ZIP to temp folder
+      const tempThemeName = await invoke<string>('download_theme_to_temp', {
+        zipUrl: zipUrl,
+        themeSlug: themeData.theme.slug,
+        checksum: downloadInfo.checksum,
+      });
+
+      // Return the temp theme name (e.g., ".temp/theme-slug")
+      return tempThemeName;
+    } catch (error) {
+      logger.error('themeService', 'previewCloudTheme', 'Failed to preview cloud theme', {
+        error,
+        themeId,
+      });
+      throw error;
+    }
+  }
+
+  // Cleanup temp theme folder
+  async cleanupTempTheme(themeSlug: string): Promise<void> {
+    try {
+      await invoke('cleanup_temp_theme', { themeSlug });
+    } catch (error) {
+      logger.error('themeService', 'cleanupTempTheme', 'Failed to cleanup temp theme', {
+        error,
+        themeSlug,
+      });
+    }
+  }
+
+  async saveDownloadedThemeId(
+    themeId: string,
+    metadata?: { version: string; checksum: string; updated_at: number },
+  ): Promise<void> {
+    try {
+      const { saveSettingsWithQueue } = await import('./settingsSync');
+      // Get current downloaded themes metadata
+      const subset = await invoke<any>('get_settings_subset', {
+        keys: ['downloaded_theme_ids', 'downloaded_theme_metadata'],
+      });
+      const currentIds: string[] = subset?.downloaded_theme_ids || [];
+      const currentMetadata: Record<
+        string,
+        { version: string; checksum: string; updated_at: number }
+      > = subset?.downloaded_theme_metadata || {};
+
+      // Add theme ID if not already present
+      if (!currentIds.includes(themeId)) {
+        await saveSettingsWithQueue({
+          downloaded_theme_ids: [...currentIds, themeId],
+        });
+      }
+
+      // Save metadata if provided
+      if (metadata) {
+        await saveSettingsWithQueue({
+          downloaded_theme_metadata: {
+            ...currentMetadata,
+            [themeId]: metadata,
+          },
+        });
+        logger.debug('themeService', 'saveDownloadedThemeId', 'Saved theme metadata to settings', {
+          themeId,
+          metadata,
+        });
+      }
+    } catch (error) {
+      logger.error('themeService', 'saveDownloadedThemeId', 'Failed to save theme ID', { error });
+    }
+  }
+
+  async removeDownloadedThemeId(themeId: string): Promise<void> {
+    try {
+      const { saveSettingsWithQueue } = await import('./settingsSync');
+      const subset = await invoke<any>('get_settings_subset', {
+        keys: ['downloaded_theme_ids', 'downloaded_theme_metadata'],
+      });
+      const currentIds: string[] = subset?.downloaded_theme_ids || [];
+      const currentMetadata: Record<string, any> = subset?.downloaded_theme_metadata || {};
+
+      await saveSettingsWithQueue({
+        downloaded_theme_ids: currentIds.filter((id) => id !== themeId),
+        downloaded_theme_metadata: Object.fromEntries(
+          Object.entries(currentMetadata).filter(([id]) => id !== themeId),
+        ),
+      });
+      logger.debug('themeService', 'removeDownloadedThemeId', 'Removed theme ID from settings', {
+        themeId,
+      });
+    } catch (error) {
+      logger.error('themeService', 'removeDownloadedThemeId', 'Failed to remove theme ID', {
+        error,
+      });
+    }
+  }
+
+  async isThemeInstalled(themeSlug: string): Promise<boolean> {
+    try {
+      const availableThemes = await this.getAvailableThemes();
+      return availableThemes.includes(themeSlug);
+    } catch {
+      return false;
+    }
+  }
+
+  async syncDownloadedThemes(): Promise<void> {
+    try {
+      // Get list of downloaded theme UUIDs from settings
+      const subset = await invoke<any>('get_settings_subset', { keys: ['downloaded_theme_ids'] });
+      const downloadedIds: string[] = subset?.downloaded_theme_ids || [];
+
+      if (downloadedIds.length === 0) {
+        logger.debug('themeService', 'syncDownloadedThemes', 'No themes to sync');
+        return;
+      }
+
+      logger.info('themeService', 'syncDownloadedThemes', 'Starting theme sync', {
+        count: downloadedIds.length,
+      });
+
+      // For each downloaded theme ID, check if it exists locally
+      // If not, re-download it
+      for (const themeId of downloadedIds) {
+        try {
+          const themeData = await themeStoreService.getTheme(themeId);
+          if (themeData && themeData.theme && themeData.theme.slug) {
+            // Check if theme is already installed locally
+            const installed = await this.isThemeInstalled(themeData.theme.slug);
+            if (!installed) {
+              // Re-download and install
+              logger.info(
+                'themeService',
+                'syncDownloadedThemes',
+                `Re-downloading theme ${themeId}`,
+                { slug: themeData.theme.slug },
+              );
+              await this.loadCloudTheme(themeId);
+            } else {
+              logger.debug('themeService', 'syncDownloadedThemes', 'Theme already installed', {
+                themeId,
+                slug: themeData.theme.slug,
+              });
+            }
+          } else {
+            logger.warn(
+              'themeService',
+              'syncDownloadedThemes',
+              'Theme not found in store or invalid structure',
+              {
+                themeId,
+                hasThemeData: !!themeData,
+                hasTheme: !!themeData?.theme,
+                hasSlug: !!themeData?.theme?.slug,
+              },
+            );
+          }
+        } catch (error) {
+          logger.error('themeService', 'syncDownloadedThemes', `Failed to sync theme ${themeId}`, {
+            error,
+            themeId,
+          });
+          // Continue with next theme
+        }
+      }
+
+      logger.info('themeService', 'syncDownloadedThemes', 'Theme sync completed');
+    } catch (error) {
+      logger.error('themeService', 'syncDownloadedThemes', 'Failed to sync themes', { error });
+    }
+  }
+
+  // Get installed theme metadata from settings
+  async getInstalledThemeMetadata(
+    themeId: string,
+  ): Promise<{ version: string; checksum: string; updated_at: number } | null> {
+    try {
+      const subset = await invoke<any>('get_settings_subset', {
+        keys: ['downloaded_theme_metadata'],
+      });
+      const metadata: Record<string, { version: string; checksum: string; updated_at: number }> =
+        subset?.downloaded_theme_metadata || {};
+      return metadata[themeId] || null;
+    } catch (error) {
+      logger.error('themeService', 'getInstalledThemeMetadata', 'Failed to get metadata', {
+        error,
+      });
+      return null;
+    }
+  }
+
+  // Check if a theme has an update available
+  async checkThemeUpdate(themeId: string): Promise<{
+    hasUpdate: boolean;
+    currentVersion?: string;
+    latestVersion?: string;
+    currentChecksum?: string;
+    latestChecksum?: string;
+  }> {
+    try {
+      // Get installed metadata
+      const installedMetadata = await this.getInstalledThemeMetadata(themeId);
+      if (!installedMetadata) {
+        return { hasUpdate: false };
+      }
+
+      // Get latest theme data from store
+      const themeData = await themeStoreService.getTheme(themeId);
+      if (!themeData || !themeData.theme) {
+        return { hasUpdate: false };
+      }
+
+      const latestVersion = themeData.theme.version;
+      const latestUpdatedAt = themeData.theme.updated_at;
+
+      // Check if version changed or updated_at is newer
+      const versionChanged = installedMetadata.version !== latestVersion;
+      const updatedAtChanged = latestUpdatedAt > installedMetadata.updated_at;
+
+      // Get latest checksum if available
+      const downloadInfo = await themeStoreService.downloadTheme(themeId);
+      const latestChecksum = downloadInfo?.checksum;
+
+      // If updated_at changed, invalidate image cache
+      if (updatedAtChanged) {
+        try {
+          await invoke('invalidate_theme_image_cache', { themeId });
+          logger.debug('themeService', 'checkThemeUpdate', 'Invalidated image cache', {
+            themeId,
+          });
+        } catch (e) {
+          logger.warn('themeService', 'checkThemeUpdate', 'Failed to invalidate image cache', {
+            error: e,
+            themeId,
+          });
+        }
+      }
+
+      return {
+        hasUpdate: versionChanged || updatedAtChanged,
+        currentVersion: installedMetadata.version,
+        latestVersion: latestVersion,
+        currentChecksum: installedMetadata.checksum,
+        latestChecksum: latestChecksum,
+      };
+    } catch (error) {
+      logger.error('themeService', 'checkThemeUpdate', 'Failed to check for updates', {
+        error,
+        themeId,
+      });
+      return { hasUpdate: false };
+    }
+  }
+
+  // Call on app startup after settings load
+  async initializeThemeSync(): Promise<void> {
+    // Check if we have downloaded themes to sync
+    const subset = await invoke<any>('get_settings_subset', { keys: ['downloaded_theme_ids'] });
+    const downloadedIds: string[] = subset?.downloaded_theme_ids || [];
+
+    if (downloadedIds.length > 0) {
+      // Sync in background (don't block startup)
+      this.syncDownloadedThemes().catch((error) => {
+        logger.error('themeService', 'initializeThemeSync', 'Failed to sync themes', { error });
+      });
     }
   }
 }

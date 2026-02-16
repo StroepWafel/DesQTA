@@ -14,8 +14,10 @@
   import { Slider } from '$lib/components/ui/slider/index.js';
   import { Icon } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
+  import { get } from 'svelte/store';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
+  import { analyticsCrunching } from '../../lib/stores/analyticsOnboarding';
 
   let analyticsData: AnalyticsData | null = $state(null);
   let loading = $state(true);
@@ -140,16 +142,17 @@
 
   function formatLastUpdated(date: Date | null): string {
     if (!date) return '';
+    const t = get(_);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    if (diffMins < 1) return t('analytics.time_just_now');
+    if (diffMins < 60) return t('analytics.time_minutes_ago', { values: { count: diffMins } });
+    if (diffHours < 24) return t('analytics.time_hours_ago', { values: { count: diffHours } });
+    if (diffDays < 7) return t('analytics.time_days_ago', { values: { count: diffDays } });
 
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -190,23 +193,28 @@
 
       // Show success toast notification
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.success('Analytics data synced successfully');
+      toastStore.success(get(_)('analytics.sync_success'));
     } catch (e) {
       logger.error('analytics', 'onMount', `Failed to sync analytics data: ${e}`, { error: e });
       error = $_('analytics.sync_failed') || 'Failed to sync analytics data, showing cached data.';
 
       // Show error toast notification
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.error('Failed to sync analytics data');
+      toastStore.error(get(_)('analytics.sync_error'));
     } finally {
       syncing = false;
     }
+  });
+
+  $effect(() => {
+    analyticsCrunching.set(loading || syncing);
   });
 
   onDestroy(() => {
     if (timestampInterval) {
       clearInterval(timestampInterval);
     }
+    analyticsCrunching.set(false);
   });
 
   // Derived unique values for filter options
@@ -397,7 +405,7 @@
     </div>
 
     <!-- Main Analytics Charts -->
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" data-onboarding="analytics-chart">
       {#key filteredData().length + filteredData()
           .map((d) => d.id)
           .join(',')}

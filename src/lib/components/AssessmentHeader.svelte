@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
   import { ArrowLeft } from 'svelte-hero-icons';
+  import { _ } from '$lib/i18n';
 </script>
 
 <div
@@ -9,6 +10,6 @@
     href="/assessments"
     class="flex gap-2 items-center transition-colors duration-200 text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
     <Icon src={ArrowLeft} class="w-5 h-5" />
-    <span>Back to Assessments</span>
+    <span>{$_('assessments.back_to_assessments')}</span>
   </a>
-</div> 
+</div>

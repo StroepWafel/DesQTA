@@ -161,6 +161,7 @@
   let selectedIndex = $state(-1);
   let showPagesMenu = $state(false);
   let globalSearchEnabled = $state(false);
+  let autoDismissMessageNotifications = $state(false);
   let showNotifications = $state(false);
   let loadingNotifications = $state(false);
   let notifications = $state<Notification[]>([]);
@@ -216,6 +217,34 @@
     }
   }
 
+  async function loadAutoDismissMessageNotificationsSetting() {
+    logger.debug(
+      'AppHeader',
+      'loadAutoDismissMessageNotificationsSetting',
+      'Loading auto dismiss message notifications setting',
+    );
+
+    try {
+      const subset = await invoke<any>('get_settings_subset', {
+        keys: ['auto_dismiss_message_notifications'],
+      });
+      autoDismissMessageNotifications = subset?.auto_dismiss_message_notifications ?? false; // Default to disabled
+      logger.info(
+        'AppHeader',
+        'loadAutoDismissMessageNotificationsSetting',
+        `Auto dismiss message notifications enabled: ${autoDismissMessageNotifications}`,
+      );
+    } catch (error) {
+      logger.error(
+        'AppHeader',
+        'loadAutoDismissMessageNotificationsSetting',
+        `Failed to load auto dismiss message notifications setting: ${error}`,
+        { error },
+      );
+      autoDismissMessageNotifications = false; // Default to disabled on error
+    }
+  }
+
   async function fetchNotifications() {
     if (loadingNotifications) return;
 
@@ -251,10 +280,9 @@
         notificationsData = parsedResponse;
       }
 
-      if (notificationsData.length > 0) {
-        notifications = notificationsData;
-        unreadNotifications = notificationsData.length;
-      }
+      // Always update notifications, even if empty (to reflect dismissed notifications)
+      notifications = notificationsData;
+      unreadNotifications = notificationsData.length;
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -332,7 +360,7 @@
     return Bell;
   }
 
-  function handleNotificationClick(notification: Notification) {
+  async function handleNotificationClick(notification: Notification) {
     if (notification.type === 'coneqtassessments' && notification.coneqtAssessments) {
       const { assessmentID, metaclassID } = notification.coneqtAssessments;
       // Extract year from notification timestamp (fallback to current year if unavailable)
@@ -347,6 +375,50 @@
       goto('/reports');
     } else if (notification.type === 'message' && notification.message) {
       const id = notification.message.messageID;
+
+      // If auto-dismiss is enabled, dismiss the notification before navigating
+      if (autoDismissMessageNotifications) {
+        try {
+          // Optimistically remove the notification from the list immediately
+          notifications = notifications.filter(
+            (n) => n.notificationID !== notification.notificationID,
+          );
+          unreadNotifications = Math.max(0, unreadNotifications - 1);
+
+          // Dismiss on server
+          await seqtaFetch('/seqta/student/notification/dismiss', {
+            method: 'POST',
+            body: {
+              ids: [notification.notificationID],
+            },
+          });
+          logger.info(
+            'AppHeader',
+            'handleNotificationClick',
+            `Dismissed message notification ${notification.notificationID}`,
+          );
+
+          // Refresh notifications list in background to ensure sync
+          fetchNotifications().catch((error) => {
+            logger.error(
+              'AppHeader',
+              'handleNotificationClick',
+              `Failed to refresh notifications after dismiss: ${error}`,
+              { error },
+            );
+          });
+        } catch (error) {
+          logger.error(
+            'AppHeader',
+            'handleNotificationClick',
+            `Failed to dismiss notification: ${error}`,
+            { error },
+          );
+          // Re-fetch to restore the notification if dismiss failed
+          await fetchNotifications();
+        }
+      }
+
       showNotifications = false;
       showNotificationsModal = false;
       goto(`/direqt-messages?messageID=${id}`);
@@ -355,6 +427,7 @@
 
   onMount(() => {
     loadGlobalSearchSetting();
+    loadAutoDismissMessageNotificationsSetting();
     fetchNotifications();
     // Attempt to flush any queued offline changes on header mount
     flushAll().catch(() => {});
@@ -541,19 +614,19 @@
     {#if !isMobile}
       <div class="flex items-center ml-4 space-x-2">
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
           onclick={() => appWindow.minimize()}
           aria-label={$_('header.minimize', { default: 'Minimize' })}>
           <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
           onclick={() => appWindow.toggleMaximize()}
           aria-label={$_('header.maximize', { default: 'Maximize' })}>
           <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         </button>
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform group hover:bg-red-500 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 hover:scale-105 active:scale-95 playful"
+          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform group hover:bg-red-500 hover:scale-105 active:scale-95 playful"
           onclick={() => appWindow.close()}
           aria-label={$_('header.close', { default: 'Close' })}>
           <Icon

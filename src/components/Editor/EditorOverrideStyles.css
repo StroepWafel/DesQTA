@@ -399,18 +399,25 @@
 
 /* Exclude navigation and sidebar elements from editor prose styles */
 /* These rules override the .editor-prose a styles for navigation elements */
-aside a,
-aside nav a,
-nav a,
-[role='navigation'] a,
-.sidebar a,
-header a {
+/* Increased specificity to ensure these rules win over .editor-prose a */
+/* Using :not(.editor-prose) to exclude editor content while maintaining high specificity */
+aside:not(.editor-prose) a,
+aside:not(.editor-prose) nav a,
+nav:not(.editor-prose) a,
+[role='navigation']:not(.editor-prose) a,
+.sidebar:not(.editor-prose) a,
+header:not(.editor-prose) a {
   color: revert !important;
-  text-decoration: revert !important;
+  text-decoration: none !important;
   text-decoration-color: revert !important;
 }
 
-aside a span,
-aside nav a span {
+aside:not(.editor-prose) a span,
+aside:not(.editor-prose) nav a span {
   color: revert !important;
+}
+
+/* Additional specific override for sidebar navigation links */
+aside nav a {
+  text-decoration: none !important;
 }

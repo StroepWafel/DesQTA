@@ -279,6 +279,11 @@ pub async fn fetch_api_data(
     let _parse_html = parse_html; // Use parse_html later in the function
     let client = create_client();
     let mut session = session::Session::load();
+    
+    // Validate session has required data
+    if session.jsessionid.is_empty() && session.base_url.is_empty() {
+        return Err("No active session found. Please log in again.".to_string());
+    }
 
     let full_url = if url.starts_with("http") {
         url.to_string()
@@ -296,6 +301,16 @@ pub async fn fetch_api_data(
     let mut last_error: Option<String> = None;
     
     for attempt in 0..=max_retries {
+        // Reload session at start of each attempt to ensure we have the latest session state
+        // This is critical because append_default_headers also loads the session fresh,
+        // and we need both to use the same session state
+        session = session::Session::load();
+        
+        // Validate session is still valid after reload
+        if session.jsessionid.is_empty() && session.base_url.is_empty() {
+            return Err("Session expired or cleared. Please log in again.".to_string());
+        }
+        
         // Build request for this attempt
         let mut request_to_send = match method {
             RequestMethod::GET => client.get(&full_url),
@@ -364,7 +379,8 @@ pub async fn fetch_api_data(
             // Capture status before consuming response
             let status = resp.status();
             
-            // Check for HTTP-level authentication failures
+            // Check for HTTP-level authentication failures (only 401/403, not 404)
+            // 404 (NOT_FOUND) is not an auth failure and should not trigger re-auth
             let is_http_auth_failure = status == reqwest::StatusCode::UNAUTHORIZED 
                 || status == reqwest::StatusCode::FORBIDDEN;
             
@@ -480,7 +496,34 @@ pub async fn fetch_api_data(
                         }
                     }
                 } else if is_body_auth_failure || is_http_auth_failure {
-                    // Auth failure but no stored credentials
+                    // Auth failure but no stored credentials - try reloading session and retrying once
+                    // This handles cases where the session might be refreshed by another process
+                    // or where there's a temporary session invalidation
+                    let reloaded_session = session::Session::load();
+                    
+                    // If reloaded session is empty, this likely means session was cleared (e.g., during login)
+                    // Don't retry with empty session - return a clear error
+                    if reloaded_session.jsessionid.is_empty() || reloaded_session.base_url.is_empty() {
+                        return Err("Session was cleared. This may happen during login. Please try again after login completes.".to_string());
+                    }
+                    
+                    if reloaded_session.jsessionid != session.jsessionid {
+                        // Session was reloaded and is different - try one more time with reloaded session
+                        // This handles race conditions where session was updated between calls
+
+                        // Wait a brief moment in case session is being refreshed
+                        tokio::time::sleep(Duration::from_millis(100)).await;
+                        
+                        // Reload session one more time to catch any updates
+                        let final_session = session::Session::load();
+                        if !final_session.jsessionid.is_empty() && !final_session.base_url.is_empty() {
+                            // Update session and retry in the outer loop
+                            session = final_session;
+                            continue;
+                        }
+                    }
+
+                    // No stored credentials and session reload didn't help (same session or empty)
                     return Err(format!("Authentication failed: {}", response_text));
                 }
                 
@@ -606,8 +649,7 @@ pub async fn fetch_api_data(
                 
                 tokio::time::sleep(Duration::from_millis(delay_ms)).await;
                 
-                // Reload session for retry (in case it was updated)
-                session = session::Session::load();
+                // Session will be reloaded at the start of the next loop iteration
             }
         }
     }

@@ -6,6 +6,7 @@
     padding?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
     interactive?: boolean;
     class?: string;
+    contentClass?: string;
     onclick?: () => void;
     children?: Snippet;
     header?: Snippet;
@@ -17,6 +18,7 @@
     padding = 'md',
     interactive = false,
     class: className = '',
+    contentClass = '',
     onclick,
     children,
     header,
@@ -52,7 +54,7 @@
       .join(' '),
   );
 
-  let contentClasses = $derived([paddings[padding]].join(' '));
+  let contentClasses = $derived([paddings[padding], contentClass].filter(Boolean).join(' '));
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->

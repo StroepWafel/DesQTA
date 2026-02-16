@@ -17,6 +17,7 @@
   import Editor from '../../../../components/Editor/Editor.svelte';
   import GoalsToolbar from '../../../goals/components/GoalsToolbar.svelte';
   import { Editor as TipTapEditor } from '@tiptap/core';
+  import { get } from 'svelte/store';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../../lib/i18n';
   import { logger } from '../../../../utils/logger';
@@ -166,7 +167,7 @@
           }
         }
       } else {
-        error = 'Invalid response format';
+        error = get(_)('folios.invalid_response');
         logger.error('folios', 'loadFolio', 'Invalid response format', { data });
       }
     } catch (e) {
@@ -263,7 +264,7 @@
         // Show success toast if available
         try {
           const { toastStore } = await import('../../../../lib/stores/toast');
-          toastStore.success($_('folios.saved') || 'Folio saved successfully');
+          toastStore.success(get(_)('folios.saved'));
         } catch {
           // Toast store not available, skip
         }
@@ -274,7 +275,7 @@
       logger.error('folios', 'saveFolio', `Failed to save folio: ${e}`, { error: e });
       try {
         const { toastStore } = await import('../../../../lib/stores/toast');
-        toastStore.error($_('folios.save_error') || 'Failed to save folio');
+        toastStore.error(get(_)('folios.save_error'));
       } catch {
         // Toast store not available, skip
       }
@@ -302,7 +303,7 @@
       published = previousPublished;
       try {
         const { toastStore } = await import('../../../../lib/stores/toast');
-        toastStore.error($_('folios.publish_error') || 'Failed to publish/unpublish folio');
+        toastStore.error(get(_)('folios.publish_error'));
       } catch {
         // Toast store not available, skip
       }
@@ -414,7 +415,7 @@
 
         try {
           const { toastStore } = await import('../../../../lib/stores/toast');
-          toastStore.success($_('forums.reply_sent') || 'Comment sent successfully');
+          toastStore.success(get(_)('folios.comment_sent'));
         } catch {
           // Toast store not available, skip
         }
@@ -423,7 +424,7 @@
       logger.error('folios', 'sendComment', `Failed to send comment: ${e}`, { error: e });
       try {
         const { toastStore } = await import('../../../../lib/stores/toast');
-        toastStore.error($_('forums.reply_error') || 'Failed to send comment');
+        toastStore.error(get(_)('folios.comment_error'));
       } catch {
         // Toast store not available, skip
       }

@@ -6,6 +6,7 @@
   import type { WidgetType, WidgetConfig } from '../../types/widgets';
   import { widgetService } from '../../services/widgetService';
   import { logger } from '../../../utils/logger';
+  import { calculateNextAvailablePosition } from '../../utils/widgetPosition';
 
   interface Props {
     open: boolean;
@@ -50,20 +51,23 @@
         throw new Error(`Widget definition not found for type: ${type}`);
       }
 
-      // Find the highest y position to place new widget at the bottom
+      // Calculate the next available position using collision detection
       const layout = await widgetService.loadLayout();
       const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
-      const maxY = widgets.reduce((max, w) => Math.max(max, w.position.y + w.position.h), 0);
+      const position = calculateNextAvailablePosition(
+        widgets,
+        definition.minSize.w,
+        definition.minSize.h,
+        definition.defaultSize.w,
+        definition.defaultSize.h,
+      );
 
       const newWidget: WidgetConfig = {
         id: `${type}_${Date.now()}`,
         type,
         enabled: true,
         position: {
-          x: 0,
-          y: maxY,
-          w: definition.defaultSize.w,
-          h: definition.defaultSize.h,
+          ...position,
           minW: definition.minSize.w,
           minH: definition.minSize.h,
           maxW: definition.maxSize.w,

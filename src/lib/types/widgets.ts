@@ -13,7 +13,8 @@ export type WidgetType =
   | 'study_time_tracker'
   | 'deadlines_calendar'
   | 'quick_notes'
-  | 'weather';
+  | 'weather'
+  | 'timetable';
 
 export interface WidgetPosition {
   x: number;

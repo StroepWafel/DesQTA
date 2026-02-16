@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { _ } from '$lib/i18n';
+
   interface Props {
     message?: string;
     size?: 'sm' | 'md' | 'lg';
   }
 
-  let { message = 'Loading...', size = 'md' }: Props = $props();
+  let { message, size = 'md' }: Props = $props();
 
   const sizeClasses = {
     sm: 'w-8 h-8',
@@ -28,6 +30,6 @@
   </div>
   <p
     class="mt-4 transition-opacity duration-200 {textSizes[size]} text-zinc-600 dark:text-zinc-400">
-    {message}
+    {message ?? $_('common.loading')}
   </p>
 </div>

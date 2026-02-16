@@ -27,6 +27,7 @@
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { invalidateDevSensitiveInfoHiderCache } from '../../utils/netUtil';
+  import { get } from 'svelte/store';
   import T from './T.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
   import { _ } from '../i18n';
@@ -295,16 +296,16 @@
       await html5Qr.clear();
       if (qrCodeData) {
         console.debug('[QR] Scan success:', qrCodeData);
-        qrSuccess = 'QR code scanned successfully!';
+        qrSuccess = get(_)('login.qr_success');
         onUrlChange(qrCodeData);
         onStartLogin();
       } else {
         console.warn('[QR] No QR code found in the image.');
-        qrError = 'No QR code found in the image.';
+        qrError = get(_)('login.qr_no_code');
       }
     } catch (err) {
       console.error('[QR] Failed to scan QR code:', err);
-      let errorMsg = 'Failed to scan QR code. Please try a clearer image.';
+      let errorMsg = get(_)('login.qr_error_generic');
       if (err && typeof err === 'object' && 'message' in err) {
         errorMsg += ' ' + (err as any).message;
       } else if (typeof err === 'string') {
@@ -326,12 +327,12 @@
     try {
       const cameras = await Html5Qrcode.getCameras();
       if (!cameras || cameras.length === 0) {
-        liveScanError = 'No camera found on this device.';
+        liveScanError = get(_)('login.camera_error');
         showLiveScan = true;
         return;
       }
     } catch (err) {
-      liveScanError = 'Unable to access camera. Please check browser permissions.';
+      liveScanError = get(_)('login.camera_permission');
       showLiveScan = true;
       return;
     }
@@ -343,7 +344,7 @@
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 300, height: 300 } },
         (decodedText) => {
-          qrSuccess = 'QR code scanned successfully!';
+          qrSuccess = get(_)('login.qr_success');
           onUrlChange(decodedText);
           onStartLogin();
           stopLiveScan();
@@ -354,7 +355,7 @@
       );
     } catch (err) {
       liveScanError =
-        'Failed to start live scan. ' +
+        get(_)('login.live_scan_error') +
         (err && typeof err === 'object' && 'message' in err ? (err as any).message : err);
       console.error('[QR] Live scan error:', err);
     }
@@ -417,7 +418,7 @@
 
   async function handleDirectLogin() {
     if (!directSeqtaUrl.trim() || !directUsername.trim() || !directPassword.trim()) {
-      directLoginError = 'Please fill in all fields';
+      directLoginError = get(_)('login.fill_all_fields');
       return;
     }
 
@@ -434,7 +435,7 @@
     } catch (error) {
       console.error('[DIRECT_LOGIN] Failed:', error);
       directLoginError =
-        typeof error === 'string' ? error : 'Login failed. Please check your credentials.';
+        typeof error === 'string' ? error : get(_)('login.failed_credentials');
       directLoginLoading = false;
     }
   }

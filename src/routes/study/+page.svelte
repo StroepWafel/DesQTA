@@ -8,6 +8,7 @@
   import { quintOut, cubicOut } from 'svelte/easing';
   import { studyTips } from './studytips';
   import NotesContainer from '$lib/components/notes/NotesContainer.svelte';
+  import StudyToolsContainer from '$lib/components/study/StudyToolsContainer.svelte';
   import { Button, Input, Badge } from '$lib/components/ui';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
@@ -98,8 +99,8 @@
   let completingTasks: Set<string> = new Set();
 
   // Tabs
-  type TabKey = 'tasks' | 'notes';
-  let activeTab: TabKey = 'tasks';
+  type TabKey = 'quizzes' | 'tasks' | 'notes';
+  let activeTab: TabKey = 'quizzes';
 
   // Upcoming assessments state (real data)
   let upcomingAssessments: AssessmentItem[] = [];
@@ -672,6 +673,18 @@
       aria-label={$_('study.tabs_label', { default: 'Study sections' })}>
       <button
         class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
+        'quizzes'
+          ? 'accent-bg text-white'
+          : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
+        on:click={() => (activeTab = 'quizzes')}
+        role="tab"
+        aria-selected={activeTab === 'quizzes'}
+        aria-controls="quizzes-panel"
+        id="quizzes-tab">
+        <T key="study.quizzes" fallback="Quizzes" />
+      </button>
+      <button
+        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'tasks'
           ? 'accent-bg text-white'
           : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
@@ -699,7 +712,18 @@
 
   <!-- Main Content Area -->
   <div class="flex-1 min-h-0 px-4 sm:px-6 pb-4 sm:pb-6">
-    {#if activeTab === 'tasks'}
+    {#if activeTab === 'quizzes'}
+      <!-- Quizzes Tab -->
+      <div
+        class="h-full flex flex-col min-h-0"
+        role="tabpanel"
+        id="quizzes-panel"
+        aria-labelledby="quizzes-tab"
+        in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }}
+        out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
+        <StudyToolsContainer assessments={assessmentsAll} />
+      </div>
+    {:else if activeTab === 'tasks'}
       <!-- Tasks Tab: Main Grid with Sidebar -->
       <div
         class="h-full grid grid-cols-1 gap-6 lg:grid-cols-3"

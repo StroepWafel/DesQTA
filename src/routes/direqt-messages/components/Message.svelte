@@ -7,6 +7,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import { buildIframeHtml } from '../utils/iframeHtml';
+  import { theme } from '../../../lib/stores/theme';
 
   let {
     selectedMessage,
@@ -149,6 +150,15 @@
     }
     // Load avatar whenever selectedMessage changes
     void loadDetailAvatar();
+  });
+
+  // Update iframe content when theme changes
+  $effect(() => {
+    // Access theme store to track changes
+    theme;
+    if (selectedMessage && iframe) {
+      void updateIframeContent();
+    }
   });
 
   onMount(() => {
@@ -330,7 +340,8 @@
                       class="flex items-center gap-3 w-full p-3 rounded-lg border border-zinc-300/50 dark:border-zinc-700/50 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-all duration-200 hover:shadow-md text-left"
                       onclick={() => openAttachment(file)}
                       title="Click to open attachment">
-                      <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-accent-500/10 flex items-center justify-center">
+                      <div
+                        class="flex-shrink-0 w-10 h-10 rounded-lg bg-accent-500/10 flex items-center justify-center">
                         <Icon src={PaperClip} class="w-5 h-5 text-accent-500" />
                       </div>
                       <div class="flex-1 min-w-0">

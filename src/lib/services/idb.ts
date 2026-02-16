@@ -50,6 +50,9 @@ export async function queueAdd(item: Omit<QueueItem, 'id' | 'created_at'>): Prom
       itemType: item.type,
       payload: item.payload,
     });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('queue-changed'));
+    }
     return id;
   } catch (error) {
     console.error('Failed to add queue item:', error);
@@ -67,9 +70,17 @@ export async function queueAll(): Promise<QueueItem[]> {
   }
 }
 
+export async function queueCountByType(type: QueueItem['type']): Promise<number> {
+  const items = await queueAll();
+  return items.filter((item) => item.type === type).length;
+}
+
 export async function queueDelete(id: number): Promise<void> {
   try {
     await invoke('db_queue_delete', { id });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('queue-changed'));
+    }
   } catch (error) {
     console.error('Failed to delete queue item:', error);
     throw error;
