@@ -463,89 +463,133 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
     topic: string;
     numQuestions: number;
     assessmentContext?: string;
+    yearLevel?: string;
+    questionTypes?: ('multiple_choice' | 'true_false' | 'short_answer')[];
   }): Promise<{ questions: QuizQuestion[] } | null> {
-    const { topic, numQuestions, assessmentContext } = params;
+    const { topic, numQuestions, assessmentContext, yearLevel, questionTypes } = params;
     const contextBlock = assessmentContext
       ? `\nAdditional context from the assessment:\n${assessmentContext}\n`
       : '';
+    const yearBlock = yearLevel ? `\nTarget year level: ${yearLevel}. Adjust difficulty and vocabulary accordingly.\n` : '';
+    const types = questionTypes?.length ? questionTypes : ['multiple_choice', 'true_false', 'short_answer'];
+    const typesDesc = types.join(', ');
 
-    const prompt = `You are an AI educational assistant creating a multiple-choice quiz for a student.
+    const prompt = `You are an AI educational assistant creating a quiz for a student.
 
 Topic to quiz on: ${topic}
-${contextBlock}
+${contextBlock}${yearBlock}
 
-Generate exactly ${numQuestions} multiple-choice questions. Each question must have exactly 4 options (A, B, C, D). The correct answer should be at correctIndex (0-3).
+Generate exactly ${numQuestions} questions. Include a MIX of these types: ${typesDesc}.
 
-Respond ONLY with a JSON object in this exact format (no markdown, no code blocks):
+For each question, use the appropriate format:
+
+1. multiple_choice: "type": "multiple_choice", "options": [4 options], "correctIndex": 0-3
+2. true_false: "type": "true_false", "options": ["True", "False"], "correctIndex": 0 or 1
+3. short_answer: "type": "short_answer", "options": [], "correctIndex": 0, "correctAnswer": "the expected answer (accept minor variations)"
+
+Respond ONLY with a JSON object (no markdown, no code blocks):
 {
   "questions": [
     {
-      "question": "The question text here",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "question": "The question text",
+      "type": "multiple_choice",
+      "options": ["A", "B", "C", "D"],
       "correctIndex": 0
+    },
+    {
+      "question": "Statement that is true or false?",
+      "type": "true_false",
+      "options": ["True", "False"],
+      "correctIndex": 0
+    },
+    {
+      "question": "What is X?",
+      "type": "short_answer",
+      "options": [],
+      "correctIndex": 0,
+      "correctAnswer": "Expected answer"
     }
   ]
 }
 
 Rules:
-- correctIndex must be 0, 1, 2, or 3 (index of the correct option)
-- Each question must have exactly 4 options
-- Questions should test understanding of the topic
+- Vary question types across the quiz
+- For multiple_choice: exactly 4 options, correctIndex 0-3
+- For true_false: exactly 2 options ["True","False"], correctIndex 0 or 1
+- For short_answer: options=[], correctIndex=0, correctAnswer=string (provide the main acceptable answer)
+- Questions should test understanding
 - Vary difficulty appropriately`;
 
     const result = await this.callAIForJSON<{ questions: QuizQuestion[] }>(prompt, {
       maxTokens: 4096,
     });
     if (!result?.questions || !Array.isArray(result.questions)) return null;
-    // Validate each question
-    const valid = result.questions.every(
-      (q) =>
-        typeof q.question === 'string' &&
-        Array.isArray(q.options) &&
-        q.options.length === 4 &&
-        typeof q.correctIndex === 'number' &&
-        q.correctIndex >= 0 &&
-        q.correctIndex < 4,
-    );
+    // Validate and normalize each question
+    const valid = result.questions.every((q) => {
+      if (typeof q.question !== 'string' || !q.question.trim()) return false;
+      const t = (q.type || 'multiple_choice') as string;
+      if (t === 'short_answer') {
+        return typeof q.correctAnswer === 'string' && q.correctAnswer.trim().length > 0;
+      }
+      if (t === 'true_false') {
+        return Array.isArray(q.options) && q.options.length === 2 && typeof q.correctIndex === 'number' && (q.correctIndex === 0 || q.correctIndex === 1);
+      }
+      return Array.isArray(q.options) && q.options.length === 4 && typeof q.correctIndex === 'number' && q.correctIndex >= 0 && q.correctIndex < 4;
+    });
     return valid ? result : null;
   }
 
   static async generateQuizFeedback(params: {
     questions: QuizQuestion[];
-    userAnswers: number[];
+    userAnswers: (number | string)[];
     topic: string;
   }): Promise<QuizFeedback | null> {
     const { questions, userAnswers, topic } = params;
     const results = questions.map((q, i) => {
-      const correct = userAnswers[i] === q.correctIndex;
-      return {
-        question: q.question,
-        correctAnswer: q.options[q.correctIndex],
-        userAnswer: q.options[userAnswers[i] ?? -1] ?? 'No answer',
-        correct,
-      };
+      const ans = userAnswers[i];
+      const t = (q.type || 'multiple_choice') as string;
+      let correctAnswer: string;
+      let userAnswer: string;
+      if (t === 'short_answer') {
+        correctAnswer = q.correctAnswer ?? '';
+        userAnswer = typeof ans === 'string' ? ans : '';
+      } else {
+        correctAnswer = q.options[q.correctIndex] ?? '';
+        userAnswer = typeof ans === 'number' && q.options[ans] != null ? q.options[ans] : 'No answer';
+      }
+      return { question: q.question, type: t, correctAnswer, userAnswer };
     });
-    const correctCount = results.filter((r) => r.correct).length;
-    const total = questions.length;
-    const score = total > 0 ? Math.round((correctCount / total) * 100) : 0;
 
-    const prompt = `You are an AI educational assistant providing personalized feedback on a student's quiz results.
+    const prompt = `You are an AI educational assistant evaluating a student's quiz answers and providing feedback.
 
 Topic: ${topic}
-Score: ${correctCount}/${total} (${score}%)
 
-Question-by-question results:
-${results.map((r, i) => `${i + 1}. ${r.question}\n   Correct: ${r.correctAnswer}\n   Student: ${r.userAnswer}\n   ${r.correct ? 'Correct' : 'Incorrect'}`).join('\n\n')}
+For each question below, you must:
+1. EVALUATE the student's answer (especially for short_answer - do NOT require exact match; accept equivalent or close answers)
+2. Assign a score: 1 = full marks (correct or close enough), 0.5 = half marks (partially correct, shows some understanding), 0 = no marks (wrong or irrelevant)
 
-Provide encouraging, constructive feedback. Be specific about what they got right and what to review.
+For multiple_choice and true_false: 1 if correct, 0 if wrong.
+For short_answer: Use your judgment. Accept synonyms, rephrasing, and minor variations. Give 0.5 for answers that are partially right.
+
+Question-by-question (evaluate each):
+${results.map((r, i) => `${i + 1}. [${r.type}] ${r.question}\n   Model answer: ${r.correctAnswer}\n   Student wrote: ${r.userAnswer}`).join('\n\n')}
 
 Respond ONLY with a JSON object in this exact format (no markdown, no code blocks):
 {
-  "summary": "A 2-3 sentence overall summary of their performance",
+  "questionScores": [1, 0.5, 0, ...],
+  "summary": "A 2-3 sentence overall summary of their performance, mentioning partial credit where applicable",
   "suggestions": ["Specific suggestion 1", "Specific suggestion 2", "..."],
   "encouragement": "A brief encouraging closing message"
-}`;
+}
 
-    return this.callAIForJSON<QuizFeedback>(prompt);
+CRITICAL: questionScores must be an array of exactly ${questions.length} numbers (1, 0.5, or 0), one per question in the same order as above.`;
+
+    const feedback = await this.callAIForJSON<QuizFeedback>(prompt);
+    if (!feedback) return null;
+    // Validate questionScores length
+    if (feedback.questionScores && feedback.questionScores.length !== questions.length) {
+      feedback.questionScores = undefined;
+    }
+    return feedback;
   }
 }

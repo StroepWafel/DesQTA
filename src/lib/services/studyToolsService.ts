@@ -8,11 +8,15 @@ export interface GenerateQuizParams {
   topic: string;
   numQuestions: number;
   assessmentContext?: string;
+  /** Optional year level hint for AI (e.g. "Year 10") */
+  yearLevel?: string;
+  /** Question types to include - mix by default */
+  questionTypes?: ('multiple_choice' | 'true_false' | 'short_answer')[];
 }
 
 export interface GenerateFeedbackParams {
   questions: QuizQuestion[];
-  userAnswers: number[];
+  userAnswers: (number | string)[];
   topic: string;
 }
 
@@ -64,11 +68,13 @@ export async function fetchAssessmentContext(
  * Generates a quiz using the configured AI provider (Gemini or Cerebras).
  */
 export async function generateQuiz(params: GenerateQuizParams): Promise<QuizQuestion[]> {
-  const { topic, numQuestions, assessmentContext } = params;
+  const { topic, numQuestions, assessmentContext, yearLevel, questionTypes } = params;
   const result = await GeminiService.generateQuizContent({
     topic,
     numQuestions,
     assessmentContext,
+    yearLevel,
+    questionTypes,
   });
   if (!result?.questions?.length) {
     throw new Error('Failed to generate quiz. Please try again.');

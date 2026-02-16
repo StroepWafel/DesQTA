@@ -15,8 +15,9 @@
   } from '$lib/services/studyToolsService';
   import { saveSettingsWithQueue } from '$lib/services/settingsSync';
   import type { QuizQuestion, QuizFeedback } from '$lib/types/studyTools';
-  import { Icon, Sparkles, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'svelte-hero-icons';
+  import { Icon, Sparkles, CheckCircle, XCircle, ChevronDown, ChevronUp, MagnifyingGlass, Check } from 'svelte-hero-icons';
   import Modal from '$lib/components/Modal.svelte';
+  import { clickOutside } from '$lib/actions/clickOutside.js';
 
   interface FullAssessment {
     id: string | number;
@@ -30,9 +31,11 @@
 
   interface Props {
     assessments: FullAssessment[];
+    /** Available year levels for filtering (e.g. [2024, 2025]) */
+    availableYears?: number[];
   }
 
-  let { assessments }: Props = $props();
+  let { assessments, availableYears = [] }: Props = $props();
 
   type SourceMode = 'assessment' | 'custom';
   let sourceMode = $state<SourceMode>('custom');
@@ -43,11 +46,17 @@
   let loadingFeedback = $state(false);
   let error = $state<string | null>(null);
   let questions = $state<QuizQuestion[]>([]);
-  let userAnswers = $state<number[]>([]);
+  let userAnswers = $state<(number | string)[]>([]);
   let submitted = $state(false);
   let aiFeedback = $state<QuizFeedback | null>(null);
   let showAiFeedback = $state(true);
   let assessmentModalOpen = $state(false);
+  let assessmentSearchQuery = $state('');
+  let assessmentFilterUpcomingOnly = $state(true);
+  let assessmentFilterYear = $state<number | 'all'>('all');
+  let selectedDifficulty = $state<7 | 8 | 9 | 10 | 11 | 12 | null>(10);
+  let selectedQuestionTypes = $state<('multiple_choice' | 'true_false' | 'short_answer')[]>(['multiple_choice', 'true_false', 'short_answer']);
+  let questionTypesDropdownOpen = $state(false);
   let apiKeySetupModalOpen = $state(false);
   let hasApiKey = $state<boolean | null>(null);
   let apiKeyInput = $state('');
@@ -113,6 +122,11 @@
     }
   }
 
+  const yearsFromAssessments = $derived(
+    [...new Set(assessments.map((a) => new Date(a.due).getFullYear()))].sort((a, b) => b - a),
+  );
+  const assessmentYears = $derived(availableYears.length > 0 ? availableYears : yearsFromAssessments);
+
   onMount(() => {
     checkApiKey();
   });
@@ -123,13 +137,29 @@
       : customTopic.trim(),
   );
 
-  const canGenerate = $derived(topic.length > 0 && questionCount >= 5 && questionCount <= 20);
-
-  const correctCount = $derived(
-    submitted ? userAnswers.filter((a, i) => a === questions[i]?.correctIndex).length : 0,
+  const canGenerate = $derived(
+    topic.length > 0 && questionCount >= 5 && questionCount <= 20 && selectedQuestionTypes.length > 0,
   );
+
+  function isAnswerCorrect(q: QuizQuestion, ans: number | string, i: number): boolean {
+    const t = q.type || 'multiple_choice';
+    if (t === 'short_answer') {
+      const expected = (q.correctAnswer ?? '').trim().toLowerCase();
+      const given = (typeof ans === 'string' ? ans : '').trim().toLowerCase();
+      return expected === given;
+    }
+    return ans === q.correctIndex;
+  }
+
+  /** Use AI scores when available; otherwise fall back to client-side (MC/tf only, short answer = wrong). */
+  const questionScores = $derived(
+    aiFeedback?.questionScores && aiFeedback.questionScores.length === questions.length
+      ? aiFeedback.questionScores
+      : questions.map((q, i) => (isAnswerCorrect(q, userAnswers[i], i) ? 1 : 0)),
+  );
+  const totalScore = $derived(questionScores.reduce((a, b) => a + b, 0));
   const scorePercent = $derived(
-    questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0,
+    questions.length > 0 ? Math.round((totalScore / questions.length) * 100) : 0,
   );
 
   async function handleGenerate() {
@@ -156,13 +186,19 @@
           Number(selectedAssessment.metaclass),
         );
       }
+      const yearLevelStr = selectedDifficulty != null ? `Year ${selectedDifficulty}` : undefined;
       const generated = await generateQuiz({
         topic,
         numQuestions: questionCount,
         assessmentContext,
+        yearLevel: yearLevelStr,
+        questionTypes: selectedQuestionTypes.length > 0 ? selectedQuestionTypes : undefined,
       });
       questions = generated;
-      userAnswers = new Array(generated.length).fill(-1);
+      userAnswers = generated.map((q) => {
+        const t = q.type || 'multiple_choice';
+        return t === 'short_answer' ? '' : -1;
+      });
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     } finally {
@@ -170,8 +206,18 @@
     }
   }
 
+  const allAnswersFilled = $derived(
+    userAnswers.length === questions.length &&
+      userAnswers.every((a, i) => {
+        const q = questions[i];
+        const t = q?.type || 'multiple_choice';
+        if (t === 'short_answer') return typeof a === 'string' && (a as string).trim() !== '';
+        return typeof a === 'number' && a >= 0;
+      }),
+  );
+
   async function handleSubmit() {
-    if (userAnswers.some((a) => a < 0)) return;
+    if (!allAnswersFilled) return;
     submitted = true;
     loadingFeedback = true;
     aiFeedback = null;
@@ -197,15 +243,30 @@
     error = null;
   }
 
-  function setAnswer(index: number, value: number) {
+  function setAnswer(index: number, value: number | string) {
     userAnswers = userAnswers.map((a, i) => (i === index ? value : a));
   }
 
-  const upcomingAssessments = $derived(
-    assessments.filter((a) => new Date(a.due) >= new Date()).sort(
-      (a, b) => new Date(a.due).getTime() - new Date(b.due).getTime(),
-    ),
-  );
+  const filteredAssessments = $derived.by(() => {
+    let list = assessments;
+    if (assessmentFilterUpcomingOnly) {
+      list = list.filter((a) => new Date(a.due) >= new Date());
+    }
+    const yl = assessmentFilterYear;
+    if (yl !== 'all' && typeof yl === 'number') {
+      list = list.filter((a) => new Date(a.due).getFullYear() === yl);
+    }
+    if (assessmentSearchQuery.trim()) {
+      const q = assessmentSearchQuery.trim().toLowerCase();
+      list = list.filter(
+        (a) =>
+          (a.title ?? '').toLowerCase().includes(q) ||
+          (a.subject ?? '').toLowerCase().includes(q) ||
+          (a.code ?? '').toLowerCase().includes(q),
+      );
+    }
+    return list.sort((a, b) => new Date(a.due).getTime() - new Date(b.due).getTime());
+  });
 
   function selectAssessment(a: FullAssessment) {
     selectedAssessment = a;
@@ -272,17 +333,64 @@
 
           <Modal
             bind:open={assessmentModalOpen}
-            title={$_('study.upcoming_assessments') || 'Upcoming Assessments'}
+            title={$_('study.select_assessment') || 'Select assessment'}
             maxWidth="max-w-2xl"
             onclose={() => (assessmentModalOpen = false)}>
-            <div class="px-8 pb-8 max-h-[60vh] overflow-y-auto">
-              {#if upcomingAssessments.length === 0}
+            <div class="px-8 pb-8 max-h-[70vh] flex flex-col gap-4">
+              <!-- Search -->
+              <div class="relative shrink-0">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                  <Icon src={MagnifyingGlass} class="w-4 h-4" />
+                </span>
+                <input
+                  type="text"
+                  bind:value={assessmentSearchQuery}
+                  placeholder={$_('study.search_assessments') || 'Search assessments...'}
+                  class="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 accent-ring" />
+              </div>
+              <!-- Filters: Upcoming/All + Year -->
+              <div class="flex flex-wrap gap-3 shrink-0">
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {assessmentFilterUpcomingOnly
+                      ? 'accent-bg text-white'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+                    onclick={() => (assessmentFilterUpcomingOnly = true)}>
+                    <T key="study.upcoming_only" fallback="Upcoming only" />
+                  </button>
+                  <button
+                    type="button"
+                    class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {!assessmentFilterUpcomingOnly
+                      ? 'accent-bg text-white'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+                    onclick={() => (assessmentFilterUpcomingOnly = false)}>
+                    <T key="study.all_assessments" fallback="All" />
+                  </button>
+                </div>
+                {#if assessmentYears.length > 0}
+                  <select
+                    class="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 accent-ring"
+                    value={assessmentFilterYear === 'all' ? 'all' : String(assessmentFilterYear)}
+                    onchange={(e) => {
+                      const v = (e.target as HTMLSelectElement).value;
+                      assessmentFilterYear = v === 'all' ? 'all' : parseInt(v, 10);
+                    }}>
+                    <option value="all"><T key="directory.all_years" fallback="All years" /></option>
+                    {#each assessmentYears as y}
+                      <option value={y}>{y}</option>
+                    {/each}
+                  </select>
+                {/if}
+              </div>
+              <div class="flex-1 min-h-0 overflow-y-auto">
+              {#if filteredAssessments.length === 0}
                 <p class="text-zinc-500 dark:text-zinc-400 py-8 text-center">
-                  <T key="study.no_upcoming_assessments" fallback="No upcoming assessments." />
+                  <T key="study.no_assessments_match" fallback="No assessments match your filters." />
                 </p>
               {:else}
                 <div class="space-y-2">
-                  {#each upcomingAssessments as a}
+                  {#each filteredAssessments as a}
                     <button
                       type="button"
                       class="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-left transition-all duration-200 hover:scale-[1.02] hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md focus:outline-none focus:ring-2 accent-ring {selectedAssessment?.id ===
@@ -313,6 +421,7 @@
                   {/each}
                 </div>
               {/if}
+              </div>
             </div>
           </Modal>
         {:else}
@@ -323,6 +432,91 @@
               class="w-full" />
           </div>
         {/if}
+
+        <!-- Difficulty (year level for AI) -->
+        <div class="flex items-center gap-3">
+          <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+            <T key="study.difficulty" fallback="Difficulty" />
+          </Label.Root>
+          <select
+            class="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 accent-ring"
+            value={selectedDifficulty ?? ''}
+            onchange={(e) => {
+              const v = (e.target as HTMLSelectElement).value;
+              selectedDifficulty = v === '' ? null : (parseInt(v, 10) as 7 | 8 | 9 | 10 | 11 | 12);
+            }}>
+            <option value=""><T key="study.any_difficulty" fallback="Any" /></option>
+            {#each [7, 8, 9, 10, 11, 12] as y}
+              <option value={y}>Year {y}</option>
+            {/each}
+          </select>
+        </div>
+
+        <!-- Question types (dropdown) -->
+        <div class="flex items-center gap-3">
+          <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+            <T key="study.question_types" fallback="Question types" />
+          </Label.Root>
+          <div class="relative" use:clickOutside={() => (questionTypesDropdownOpen = false)}>
+            <button
+              type="button"
+              class="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm flex items-center gap-2 min-w-[180px] justify-between transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring"
+              onclick={() => (questionTypesDropdownOpen = !questionTypesDropdownOpen)}>
+              <span class="truncate">
+                {#if selectedQuestionTypes.length === 3}
+                  <T key="study.all_types" fallback="All types" />
+                {:else if selectedQuestionTypes.length === 0}
+                  <T key="study.select_types" fallback="Select types..." />
+                {:else}
+                  {selectedQuestionTypes
+                    .map((t) =>
+                      t === 'multiple_choice'
+                        ? ($_('study.type_multiple_choice') ?? 'Multiple choice')
+                        : t === 'true_false'
+                          ? ($_('study.type_true_false') ?? 'True/False')
+                          : ($_('study.type_short_answer') ?? 'Short answer'),
+                    )
+                    .join(', ')}
+                {/if}
+              </span>
+              <Icon src={ChevronDown} class="w-4 h-4 shrink-0 transition-transform duration-200 {questionTypesDropdownOpen ? 'rotate-180' : ''}" />
+            </button>
+            {#if questionTypesDropdownOpen}
+              <div
+                class="absolute z-50 mt-1 min-w-[180px] py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg"
+                transition:fly={{ y: -4, duration: 150 }}>
+                {#each ['multiple_choice', 'true_false', 'short_answer'] as t}
+                  {@const type = t as 'multiple_choice' | 'true_false' | 'short_answer'}
+                  <label
+                    class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors duration-200">
+                    <input
+                      type="checkbox"
+                      checked={selectedQuestionTypes.includes(type)}
+                      onchange={(e) => {
+                        const checked = (e.target as HTMLInputElement).checked;
+                        selectedQuestionTypes = checked
+                          ? [...selectedQuestionTypes, type]
+                          : selectedQuestionTypes.filter((x) => x !== type);
+                      }}
+                      class="rounded accent-ring" />
+                    <span class="text-sm text-zinc-700 dark:text-zinc-300">
+                      {#if type === 'multiple_choice'}
+                        <T key="study.type_multiple_choice" fallback="Multiple choice" />
+                      {:else if type === 'true_false'}
+                        <T key="study.type_true_false" fallback="True/False" />
+                      {:else}
+                        <T key="study.type_short_answer" fallback="Short answer" />
+                      {/if}
+                    </span>
+                    {#if selectedQuestionTypes.includes(type)}
+                      <Icon src={Check} class="w-4 h-4 text-(--accent) ml-auto" />
+                    {/if}
+                  </label>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        </div>
 
         <!-- Question count -->
         <div class="flex items-center gap-3">
@@ -369,29 +563,39 @@
             }}
             class="space-y-6">
             {#each questions as q, i}
+              {@const qType = q.type || 'multiple_choice'}
               <div
                 class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white/50 dark:bg-zinc-800/50">
                 <p class="font-medium text-zinc-900 dark:text-white mb-3">
                   {i + 1}. {q.question}
                 </p>
                 <div class="space-y-2">
-                  {#each q.options as opt, j}
-                    <label
-                      class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors duration-200">
-                      <input
-                        type="radio"
-                        name="q{i}"
-                        value={j}
-                        checked={userAnswers[i] === j}
-                        onchange={() => setAnswer(i, j)}
-                        class="accent-ring" />
-                      <span class="text-zinc-700 dark:text-zinc-300">{opt}</span>
-                    </label>
-                  {/each}
+                  {#if qType === 'short_answer'}
+                    <input
+                      type="text"
+                      value={typeof userAnswers[i] === 'string' ? userAnswers[i] : ''}
+                      oninput={(e) => setAnswer(i, (e.target as HTMLInputElement).value)}
+                      placeholder={$_('study.type_your_answer') || 'Type your answer...'}
+                      class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 accent-ring" />
+                  {:else}
+                    {#each (qType === 'true_false' && (!q.options || q.options.length === 0) ? ['True', 'False'] : (q.options || [])) as opt, j}
+                      <label
+                        class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors duration-200">
+                        <input
+                          type="radio"
+                          name="q{i}"
+                          value={j}
+                          checked={userAnswers[i] === j}
+                          onchange={() => setAnswer(i, j)}
+                          class="accent-ring" />
+                        <span class="text-zinc-700 dark:text-zinc-300">{opt}</span>
+                      </label>
+                    {/each}
+                  {/if}
                 </div>
               </div>
             {/each}
-            <Button type="submit" disabled={userAnswers.some((a) => a < 0)}>
+            <Button type="submit" disabled={!allAnswersFilled}>
               <T key="study.submit_answers" fallback="Submit Answers" />
             </Button>
           </form>
@@ -403,29 +607,37 @@
                 <T key="study.raw_feedback" fallback="Results" />
               </h3>
               <div class="text-sm text-zinc-600 dark:text-zinc-400">
-                {correctCount}/{questions.length} ({scorePercent}%)
+                {totalScore}/{questions.length} ({scorePercent}%)
               </div>
             </div>
 
             {#each questions as q, i}
+              {@const score = questionScores[i] ?? 0}
+              {@const correctDisplay = (q.type === 'short_answer' ? q.correctAnswer : q.options?.[q.correctIndex]) ?? ''}
               <div
-                class="p-4 rounded-xl border transition-colors duration-200 {userAnswers[i] ===
-                q.correctIndex
+                class="p-4 rounded-xl border transition-colors duration-200 {score >= 1
                   ? 'border-green-200 dark:border-green-800/50 bg-green-50/50 dark:bg-green-900/10'
-                  : 'border-red-200 dark:border-red-800/50 bg-red-50/50 dark:bg-red-900/10'}">
+                  : score >= 0.5
+                    ? 'border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10'
+                    : 'border-red-200 dark:border-red-800/50 bg-red-50/50 dark:bg-red-900/10'}">
                 <p class="font-medium text-zinc-900 dark:text-white mb-2">
                   {i + 1}. {q.question}
                 </p>
                 <div class="flex items-center gap-2 text-sm">
-                  {#if userAnswers[i] === q.correctIndex}
+                  {#if score >= 1}
                     <Icon src={CheckCircle} class="w-5 h-5 text-green-600 dark:text-green-400 shrink-0" />
                     <span class="text-green-700 dark:text-green-300"
-                      >{$_('study.correct') ?? 'Correct'}: {q.options[q.correctIndex]}</span
+                      >{$_('study.full_marks') ?? 'Full marks'}{#if correctDisplay}: {correctDisplay}{/if}</span
+                    >
+                  {:else if score >= 0.5}
+                    <Icon src={CheckCircle} class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span class="text-amber-700 dark:text-amber-300"
+                      >{$_('study.half_marks') ?? 'Half marks'}{#if correctDisplay} — {$_('study.model_answer') ?? 'Model'}: {correctDisplay}{/if}</span
                     >
                   {:else}
                     <Icon src={XCircle} class="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
                     <span class="text-red-700 dark:text-red-300">
-                      {$_('study.incorrect') ?? 'Incorrect'}. {$_('study.correct_answer') ?? 'Correct'}: {q.options[q.correctIndex]}
+                      {$_('study.incorrect') ?? 'Incorrect'}. {$_('study.correct_answer') ?? 'Correct'}: {correctDisplay}
                     </span>
                   {/if}
                 </div>
