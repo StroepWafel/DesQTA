@@ -12,7 +12,7 @@ body:
     attributes:
       label: 
       options: Before reporting an issue, please
-        - label: Search existing issues (including closed ones) to avoid duplicates.
+        - label: Search existing issues, including closed ones, to avoid duplicates.
           required: true
         - label: Ensure the program is unmodified and no unsupported plugins are installed.
           required: true
