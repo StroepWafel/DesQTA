@@ -6,24 +6,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Please add to the header a short summary of the bug. (place after [BUG])**
+        **Before reporting an issue, please:**
+        1. Search existing issues (including closed ones) to avoid duplicates: [Search Issues](https://github.com/BetterSEQTA/DesQTA/issues)
+        2. Ensure the program is unmodified and no unsupported plugins are installed.
+        3. Provide as much detail as possible including steps to reproduce, screenshots, and logs.
 
-  - type: checkboxes
-    attributes:
-      label: 
-      options: Before reporting an issue, please
-        - label: Search existing issues, including closed ones, to avoid duplicates.
-          required: true
-        - label: Ensure the program is unmodified and no unsupported plugins are installed.
-          required: true
-        - label: Provide as much detail as possible including steps to reproduce, screenshots, and logs.
-          required: true
-          
-  - type: markdown
-    attributes:
-       value: |
-        Please add to the header a short summary of the bug. (place after [BUG])
-        
   - type: textarea
     attributes:
       label: Describe the bug
