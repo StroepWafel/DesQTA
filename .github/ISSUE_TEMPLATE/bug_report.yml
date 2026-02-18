@@ -9,7 +9,8 @@ body:
         **Before reporting an issue, please:**
         1. Search existing issues (including closed ones) to avoid duplicates: [Search Issues](https://github.com/BetterSEQTA/DesQTA/issues)
         2. Ensure the program is unmodified and no unsupported plugins are installed.
-        3. Provide as much detail as possible including steps to reproduce, screenshots, and logs.
+        3. Provide as much detail as possible including steps to reproduce, screenshots, and logs.  
+        
 
   - type: markdown
     attributes:
