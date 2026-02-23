@@ -2,6 +2,7 @@
   import { fade } from 'svelte/transition';
   import { sanitizeHtml } from '../../utils/sanitization';
   import LinkPreview from '../../routes/courses/components/LinkPreview.svelte';
+  import T from './T.svelte';
   import { renderModule } from '../utils/moduleUtils';
   import type { RenderedModule } from '../utils/moduleUtils';
   import type {
@@ -16,14 +17,18 @@
     enableLinkPreviews = false,
     linkPreview = null,
     onResourceClick,
+    failedResourceIds = new Set<string>(),
     allModules = [],
+    compact = false,
   }: {
     renderedModule: RenderedModule;
     index?: number;
     enableLinkPreviews?: boolean;
     linkPreview?: LinkPreviewType | null | ((url: string) => LinkPreviewType | null);
     onResourceClick?: (resource: ResourceLink) => void;
+    failedResourceIds?: Set<string>;
     allModules?: Module[];
+    compact?: boolean;
   } = $props();
 
   function getLinkPreview(url: string): LinkPreviewType | null {
@@ -40,21 +45,27 @@
 
 {#if renderedModule.type === 'title'}
   <h2
-    class="px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg"
+    class="{compact
+      ? 'text-xl font-bold text-zinc-900 dark:text-white mt-6 mb-2 first:mt-0'
+      : 'px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg'}"
     transition:fade={{ duration: 200, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     {renderedModule.content}
   </h2>
 {:else if renderedModule.type === 'text'}
   <div
-    class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
+    class="{compact
+      ? 'mb-4 last:mb-0 [&_h1]:mt-4 [&_h1]:first:mt-0 [&_h2]:mt-4 [&_h2]:first:mt-0 [&_h3]:mt-3 [&_h3]:first:mt-0'
+      : 'p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300'}"
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     {@html sanitizeHtml(renderedModule.content)}
   </div>
 {:else if renderedModule.type === 'table'}
   <div
-    class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 overflow-x-auto"
+    class="{compact
+      ? 'mb-4 overflow-x-auto'
+      : 'p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 overflow-x-auto'}"
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     <div
@@ -65,16 +76,19 @@
 {:else if renderedModule.type === 'resources'}
   {@const resources = Array.isArray(renderedModule.content) ? renderedModule.content : []}
   <div
-    class="mb-6"
+    class="{compact ? 'mb-4' : 'mb-6'}"
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     <h3 class="text-lg font-semibold mb-3 text-white">Resources</h3>
     <div class="space-y-2">
       {#each resources as resource, resourceIndex}
+        {@const isFailed = failedResourceIds.has(resource.uuid)}
         {#if onResourceClick}
           <button
             type="button"
-            class="w-full p-3 rounded-lg border border-zinc-300/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50 hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer text-left"
+            class="w-full p-3 rounded-lg border transition-all duration-200 cursor-pointer text-left {isFailed
+              ? 'border-red-500/80 dark:border-red-500/80 bg-red-500/10 dark:bg-red-500/10 hover:shadow-md hover:scale-[1.02]'
+              : 'border-zinc-300/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50 hover:shadow-md hover:scale-[1.02]'}"
             transition:fade={{ duration: 200, delay: animationDelay + (resourceIndex + 1) * 50 }}
             style="transform-origin: left center;"
             onclick={() => onResourceClick(resource)}
@@ -85,6 +99,11 @@
               }
             }}>
             <p class="text-white">{resource.filename}</p>
+            {#if isFailed}
+              <p class="text-sm text-red-400 dark:text-red-400 mt-1">
+                <T key="common.retry" fallback="Retry" />
+              </p>
+            {/if}
           </button>
         {:else}
           <div
@@ -99,7 +118,7 @@
   </div>
 {:else if renderedModule.type === 'link'}
   <div
-    class="mb-6"
+    class="{compact ? 'mb-4' : 'mb-6'}"
     transition:fade={{ duration: 200, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     {#if enableLinkPreviews && getLinkPreview(renderedModule.content)}

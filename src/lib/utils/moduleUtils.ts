@@ -1,4 +1,5 @@
 import { renderDraftJSText } from '../../routes/courses/utils';
+import { MODULE_TYPE_UUIDS } from '../../routes/courses/constants';
 import type {
   Module,
   TitleModule,
@@ -39,7 +40,7 @@ export function isLexicalModule(module: Module): module is LexicalModule {
 
 export function isTableModule(module: Module): module is TableModule {
   return (
-    module.type === '0d49d130-c197-421d-a56a-d1ba0a67cfc0' &&
+    module.type === MODULE_TYPE_UUIDS.LEGACY_EDITOR &&
     isModule(
       module,
       (content) =>
@@ -50,7 +51,7 @@ export function isTableModule(module: Module): module is TableModule {
 
 export function isLegacyEditorModule(module: Module): boolean {
   return (
-    module.type === '0d49d130-c197-421d-a56a-d1ba0a67cfc0' &&
+    module.type === MODULE_TYPE_UUIDS.LEGACY_EDITOR &&
     isModule(
       module,
       (content) =>
@@ -64,11 +65,11 @@ export function isResourceModule(module: Module): module is ResourceModule {
 }
 
 export function isLinkModule(module: Module): module is LinkModule {
-  return isModule(module, (content) => content && content.url);
+  return isModule(module, (content) => content && (content.url || content.embedLink));
 }
 
 export function isPreviewLexicalModule(module: Module): module is PreviewLexicalModule {
-  if (module.type === 'f388e4f9-b350-4ee8-964b-2618ea4a037a') {
+  if (module.type === MODULE_TYPE_UUIDS.PREVIEW_LEXICAL) {
     return (
       'content' in module && module.content && typeof (module.content as any).html === 'string'
     );
@@ -83,21 +84,21 @@ export function isPreviewLexicalModule(module: Module): module is PreviewLexical
 
 export function isColumnLayoutModule(module: Module): module is ColumnLayoutModule {
   return (
-    module.type === 'c082b45f-abf5-41fa-9c15-74233ab52c91' &&
+    module.type === MODULE_TYPE_UUIDS.COLUMN_LAYOUT &&
     isModule(module, (content) => content && content.AdvanceLayout)
   );
 }
 
 export function isFormulaModule(module: Module): module is FormulaModule {
   return (
-    module.type === 'e3f1b225-d159-4a7f-bc84-2fddf05ed6d6' &&
+    module.type === MODULE_TYPE_UUIDS.LINK &&
     isModule(module, (content) => content && content.formula && content.scale)
   );
 }
 
 export function isPollModule(module: Module): module is PollModule {
   return (
-    module.type === 'b30fef7f-528f-4c0c-bfb4-0cc78e77767a' &&
+    module.type === MODULE_TYPE_UUIDS.FORMULA &&
     isModule(module, (content) => content && content.proposition && Array.isArray(content.options))
   );
 }
@@ -162,7 +163,8 @@ export function renderModule(module: Module, allModules?: Module[]): RenderedMod
       content: module.content.value.resources.filter((r) => r.selected),
     };
   } else if (isLinkModule(module)) {
-    return { type: 'link', content: module.content.url };
+    const url = module.content.url || (module.content as { embedLink?: string }).embedLink || '';
+    return { type: 'link', content: url };
   } else if (isColumnLayoutModule(module)) {
     return {
       type: 'columnLayout',
