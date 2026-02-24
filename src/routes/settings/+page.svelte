@@ -1140,7 +1140,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                       </p>
                       <p class="text-xs text-zinc-500 dark:text-zinc-400">
                         <a
-                          href="https://accounts.betterseqta.org"
+                          href="https://accounts.betterseqta.org/register"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="accent-text hover:underline">
