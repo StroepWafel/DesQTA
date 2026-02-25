@@ -107,6 +107,7 @@
   let keyBuffer = '';
   let acceptedCloudEula = $state(false);
   let syncCloudPfp = $state(false);
+  let sendAnonymousUsageStatistics = $state(false);
   let showEulaModal = $state(false);
   let cloudBaseUrl: string = '';
   let cloudBaseUrlSaving = false;
@@ -150,6 +151,7 @@
     devForceOfflineMode: boolean;
     acceptedCloudEula: boolean;
     syncCloudPfp: boolean;
+    sendAnonymousUsageStatistics: boolean;
     separateRssFeed: boolean;
     zoomLevel: number;
   } | null = null;
@@ -281,6 +283,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'dev_force_offline_mode',
           'accepted_cloud_eula',
           'sync_cloud_pfp',
+          'send_anonymous_usage_statistics',
           'language',
           'separate_rss_feed',
           'zoom_level',
@@ -311,6 +314,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
       syncCloudPfp = settings.sync_cloud_pfp ?? false;
+      sendAnonymousUsageStatistics = settings.send_anonymous_usage_statistics ?? false;
       separateRssFeed = settings.separate_rss_feed ?? false;
       zoomLevel = typeof settings.zoom_level === 'number' ? settings.zoom_level : 1;
 
@@ -341,6 +345,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         devForceOfflineMode,
         acceptedCloudEula,
         syncCloudPfp,
+        sendAnonymousUsageStatistics,
         separateRssFeed,
         zoomLevel,
       };
@@ -453,6 +458,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
         sync_cloud_pfp: syncCloudPfp,
+        send_anonymous_usage_statistics: sendAnonymousUsageStatistics,
         separate_rss_feed: separateRssFeed,
         zoom_level: zoomLevel,
       };
@@ -499,9 +505,10 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.globalSearchEnabled = globalSearchEnabled;
         initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
         initialSettings.devForceOfflineMode = devForceOfflineMode;
-        initialSettings.acceptedCloudEula = acceptedCloudEula;
-        initialSettings.syncCloudPfp = syncCloudPfp;
-        initialSettings.separateRssFeed = separateRssFeed;
+      initialSettings.acceptedCloudEula = acceptedCloudEula;
+      initialSettings.syncCloudPfp = syncCloudPfp;
+      initialSettings.sendAnonymousUsageStatistics = sendAnonymousUsageStatistics;
+      initialSettings.separateRssFeed = separateRssFeed;
         initialSettings.zoomLevel = zoomLevel;
       }
 
@@ -621,6 +628,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
     syncCloudPfp = cloudSettings.sync_cloud_pfp ?? false;
+    sendAnonymousUsageStatistics = cloudSettings.send_anonymous_usage_statistics ?? false;
     separateRssFeed = cloudSettings.separate_rss_feed ?? false;
     zoomLevel = cloudSettings.zoom_level ?? 1;
 
@@ -702,6 +710,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       devSensitiveInfoHider !== initialSettings.devSensitiveInfoHider ||
       devForceOfflineMode !== initialSettings.devForceOfflineMode ||
       acceptedCloudEula !== initialSettings.acceptedCloudEula ||
+      syncCloudPfp !== initialSettings.syncCloudPfp ||
+      sendAnonymousUsageStatistics !== initialSettings.sendAnonymousUsageStatistics ||
       separateRssFeed !== initialSettings.separateRssFeed ||
       zoomLevel !== initialSettings.zoomLevel
     );
@@ -1175,6 +1185,25 @@ The Company reserves the right to terminate your access to the Service at any ti
                       key="settings.sync_cloud_pfp_description"
                       fallback="Download and keep your cloud avatar in sync with the app header." />
                   </p>
+                  <label
+                    data-onboarding="analytics-optin"
+                    class="flex cursor-pointer gap-3 items-center text-sm text-zinc-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      class="w-4 h-4 rounded accent-blue-600"
+                      bind:checked={sendAnonymousUsageStatistics}
+                      onchange={() => saveSettings({ skipReload: true })} />
+                    <span>
+                      <T
+                        key="settings.send_anonymous_usage_statistics"
+                        fallback="Send anonymous usage statistics" />
+                    </span>
+                  </label>
+                  <p class="mt-1 ml-7 text-xs text-zinc-500 dark:text-zinc-400">
+                    <T
+                      key="settings.send_anonymous_usage_statistics_description"
+                      fallback="Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected." />
+                  </p>
                 </div>
               </div>
             {:else}
@@ -1221,6 +1250,27 @@ The Company reserves the right to terminate your access to the Service at any ti
                       Login & Sync
                     </button>
                   </div>
+                </div>
+                <div class="px-5 pb-5 pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                  <label
+                    data-onboarding="analytics-optin"
+                    class="flex cursor-pointer gap-3 items-center text-sm text-zinc-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      class="w-4 h-4 rounded accent-blue-600"
+                      bind:checked={sendAnonymousUsageStatistics}
+                      onchange={() => saveSettings({ skipReload: true })} />
+                    <span>
+                      <T
+                        key="settings.send_anonymous_usage_statistics"
+                        fallback="Send anonymous usage statistics" />
+                    </span>
+                  </label>
+                  <p class="mt-1 ml-7 text-xs text-zinc-500 dark:text-zinc-400">
+                    <T
+                      key="settings.send_anonymous_usage_statistics_description"
+                      fallback="Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected." />
+                  </p>
                 </div>
               </div>
             {/if}

@@ -40,6 +40,7 @@ async function autoSyncToCloud(patch: Record<string, any>): Promise<void> {
           'dev_sensitive_info_hider',
           'dev_force_offline_mode',
           'accepted_cloud_eula',
+          'send_anonymous_usage_statistics',
           'sync_cloud_pfp',
           'language',
           'zoom_level',

@@ -391,6 +391,14 @@
         runSyncCloudSettings(),
       ]);
 
+      // Usage analytics: increment session count and start hourly check (service checks opt-in internally)
+      if (!get(needsSetup)) {
+        import('$lib/services/usageAnalyticsService').then(({ usageAnalyticsService }) => {
+          usageAnalyticsService.onAppStart().catch(() => {});
+          usageAnalyticsService.start();
+        });
+      }
+
       // Load setup assistant completion status (for first-launch flow)
       try {
         const setupSettings = await loadSettings(['has_completed_setup_assistant']);

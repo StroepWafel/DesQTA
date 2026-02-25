@@ -56,6 +56,17 @@ fn reserved_client_file() -> PathBuf {
     dir
 }
 
+/// Per-profile storage for anonymous usage analytics state (daily session counts, last sent date).
+fn usage_analytics_state_file() -> PathBuf {
+    let mut dir = profiles::get_profile_dir(
+        &profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string()),
+    );
+    dir.push("usage_analytics_state.json");
+    dir
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CloudToken {
     pub token: Option<String>,
@@ -87,6 +98,48 @@ impl CloudState {
     }
     pub fn save(&self) -> io::Result<()> {
         let path = cloud_state_file();
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(path, serde_json::to_string(self).unwrap())
+    }
+}
+
+/// Per-profile state for anonymous usage analytics (daily session counts).
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct UsageAnalyticsState {
+    /// Date we're accumulating sessions for (YYYY-MM-DD).
+    #[serde(default)]
+    pub tracking_date: String,
+    /// Session count for tracking_date.
+    #[serde(default)]
+    pub sessions_count: u32,
+    /// Last date we successfully sent a report for.
+    #[serde(default)]
+    pub last_sent_date: Option<String>,
+    /// Pending date we have data for but haven't sent yet (e.g. yesterday).
+    #[serde(default)]
+    pub pending_date: Option<String>,
+    /// Session count for pending_date.
+    #[serde(default)]
+    pub pending_sessions: u32,
+}
+
+impl UsageAnalyticsState {
+    pub fn load() -> Self {
+        let path = usage_analytics_state_file();
+        if let Ok(mut file) = fs::File::open(path) {
+            let mut contents = String::new();
+            if file.read_to_string(&mut contents).is_ok() {
+                if let Ok(state) = serde_json::from_str::<UsageAnalyticsState>(&contents) {
+                    return state;
+                }
+            }
+        }
+        UsageAnalyticsState::default()
+    }
+    pub fn save(&self) -> io::Result<()> {
+        let path = usage_analytics_state_file();
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
@@ -184,6 +237,8 @@ pub struct Settings {
     pub dev_force_offline_mode: bool,
     pub accepted_cloud_eula: bool,
     #[serde(default)]
+    pub send_anonymous_usage_statistics: bool,
+    #[serde(default)]
     pub sync_cloud_pfp: bool,
     #[serde(default)]
     pub last_synced_cloud_pfp_url: Option<String>,
@@ -242,6 +297,7 @@ impl Default for Settings {
             dev_sensitive_info_hider: false,
             dev_force_offline_mode: false,
             accepted_cloud_eula: false,
+            send_anonymous_usage_statistics: false,
             sync_cloud_pfp: false,
             last_synced_cloud_pfp_url: None,
             language: "en".to_string(), // Default to English
@@ -534,6 +590,11 @@ impl Settings {
             &existing_json,
             "accepted_cloud_eula",
             default_settings.accepted_cloud_eula,
+        );
+        default_settings.send_anonymous_usage_statistics = get_bool(
+            &existing_json,
+            "send_anonymous_usage_statistics",
+            default_settings.send_anonymous_usage_statistics,
         );
         default_settings.sync_cloud_pfp = get_bool(
             &existing_json,
@@ -874,6 +935,82 @@ pub fn save_reserved_client(client_id: String, redirect_uri: String) -> Result<(
         redirect_uri,
     };
     rc.save().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_usage_analytics_state() -> UsageAnalyticsState {
+    UsageAnalyticsState::load()
+}
+
+#[tauri::command]
+pub fn increment_usage_analytics_session() -> Result<UsageAnalyticsState, String> {
+    use chrono::Utc;
+    let today = Utc::now().format("%Y-%m-%d").to_string();
+    let mut state = UsageAnalyticsState::load();
+    if state.tracking_date.is_empty() {
+        state.tracking_date = today.clone();
+        state.sessions_count = 1;
+    } else if state.tracking_date == today {
+        state.sessions_count += 1;
+    } else {
+        // New day: move current to pending, start fresh for today
+        state.pending_date = Some(state.tracking_date.clone());
+        state.pending_sessions = state.sessions_count;
+        state.tracking_date = today.clone();
+        state.sessions_count = 1;
+    }
+    state.save().map_err(|e| e.to_string())?;
+    Ok(state)
+}
+
+#[tauri::command]
+pub fn mark_usage_analytics_sent_and_reset(date: String) -> Result<UsageAnalyticsState, String> {
+    use chrono::Utc;
+    let today = Utc::now().format("%Y-%m-%d").to_string();
+    let mut state = UsageAnalyticsState::load();
+    state.last_sent_date = Some(date.clone());
+    if state.pending_date.as_deref() == Some(date.as_str()) {
+        state.pending_date = None;
+        state.pending_sessions = 0;
+    }
+    if state.tracking_date == date {
+        state.tracking_date = today;
+        state.sessions_count = 1;
+    }
+    state.save().map_err(|e| e.to_string())?;
+    Ok(state)
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UsageAnalyticsPayload {
+    pub date: String,
+    pub sessions_count: u32,
+    pub cloud_signed_in: bool,
+    pub app_version: String,
+    pub platform: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_id: Option<String>,
+}
+
+#[tauri::command]
+pub async fn send_usage_analytics_report(payload: UsageAnalyticsPayload) -> Result<bool, String> {
+    let url = "https://betterseqta.org/api/analytics/usage";
+    let client = reqwest::Client::new();
+
+    let mut request = client
+        .post(url)
+        .header("Content-Type", "application/json")
+        .json(&payload);
+
+    if payload.cloud_signed_in {
+        let cloud_token = CloudToken::load();
+        if let Some(ref token) = cloud_token.token {
+            request = request.header("Authorization", format!("Bearer {}", token));
+        }
+    }
+
+    let response = request.send().await.map_err(|e| e.to_string())?;
+    Ok(response.status().is_success())
 }
 
 #[tauri::command]

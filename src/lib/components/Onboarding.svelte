@@ -17,6 +17,7 @@
     CalendarDays,
     PaintBrush,
     Cloud,
+    ChartBarSquare,
     UserCircle,
   } from 'svelte-hero-icons';
   import { _ } from '../i18n';
@@ -105,6 +106,17 @@
       icon: Cloud,
     },
     {
+      id: 'analytics-optin',
+      titleKey: 'onboarding.step_analytics_optin_title',
+      descKey: 'onboarding.step_analytics_optin_desc',
+      titleFallback: 'Send anonymous usage statistics',
+      descFallback: 'Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected.',
+      targetSelector: '[data-onboarding="analytics-optin"]',
+      page: '/settings',
+      scrollTo: 'analytics-optin',
+      icon: ChartBarSquare,
+    },
+    {
       id: 'user-dropdown',
       titleKey: 'onboarding.step_profile_title',
       descKey: 'onboarding.step_profile_desc',
@@ -186,6 +198,14 @@
       if (element) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         await new Promise((resolve) => setTimeout(resolve, 600));
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+    }
+    // Special handling for analytics-optin: scroll to element
+    if (step.id === 'analytics-optin') {
+      const element = document.querySelector(`[data-onboarding="analytics-optin"]`);
+      if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         await new Promise((resolve) => setTimeout(resolve, 400));
       }
