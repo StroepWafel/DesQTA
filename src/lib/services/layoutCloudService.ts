@@ -168,6 +168,10 @@ export async function syncCloudSettings(options: {
       loadTheme(),
       loadCurrentTheme(),
       (async () => {
+        const { syncCloudPfpToLocal } = await import('./cloudPfpSyncService');
+        await syncCloudPfpToLocal();
+      })(),
+      (async () => {
         if (settings.language && settings.language !== get(locale)) {
           locale.set(settings.language);
         }

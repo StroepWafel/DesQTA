@@ -558,6 +558,8 @@
     "accept_cloud_eula": "BetterSEQTAクラウドEULAに同意",
     "cloud_eula_description": "クラウド機能を使用する前に、クラウド同期EULAを読んで同意する必要があります。",
     "read_accept": "読んで同意",
+    "sync_cloud_pfp": "BetterSEQTA クラウドのプロフィール写真をローカル写真として使用",
+    "sync_cloud_pfp_description": "クラウドのアバターをダウンロードしてアプリヘッダーと同期させます。",
     "personal_settings": "個人設定",
     "personal_settings_description": "個人プロファイルと設定をカスタマイズ",
     "custom_profile_picture": "カスタムプロファイル画像",

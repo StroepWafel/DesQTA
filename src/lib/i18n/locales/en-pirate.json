@@ -565,6 +565,8 @@
     "accept_cloud_eula": "Accept BetterSEQTA Cloud Pirate Code",
     "cloud_eula_description": "Ye must read and accept the Cloud Sync Pirate Code before usin' cloud treasures.",
     "read_accept": "Read & Accept the Code",
+    "sync_cloud_pfp": "Use yer BetterSEQTA cloud portrait as yer local picture",
+    "sync_cloud_pfp_description": "Download and keep yer cloud avatar in sync with the app header.",
     "personal_settings": "Captain's Personal Settings",
     "personal_settings_description": "Customize yer captain's profile and ship preferences",
     "custom_profile_picture": "Custom Captain Portrait",

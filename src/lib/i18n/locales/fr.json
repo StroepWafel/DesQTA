@@ -561,6 +561,8 @@
     "accept_cloud_eula": "Accepter le CLUF BetterSEQTA Cloud",
     "cloud_eula_description": "Vous devez lire et accepter le CLUF de Synchronisation Cloud avant d'utiliser les fonctionnalités cloud.",
     "read_accept": "Lire et Accepter",
+    "sync_cloud_pfp": "Utiliser la photo de profil cloud BetterSEQTA comme image locale",
+    "sync_cloud_pfp_description": "Téléchargez et gardez votre avatar cloud synchronisé avec l'en-tête de l'application.",
     "personal_settings": "Paramètres Personnels",
     "personal_settings_description": "Personnalisez votre profil personnel et vos préférences",
     "custom_profile_picture": "Photo de Profil Personnalisée",

@@ -653,6 +653,8 @@
     "accept_cloud_eula": "Aceitar EULA da Nuvem BetterSEQTA",
     "cloud_eula_description": "Você deve ler e aceitar o EULA de Sincronização na Nuvem antes de usar os recursos na nuvem.",
     "read_accept": "Ler e Aceitar",
+    "sync_cloud_pfp": "Usar foto de perfil da nuvem BetterSEQTA como imagem local",
+    "sync_cloud_pfp_description": "Baixe e mantenha seu avatar da nuvem sincronizado com o cabeçalho do aplicativo.",
     "personal_settings": "Configurações Pessoais",
     "personal_settings_description": "Personalize seu perfil pessoal e preferências",
     "custom_profile_picture": "Foto de Perfil Personalizada",

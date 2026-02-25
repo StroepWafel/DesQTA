@@ -106,6 +106,7 @@
   let zoomLevel = $state(1);
   let keyBuffer = '';
   let acceptedCloudEula = $state(false);
+  let syncCloudPfp = $state(false);
   let showEulaModal = $state(false);
   let cloudBaseUrl: string = '';
   let cloudBaseUrlSaving = false;
@@ -148,6 +149,7 @@
     devSensitiveInfoHider: boolean;
     devForceOfflineMode: boolean;
     acceptedCloudEula: boolean;
+    syncCloudPfp: boolean;
     separateRssFeed: boolean;
     zoomLevel: number;
   } | null = null;
@@ -239,6 +241,10 @@ The Company reserves the right to terminate your access to the Service at any ti
             cloudUser = null;
           });
       }
+
+      // Sync cloud PFP to local when user is logged in
+      const { syncCloudPfpToLocal } = await import('$lib/services/cloudPfpSyncService');
+      await syncCloudPfpToLocal();
     } catch (e) {
       cloudUser = null;
     }
@@ -274,6 +280,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'dev_sensitive_info_hider',
           'dev_force_offline_mode',
           'accepted_cloud_eula',
+          'sync_cloud_pfp',
           'language',
           'separate_rss_feed',
           'zoom_level',
@@ -303,6 +310,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
+      syncCloudPfp = settings.sync_cloud_pfp ?? false;
       separateRssFeed = settings.separate_rss_feed ?? false;
       zoomLevel = typeof settings.zoom_level === 'number' ? settings.zoom_level : 1;
 
@@ -332,6 +340,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         devSensitiveInfoHider,
         devForceOfflineMode,
         acceptedCloudEula,
+        syncCloudPfp,
         separateRssFeed,
         zoomLevel,
       };
@@ -443,6 +452,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         dev_sensitive_info_hider: devSensitiveInfoHider,
         dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
+        sync_cloud_pfp: syncCloudPfp,
         separate_rss_feed: separateRssFeed,
         zoom_level: zoomLevel,
       };
@@ -490,6 +500,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
         initialSettings.devForceOfflineMode = devForceOfflineMode;
         initialSettings.acceptedCloudEula = acceptedCloudEula;
+        initialSettings.syncCloudPfp = syncCloudPfp;
         initialSettings.separateRssFeed = separateRssFeed;
         initialSettings.zoomLevel = zoomLevel;
       }
@@ -609,6 +620,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
+    syncCloudPfp = cloudSettings.sync_cloud_pfp ?? false;
     separateRssFeed = cloudSettings.separate_rss_feed ?? false;
     zoomLevel = cloudSettings.zoom_level ?? 1;
 
@@ -731,6 +743,8 @@ The Company reserves the right to terminate your access to the Service at any ti
     pendingNavigationUrl = null;
   }
 
+  let removeMountListeners: (() => void) | null = null;
+
   onMount(async () => {
     // Check if running on desktop (updater only works on desktop)
     const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
@@ -738,10 +752,15 @@ The Company reserves the right to terminate your access to the Service at any ti
 
     await Promise.all([loadSettings(), loadCloudUser(), loadProfilePicture()]);
     window.addEventListener('keydown', handleKeydown);
+    const onProfilePictureUpdated = () => loadProfilePicture();
+    window.addEventListener('profile-picture-updated', onProfilePictureUpdated);
+    removeMountListeners = () => {
+      window.removeEventListener('keydown', handleKeydown);
+      window.removeEventListener('profile-picture-updated', onProfilePictureUpdated);
+    };
   });
-  onDestroy(() => {
-    window.removeEventListener('keydown', handleKeydown);
-  });
+
+  onDestroy(() => removeMountListeners?.());
 
   // Clear browser cache to fix routing issues
   async function clearCache() {
@@ -798,6 +817,15 @@ The Company reserves the right to terminate your access to the Service at any ti
   }
 
   // Load custom profile picture
+  async function handleSyncCloudPfpChange() {
+    await saveSettings({ skipReload: true });
+    if (syncCloudPfp) {
+      const { syncCloudPfpToLocal } = await import('$lib/services/cloudPfpSyncService');
+      await syncCloudPfpToLocal();
+      loadProfilePicture();
+    }
+  }
+
   async function loadProfilePicture() {
     try {
       const dataUrl = await invoke<string | null>('get_profile_picture_data_url');
@@ -1128,6 +1156,26 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <p class="px-5 pb-5 text-xs text-zinc-500 dark:text-zinc-400">
                   Settings sync automatically. Upload or download manually across devices.
                 </p>
+                <div class="px-5 pb-5 pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                  <label
+                    class="flex cursor-pointer gap-3 items-center text-sm text-zinc-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      class="w-4 h-4 rounded accent-blue-600"
+                      bind:checked={syncCloudPfp}
+                      onchange={handleSyncCloudPfpChange} />
+                    <span>
+                      <T
+                        key="settings.sync_cloud_pfp"
+                        fallback="Use BetterSEQTA cloud profile picture as local picture" />
+                    </span>
+                  </label>
+                  <p class="mt-1 ml-7 text-xs text-zinc-500 dark:text-zinc-400">
+                    <T
+                      key="settings.sync_cloud_pfp_description"
+                      fallback="Download and keep your cloud avatar in sync with the app header." />
+                  </p>
+                </div>
               </div>
             {:else}
               <!-- Not logged in state -->

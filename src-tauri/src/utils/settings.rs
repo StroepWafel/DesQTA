@@ -183,6 +183,10 @@ pub struct Settings {
     pub dev_sensitive_info_hider: bool,
     pub dev_force_offline_mode: bool,
     pub accepted_cloud_eula: bool,
+    #[serde(default)]
+    pub sync_cloud_pfp: bool,
+    #[serde(default)]
+    pub last_synced_cloud_pfp_url: Option<String>,
     pub language: String,
     #[serde(default)]
     pub menu_order: Option<Vec<String>>,
@@ -238,6 +242,8 @@ impl Default for Settings {
             dev_sensitive_info_hider: false,
             dev_force_offline_mode: false,
             accepted_cloud_eula: false,
+            sync_cloud_pfp: false,
+            last_synced_cloud_pfp_url: None,
             language: "en".to_string(), // Default to English
             menu_order: None,
             has_been_through_onboarding: false,
@@ -529,6 +535,13 @@ impl Settings {
             "accepted_cloud_eula",
             default_settings.accepted_cloud_eula,
         );
+        default_settings.sync_cloud_pfp = get_bool(
+            &existing_json,
+            "sync_cloud_pfp",
+            default_settings.sync_cloud_pfp,
+        );
+        default_settings.last_synced_cloud_pfp_url =
+            get_opt_string(&existing_json, "last_synced_cloud_pfp_url");
         default_settings.language =
             get_string(&existing_json, "language", &default_settings.language);
         default_settings.menu_order = get_opt_string_array(&existing_json, "menu_order");

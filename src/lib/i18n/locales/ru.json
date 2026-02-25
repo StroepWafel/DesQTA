@@ -653,6 +653,8 @@
     "accept_cloud_eula": "Принять EULA облака BetterSEQTA",
     "cloud_eula_description": "Вы должны прочитать и принять EULA облачной синхронизации перед использованием облачных функций.",
     "read_accept": "Прочитать и принять",
+    "sync_cloud_pfp": "Использовать фото профиля BetterSEQTA Cloud как локальное",
+    "sync_cloud_pfp_description": "Загрузите и синхронизируйте аватар из облака с заголовком приложения.",
     "personal_settings": "Личные настройки",
     "personal_settings_description": "Настройте свой личный профиль и предпочтения",
     "custom_profile_picture": "Пользовательское фото профиля",

@@ -558,6 +558,8 @@
     "accept_cloud_eula": "接受BetterSEQTA云端用户许可协议",
     "cloud_eula_description": "在使用云功能之前，您必须阅读并接受云同步用户许可协议。",
     "read_accept": "阅读并接受",
+    "sync_cloud_pfp": "使用 BetterSEQTA 云头像作为本地头像",
+    "sync_cloud_pfp_description": "下载并保持云头像与应用标题栏同步。",
     "personal_settings": "个人设置",
     "personal_settings_description": "自定义您的个人资料和偏好",
     "custom_profile_picture": "自定义头像",

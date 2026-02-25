@@ -479,6 +479,7 @@ pub fn run() {
             notes_filesystem::cleanup_unused_images_filesystem,
             notes_filesystem::get_file_tree,
             profile_picture::save_profile_picture,
+            profile_picture::save_profile_picture_from_url,
             profile_picture::get_profile_picture_path_cmd,
             profile_picture::delete_profile_picture,
             profile_picture::has_custom_profile_picture,

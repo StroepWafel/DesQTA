@@ -648,6 +648,8 @@
     "accept_cloud_eula": "Accept BetterSEQTA Cloud EULA",
     "cloud_eula_description": "You must read and accept the Cloud Sync EULA before using cloud features.",
     "read_accept": "Read & Accept",
+    "sync_cloud_pfp": "BetterSEQTA 클라우드 프로필 사진을 로컬 사진으로 사용",
+    "sync_cloud_pfp_description": "클라우드 아바타를 다운로드하여 앱 헤더와 동기화합니다.",
     "personal_settings": "Personal Settings",
     "personal_settings_description": "Customize your personal profile and preferences",
     "custom_profile_picture": "Custom Profile Picture",

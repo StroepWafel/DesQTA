@@ -4,7 +4,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { goto } from '$app/navigation';
   import { getRandomDicebearAvatar } from '../../utils/netUtil';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import ProfileSwitcher from './ProfileSwitcher.svelte';
   import { _ } from '../i18n';
   import T from './T.svelte';
@@ -77,6 +77,8 @@
     }
   }
 
+  let removeProfilePictureListener: (() => void) | null = null;
+
   onMount(async () => {
     try {
       const subset = await invoke<any>('get_settings_subset', {
@@ -92,7 +94,14 @@
 
     // Load custom profile picture
     await loadCustomProfilePicture();
+
+    const onProfilePictureUpdated = () => loadCustomProfilePicture();
+    window.addEventListener('profile-picture-updated', onProfilePictureUpdated);
+    removeProfilePictureListener = () =>
+      window.removeEventListener('profile-picture-updated', onProfilePictureUpdated);
   });
+
+  onDestroy(() => removeProfilePictureListener?.());
 
   // Close dropdown when userInfo becomes undefined (logout)
   $effect(() => {
