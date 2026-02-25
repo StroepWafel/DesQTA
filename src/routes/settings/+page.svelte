@@ -40,6 +40,7 @@
     FolderOpen,
     MagnifyingGlass,
     Minus,
+    Sparkles,
   } from 'svelte-hero-icons';
   import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
@@ -560,6 +561,10 @@ The Company reserves the right to terminate your access to the Service at any ti
 
   function closeCloudSyncModal() {
     showCloudSyncModal = false;
+  }
+
+  function openWhatsNewModal() {
+    window.dispatchEvent(new CustomEvent('show-whats-new'));
   }
 
   function openTroubleshootingModal() {
@@ -2181,6 +2186,28 @@ The Company reserves the right to terminate your access to the Service at any ti
               <Icon src={ArrowPath} class="w-4 h-4" />
               <span><T key="settings.redo_onboarding" fallback="Redo Walkthrough" /></span>
             {/if}
+          </button>
+        </div>
+      </section>
+
+      <!-- What's New button -->
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="flex justify-between items-center p-4 sm:p-6">
+          <div>
+            <h2 class="text-base font-semibold sm:text-lg">
+              <T key="whats_new.title" fallback="What's New" />
+            </h2>
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+              <T key="settings.whats_new_description" fallback="View the changelog and latest features." />
+            </p>
+          </div>
+          <button
+            type="button"
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 focus:ring-2 active:scale-95 hover:scale-105 accent-bg focus:ring-offset-2 focus:ring-[var(--accent)]"
+            onclick={openWhatsNewModal}>
+            <Icon src={Sparkles} class="w-4 h-4" />
+            <T key="settings.view_changelog" fallback="View" />
           </button>
         </div>
       </section>

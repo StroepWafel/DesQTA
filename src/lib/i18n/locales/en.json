@@ -340,6 +340,13 @@
     "official_website": "Official website",
     "copyright": "© 2026 DesQTA. Licensed under MIT License."
   },
+  "whats_new": {
+    "title": "What's New",
+    "subtitle": "DesQTA has been updated from",
+    "to": " to ",
+    "modal_aria_label": "What's New",
+    "loading": "Loading changelog..."
+  },
   "dashboard": {
     "quick_links": "Quick Links",
     "recent_news": "Recent News",
@@ -775,6 +782,8 @@
     "clear_filters": "Clear Filters",
     "redo_onboarding": "Redo Walkthrough",
     "redo_onboarding_description": "Restart the onboarding walkthrough to learn about DesQTA features.",
+    "whats_new_description": "View the changelog and latest features.",
+    "view_changelog": "View",
     "resetting": "Resetting...",
     "menu_order": "Menu Order",
     "sidebar_settings": "Sidebar Settings",

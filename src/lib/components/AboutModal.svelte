@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { invoke } from '@tauri-apps/api/core';
   import Modal from '$lib/components/Modal.svelte';
   import {
     Icon,
@@ -21,7 +23,15 @@
   }
 
   let { open = $bindable(false), onclose }: Props = $props();
-  let appVersion: string = '1.0.0-rc.8';
+  let appVersion = $state('1.0.0');
+
+  onMount(async () => {
+    try {
+      appVersion = await invoke<string>('get_app_version');
+    } catch {
+      // Fallback if command fails
+    }
+  });
 
   function closeModal() {
     onclose?.();

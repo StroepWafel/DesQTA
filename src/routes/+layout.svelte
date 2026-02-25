@@ -3,6 +3,7 @@
   import { Window } from '@tauri-apps/api/window';
   const appWindow = Window.getCurrent();
   import AboutModal from '../lib/components/AboutModal.svelte';
+  import WhatsNewModal from '../lib/components/WhatsNewModal.svelte';
   import AppHeader from '../lib/components/AppHeader.svelte';
   import AppSidebar from '../lib/components/AppSidebar.svelte';
   import LoginScreen from '../lib/components/LoginScreen.svelte';
@@ -87,6 +88,10 @@
   let sidebarOpen = $state(true);
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
+  let showWhatsNewModal = $state(false);
+  let changelogMarkdown = $state('');
+  let versionUpdateCurrent = $state('');
+  let versionUpdatePrevious = $state('');
   let showOnboarding = $state(false);
   let hasCompletedSetupAssistant = $state(false);
   let isFullscreen = $state(false);
@@ -147,6 +152,7 @@
   };
 
   let unlistenLayout: (() => void) | undefined;
+  let unlistenShowWhatsNew: ((e: Event) => void) | undefined;
 
   const checkSession = async () => {
     await checkSessionAuth({
@@ -161,6 +167,9 @@
     logger.logComponentUnmount('layout');
     unlistenLayout?.();
     window.removeEventListener('redo-onboarding', handleRedoOnboarding);
+    if (unlistenShowWhatsNew) {
+      window.removeEventListener('show-whats-new', unlistenShowWhatsNew);
+    }
   });
 
   const reloadSidebarSettings = async () => {
@@ -408,6 +417,45 @@
       } catch (e) {
         logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
       }
+
+      // Check if app was just updated - show What's New modal
+      try {
+        const versionInfo = await invoke<{ current: string; previousVersion?: string }>(
+          'get_version_update_info'
+        );
+        if (versionInfo?.previousVersion && !get(needsSetup)) {
+          versionUpdateCurrent = versionInfo.current;
+          versionUpdatePrevious = versionInfo.previousVersion;
+          try {
+            const res = await fetch('/CHANGELOG.md');
+            changelogMarkdown = (await res.text()) || '';
+          } catch {
+            changelogMarkdown = '';
+          }
+          setTimeout(() => (showWhatsNewModal = true), 800);
+        }
+      } catch (e) {
+        logger.debug('layout', 'onMount', 'Could not check version update info', { error: e });
+      }
+
+      // Listen for manual "What's New" request (e.g. from Settings)
+      const handleShowWhatsNew = async () => {
+        try {
+          versionUpdateCurrent = await invoke<string>('get_app_version');
+          versionUpdatePrevious = '';
+          try {
+            const res = await fetch('/CHANGELOG.md');
+            changelogMarkdown = (await res.text()) || '';
+          } catch {
+            changelogMarkdown = '';
+          }
+          showWhatsNewModal = true;
+        } catch (e) {
+          logger.debug('layout', 'handleShowWhatsNew', 'Failed to show What\'s New', { error: e });
+        }
+      };
+      window.addEventListener('show-whats-new', handleShowWhatsNew);
+      unlistenShowWhatsNew = handleShowWhatsNew;
 
       // Validate SEQTA session BEFORE starting background sync
       // This prevents sync_analytics_data (and other warmup) from running in parallel with
@@ -791,4 +839,11 @@
     },
   }} />
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
+<WhatsNewModal
+  bind:open={showWhatsNewModal}
+  currentVersion={versionUpdateCurrent}
+  previousVersion={versionUpdatePrevious}
+  changelogMarkdown={changelogMarkdown}
+  onclose={() => (showWhatsNewModal = false)}
+/>
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />

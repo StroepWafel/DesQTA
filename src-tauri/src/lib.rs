@@ -134,6 +134,46 @@ fn get_seqta_base_url() -> String {
     session.base_url
 }
 
+fn get_version_app_data_dir() -> std::path::PathBuf {
+    if cfg!(target_os = "android") {
+        let mut dir = std::path::PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("DesQTA");
+        dir
+    } else {
+        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
+        dir.push("DesQTA");
+        dir
+    }
+}
+
+/// Returns current app version and previous version (if app was just updated).
+#[tauri::command]
+fn get_version_update_info(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let current = app.package_info().version.to_string();
+    let app_data_dir = get_version_app_data_dir();
+    let whats_new_file = app_data_dir.join("previous_version_for_whats_new");
+    let previous_version = fs::read_to_string(&whats_new_file).ok().filter(|s| !s.is_empty());
+    Ok(serde_json::json!({
+        "current": current,
+        "previousVersion": previous_version
+    }))
+}
+
+/// Clears the "just updated" flag after user dismisses What's New modal.
+#[tauri::command]
+fn clear_version_update_info() -> Result<(), String> {
+    let app_data_dir = get_version_app_data_dir();
+    let whats_new_file = app_data_dir.join("previous_version_for_whats_new");
+    let _ = fs::remove_file(&whats_new_file);
+    Ok(())
+}
+
+/// Returns the current app version string.
+#[tauri::command]
+fn get_app_version(app: tauri::AppHandle) -> String {
+    app.package_info().version.to_string()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
@@ -317,6 +357,9 @@ pub fn run() {
             login::direct_login,
             login::reauthenticate,
             get_seqta_base_url,
+            get_version_update_info,
+            clear_version_update_info,
+            get_app_version,
             profiles::get_current_profile,
             profiles::list_profiles,
             profiles::switch_profile,
@@ -529,12 +572,18 @@ pub fn run() {
             // Read the previous version
             let last_version = fs::read_to_string(&version_file).unwrap_or_default();
 
-            // If versions differ, clear the cache
+            // If versions differ, clear the cache and record previous version for What's New
             if current_version != last_version {
                 println!(
                     "[DesQTA] Version changed from '{}' to '{}'. Clearing webview cache...",
                     last_version, current_version
                 );
+
+                // Record previous version so frontend can show What's New modal
+                if !last_version.is_empty() {
+                    let whats_new_file = app_data_dir.join("previous_version_for_whats_new");
+                    let _ = fs::write(&whats_new_file, &last_version);
+                }
 
                 // Get the main window and clear data
                 if let Some(window) = app.webview_windows().get("main") {
