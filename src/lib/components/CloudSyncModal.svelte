@@ -353,7 +353,7 @@
 
             <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
               <a
-                href="https://accounts.betterseqta.org"
+                href="https://accounts.betterseqta.org/register"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-blue-600 dark:text-blue-400 hover:underline">
@@ -431,7 +431,7 @@
               Sync your DesQTA settings across devices using BetterSEQTA Plus account cloud syncing.
               Your settings are encrypted and secure.
               <a
-                href="https://accounts.betterseqta.org"
+                href="https://accounts.betterseqta.org/register"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-blue-600 dark:text-blue-400 hover:underline">
