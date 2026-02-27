@@ -7,11 +7,24 @@ on:
         description: 'Release version (e.g., 1.0.1)'
         required: true
         type: string
-      release_notes:
-        description: 'Release notes'
+      previous_tag:
+        description: 'Previous release tag to compare (e.g., v1.0.0). Empty = auto-detect latest'
         required: false
         type: string
-        default: 'Bug fixes and improvements'
+      compatibility:
+        description: 'Platform compatibility (e.g., Windows 10+, macOS 10.13+, Android 8+)'
+        required: false
+        type: string
+        default: 'Windows 10+, macOS 10.13+, Android 8+'
+      detail_level:
+        description: 'Release notes depth'
+        required: false
+        type: choice
+        default: standard
+        options:
+          - brief
+          - standard
+          - detailed
 
 permissions:
   contents: write
@@ -251,6 +264,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -284,46 +299,42 @@ jobs:
           echo "$windows_sig" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Collect artifact paths for release
+        id: artifact-paths
+        run: |
+          paths=$(find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.sig' -o -name '*.dmg' -o -name '*.apk' \) | tr '\n' ',')
+          paths="${paths%,}"
+          echo "paths=$paths" >> $GITHUB_OUTPUT
+
+      - name: Generate Release Notes
+        id: ai-release-notes
+        uses: StroepWafel/AI-Release-Notes@v1
+        with:
+          groq_api_key: ${{ secrets.GROQ_API_KEY }}
+          tag_name: v${{ inputs.version }}
+          previous_tag: ${{ inputs.previous_tag }}
+          release_name: DesQTA v${{ inputs.version }}
+          draft: true
+          detail_level: ${{ inputs.detail_level }}
+          compatibility: ${{ inputs.compatibility }}
+          files: ${{ steps.artifact-paths.outputs.paths }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate update manifest
         run: |
-          cat > update-manifest.json <<EOF
-          {
-            "version": "${{ inputs.version }}",
-            "notes": "${{ inputs.release_notes }}",
-            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "platforms": {
-              "windows-x86_64": {
-                "signature": "${{ steps.read-sigs.outputs.windows_sig }}",
-                "url": "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.windows_file }}"
-              }
-            }
-          }
-          EOF
+          jq -n \
+            --arg version "${{ inputs.version }}" \
+            --argjson notes ${{ toJSON(steps.ai-release-notes.outputs.release_notes) }} \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg sig "${{ steps.read-sigs.outputs.windows_sig }}" \
+            --arg url "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.windows_file }}" \
+            '{version: $version, notes: $notes, pub_date: $pub_date, platforms: {"windows-x86_64": {signature: $sig, url: $url}}}' > update-manifest.json
           cat update-manifest.json
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ inputs.version }}
-          name: 'DesQTA v${{ inputs.version }}'
-          body: |
-            ${{ inputs.release_notes }}
-
-            ## Downloads
-            - **Windows (x64)**: `DesQTA_Setup.exe`
-            - **macOS (Intel)**: `DesQTA_1.0.0-3_x64.dmg`
-            - **macOS (Apple Silicon)**: `DesQTA_1.0.0-3_aarch64.dmg`
-            - **Android**: APK files available in release assets
-          draft: true
-          files: |
-            artifacts/windows-x86_64/**/*.exe
-            artifacts/windows-x86_64/**/*.msi
-            artifacts/windows-x86_64/**/*.exe.sig
-            artifacts/windows-x86_64/**/*.msi.sig
-            artifacts/darwin-x86_64/**/*.dmg
-            artifacts/darwin-aarch64/**/*.dmg
-            artifacts/android-builds/**/*.apk
-            update-manifest.json
+      - name: Upload manifest to release
+        run: |
+          gh release upload "v${{ inputs.version }}" update-manifest.json --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
