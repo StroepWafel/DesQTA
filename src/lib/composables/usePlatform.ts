@@ -8,6 +8,7 @@ export interface PlatformState {
   isNativeMobile: boolean;
   isSmallViewport: boolean;
   isWindows: boolean;
+  supportsBiometric: boolean;
 }
 
 /**
@@ -24,6 +25,7 @@ export function usePlatform() {
     isNativeMobile: false,
     isSmallViewport: false,
     isWindows: false,
+    supportsBiometric: false,
   };
 
   const checkPlatform = () => {
@@ -32,16 +34,23 @@ export function usePlatform() {
     state.isNativeMobile = tauri_platform === 'ios' || tauri_platform === 'android';
     state.isSmallViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
     state.isMobile = state.isNativeMobile || state.isSmallViewport;
+    state.supportsBiometric =
+      tauri_platform === 'ios' ||
+      tauri_platform === 'android' ||
+      tauri_platform === 'macos' ||
+      tauri_platform === 'windows';
     platformStore.set({
       isMobile: state.isMobile,
       isNativeMobile: state.isNativeMobile,
       isSmallViewport: state.isSmallViewport,
+      supportsBiometric: state.supportsBiometric,
     });
     return {
       isWindows: state.isWindows,
       isMobile: state.isMobile,
       isNativeMobile: state.isNativeMobile,
       isSmallViewport: state.isSmallViewport,
+      supportsBiometric: state.supportsBiometric,
     };
   };
 

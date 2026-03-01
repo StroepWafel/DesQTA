@@ -9,6 +9,7 @@
   import MobileBottomNav from '../lib/components/MobileBottomNav.svelte';
   import LoginScreen from '../lib/components/LoginScreen.svelte';
   import SetupAssistant from '../lib/components/SetupAssistant.svelte';
+  import BiometricGate from '../lib/components/BiometricGate.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import { Toaster } from 'svelte-sonner';
@@ -38,6 +39,7 @@
     loadSettings,
     loadEnhancedAnimationsSetting as loadEnhancedAnimationsSettingFn,
   } from '../lib/composables/useLayoutSettings';
+  import { checkStatus } from '@choochmeque/tauri-plugin-biometry-api';
   import '../app.css';
   import {
     accentColor,
@@ -96,6 +98,8 @@
   let versionUpdatePrevious = $state('');
   let showOnboarding = $state(false);
   let hasCompletedSetupAssistant = $state(false);
+  let biometricEnabled = $state(false);
+  let biometricUnlocked = $state(false);
   let isFullscreen = $state(false);
 
   // Composables
@@ -112,6 +116,10 @@
   let autoCollapseSidebar = $derived(sidebar.state.autoCollapse);
   let autoExpandSidebarHover = $derived(sidebar.state.autoExpandOnHover);
   let isMobile = $derived($platformStore.isMobile);
+  let supportsBiometric = $derived($platformStore.supportsBiometric);
+  let showBiometricGate = $derived(
+    !$needsSetup && biometricEnabled && supportsBiometric && !biometricUnlocked
+  );
 
   // Settings state
   let disableSchoolPicture = $state(false);
@@ -401,10 +409,35 @@
         });
       }
 
-      // Load setup assistant completion status (for first-launch flow)
+      // Load setup assistant completion status and biometric preference (for first-launch flow)
       try {
-        const setupSettings = await loadSettings(['has_completed_setup_assistant']);
+        const setupSettings = await loadSettings([
+          'has_completed_setup_assistant',
+          'biometric_enabled',
+        ]);
         hasCompletedSetupAssistant = setupSettings.has_completed_setup_assistant === true;
+        biometricEnabled = setupSettings.biometric_enabled === true;
+
+        // Auto-disable biometric if not available (e.g. no face/fingerprint/iris enrolled)
+        if (biometricEnabled && get(platformStore).supportsBiometric) {
+          try {
+            const status = await checkStatus();
+            if (!status.isAvailable) {
+              logger.debug('layout', 'onMount', 'Biometric not available, auto-disabling', {
+                error: status.error,
+                errorCode: status.errorCode,
+              });
+              biometricEnabled = false;
+              const { saveSettingsWithQueue, flushSettingsQueue } = await import(
+                '$lib/services/settingsSync'
+              );
+              await saveSettingsWithQueue({ biometric_enabled: false });
+              await flushSettingsQueue();
+            }
+          } catch (e) {
+            logger.debug('layout', 'onMount', 'Could not check biometric status', { error: e });
+          }
+        }
       } catch (e) {
         logger.debug('layout', 'onMount', 'Could not load setup assistant status', { error: e });
       }
@@ -792,6 +825,23 @@
           <div class="flex items-center justify-center w-full h-full py-12">
             <LoadingScreen inline />
           </div>
+        {:else if showBiometricGate}
+          <BiometricGate
+            onUnlock={() => (biometricUnlocked = true)}
+            onBiometryUnavailable={async () => {
+              biometricEnabled = false;
+              biometricUnlocked = true;
+              try {
+                const { saveSettingsWithQueue, flushSettingsQueue } = await import(
+                  '$lib/services/settingsSync'
+                );
+                await saveSettingsWithQueue({ biometric_enabled: false });
+                await flushSettingsQueue();
+              } catch (e) {
+                logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', { error: e });
+              }
+            }}
+          />
         {:else if $needsSetup}
           {#if !hasCompletedSetupAssistant}
             <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />

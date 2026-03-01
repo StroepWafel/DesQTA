@@ -18,6 +18,7 @@
   "license": "MIT",
   "dependencies": {
     "7.css": "^0.18.0",
+    "@choochmeque/tauri-plugin-biometry-api": "^0.2.6",
     "@preact/signals": "^2.5.1",
     "@saurl/tauri-plugin-safe-area-insets-css-api": "^0.1.0",
     "@tailwindcss/typography": "^0.5.16",

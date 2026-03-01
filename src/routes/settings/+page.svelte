@@ -41,6 +41,7 @@
     MagnifyingGlass,
     Minus,
     Sparkles,
+    LockClosed,
   } from 'svelte-hero-icons';
   import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
@@ -56,6 +57,8 @@
   import { toastStore } from '../../lib/stores/toast';
   import { cloudSettingsService } from '../../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
+  import { platformStore } from '../../lib/stores/platform';
+  import { checkStatus, authenticate } from '@choochmeque/tauri-plugin-biometry-api';
   import { setZoom } from '../../lib/utils/zoom';
   import { CacheManager } from '../../utils/cacheManager';
   import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
@@ -123,6 +126,53 @@
   let showUnsavedChangesModal = $state(false);
   let pendingNavigationUrl: string | null = null;
   let resettingOnboarding = $state(false);
+  let biometricEnabled = $state(false);
+  let biometricToggleLoading = $state(false);
+  let biometricToggleError = $state<string | null>(null);
+
+  let supportsBiometric = $derived($platformStore.supportsBiometric);
+
+  async function handleBiometricToggle(e: MouseEvent) {
+    e.preventDefault();
+    const wantsEnable = !biometricEnabled;
+
+    if (wantsEnable) {
+      biometricToggleError = null;
+      biometricToggleLoading = true;
+      try {
+        const status = await checkStatus();
+        if (!status.isAvailable) {
+          biometricToggleError =
+            status.error ?? $_('setup_assistant.biometric_unavailable', { default: 'Biometric authentication is not available on this device.' });
+          toastStore.error(biometricToggleError);
+          return;
+        }
+        await authenticate($_('setup_assistant.biometric_title', { default: 'Unlock with biometrics' }), {
+          allowDeviceCredential: true,
+          cancelTitle: $_('common.cancel', { default: 'Cancel' }),
+          confirmationRequired: false,
+        });
+        biometricEnabled = true;
+        await saveSettingsWithQueue({ biometric_enabled: true });
+        await flushSettingsQueue();
+        if (initialSettings) initialSettings.biometricEnabled = true;
+        toastStore.success($_('settings.biometric_enabled_success', { default: 'Biometric unlock enabled' }));
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!msg.includes('userCancel') && !msg.toLowerCase().includes('user cancel')) {
+          biometricToggleError = msg;
+          toastStore.error($_('settings.biometric_enable_failed', { default: 'Could not enable biometric unlock' }));
+        }
+      } finally {
+        biometricToggleLoading = false;
+      }
+    } else {
+      biometricEnabled = false;
+      await saveSettingsWithQueue({ biometric_enabled: false });
+      await flushSettingsQueue();
+      if (initialSettings) initialSettings.biometricEnabled = false;
+    }
+  }
 
   // Store initial settings state for comparison
   let initialSettings: {
@@ -154,6 +204,7 @@
     sendAnonymousUsageStatistics: boolean;
     separateRssFeed: boolean;
     zoomLevel: number;
+    biometricEnabled: boolean;
   } | null = null;
 
   // Menu configuration (same as in layout)
@@ -287,6 +338,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'language',
           'separate_rss_feed',
           'zoom_level',
+          'biometric_enabled',
         ],
       });
       shortcuts = settings.shortcuts || [];
@@ -317,6 +369,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       sendAnonymousUsageStatistics = settings.send_anonymous_usage_statistics ?? false;
       separateRssFeed = settings.separate_rss_feed ?? false;
       zoomLevel = typeof settings.zoom_level === 'number' ? settings.zoom_level : 1;
+      biometricEnabled = settings.biometric_enabled ?? false;
 
       // Store initial state for comparison
       initialSettings = {
@@ -348,6 +401,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         sendAnonymousUsageStatistics,
         separateRssFeed,
         zoomLevel,
+        biometricEnabled,
       };
 
       console.log('Loading settings', {
@@ -386,6 +440,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       acceptedCloudEula = false;
       separateRssFeed = false;
       zoomLevel = 1;
+      biometricEnabled = false;
       showDevSettings = false;
     }
     loading = false;
@@ -461,6 +516,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         send_anonymous_usage_statistics: sendAnonymousUsageStatistics,
         separate_rss_feed: separateRssFeed,
         zoom_level: zoomLevel,
+        biometric_enabled: biometricEnabled,
       };
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
@@ -510,6 +566,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       initialSettings.sendAnonymousUsageStatistics = sendAnonymousUsageStatistics;
       initialSettings.separateRssFeed = separateRssFeed;
         initialSettings.zoomLevel = zoomLevel;
+      initialSettings.biometricEnabled = biometricEnabled;
       }
 
       if (!options.skipReload) {
@@ -631,6 +688,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     sendAnonymousUsageStatistics = cloudSettings.send_anonymous_usage_statistics ?? false;
     separateRssFeed = cloudSettings.separate_rss_feed ?? false;
     zoomLevel = cloudSettings.zoom_level ?? 1;
+    biometricEnabled = cloudSettings.biometric_enabled ?? false;
 
     // Reload settings
     await loadSettings();
@@ -713,7 +771,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       syncCloudPfp !== initialSettings.syncCloudPfp ||
       sendAnonymousUsageStatistics !== initialSettings.sendAnonymousUsageStatistics ||
       separateRssFeed !== initialSettings.separateRssFeed ||
-      zoomLevel !== initialSettings.zoomLevel
+      zoomLevel !== initialSettings.zoomLevel ||
+      biometricEnabled !== initialSettings.biometricEnabled
     );
   }
 
@@ -1774,6 +1833,57 @@ The Company reserves the right to terminate your access to the Service at any ti
           </div>
         </div>
       </section>
+
+      <!-- Security (biometric) - only when platform supports it -->
+      {#if supportsBiometric}
+        <section
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+            <h2 class="text-base font-semibold sm:text-lg">
+              <T key="settings.security" fallback="Security" />
+            </h2>
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+              <T
+                key="settings.security_description"
+                fallback="Protect your app with biometric authentication" />
+            </p>
+          </div>
+          <div class="p-4 sm:p-6">
+            <div
+              class="flex flex-col gap-4 p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
+              <div class="flex gap-3 items-center">
+                <input
+                  id="biometric-enabled"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  checked={biometricEnabled}
+                  disabled={biometricToggleLoading}
+                  onclick={handleBiometricToggle}
+                  role="switch"
+                  aria-describedby="biometric-desc" />
+                <label
+                  for="biometric-enabled"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200 {biometricToggleLoading ? 'opacity-60 cursor-wait' : ''}"
+                  ><T
+                    key="settings.biometric_enabled"
+                    fallback="Unlock with biometrics (Face ID, Touch ID, fingerprint, Windows Hello)" /></label>
+              </div>
+              {#if biometricToggleLoading}
+                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                  <T key="settings.biometric_verifying" fallback="Verifying biometric..." />
+                </p>
+              {:else if biometricToggleError}
+                <p class="text-xs text-red-500 dark:text-red-400">{biometricToggleError}</p>
+              {/if}
+              <p id="biometric-desc" class="text-xs text-zinc-500 dark:text-zinc-400">
+                <T
+                  key="settings.biometric_enabled_description"
+                  fallback="Require biometric authentication when opening the app" />
+              </p>
+            </div>
+          </div>
+        </section>
+      {/if}
 
       <!-- Zoom Settings -->
       <section

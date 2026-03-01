@@ -194,6 +194,7 @@
           'language',
           'separate_rss_feed',
           'zoom_level',
+          'biometric_enabled',
         ],
       });
 

@@ -44,6 +44,7 @@ async function autoSyncToCloud(patch: Record<string, any>): Promise<void> {
           'sync_cloud_pfp',
           'language',
           'zoom_level',
+          'biometric_enabled',
         ],
       });
 

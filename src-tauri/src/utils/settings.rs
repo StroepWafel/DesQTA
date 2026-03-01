@@ -249,6 +249,9 @@ pub struct Settings {
     pub has_been_through_onboarding: bool,
     #[serde(default)]
     pub has_completed_setup_assistant: bool,
+    /// Enable biometric (Face ID / fingerprint) to unlock app on mobile
+    #[serde(default)]
+    pub biometric_enabled: bool,
     #[serde(default)]
     pub separate_rss_feed: bool,
     #[serde(default)]
@@ -304,6 +307,7 @@ impl Default for Settings {
             menu_order: None,
             has_been_through_onboarding: false,
             has_completed_setup_assistant: false,
+            biometric_enabled: false,
             separate_rss_feed: false,
             dashboard_widgets_layout: None,
             sidebar_folders: None,
@@ -615,6 +619,11 @@ impl Settings {
             &existing_json,
             "has_completed_setup_assistant",
             default_settings.has_completed_setup_assistant,
+        );
+        default_settings.biometric_enabled = get_bool(
+            &existing_json,
+            "biometric_enabled",
+            default_settings.biometric_enabled,
         );
         default_settings.separate_rss_feed = get_bool(
             &existing_json,
