@@ -1,10 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { platformStore } from '$lib/stores/platform';
-
-  let isMobile = $derived($platformStore.isMobile);
-
   import {
     accentColor,
     loadAccentColor,
@@ -63,6 +59,8 @@
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
   import { platformStore } from '../../lib/stores/platform';
   import { checkStatus, authenticate } from '@choochmeque/tauri-plugin-biometry-api';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { setZoom } from '../../lib/utils/zoom';
   import { CacheManager } from '../../utils/cacheManager';
   import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
