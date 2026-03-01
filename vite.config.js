@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { compileModule } from 'svelte/compiler';
+// @ts-expect-error - path is a Node.js built-in module
 import path from 'path';
 // @ts-expect-error - fs is a Node.js built-in module
 import fs from 'fs';
@@ -19,6 +20,7 @@ function layerchartRunesPlugin() {
   return {
     name: 'layerchart-runes',
     enforce: 'pre',
+    /** @param {string} id @param {string} [importer] */
     resolveId(id, importer) {
       if (!id.endsWith('.svelte.js') || id.includes('?')) return;
       let resolvedPath = id;
@@ -32,6 +34,7 @@ function layerchartRunesPlugin() {
         return resolvedPath + QUERY;
       }
     },
+    /** @param {string} id */
     load(id) {
       if (id.endsWith(QUERY)) {
         const realPath = id.slice(0, -QUERY.length);

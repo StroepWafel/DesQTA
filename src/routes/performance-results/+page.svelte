@@ -27,9 +27,9 @@
     SystemMetrics,
   } from '../../lib/services/performanceTesting';
 
-  let results: TestResults | null = null;
-  let loading = true;
-  let error: string | null = null;
+  let results = $state<TestResults | null>(null);
+  let loading = $state(true);
+  let error = $state<string | null>(null);
 
   onMount(() => {
     // Get results from URL params or session storage
@@ -37,7 +37,7 @@
 
     if (resultsParam) {
       try {
-        results = JSON.parse(decodeURIComponent(resultsParam));
+        results = JSON.parse(decodeURIComponent(resultsParam)) as TestResults;
         loading = false;
       } catch (e) {
         error = $_('performance.failed_to_parse_results', {
@@ -50,7 +50,7 @@
       const storedResults = sessionStorage.getItem('performance-test-results');
       if (storedResults) {
         try {
-          results = JSON.parse(storedResults);
+          results = JSON.parse(storedResults) as TestResults;
           loading = false;
         } catch (e) {
           error = $_('performance.failed_to_parse_stored', {

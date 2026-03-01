@@ -63,7 +63,7 @@
     }),
   );
 
-  const groupedLessons = $derived<Array<[string, TimetableLesson[]]>>(() => {
+  const groupedLessons = $derived.by(() => {
     const groups = new Map<string, TimetableLesson[]>();
     for (const lesson of filteredLessons) {
       if (!groups.has(lesson.date)) {

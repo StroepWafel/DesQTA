@@ -172,7 +172,10 @@ export async function syncCloudSettings(options: {
         await syncCloudPfpToLocal();
       })(),
       (async () => {
-        if (settings.language && settings.language !== get(locale)) {
+        if (
+          typeof settings.language === 'string' &&
+          settings.language !== get(locale)
+        ) {
           locale.set(settings.language);
         }
       })(),
