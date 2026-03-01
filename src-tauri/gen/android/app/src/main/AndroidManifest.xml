@@ -38,6 +38,19 @@
             <!-- DEEP LINK PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->
         </activity>
 
+        <!-- DesQTA Next Lesson widget -->
+        <receiver
+            android:name=".NextLessonWidgetProvider"
+            android:exported="true"
+            android:label="@string/next_lesson_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/desqta_next_lesson_info" />
+        </receiver>
+
         <provider
           android:name="androidx.core.content.FileProvider"
           android:authorities="${applicationId}.fileprovider"

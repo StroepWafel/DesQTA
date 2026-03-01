@@ -137,6 +137,75 @@ async function prefetchUpcomingAssessments(): Promise<void> {
   }
 }
 
+/** Fetches timetable across days and updates the Android Next Lesson widget with the absolute next lesson. */
+export async function updateNextLessonWidget(): Promise<void> {
+  try {
+    const today = new Date();
+    const from = formatDate(today);
+    const untilDate = new Date(today.getTime() + 14 * 86400000);
+    const until = formatDate(untilDate);
+
+    const colours = await prefetchLessonColours();
+    const res = await seqtaFetch('/seqta/student/load/timetable?', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { from, until, student: STUDENT_ID },
+    });
+
+    const items = JSON.parse(res).payload?.items ?? [];
+    const now = new Date();
+    const nowMs = now.getTime();
+
+    const lessons = items
+      .map((l: any) => ({
+        date: l.date,
+        from: (l.from || '').substring(0, 5),
+        until: (l.until || '').substring(0, 5),
+        description: l.description || l.code || '',
+        room: l.room || '',
+      }))
+      .filter((l: any) => l.from && l.date)
+      .sort((a: any, b: any) => {
+        const da = new Date(`${a.date}T${a.from}`).getTime();
+        const db = new Date(`${b.date}T${b.from}`).getTime();
+        return da - db;
+      });
+
+    const next = lessons.find((l: any) => {
+      const start = new Date(`${l.date}T${l.from}`).getTime();
+      return start > nowMs;
+    });
+
+    if (!next) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('set_next_lesson_for_widget', { name: null, time: null, room: null });
+      return;
+    }
+
+    const lessonDate = new Date(next.date);
+    const todayStr = today.toDateString();
+    const tomorrow = new Date(today.getTime() + 86400000).toDateString();
+    let dayLabel: string;
+    if (lessonDate.toDateString() === todayStr) {
+      dayLabel = 'Today';
+    } else if (lessonDate.toDateString() === tomorrow) {
+      dayLabel = 'Tomorrow';
+    } else {
+      dayLabel = lessonDate.toLocaleDateString('en-AU', { weekday: 'short' });
+    }
+    const timeStr = `${dayLabel}, ${next.from} – ${next.until}`;
+
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('set_next_lesson_for_widget', {
+      name: next.description,
+      time: timeStr,
+      room: next.room || null,
+    });
+  } catch {
+    // ignore - widget is Android-only, invoke may fail on desktop
+  }
+}
+
 export async function warmUpCommonData(): Promise<void> {
   // Check if offline mode is forced
   const offline = await isOfflineMode();
@@ -149,6 +218,7 @@ export async function warmUpCommonData(): Promise<void> {
   await Promise.allSettled([
     prefetchLessonColours(),
     prefetchTimetableWeek(),
+    updateNextLessonWidget(),
     prefetchUpcomingAssessments(),
     prefetchAssessmentsOverview(),
     prefetchNoticesLabels(),

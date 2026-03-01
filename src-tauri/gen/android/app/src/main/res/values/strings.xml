@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">DesQTA</string>
     <string name="main_activity_title">DesQTA</string>
+
+    <!-- Next Lesson widget -->
+    <string name="next_lesson_label">Next Lesson</string>
+    <string name="next_lesson_title">Next lesson</string>
+    <string name="next_lesson_description">Shows your next lesson. Tap to open DesQTA.</string>
 </resources>

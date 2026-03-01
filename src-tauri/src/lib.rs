@@ -146,6 +146,29 @@ fn get_version_app_data_dir() -> std::path::PathBuf {
     }
 }
 
+/// Path for the next-lesson widget data file (Android widget reads from same location).
+fn next_lesson_widget_file_path() -> std::path::PathBuf {
+    let app_data = get_version_app_data_dir();
+    app_data.parent().unwrap().join("next_lesson.json")
+}
+
+/// Set the next lesson for the Android home screen widget.
+/// Call from the frontend when schedule/timetable data is loaded.
+#[tauri::command]
+fn set_next_lesson_for_widget(
+    name: Option<String>,
+    time: Option<String>,
+    room: Option<String>,
+) -> Result<(), String> {
+    let path = next_lesson_widget_file_path();
+    let data = serde_json::json!({
+        "name": name.unwrap_or_default(),
+        "time": time.unwrap_or_default(),
+        "room": room.unwrap_or_default()
+    });
+    fs::write(&path, data.to_string()).map_err(|e| e.to_string())
+}
+
 /// Returns current app version and previous version (if app was just updated).
 #[tauri::command]
 fn get_version_update_info(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
@@ -357,6 +380,7 @@ pub fn run() {
             login::direct_login,
             login::reauthenticate,
             get_seqta_base_url,
+            set_next_lesson_for_widget,
             get_version_update_info,
             clear_version_update_info,
             get_app_version,
