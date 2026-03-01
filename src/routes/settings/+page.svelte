@@ -146,7 +146,7 @@
         if (!status.isAvailable) {
           biometricToggleError =
             status.error ?? $_('setup_assistant.biometric_unavailable', { default: 'Biometric authentication is not available on this device.' });
-          toastStore.error(biometricToggleError);
+          toastStore.error(biometricToggleError ?? 'Biometric unavailable');
           return;
         }
         await authenticate($_('setup_assistant.biometric_title', { default: 'Unlock with biometrics' }), {
@@ -2566,16 +2566,16 @@ The Company reserves the right to terminate your access to the Service at any ti
   }} />
 
 {#if showEulaModal}
-  <div class="flex fixed inset-0 z-50 justify-center items-center">
+  <div class="flex fixed inset-0 z-50 justify-center items-center mobile-modal-inset">
     <div
-      class="absolute inset-0 backdrop-blur-xs bg-black/50"
+      class="absolute inset-0 backdrop-blur-xs bg-black/50 mobile-modal-inset"
       role="button"
       tabindex="0"
       onclick={() => (showEulaModal = false)}
       onkeydown={(e) => e.key === 'Escape' && (showEulaModal = false)}>
     </div>
     <div
-      class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 animate-fade-in">
+      class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 animate-fade-in mobile-modal-max-h">
       <h3 class="mb-3 text-lg font-semibold">BetterSEQTA Cloud EULA</h3>
       <div
         class="overflow-auto p-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-200"

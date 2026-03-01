@@ -175,7 +175,7 @@
   {#key lesson.id}
     <div
       bind:this={popoutElement}
-      class="fixed z-50 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border shadow-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 max-h-[calc(100vh-2rem)] overflow-y-auto"
+      class="fixed z-50 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border shadow-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 max-h-[calc(100vh-2rem)] overflow-y-auto mobile-modal-max-h"
       style="top: {position.top}px; left: {position.left}px; border-left: 4px solid {lesson.colour};"
       transition:fly={{
         y: transitionDirection === 'down' ? -10 : 10,

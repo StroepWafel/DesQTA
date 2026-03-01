@@ -681,7 +681,7 @@
   {/if}
   {#if showNotificationsModal}
     <div
-      class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs"
+      class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs mobile-modal-inset"
       role="dialog"
       aria-modal="true"
       aria-label={$_('header.notifications') || 'Notifications'}
@@ -706,7 +706,7 @@
             Close
           </button>
         </div>
-        <div class="p-2 max-h-[70vh] overflow-y-auto">
+        <div class="p-2 max-h-[70vh] overflow-y-auto mobile-modal-max-h">
           {#if loadingNotifications}
             <div class="flex justify-center items-center py-8">
               <div

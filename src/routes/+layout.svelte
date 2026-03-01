@@ -116,6 +116,7 @@
   let autoCollapseSidebar = $derived(sidebar.state.autoCollapse);
   let autoExpandSidebarHover = $derived(sidebar.state.autoExpandOnHover);
   let isMobile = $derived($platformStore.isMobile);
+  let isIOS = $derived($platformStore.isIOS);
   let supportsBiometric = $derived($platformStore.supportsBiometric);
   let showBiometricGate = $derived(
     !$needsSetup && biometricEnabled && supportsBiometric && !biometricUnlocked
@@ -312,6 +313,15 @@
     logger.debug('layout', '$effect', 'Applied accent color to root as CSS var', {
       accent: $accentColor,
     });
+  });
+
+  // iOS: add platform-ios class for safe area padding (notch, home indicator)
+  $effect(() => {
+    if (isIOS) {
+      document.documentElement.classList.add('platform-ios');
+    } else {
+      document.documentElement.classList.remove('platform-ios');
+    }
   });
 
   $effect(() => {
@@ -823,7 +833,7 @@
       <main
         class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen || isMobile
           ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 {isMobile && !$needsSetup ? 'pb-[56px]' : ''}"
+          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 {isMobile && !$needsSetup ? 'pb-[56px] mobile-main' : ''}"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if !$needsSetup}
           <OfflineBanner />

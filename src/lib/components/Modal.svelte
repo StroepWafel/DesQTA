@@ -54,13 +54,13 @@
 
 {#if open}
   <div
-    class="flex fixed right-0 bottom-0 left-0 top-16 z-50 justify-center items-center p-6"
+    class="flex fixed inset-x-0 top-16 bottom-0 z-50 justify-center items-center p-6 mobile-modal-inset"
     style="background-color: transparent;"
     role="dialog"
     aria-modal="true"
     aria-label={ariaLabel}>
     <div
-      class="fixed right-0 bottom-0 left-0 top-16 backdrop-blur-md bg-black/40"
+      class="fixed inset-x-0 top-16 bottom-0 backdrop-blur-md bg-black/40 mobile-modal-inset"
       onclick={handleBackdropClick}
       onkeydown={handleKeydown}
       role="button"

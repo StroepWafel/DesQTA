@@ -283,11 +283,11 @@
 </script>
 
 {#if open}
-  <div class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="fixed inset-0 z-50 overflow-y-auto mobile-modal-inset">
     <div class="flex items-center justify-center min-h-screen p-4">
       <!-- Background overlay -->
       <div 
-        class="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity" 
+        class="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity mobile-modal-inset" 
         onclick={closeModal}
         role="button"
         tabindex="0"
@@ -296,7 +296,7 @@
       ></div>
 
       <!-- Modal panel -->
-      <div class="relative bg-white dark:bg-zinc-900 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all w-full max-w-6xl max-h-[90vh]">
+      <div class="relative bg-white dark:bg-zinc-900 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all w-full max-w-6xl max-h-[90vh] mobile-modal-max-h">
     <!-- Header -->
         <div class="bg-zinc-50 dark:bg-zinc-800 px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
           <div class="flex items-center justify-between">

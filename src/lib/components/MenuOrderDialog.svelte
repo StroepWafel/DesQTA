@@ -103,7 +103,7 @@
 {#if open}
   <!-- Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50 transition-opacity"
+    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50 transition-opacity mobile-modal-inset"
     transition:fly={{ duration: 200, y: 0 }}
     onclick={(e) => {
       if (e.target === e.currentTarget) onClose();
@@ -117,7 +117,7 @@
     tabindex="0">
     <!-- Dialog -->
     <div
-      class="relative bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col"
+      class="relative bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col mobile-modal-max-h"
       transition:fly={{ duration: 200, y: 20 }}>
       <!-- Header -->
       <div class="flex justify-between items-center p-6 border-b border-zinc-200 dark:border-zinc-700">
