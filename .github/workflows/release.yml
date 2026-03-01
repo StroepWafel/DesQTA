@@ -25,6 +25,35 @@ on:
           - brief
           - standard
           - detailed
+      model:
+        description: 'Groq model override (empty = use action default)'
+        required: false
+        type: string
+      body_template:
+        description: 'Custom structure for release notes (multiline). Empty = use default below'
+        required: false
+        type: string
+        default: |
+          ## What's New
+          ### Features
+          -
+          ### Under The Hood
+          -
+          ## Bugs Squashed
+          -
+      show_diff_section:
+        description: 'Append diff section at bottom of release notes'
+        required: false
+        type: boolean
+        default: false
+      prompt_append:
+        description: 'Extra instructions for AI (tone, audience, context)'
+        required: false
+        type: string
+      system_append:
+        description: 'Extra system constraints/behavior for AI'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -317,6 +346,11 @@ jobs:
           draft: true
           detail_level: ${{ inputs.detail_level }}
           compatibility: ${{ inputs.compatibility }}
+          model: ${{ inputs.model }}
+          body_template: ${{ inputs.body_template }}
+          show_diff_section: ${{ inputs.show_diff_section }}
+          prompt_append: ${{ inputs.prompt_append }}
+          system_append: ${{ inputs.system_append }}
           files: ${{ steps.artifact-paths.outputs.paths }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
