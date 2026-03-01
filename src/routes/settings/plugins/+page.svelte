@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { platformStore } from '$lib/stores/platform';
   import { marked } from 'marked';
+
+  let isMobile = $derived($platformStore.isMobile);
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
 

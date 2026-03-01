@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
   import { seqtaFetch } from '../../utils/netUtil';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import {
     Icon,

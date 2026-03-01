@@ -420,7 +420,7 @@
         </div>
         <button
           onclick={skipOnboarding}
-          class="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+          class="min-h-[44px] min-w-[44px] flex items-center justify-center p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200"
           aria-label={$_('onboarding.skip_tour', { default: 'Skip tour' })}>
           <Icon src={XMark} class="w-5 h-5" />
         </button>
@@ -450,20 +450,20 @@
       <div class="flex items-center justify-between gap-3">
         <button
           onclick={skipOnboarding}
-          class="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+          class="min-h-[44px] px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-all duration-200">
           <T key="onboarding.skip_tour" fallback="Skip tour" />
         </button>
         <div class="flex items-center gap-3">
           <button
             onclick={prevStep}
             disabled={currentStep === 0}
-            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+            class="flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
             <Icon src={ChevronLeft} class="w-4 h-4" />
             <span><T key="common.back" fallback="Back" /></span>
           </button>
           <button
             onclick={nextStep}
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            class="flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-lg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style="background-color: var(--accent); --tw-ring-color: var(--accent);"
             onmouseenter={(e) => {
               e.currentTarget.style.opacity = '0.9';

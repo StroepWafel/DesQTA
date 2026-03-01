@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { platformStore } from '$lib/stores/platform';
   import { seqtaFetch, getRandomDicebearAvatar } from '../../utils/netUtil';
   import { Icon } from 'svelte-hero-icons';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { MagnifyingGlass, Funnel, User, AcademicCap, MapPin } from 'svelte-hero-icons';
   import { invoke } from '@tauri-apps/api/core';
   import { cache } from '../../utils/cache';
@@ -443,14 +446,14 @@
 
     <div class="flex items-center gap-2">
       <button
-        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="flex items-center gap-2 min-h-[44px] px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         onclick={() => (showFiltersModal = true)}>
         <Icon src={Funnel} class="w-4 h-4" />
         <T key="directory.filters" fallback="Filters" />
       </button>
 
       <button
-        class="px-4 py-2 text-sm font-medium text-white accent-bg rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="min-h-[44px] px-4 py-2 text-sm font-medium text-white accent-bg rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         onclick={clearFilters}>
         <T key="directory.clear_all" fallback="Clear All" />
       </button>

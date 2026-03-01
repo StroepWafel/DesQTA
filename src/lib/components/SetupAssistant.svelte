@@ -120,7 +120,7 @@
     <button
       type="button"
       onclick={skipSetup}
-      class="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors duration-200 rounded-lg hover:bg-white/50 dark:hover:bg-zinc-800/50">
+      class="min-h-[44px] px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-all duration-200 rounded-lg hover:bg-white/50 dark:hover:bg-zinc-800/50">
       <T key="setup_assistant.skip" fallback="Skip" />
     </button>
   </div>
@@ -130,7 +130,7 @@
     {#each Array(totalSteps) as _, i}
       <button
         type="button"
-        class="w-2.5 h-2.5 rounded-full transition-all duration-300 {i === currentStep
+        class="w-2.5 h-2.5 rounded-full transition-all duration-300 p-[17px] -m-[17px] {i === currentStep
           ? 'bg-[var(--accent)] scale-125'
           : i < currentStep
             ? 'bg-[var(--accent)]/60'
@@ -139,7 +139,7 @@
           default: `Step ${i + 1} of ${totalSteps}`,
           values: { current: i + 1, total: totalSteps },
         })}
-        onclick={() => (currentStep = i)} />
+        onclick={() => (currentStep = i)}></button>
     {/each}
   </div>
 
@@ -169,7 +169,7 @@
           <button
             type="button"
             onclick={nextStep}
-            class="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            class="inline-flex items-center gap-2 min-h-[44px] px-8 py-4 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style="background-color: var(--accent); --tw-ring-color: var(--accent);">
             <T key="setup_assistant.get_started" fallback="Get Started" />
             <Icon src={ChevronRight} class="w-5 h-5" />
@@ -204,13 +204,13 @@
             <button
               type="button"
               onclick={prevStep}
-              class="px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-colors">
+              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200">
               <T key="common.back" fallback="Back" />
             </button>
             <button
               type="button"
               onclick={nextStep}
-              class="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
+              class="inline-flex items-center gap-2 min-h-[44px] px-8 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
               style="background-color: var(--accent); --tw-ring-color: var(--accent);">
               <T key="setup_assistant.continue" fallback="Continue" />
               <Icon src={ChevronRight} class="w-5 h-5" />
@@ -289,13 +289,13 @@
             <button
               type="button"
               onclick={prevStep}
-              class="px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-colors">
+              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200">
               <T key="common.back" fallback="Back" />
             </button>
             <button
               type="button"
               onclick={nextStep}
-              class="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
+              class="inline-flex items-center gap-2 min-h-[44px] px-8 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
               style="background-color: var(--accent); --tw-ring-color: var(--accent);">
               <T key="setup_assistant.continue" fallback="Continue" />
               <Icon src={ChevronRight} class="w-5 h-5" />
@@ -332,7 +332,7 @@
               type="button"
               disabled={biometricLoading}
               onclick={enableBiometric}
-              class="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+              class="inline-flex items-center justify-center gap-2 min-h-[44px] px-8 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
               style="background-color: var(--accent); --tw-ring-color: var(--accent);">
               {#if biometricLoading}
                 <span class="animate-pulse"><T key="common.loading" fallback="Loading..." /></span>
@@ -345,7 +345,7 @@
               type="button"
               disabled={biometricLoading}
               onclick={skipBiometric}
-              class="px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-colors disabled:opacity-60">
+              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200 disabled:opacity-60">
               <T key="setup_assistant.biometric_skip" fallback="Skip for now" />
             </button>
           </div>
@@ -353,7 +353,7 @@
             <button
               type="button"
               onclick={prevStep}
-              class="px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-colors">
+              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200">
               <T key="common.back" fallback="Back" />
             </button>
           </div>
@@ -383,7 +383,7 @@
           <button
             type="button"
             onclick={completeSetup}
-            class="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            class="inline-flex items-center gap-2 min-h-[44px] px-8 py-4 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style="background-color: var(--accent); --tw-ring-color: var(--accent);">
             <T key="setup_assistant.sign_in" fallback="Sign in" />
             <Icon src={ChevronRight} class="w-5 h-5" />

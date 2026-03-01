@@ -295,9 +295,9 @@
   class:sm:w-64={sidebarOpen}
   class:sm:w-0={!sidebarOpen}
   class:sm:z-auto={sidebarOpen}>
-  <!-- Nav with fixed width and absolute positioning -->
+  <!-- Nav with fixed width and absolute positioning; min-h-0 enables scroll when content overflows -->
   <nav
-    class="absolute top-0 right-0 w-full sm:w-64 h-full flex flex-col overflow-y-auto p-3 py-px space-y-2 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
+    class="absolute top-0 right-0 w-full sm:w-64 h-full min-h-0 flex flex-col overflow-y-auto overflow-x-hidden p-3 py-px space-y-2 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
     <!-- Mobile Close Button -->
     <div class="flex justify-end sm:hidden mb-4">
       <button

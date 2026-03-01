@@ -331,7 +331,7 @@
       const settings = await loadSettings(['has_been_through_onboarding']);
       if (!settings.has_been_through_onboarding) {
         showOnboarding = true;
-        sidebarOpen = true;
+        sidebarOpen = false; // Close mobile nav during tour
       }
     } catch (e) {
       logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', {
@@ -447,14 +447,14 @@
         logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
       });
 
-      // Check if user needs onboarding - show tour for first-time users
+      // Check if user needs onboarding - show tour for first-time users (post-login only)
       try {
         const settings = await loadSettings(['has_been_through_onboarding']);
         if (!settings.has_been_through_onboarding && !get(needsSetup)) {
           // Wait a bit for UI to settle
           setTimeout(() => {
             showOnboarding = true;
-            sidebarOpen = true; // Ensure sidebar is open for first step
+            sidebarOpen = false; // Close mobile nav during tour for better UX
           }, 1000);
         }
       } catch (e) {
@@ -592,6 +592,13 @@
   $effect(() => {
     if (isMobile && !$needsSetup && !showOnboarding && !hasInitializedMobileSidebar) {
       hasInitializedMobileSidebar = true;
+      sidebarOpen = false;
+    }
+  });
+
+  // Close mobile sidebar when onboarding tour starts
+  $effect(() => {
+    if (showOnboarding && isMobile) {
       sidebarOpen = false;
     }
   });

@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { seqtaFetch } from '../../../utils/netUtil';
   import { LoadingSpinner, EmptyState, Button } from '$lib/components/ui';
   import {

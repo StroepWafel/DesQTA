@@ -3,6 +3,9 @@
   import { fade, fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import { page } from '$app/stores';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { seqtaFetch } from '../../../../utils/netUtil';
   import AssessmentHeader from '../../../../lib/components/AssessmentHeader.svelte';
   import AssessmentTabs from '../../../../lib/components/AssessmentTabs.svelte';

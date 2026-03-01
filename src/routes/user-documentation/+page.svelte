@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import {
     Icon,
     BookOpen,
@@ -351,7 +354,7 @@
         {#each categories as category (category)}
           <button
             onclick={() => (selectedCategory = category)}
-            class="px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200 border {selectedCategory ===
+            class="min-h-[44px] px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200 border {selectedCategory ===
             category
               ? 'accent-bg text-white border-transparent shadow-sm'
               : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-800 dark:hover:text-zinc-300'} active:scale-[0.98]">

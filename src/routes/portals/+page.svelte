@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { platformStore } from '$lib/stores/platform';
   import { Icon } from 'svelte-hero-icons';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { GlobeAlt, ExclamationTriangle } from 'svelte-hero-icons';
   import { seqtaFetch } from '../../utils/netUtil';
   import { fade, fly } from 'svelte/transition';

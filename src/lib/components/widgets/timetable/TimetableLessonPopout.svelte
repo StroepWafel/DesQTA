@@ -238,7 +238,7 @@
         {#if lesson.programmeID !== 0}
           <button
             type="button"
-            class="flex gap-3 items-center px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
+            class="flex gap-3 items-center min-h-[44px] px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
             onclick={handleViewCourse}>
             <div class="flex justify-center items-center w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 group-hover:bg-white/20 shrink-0">
               <Icon src={BookOpen} class="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
@@ -247,7 +247,7 @@
           </button>
           <button
             type="button"
-            class="flex gap-3 items-center px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
+            class="flex gap-3 items-center min-h-[44px] px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
             onclick={handleViewAssessments}>
             <div class="flex justify-center items-center w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 group-hover:bg-white/20 shrink-0">
               <Icon src={DocumentText} class="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />

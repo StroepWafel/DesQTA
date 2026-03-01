@@ -16,7 +16,7 @@
 
 <div class="inline-block relative text-left export-dropdown-container">
   <button
-    class="group flex gap-2 items-center px-4 py-2 rounded-xl border transition-all duration-200 bg-white hover:accent-bg hover:text-white dark:bg-zinc-700 dark:hover:accent-bg border-zinc-200 dark:border-zinc-600 hover:border-transparent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring shadow-sm"
+    class="group flex gap-2 items-center min-h-[44px] px-4 py-2 rounded-xl border transition-all duration-200 bg-white hover:accent-bg hover:text-white dark:bg-zinc-700 dark:hover:accent-bg border-zinc-200 dark:border-zinc-600 hover:border-transparent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring shadow-sm"
     onclick={() => (showExportMenu = !showExportMenu)}
     aria-label={$_('timetable.export_options') || 'Export options'}
     aria-expanded={showExportMenu}>
@@ -32,7 +32,7 @@
       transition:fly={{ y: -8, duration: 200, opacity: 0, easing: cubicInOut }}>
       <div class="p-2">
         <button
-          class="flex gap-3 items-center px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
+          class="flex gap-3 items-center min-h-[44px] px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
           onclick={() => {
             showExportMenu = false;
             onExportCsv();
@@ -47,7 +47,7 @@
         </button>
 
         <button
-          class="flex gap-3 items-center px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
+          class="flex gap-3 items-center min-h-[44px] px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
           onclick={() => {
             showExportMenu = false;
             onExportPdf();
@@ -62,7 +62,7 @@
         </button>
 
         <button
-          class="flex gap-3 items-center px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
+          class="flex gap-3 items-center min-h-[44px] px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
           onclick={() => {
             showExportMenu = false;
             onExportIcal();

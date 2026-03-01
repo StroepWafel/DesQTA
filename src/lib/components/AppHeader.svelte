@@ -514,16 +514,15 @@
   </div>
 
   <div class="flex items-center space-x-2">
-    {#if userInfo}
-      <UserDropdown
-        {userInfo}
-        {showUserDropdown}
-        {onToggleUserDropdown}
-        {onLogout}
-        {onShowAbout}
-        {onClickOutside}
-        {disableSchoolPicture} />
-    {/if}
+    <!-- Always show UserDropdown when in app (allows Sign out when session invalid) -->
+    <UserDropdown
+      userInfo={userInfo}
+      {showUserDropdown}
+      {onToggleUserDropdown}
+      {onLogout}
+      {onShowAbout}
+      {onClickOutside}
+      {disableSchoolPicture} />
 
     <!-- Cloud sync status indicator -->
     <div class="relative cloud-status-dropdown">

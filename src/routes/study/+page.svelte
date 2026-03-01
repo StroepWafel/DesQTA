@@ -3,7 +3,10 @@
   import { invoke } from '@tauri-apps/api/core';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
+  import { platformStore } from '$lib/stores/platform';
   import { Icon, Calendar, Clock, MagnifyingGlass } from 'svelte-hero-icons';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { fly, fade, scale, slide } from 'svelte/transition';
   import { quintOut, cubicOut } from 'svelte/easing';
   import { studyTips } from './studytips';
