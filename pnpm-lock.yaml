@@ -2368,10 +2368,6 @@ snapshots:
 
   '@babel/runtime@7.28.6': {}
 
-  '@choochmeque/tauri-plugin-biometry-api@0.2.6':
-    dependencies:
-      '@tauri-apps/api': 2.9.0
-
   '@dagrejs/dagre@1.1.8':
     dependencies:
       '@dagrejs/graphlib': 2.2.4
