@@ -3,6 +3,11 @@
   "version": "1.0.0-rc.8",
   "description": "",
   "type": "module",
+  "pnpm": {
+    "overrides": {
+      "rollup": "4.59.0"
+    }
+  },
   "scripts": {
     "start": "npm install && npm run tauri dev",
     "predev": "node scripts/generate-themes.mjs",
