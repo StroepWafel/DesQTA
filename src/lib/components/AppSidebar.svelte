@@ -295,9 +295,11 @@
   class:sm:w-64={sidebarOpen}
   class:sm:w-0={!sidebarOpen}
   class:sm:z-auto={sidebarOpen}>
-  <!-- Nav with fixed width and absolute positioning; min-h-0 enables scroll when content overflows -->
+  <!-- Nav: fixed header + scrollable body for reliable mobile scroll -->
   <nav
-    class="absolute top-0 right-0 w-full sm:w-64 h-full min-h-0 flex flex-col overflow-y-auto overflow-x-hidden p-3 py-px space-y-2 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
+    class="absolute top-0 right-0 w-full sm:w-64 h-full min-h-0 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
+    <!-- Fixed header (non-scrolling) -->
+    <div class="shrink-0 p-3 pt-3 pb-0 sm:py-px">
     <!-- Mobile Close Button -->
     <div class="flex justify-end sm:hidden mb-4">
       <button
@@ -315,7 +317,10 @@
       </h2>
       <div class="w-12 h-1 bg-accent-500 rounded-full"></div>
     </div>
+    </div>
 
+    <!-- Scrollable menu content (enables touch scroll on mobile) -->
+    <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-3 pb-6 sm:py-px sm:pb-3" style="-webkit-overflow-scrolling: touch;">
     {#if loading}
       <!-- Loading state -->
       <div class="flex items-center justify-center py-4">
@@ -324,7 +329,7 @@
         </div>
       </div>
     {:else}
-      <div class="flex-1 min-h-0 flex flex-col">
+      <div class="flex flex-col space-y-2">
         <!-- Favorites Section -->
         {#if favoriteItems().length > 0}
           <div class="mb-2">
@@ -454,5 +459,6 @@
         {/each}
       </div>
     {/if}
+    </div>
   </nav>
 </aside>
