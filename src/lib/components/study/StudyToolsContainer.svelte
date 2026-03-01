@@ -57,7 +57,6 @@
   let selectedDifficulty = $state<7 | 8 | 9 | 10 | 11 | 12 | null>(10);
   let selectedQuestionTypes = $state<('multiple_choice' | 'true_false' | 'short_answer')[]>(['multiple_choice', 'true_false', 'short_answer']);
   let questionTypesDropdownOpen = $state(false);
-  let apiKeySetupModalOpen = $state(false);
   let hasApiKey = $state<boolean | null>(null);
   let apiKeyInput = $state('');
   let savingApiKey = $state(false);
@@ -87,12 +86,8 @@
       const gemini = (subset?.gemini_api_key ?? '').trim();
       const cerebras = (subset?.cerebras_api_key ?? '').trim();
       hasApiKey = gemini.length > 0 || cerebras.length > 0;
-      if (!hasApiKey) {
-        apiKeySetupModalOpen = true;
-      }
     } catch {
       hasApiKey = false;
-      apiKeySetupModalOpen = true;
     }
   }
 
@@ -113,7 +108,6 @@
         quiz_generator_enabled: true,
       });
       hasApiKey = true;
-      apiKeySetupModalOpen = false;
       apiKeyInput = '';
     } catch (e) {
       apiKeyError = e instanceof Error ? e.message : String(e);
@@ -165,7 +159,6 @@
   async function handleGenerate() {
     if (!canGenerate) return;
     if (hasApiKey === false) {
-      apiKeySetupModalOpen = true;
       return;
     }
     if (hasApiKey === null) {
@@ -287,6 +280,87 @@
       </h2>
     </div>
 
+    <!-- API Key Setup (inline when not configured) -->
+    {#if hasApiKey === false}
+      <div class="flex-1 min-h-0 overflow-auto px-6 pb-6 space-y-6">
+        <h3 class="font-semibold text-zinc-900 dark:text-white">
+          {$_('study.ai_quiz_setup') ?? 'Enable AI Quizzes'}
+        </h3>
+
+        <!-- Quiz Preview -->
+        <div>
+          <h4 class="font-medium text-zinc-800 dark:text-zinc-200 mb-3 text-sm">
+            {$_('study.quiz_preview') ?? 'Here\'s what your AI quiz could look like:'}
+          </h4>
+          <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 p-4 space-y-4">
+            {#each SAMPLE_QUIZ as q, i}
+              <div class="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50">
+                <p class="font-medium text-zinc-900 dark:text-white mb-2 text-sm">
+                  {i + 1}. {q.question}
+                </p>
+                <div class="space-y-1">
+                  {#each q.options as opt}
+                    <div
+                      class="flex items-center gap-2 py-1.5 px-2 rounded text-sm text-zinc-600 dark:text-zinc-400">
+                      <span class="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600"></span>
+                      {opt}
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <!-- Instructions -->
+        <div>
+          <h4 class="font-medium text-zinc-800 dark:text-zinc-200 mb-2 text-sm">
+            {$_('study.get_free_api_key') ?? 'Get a free Cerebras API key (takes 1 minute):'}
+          </h4>
+          <ol class="list-decimal list-inside space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <li>
+              {$_('study.cerebras_step_1') ?? 'Go to'}
+              <a
+                href="https://cloud.cerebras.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-(--accent) underline font-medium hover:opacity-80">
+                cloud.cerebras.ai
+              </a>
+            </li>
+            <li>{$_('study.cerebras_step_2') ?? 'Sign up (free, no credit card required)'}</li>
+            <li>{$_('study.cerebras_step_3') ?? 'Click "Copy api key" on the dashboard that it opens to'}</li>
+            <li>{$_('study.cerebras_step_4') ?? 'Paste it below and click Save'}</li>
+          </ol>
+          <p class="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
+            {$_('study.cerebras_free_tier') ?? 'Free tier: 1 million tokens per day.'}
+          </p>
+        </div>
+
+        <!-- API Key Input -->
+        <div>
+          <Label.Root class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+            {$_('study.cerebras_api_key') ?? 'Cerebras API Key'}
+          </Label.Root>
+          <Input
+            bind:value={apiKeyInput}
+            type="password"
+            placeholder={$_('study.paste_api_key') ?? 'Paste your API key here'}
+            class="w-full font-mono text-sm" />
+          {#if apiKeyError}
+            <p class="mt-2 text-sm text-red-600 dark:text-red-400">{apiKeyError}</p>
+          {/if}
+        </div>
+
+        <Button
+          onclick={saveApiKeyAndEnable}
+          disabled={savingApiKey || !apiKeyInput.trim()}
+          loading={savingApiKey}
+          class="w-full transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
+          {$_('study.save_and_enable') ?? 'Save & Enable AI Quizzes'}
+        </Button>
+      </div>
+    {:else}
     <!-- Config Panel -->
     <div class="p-6 space-y-4">
       <!-- Source selector -->
@@ -698,87 +772,6 @@
         </p>
       </div>
     {/if}
+    {/if}
   </div>
-
-  <!-- API Key Setup Modal (shown when no Gemini or Cerebras key is set) - must be outside conditionals -->
-  <Modal
-    bind:open={apiKeySetupModalOpen}
-    title={$_('study.ai_quiz_setup') ?? 'Enable AI Quizzes'}
-    maxWidth="max-w-2xl"
-    onclose={() => (apiKeySetupModalOpen = false)}>
-    <div class="px-8 pb-8 max-h-[75vh] overflow-y-auto space-y-6">
-      <!-- Quiz Preview -->
-      <div>
-        <h3 class="font-semibold text-zinc-900 dark:text-white mb-3">
-          {$_('study.quiz_preview') ?? 'Here\'s what your AI quiz could look like:'}
-        </h3>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 p-4 space-y-4">
-          {#each SAMPLE_QUIZ as q, i}
-            <div class="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50">
-              <p class="font-medium text-zinc-900 dark:text-white mb-2 text-sm">
-                {i + 1}. {q.question}
-              </p>
-              <div class="space-y-1">
-                {#each q.options as opt}
-                  <div
-                    class="flex items-center gap-2 py-1.5 px-2 rounded text-sm text-zinc-600 dark:text-zinc-400">
-                    <span class="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600"></span>
-                    {opt}
-                  </div>
-                {/each}
-              </div>
-            </div>
-          {/each}
-        </div>
-      </div>
-
-      <!-- Instructions -->
-      <div>
-        <h3 class="font-semibold text-zinc-900 dark:text-white mb-2">
-          {$_('study.get_free_api_key') ?? 'Get a free Cerebras API key (takes 1 minute):'}
-        </h3>
-        <ol class="list-decimal list-inside space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-          <li>
-            {$_('study.cerebras_step_1') ?? 'Go to'}
-            <a
-              href="https://cloud.cerebras.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-(--accent) underline font-medium hover:opacity-80">
-              cloud.cerebras.ai
-            </a>
-          </li>
-          <li>{$_('study.cerebras_step_2') ?? 'Sign up (free, no credit card required)'}</li>
-          <li>{$_('study.cerebras_step_3') ?? 'Click "Copy api key" on the dashboard that it opens to'}</li>
-          <li>{$_('study.cerebras_step_4') ?? 'Paste it below and click Save'}</li>
-        </ol>
-        <p class="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
-          {$_('study.cerebras_free_tier') ?? 'Free tier: 1 million tokens per day.'}
-        </p>
-      </div>
-
-      <!-- API Key Input -->
-      <div>
-        <Label.Root class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-          {$_('study.cerebras_api_key') ?? 'Cerebras API Key'}
-        </Label.Root>
-        <Input
-          bind:value={apiKeyInput}
-          type="password"
-          placeholder={$_('study.paste_api_key') ?? 'Paste your API key here'}
-          class="w-full font-mono text-sm" />
-        {#if apiKeyError}
-          <p class="mt-2 text-sm text-red-600 dark:text-red-400">{apiKeyError}</p>
-        {/if}
-      </div>
-
-      <Button
-        onclick={saveApiKeyAndEnable}
-        disabled={savingApiKey || !apiKeyInput.trim()}
-        loading={savingApiKey}
-        class="w-full">
-        {$_('study.save_and_enable') ?? 'Save & Enable AI Quizzes'}
-      </Button>
-    </div>
-  </Modal>
 </div>
