@@ -26,7 +26,7 @@ export async function loadEnhancedAnimationsSetting(
 ): Promise<void> {
   const { onEnhancedAnimations } = options;
   const settings = await loadSettings(['enhanced_animations']);
-  const value = settings.enhanced_animations ?? true;
+  const value = settings.enhanced_animations === true || settings.enhanced_animations === undefined;
   onEnhancedAnimations(value);
   logger.debug('layout', 'loadEnhancedAnimationsSetting', `Enhanced animations: ${value}`);
 }

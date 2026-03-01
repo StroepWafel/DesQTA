@@ -8,7 +8,10 @@
   import { invoke } from '@tauri-apps/api/core';
 
   // $lib/ imports
+  import { platformStore } from '$lib/stores/platform';
   import { setIdb, getWithIdbFallback } from '$lib/services/idbCache';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import Modal from '$lib/components/Modal.svelte';
   import T from '$lib/components/T.svelte';

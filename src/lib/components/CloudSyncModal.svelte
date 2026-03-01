@@ -83,6 +83,7 @@
       success = 'Successfully authenticated with BetterSEQTA Plus account';
       password = ''; // Clear password
       toastStore.success('Successfully authenticated with BetterSEQTA Plus');
+      dispatch('cloudauthchange');
     } catch (err) {
       error = `Authentication failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
       toastStore.error('Authentication failed');
@@ -117,6 +118,7 @@
       isAuthenticated = true;
       success = 'Successfully authenticated with Discord';
       toastStore.success('Successfully authenticated with Discord');
+      dispatch('cloudauthchange');
     } catch (err) {
       error = `Discord authentication failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
       toastStore.error('Discord authentication failed');
@@ -133,6 +135,7 @@
       isAuthenticated = false;
       success = 'Successfully logged out';
       toastStore.success('Successfully logged out');
+      dispatch('cloudauthchange');
     } catch (err) {
       error = `Logout failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
       toastStore.error('Logout failed');
@@ -191,6 +194,7 @@
           'language',
           'separate_rss_feed',
           'zoom_level',
+          'biometric_enabled',
         ],
       });
 
@@ -350,7 +354,7 @@
 
             <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
               <a
-                href="https://accounts.betterseqta.org"
+                href="https://accounts.betterseqta.org/register"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-blue-600 dark:text-blue-400 hover:underline">
@@ -428,7 +432,7 @@
               Sync your DesQTA settings across devices using BetterSEQTA Plus account cloud syncing.
               Your settings are encrypted and secure.
               <a
-                href="https://accounts.betterseqta.org"
+                href="https://accounts.betterseqta.org/register"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-blue-600 dark:text-blue-400 hover:underline">

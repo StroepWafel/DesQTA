@@ -33,6 +33,18 @@ fn cloud_token_file() -> PathBuf {
     dir
 }
 
+/// Per-profile storage for cloud sign-in state (separate from settings).
+/// Used to detect when user was previously signed in but got signed out (e.g. token expiry).
+fn cloud_state_file() -> PathBuf {
+    let mut dir = profiles::get_profile_dir(
+        &profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string()),
+    );
+    dir.push("cloud_state.json");
+    dir
+}
+
 /// Per-profile storage for DesQTA reserved client ID.
 fn reserved_client_file() -> PathBuf {
     let mut dir = profiles::get_profile_dir(
@@ -44,6 +56,17 @@ fn reserved_client_file() -> PathBuf {
     dir
 }
 
+/// Per-profile storage for anonymous usage analytics state (daily session counts, last sent date).
+fn usage_analytics_state_file() -> PathBuf {
+    let mut dir = profiles::get_profile_dir(
+        &profiles::ProfileManager::get_current_profile()
+            .map(|p| p.id)
+            .unwrap_or_else(|| "default".to_string()),
+    );
+    dir.push("usage_analytics_state.json");
+    dir
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CloudToken {
     pub token: Option<String>,
@@ -52,6 +75,76 @@ pub struct CloudToken {
     pub user: Option<CloudUser>,
     #[serde(default)]
     pub base_url: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct CloudState {
+    #[serde(default)]
+    pub previously_signed_into_cloud: bool,
+}
+
+impl CloudState {
+    pub fn load() -> Self {
+        let path = cloud_state_file();
+        if let Ok(mut file) = fs::File::open(path) {
+            let mut contents = String::new();
+            if file.read_to_string(&mut contents).is_ok() {
+                if let Ok(state) = serde_json::from_str::<CloudState>(&contents) {
+                    return state;
+                }
+            }
+        }
+        CloudState::default()
+    }
+    pub fn save(&self) -> io::Result<()> {
+        let path = cloud_state_file();
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(path, serde_json::to_string(self).unwrap())
+    }
+}
+
+/// Per-profile state for anonymous usage analytics (daily session counts).
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct UsageAnalyticsState {
+    /// Date we're accumulating sessions for (YYYY-MM-DD).
+    #[serde(default)]
+    pub tracking_date: String,
+    /// Session count for tracking_date.
+    #[serde(default)]
+    pub sessions_count: u32,
+    /// Last date we successfully sent a report for.
+    #[serde(default)]
+    pub last_sent_date: Option<String>,
+    /// Pending date we have data for but haven't sent yet (e.g. yesterday).
+    #[serde(default)]
+    pub pending_date: Option<String>,
+    /// Session count for pending_date.
+    #[serde(default)]
+    pub pending_sessions: u32,
+}
+
+impl UsageAnalyticsState {
+    pub fn load() -> Self {
+        let path = usage_analytics_state_file();
+        if let Ok(mut file) = fs::File::open(path) {
+            let mut contents = String::new();
+            if file.read_to_string(&mut contents).is_ok() {
+                if let Ok(state) = serde_json::from_str::<UsageAnalyticsState>(&contents) {
+                    return state;
+                }
+            }
+        }
+        UsageAnalyticsState::default()
+    }
+    pub fn save(&self) -> io::Result<()> {
+        let path = usage_analytics_state_file();
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(path, serde_json::to_string(self).unwrap())
+    }
 }
 
 impl CloudToken {
@@ -143,6 +236,12 @@ pub struct Settings {
     pub dev_sensitive_info_hider: bool,
     pub dev_force_offline_mode: bool,
     pub accepted_cloud_eula: bool,
+    #[serde(default)]
+    pub send_anonymous_usage_statistics: bool,
+    #[serde(default)]
+    pub sync_cloud_pfp: bool,
+    #[serde(default)]
+    pub last_synced_cloud_pfp_url: Option<String>,
     pub language: String,
     #[serde(default)]
     pub menu_order: Option<Vec<String>>,
@@ -150,6 +249,9 @@ pub struct Settings {
     pub has_been_through_onboarding: bool,
     #[serde(default)]
     pub has_completed_setup_assistant: bool,
+    /// Enable biometric (Face ID / fingerprint) to unlock app on mobile
+    #[serde(default)]
+    pub biometric_enabled: bool,
     #[serde(default)]
     pub separate_rss_feed: bool,
     #[serde(default)]
@@ -198,10 +300,14 @@ impl Default for Settings {
             dev_sensitive_info_hider: false,
             dev_force_offline_mode: false,
             accepted_cloud_eula: false,
+            send_anonymous_usage_statistics: false,
+            sync_cloud_pfp: false,
+            last_synced_cloud_pfp_url: None,
             language: "en".to_string(), // Default to English
             menu_order: None,
             has_been_through_onboarding: false,
             has_completed_setup_assistant: false,
+            biometric_enabled: false,
             separate_rss_feed: false,
             dashboard_widgets_layout: None,
             sidebar_folders: None,
@@ -489,6 +595,18 @@ impl Settings {
             "accepted_cloud_eula",
             default_settings.accepted_cloud_eula,
         );
+        default_settings.send_anonymous_usage_statistics = get_bool(
+            &existing_json,
+            "send_anonymous_usage_statistics",
+            default_settings.send_anonymous_usage_statistics,
+        );
+        default_settings.sync_cloud_pfp = get_bool(
+            &existing_json,
+            "sync_cloud_pfp",
+            default_settings.sync_cloud_pfp,
+        );
+        default_settings.last_synced_cloud_pfp_url =
+            get_opt_string(&existing_json, "last_synced_cloud_pfp_url");
         default_settings.language =
             get_string(&existing_json, "language", &default_settings.language);
         default_settings.menu_order = get_opt_string_array(&existing_json, "menu_order");
@@ -501,6 +619,11 @@ impl Settings {
             &existing_json,
             "has_completed_setup_assistant",
             default_settings.has_completed_setup_assistant,
+        );
+        default_settings.biometric_enabled = get_bool(
+            &existing_json,
+            "biometric_enabled",
+            default_settings.biometric_enabled,
         );
         default_settings.separate_rss_feed = get_bool(
             &existing_json,
@@ -762,6 +885,10 @@ pub async fn save_cloud_token(
     cloud_token.user = Some(user.clone());
     // This uses cloud_token_file(), which saves to the correct Android folder on Android
     cloud_token.save().map_err(|e| e.to_string())?;
+    // Mark that user has signed into cloud (for sign-out detection)
+    let mut state = CloudState::load();
+    state.previously_signed_into_cloud = true;
+    let _ = state.save();
     Ok(user)
 }
 
@@ -777,7 +904,24 @@ pub fn get_cloud_user() -> CloudUserWithToken {
 
 #[tauri::command]
 pub fn clear_cloud_token() -> Result<(), String> {
-    CloudToken::clear_file().map_err(|e| e.to_string())
+    CloudToken::clear_file().map_err(|e| e.to_string())?;
+    // Clear previously-signed flag on explicit logout
+    let mut state = CloudState::load();
+    state.previously_signed_into_cloud = false;
+    state.save().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_cloud_state() -> CloudState {
+    CloudState::load()
+}
+
+#[tauri::command]
+pub fn set_cloud_state_previously_signed(value: bool) -> Result<(), String> {
+    let mut state = CloudState::load();
+    state.previously_signed_into_cloud = value;
+    state.save().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -800,6 +944,82 @@ pub fn save_reserved_client(client_id: String, redirect_uri: String) -> Result<(
         redirect_uri,
     };
     rc.save().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_usage_analytics_state() -> UsageAnalyticsState {
+    UsageAnalyticsState::load()
+}
+
+#[tauri::command]
+pub fn increment_usage_analytics_session() -> Result<UsageAnalyticsState, String> {
+    use chrono::Utc;
+    let today = Utc::now().format("%Y-%m-%d").to_string();
+    let mut state = UsageAnalyticsState::load();
+    if state.tracking_date.is_empty() {
+        state.tracking_date = today.clone();
+        state.sessions_count = 1;
+    } else if state.tracking_date == today {
+        state.sessions_count += 1;
+    } else {
+        // New day: move current to pending, start fresh for today
+        state.pending_date = Some(state.tracking_date.clone());
+        state.pending_sessions = state.sessions_count;
+        state.tracking_date = today.clone();
+        state.sessions_count = 1;
+    }
+    state.save().map_err(|e| e.to_string())?;
+    Ok(state)
+}
+
+#[tauri::command]
+pub fn mark_usage_analytics_sent_and_reset(date: String) -> Result<UsageAnalyticsState, String> {
+    use chrono::Utc;
+    let today = Utc::now().format("%Y-%m-%d").to_string();
+    let mut state = UsageAnalyticsState::load();
+    state.last_sent_date = Some(date.clone());
+    if state.pending_date.as_deref() == Some(date.as_str()) {
+        state.pending_date = None;
+        state.pending_sessions = 0;
+    }
+    if state.tracking_date == date {
+        state.tracking_date = today;
+        state.sessions_count = 1;
+    }
+    state.save().map_err(|e| e.to_string())?;
+    Ok(state)
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UsageAnalyticsPayload {
+    pub date: String,
+    pub sessions_count: u32,
+    pub cloud_signed_in: bool,
+    pub app_version: String,
+    pub platform: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_id: Option<String>,
+}
+
+#[tauri::command]
+pub async fn send_usage_analytics_report(payload: UsageAnalyticsPayload) -> Result<bool, String> {
+    let url = "https://betterseqta.org/api/analytics/usage";
+    let client = reqwest::Client::new();
+
+    let mut request = client
+        .post(url)
+        .header("Content-Type", "application/json")
+        .json(&payload);
+
+    if payload.cloud_signed_in {
+        let cloud_token = CloudToken::load();
+        if let Some(ref token) = cloud_token.token {
+            request = request.header("Authorization", format!("Bearer {}", token));
+        }
+    }
+
+    let response = request.send().await.map_err(|e| e.to_string())?;
+    Ok(response.status().is_success())
 }
 
 #[tauri::command]

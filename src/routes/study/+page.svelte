@@ -3,7 +3,10 @@
   import { invoke } from '@tauri-apps/api/core';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
+  import { platformStore } from '$lib/stores/platform';
   import { Icon, Calendar, Clock, MagnifyingGlass } from 'svelte-hero-icons';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { fly, fade, scale, slide } from 'svelte/transition';
   import { quintOut, cubicOut } from 'svelte/easing';
   import { studyTips } from './studytips';
@@ -580,30 +583,32 @@
     });
   }
 
-  $: filteredSortedTodos = todos
-    .filter((t) => {
-      if (query) {
-        const q = query.toLowerCase();
-        const tagStr = (t.tags ?? []).join(',').toLowerCase();
-        if (!(t.title.toLowerCase().includes(q) || tagStr.includes(q))) return false;
-      }
-      if (filter === 'completed') return t.completed;
-      if (filter === 'today') return !t.completed && isToday(t.due_date ?? undefined);
-      if (filter === 'week') return !t.completed && isThisWeek(t.due_date ?? undefined);
-      // For 'all' filter, only show non-completed tasks
-      return !t.completed;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'due') {
-        const ad = a.due_date ? new Date(a.due_date).getTime() : Infinity;
-        const bd = b.due_date ? new Date(b.due_date).getTime() : Infinity;
-        return ad - bd;
-      }
-      if (sortBy === 'priority') return priorityOrder(a.priority) - priorityOrder(b.priority);
-      const au = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-      const bu = b.updated_at ? new Date(b.updated_at).getTime() : 0;
-      return bu - au;
-    });
+  const filteredSortedTodos = $derived(
+    todos
+      .filter((t) => {
+        if (query) {
+          const q = query.toLowerCase();
+          const tagStr = (t.tags ?? []).join(',').toLowerCase();
+          if (!(t.title.toLowerCase().includes(q) || tagStr.includes(q))) return false;
+        }
+        if (filter === 'completed') return t.completed;
+        if (filter === 'today') return !t.completed && isToday(t.due_date ?? undefined);
+        if (filter === 'week') return !t.completed && isThisWeek(t.due_date ?? undefined);
+        // For 'all' filter, only show non-completed tasks
+        return !t.completed;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'due') {
+          const ad = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+          const bd = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+          return ad - bd;
+        }
+        if (sortBy === 'priority') return priorityOrder(a.priority) - priorityOrder(b.priority);
+        const au = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const bu = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+        return bu - au;
+      }),
+  );
 
   // Random study tip selection
   let currentStudyTip = '';

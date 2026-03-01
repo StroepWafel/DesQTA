@@ -1,6 +1,6 @@
 <script lang="ts">
   // Svelte imports
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { fade } from 'svelte/transition';
 
   // $lib/ imports
@@ -21,11 +21,12 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
   import { updateUrlParams, getUrlParam } from '$lib/utils/urlParams';
+  import { formatLessonDate } from './utils';
+  import { platformStore } from '$lib/stores/platform';
 
   // Relative imports
-  import { invoke } from '@tauri-apps/api/core';
   import { cache } from '../../utils/cache';
-  import { logger } from '../../utils/logger';
+  import { courseService } from '$lib/services/courseService';
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import CourseContent from './components/CourseContent.svelte';
 
@@ -55,18 +56,23 @@
   let selectedSubject: Subject | null = $state(null);
   let coursePayload: CoursePayload | null = $state(null);
   let parsedDocument: ParsedDocument | null = $state(null);
+  let documentParseError = $state(false);
   let loadingCourse = $state(false);
   let courseError: string | null = $state(null);
   let search = $state('');
 
   // Schedule navigation state
   let selectedLesson: Lesson | null = $state(null);
+  let selectedTermSchedule: TermSchedule | null = $state(null);
+  let selectedLessonIndex: number | null = $state(null);
   let selectedLessonContent: WeeklyLessonContent | null = $state(null);
   let selectedStandaloneContent: WeeklyLessonContent | null = $state(null);
   let showingOverview = $state(true); // Start with overview by default
   let contentScrollContainer: HTMLElement;
+  // bind:this sets this ref when the lesson list mounts
+  let lessonListScrollContainer: HTMLDivElement | undefined;
   let sidebarOpen = $state(false);
-  let isMobile = $state(false);
+  let isMobile = $derived($platformStore.isMobile);
 
   async function loadSubjects() {
     loading = true;
@@ -87,9 +93,7 @@
         ttlMinutes: 60,
         context: 'courses',
         functionName: 'loadSubjects',
-        fetcher: async () => {
-          return await invoke<Folder[]>('get_courses_subjects');
-        },
+        fetcher: () => courseService.loadSubjects(),
         onDataLoaded: (foldersData) => {
           processFolders(foldersData);
           loading = false;
@@ -113,9 +117,12 @@
   async function loadCourseContent(subject: Subject) {
     loadingCourse = true;
     courseError = null;
+    documentParseError = false;
     coursePayload = null;
     parsedDocument = null;
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
     selectedStandaloneContent = null;
 
@@ -126,23 +133,12 @@
       ttlMinutes: 60,
       context: 'courses',
       functionName: 'loadCourseContent',
-      fetcher: async () => {
-        return await invoke<CoursePayload>('get_course_content', {
-          programme: subject.programme,
-          metaclass: subject.metaclass,
-        });
-      },
+      fetcher: () => courseService.loadCourseContent(subject),
       onDataLoaded: async (payload) => {
         coursePayload = payload;
-        if (payload?.document) {
-          try {
-            parsedDocument = JSON.parse(payload.document);
-          } catch (e) {
-            logger.error('courses', 'loadCourseContent', 'Failed to parse document JSON', {
-              error: e,
-            });
-          }
-        }
+        const { parsed, error } = courseService.parseDocument(payload);
+        parsedDocument = parsed;
+        documentParseError = error;
         loadingCourse = false;
       },
     });
@@ -154,10 +150,45 @@
     }
   }
 
+  async function refreshLessonContent() {
+    if (!selectedSubject || selectedTermSchedule === null || selectedLessonIndex === null) return;
+    loadingCourse = true;
+    courseError = null;
+    documentParseError = false;
+    const cacheKey = `course_${selectedSubject.programme}_${selectedSubject.metaclass}`;
+    const ts = selectedTermSchedule;
+    const idx = selectedLessonIndex;
+    try {
+      await useDataLoader<CoursePayload>({
+        cacheKey,
+        ttlMinutes: 60,
+        context: 'courses',
+        functionName: 'refreshLessonContent',
+        fetcher: () => courseService.loadCourseContent(selectedSubject!),
+        skipCache: true,
+        onDataLoaded: async (p) => {
+          coursePayload = p;
+          const { parsed, error } = courseService.parseDocument(p);
+          parsedDocument = parsed;
+          documentParseError = error;
+          if (ts && idx !== null && p?.w?.[ts.n]?.[idx]) {
+            selectedLessonContent = p.w[ts.n][idx];
+          }
+        },
+      });
+    } catch (e) {
+      courseError = e instanceof Error ? e.message : String(e);
+    } finally {
+      loadingCourse = false;
+    }
+  }
+
   async function selectSubject(subject: Subject) {
     selectedSubject = subject;
     showingOverview = true; // Reset to overview when selecting a new subject
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
     selectedStandaloneContent = null;
     
@@ -179,6 +210,8 @@
 
   async function selectLesson(termSchedule: TermSchedule, lesson: Lesson, lessonIndex: number) {
     selectedLesson = lesson;
+    selectedTermSchedule = termSchedule;
+    selectedLessonIndex = lessonIndex;
     selectedStandaloneContent = null;
     showingOverview = false;
 
@@ -214,6 +247,8 @@
   async function selectStandaloneContent(content: WeeklyLessonContent) {
     selectedStandaloneContent = content;
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
     showingOverview = false;
 
@@ -242,6 +277,8 @@
   async function selectOverview() {
     showingOverview = true;
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
     selectedStandaloneContent = null;
 
@@ -299,6 +336,29 @@
     return folder.code.toLowerCase().includes(q) || folder.subjects.some(subjectMatches);
   }
 
+  // Scroll selected lesson into view when deep-linking
+  $effect(() => {
+    if (showingOverview || !lessonListScrollContainer) return;
+    let id: string | null = null;
+    if (selectedStandaloneContent && 'i' in selectedStandaloneContent) {
+      id = `lesson-standalone-${selectedStandaloneContent.i}`;
+    } else if (selectedLesson && coursePayload?.d) {
+      for (const ts of coursePayload.d) {
+        const idx = ts.l.indexOf(selectedLesson);
+        if (idx >= 0) {
+          id = `lesson-${ts.n}-${idx}`;
+          break;
+        }
+      }
+    }
+    if (id) {
+      tick().then(() => {
+        const el = lessonListScrollContainer?.querySelector(`[data-lesson-id="${id}"]`);
+        if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    }
+  });
+
   function getQueryParams() {
     return {
       code: getUrlParam('code'),
@@ -318,9 +378,12 @@
     // Load course content for the subject
     loadingCourse = true;
     courseError = null;
+    documentParseError = false;
     coursePayload = null;
     parsedDocument = null;
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
     const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
     const { isOfflineMode } = await import('../../lib/utils/offlineMode');
@@ -335,15 +398,10 @@
         ));
       if (cached) {
         coursePayload = cached;
-        if (coursePayload?.document) {
-          try {
-            parsedDocument = JSON.parse(coursePayload.document);
-          } catch (e) {
-            logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', {
-              error: e,
-            });
-          }
-        }
+        documentParseError = false;
+        const { parsed, error } = courseService.parseDocument(coursePayload);
+          parsedDocument = parsed;
+          documentParseError = error;
         loadingCourse = false;
         // Continue with lesson/content finding logic below
         // (handled in the main logic after fetching)
@@ -357,23 +415,12 @@
         ttlMinutes: 60,
         context: 'courses',
         functionName: 'autoSelectFromQuery',
-        fetcher: async () => {
-          return await invoke<CoursePayload>('get_course_content', {
-            programme: subject.programme,
-            metaclass: subject.metaclass,
-          });
-        },
+        fetcher: () => courseService.loadCourseContent(subject),
         onDataLoaded: async (payload) => {
           coursePayload = payload;
-          if (payload?.document) {
-            try {
-              parsedDocument = JSON.parse(payload.document);
-            } catch (e) {
-              logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', {
-                error: e,
-              });
-            }
-          }
+          const { parsed, error } = courseService.parseDocument(payload);
+          parsedDocument = parsed;
+          documentParseError = error;
         },
         shouldSyncInBackground: () => false, // Always fetch fresh when online
       });
@@ -487,48 +534,40 @@
   }
 
   // Check if mobile
-  function checkMobile() {
-    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
-    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
-    const mql = window.matchMedia('(max-width: 640px)');
-    const isSmallViewport = mql.matches;
-    isMobile = isNativeMobile || isSmallViewport;
-    
-    // Close sidebar on mobile by default
-    if (isMobile) {
+  function handleSidebarKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && isMobile && sidebarOpen) {
       sidebarOpen = false;
-    } else {
-      sidebarOpen = true;
+      e.preventDefault();
+      return;
+    }
+
+    if (!coursePayload) return;
+    const target = e.target as HTMLElement;
+    if (!target.closest('[data-lesson-id]')) return;
+
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+
+    const buttons = Array.from(
+      lessonListScrollContainer?.querySelectorAll<HTMLElement>('[data-lesson-id]') ?? [],
+    );
+    const idx = buttons.indexOf(target);
+    if (idx < 0) return;
+
+    e.preventDefault();
+    if (e.key === 'ArrowDown' && idx < buttons.length - 1) {
+      buttons[idx + 1].focus();
+    } else if (e.key === 'ArrowUp' && idx > 0) {
+      buttons[idx - 1].focus();
     }
   }
+
+  $effect(() => {
+    sidebarOpen = !isMobile;
+  });
 
   onMount(() => {
     loadSubjects();
     autoSelectFromQuery();
-    checkMobile();
-    
-    const mql = window.matchMedia('(max-width: 640px)');
-    const onMqlChange = () => checkMobile();
-    
-    try {
-      mql.addEventListener('change', onMqlChange);
-    } catch {
-      // Safari fallback
-      // @ts-ignore
-      mql.addListener(onMqlChange);
-    }
-    
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      try {
-        mql.removeEventListener('change', onMqlChange);
-      } catch {
-        // @ts-ignore
-        mql.removeListener(onMqlChange);
-      }
-    };
   });
 </script>
 
@@ -559,7 +598,11 @@
   <div
     class="flex flex-col w-80 h-full border-r border-zinc-200 transition-all duration-300 dark:border-zinc-700 theme-bg {isMobile
       ? `fixed top-0 left-0 z-40 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
-      : ''}">
+      : ''}"
+    role="region"
+    aria-label="Course navigation"
+    tabindex="-1"
+    onkeydown={handleSidebarKeydown}>
     <!-- Navigation Header -->
     <div
       class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
@@ -587,6 +630,8 @@
               selectedSubject = null;
               // Don't clear coursePayload, parsedDocument to keep content visible
               selectedLesson = null;
+              selectedTermSchedule = null;
+              selectedLessonIndex = null;
               selectedLessonContent = null;
               showingOverview = true;
             }}
@@ -748,6 +793,8 @@
                   onclick={() => {
                     selectedSubject = null;
                     selectedLesson = null;
+                    selectedTermSchedule = null;
+                    selectedLessonIndex = null;
                     selectedLessonContent = null;
                     selectedStandaloneContent = null;
                     showingOverview = true;
@@ -834,7 +881,10 @@
             </div>
 
             <!-- Lesson Schedule or Standalone Content -->
-            <div class="overflow-y-auto flex-1">
+            <div
+              class="overflow-y-auto flex-1"
+              bind:this={lessonListScrollContainer}
+              role="list">
               {#if coursePayload.d && Array.isArray(coursePayload.d) && coursePayload.d.length > 0}
                 <!-- Regular lessons -->
                 {#each coursePayload.d as termSchedule}
@@ -851,6 +901,7 @@
                       {@const lessonContent = coursePayload?.w?.[termSchedule.n]?.[lessonIndex]}
                       {@const lessonTopic = lessonContent?.t}
                       <button
+                        data-lesson-id="lesson-{termSchedule.n}-{lessonIndex}"
                         class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
                           ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
                           : 'border-transparent hover:border-accent/50'}"
@@ -864,10 +915,10 @@
                           </div>
                         {/if}
                         <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                          {new Date(lesson.d).toLocaleDateString('en-AU', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
+                          {formatLessonDate(lesson.d, {
+                            today: $_('courses.today') || 'Today',
+                            tomorrow: $_('courses.tomorrow') || 'Tomorrow',
+                            yesterday: $_('courses.yesterday') || 'Yesterday',
                           })}
                         </div>
                         <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
@@ -888,6 +939,7 @@
                     {@const isSelected =
                       selectedStandaloneContent === contentItem && !showingOverview}
                     <button
+                      data-lesson-id="lesson-standalone-{contentItem.i}"
                       class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
                         ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
                         : 'border-transparent hover:border-accent/50'}"
@@ -928,14 +980,71 @@
           size="md" />
       </div>
     {:else if coursePayload}
-      <div class="h-full">
-        <div class="overflow-y-auto h-full course-content">
+      <div class="h-full flex flex-col">
+        <!-- Breadcrumb / Context Bar -->
+        {#if selectedSubject}
+          <nav
+            class="flex items-center gap-2 px-4 py-2 text-sm border-b border-zinc-200 dark:border-zinc-700 theme-bg text-zinc-600 dark:text-zinc-400 shrink-0"
+            aria-label="Breadcrumb">
+            <span class="font-medium text-zinc-900 dark:text-white truncate">
+              {selectedSubject.title}
+            </span>
+            <span class="text-zinc-400 dark:text-zinc-500">
+              {$_('courses.breadcrumb_separator') || '›'}
+            </span>
+            {#if showingOverview}
+              <span class="text-accent font-medium">
+                <T key="courses.course_overview" fallback="Course Overview" />
+              </span>
+            {:else if selectedLesson && coursePayload?.d}
+              {@const lesson = selectedLesson}
+              {@const ts = lesson
+                ? coursePayload.d.find((t) => t.l.includes(lesson))
+                : undefined}
+              {#if ts}
+                <span class="truncate">
+                  {$_('courses.breadcrumb_term_week', { values: { term: ts.t, week: ts.w } }) ||
+                    `Term ${ts.t} Week ${ts.w}`}
+                </span>
+                <span class="text-zinc-400 dark:text-zinc-500">
+                  {$_('courses.breadcrumb_separator') || '›'}
+                </span>
+                <span class="text-accent font-medium truncate max-w-[200px]" title={selectedLesson.p}>
+                  {selectedLesson.p}
+                </span>
+              {/if}
+            {:else if selectedStandaloneContent}
+              <span class="text-accent font-medium truncate max-w-[200px]"
+                title={selectedStandaloneContent.t || ''}>
+                {selectedStandaloneContent.t || 'Untitled'}
+              </span>
+            {/if}
+          </nav>
+        {/if}
+        <div class="overflow-y-auto flex-1 course-content">
           <CourseContent
             {coursePayload}
             {parsedDocument}
+            documentParseError={documentParseError}
+            onRetryCourse={
+              selectedSubject
+                ? () => {
+                    if (selectedSubject) loadCourseContent(selectedSubject);
+                  }
+                : undefined
+            }
             {selectedLessonContent}
             {selectedStandaloneContent}
-            {showingOverview} />
+            {showingOverview}
+            lessonWithoutContent={
+              !showingOverview &&
+              !!selectedLesson &&
+              selectedLessonContent === null &&
+              selectedStandaloneContent === null
+            }
+            {selectedLesson}
+            onRefreshLesson={refreshLessonContent}
+            onGoToOverview={selectOverview} />
         </div>
       </div>
     {:else}

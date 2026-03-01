@@ -4,7 +4,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { goto } from '$app/navigation';
   import { getRandomDicebearAvatar } from '../../utils/netUtil';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import ProfileSwitcher from './ProfileSwitcher.svelte';
   import { _ } from '../i18n';
   import T from './T.svelte';
@@ -41,7 +41,7 @@
   }
 
   interface Props {
-    userInfo: UserInfo;
+    userInfo: UserInfo | undefined | null;
     showUserDropdown: boolean;
     onToggleUserDropdown: () => void;
     onLogout: () => void;
@@ -77,6 +77,8 @@
     }
   }
 
+  let removeProfilePictureListener: (() => void) | null = null;
+
   onMount(async () => {
     try {
       const subset = await invoke<any>('get_settings_subset', {
@@ -92,14 +94,18 @@
 
     // Load custom profile picture
     await loadCustomProfilePicture();
+
+    const onProfilePictureUpdated = () => loadCustomProfilePicture();
+    window.addEventListener('profile-picture-updated', onProfilePictureUpdated);
+    removeProfilePictureListener = () =>
+      window.removeEventListener('profile-picture-updated', onProfilePictureUpdated);
   });
 
-  // Close dropdown when userInfo becomes undefined (logout)
-  $effect(() => {
-    if (!userInfo) {
-      showUserDropdown = false;
-    }
-  });
+  onDestroy(() => removeProfilePictureListener?.());
+
+  // Close dropdown when userInfo becomes undefined (except we keep it open for sign-out option)
+  // Only close if we had userInfo and now we don't - but we still render the button for sign-out
+  const hasValidSession = $derived(!!userInfo);
 </script>
 
 <div class="relative user-dropdown-container">
@@ -109,41 +115,53 @@
     onclick={onToggleUserDropdown}
     aria-label={$_('user.user_menu') || 'User menu'}
     tabindex="0">
-    {#if customProfilePicture && !customProfilePictureError}
-      <img
-        src={customProfilePicture}
-        alt=""
-        onerror={() => (customProfilePictureError = true)}
-        class="object-cover w-8 h-8 md:w-8 md:h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
-    {:else if devSensitiveInfoHider && randomAvatarUrl && !randomAvatarError}
-      <img
-        src={randomAvatarUrl}
-        alt=""
-        onerror={() => (randomAvatarError = true)}
-        class="object-cover w-8 h-8 md:w-8 md:h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
-    {:else if !disableSchoolPicture && userInfo.profilePicture && !schoolPictureError}
-      <img
-        src={userInfo.profilePicture}
-        alt=""
-        onerror={() => (schoolPictureError = true)}
-        class="object-cover w-8 h-8 md:w-8 md:h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
+    {#if userInfo}
+      {#if customProfilePicture && !customProfilePictureError}
+        <img
+          src={customProfilePicture}
+          alt=""
+          onerror={() => (customProfilePictureError = true)}
+          class="object-cover w-8 h-8 md:w-8 md:h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
+      {:else if devSensitiveInfoHider && randomAvatarUrl && !randomAvatarError}
+        <img
+          src={randomAvatarUrl}
+          alt=""
+          onerror={() => (randomAvatarError = true)}
+          class="object-cover w-8 h-8 md:w-8 md:h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
+      {:else if !disableSchoolPicture && userInfo.profilePicture && !schoolPictureError}
+        <img
+          src={userInfo.profilePicture}
+          alt=""
+          onerror={() => (schoolPictureError = true)}
+          class="object-cover w-8 h-8 md:w-8 md:h-8 rounded-full border-2 shadow-xs border-white/60 dark:border-zinc-600/60" />
+      {:else}
+        <div
+          class="flex items-center justify-center w-8 h-8 md:w-8 md:h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
+          {(userInfo.displayName || userInfo.userName || '?')[0]}
+        </div>
+      {/if}
+      <span class="hidden font-semibold text-zinc-900 md:inline dark:text-white">
+        {userInfo.userDesc || userInfo.userName}
+      </span>
     {:else}
+      <!-- Session invalid: show placeholder so user can still access Sign out -->
       <div
-        class="flex items-center justify-center w-8 h-8 md:w-8 md:h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
-        {(userInfo.displayName || userInfo.userName || '?')[0]}
+        class="flex items-center justify-center w-8 h-8 md:w-8 md:h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 font-bold text-base border-2 shadow-xs border-amber-200/60 dark:border-amber-800/60">
+        ?
       </div>
+      <span class="hidden font-semibold text-amber-700 md:inline dark:text-amber-400">
+        {$_('user.session_expired', { default: 'Session expired' })}
+      </span>
     {/if}
-    <span class="hidden font-semibold text-zinc-900 md:inline dark:text-white">
-      {userInfo.userDesc || userInfo.userName}
-    </span>
   </button>
   {#if showUserDropdown}
     <div
       class="absolute right-0 z-50 mt-3 w-56 md:w-56 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/40"
       transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
       <div class="p-2">
+        {#if userInfo}
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
+          class="flex gap-3 items-center min-h-[44px] px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
           onclick={() => {
             onToggleUserDropdown();
             onShowAbout();
@@ -202,9 +220,12 @@
              }}
           />
         </div>
+        {/if}
 
+        <!-- Sign out: always visible (including when session invalid) -->
+        <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
+          class="flex gap-3 items-center min-h-[44px] px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] text-zinc-700 hover:bg-zinc-800/50 hover:text-white dark:text-zinc-200 group"
           onclick={() => {
             onToggleUserDropdown();
             onLogout();
@@ -226,7 +247,7 @@
         <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
 
         <button
-          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] text-red-600 hover:bg-red-900/20 hover:text-white dark:text-red-400 group"
+          class="flex gap-3 items-center min-h-[44px] px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] text-red-600 hover:bg-red-900/20 hover:text-white dark:text-red-400 group"
           onclick={() => {
             onToggleUserDropdown();
             // Call the quit command

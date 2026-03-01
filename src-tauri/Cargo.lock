@@ -1170,10 +1170,12 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-autostart",
+ "tauri-plugin-biometry",
  "tauri-plugin-deep-link",
  "tauri-plugin-dialog",
  "tauri-plugin-notification",
  "tauri-plugin-opener",
+ "tauri-plugin-safe-area-insets-css",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
  "time",
@@ -3349,7 +3351,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c10c2894a6fed806ade6027bcd50662746363a9589d3ec9d9bef30a4e4bc166"
 dependencies = [
  "bitflags 2.9.4",
+ "block2 0.6.1",
  "dispatch2",
+ "libc",
  "objc2 0.6.2",
 ]
 
@@ -3438,6 +3442,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc2-local-authentication"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ece6cee251f29a936d3d143f6847ba6b121e5f906f9c838f68524c78abe6aa30"
+dependencies = [
+ "block2 0.6.1",
+ "objc2 0.6.2",
+ "objc2-foundation 0.3.1",
+ "objc2-security",
+]
+
+[[package]]
 name = "objc2-metal"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3492,6 +3508,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1f8e0ef3ab66b08c42644dcb34dba6ec0a574bbd8adbb8bdbdc7a2779731a44"
 dependencies = [
  "bitflags 2.9.4",
+ "block2 0.6.1",
+ "libc",
  "objc2 0.6.2",
  "objc2-core-foundation",
 ]
@@ -5424,6 +5442,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-biometry"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8058e85ed21976445c6757b5c0ed04a92082d681e81a682767a138e51be60c0e"
+dependencies = [
+ "block2 0.6.1",
+ "log",
+ "objc2 0.6.2",
+ "objc2-core-foundation",
+ "objc2-foundation 0.3.1",
+ "objc2-local-authentication",
+ "objc2-security",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.16",
+ "windows 0.61.3",
+]
+
+[[package]]
 name = "tauri-plugin-deep-link"
 version = "2.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5523,6 +5563,18 @@ dependencies = [
  "url",
  "windows 0.61.3",
  "zbus 5.11.0",
+]
+
+[[package]]
+name = "tauri-plugin-safe-area-insets-css"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "245c374d1f8b4f68b4b14596a8d4252c3410eb0591685cc21d2d34158aab3949"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.16",
 ]
 
 [[package]]

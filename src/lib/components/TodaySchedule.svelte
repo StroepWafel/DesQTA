@@ -78,6 +78,14 @@
     if (lessonInterval) clearInterval(lessonInterval);
     checkCurrentLessons();
     lessonInterval = setInterval(checkCurrentLessons, 60_000);
+
+    // Update Android home screen widget with next lesson (any day)
+    try {
+      const { updateNextLessonWidget } = await import('$lib/services/warmupService');
+      await updateNextLessonWidget();
+    } catch {
+      /* ignore */
+    }
   }
 
   function checkCurrentLessons() {

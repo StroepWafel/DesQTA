@@ -7,7 +7,10 @@
   import { invoke } from '@tauri-apps/api/core';
 
   // $lib/ imports
+  import { platformStore } from '$lib/stores/platform';
   import { setIdb } from '$lib/services/idbCache';
+
+  let isMobile = $derived($platformStore.isMobile);
   import T from '$lib/components/T.svelte';
   import AssessmentBoardView from '$lib/components/AssessmentBoardView.svelte';
   import AssessmentCalendarView from '$lib/components/AssessmentCalendarView.svelte';

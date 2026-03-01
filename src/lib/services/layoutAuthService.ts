@@ -52,7 +52,7 @@ export async function loadUserInfo(options: LayoutAuthLoadUserInfoOptions): Prom
   const { loadSettings, onDisableSchoolPicture, onUserInfo } = options;
 
   const settings = await loadSettings(['disable_school_picture']);
-  const disableSchoolPicture = settings.disable_school_picture ?? false;
+  const disableSchoolPicture = settings.disable_school_picture === true;
   onDisableSchoolPicture(disableSchoolPicture);
 
   const info = await authService.loadUserInfo({ disableSchoolPicture });

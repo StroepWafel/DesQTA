@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
   import { seqtaFetch } from '../../utils/netUtil';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { Icon, FolderOpen, PencilSquare, ExclamationTriangle } from 'svelte-hero-icons';
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import T from '$lib/components/T.svelte';

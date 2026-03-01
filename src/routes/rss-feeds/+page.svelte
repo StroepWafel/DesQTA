@@ -15,6 +15,7 @@
   import { Icon } from 'svelte-hero-icons';
   import { Rss, Bars3, XMark, Cog6Tooth } from 'svelte-hero-icons';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
 
   // Relative imports
   import { logger } from '../../utils/logger';
@@ -33,7 +34,7 @@
   let selectedMessage = $state<Message | null>(null);
   let feeds = $state<Array<{ url: string; name: string }>>([]);
   let sidebarOpen = $state(false);
-  let isMobile = $state(false);
+  let isMobile = $derived($platformStore.isMobile);
 
   // Derived state for mobile modal
   let showMobileModal = $derived(!!selectedMessage);
@@ -140,48 +141,12 @@
     }
   }
 
-  // Check if mobile
-  function checkMobile() {
-    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
-    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
-    const mql = window.matchMedia('(max-width: 1024px)'); // xl breakpoint
-    const isSmallViewport = mql.matches;
-    isMobile = isNativeMobile || isSmallViewport;
-    
-    // Close sidebar on mobile by default
-    if (isMobile) {
-      sidebarOpen = false;
-    } else {
-      sidebarOpen = true;
-    }
-  }
+  $effect(() => {
+    sidebarOpen = !isMobile;
+  });
 
   onMount(() => {
     loadFeeds();
-    checkMobile();
-    
-    const mql = window.matchMedia('(max-width: 1024px)');
-    const onMqlChange = () => checkMobile();
-    
-    try {
-      mql.addEventListener('change', onMqlChange);
-    } catch {
-      // Safari fallback
-      // @ts-ignore
-      mql.addListener(onMqlChange);
-    }
-    
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      try {
-        mql.removeEventListener('change', onMqlChange);
-      } catch {
-        // @ts-ignore
-        mql.removeListener(onMqlChange);
-      }
-    };
   });
 </script>
 

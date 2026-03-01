@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { themeService, type ThemeManifest } from '$lib/services/themeService';
   import {
     themeStoreService,
@@ -637,6 +640,15 @@
   }
 </script>
 
+<svelte:head>
+  {#if collections[0]?.cover_image_url}
+    {@const firstUrl = resolveImageUrlSync(collections[0].cover_image_url)}
+    {#if firstUrl}
+      <link rel="preload" as="image" href={firstUrl} fetchpriority="high" />
+    {/if}
+  {/if}
+</svelte:head>
+
 <!-- Minimal Store Header -->
 <div
   class="sticky top-0 z-30 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700 shadow-sm"
@@ -810,7 +822,7 @@
     </div>
   {:else}
     <!-- Featured Carousel -->
-    {#if spotlightThemes && spotlightThemes.length > 0}
+    {#if spotlightThemes && spotlightThemes.length > 0 && !searchQuery.trim()}
       <div class="mb-16">
         <SpotlightCarousel
           themes={spotlightThemes}
@@ -828,7 +840,7 @@
     {/if}
 
     <!-- Collections Section -->
-    {#if collections && collections.length > 0}
+    {#if collections && collections.length > 0 && !searchQuery.trim()}
       <div class="mb-16">
         <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Collections</h2>
         <div class="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
@@ -841,11 +853,13 @@
                   selectedCollection = collection;
                   collectionModalOpen = true;
                 }}
-                transition:fly={{ x: 20, duration: 300, delay: i * 50, easing: cubicOut }}>
+                transition:fly={{ x: 20, duration: i === 0 ? 0 : 300, delay: i * 50, easing: cubicOut }}>
                 {#if collection.cover_image_url}
                   <img
                     src={resolveImageUrlSync(collection.cover_image_url) || ''}
                     alt={collection.name}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    fetchpriority={i === 0 ? 'high' : undefined}
                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                 {:else}
                   <div

@@ -3,6 +3,9 @@
   import { invoke } from '@tauri-apps/api/core';
   import type { AnalyticsData, Assessment } from '$lib/types';
   import { fade } from 'svelte/transition';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { Button, Badge, SearchInput, EmptyState } from '$lib/components/ui';
   import { ExclamationTriangle, ChartBar } from 'svelte-hero-icons';
   import RawDataTable from '$lib/components/RawDataTable.svelte';

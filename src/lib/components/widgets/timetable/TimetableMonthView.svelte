@@ -135,7 +135,7 @@
         icon={ChevronLeft}
         onclick={prevMonth}
         ariaLabel="Previous month"
-        class="w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
+        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
       
       <h2 class="text-xl font-bold text-zinc-900 dark:text-white min-w-[200px] text-center">
         {monthName}
@@ -147,13 +147,13 @@
         icon={ChevronRight}
         onclick={nextMonth}
         ariaLabel="Next month"
-        class="w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
+        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
       
       <Button
         variant="ghost"
         size="sm"
         onclick={goToToday}
-        class="px-4 py-2 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 ml-2">
+        class="min-h-[44px] px-4 py-2 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 ml-2">
         {$_('timetable.today') || 'Today'}
       </Button>
     </div>

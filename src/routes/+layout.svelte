@@ -3,10 +3,13 @@
   import { Window } from '@tauri-apps/api/window';
   const appWindow = Window.getCurrent();
   import AboutModal from '../lib/components/AboutModal.svelte';
+  import WhatsNewModal from '../lib/components/WhatsNewModal.svelte';
   import AppHeader from '../lib/components/AppHeader.svelte';
   import AppSidebar from '../lib/components/AppSidebar.svelte';
+  import MobileBottomNav from '../lib/components/MobileBottomNav.svelte';
   import LoginScreen from '../lib/components/LoginScreen.svelte';
   import SetupAssistant from '../lib/components/SetupAssistant.svelte';
+  import BiometricGate from '../lib/components/BiometricGate.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import { Toaster } from 'svelte-sonner';
@@ -31,10 +34,12 @@
   import { useSidebar } from '../lib/composables/useSidebar';
   import { usePlatform } from '../lib/composables/usePlatform';
   import { useLayoutListeners } from '../lib/composables/useLayoutListeners';
+  import { platformStore } from '$lib/stores/platform';
   import {
     loadSettings,
     loadEnhancedAnimationsSetting as loadEnhancedAnimationsSettingFn,
   } from '../lib/composables/useLayoutSettings';
+  import { checkStatus } from '@choochmeque/tauri-plugin-biometry-api';
   import '../app.css';
   import {
     accentColor,
@@ -87,8 +92,14 @@
   let sidebarOpen = $state(true);
   let showUserDropdown = $state(false);
   let showAboutModal = $state(false);
+  let showWhatsNewModal = $state(false);
+  let changelogMarkdown = $state('');
+  let versionUpdateCurrent = $state('');
+  let versionUpdatePrevious = $state('');
   let showOnboarding = $state(false);
   let hasCompletedSetupAssistant = $state(false);
+  let biometricEnabled = $state(false);
+  let biometricUnlocked = $state(false);
   let isFullscreen = $state(false);
 
   // Composables
@@ -104,7 +115,11 @@
   let forceUseLocation = $derived(weather.state.forceUseLocation);
   let autoCollapseSidebar = $derived(sidebar.state.autoCollapse);
   let autoExpandSidebarHover = $derived(sidebar.state.autoExpandOnHover);
-  let isMobile = $derived(platform.state.isMobile);
+  let isMobile = $derived($platformStore.isMobile);
+  let supportsBiometric = $derived($platformStore.supportsBiometric);
+  let showBiometricGate = $derived(
+    !$needsSetup && biometricEnabled && supportsBiometric && !biometricUnlocked
+  );
 
   // Settings state
   let disableSchoolPicture = $state(false);
@@ -147,6 +162,7 @@
   };
 
   let unlistenLayout: (() => void) | undefined;
+  let unlistenShowWhatsNew: ((e: Event) => void) | undefined;
 
   const checkSession = async () => {
     await checkSessionAuth({
@@ -161,6 +177,9 @@
     logger.logComponentUnmount('layout');
     unlistenLayout?.();
     window.removeEventListener('redo-onboarding', handleRedoOnboarding);
+    if (unlistenShowWhatsNew) {
+      window.removeEventListener('show-whats-new', unlistenShowWhatsNew);
+    }
   });
 
   const reloadSidebarSettings = async () => {
@@ -312,7 +331,7 @@
       const settings = await loadSettings(['has_been_through_onboarding']);
       if (!settings.has_been_through_onboarding) {
         showOnboarding = true;
-        sidebarOpen = true;
+        sidebarOpen = false; // Close mobile nav during tour
       }
     } catch (e) {
       logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', {
@@ -382,10 +401,43 @@
         runSyncCloudSettings(),
       ]);
 
-      // Load setup assistant completion status (for first-launch flow)
+      // Usage analytics: increment session count and start hourly check (service checks opt-in internally)
+      if (!get(needsSetup)) {
+        import('$lib/services/usageAnalyticsService').then(({ usageAnalyticsService }) => {
+          usageAnalyticsService.onAppStart().catch(() => {});
+          usageAnalyticsService.start();
+        });
+      }
+
+      // Load setup assistant completion status and biometric preference (for first-launch flow)
       try {
-        const setupSettings = await loadSettings(['has_completed_setup_assistant']);
+        const setupSettings = await loadSettings([
+          'has_completed_setup_assistant',
+          'biometric_enabled',
+        ]);
         hasCompletedSetupAssistant = setupSettings.has_completed_setup_assistant === true;
+        biometricEnabled = setupSettings.biometric_enabled === true;
+
+        // Auto-disable biometric if not available (e.g. no face/fingerprint/iris enrolled)
+        if (biometricEnabled && get(platformStore).supportsBiometric) {
+          try {
+            const status = await checkStatus();
+            if (!status.isAvailable) {
+              logger.debug('layout', 'onMount', 'Biometric not available, auto-disabling', {
+                error: status.error,
+                errorCode: status.errorCode,
+              });
+              biometricEnabled = false;
+              const { saveSettingsWithQueue, flushSettingsQueue } = await import(
+                '$lib/services/settingsSync'
+              );
+              await saveSettingsWithQueue({ biometric_enabled: false });
+              await flushSettingsQueue();
+            }
+          } catch (e) {
+            logger.debug('layout', 'onMount', 'Could not check biometric status', { error: e });
+          }
+        }
       } catch (e) {
         logger.debug('layout', 'onMount', 'Could not load setup assistant status', { error: e });
       }
@@ -395,19 +447,58 @@
         logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
       });
 
-      // Check if user needs onboarding - show tour for first-time users
+      // Check if user needs onboarding - show tour for first-time users (post-login only)
       try {
         const settings = await loadSettings(['has_been_through_onboarding']);
         if (!settings.has_been_through_onboarding && !get(needsSetup)) {
           // Wait a bit for UI to settle
           setTimeout(() => {
             showOnboarding = true;
-            sidebarOpen = true; // Ensure sidebar is open for first step
+            sidebarOpen = false; // Close mobile nav during tour for better UX
           }, 1000);
         }
       } catch (e) {
         logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
       }
+
+      // Check if app was just updated - show What's New modal
+      try {
+        const versionInfo = await invoke<{ current: string; previousVersion?: string }>(
+          'get_version_update_info'
+        );
+        if (versionInfo?.previousVersion && !get(needsSetup)) {
+          versionUpdateCurrent = versionInfo.current;
+          versionUpdatePrevious = versionInfo.previousVersion;
+          try {
+            const res = await fetch('/CHANGELOG.md');
+            changelogMarkdown = (await res.text()) || '';
+          } catch {
+            changelogMarkdown = '';
+          }
+          setTimeout(() => (showWhatsNewModal = true), 800);
+        }
+      } catch (e) {
+        logger.debug('layout', 'onMount', 'Could not check version update info', { error: e });
+      }
+
+      // Listen for manual "What's New" request (e.g. from Settings)
+      const handleShowWhatsNew = async () => {
+        try {
+          versionUpdateCurrent = await invoke<string>('get_app_version');
+          versionUpdatePrevious = '';
+          try {
+            const res = await fetch('/CHANGELOG.md');
+            changelogMarkdown = (await res.text()) || '';
+          } catch {
+            changelogMarkdown = '';
+          }
+          showWhatsNewModal = true;
+        } catch (e) {
+          logger.debug('layout', 'handleShowWhatsNew', 'Failed to show What\'s New', { error: e });
+        }
+      };
+      window.addEventListener('show-whats-new', handleShowWhatsNew);
+      unlistenShowWhatsNew = handleShowWhatsNew;
 
       // Validate SEQTA session BEFORE starting background sync
       // This prevents sync_analytics_data (and other warmup) from running in parallel with
@@ -496,26 +587,39 @@
     if ($page.url.pathname === '/settings') reloadSidebarSettings();
   });
 
-  // Mobile detection and event listeners
+  // On mobile: sidebar closed by default on load/refresh (user opens via "More" tab)
+  let hasInitializedMobileSidebar = $state(false);
+  $effect(() => {
+    if (isMobile && !$needsSetup && !showOnboarding && !hasInitializedMobileSidebar) {
+      hasInitializedMobileSidebar = true;
+      sidebarOpen = false;
+    }
+  });
+
+  // Close mobile sidebar when onboarding tour starts
+  $effect(() => {
+    if (showOnboarding && isMobile) {
+      sidebarOpen = false;
+    }
+  });
+
+  // Mobile detection and event listeners (uses unified usePlatform)
   onMount(() => {
-    // Treat mobile either as a native mobile platform (Tauri)
-    // or when viewport is below the `sm` breakpoint (~640px)
     const mql = window.matchMedia('(max-width: 640px)');
 
     const checkMobile = () => {
-      const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
-      const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
-      const isSmallViewport = mql.matches;
-      const nextIsMobile = isNativeMobile || isSmallViewport;
-
-      // Update platform state
-      platform.state.isMobile = nextIsMobile;
-
-      // If switching from non-mobile to mobile, ensure sidebar is closed
-      if (!isMobile && nextIsMobile) {
+      const prevMobile = get(platformStore).isMobile;
+      const { isMobile: newMobile } = platform.checkPlatform();
+      if (!prevMobile && newMobile) {
         sidebarOpen = false;
       }
     };
+
+    // Load safe area plugin only in Tauri (avoids infinite loop outside Tauri)
+    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
+    if (tauriPlatform === 'ios' || tauriPlatform === 'android') {
+      import('@saurl/tauri-plugin-safe-area-insets-css-api');
+    }
 
     checkMobile();
     const onMqlChange = () => checkMobile();
@@ -676,10 +780,10 @@
   <LoadingScreen />
 {:else}
   <div
-    class="flex flex-col h-screen w-screen {isFullscreen
+    class="flex flex-col h-screen w-screen {isFullscreen || isMobile
       ? ''
       : 'rounded-2xl'} overflow-hidden theme-bg"
-    style="outline: none; border: none; margin: 0; padding: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+    style="outline: none; border: none; margin: 0; padding: 0; padding-top: var(--safe-area-top); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
     {#if !$needsSetup}
       <AppHeader
         {sidebarOpen}
@@ -688,6 +792,7 @@
         {userInfo}
         {showUserDropdown}
         {isFullscreen}
+        {isMobile}
         onToggleSidebar={() => (sidebarOpen = !sidebarOpen)}
         onToggleUserDropdown={() => (showUserDropdown = !showUserDropdown)}
         onLogout={handleLogout}
@@ -716,9 +821,9 @@
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen
+        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen || isMobile
           ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
+          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 {isMobile && !$needsSetup ? 'pb-[56px]' : ''}"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if !$needsSetup}
           <OfflineBanner />
@@ -727,6 +832,23 @@
           <div class="flex items-center justify-center w-full h-full py-12">
             <LoadingScreen inline />
           </div>
+        {:else if showBiometricGate}
+          <BiometricGate
+            onUnlock={() => (biometricUnlocked = true)}
+            onBiometryUnavailable={async () => {
+              biometricEnabled = false;
+              biometricUnlocked = true;
+              try {
+                const { saveSettingsWithQueue, flushSettingsQueue } = await import(
+                  '$lib/services/settingsSync'
+                );
+                await saveSettingsWithQueue({ biometric_enabled: false });
+                await flushSettingsQueue();
+              } catch (e) {
+                logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', { error: e });
+              }
+            }}
+          />
         {:else if $needsSetup}
           {#if !hasCompletedSetupAssistant}
             <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />
@@ -742,6 +864,11 @@
       </main>
 
       <!-- ThemeBuilder Sidebar -->
+      <!-- Mobile Bottom Navigation -->
+      {#if isMobile && !$needsSetup}
+        <MobileBottomNav onOpenSidebar={() => (sidebarOpen = true)} />
+      {/if}
+
       {#if $themeBuilderSidebarOpen}
         <aside
           class="flex fixed top-0 right-0 z-50 flex-col w-96 h-full theme-bg border-l shadow-xl transition-transform duration-200 border-zinc-200 dark:border-zinc-700">
@@ -761,12 +888,12 @@
   </div>
 {/if}
 <Toaster
-  position="bottom-right"
+  position={isMobile ? 'top-center' : 'bottom-right'}
   theme={$theme === 'dark' ? 'dark' : 'light'}
   richColors
   expand={true}
   closeButton
-  offset="20px"
+  offset={isMobile ? 'calc(var(--safe-area-top, 0px) + 1rem)' : '20px'}
   visibleToasts={5}
   toastOptions={{
     unstyled: true,
@@ -791,4 +918,11 @@
     },
   }} />
 <AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
+<WhatsNewModal
+  bind:open={showWhatsNewModal}
+  currentVersion={versionUpdateCurrent}
+  previousVersion={versionUpdatePrevious}
+  changelogMarkdown={changelogMarkdown}
+  onclose={() => (showWhatsNewModal = false)}
+/>
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />

@@ -156,7 +156,7 @@
         icon={ChevronLeft}
         onclick={prevDay}
         ariaLabel={$_('timetable.previous_day') || 'Previous day'}
-        class="w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
+        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
       
       <div class="text-center min-w-[200px]">
         <h2
@@ -181,14 +181,14 @@
         icon={ChevronRight}
         onclick={nextDay}
         ariaLabel={$_('timetable.next_day') || 'Next day'}
-        class="w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
+        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
       
       {#if !isToday}
         <Button
           variant="ghost"
           size="sm"
           onclick={goToToday}
-          class="px-4 py-2 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95">
+          class="min-h-[44px] px-4 py-2 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95">
           {$_('timetable.today') || 'Today'}
         </Button>
       {/if}

@@ -1,122 +1,178 @@
+import { get } from 'svelte/store';
+import { locale } from '$lib/i18n';
 import { sanitizeHtml } from '../../utils/sanitization';
 import type { DraftJSContent, LinkPreview, Lesson } from './types';
+
+/** Get current locale for date formatting (e.g. 'en', 'de', 'fr') */
+function getLocale(): string {
+  const l = get(locale);
+  return l || 'en';
+}
 
 // Re-export sanitizeHtml for backwards compatibility
 export { sanitizeHtml };
 
-export function renderDraftJSText(content: DraftJSContent): string {
-  return content.blocks
-    .map((block) => {
-      let text = block.text;
+function applyInlineStyles(
+  text: string,
+  block: { inlineStyleRanges?: any[]; entityRanges?: any[] },
+  entityMap: DraftJSContent['entityMap'],
+): string {
+  const styleRanges: Array<{
+    offset: number;
+    length: number;
+    type: 'style' | 'entity';
+    style?: string;
+    entityKey?: number;
+  }> = [];
 
-      // Collect all style ranges (both inline styles and entity ranges)
-      const styleRanges: Array<{
-        offset: number;
-        length: number;
-        type: 'style' | 'entity';
-        style?: string;
-        entityKey?: number;
-      }> = [];
+  if (block.inlineStyleRanges?.length) {
+    block.inlineStyleRanges.forEach((range: { offset: number; length: number; style: string }) => {
+      styleRanges.push({ offset: range.offset, length: range.length, type: 'style', style: range.style });
+    });
+  }
+  if (block.entityRanges?.length) {
+    block.entityRanges.forEach((range: { offset: number; length: number; key: number }) => {
+      styleRanges.push({ offset: range.offset, length: range.length, type: 'entity', entityKey: range.key });
+    });
+  }
 
-      // Add inline style ranges
-      if (block.inlineStyleRanges && block.inlineStyleRanges.length > 0) {
-        block.inlineStyleRanges.forEach((range) => {
-          styleRanges.push({
-            offset: range.offset,
-            length: range.length,
-            type: 'style',
-            style: range.style,
-          });
-        });
-      }
+  if (styleRanges.length === 0) return text;
 
-      // Add entity ranges
-      if (block.entityRanges && block.entityRanges.length > 0) {
-        block.entityRanges.forEach((range) => {
-          styleRanges.push({
-            offset: range.offset,
-            length: range.length,
-            type: 'entity',
-            entityKey: range.key,
-          });
-        });
-      }
+  const rangeMap = new Map<string, (typeof styleRanges)[0][]>();
+  styleRanges.forEach((range) => {
+    const key = `${range.offset}-${range.length}`;
+    if (!rangeMap.has(key)) rangeMap.set(key, []);
+    rangeMap.get(key)!.push(range);
+  });
 
-      // Apply styles from end to start to preserve offsets
-      if (styleRanges.length > 0) {
-        // Group styles by their range (offset + length)
-        const rangeMap = new Map<string, Array<(typeof styleRanges)[0]>>();
+  const sortedKeys = Array.from(rangeMap.keys()).sort((a, b) => {
+    return Number(b.split('-')[0]) - Number(a.split('-')[0]);
+  });
 
-        styleRanges.forEach((range) => {
-          const key = `${range.offset}-${range.length}`;
-          if (!rangeMap.has(key)) {
-            rangeMap.set(key, []);
-          }
-          rangeMap.get(key)!.push(range);
-        });
+  for (const key of sortedKeys) {
+    const ranges = rangeMap.get(key)!;
+    const [offset, length] = key.split('-').map(Number);
+    const before = text.substring(0, offset);
+    let wrappedText = text.substring(offset, offset + length);
+    const after = text.substring(offset + length);
 
-        // Sort ranges by offset in reverse order
-        const sortedKeys = Array.from(rangeMap.keys()).sort((a, b) => {
-          const [offsetA] = a.split('-').map(Number);
-          const [offsetB] = b.split('-').map(Number);
-          return offsetB - offsetA;
-        });
-
-        for (const key of sortedKeys) {
-          const ranges = rangeMap.get(key)!;
-          const [offset, length] = key.split('-').map(Number);
-
-          const before = text.substring(0, offset);
-          const styledText = text.substring(offset, offset + length);
-          const after = text.substring(offset + length);
-
-          let wrappedText = styledText;
-
-          // Apply all styles for this range (nested)
-          for (const range of ranges) {
-            if (range.type === 'entity') {
-              const entity = content.entityMap[range.entityKey!];
-              if (entity && entity.type === 'LINK') {
-                wrappedText = `<a href="${entity.data.href || entity.data.url}" class="text-indigo-400 underline transition-colors hover:text-purple-300" target="_blank" rel="noopener noreferrer">${wrappedText}</a>`;
-              }
-            } else if (range.type === 'style') {
-              switch (range.style) {
-                case 'BOLD':
-                  wrappedText = `<strong>${wrappedText}</strong>`;
-                  break;
-                case 'ITALIC':
-                  wrappedText = `<em>${wrappedText}</em>`;
-                  break;
-                case 'UNDERLINE':
-                  wrappedText = `<u>${wrappedText}</u>`;
-                  break;
-                case 'STRIKETHROUGH':
-                  wrappedText = `<s>${wrappedText}</s>`;
-                  break;
-                case 'CODE':
-                  wrappedText = `<code class="px-1 py-0.5 rounded bg-zinc-700 text-sm font-mono">${wrappedText}</code>`;
-                  break;
-              }
-            }
-          }
-
-          text = `${before}${wrappedText}${after}`;
+    for (const range of ranges) {
+      if (range.type === 'entity') {
+        const entity = entityMap[String(range.entityKey)];
+        if (entity?.type === 'LINK') {
+          wrappedText = `<a href="${entity.data?.href || entity.data?.url}" class="text-indigo-400 underline transition-colors hover:text-purple-300" target="_blank" rel="noopener noreferrer">${wrappedText}</a>`;
+        }
+      } else if (range.type === 'style' && range.style) {
+        switch (range.style) {
+          case 'BOLD':
+            wrappedText = `<strong>${wrappedText}</strong>`;
+            break;
+          case 'ITALIC':
+            wrappedText = `<em>${wrappedText}</em>`;
+            break;
+          case 'UNDERLINE':
+            wrappedText = `<u>${wrappedText}</u>`;
+            break;
+          case 'STRIKETHROUGH':
+            wrappedText = `<s>${wrappedText}</s>`;
+            break;
+          case 'CODE':
+            wrappedText = `<code class="px-1 py-0.5 rounded bg-zinc-700 text-sm font-mono">${wrappedText}</code>`;
+            break;
         }
       }
+    }
+    text = `${before}${wrappedText}${after}`;
+  }
+  return text;
+}
 
-      // Apply block-level formatting
-      switch (block.type) {
-        case 'header-one':
-          return `<h1 class="mb-4 text-2xl font-bold text-white">${text}</h1>`;
-        case 'header-two':
-          return `<h2 class="mb-3 text-xl font-bold text-white">${text}</h2>`;
-        case 'header-three':
-          return `<h3 class="mb-2 text-lg font-bold text-white">${text}</h3>`;
-        default:
-          return `<p class="mb-2 dark:text-zinc-300">${text}</p>`;
+const HEADING_CLASS = 'font-bold text-zinc-900 dark:text-white';
+const PROSE_CLASS = 'text-zinc-700 dark:text-zinc-300';
+
+export function renderDraftJSText(content: DraftJSContent): string {
+  const entityMap = content.entityMap || {};
+  let html = '';
+  let listStack: { type: 'ul' | 'ol'; depth: number }[] = [];
+
+  function closeListsToDepth(targetDepth: number) {
+    while (listStack.length > 0 && listStack[listStack.length - 1].depth > targetDepth) {
+      const { type } = listStack.pop()!;
+      html += type === 'ul' ? '</li></ul>' : '</li></ol>';
+    }
+  }
+
+  function closeAllLists() {
+    while (listStack.length > 0) {
+      const { type } = listStack.pop()!;
+      html += type === 'ul' ? '</li></ul>' : '</li></ol>';
+    }
+  }
+
+  for (let i = 0; i < content.blocks.length; i++) {
+    const block = content.blocks[i];
+    const text = applyInlineStyles(block.text, block, entityMap);
+    const depth = block.depth ?? 0;
+
+    if (block.type === 'unordered-list-item') {
+      closeListsToDepth(depth);
+      const top = listStack[listStack.length - 1];
+      const needNewList = !top || top.type !== 'ul' || top.depth !== depth;
+      if (needNewList) {
+        closeListsToDepth(depth - 1);
+        if (listStack.length > 0 && listStack[listStack.length - 1].depth >= depth) {
+          html += '</li>';
+        }
+        html += '<ul class="list-disc pl-5 my-1 space-y-0.5">';
+        listStack.push({ type: 'ul', depth });
+      } else {
+        html += '</li>';
       }
-    })
-    .join('');
+      html += `<li class="${PROSE_CLASS}">${text || '&nbsp;'}`;
+      continue;
+    }
+
+    if (block.type === 'ordered-list-item') {
+      closeListsToDepth(depth);
+      const top = listStack[listStack.length - 1];
+      const needNewList = !top || top.type !== 'ol' || top.depth !== depth;
+      if (needNewList) {
+        closeListsToDepth(depth - 1);
+        if (listStack.length > 0 && listStack[listStack.length - 1].depth >= depth) {
+          html += '</li>';
+        }
+        html += '<ol class="list-decimal pl-5 my-1 space-y-0.5">';
+        listStack.push({ type: 'ol', depth });
+      } else {
+        html += '</li>';
+      }
+      html += `<li class="${PROSE_CLASS}">${text || '&nbsp;'}`;
+      continue;
+    }
+
+    closeAllLists();
+
+    switch (block.type) {
+      case 'header-one':
+        html += `<h1 class="text-2xl ${HEADING_CLASS} mt-4 mb-2 first:mt-0">${text}</h1>`;
+        break;
+      case 'header-two':
+        html += `<h2 class="text-xl ${HEADING_CLASS} mt-4 mb-2 first:mt-0">${text}</h2>`;
+        break;
+      case 'header-three':
+        html += `<h3 class="text-lg ${HEADING_CLASS} mt-3 mb-1.5 first:mt-0">${text}</h3>`;
+        break;
+      case 'unstyled':
+      default:
+        if (text.trim()) {
+          html += `<p class="${PROSE_CLASS} mb-1.5 leading-relaxed">${text}</p>`;
+        }
+        break;
+    }
+  }
+
+  closeAllLists();
+  return html;
 }
 
 export function getFileIcon(mimetype: string): string {
@@ -162,8 +218,32 @@ export function formatFileSize(size: string): string {
   return `${fileSize.toFixed(1)} ${units[unitIndex]}`;
 }
 
+// Link preview cache (in-memory, 24h TTL)
+const linkPreviewCache = new Map<
+  string,
+  { value: LinkPreview; timestamp: number }
+>();
+const LINK_PREVIEW_TTL_MS = 24 * 60 * 60 * 1000;
+
+function getCachedLinkPreview(url: string): LinkPreview | null {
+  const entry = linkPreviewCache.get(url);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > LINK_PREVIEW_TTL_MS) {
+    linkPreviewCache.delete(url);
+    return null;
+  }
+  return entry.value;
+}
+
+function setCachedLinkPreview(url: string, preview: LinkPreview): void {
+  linkPreviewCache.set(url, { value: preview, timestamp: Date.now() });
+}
+
 // Link preview functionality
 export async function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
+  const cached = getCachedLinkPreview(url);
+  if (cached) return cached;
+
   try {
     const embedlyUrl = `https://api.embed.ly/1/oembed?url=${encodeURIComponent(url)}&key=fef2d3229afa11e0bcfe4040d3dc5c07&format=json&maxWidth=600&maxHeight=400&secure=true&luxe=1`;
 
@@ -174,7 +254,7 @@ export async function fetchLinkPreview(url: string): Promise<LinkPreview | null>
       return null;
     }
 
-    return {
+    const preview: LinkPreview = {
       title: data.title || `Preview of ${getDomainName(url)}`,
       description: data.description || '',
       image: data.thumbnail_url || '',
@@ -182,8 +262,9 @@ export async function fetchLinkPreview(url: string): Promise<LinkPreview | null>
       imageWidth: data.thumbnail_width || 0,
       imageHeight: data.thumbnail_height || 0,
     };
-  } catch (error) {
-    console.error('Failed to fetch link preview:', error);
+    setCachedLinkPreview(url, preview);
+    return preview;
+  } catch {
     return null;
   }
 }
@@ -229,10 +310,11 @@ export function isValidUrl(string: string): boolean {
   }
 }
 
-export function formatDate(dateString: string): string {
+export function formatDate(dateString: string, localeOverride?: string): string {
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-AU', {
+    const loc = localeOverride ?? getLocale();
+    return date.toLocaleDateString(loc, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -242,10 +324,11 @@ export function formatDate(dateString: string): string {
   }
 }
 
-export function formatTime(timeString: string): string {
+export function formatTime(timeString: string, localeOverride?: string): string {
   try {
     const time = new Date(`2000-01-01T${timeString}`);
-    return time.toLocaleTimeString('en-AU', {
+    const loc = localeOverride ?? getLocale();
+    return time.toLocaleTimeString(loc, {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
@@ -269,7 +352,16 @@ export function isLessonReleased(lesson: Lesson): boolean {
   }
 }
 
-export function formatLessonDate(dateString: string): string {
+export type FormatLessonDateLabels = {
+  today: string;
+  tomorrow: string;
+  yesterday: string;
+};
+
+export function formatLessonDate(
+  dateString: string,
+  labels?: FormatLessonDateLabels,
+): string {
   try {
     const date = new Date(dateString);
     const now = new Date();
@@ -279,16 +371,21 @@ export function formatLessonDate(dateString: string): string {
     const diffTime = lessonDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
+    const loc = getLocale();
+    const t = labels?.today ?? 'Today';
+    const tm = labels?.tomorrow ?? 'Tomorrow';
+    const y = labels?.yesterday ?? 'Yesterday';
+
     if (diffDays === 0) {
-      return 'Today';
+      return t;
     } else if (diffDays === 1) {
-      return 'Tomorrow';
+      return tm;
     } else if (diffDays === -1) {
-      return 'Yesterday';
+      return y;
     } else if (diffDays > 1 && diffDays <= 7) {
-      return date.toLocaleDateString('en-AU', { weekday: 'long' });
+      return date.toLocaleDateString(loc, { weekday: 'long' });
     } else {
-      return date.toLocaleDateString('en-AU', {
+      return date.toLocaleDateString(loc, {
         day: 'numeric',
         month: 'short',
         year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,

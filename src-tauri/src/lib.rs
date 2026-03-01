@@ -134,13 +134,78 @@ fn get_seqta_base_url() -> String {
     session.base_url
 }
 
+fn get_version_app_data_dir() -> std::path::PathBuf {
+    if cfg!(target_os = "android") {
+        let mut dir = std::path::PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("DesQTA");
+        dir
+    } else {
+        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
+        dir.push("DesQTA");
+        dir
+    }
+}
+
+/// Path for the next-lesson widget data file (Android widget reads from same location).
+fn next_lesson_widget_file_path() -> std::path::PathBuf {
+    let app_data = get_version_app_data_dir();
+    app_data.parent().unwrap().join("next_lesson.json")
+}
+
+/// Set the next lesson for the Android home screen widget.
+/// Call from the frontend when schedule/timetable data is loaded.
+#[tauri::command]
+fn set_next_lesson_for_widget(
+    name: Option<String>,
+    time: Option<String>,
+    room: Option<String>,
+) -> Result<(), String> {
+    let path = next_lesson_widget_file_path();
+    let data = serde_json::json!({
+        "name": name.unwrap_or_default(),
+        "time": time.unwrap_or_default(),
+        "room": room.unwrap_or_default()
+    });
+    fs::write(&path, data.to_string()).map_err(|e| e.to_string())
+}
+
+/// Returns current app version and previous version (if app was just updated).
+#[tauri::command]
+fn get_version_update_info(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let current = app.package_info().version.to_string();
+    let app_data_dir = get_version_app_data_dir();
+    let whats_new_file = app_data_dir.join("previous_version_for_whats_new");
+    let previous_version = fs::read_to_string(&whats_new_file).ok().filter(|s| !s.is_empty());
+    Ok(serde_json::json!({
+        "current": current,
+        "previousVersion": previous_version
+    }))
+}
+
+/// Clears the "just updated" flag after user dismisses What's New modal.
+#[tauri::command]
+fn clear_version_update_info() -> Result<(), String> {
+    let app_data_dir = get_version_app_data_dir();
+    let whats_new_file = app_data_dir.join("previous_version_for_whats_new");
+    let _ = fs::remove_file(&whats_new_file);
+    Ok(())
+}
+
+/// Returns the current app version string.
+#[tauri::command]
+fn get_app_version(app: tauri::AppHandle) -> String {
+    app.package_info().version.to_string()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_dialog::init());
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_safe_area_insets_css::init())
+        .plugin(tauri_plugin_biometry::init());
 
     #[cfg(desktop)]
     {
@@ -317,6 +382,10 @@ pub fn run() {
             login::direct_login,
             login::reauthenticate,
             get_seqta_base_url,
+            set_next_lesson_for_widget,
+            get_version_update_info,
+            clear_version_update_info,
+            get_app_version,
             profiles::get_current_profile,
             profiles::list_profiles,
             profiles::switch_profile,
@@ -330,9 +399,15 @@ pub fn run() {
             settings::save_cloud_token,
             settings::get_cloud_user,
             settings::clear_cloud_token,
+            settings::get_cloud_state,
+            settings::set_cloud_state_previously_signed,
             settings::get_reserved_client,
             settings::clear_reserved_client,
             settings::save_reserved_client,
+            settings::get_usage_analytics_state,
+            settings::increment_usage_analytics_session,
+            settings::mark_usage_analytics_sent_and_reset,
+            settings::send_usage_analytics_report,
             settings::get_cloud_base_url,
             settings::set_cloud_base_url,
             settings::upload_settings_to_cloud,
@@ -434,6 +509,7 @@ pub fn run() {
             notes_filesystem::cleanup_unused_images_filesystem,
             notes_filesystem::get_file_tree,
             profile_picture::save_profile_picture,
+            profile_picture::save_profile_picture_from_url,
             profile_picture::get_profile_picture_path_cmd,
             profile_picture::delete_profile_picture,
             profile_picture::has_custom_profile_picture,
@@ -527,12 +603,18 @@ pub fn run() {
             // Read the previous version
             let last_version = fs::read_to_string(&version_file).unwrap_or_default();
 
-            // If versions differ, clear the cache
+            // If versions differ, clear the cache and record previous version for What's New
             if current_version != last_version {
                 println!(
                     "[DesQTA] Version changed from '{}' to '{}'. Clearing webview cache...",
                     last_version, current_version
                 );
+
+                // Record previous version so frontend can show What's New modal
+                if !last_version.is_empty() {
+                    let whats_new_file = app_data_dir.join("previous_version_for_whats_new");
+                    let _ = fs::write(&whats_new_file, &last_version);
+                }
 
                 // Get the main window and clear data
                 if let Some(window) = app.webview_windows().get("main") {
@@ -731,6 +813,20 @@ pub fn run() {
                     })
                     .build(app)
                     .expect("Error while setting up tray menu");
+            }
+
+            // Bring main window to front on startup (fixes installer/updater launch where window
+            // opens behind other windows). Short delay helps when launched by another process.
+            #[cfg(desktop)]
+            {
+                let app_handle = app.app_handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(300));
+                    if let Some(window) = app_handle.webview_windows().get("main") {
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
+                });
             }
 
             Ok(())

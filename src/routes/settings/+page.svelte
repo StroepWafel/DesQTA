@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { notify } from '../../utils/notify';
   import {
     accentColor,
     loadAccentColor,
@@ -19,6 +18,7 @@
     Moon,
     ComputerDesktop,
     CloudArrowUp,
+    CloudArrowDown,
     Cog,
     Squares2x2,
     User,
@@ -40,6 +40,8 @@
     FolderOpen,
     MagnifyingGlass,
     Minus,
+    Sparkles,
+    LockClosed,
   } from 'svelte-hero-icons';
   import { check } from '@tauri-apps/plugin-updater';
   import CloudSyncModal from '../../lib/components/CloudSyncModal.svelte';
@@ -55,10 +57,15 @@
   import { toastStore } from '../../lib/stores/toast';
   import { cloudSettingsService } from '../../lib/services/cloudSettingsService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../../lib/services/settingsSync';
+  import { platformStore } from '../../lib/stores/platform';
+  import { checkStatus, authenticate } from '@choochmeque/tauri-plugin-biometry-api';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { setZoom } from '../../lib/utils/zoom';
   import { CacheManager } from '../../utils/cacheManager';
   import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
   import Modal from '../../lib/components/Modal.svelte';
+  import ProfilePictureCropModal from '../../lib/components/ProfilePictureCropModal.svelte';
 
   interface Shortcut {
     name: string;
@@ -104,6 +111,8 @@
   let zoomLevel = $state(1);
   let keyBuffer = '';
   let acceptedCloudEula = $state(false);
+  let syncCloudPfp = $state(false);
+  let sendAnonymousUsageStatistics = $state(false);
   let showEulaModal = $state(false);
   let cloudBaseUrl: string = '';
   let cloudBaseUrlSaving = false;
@@ -119,6 +128,53 @@
   let showUnsavedChangesModal = $state(false);
   let pendingNavigationUrl: string | null = null;
   let resettingOnboarding = $state(false);
+  let biometricEnabled = $state(false);
+  let biometricToggleLoading = $state(false);
+  let biometricToggleError = $state<string | null>(null);
+
+  let supportsBiometric = $derived($platformStore.supportsBiometric);
+
+  async function handleBiometricToggle(e: MouseEvent) {
+    e.preventDefault();
+    const wantsEnable = !biometricEnabled;
+
+    if (wantsEnable) {
+      biometricToggleError = null;
+      biometricToggleLoading = true;
+      try {
+        const status = await checkStatus();
+        if (!status.isAvailable) {
+          biometricToggleError =
+            status.error ?? $_('setup_assistant.biometric_unavailable', { default: 'Biometric authentication is not available on this device.' });
+          toastStore.error(biometricToggleError);
+          return;
+        }
+        await authenticate($_('setup_assistant.biometric_title', { default: 'Unlock with biometrics' }), {
+          allowDeviceCredential: true,
+          cancelTitle: $_('common.cancel', { default: 'Cancel' }),
+          confirmationRequired: false,
+        });
+        biometricEnabled = true;
+        await saveSettingsWithQueue({ biometric_enabled: true });
+        await flushSettingsQueue();
+        if (initialSettings) initialSettings.biometricEnabled = true;
+        toastStore.success($_('settings.biometric_enabled_success', { default: 'Biometric unlock enabled' }));
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!msg.includes('userCancel') && !msg.toLowerCase().includes('user cancel')) {
+          biometricToggleError = msg;
+          toastStore.error($_('settings.biometric_enable_failed', { default: 'Could not enable biometric unlock' }));
+        }
+      } finally {
+        biometricToggleLoading = false;
+      }
+    } else {
+      biometricEnabled = false;
+      await saveSettingsWithQueue({ biometric_enabled: false });
+      await flushSettingsQueue();
+      if (initialSettings) initialSettings.biometricEnabled = false;
+    }
+  }
 
   // Store initial settings state for comparison
   let initialSettings: {
@@ -146,8 +202,11 @@
     devSensitiveInfoHider: boolean;
     devForceOfflineMode: boolean;
     acceptedCloudEula: boolean;
+    syncCloudPfp: boolean;
+    sendAnonymousUsageStatistics: boolean;
     separateRssFeed: boolean;
     zoomLevel: number;
+    biometricEnabled: boolean;
   } | null = null;
 
   // Menu configuration (same as in layout)
@@ -216,6 +275,8 @@ The Company reserves the right to terminate your access to the Service at any ti
   let customProfilePicture = $state<string | null>(null);
   let uploading = $state(false);
   let fileInput: HTMLInputElement;
+  let showCropModal = $state(false);
+  let cropImageSrc = $state<string | null>(null);
 
   async function loadCloudUser() {
     cloudUserLoading = true;
@@ -235,6 +296,10 @@ The Company reserves the right to terminate your access to the Service at any ti
             cloudUser = null;
           });
       }
+
+      // Sync cloud PFP to local when user is logged in
+      const { syncCloudPfpToLocal } = await import('$lib/services/cloudPfpSyncService');
+      await syncCloudPfpToLocal();
     } catch (e) {
       cloudUser = null;
     }
@@ -270,9 +335,12 @@ The Company reserves the right to terminate your access to the Service at any ti
           'dev_sensitive_info_hider',
           'dev_force_offline_mode',
           'accepted_cloud_eula',
+          'sync_cloud_pfp',
+          'send_anonymous_usage_statistics',
           'language',
           'separate_rss_feed',
           'zoom_level',
+          'biometric_enabled',
         ],
       });
       shortcuts = settings.shortcuts || [];
@@ -299,8 +367,11 @@ The Company reserves the right to terminate your access to the Service at any ti
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
+      syncCloudPfp = settings.sync_cloud_pfp ?? false;
+      sendAnonymousUsageStatistics = settings.send_anonymous_usage_statistics ?? false;
       separateRssFeed = settings.separate_rss_feed ?? false;
       zoomLevel = typeof settings.zoom_level === 'number' ? settings.zoom_level : 1;
+      biometricEnabled = settings.biometric_enabled ?? false;
 
       // Store initial state for comparison
       initialSettings = {
@@ -328,8 +399,11 @@ The Company reserves the right to terminate your access to the Service at any ti
         devSensitiveInfoHider,
         devForceOfflineMode,
         acceptedCloudEula,
+        syncCloudPfp,
+        sendAnonymousUsageStatistics,
         separateRssFeed,
         zoomLevel,
+        biometricEnabled,
       };
 
       console.log('Loading settings', {
@@ -368,6 +442,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       acceptedCloudEula = false;
       separateRssFeed = false;
       zoomLevel = 1;
+      biometricEnabled = false;
       showDevSettings = false;
     }
     loading = false;
@@ -439,8 +514,11 @@ The Company reserves the right to terminate your access to the Service at any ti
         dev_sensitive_info_hider: devSensitiveInfoHider,
         dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
+        sync_cloud_pfp: syncCloudPfp,
+        send_anonymous_usage_statistics: sendAnonymousUsageStatistics,
         separate_rss_feed: separateRssFeed,
         zoom_level: zoomLevel,
+        biometric_enabled: biometricEnabled,
       };
       await saveSettingsWithQueue(patch);
       await flushSettingsQueue();
@@ -485,9 +563,12 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.globalSearchEnabled = globalSearchEnabled;
         initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
         initialSettings.devForceOfflineMode = devForceOfflineMode;
-        initialSettings.acceptedCloudEula = acceptedCloudEula;
-        initialSettings.separateRssFeed = separateRssFeed;
+      initialSettings.acceptedCloudEula = acceptedCloudEula;
+      initialSettings.syncCloudPfp = syncCloudPfp;
+      initialSettings.sendAnonymousUsageStatistics = sendAnonymousUsageStatistics;
+      initialSettings.separateRssFeed = separateRssFeed;
         initialSettings.zoomLevel = zoomLevel;
+      initialSettings.biometricEnabled = biometricEnabled;
       }
 
       if (!options.skipReload) {
@@ -524,33 +605,30 @@ The Company reserves the right to terminate your access to the Service at any ti
       alert('Reminders are currently disabled. Enable them to receive notifications.');
       return;
     }
-    await notify({
-      title: 'Test Notification',
-      body: 'This is a test notification from DesQTA settings.',
-    });
     toastStore.success('Test notification sent');
+  }
+
+  /** Safely get display name for a feed URL (hostname or 'New Feed'). Avoids Invalid URL errors. */
+  function getFeedDisplayName(url: string): string {
+    if (!url?.trim()) return 'New Feed';
+    try {
+      return new URL(url).hostname || 'New Feed';
+    } catch {
+      return 'New Feed';
+    }
   }
 
   async function testFeed(url: string) {
     if (!url) {
-      notify({
-        title: 'Invalid Feed URL',
-        body: 'Please enter a valid RSS feed URL',
-      });
+      toastStore.error('Please enter a valid RSS feed URL');
       return;
     }
 
     try {
       const result = await invoke('get_rss_feed', { feed: url });
-      notify({
-        title: 'Feed Test Successful',
-        body: 'The RSS feed is valid and can be added',
-      });
+      toastStore.success('The RSS feed is valid and can be added');
     } catch (error) {
-      notify({
-        title: 'Feed Test Failed',
-        body: 'Could not fetch the RSS feed. Please check the URL and try again.',
-      });
+      toastStore.error('Could not fetch the RSS feed. Please check the URL and try again.');
     }
   }
 
@@ -560,6 +638,10 @@ The Company reserves the right to terminate your access to the Service at any ti
 
   function closeCloudSyncModal() {
     showCloudSyncModal = false;
+  }
+
+  function openWhatsNewModal() {
+    window.dispatchEvent(new CustomEvent('show-whats-new'));
   }
 
   function openTroubleshootingModal() {
@@ -604,8 +686,11 @@ The Company reserves the right to terminate your access to the Service at any ti
     globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
+    syncCloudPfp = cloudSettings.sync_cloud_pfp ?? false;
+    sendAnonymousUsageStatistics = cloudSettings.send_anonymous_usage_statistics ?? false;
     separateRssFeed = cloudSettings.separate_rss_feed ?? false;
     zoomLevel = cloudSettings.zoom_level ?? 1;
+    biometricEnabled = cloudSettings.biometric_enabled ?? false;
 
     // Reload settings
     await loadSettings();
@@ -685,8 +770,11 @@ The Company reserves the right to terminate your access to the Service at any ti
       devSensitiveInfoHider !== initialSettings.devSensitiveInfoHider ||
       devForceOfflineMode !== initialSettings.devForceOfflineMode ||
       acceptedCloudEula !== initialSettings.acceptedCloudEula ||
+      syncCloudPfp !== initialSettings.syncCloudPfp ||
+      sendAnonymousUsageStatistics !== initialSettings.sendAnonymousUsageStatistics ||
       separateRssFeed !== initialSettings.separateRssFeed ||
-      zoomLevel !== initialSettings.zoomLevel
+      zoomLevel !== initialSettings.zoomLevel ||
+      biometricEnabled !== initialSettings.biometricEnabled
     );
   }
 
@@ -726,6 +814,8 @@ The Company reserves the right to terminate your access to the Service at any ti
     pendingNavigationUrl = null;
   }
 
+  let removeMountListeners: (() => void) | null = null;
+
   onMount(async () => {
     // Check if running on desktop (updater only works on desktop)
     const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
@@ -733,10 +823,15 @@ The Company reserves the right to terminate your access to the Service at any ti
 
     await Promise.all([loadSettings(), loadCloudUser(), loadProfilePicture()]);
     window.addEventListener('keydown', handleKeydown);
+    const onProfilePictureUpdated = () => loadProfilePicture();
+    window.addEventListener('profile-picture-updated', onProfilePictureUpdated);
+    removeMountListeners = () => {
+      window.removeEventListener('keydown', handleKeydown);
+      window.removeEventListener('profile-picture-updated', onProfilePictureUpdated);
+    };
   });
-  onDestroy(() => {
-    window.removeEventListener('keydown', handleKeydown);
-  });
+
+  onDestroy(() => removeMountListeners?.());
 
   // Clear browser cache to fix routing issues
   async function clearCache() {
@@ -767,24 +862,12 @@ The Company reserves the right to terminate your access to the Service at any ti
         updateNotes = update.body || 'Bug fixes and improvements';
 
         toastStore.info(`Update available: Version ${update.version}`);
-        notify({
-          title: 'Update Available',
-          body: `Version ${update.version} is available! Click "Install Update" to download and install.`,
-        });
       } else {
         toastStore.success('You are running the latest version');
-        notify({
-          title: 'Up to Date',
-          body: 'You are running the latest version of DesQTA.',
-        });
       }
     } catch (error) {
       logger.error('settings', 'checkForUpdates', 'Failed to check for updates', { error });
       toastStore.error('Failed to check for updates');
-      notify({
-        title: 'Update Check Failed',
-        body: 'Unable to check for updates. Please try again later.',
-      });
     } finally {
       checkingUpdates = false;
     }
@@ -797,22 +880,23 @@ The Company reserves the right to terminate your access to the Service at any ti
       if (update?.available) {
         await update.downloadAndInstall();
         toastStore.success('Update downloaded. Restart to install');
-        notify({
-          title: 'Update Downloaded',
-          body: 'The update will be installed when you restart the application.',
-        });
       }
     } catch (error) {
       logger.error('settings', 'installUpdate', 'Failed to install update', { error });
       toastStore.error('Failed to install update');
-      notify({
-        title: 'Update Installation Failed',
-        body: 'Unable to install the update. Please try again later.',
-      });
     }
   }
 
   // Load custom profile picture
+  async function handleSyncCloudPfpChange() {
+    await saveSettings({ skipReload: true });
+    if (syncCloudPfp) {
+      const { syncCloudPfpToLocal } = await import('$lib/services/cloudPfpSyncService');
+      await syncCloudPfpToLocal();
+      loadProfilePicture();
+    }
+  }
+
   async function loadProfilePicture() {
     try {
       const dataUrl = await invoke<string | null>('get_profile_picture_data_url');
@@ -823,54 +907,47 @@ The Company reserves the right to terminate your access to the Service at any ti
     }
   }
 
-  // Handle profile picture upload
-  async function handleProfilePictureUpload(event: Event) {
+  // Handle profile picture upload - opens crop dialog
+  function handleProfilePictureUpload(event: Event) {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
 
     if (!file) return;
 
-    // Validate file size (max 5MB)
+    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      notify({
-        title: 'File Too Large',
-        body: 'Please select an image smaller than 10MB.',
-      });
+      toastStore.error('Please select an image smaller than 10MB.');
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      cropImageSrc = reader.result as string;
+      showCropModal = true;
+    };
+    reader.readAsDataURL(file);
+    if (target) target.value = '';
+  }
+
+  // Save cropped profile picture (from crop modal)
+  async function handleCropSave(croppedBase64: string) {
     uploading = true;
-
     try {
-      // Convert file to base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      // Save to backend
-      await invoke('save_profile_picture', { base64Data: base64 });
-
-      // Update local state
-      customProfilePicture = base64;
-
-      // Refresh the page to update the header
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      await invoke('save_profile_picture', { base64Data: croppedBase64 });
+      customProfilePicture = croppedBase64;
+      toastStore.success('Profile picture updated successfully');
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
-      console.error('Failed to upload profile picture:', error);
-      notify({
-        title: 'Upload Failed',
-        body: 'Failed to save profile picture. Please try again.',
-      });
+      console.error('Failed to save profile picture:', error);
+      toastStore.error('Failed to save profile picture. Please try again.');
     } finally {
       uploading = false;
-      // Clear the input
-      if (target) target.value = '';
     }
+  }
+
+  function closeCropModal() {
+    showCropModal = false;
+    cropImageSrc = null;
   }
 
   // Remove profile picture
@@ -881,11 +958,6 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       toastStore.success('Profile picture removed successfully');
 
-      notify({
-        title: 'Profile Picture Removed',
-        body: 'Your custom profile picture has been removed.',
-      });
-
       // Refresh the page to update the header
       setTimeout(() => {
         window.location.reload();
@@ -893,10 +965,6 @@ The Company reserves the right to terminate your access to the Service at any ti
     } catch (error) {
       console.error('Failed to remove profile picture:', error);
       toastStore.error('Failed to remove profile picture');
-      notify({
-        title: 'Removal Failed',
-        body: 'Failed to remove profile picture. Please try again.',
-      });
     }
   }
 
@@ -924,10 +992,6 @@ The Company reserves the right to terminate your access to the Service at any ti
       } catch (saveError) {
         console.error('Failed to save performance results:', saveError);
         toastStore.warning('Test completed but failed to save results');
-        notify({
-          title: 'Save Failed',
-          body: 'Performance test completed but failed to save results. Showing results anyway.',
-        });
 
         // Still show results even if save failed
         sessionStorage.setItem('performance-test-results', JSON.stringify(results));
@@ -959,16 +1023,10 @@ The Company reserves the right to terminate your access to the Service at any ti
 
         await invoke('save_performance_test_results', { results: errorResults });
 
-        notify({
-          title: 'Performance Test Failed',
-          body: 'Test failed but error report has been saved to AppData.',
-        });
+        toastStore.error('Performance test failed but error report has been saved.');
       } catch (saveError) {
         console.error('Failed to save error report:', saveError);
-        notify({
-          title: 'Performance Test Failed',
-          body: 'Test failed and could not save error report.',
-        });
+        toastStore.error('Performance test failed and could not save error report.');
       }
     } finally {
       performanceTestRunning = false;
@@ -981,17 +1039,9 @@ The Company reserves the right to terminate your access to the Service at any ti
       await invoke('open_url', { url: `file://${performanceDir}` });
 
       toastStore.success('Performance tests folder opened');
-      notify({
-        title: 'Performance Tests Folder',
-        body: 'Opened the folder containing all saved performance test results.',
-      });
     } catch (error) {
       console.error('Failed to open performance tests folder:', error);
       toastStore.error('Failed to open performance tests folder');
-      notify({
-        title: 'Error',
-        body: 'Failed to open performance tests folder.',
-      });
     }
   }
 
@@ -1057,6 +1107,12 @@ The Company reserves the right to terminate your access to the Service at any ti
       </div>
     </div>
   </div>
+
+  <ProfilePictureCropModal
+    open={showCropModal}
+    imageSrc={cropImageSrc}
+    onsave={handleCropSave}
+    oncancel={closeCropModal} />
 
   {#if loading}
     <div class="flex justify-center items-center py-12 animate-fade-in">
@@ -1127,107 +1183,155 @@ The Company reserves the right to terminate your access to the Service at any ti
             {#if cloudUser}
               <!-- Logged in state -->
               <div
-                class="p-4 rounded-lg border border-green-200 bg-green-100/60 dark:bg-green-900/30 animate-fade-in dark:border-green-800">
-                <div class="flex gap-4 items-start">
-                  {#if cloudUser.pfpUrl}
-                    <img
-                      src={getFullPfpUrl(cloudUser.pfpUrl) ||
-                        `https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
-                      alt={cloudUser.displayName || cloudUser.username}
-                      class="object-cover w-12 h-12 rounded-full border-2 border-green-300 dark:border-green-700" />
-                  {:else}
-                    <img
-                      src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
-                      alt={cloudUser.displayName || cloudUser.username}
-                      class="object-cover w-12 h-12 rounded-full border-2 border-green-300 dark:border-green-700" />
-                  {/if}
-                  <div class="flex-1">
-                    <div class="flex gap-2 items-center mb-1">
-                      <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span class="text-sm font-semibold text-green-800 dark:text-green-200"
-                        >Logged in to BetterSEQTA Plus</span>
+                class="overflow-hidden rounded-xl border border-zinc-200/80 dark:border-zinc-700/80 bg-linear-to-br from-emerald-50/80 to-white dark:from-emerald-950/20 dark:to-zinc-900/80 shadow-sm animate-fade-in">
+                <div class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex gap-4 items-center">
+                    <div class="relative shrink-0">
+                      {#if cloudUser.pfpUrl}
+                        <img
+                          src={getFullPfpUrl(cloudUser.pfpUrl) ||
+                            `https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
+                          alt={cloudUser.displayName || cloudUser.username}
+                          class="object-cover w-14 h-14 rounded-full ring-2 ring-emerald-400/50 dark:ring-emerald-500/40" />
+                      {:else}
+                        <img
+                          src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${cloudUser.id}`}
+                          alt={cloudUser.displayName || cloudUser.username}
+                          class="object-cover w-14 h-14 rounded-full ring-2 ring-emerald-400/50 dark:ring-emerald-500/40" />
+                      {/if}
+                      <div
+                        class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900"
+                        title="Connected">
+                      </div>
                     </div>
-                    <div class="mb-1 text-sm text-green-700 dark:text-green-300">
-                      <strong>{cloudUser.displayName || cloudUser.username}</strong>
-                    </div>
-                    <div class="mb-3 text-xs text-green-600 dark:text-green-400">
-                      @{cloudUser.username}
+                    <div>
+                      <p class="text-sm font-medium text-zinc-900 dark:text-white">
+                        {cloudUser.displayName || cloudUser.username}
+                      </p>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">@{cloudUser.username}</p>
+                      <p
+                        class="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        BetterSEQTA Plus
+                      </p>
                     </div>
                   </div>
+                  <button
+                    class="flex gap-2 items-center justify-center px-5 py-2.5 rounded-xl font-medium text-sm text-white transition-all duration-200 accent-bg hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    onclick={openCloudSyncModal}
+                    disabled={!acceptedCloudEula}>
+                    <Icon src={CloudArrowUp} class="w-4 h-4" />
+                    Manage
+                  </button>
                 </div>
-                <div class="pt-4 mt-4 border-t border-green-200 dark:border-green-800">
-                  <h4 class="mb-2 text-sm font-semibold text-green-800 dark:text-green-200">
-                    Settings Synchronization
-                  </h4>
-                  <p class="mb-4 text-xs text-green-700 dark:text-green-300">
-                    Upload your current settings to the cloud or download settings from another
-                    device. This includes all your shortcuts, feeds, theme preferences, and other
-                    customizations.
+                <p class="px-5 pb-5 text-xs text-zinc-500 dark:text-zinc-400">
+                  Settings sync automatically. Upload or download manually across devices.
+                </p>
+                <div class="px-5 pb-5 pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                  <label
+                    class="flex cursor-pointer gap-3 items-center text-sm text-zinc-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      class="w-4 h-4 rounded accent-blue-600"
+                      bind:checked={syncCloudPfp}
+                      onchange={handleSyncCloudPfpChange} />
+                    <span>
+                      <T
+                        key="settings.sync_cloud_pfp"
+                        fallback="Use BetterSEQTA cloud profile picture as local picture" />
+                    </span>
+                  </label>
+                  <p class="mt-1 ml-7 text-xs text-zinc-500 dark:text-zinc-400">
+                    <T
+                      key="settings.sync_cloud_pfp_description"
+                      fallback="Download and keep your cloud avatar in sync with the app header." />
                   </p>
-                  <div class="flex flex-col gap-3 sm:flex-row">
-                    <button
-                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-xs transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                      onclick={openCloudSyncModal}
-                      disabled={!acceptedCloudEula}>
-                      <Icon src={CloudArrowUp} class="w-5 h-5" />
-                      Sync Settings
-                    </button>
-                  </div>
+                  <label
+                    data-onboarding="analytics-optin"
+                    class="flex cursor-pointer gap-3 items-center text-sm text-zinc-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      class="w-4 h-4 rounded accent-blue-600"
+                      bind:checked={sendAnonymousUsageStatistics}
+                      onchange={() => saveSettings({ skipReload: true })} />
+                    <span>
+                      <T
+                        key="settings.send_anonymous_usage_statistics"
+                        fallback="Send anonymous usage statistics" />
+                    </span>
+                  </label>
+                  <p class="mt-1 ml-7 text-xs text-zinc-500 dark:text-zinc-400">
+                    <T
+                      key="settings.send_anonymous_usage_statistics_description"
+                      fallback="Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected." />
+                  </p>
                 </div>
               </div>
             {:else}
               <!-- Not logged in state -->
-              <div class="p-4 rounded-lg bg-zinc-200/60 dark:bg-zinc-700/30 animate-fade-in">
-                <div
-                  class="p-3 mb-3 rounded-sm border border-yellow-200 bg-yellow-100/60 dark:bg-yellow-900/30 dark:border-yellow-800">
-                  <div class="flex gap-2 items-center">
-                    <input
-                      id="accept-eula-loggedout"
-                      type="checkbox"
-                      class="w-4 h-4 accent-blue-600"
-                      bind:checked={acceptedCloudEula} />
-                    <label for="accept-eula-loggedout" class="text-sm"
-                      >I have read and accept the Cloud Sync Terms (EULA)</label>
-                  </div>
-                </div>
-                <div class="flex flex-col gap-4">
-                  <div class="flex gap-3 items-center">
-                    <div class="w-2 h-2 rounded-full bg-zinc-400"></div>
-                    <span class="text-sm font-semibold text-zinc-600 dark:text-zinc-300"
-                      >Not logged in to BetterSEQTA Plus</span>
-                  </div>
-                  <div>
-                    <h3
-                      class="mb-2 text-sm font-semibold sm:text-base text-zinc-500 dark:text-zinc-400">
-                      Settings Synchronization
-                    </h3>
-                    <p class="mb-4 text-xs text-zinc-500 sm:text-sm dark:text-zinc-500">
-                      Upload your current settings to the cloud or download settings from another
-                      device. This includes all your shortcuts, feeds, theme preferences, and other
-                      customizations.
-                    </p>
-                    <p class="mb-4 text-xs text-zinc-500 sm:text-sm dark:text-zinc-500">
-                      <a
-                        href="https://accounts.betterseqta.org"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-blue-600 dark:text-blue-500 hover:underline">
-                        Create a free BetterSEQTA Plus account
-                      </a> to get started with cloud syncing.
-                    </p>
-                  </div>
-                  <div class="flex flex-col gap-3 sm:flex-row">
-                    <button
-                      class="flex gap-2 items-center justify-center px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                      onclick={openCloudSyncModal}
-                      disabled={!acceptedCloudEula}>
-                      <Icon src={CloudArrowUp} class="w-5 h-5" />
-                      Login & Sync Settings
-                    </button>
-                    <div class="text-xs text-zinc-500 dark:text-zinc-500 sm:self-center">
-                      Requires BetterSEQTA Plus account
+              <div
+                class="overflow-hidden rounded-xl border border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-50/50 dark:bg-zinc-800/30 animate-fade-in">
+                <div class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex gap-4 items-center">
+                    <div
+                      class="flex w-14 h-14 shrink-0 items-center justify-center rounded-full bg-zinc-200/80 dark:bg-zinc-700/80">
+                      <Icon src={CloudArrowUp} class="w-7 h-7 text-zinc-400 dark:text-zinc-500" />
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-zinc-900 dark:text-white">
+                        Sync Settings Across Devices
+                      </p>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                        <a
+                          href="https://accounts.betterseqta.org/register"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="accent-text hover:underline">
+                          Create a free account
+                        </a>
+                        to get started
+                      </p>
                     </div>
                   </div>
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <label
+                      class="flex cursor-pointer gap-2 items-center text-xs text-zinc-600 dark:text-zinc-400">
+                      <input
+                        id="accept-eula-loggedout"
+                        type="checkbox"
+                        class="w-4 h-4 rounded accent-blue-600"
+                        bind:checked={acceptedCloudEula} />
+                      Accept EULA
+                    </label>
+                    <button
+                      class="flex gap-2 items-center justify-center px-5 py-2.5 rounded-xl font-medium text-sm text-white transition-all duration-200 accent-bg hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      onclick={openCloudSyncModal}
+                      disabled={!acceptedCloudEula}>
+                      <Icon src={CloudArrowUp} class="w-4 h-4" />
+                      Login & Sync
+                    </button>
+                  </div>
+                </div>
+                <div class="px-5 pb-5 pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                  <label
+                    data-onboarding="analytics-optin"
+                    class="flex cursor-pointer gap-3 items-center text-sm text-zinc-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      class="w-4 h-4 rounded accent-blue-600"
+                      bind:checked={sendAnonymousUsageStatistics}
+                      onchange={() => saveSettings({ skipReload: true })} />
+                    <span>
+                      <T
+                        key="settings.send_anonymous_usage_statistics"
+                        fallback="Send anonymous usage statistics" />
+                    </span>
+                  </label>
+                  <p class="mt-1 ml-7 text-xs text-zinc-500 dark:text-zinc-400">
+                    <T
+                      key="settings.send_anonymous_usage_statistics_description"
+                      fallback="Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected." />
+                  </p>
                 </div>
               </div>
             {/if}
@@ -1732,6 +1836,57 @@ The Company reserves the right to terminate your access to the Service at any ti
         </div>
       </section>
 
+      <!-- Security (biometric) - only when platform supports it -->
+      {#if supportsBiometric}
+        <section
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+            <h2 class="text-base font-semibold sm:text-lg">
+              <T key="settings.security" fallback="Security" />
+            </h2>
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+              <T
+                key="settings.security_description"
+                fallback="Protect your app with biometric authentication" />
+            </p>
+          </div>
+          <div class="p-4 sm:p-6">
+            <div
+              class="flex flex-col gap-4 p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
+              <div class="flex gap-3 items-center">
+                <input
+                  id="biometric-enabled"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  checked={biometricEnabled}
+                  disabled={biometricToggleLoading}
+                  onclick={handleBiometricToggle}
+                  role="switch"
+                  aria-describedby="biometric-desc" />
+                <label
+                  for="biometric-enabled"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200 {biometricToggleLoading ? 'opacity-60 cursor-wait' : ''}"
+                  ><T
+                    key="settings.biometric_enabled"
+                    fallback="Unlock with biometrics (Face ID, Touch ID, fingerprint, Windows Hello)" /></label>
+              </div>
+              {#if biometricToggleLoading}
+                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                  <T key="settings.biometric_verifying" fallback="Verifying biometric..." />
+                </p>
+              {:else if biometricToggleError}
+                <p class="text-xs text-red-500 dark:text-red-400">{biometricToggleError}</p>
+              {/if}
+              <p id="biometric-desc" class="text-xs text-zinc-500 dark:text-zinc-400">
+                <T
+                  key="settings.biometric_enabled_description"
+                  fallback="Require biometric authentication when opening the app" />
+              </p>
+            </div>
+          </div>
+        </section>
+      {/if}
+
       <!-- Zoom Settings -->
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
@@ -1760,7 +1915,8 @@ The Company reserves the right to terminate your access to the Service at any ti
                 aria-label="Zoom out">
                 <Icon src={Minus} class="w-5 h-5" />
               </button>
-              <span class="text-sm font-medium text-zinc-900 dark:text-white min-w-[4rem] text-center">
+              <span
+                class="text-sm font-medium text-zinc-900 dark:text-white min-w-[4rem] text-center">
                 {Math.round(zoomLevel * 100)}%
               </span>
               <button
@@ -1964,7 +2120,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                       <div class="flex gap-2 items-center mb-2">
                         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         <span class="text-sm font-medium truncate text-zinc-800 dark:text-zinc-200">
-                          {feed.url ? new URL(feed.url).hostname : 'New Feed'}
+                          {getFeedDisplayName(feed.url)}
                         </span>
                       </div>
                       <input
@@ -2244,6 +2400,28 @@ The Company reserves the right to terminate your access to the Service at any ti
         </div>
       </section>
 
+      <!-- What's New button -->
+      <section
+        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        <div class="flex justify-between items-center p-4 sm:p-6">
+          <div>
+            <h2 class="text-base font-semibold sm:text-lg">
+              <T key="whats_new.title" fallback="What's New" />
+            </h2>
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+              <T key="settings.whats_new_description" fallback="View the changelog and latest features." />
+            </p>
+          </div>
+          <button
+            type="button"
+            class="flex gap-2 justify-center items-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 focus:ring-2 active:scale-95 hover:scale-105 accent-bg focus:ring-offset-2 focus:ring-[var(--accent)]"
+            onclick={openWhatsNewModal}>
+            <Icon src={Sparkles} class="w-4 h-4" />
+            <T key="settings.view_changelog" fallback="View" />
+          </button>
+        </div>
+      </section>
+
       <!-- Troubleshooting button -->
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
@@ -2371,7 +2549,8 @@ The Company reserves the right to terminate your access to the Service at any ti
   onSettingsUpload={handleSettingsUpload}
   onSettingsDownload={handleSettingsDownload}
   onSave={() => saveSettings({ skipReload: true })}
-  on:close={closeCloudSyncModal} />
+  on:close={closeCloudSyncModal}
+  on:cloudauthchange={loadCloudUser} />
 
 <!-- Troubleshooting Modal -->
 <TroubleshootingModal open={showTroubleshootingModal} onclose={closeTroubleshootingModal} />

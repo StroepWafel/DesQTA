@@ -295,9 +295,9 @@
   class:sm:w-64={sidebarOpen}
   class:sm:w-0={!sidebarOpen}
   class:sm:z-auto={sidebarOpen}>
-  <!-- Nav with fixed width and absolute positioning -->
+  <!-- Nav with fixed width and absolute positioning; min-h-0 enables scroll when content overflows -->
   <nav
-    class="absolute top-0 right-0 w-full sm:w-64 h-full flex flex-col overflow-y-auto p-3 py-px space-y-2 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
+    class="absolute top-0 right-0 w-full sm:w-64 h-full min-h-0 flex flex-col overflow-y-auto overflow-x-hidden p-3 py-px space-y-2 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
     <!-- Mobile Close Button -->
     <div class="flex justify-end sm:hidden mb-4">
       <button
@@ -341,7 +341,7 @@
               <a
                 href={item.path}
                 onclick={handleMenuItemClick}
-                class="flex gap-4 items-center text-md px-3 py-3 ml-4 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden {isActive
+                class="flex gap-4 items-center text-md px-3 py-3 ml-4 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
                   ? 'bg-accent text-white !text-white'
                   : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}">
                 <Icon
@@ -369,7 +369,7 @@
             <a
               href={item.path}
               onclick={handleMenuItemClick}
-              class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden {isActive
+              class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
                 ? 'bg-accent text-white !text-white'
                 : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}">
               <Icon
@@ -390,7 +390,7 @@
                 <!-- Folder Header (styled exactly like nav item) -->
                 <button
                   onclick={() => toggleFolder(folder.id)}
-                  class="w-full flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300">
+                  class="w-full flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300">
                   <!-- Folder Icon (always Heroicon Folder) -->
                   <Icon src={Folder} class="w-6 h-6 shrink-0 text-zinc-600 dark:text-zinc-400" />
 

@@ -3,7 +3,10 @@
   import { onMount } from 'svelte';
 
   // $lib/ imports
+  import { platformStore } from '$lib/stores/platform';
   import { useDataLoader } from '$lib/utils/useDataLoader';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { EmptyState, LoadingSpinner } from '$lib/components/ui';
   import { ExclamationTriangle, DocumentText } from 'svelte-hero-icons';
   import * as Select from '$lib/components/ui/select/index.js';

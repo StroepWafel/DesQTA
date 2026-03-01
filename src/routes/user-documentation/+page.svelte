@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import {
     Icon,
     BookOpen,
@@ -175,7 +178,7 @@
       category: 'Cloud Sync',
       question: 'How does cloud sync work with BetterSEQTA Plus?',
       answer:
-        'Cloud Sync allows you to sync settings across all your devices:\n\nSetup:\n1. Create a free BetterSEQTA Plus account at accounts.betterseqta.org\n2. Go to Settings > Cloud Sync\n3. Click "Login & Sync Settings"\n4. Enter your BetterSEQTA Plus authentication token\n5. Authenticate to link your account\n\nWhat Syncs:\n• App settings and preferences\n• Dashboard shortcuts\n• Theme preferences and custom themes\n• Search favorites and custom shortcuts\n• Widget configurations\n• Interface preferences\n\nSync Operations:\n• Upload Settings - Save current settings to cloud\n• Download Settings - Load settings from cloud (overwrites local)\n• Auto-sync - Automatically sync on changes (optional)\n\nSecurity:\n• All data is encrypted in transit\n• Authentication tokens are stored securely\n• You can logout to disconnect sync\n• Settings are private to your account',
+        'Cloud Sync allows you to sync settings across all your devices:\n\nSetup:\n1. Create a free BetterSEQTA Plus account at accounts.betterseqta.org/register\n2. Go to Settings > Cloud Sync\n3. Click "Login & Sync Settings"\n4. Enter your BetterSEQTA Plus authentication token\n5. Authenticate to link your account\n\nWhat Syncs:\n• App settings and preferences\n• Dashboard shortcuts\n• Theme preferences and custom themes\n• Search favorites and custom shortcuts\n• Widget configurations\n• Interface preferences\n\nSync Operations:\n• Upload Settings - Save current settings to cloud\n• Download Settings - Load settings from cloud (overwrites local)\n• Auto-sync - Automatically sync on changes (optional)\n\nSecurity:\n• All data is encrypted in transit\n• Authentication tokens are stored securely\n• You can logout to disconnect sync\n• Settings are private to your account',
     },
     {
       category: 'Cloud Sync',
@@ -351,7 +354,7 @@
         {#each categories as category (category)}
           <button
             onclick={() => (selectedCategory = category)}
-            class="px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200 border {selectedCategory ===
+            class="min-h-[44px] px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200 border {selectedCategory ===
             category
               ? 'accent-bg text-white border-transparent shadow-sm'
               : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-800 dark:hover:text-zinc-300'} active:scale-[0.98]">

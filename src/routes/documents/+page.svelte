@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { platformStore } from '$lib/stores/platform';
   import { seqtaFetch } from '../../utils/netUtil';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import T from '$lib/components/T.svelte';

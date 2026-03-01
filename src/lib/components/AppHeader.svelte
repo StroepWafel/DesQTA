@@ -14,6 +14,8 @@
     ChatBubbleLeftRight,
     ClipboardDocumentList,
     DocumentText,
+    CloudArrowUp,
+    NoSymbol,
   } from 'svelte-hero-icons';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
@@ -29,6 +31,7 @@
     questionnaireService,
     type QuestionnaireQuestion,
   } from '../services/questionnaireService';
+  import { cloudUserStore } from '../services/cloudAuthService';
   import { _ } from '../i18n';
   import T from './T.svelte';
 
@@ -39,6 +42,7 @@
     userInfo?: UserInfo;
     showUserDropdown: boolean;
     isFullscreen?: boolean;
+    isMobile?: boolean;
     onToggleSidebar: () => void;
     onToggleUserDropdown: () => void;
     onLogout: () => void;
@@ -118,6 +122,7 @@
     userInfo,
     showUserDropdown,
     isFullscreen = false,
+    isMobile = false,
     onToggleSidebar,
     onToggleUserDropdown,
     onLogout,
@@ -166,10 +171,10 @@
   let loadingNotifications = $state(false);
   let notifications = $state<Notification[]>([]);
   let unreadNotifications = $state(0);
-  let isMobile = $state(false);
   let showNotificationsModal = $state(false);
   let showQuestionnaireModal = $state(false);
   let currentQuestion = $state<QuestionnaireQuestion | null>(null);
+  let showCloudSignOutInfo = $state(false);
 
   function handleSelect(page: { nameKey: string; path: string }) {
     searchStore.set('');
@@ -432,31 +437,20 @@
     // Attempt to flush any queued offline changes on header mount
     flushAll().catch(() => {});
 
-    // Check for mobile on mount and resize
-    const checkMobile = async () => {
-      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
-      if (tauri_platform == 'ios' || tauri_platform == 'android') {
-        isMobile = true;
-      } else {
-        isMobile = false;
-      }
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-
-    // Add click outside handler for notifications
+    // Add click outside handler for notifications and cloud sign-out info
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (showNotifications && !target.closest('.notification-dropdown')) {
         showNotifications = false;
+      }
+      if (showCloudSignOutInfo && !target.closest('.cloud-status-dropdown')) {
+        showCloudSignOutInfo = false;
       }
     };
 
     document.addEventListener('click', handleClickOutside);
 
     return () => {
-      window.removeEventListener('resize', checkMobile);
       document.removeEventListener('click', handleClickOutside);
     };
   });
@@ -479,33 +473,38 @@
 </script>
 
 <header
-  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 theme-bg {isFullscreen
+  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 theme-bg {isFullscreen || isMobile
     ? ''
     : sidebarOpen
       ? 'rounded-tr-2xl'
       : 'rounded-t-2xl'}"
   data-tauri-drag-region>
   <div class="flex items-center space-x-4">
-    <button
-      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
-      onclick={onToggleSidebar}
-      aria-label={$_('header.toggle_sidebar', { default: 'Toggle sidebar' })}>
-      <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
-    </button>
+    <!-- Hamburger: desktop only (mobile uses bottom nav "More" tab) -->
+    {#if !isMobile}
+      <button
+        class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
+        onclick={onToggleSidebar}
+        aria-label={$_('header.toggle_sidebar', { default: 'Toggle sidebar' })}>
+        <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
+      </button>
+    {/if}
     <div class="flex items-center space-x-3">
-      <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0" />
+      <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0 {isMobile ? 'w-7 h-7' : ''}" />
       <h1
-        class="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300">
+        class="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300 {isMobile ? 'text-lg' : ''}">
         DesQTA
       </h1>
-      {#if weatherEnabled && weatherData}
+      {#if !isMobile && weatherEnabled && weatherData}
         <WeatherWidget {weatherData} />
       {/if}
-      <QuestionnaireWidget
-        onOpenModal={(question) => {
-          currentQuestion = question;
-          showQuestionnaireModal = true;
-        }} />
+      {#if !isMobile}
+        <QuestionnaireWidget
+          onOpenModal={(question) => {
+            currentQuestion = question;
+            showQuestionnaireModal = true;
+          }} />
+      {/if}
     </div>
   </div>
   <div class="flex flex-1 justify-center">
@@ -515,16 +514,57 @@
   </div>
 
   <div class="flex items-center space-x-2">
-    {#if userInfo}
-      <UserDropdown
-        {userInfo}
-        {showUserDropdown}
-        {onToggleUserDropdown}
-        {onLogout}
-        {onShowAbout}
-        {onClickOutside}
-        {disableSchoolPicture} />
-    {/if}
+    <!-- Always show UserDropdown when in app (allows Sign out when session invalid) -->
+    <UserDropdown
+      userInfo={userInfo}
+      {showUserDropdown}
+      {onToggleUserDropdown}
+      {onLogout}
+      {onShowAbout}
+      {onClickOutside}
+      {disableSchoolPicture} />
+
+    <!-- Cloud sync status indicator -->
+    <div class="relative cloud-status-dropdown">
+      {#if $cloudUserStore}
+        <a
+          href="/settings"
+          class="flex relative justify-center items-center rounded-xl border transition-all duration-200 ease-in-out transform size-12 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
+          aria-label={$_('header.cloud_signed_in', { default: 'Signed in to BetterSEQTA Plus' })}>
+          <Icon src={CloudArrowUp} class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        </a>
+      {:else}
+        <button
+          type="button"
+          class="flex relative justify-center items-center rounded-xl border transition-all duration-200 ease-in-out transform size-12 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
+          aria-label={$_('header.cloud_not_signed_in', { default: 'Not signed in to BetterSEQTA Plus' })}
+          onclick={() => (showCloudSignOutInfo = !showCloudSignOutInfo)}>
+          <span class="relative inline-flex justify-center items-center">
+            <Icon src={CloudArrowUp} class="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+            <Icon
+              src={NoSymbol}
+              class="absolute w-4 h-4 text-red-500 dark:text-red-400 pointer-events-none"
+              aria-hidden="true" />
+          </span>
+        </button>
+        {#if showCloudSignOutInfo}
+          <div
+            class="absolute right-0 z-50 mt-2 w-72 rounded-xl border shadow-2xl backdrop-blur-xl bg-white/95 dark:bg-zinc-900/95 border-zinc-200/60 dark:border-zinc-700/60 p-4"
+            transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}
+            style="transform-origin: top right;">
+            <p class="text-sm text-zinc-700 dark:text-zinc-300 mb-4">
+              <T key="header.cloud_signed_out_message" fallback="You're signed out of BetterSEQTA Plus. Sign in via Settings to sync your data across devices." />
+            </p>
+            <a
+              href="/settings"
+              class="flex justify-center items-center gap-2 w-full px-4 py-2 text-sm font-medium text-white rounded-lg transition-all duration-200 accent-bg hover:scale-[1.02] active:scale-95"
+              onclick={() => (showCloudSignOutInfo = false)}>
+              <T key="header.cloud_go_to_settings" fallback="Go to Settings" />
+            </a>
+          </div>
+        {/if}
+      {/if}
+    </div>
 
     <div class="relative notification-dropdown">
       <button

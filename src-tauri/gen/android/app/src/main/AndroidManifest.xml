@@ -7,7 +7,8 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
 
     <application
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher2"
+        android:roundIcon="@mipmap/ic_launcher2_round"
         android:label="@string/app_name"
         android:theme="@style/Theme.desqta"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
@@ -37,6 +38,19 @@
             </intent-filter>
             <!-- DEEP LINK PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->
         </activity>
+
+        <!-- DesQTA Next Lesson widget -->
+        <receiver
+            android:name=".NextLessonWidgetProvider"
+            android:exported="true"
+            android:label="@string/next_lesson_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/desqta_next_lesson_info" />
+        </receiver>
 
         <provider
           android:name="androidx.core.content.FileProvider"

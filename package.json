@@ -18,7 +18,9 @@
   "license": "MIT",
   "dependencies": {
     "7.css": "^0.18.0",
+    "@choochmeque/tauri-plugin-biometry-api": "^0.2.6",
     "@preact/signals": "^2.5.1",
+    "@saurl/tauri-plugin-safe-area-insets-css-api": "^0.1.0",
     "@tailwindcss/typography": "^0.5.16",
     "@tauri-apps/api": "2.9.0",
     "@tauri-apps/plugin-dialog": "2.4.0",
@@ -65,6 +67,7 @@
     "prosemirror-view": "^1.33.9",
     "rss-parser": "^3.12.0",
     "sortablejs": "^1.15.6",
+    "svelte-easy-crop": "^5.0.0",
     "svelte-i18n": "^4.0.1",
     "svelte-motion": "^0.12.2",
     "svelte-sonner": "^1.0.7",
