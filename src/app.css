@@ -20,6 +20,10 @@
 }
 
 :root {
+  /* Safe area insets: plugin sets --safe-area-inset-top/bottom in Tauri; fallback 0px on desktop */
+  --safe-area-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-area-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -393,6 +397,15 @@ select:focus-visible {
 /* Smooth scroll behavior for programmatic scrolling */
 html {
   scroll-behavior: smooth;
+}
+
+/* Faster tap response on touch devices (removes 300ms delay) */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
 }
 
 /* Hide scrollbar utility */

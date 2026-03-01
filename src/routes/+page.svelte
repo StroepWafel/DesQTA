@@ -7,7 +7,9 @@
   import { migrateToWidgetSystem, validateAndFixLayout } from '$lib/services/widgetMigration';
   import { logger } from '../utils/logger';
   import type { WidgetConfig, WidgetLayout } from '$lib/types/widgets';
+  import { platformStore } from '$lib/stores/platform';
 
+  let isMobile = $derived($platformStore.isMobile);
   let isEditing = $state(false);
   let selectedWidget = $state<WidgetConfig | null>(null);
   let showSettings = $state(false);
@@ -55,7 +57,7 @@
   });
 </script>
 
-<div class="p-4 sm:p-6 min-h-screen">
+<div class="p-4 sm:p-6 min-h-screen {isMobile ? 'pb-4' : ''}">
   <!-- Edit Mode Toggle -->
   <div in:fade={{ duration: 400 }}>
     <EditModeToggle
@@ -69,6 +71,7 @@
     <WidgetGrid
       bind:this={widgetGridRef}
       {isEditing}
+      {isMobile}
       onLayoutChange={handleGridLayoutChange}
       onWidgetSettings={handleWidgetSettings} />
   </div>

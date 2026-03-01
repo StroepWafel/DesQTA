@@ -22,6 +22,7 @@
   import { _ } from '$lib/i18n';
   import { updateUrlParams, getUrlParam } from '$lib/utils/urlParams';
   import { formatLessonDate } from './utils';
+  import { platformStore } from '$lib/stores/platform';
 
   // Relative imports
   import { cache } from '../../utils/cache';
@@ -71,7 +72,7 @@
   // bind:this sets this ref when the lesson list mounts
   let lessonListScrollContainer: HTMLDivElement | undefined;
   let sidebarOpen = $state(false);
-  let isMobile = $state(false);
+  let isMobile = $derived($platformStore.isMobile);
 
   async function loadSubjects() {
     loading = true;
@@ -560,48 +561,13 @@
     }
   }
 
-  function checkMobile() {
-    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
-    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
-    const mql = window.matchMedia('(max-width: 640px)');
-    const isSmallViewport = mql.matches;
-    isMobile = isNativeMobile || isSmallViewport;
-    
-    // Close sidebar on mobile by default
-    if (isMobile) {
-      sidebarOpen = false;
-    } else {
-      sidebarOpen = true;
-    }
-  }
+  $effect(() => {
+    sidebarOpen = !isMobile;
+  });
 
   onMount(() => {
     loadSubjects();
     autoSelectFromQuery();
-    checkMobile();
-    
-    const mql = window.matchMedia('(max-width: 640px)');
-    const onMqlChange = () => checkMobile();
-    
-    try {
-      mql.addEventListener('change', onMqlChange);
-    } catch {
-      // Safari fallback
-      // @ts-ignore
-      mql.addListener(onMqlChange);
-    }
-    
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      try {
-        mql.removeEventListener('change', onMqlChange);
-      } catch {
-        // @ts-ignore
-        mql.removeListener(onMqlChange);
-      }
-    };
   });
 </script>
 

@@ -6,18 +6,10 @@
   import { getUrlParam, updateUrlParam } from '$lib/utils/urlParams';
   import { getMonday, formatDate, parseDate } from '$lib/utils/timetableUtils';
   import type { WidgetConfig } from '$lib/types/widgets';
+  import { platformStore } from '$lib/stores/platform';
 
-  // Check if mobile synchronously
-  function checkMobile(): boolean {
-    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
-    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
-    const mql = window.matchMedia('(max-width: 640px)');
-    const isSmallViewport = mql.matches;
-    return isNativeMobile || isSmallViewport;
-  }
-
-  const isMobile = checkMobile();
-  const initialViewMode: 'week' | 'day' | 'month' | 'list' = isMobile ? 'day' : 'week';
+  let isMobile = $derived($platformStore.isMobile);
+  let initialViewMode = $derived<'week' | 'day' | 'month' | 'list'>(isMobile ? 'day' : 'week');
 
   let widgetConfig: WidgetConfig | null = $state(null);
   let weekStart = $state(getMonday(new Date()));

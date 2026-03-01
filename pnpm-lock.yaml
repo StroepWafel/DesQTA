@@ -14,6 +14,9 @@ importers:
       '@preact/signals':
         specifier: ^2.5.1
         version: 2.5.1(preact@10.27.3)
+      '@saurl/tauri-plugin-safe-area-insets-css-api':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@tailwindcss/typography':
         specifier: ^0.5.16
         version: 0.5.19(tailwindcss@4.1.16)
@@ -826,6 +829,9 @@ packages:
     resolution: {integrity: sha512-TAcgQh2sSkykPRWLrdyy2AiceMckNf5loITqXxFI5VuQjS5tSuw3WlwdN8qv8vzjLAUTvYaH/mVjSFpbkFbpTg==}
     cpu: [x64]
     os: [win32]
+
+  '@saurl/tauri-plugin-safe-area-insets-css-api@0.1.0':
+    resolution: {integrity: sha512-cZbOexV7OSBvgGECrqInA7daoCRLG5wGcUy/zrRIDaqXVKP6THdLWwsC5Ho6UD0lsxr8O4+zd1PPFJwrlHxTYg==}
 
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
@@ -2708,6 +2714,10 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.52.5':
     optional: true
+
+  '@saurl/tauri-plugin-safe-area-insets-css-api@0.1.0':
+    dependencies:
+      '@tauri-apps/api': 2.9.0
 
   '@standard-schema/spec@1.0.0': {}
 

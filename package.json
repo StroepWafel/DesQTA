@@ -19,6 +19,7 @@
   "dependencies": {
     "7.css": "^0.18.0",
     "@preact/signals": "^2.5.1",
+    "@saurl/tauri-plugin-safe-area-insets-css-api": "^0.1.0",
     "@tailwindcss/typography": "^0.5.16",
     "@tauri-apps/api": "2.9.0",
     "@tauri-apps/plugin-dialog": "2.4.0",

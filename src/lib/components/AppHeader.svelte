@@ -42,6 +42,7 @@
     userInfo?: UserInfo;
     showUserDropdown: boolean;
     isFullscreen?: boolean;
+    isMobile?: boolean;
     onToggleSidebar: () => void;
     onToggleUserDropdown: () => void;
     onLogout: () => void;
@@ -121,6 +122,7 @@
     userInfo,
     showUserDropdown,
     isFullscreen = false,
+    isMobile = false,
     onToggleSidebar,
     onToggleUserDropdown,
     onLogout,
@@ -169,7 +171,6 @@
   let loadingNotifications = $state(false);
   let notifications = $state<Notification[]>([]);
   let unreadNotifications = $state(0);
-  let isMobile = $state(false);
   let showNotificationsModal = $state(false);
   let showQuestionnaireModal = $state(false);
   let currentQuestion = $state<QuestionnaireQuestion | null>(null);
@@ -436,19 +437,6 @@
     // Attempt to flush any queued offline changes on header mount
     flushAll().catch(() => {});
 
-    // Check for mobile on mount and resize
-    const checkMobile = async () => {
-      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
-      if (tauri_platform == 'ios' || tauri_platform == 'android') {
-        isMobile = true;
-      } else {
-        isMobile = false;
-      }
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-
     // Add click outside handler for notifications and cloud sign-out info
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -463,7 +451,6 @@
     document.addEventListener('click', handleClickOutside);
 
     return () => {
-      window.removeEventListener('resize', checkMobile);
       document.removeEventListener('click', handleClickOutside);
     };
   });
@@ -486,33 +473,38 @@
 </script>
 
 <header
-  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 theme-bg {isFullscreen
+  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 theme-bg {isFullscreen || isMobile
     ? ''
     : sidebarOpen
       ? 'rounded-tr-2xl'
       : 'rounded-t-2xl'}"
   data-tauri-drag-region>
   <div class="flex items-center space-x-4">
-    <button
-      class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
-      onclick={onToggleSidebar}
-      aria-label={$_('header.toggle_sidebar', { default: 'Toggle sidebar' })}>
-      <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
-    </button>
+    <!-- Hamburger: desktop only (mobile uses bottom nav "More" tab) -->
+    {#if !isMobile}
+      <button
+        class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
+        onclick={onToggleSidebar}
+        aria-label={$_('header.toggle_sidebar', { default: 'Toggle sidebar' })}>
+        <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
+      </button>
+    {/if}
     <div class="flex items-center space-x-3">
-      <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0" />
+      <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0 {isMobile ? 'w-7 h-7' : ''}" />
       <h1
-        class="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300">
+        class="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300 {isMobile ? 'text-lg' : ''}">
         DesQTA
       </h1>
-      {#if weatherEnabled && weatherData}
+      {#if !isMobile && weatherEnabled && weatherData}
         <WeatherWidget {weatherData} />
       {/if}
-      <QuestionnaireWidget
-        onOpenModal={(question) => {
-          currentQuestion = question;
-          showQuestionnaireModal = true;
-        }} />
+      {#if !isMobile}
+        <QuestionnaireWidget
+          onOpenModal={(question) => {
+            currentQuestion = question;
+            showQuestionnaireModal = true;
+          }} />
+      {/if}
     </div>
   </div>
   <div class="flex flex-1 justify-center">

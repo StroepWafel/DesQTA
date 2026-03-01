@@ -1,27 +1,48 @@
 import { Window } from '@tauri-apps/api/window';
+import { platformStore } from '$lib/stores/platform';
 
 const appWindow = Window.getCurrent();
 
 export interface PlatformState {
   isMobile: boolean;
+  isNativeMobile: boolean;
+  isSmallViewport: boolean;
   isWindows: boolean;
 }
 
 /**
  * Platform detection composable
  * Returns state object that can be used with $state() in Svelte components
+ *
+ * - isNativeMobile: true only on Tauri iOS/Android
+ * - isSmallViewport: true when viewport <= 640px (sm breakpoint)
+ * - isMobile: true when isNativeMobile OR isSmallViewport (unified mobile layout)
  */
 export function usePlatform() {
   const state: PlatformState = {
     isMobile: false,
+    isNativeMobile: false,
+    isSmallViewport: false,
     isWindows: false,
   };
 
   const checkPlatform = () => {
     const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
     state.isWindows = tauri_platform === 'windows';
-    state.isMobile = tauri_platform === 'ios' || tauri_platform === 'android';
-    return { isWindows: state.isWindows, isMobile: state.isMobile };
+    state.isNativeMobile = tauri_platform === 'ios' || tauri_platform === 'android';
+    state.isSmallViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
+    state.isMobile = state.isNativeMobile || state.isSmallViewport;
+    platformStore.set({
+      isMobile: state.isMobile,
+      isNativeMobile: state.isNativeMobile,
+      isSmallViewport: state.isSmallViewport,
+    });
+    return {
+      isWindows: state.isWindows,
+      isMobile: state.isMobile,
+      isNativeMobile: state.isNativeMobile,
+      isSmallViewport: state.isSmallViewport,
+    };
   };
 
   const setupWindowCorners = () => {
@@ -46,4 +67,3 @@ export function usePlatform() {
     setupWindowCorners,
   };
 }
-

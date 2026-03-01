@@ -8,6 +8,7 @@
   import { get } from 'svelte/store';
   import { _ } from '../i18n';
   import T from './T.svelte';
+  import { platformStore } from '$lib/stores/platform';
 
   const t = () => get(_);
 
@@ -20,12 +21,7 @@
   let currentStep = $state(0);
   const totalSteps = 4; // Welcome, Language, How to Log In, Ready
 
-  function checkMobile(): boolean {
-    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
-    return tauriPlatform === 'ios' || tauriPlatform === 'android';
-  }
-
-  const isMobile = checkMobile();
+  let isMobile = $derived($platformStore.isNativeMobile);
 
   async function nextStep() {
     if (currentStep < totalSteps - 1) {

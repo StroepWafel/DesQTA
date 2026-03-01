@@ -6,6 +6,7 @@
   import WhatsNewModal from '../lib/components/WhatsNewModal.svelte';
   import AppHeader from '../lib/components/AppHeader.svelte';
   import AppSidebar from '../lib/components/AppSidebar.svelte';
+  import MobileBottomNav from '../lib/components/MobileBottomNav.svelte';
   import LoginScreen from '../lib/components/LoginScreen.svelte';
   import SetupAssistant from '../lib/components/SetupAssistant.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
@@ -32,6 +33,7 @@
   import { useSidebar } from '../lib/composables/useSidebar';
   import { usePlatform } from '../lib/composables/usePlatform';
   import { useLayoutListeners } from '../lib/composables/useLayoutListeners';
+  import { platformStore } from '$lib/stores/platform';
   import {
     loadSettings,
     loadEnhancedAnimationsSetting as loadEnhancedAnimationsSettingFn,
@@ -109,7 +111,7 @@
   let forceUseLocation = $derived(weather.state.forceUseLocation);
   let autoCollapseSidebar = $derived(sidebar.state.autoCollapse);
   let autoExpandSidebarHover = $derived(sidebar.state.autoExpandOnHover);
-  let isMobile = $derived(platform.state.isMobile);
+  let isMobile = $derived($platformStore.isMobile);
 
   // Settings state
   let disableSchoolPicture = $state(false);
@@ -552,26 +554,32 @@
     if ($page.url.pathname === '/settings') reloadSidebarSettings();
   });
 
-  // Mobile detection and event listeners
+  // On mobile: sidebar closed by default on load/refresh (user opens via "More" tab)
+  let hasInitializedMobileSidebar = $state(false);
+  $effect(() => {
+    if (isMobile && !$needsSetup && !showOnboarding && !hasInitializedMobileSidebar) {
+      hasInitializedMobileSidebar = true;
+      sidebarOpen = false;
+    }
+  });
+
+  // Mobile detection and event listeners (uses unified usePlatform)
   onMount(() => {
-    // Treat mobile either as a native mobile platform (Tauri)
-    // or when viewport is below the `sm` breakpoint (~640px)
     const mql = window.matchMedia('(max-width: 640px)');
 
     const checkMobile = () => {
-      const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
-      const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
-      const isSmallViewport = mql.matches;
-      const nextIsMobile = isNativeMobile || isSmallViewport;
-
-      // Update platform state
-      platform.state.isMobile = nextIsMobile;
-
-      // If switching from non-mobile to mobile, ensure sidebar is closed
-      if (!isMobile && nextIsMobile) {
+      const prevMobile = get(platformStore).isMobile;
+      const { isMobile: newMobile } = platform.checkPlatform();
+      if (!prevMobile && newMobile) {
         sidebarOpen = false;
       }
     };
+
+    // Load safe area plugin only in Tauri (avoids infinite loop outside Tauri)
+    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
+    if (tauriPlatform === 'ios' || tauriPlatform === 'android') {
+      import('@saurl/tauri-plugin-safe-area-insets-css-api');
+    }
 
     checkMobile();
     const onMqlChange = () => checkMobile();
@@ -732,10 +740,10 @@
   <LoadingScreen />
 {:else}
   <div
-    class="flex flex-col h-screen w-screen {isFullscreen
+    class="flex flex-col h-screen w-screen {isFullscreen || isMobile
       ? ''
       : 'rounded-2xl'} overflow-hidden theme-bg"
-    style="outline: none; border: none; margin: 0; padding: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+    style="outline: none; border: none; margin: 0; padding: 0; padding-top: var(--safe-area-top); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
     {#if !$needsSetup}
       <AppHeader
         {sidebarOpen}
@@ -744,6 +752,7 @@
         {userInfo}
         {showUserDropdown}
         {isFullscreen}
+        {isMobile}
         onToggleSidebar={() => (sidebarOpen = !sidebarOpen)}
         onToggleUserDropdown={() => (showUserDropdown = !showUserDropdown)}
         onLogout={handleLogout}
@@ -772,9 +781,9 @@
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen
+        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen || isMobile
           ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
+          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 {isMobile && !$needsSetup ? 'pb-[56px]' : ''}"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if !$needsSetup}
           <OfflineBanner />
@@ -798,6 +807,11 @@
       </main>
 
       <!-- ThemeBuilder Sidebar -->
+      <!-- Mobile Bottom Navigation -->
+      {#if isMobile && !$needsSetup}
+        <MobileBottomNav onOpenSidebar={() => (sidebarOpen = true)} />
+      {/if}
+
       {#if $themeBuilderSidebarOpen}
         <aside
           class="flex fixed top-0 right-0 z-50 flex-col w-96 h-full theme-bg border-l shadow-xl transition-transform duration-200 border-zinc-200 dark:border-zinc-700">
@@ -817,12 +831,12 @@
   </div>
 {/if}
 <Toaster
-  position="bottom-right"
+  position={isMobile ? 'top-center' : 'bottom-right'}
   theme={$theme === 'dark' ? 'dark' : 'light'}
   richColors
   expand={true}
   closeButton
-  offset="20px"
+  offset={isMobile ? 'calc(var(--safe-area-top, 0px) + 1rem)' : '20px'}
   visibleToasts={5}
   toastOptions={{
     unstyled: true,

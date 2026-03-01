@@ -10,11 +10,12 @@
 
   interface Props {
     isEditing?: boolean;
+    isMobile?: boolean;
     onLayoutChange?: (layout: WidgetLayout) => void;
     onWidgetSettings?: (widget: WidgetConfig) => void;
   }
 
-  let { isEditing = false, onLayoutChange, onWidgetSettings }: Props = $props();
+  let { isEditing = false, isMobile = false, onLayoutChange, onWidgetSettings }: Props = $props();
 
   let gridElement: HTMLDivElement | null = $state(null);
   let grid: GridStack | null = $state(null);
@@ -143,23 +144,26 @@
       grid = null;
     }
 
-    // Initialize GridStack
+    // Initialize GridStack - single column on mobile for native feel
+    const column = isMobile ? 1 : 12;
+    const cellHeight = isMobile ? 60 : 80;
+    const canEdit = isEditing && !isMobile;
+
     grid = GridStack.init(
       {
-        column: 12,
-        cellHeight: 80, // Taller cells for better widget visibility
-        margin: 16,
+        column,
+        cellHeight,
+        margin: isMobile ? 12 : 16,
         resizable: {
-          handles: 'e, se, s, sw, w',
+          handles: canEdit ? 'e, se, s, sw, w' : '',
         },
         draggable: {
-          handle: isEditing ? '.gs-resize-handle-top' : '.none',
+          handle: canEdit ? '.gs-resize-handle-top' : '.none',
         },
-        disableResize: !isEditing,
-        disableDrag: !isEditing,
+        disableResize: !canEdit,
+        disableDrag: !canEdit,
         float: false,
         animate: true,
-        // Snap to grid for clean alignment
         minRow: 1,
       },
       gridElement,
@@ -363,15 +367,15 @@
         const definition = widgetRegistry.get(widget.type);
 
         // CRITICAL FIX: Always call grid.update() or makeWidget() to ensure GridStack applies positions
-        // GridStack may have initialized before attributes were set, so we need to force it to read current attributes
+        // On mobile (1 column), force full width; otherwise use saved position
         const gridItem = {
-          x: widget.position.x,
+          x: isMobile ? 0 : widget.position.x,
           y: widget.position.y,
-          w: widget.position.w,
-          h: widget.position.h,
-          minW: widget.position.minW || definition?.minSize.w || 1,
+          w: isMobile ? 1 : widget.position.w,
+          h: isMobile ? Math.max(widget.position.h, 2) : widget.position.h,
+          minW: isMobile ? 1 : (widget.position.minW || definition?.minSize.w || 1),
           minH: widget.position.minH || definition?.minSize.h || 1,
-          maxW: widget.position.maxW || definition?.maxSize.w || 12,
+          maxW: isMobile ? 1 : (widget.position.maxW || definition?.maxSize.w || 12),
           maxH: widget.position.maxH || definition?.maxSize.h || 12,
         };
 
@@ -440,15 +444,17 @@
   // Watch for editing mode changes
   $effect(() => {
     if (grid) {
-      grid.enableMove(isEditing);
-      grid.enableResize(isEditing);
-      grid.opts.disableDrag = !isEditing;
-      grid.opts.disableResize = !isEditing;
+      const canEdit = isEditing && !isMobile;
+      grid.enableMove(canEdit);
+      grid.enableResize(canEdit);
+      grid.opts.disableDrag = !canEdit;
+      grid.opts.disableResize = !canEdit;
       grid.opts.draggable = {
-        handle: isEditing ? '.gs-resize-handle-top' : '.none',
+        handle: canEdit ? '.gs-resize-handle-top' : '.none',
       };
     }
   });
+
 
   // Watch for layout.widgets changes and reload grid (but not on initial mount)
   let isInitialMount = $state(true);

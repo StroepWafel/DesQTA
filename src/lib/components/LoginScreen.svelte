@@ -31,6 +31,7 @@
   import T from './T.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
   import { _ } from '../i18n';
+  import { platformStore } from '$lib/stores/platform';
 
   interface Props {
     seqtaUrl: string;
@@ -49,7 +50,7 @@
   let showLiveScan = $state(false);
   let liveScanError = $state('');
   let html5QrLive: Html5Qrcode | null = null;
-  let isMobile = $state(false);
+  let isMobile = $derived($platformStore.isMobile);
   let loginMethod = $state<'url' | 'qr' | 'direct'>('url'); // Default to manual URL for desktop
   let directUsername = $state('');
   let directPassword = $state('');
@@ -195,18 +196,10 @@
       } catch {}
     })();
     loadProfiles();
-    const checkMobile = () => {
-      const tauri_platform = import.meta.env.TAURI_ENV_PLATFORM;
-      if (tauri_platform == 'ios' || tauri_platform == 'android') {
-        isMobile = true;
-        loginMethod = 'qr'; // Default to QR on mobile
-      } else {
-        isMobile = false;
-        loginMethod = 'url'; // Default to manual URL on desktop
-      }
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    const { isNativeMobile } = platformStore.checkPlatform();
+    if (isNativeMobile) {
+      loginMethod = 'qr';
+    }
     const handleKeydown = (e: KeyboardEvent) => {
       const char = e.key?.toLowerCase();
       if (!char || char.length !== 1 || !/[a-z]/.test(char)) return;
@@ -242,7 +235,6 @@
     }
 
     return () => {
-      window.removeEventListener('resize', checkMobile);
       window.removeEventListener('keydown', handleKeydown);
     };
   });
