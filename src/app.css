@@ -427,12 +427,21 @@ html {
   }
 }
 
-/* iOS only: safe area padding for notch and home indicator (Android handles differently) */
+/* iOS only: safe area padding for notch and home indicator (Android handles differently).
+   Add buffer so content sits slightly down from top and up from bottom. */
+.platform-ios {
+  --safe-area-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 12px);
+  --safe-area-bottom: calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 12px);
+}
 .platform-ios .mobile-bottom-nav {
   padding-bottom: var(--safe-area-bottom);
 }
 .platform-ios .mobile-main {
   padding-bottom: calc(56px + var(--safe-area-bottom));
+}
+/* Sidebar scroll area: extra bottom padding on iOS so last items clear nav + home indicator */
+.platform-ios .sidebar-scroll {
+  padding-bottom: calc(72px + var(--safe-area-bottom)) !important;
 }
 
 /* Hide scrollbar utility */
