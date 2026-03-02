@@ -205,7 +205,7 @@ jobs:
         run: pnpm install
 
       - name: Generate app icons
-        run: pnpm tauri icon static/tauri.svg
+        run: pnpm tauri icon static/app-icon.svg
 
       - name: Build Linux (.deb, .AppImage, .rpm)
         env:
