@@ -89,7 +89,7 @@ jobs:
       - name: Build Unsigned iOS App
         working-directory: src-tauri/gen/apple
         run: |
-          PROJECT_NAME=$(ls *.xcodeproj | sed 's/\.xcodeproj//' | head -n 1)
+          PROJECT_NAME=$(ls -d *.xcodeproj | sed 's/\.xcodeproj$//' | head -n 1)
           SCHEME_NAME="desqta_iOS"
 
           echo "Building project: $PROJECT_NAME with scheme: $SCHEME_NAME"
@@ -108,7 +108,7 @@ jobs:
       - name: Package .app into .ipa
         working-directory: src-tauri/gen/apple
         run: |
-          PROJECT_NAME=$(ls *.xcodeproj | sed 's/\.xcodeproj//' | head -n 1)
+          PROJECT_NAME=$(ls -d *.xcodeproj | sed 's/\.xcodeproj$//' | head -n 1)
 
           mkdir -p Payload
           cp -r ./build/Build/Products/Release-iphoneos/*.app Payload/
