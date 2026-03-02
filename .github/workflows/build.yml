@@ -100,6 +100,22 @@ jobs:
             echo "Created $dir/com.desqta.app-server-addr"
           done
 
+      - name: Pre-build Rust library for iOS (runs xcode-script before Xcode to avoid sandbox issues)
+        working-directory: src-tauri/gen/apple
+        run: |
+          SDKROOT=$(xcrun --sdk iphoneos --show-sdk-path)
+          mkdir -p Externals/arm64/release Externals/x86_64/release
+          echo "Building Rust lib for release..."
+          pnpm exec tauri ios xcode-script -v \
+            --platform iOS \
+            --sdk-root "$SDKROOT" \
+            --framework-search-paths "." \
+            --header-search-paths "include" \
+            --configuration release \
+            arm64
+          echo "Rust library built:"
+          ls -la Externals/arm64/release/
+
       - name: Build Unsigned iOS App
         working-directory: src-tauri/gen/apple
         run: |
@@ -111,7 +127,7 @@ jobs:
           xcodebuild build \
             -project "$PROJECT_NAME.xcodeproj" \
             -scheme "$SCHEME_NAME" \
-            -configuration Release \
+            -configuration release \
             -sdk iphoneos \
             -derivedDataPath ./build \
             CODE_SIGN_IDENTITY="" \
@@ -129,12 +145,13 @@ jobs:
           PROJECT_NAME=$(ls -d *.xcodeproj | sed 's/\.xcodeproj$//' | head -n 1)
 
           mkdir -p Payload
-          # Use Release or Debug output depending on what was built
-          if [ -d ./build/Build/Products/Release-iphoneos ]; then
-            cp -r ./build/Build/Products/Release-iphoneos/*.app Payload/
-          else
-            cp -r ./build/Build/Products/debug-iphoneos/*.app Payload/
-          fi
+          # Use release or debug output depending on what was built
+          for dir in ./build/Build/Products/Release-iphoneos ./build/Build/Products/release-iphoneos ./build/Build/Products/debug-iphoneos; do
+            if [ -d "$dir" ]; then
+              cp -r "$dir"/*.app Payload/
+              break
+            fi
+          done
           zip -r "${PROJECT_NAME}_unsigned.ipa" Payload
 
       - name: Upload iOS IPA Artifact
