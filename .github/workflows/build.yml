@@ -54,6 +54,73 @@ jobs:
           name: desktop-builds-${{ matrix.os }}
           path: src-tauri/target/release/bundle/**
 
+  build-ios:
+    name: Build Unsigned iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Frontend
+        run: pnpm build
+
+      - name: Build Unsigned iOS App
+        working-directory: src-tauri/gen/apple
+        run: |
+          PROJECT_NAME=$(ls *.xcodeproj | sed 's/\.xcodeproj//' | head -n 1)
+          SCHEME_NAME="desqta_iOS"
+
+          echo "Building project: $PROJECT_NAME with scheme: $SCHEME_NAME"
+
+          xcodebuild build \
+            -project "$PROJECT_NAME.xcodeproj" \
+            -scheme "$SCHEME_NAME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath ./build \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_ALLOWED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      - name: Package .app into .ipa
+        working-directory: src-tauri/gen/apple
+        run: |
+          PROJECT_NAME=$(ls *.xcodeproj | sed 's/\.xcodeproj//' | head -n 1)
+
+          mkdir -p Payload
+          cp -r ./build/Build/Products/Release-iphoneos/*.app Payload/
+          zip -r "${PROJECT_NAME}_unsigned.ipa" Payload
+
+      - name: Upload iOS IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-outputs
+          path: src-tauri/gen/apple/*_unsigned.ipa
+          retention-days: 7
+
   build-android:
     runs-on: ubuntu-latest
 
