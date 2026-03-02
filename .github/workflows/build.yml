@@ -94,7 +94,11 @@ jobs:
 
       - name: Workaround for Tauri iOS xcode-script (server-addr file)
         run: |
-          echo "127.0.0.1:1430" > "${TMPDIR:-/tmp}/com.desqta.app-server-addr"
+          # Create in both TMPDIR and /tmp - Tauri CLI looks for com.desqta.app-server-addr
+          for dir in "${TMPDIR:-/tmp}" /tmp; do
+            echo "127.0.0.1:1430" > "$dir/com.desqta.app-server-addr"
+            echo "Created $dir/com.desqta.app-server-addr"
+          done
 
       - name: Build Unsigned iOS App
         working-directory: src-tauri/gen/apple
@@ -125,7 +129,12 @@ jobs:
           PROJECT_NAME=$(ls -d *.xcodeproj | sed 's/\.xcodeproj$//' | head -n 1)
 
           mkdir -p Payload
-          cp -r ./build/Build/Products/Release-iphoneos/*.app Payload/
+          # Use Release or Debug output depending on what was built
+          if [ -d ./build/Build/Products/Release-iphoneos ]; then
+            cp -r ./build/Build/Products/Release-iphoneos/*.app Payload/
+          else
+            cp -r ./build/Build/Products/debug-iphoneos/*.app Payload/
+          fi
           zip -r "${PROJECT_NAME}_unsigned.ipa" Payload
 
       - name: Upload iOS IPA Artifact
