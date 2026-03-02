@@ -80,45 +80,26 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build Frontend
-        run: pnpm build
-
-      - name: Build Unsigned iOS App
-        working-directory: src-tauri/gen/apple
+      - name: Workaround for Tauri iOS xcode-script (server-addr file)
         run: |
-          PROJECT_NAME=$(ls -d *.xcodeproj | sed 's/\.xcodeproj$//' | head -n 1)
-          SCHEME_NAME="desqta_iOS"
+          echo "127.0.0.1:1430" > "${TMPDIR:-/tmp}/com.desqta.app-server-addr"
 
-          echo "Building project: $PROJECT_NAME with scheme: $SCHEME_NAME"
-
-          xcodebuild build \
-            -project "$PROJECT_NAME.xcodeproj" \
-            -scheme "$SCHEME_NAME" \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath ./build \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_ALLOWED=NO \
-            COMPILER_INDEX_STORE_ENABLE=NO
-
-      - name: Package .app into .ipa
-        working-directory: src-tauri/gen/apple
-        run: |
-          PROJECT_NAME=$(ls -d *.xcodeproj | sed 's/\.xcodeproj$//' | head -n 1)
-
-          mkdir -p Payload
-          cp -r ./build/Build/Products/Release-iphoneos/*.app Payload/
-          zip -r "${PROJECT_NAME}_unsigned.ipa" Payload
+      - name: Build iOS (unsigned)
+        env:
+          CI: true
+        run: pnpm tauri ios build --ci --export-method debugging
 
       - name: Upload iOS IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-build-outputs
-          path: src-tauri/gen/apple/*_unsigned.ipa
+          path: src-tauri/gen/apple/*.ipa
           retention-days: 7
 
   build-android:
