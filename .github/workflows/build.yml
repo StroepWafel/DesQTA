@@ -105,6 +105,11 @@ jobs:
           echo "Rust library built:"
           ls -la gen/apple/Externals/arm64/release/
 
+      - name: Copy frontend assets for iOS
+        run: |
+          mkdir -p src-tauri/gen/apple/assets
+          cp -r build/* src-tauri/gen/apple/assets/
+
       - name: Build Unsigned iOS App
         working-directory: src-tauri/gen/apple
         run: |
