@@ -95,6 +95,17 @@ jobs:
       - name: Build Frontend
         run: pnpm build
 
+      - name: Pre-build Rust library for iOS (bypasses xcode-script which requires dev server)
+        env:
+          IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        run: |
+          cd src-tauri
+          cargo build --release --target aarch64-apple-ios --lib
+          mkdir -p gen/apple/Externals/arm64/release gen/apple/Externals/x86_64/release
+          cp target/aarch64-apple-ios/release/libdesqta_lib.a gen/apple/Externals/arm64/release/libapp.a
+          echo "Rust library built:"
+          ls -la gen/apple/Externals/arm64/release/
+
       - name: Copy frontend assets for iOS
         run: |
           mkdir -p src-tauri/gen/apple/assets
@@ -109,7 +120,7 @@ jobs:
           xcodebuild build \
             -project "$PROJECT_NAME.xcodeproj" \
             -scheme "$SCHEME_NAME" \
-            -configuration Release \
+            -configuration release \
             -sdk iphoneos \
             -derivedDataPath ./build \
             CODE_SIGN_IDENTITY="" \
