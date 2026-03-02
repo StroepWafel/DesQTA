@@ -92,29 +92,15 @@ jobs:
       - name: Build Frontend
         run: pnpm build
 
-      - name: Workaround for Tauri iOS xcode-script (server-addr file)
+      - name: Pre-build Rust library for iOS (cargo build - bypasses Tauri CLI dev server)
         run: |
-          # Create in both TMPDIR and /tmp - Tauri CLI looks for com.desqta.app-server-addr
-          for dir in "${TMPDIR:-/tmp}" /tmp; do
-            echo "127.0.0.1:1430" > "$dir/com.desqta.app-server-addr"
-            echo "Created $dir/com.desqta.app-server-addr"
-          done
-
-      - name: Pre-build Rust library for iOS (runs xcode-script before Xcode to avoid sandbox issues)
-        working-directory: src-tauri/gen/apple
-        run: |
-          SDKROOT=$(xcrun --sdk iphoneos --show-sdk-path)
-          mkdir -p Externals/arm64/release Externals/x86_64/release
-          echo "Building Rust lib for release..."
-          pnpm exec tauri ios xcode-script -v \
-            --platform iOS \
-            --sdk-root "$SDKROOT" \
-            --framework-search-paths "." \
-            --header-search-paths "include" \
-            --configuration release \
-            arm64
+          cd src-tauri
+          cargo build --release --target aarch64-apple-ios --lib
+          mkdir -p gen/apple/Externals/arm64/release gen/apple/Externals/x86_64/release
+          # Tauri iOS expects libapp.a; cargo produces libdesqta_lib.a
+          cp target/aarch64-apple-ios/release/libdesqta_lib.a gen/apple/Externals/arm64/release/libapp.a
           echo "Rust library built:"
-          ls -la Externals/arm64/release/
+          ls -la gen/apple/Externals/arm64/release/
 
       - name: Build Unsigned iOS App
         working-directory: src-tauri/gen/apple
