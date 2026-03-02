@@ -9,7 +9,7 @@
   import Link from '@tiptap/extension-link';
   import BubbleMenu from '@tiptap/extension-bubble-menu';
   import Underline from '@tiptap/extension-underline';
-  import Table from '@tiptap/extension-table';
+  import { Table } from '@tiptap/extension-table';
   import TableRow from '@tiptap/extension-table-row';
   import TableHeader from '@tiptap/extension-table-header';
   import TableCell from '@tiptap/extension-table-cell';
