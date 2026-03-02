@@ -17,7 +17,15 @@
     "clear": "Temizle",
     "refresh": "Yenile",
     "settings": "Ayarlar",
-    "close_theme_builder": "Tema Oluşturucuyu Kapat"
+    "close_theme_builder": "Tema Oluşturucuyu Kapat",
+    "move_up": "Yukarı taşı",
+    "move_down": "Aşağı taşı",
+    "add_folder": "Klasör ekle",
+    "retry": "Yeniden dene",
+    "retrying": "Yeniden deneniyor...",
+    "try_again": "Tekrar dene",
+    "saving": "Kaydediliyor...",
+    "back": "Geri"
   },
   "focus_timer": {
     "title": "Odak Zamanlayıcı",
@@ -882,6 +890,13 @@
     "sign_in": "Giriş yap",
     "step_indicator": "Adım {current} / {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "Giriş sonrası kurulum",
+    "usage_stats_title": "DesQTA'yı geliştirmeye yardımcı olun",
+    "usage_stats_subtitle": "Anonim kullanım istatistikleri göndermek ister misiniz? Bu, uygulamanın nasıl kullanıldığını anlamamıza ve geliştirmemize yardımcı olur. Kişisel veri toplanmaz.",
+    "usage_stats_yes": "Evet, DesQTA'yı geliştirmeye yardımcı ol",
+    "usage_stats_no": "Hayır teşekkürler"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -941,11 +956,18 @@
     "view_all": "Tümünü görüntüle",
     "no_notices_today": "Bugün için duyuru bulunmuyor."
   },
+  "documents": {
+    "loading": "Belgeler yükleniyor...",
+    "failed_to_load": "Belgeler yüklenemedi",
+    "error_loading": "Belgeler yüklenirken hata",
+    "no_documents": "Belge mevcut değil"
+  },
   "reports": {
     "failed_to_load": "Raporlar yüklenemedi.",
     "error_loading": "Raporlar yüklenirken hata.",
     "loading": "Raporlar yükleniyor...",
-    "download": "İndir"
+    "download": "İndir",
+    "open_failed": "Rapor açılamadı"
   },
   "performance": {
     "title": "Performance Test Results - DesQTA",

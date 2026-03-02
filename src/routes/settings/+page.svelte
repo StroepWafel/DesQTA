@@ -93,7 +93,7 @@
   let cerebrasApiKey = $state('');
   let aiProvider = $state<'gemini' | 'cerebras'>('gemini');
 
-  let remindersEnabled = $state(true);
+  let remindersEnabled = $state(false);
   let autoDismissMessageNotifications = $state(false);
   let showCloudSyncModal = $state(false);
   let showTroubleshootingModal = $state(false);
@@ -349,7 +349,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       forceUseLocation = settings.force_use_location ?? false;
       weatherCity = settings.weather_city ?? '';
       weatherCountry = settings.weather_country ?? '';
-      remindersEnabled = settings.reminders_enabled ?? true;
+      remindersEnabled = settings.reminders_enabled ?? false;
       autoDismissMessageNotifications = settings.auto_dismiss_message_notifications ?? false;
       disableSchoolPicture = settings.disable_school_picture ?? false;
       enhancedAnimations = settings.enhanced_animations ?? true;
@@ -422,7 +422,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       forceUseLocation = false;
       weatherCity = '';
       weatherCountry = '';
-      remindersEnabled = true;
+      remindersEnabled = false;
       autoDismissMessageNotifications = false;
       disableSchoolPicture = false;
       enhancedAnimations = true;
@@ -670,7 +670,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     forceUseLocation = cloudSettings.force_use_location ?? false;
     weatherCity = cloudSettings.weather_city ?? '';
     weatherCountry = cloudSettings.weather_country ?? '';
-    remindersEnabled = cloudSettings.reminders_enabled ?? true;
+    remindersEnabled = cloudSettings.reminders_enabled ?? false;
     disableSchoolPicture = cloudSettings.disable_school_picture ?? false;
     enhancedAnimations = cloudSettings.enhanced_animations ?? true;
     geminiApiKey = cloudSettings.gemini_api_key ?? '';

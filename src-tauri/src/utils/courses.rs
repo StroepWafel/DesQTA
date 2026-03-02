@@ -32,6 +32,7 @@ pub struct Folder {
 pub struct FileItem {
     #[serde(default)]
     pub filename: String,
+    #[serde(default)]
     pub size: String,
     pub context_uuid: Option<String>,
     pub mimetype: String,
@@ -63,6 +64,7 @@ pub struct UserFile {
     #[serde(default)]
     pub filename: String,
     pub t: String,
+    #[serde(default)]
     pub size: String,
     pub context_uuid: Option<String>,
     pub i: Option<i32>,

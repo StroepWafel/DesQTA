@@ -3,7 +3,7 @@
   import { PencilSquare, Trash, Star, ArrowUturnLeft, PaperClip } from 'svelte-hero-icons';
   import type { Message, MessageFile } from '../types';
   import { sanitizeHtmlAsync } from '../../../utils/sanitization';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import { buildIframeHtml } from '../utils/iframeHtml';
@@ -167,26 +167,31 @@
     // Load SEQTA base URL
     loadSeqtaBaseUrl();
 
-    // Set up a resize observer to handle window resizing
-    if (window.ResizeObserver && iframe) {
-      const currentIframe = iframe; // Capture for closure
-      const resizeObserver = new ResizeObserver(() => {
-        if (currentIframe) adjustIframeHeight();
-      });
+    let resizeObserver: ResizeObserver | null = null;
+    let observedEl: HTMLIFrameElement | null = null;
 
-      resizeObserver.observe(currentIframe);
-
-      return () => {
-        resizeObserver.unobserve(currentIframe);
-        // Clean up message listener on unmount
-        if (messageListenerCleanup) {
-          messageListenerCleanup();
-        }
-      };
-    }
+    // Defer observer setup so iframe bind:this is populated (rAF avoids ResizeObserver loop errors)
+    const setupObserver = async () => {
+      await tick();
+      if (window.ResizeObserver && iframe) {
+        observedEl = iframe;
+        let rafId: number | null = null;
+        resizeObserver = new ResizeObserver(() => {
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(() => {
+            if (observedEl) adjustIframeHeight();
+            rafId = null;
+          });
+        });
+        resizeObserver.observe(iframe);
+      }
+    };
+    void setupObserver();
 
     return () => {
-      // Clean up message listener on unmount
+      if (resizeObserver && observedEl) {
+        resizeObserver.unobserve(observedEl);
+      }
       if (messageListenerCleanup) {
         messageListenerCleanup();
       }

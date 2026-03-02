@@ -933,6 +933,13 @@
     "sign_in": "Sign in",
     "step_indicator": "Step {current} of {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "Post-login setup",
+    "usage_stats_title": "Help improve DesQTA",
+    "usage_stats_subtitle": "Would you like to send anonymous usage statistics? This helps us understand how the app is used and improve it. No personal data is collected.",
+    "usage_stats_yes": "Yes, help improve DesQTA",
+    "usage_stats_no": "No thanks"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",

@@ -25,7 +25,7 @@
 </script>
 
 <section
-  class="w-full xl:w-md border-r border-zinc-300/50 dark:border-zinc-800/50 flex flex-col bg-white dark:bg-zinc-900 backdrop-blur-xs shadow-md rounded-xl m-2">
+  class="w-full xl:w-md border-r border-zinc-300/50 dark:border-zinc-800/50 flex flex-col flex-1 min-h-0 bg-white dark:bg-zinc-900 backdrop-blur-xs shadow-md rounded-xl m-2 overflow-hidden">
   <div
     class="flex items-center p-4 text-base font-semibold border-b text-zinc-900 sm:text-lg border-zinc-300/50 dark:border-zinc-800/50 dark:text-white">
     <svg
@@ -39,7 +39,8 @@
   </div>
 
   <div
-    class="overflow-y-auto flex-1 p-1 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent">
+    class="overflow-y-auto flex-1 min-h-0 p-1 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent"
+    style="-webkit-overflow-scrolling: touch;">
     {#if loading}
       <div class="p-2 space-y-2">
         {#each Array(6) as _, i}
