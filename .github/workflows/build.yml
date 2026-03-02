@@ -97,13 +97,12 @@ jobs:
 
       - name: Pre-build Rust library for iOS (cargo build - bypasses Tauri CLI dev server)
         env:
-          # tauri-plugin-safe-area-insets-css uses Swift Logger (iOS 14+); set deployment target for Swift compilation
           IPHONEOS_DEPLOYMENT_TARGET: "15.0"
         run: |
           cd src-tauri
+          # Release profile ensures cfg(dev)=false so app uses embedded assets, not localhost:1420
           cargo build --release --target aarch64-apple-ios --lib
           mkdir -p gen/apple/Externals/arm64/release gen/apple/Externals/x86_64/release
-          # Tauri iOS expects libapp.a; cargo produces libdesqta_lib.a
           cp target/aarch64-apple-ios/release/libdesqta_lib.a gen/apple/Externals/arm64/release/libapp.a
           echo "Rust library built:"
           ls -la gen/apple/Externals/arm64/release/
@@ -118,9 +117,7 @@ jobs:
         run: |
           PROJECT_NAME=$(ls -d *.xcodeproj | sed 's/\.xcodeproj$//' | head -n 1)
           SCHEME_NAME="desqta_iOS"
-
           echo "Building project: $PROJECT_NAME with scheme: $SCHEME_NAME"
-
           xcodebuild build \
             -project "$PROJECT_NAME.xcodeproj" \
             -scheme "$SCHEME_NAME" \
