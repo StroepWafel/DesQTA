@@ -25,12 +25,11 @@ function layerchartRunesPlugin() {
       if (!id.endsWith('.svelte.js') || id.includes('?')) return;
       let resolvedPath = id;
       if (importer) {
-        const importerPath = importer.includes(QUERY) ? importer.split(QUERY)[0] : importer;
+        const importerPath = importer.includes(QUERY) ? importer.split(QUERY)[0] : importer.split('?')[0];
         const importerDir = path.dirname(importerPath);
         resolvedPath = path.resolve(importerDir, id);
       }
       if (resolvedPath.includes('layerchart')) {
-        // Real path + query: path exists for dependency resolution, query triggers our load
         return resolvedPath + QUERY;
       }
     },
@@ -38,7 +37,15 @@ function layerchartRunesPlugin() {
     load(id) {
       if (id.endsWith(QUERY)) {
         const realPath = id.slice(0, -QUERY.length);
-        const code = fs.readFileSync(realPath, 'utf-8');
+        let code = fs.readFileSync(realPath, 'utf-8');
+        // Already-compiled files use "import * as $ from 'svelte/internal/client'" which
+        // Svelte 5 reserves. Rewrite $ to __svelte__ to avoid the error.
+        if (code.includes("from 'svelte/internal/client'") || code.includes('from "svelte/internal/client"')) {
+          code = code
+            .replace(/import \* as \$ from ['"]svelte\/internal\/client['"]/g, 'import * as __svelte__ from \'svelte/internal/client\'')
+            .replace(/\b\$\./g, '__svelte__.');
+          return code;
+        }
         const result = compileModule(code, {
           filename: realPath,
           generate: 'client',
