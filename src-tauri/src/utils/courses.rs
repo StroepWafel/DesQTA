@@ -30,6 +30,7 @@ pub struct Folder {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileItem {
+    #[serde(default)]
     pub filename: String,
     pub size: String,
     pub context_uuid: Option<String>,
@@ -59,6 +60,7 @@ pub struct TermSchedule {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserFile {
     pub userfile: Option<i32>,
+    #[serde(default)]
     pub filename: String,
     pub t: String,
     pub size: String,
