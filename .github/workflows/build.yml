@@ -93,6 +93,9 @@ jobs:
         run: pnpm build
 
       - name: Pre-build Rust library for iOS (cargo build - bypasses Tauri CLI dev server)
+        env:
+          # tauri-plugin-safe-area-insets-css uses Swift Logger (iOS 14+); set deployment target for Swift compilation
+          IPHONEOS_DEPLOYMENT_TARGET: "14.0"
         run: |
           cd src-tauri
           cargo build --release --target aarch64-apple-ios --lib
