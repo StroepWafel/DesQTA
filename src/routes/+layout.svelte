@@ -837,7 +837,7 @@
       <main
         class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen || isMobile
           ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 {isMobile && !$needsSetup ? 'pb-[56px] mobile-main' : ''}"
+          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 [scrollbar-gutter:stable] {isMobile && !$needsSetup ? 'pb-[56px] mobile-main' : ''}"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if !$needsSetup}
           <OfflineBanner />

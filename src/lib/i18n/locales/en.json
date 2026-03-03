@@ -614,6 +614,7 @@
   },
   "rss_feeds": {
     "title": "RSS Feeds",
+    "description": "Read and browse your subscribed RSS feeds in one place.",
     "no_feeds": "No RSS Feeds",
     "add_feeds_in_settings": "Add RSS feeds in Settings to get started.",
     "add_feeds_in_settings_empty": "Add, edit, or remove RSS feeds in Settings.",
@@ -622,7 +623,8 @@
     "feed_item_detail": "RSS Feed Item Detail",
     "manage_feeds_in_settings": "Manage Feeds in Settings",
     "manage_feeds": "Manage feeds",
-    "select_feed": "Select Feed"
+    "select_feed": "Select Feed",
+    "your_feeds": "Your Feeds"
   },
   "messages": {
     "failed_to_load": "Failed to load messages.",
@@ -642,6 +644,7 @@
     "loading_data": "Loading Data...",
     "error": "Error! {error}",
     "no_messages_in_folder": "No messages in this folder.",
+    "no_messages_in_folder_hint": "Select another folder or check back later.",
     "compose_message": "Compose message",
     "subject": "Subject",
     "subject_placeholder": "Subject...",

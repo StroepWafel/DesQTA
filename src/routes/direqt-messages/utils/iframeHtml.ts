@@ -17,10 +17,11 @@ export function buildIframeHtml(content: string): string {
   const forwardPreambleText = isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(24,24,27,0.7)';
 
   const styleRules = [
-    `body{font-family:system-ui,-apple-system,sans-serif;color:${textColor};margin:0;padding:0 1px;background-color:transparent;line-height:1.8;font-size:15px}`,
+    `body{font-family:system-ui,-apple-system,sans-serif;color:${textColor};margin:0 auto;padding:0 0 2rem;background-color:transparent;line-height:1.75;font-size:16px;max-width:65ch}`,
     `a{color:${linkColor};text-decoration:none;cursor:pointer}`,
     'a:hover{text-decoration:underline}',
-    'p{margin:0 0 1.2em}',
+    'p{margin:0 0 1.25em}',
+    'img{max-width:100%;height:auto}',
     `.forward{border:1px solid ${forwardBorder};background-color:${forwardBg};padding:8px;border-radius:8px;margin:0}`,
     `.forward .preamble{font-size:12px;color:${forwardPreambleText};margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid ${forwardPreambleBorder}}`,
     `blockquote{border-left:3px solid ${linkColor};margin-left:0;padding-left:12px;color:${textColorSecondary}}`,
