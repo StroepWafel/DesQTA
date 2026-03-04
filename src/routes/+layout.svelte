@@ -475,12 +475,13 @@
         logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
       }
 
-      // Check if app was just updated - show What's New modal
+      // Check if app was just updated - show What's New modal (disabled for rc/beta)
       try {
         const versionInfo = await invoke<{ current: string; previousVersion?: string }>(
           'get_version_update_info'
         );
-        if (versionInfo?.previousVersion && !get(needsSetup)) {
+        const isStableRelease = !versionInfo?.current?.includes('rc') && !versionInfo?.current?.includes('beta');
+        if (versionInfo?.previousVersion && !get(needsSetup) && isStableRelease) {
           versionUpdateCurrent = versionInfo.current;
           versionUpdatePrevious = versionInfo.previousVersion;
           try {
