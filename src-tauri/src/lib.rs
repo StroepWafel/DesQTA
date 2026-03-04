@@ -750,6 +750,9 @@ pub fn run() {
                     
                     let window_clone = window.clone();
                     let current_fullscreen = Cell::new(window.is_fullscreen().unwrap_or(false));
+                    #[cfg(target_os = "macos")]
+                    let current_maximized = Cell::new(false); // Avoid is_maximized() on macOS (plugins-workspace#1918)
+                    #[cfg(not(target_os = "macos"))]
                     let current_maximized = Cell::new(window.is_maximized().unwrap_or(false));
                     
                     // Helper function to check and emit window state changes
@@ -757,6 +760,11 @@ pub fn run() {
                         let window_ref = window_clone.clone();
                         move || {
                             let is_fullscreen = window_ref.is_fullscreen().unwrap_or(false);
+                            // On macOS with undecorated windows: is_maximized() in Resized handler
+                            // causes infinite resize loop → 100% CPU hang (tauri-apps/plugins-workspace#1918)
+                            #[cfg(target_os = "macos")]
+                            let is_maximized = false;
+                            #[cfg(not(target_os = "macos"))]
                             let is_maximized = window_ref.is_maximized().unwrap_or(false);
                             let should_remove_corners = is_fullscreen || is_maximized;
                             
