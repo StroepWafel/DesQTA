@@ -17,7 +17,15 @@
     "clear": "مسح",
     "refresh": "تحديث",
     "settings": "الإعدادات",
-    "close_theme_builder": "إغلاق منشئ المظهر"
+    "close_theme_builder": "إغلاق منشئ المظهر",
+    "move_up": "تحريك لأعلى",
+    "move_down": "تحريك لأسفل",
+    "add_folder": "إضافة مجلد",
+    "retry": "إعادة المحاولة",
+    "retrying": "جاري إعادة المحاولة...",
+    "try_again": "حاول مرة أخرى",
+    "saving": "جاري الحفظ...",
+    "back": "رجوع"
   },
   "focus_timer": {
     "title": "مؤقت التركيز",
@@ -865,6 +873,13 @@
     "sign_in": "تسجيل الدخول",
     "step_indicator": "الخطوة {current} من {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "الإعداد بعد تسجيل الدخول",
+    "usage_stats_title": "ساعد في تحسين DesQTA",
+    "usage_stats_subtitle": "هل تريد إرسال إحصائيات استخدام مجهولة؟ هذا يساعدنا على فهم كيفية استخدام التطبيق وتحسينه. لا يتم جمع أي بيانات شخصية.",
+    "usage_stats_yes": "نعم، ساعد في تحسين DesQTA",
+    "usage_stats_no": "لا شكراً"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -924,11 +939,18 @@
     "view_all": "عرض الكل",
     "no_notices_today": "لا توجد إشعارات متاحة اليوم."
   },
+  "documents": {
+    "loading": "جاري تحميل المستندات...",
+    "failed_to_load": "فشل في تحميل المستندات",
+    "error_loading": "خطأ في تحميل المستندات",
+    "no_documents": "لا توجد مستندات متاحة"
+  },
   "reports": {
     "failed_to_load": "فشل في تحميل التقارير.",
     "error_loading": "خطأ في تحميل التقارير.",
     "loading": "جاري تحميل التقارير...",
-    "download": "تحميل"
+    "download": "تحميل",
+    "open_failed": "فشل في فتح التقرير"
   },
   "performance": {
     "title": "Performance Test Results - DesQTA",

@@ -6,14 +6,14 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	// Exclude layerchart's .svelte.js files - they contain Svelte 5 runes that our
+	// Exclude layerchart's .svelte.js files (not .svelte) - they contain Svelte 5 runes that our
 	// layerchartRunesPlugin compiles. Without this, the Svelte plugin would re-process
-	// our compiled output and fail on the internal $ import.
+	// our compiled output and fail on the internal $ import. Pattern matches .svelte.js and .svelte.js?*
 	vitePlugin: {
-		exclude: ['**/node_modules/layerchart/**/*.svelte.js', '**/layerchart/**/*.svelte.js'],
+		exclude: ['**/node_modules/layerchart/**/*.svelte.js*', '**/layerchart/**/*.svelte.js*'],
 		experimental: {
 			compileModule: {
-				exclude: ['**/node_modules/layerchart/**/*.svelte.js', '**/layerchart/**/*.svelte.js'],
+				exclude: ['**/node_modules/layerchart/**/*.svelte.js*', '**/layerchart/**/*.svelte.js*'],
 			},
 		},
 	},

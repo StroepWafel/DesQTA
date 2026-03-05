@@ -17,7 +17,15 @@
     "clear": "Wissen",
     "refresh": "Vernieuwen",
     "settings": "Instellingen",
-    "close_theme_builder": "Thema Builder Sluiten"
+    "close_theme_builder": "Thema Builder Sluiten",
+    "move_up": "Omhoog",
+    "move_down": "Omlaag",
+    "add_folder": "Map toevoegen",
+    "retry": "Opnieuw proberen",
+    "retrying": "Opnieuw proberen...",
+    "try_again": "Opnieuw proberen",
+    "saving": "Opslaan...",
+    "back": "Terug"
   },
   "focus_timer": {
     "title": "Focustimer",
@@ -865,6 +873,13 @@
     "sign_in": "Inloggen",
     "step_indicator": "Stap {current} van {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "Instellingen na inloggen",
+    "usage_stats_title": "Help DesQTA te verbeteren",
+    "usage_stats_subtitle": "Wilt u anonieme gebruiksstatistieken verzenden? Dit helpt ons begrijpen hoe de app wordt gebruikt en deze te verbeteren. Er worden geen persoonlijke gegevens verzameld.",
+    "usage_stats_yes": "Ja, help DesQTA te verbeteren",
+    "usage_stats_no": "Nee bedankt"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -924,11 +939,18 @@
     "view_all": "Alles bekijken",
     "no_notices_today": "Geen mededelingen beschikbaar vandaag."
   },
+  "documents": {
+    "loading": "Documenten laden...",
+    "failed_to_load": "Documenten laden mislukt",
+    "error_loading": "Fout bij laden van documenten",
+    "no_documents": "Geen documenten beschikbaar"
+  },
   "reports": {
     "failed_to_load": "Rapporten laden mislukt.",
     "error_loading": "Fout bij laden van rapporten.",
     "loading": "Rapporten laden...",
-    "download": "Downloaden"
+    "download": "Downloaden",
+    "open_failed": "Rapport openen mislukt"
   },
   "performance": {
     "title": "Performance Test Results - DesQTA",

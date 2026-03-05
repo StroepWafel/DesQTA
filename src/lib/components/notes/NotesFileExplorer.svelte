@@ -712,7 +712,7 @@
 <!-- Move Note Modal -->
 {#if showMoveNoteModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs mobile-modal-inset"
     transition:fly={{ y: 50, duration: 200 }}
     role="button"
     tabindex="0"
@@ -783,7 +783,7 @@
 <!-- Delete Confirmation Modal -->
 {#if showDeleteModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs mobile-modal-inset"
     transition:fly={{ y: 50, duration: 200 }}
     role="button"
     tabindex="0"
@@ -848,7 +848,7 @@
 <!-- Create Folder Modal -->
 {#if showCreateFolderModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm mobile-modal-inset"
     in:fly={{ y: 20, duration: 300, easing: quintOut }}>
     <div
       class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-xl p-6 w-full max-w-md mx-4">
@@ -882,7 +882,7 @@
 <!-- Rename Modal -->
 {#if showRenameModal && renamingItem}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm mobile-modal-inset"
     in:fly={{ y: 20, duration: 300, easing: quintOut }}>
     <div
       class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-xl p-6 w-full max-w-md mx-4">

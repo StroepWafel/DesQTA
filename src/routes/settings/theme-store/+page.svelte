@@ -1085,7 +1085,7 @@
 <!-- Collection Modal -->
 {#if collectionModalOpen && selectedCollection}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 mobile-modal-inset"
     role="dialog"
     aria-modal="true"
     aria-labelledby="collection-modal-title"
@@ -1099,7 +1099,7 @@
 
     <!-- Modal Content -->
     <div
-      class="relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden flex flex-col"
+      class="relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden flex flex-col mobile-modal-max-h"
       role="document"
       transition:fly={{ y: 20, duration: 300, easing: cubicOut }}>
       <!-- Header -->

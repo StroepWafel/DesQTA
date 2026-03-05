@@ -421,7 +421,7 @@
 {#if open}
   <!-- Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50 transition-opacity"
+    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50 transition-opacity mobile-modal-inset"
     transition:fade={{ duration: 300, easing: cubicInOut }}
     onclick={(e) => {
       if (e.target === e.currentTarget) onClose();
@@ -435,7 +435,7 @@
     aria-labelledby="sidebar-settings-dialog-title">
     <!-- Dialog -->
     <div
-      class="relative bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col"
+      class="relative bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col mobile-modal-max-h"
       transition:fly={{ duration: 300, y: 20, easing: cubicInOut }}>
       <!-- Header -->
       <div

@@ -75,7 +75,7 @@ onMount(() => {
 });
 </script>
 
-<div class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs">
+<div class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs mobile-modal-inset">
   <div class="pages-modal relative w-full max-w-xl mx-auto rounded-2xl bg-white/70 dark:bg-zinc-900/80 shadow-2xl border border-white/20 dark:border-zinc-700/40 backdrop-blur-xl p-0 flex flex-col animate-in"
     style="backdrop-filter: blur(24px);"
     in:scale={{ duration: 180, start: 0.98, opacity: 0 }}

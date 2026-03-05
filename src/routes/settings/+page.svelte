@@ -93,7 +93,7 @@
   let cerebrasApiKey = $state('');
   let aiProvider = $state<'gemini' | 'cerebras'>('gemini');
 
-  let remindersEnabled = $state(true);
+  let remindersEnabled = $state(false);
   let autoDismissMessageNotifications = $state(false);
   let showCloudSyncModal = $state(false);
   let showTroubleshootingModal = $state(false);
@@ -146,7 +146,7 @@
         if (!status.isAvailable) {
           biometricToggleError =
             status.error ?? $_('setup_assistant.biometric_unavailable', { default: 'Biometric authentication is not available on this device.' });
-          toastStore.error(biometricToggleError);
+          toastStore.error(biometricToggleError ?? 'Biometric unavailable');
           return;
         }
         await authenticate($_('setup_assistant.biometric_title', { default: 'Unlock with biometrics' }), {
@@ -349,7 +349,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       forceUseLocation = settings.force_use_location ?? false;
       weatherCity = settings.weather_city ?? '';
       weatherCountry = settings.weather_country ?? '';
-      remindersEnabled = settings.reminders_enabled ?? true;
+      remindersEnabled = settings.reminders_enabled ?? false;
       autoDismissMessageNotifications = settings.auto_dismiss_message_notifications ?? false;
       disableSchoolPicture = settings.disable_school_picture ?? false;
       enhancedAnimations = settings.enhanced_animations ?? true;
@@ -422,7 +422,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       forceUseLocation = false;
       weatherCity = '';
       weatherCountry = '';
-      remindersEnabled = true;
+      remindersEnabled = false;
       autoDismissMessageNotifications = false;
       disableSchoolPicture = false;
       enhancedAnimations = true;
@@ -670,7 +670,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     forceUseLocation = cloudSettings.force_use_location ?? false;
     weatherCity = cloudSettings.weather_city ?? '';
     weatherCountry = cloudSettings.weather_country ?? '';
-    remindersEnabled = cloudSettings.reminders_enabled ?? true;
+    remindersEnabled = cloudSettings.reminders_enabled ?? false;
     disableSchoolPicture = cloudSettings.disable_school_picture ?? false;
     enhancedAnimations = cloudSettings.enhanced_animations ?? true;
     geminiApiKey = cloudSettings.gemini_api_key ?? '';
@@ -1018,7 +1018,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             totalWarnings: 0,
           },
           timestamp: new Date().toISOString(),
-          version: '1.0.0-rc.8',
+          version: '1.0.0-rc.9',
         };
 
         await invoke('save_performance_test_results', { results: errorResults });
@@ -2566,16 +2566,16 @@ The Company reserves the right to terminate your access to the Service at any ti
   }} />
 
 {#if showEulaModal}
-  <div class="flex fixed inset-0 z-50 justify-center items-center">
+  <div class="flex fixed inset-0 z-50 justify-center items-center mobile-modal-inset">
     <div
-      class="absolute inset-0 backdrop-blur-xs bg-black/50"
+      class="absolute inset-0 backdrop-blur-xs bg-black/50 mobile-modal-inset"
       role="button"
       tabindex="0"
       onclick={() => (showEulaModal = false)}
       onkeydown={(e) => e.key === 'Escape' && (showEulaModal = false)}>
     </div>
     <div
-      class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 animate-fade-in">
+      class="relative max-w-2xl w-[90vw] max-h-[80vh] rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 animate-fade-in mobile-modal-max-h">
       <h3 class="mb-3 text-lg font-semibold">BetterSEQTA Cloud EULA</h3>
       <div
         class="overflow-auto p-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-200"

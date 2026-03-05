@@ -152,7 +152,7 @@
 {#if open}
   <!-- Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 mobile-modal-inset"
     role="dialog"
     aria-modal="true"
     aria-labelledby="theme-preview-title"
@@ -172,7 +172,7 @@
 
     <!-- Modal -->
     <div
-      class="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10"
+      class="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10 mobile-modal-max-h"
       role="document"
       transition:fly={{ y: 20, duration: 300, easing: cubicOut }}
       onclick={(e) => e.stopPropagation()}

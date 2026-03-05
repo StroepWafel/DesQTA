@@ -42,7 +42,7 @@
 </script>
 
 <nav
-  class="md:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-zinc-200 dark:border-zinc-700/50 theme-bg bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-zinc-900/80"
+  class="mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-zinc-200 dark:border-zinc-700/50 theme-bg bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-zinc-900/80"
   style="min-height: 56px;"
   aria-label={$_('navigation.menu', { default: 'Main navigation' })}>
   {#each NAV_ITEMS as item}

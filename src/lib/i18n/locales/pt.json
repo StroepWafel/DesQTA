@@ -17,7 +17,15 @@
     "clear": "Limpar",
     "refresh": "Atualizar",
     "settings": "Configurações",
-    "close_theme_builder": "Fechar Construtor de Temas"
+    "close_theme_builder": "Fechar Construtor de Temas",
+    "move_up": "Mover para cima",
+    "move_down": "Mover para baixo",
+    "add_folder": "Adicionar pasta",
+    "retry": "Tentar novamente",
+    "retrying": "Tentando novamente...",
+    "try_again": "Tentar novamente",
+    "saving": "Salvando...",
+    "back": "Voltar"
   },
   "focus_timer": {
     "title": "Timer de foco",
@@ -870,6 +878,13 @@
     "sign_in": "Entrar",
     "step_indicator": "Passo {current} de {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "Configuração pós-login",
+    "usage_stats_title": "Ajude a melhorar o DesQTA",
+    "usage_stats_subtitle": "Gostaria de enviar estatísticas de uso anônimas? Isso nos ajuda a entender como o app é usado e melhorá-lo. Nenhum dado pessoal é coletado.",
+    "usage_stats_yes": "Sim, ajudar a melhorar o DesQTA",
+    "usage_stats_no": "Não, obrigado"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -929,11 +944,18 @@
     "view_all": "Ver todos",
     "no_notices_today": "Nenhum aviso disponível hoje."
   },
+  "documents": {
+    "loading": "Carregando documentos...",
+    "failed_to_load": "Falha ao carregar documentos",
+    "error_loading": "Erro ao carregar documentos",
+    "no_documents": "Nenhum documento disponível"
+  },
   "reports": {
     "failed_to_load": "Falha ao carregar relatórios.",
     "error_loading": "Erro ao carregar relatórios.",
     "loading": "Carregando relatórios...",
-    "download": "Baixar"
+    "download": "Baixar",
+    "open_failed": "Falha ao abrir relatório"
   },
   "performance": {
     "title": "Resultados do Teste de Desempenho - DesQTA",

@@ -17,7 +17,15 @@
     "clear": "Очистить",
     "refresh": "Обновить",
     "settings": "Настройки",
-    "close_theme_builder": "Закрыть конструктор тем"
+    "close_theme_builder": "Закрыть конструктор тем",
+    "move_up": "Вверх",
+    "move_down": "Вниз",
+    "add_folder": "Добавить папку",
+    "retry": "Повторить",
+    "retrying": "Повторение...",
+    "try_again": "Попробовать снова",
+    "saving": "Сохранение...",
+    "back": "Назад"
   },
   "focus_timer": {
     "title": "Таймер фокуса",
@@ -870,6 +878,13 @@
     "sign_in": "Войти",
     "step_indicator": "Шаг {current} из {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "Настройка после входа",
+    "usage_stats_title": "Помогите улучшить DesQTA",
+    "usage_stats_subtitle": "Хотите отправлять анонимную статистику использования? Это поможет нам понять, как используется приложение, и улучшить его. Персональные данные не собираются.",
+    "usage_stats_yes": "Да, помочь улучшить DesQTA",
+    "usage_stats_no": "Нет, спасибо"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -929,11 +944,18 @@
     "view_all": "Показать все",
     "no_notices_today": "Сегодня нет доступных уведомлений."
   },
+  "documents": {
+    "loading": "Загрузка документов...",
+    "failed_to_load": "Не удалось загрузить документы",
+    "error_loading": "Ошибка загрузки документов",
+    "no_documents": "Нет доступных документов"
+  },
   "reports": {
     "failed_to_load": "Не удалось загрузить отчеты.",
     "error_loading": "Ошибка загрузки отчетов.",
     "loading": "Загрузка отчетов...",
-    "download": "Скачать"
+    "download": "Скачать",
+    "open_failed": "Не удалось открыть отчет"
   },
   "performance": {
     "title": "Результаты теста производительности - DesQTA",

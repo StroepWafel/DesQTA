@@ -84,6 +84,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
       - name: Build Windows
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -122,6 +125,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
 
       - name: Build macOS Intel
         env:
@@ -162,6 +168,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
       - name: Build macOS ARM
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -175,6 +184,49 @@ jobs:
           path: |
             src-tauri/target/aarch64-apple-darwin/release/bundle/**
             src-tauri/target/aarch64-apple-darwin/release/*.sig
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev libgtk-3-dev build-essential libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
+      - name: Build Linux (.deb, .AppImage, .rpm)
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: pnpm tauri build
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-builds
+          path: src-tauri/target/release/bundle/
 
   build-android:
     runs-on: ubuntu-latest
@@ -231,6 +283,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
       - name: Accept Android licenses
         run: |
           yes | sdkmanager --licenses || true
@@ -276,7 +331,7 @@ jobs:
           path: src-tauri/gen/android/app/build/outputs/apk/*/release/*.apk
 
   create-release:
-    needs: [build-windows, build-macos-intel, build-macos-arm, build-android]
+    needs: [build-windows, build-macos-intel, build-macos-arm, build-linux, build-android]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -319,7 +374,7 @@ jobs:
       - name: Collect artifact paths for release
         id: artifact-paths
         run: |
-          paths=$(find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.sig' -o -name '*.dmg' -o -name '*.apk' \) | tr '\n' ',')
+          paths=$(find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.sig' -o -name '*.dmg' -o -name '*.apk' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.rpm' \) | tr '\n' ',')
           paths="${paths%,}"
           echo "paths=$paths" >> $GITHUB_OUTPUT
 

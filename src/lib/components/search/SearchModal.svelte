@@ -131,7 +131,7 @@
 
 {#if showModal}
   <div
-    class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs"
+    class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs mobile-modal-inset"
     transition:fade={{ duration: 200, easing: cubicInOut }}>
     <div
       class="global-search-modal relative w-full max-w-2xl mx-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 shadow-2xl border border-white/20 dark:border-zinc-700/40 backdrop-blur-xl flex flex-col overflow-hidden touch-none"

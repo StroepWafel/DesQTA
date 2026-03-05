@@ -17,7 +17,15 @@
     "clear": "Effacer",
     "refresh": "Actualiser",
     "settings": "Paramètres",
-    "close_theme_builder": "Fermer le Constructeur de Thèmes"
+    "close_theme_builder": "Fermer le Constructeur de Thèmes",
+    "move_up": "Monter",
+    "move_down": "Descendre",
+    "add_folder": "Ajouter un dossier",
+    "retry": "Réessayer",
+    "retrying": "Nouvelle tentative...",
+    "try_again": "Réessayer",
+    "saving": "Enregistrement...",
+    "back": "Retour"
   },
   "focus_timer": {
     "title": "Minuteur de concentration",
@@ -142,6 +150,8 @@
     "scan_camera": "Scanner avec Caméra",
     "how_get_qr": "Comment obtenir un code QR ?",
     "manual_login": "Connexion Manuelle",
+    "manual_url": "URL Manuelle",
+    "qr_code": "Code QR",
     "enter_url": "Entrez l'URL SEQTA de votre école",
     "url_placeholder": "ecole.seqta.com.au",
     "sign_in": "Se Connecter à DesQTA",
@@ -169,6 +179,46 @@
     "feature_settings_desc": "Préférences de l'application",
     "fill_all_fields": "Veuillez remplir tous les champs",
     "failed_credentials": "Échec de la connexion. Vérifiez vos identifiants."
+  },
+  "features": {
+    "lightning_fast": "Performances ultra-rapides",
+    "qr_login": "Connexion par code QR fluide",
+    "beautiful_ui": "Interface belle et intuitive",
+    "analytics": "Tableau de bord analytique avancé",
+    "notifications": "Notifications en temps réel",
+    "offline": "Prise en charge du mode hors ligne",
+    "cross_platform": "Compatibilité multiplateforme",
+    "security": "Fonctionnalités de sécurité renforcées",
+    "themes": "Thèmes personnalisables",
+    "predictions": "Prédictions intelligentes des notes"
+  },
+  "qr_instructions": {
+    "title": "Comment obtenir votre code QR",
+    "subtitle": "Suivez ces étapes pour obtenir votre code QR de l'app mobile SEQTA",
+    "step1_title": "Ouvrez SEQTA dans votre navigateur",
+    "step1_desc": "Allez à l'URL SEQTA de votre école (ex. votreecole.seqta.com.au) et connectez-vous avec vos identifiants habituels.",
+    "step2_title": "Accédez aux Paramètres",
+    "step2_desc": "Une fois connecté, cherchez la section Paramètres. Elle se trouve généralement dans la barre latérale gauche.",
+    "step3_title": "Cliquez sur \"Connecter l'app mobile\"",
+    "step3_desc": "Trouvez et cliquez sur l'option \"Connecter l'app mobile\" ou \"Appareil mobile\". Cela lancera le processus de connexion.",
+    "step4_title": "Vérifiez votre e-mail",
+    "step4_desc": "SEQTA enverra un e-mail à votre adresse e-mail scolaire enregistrée. Cet e-mail contient le code QR dont vous avez besoin pour DesQTA.",
+    "step4_note": "L'e-mail peut prendre quelques minutes. Vérifiez votre dossier spam si vous ne le voyez pas.",
+    "step5_title": "Capturez ou enregistrez le code QR",
+    "step5_desc": "Ouvrez l'e-mail et prenez une capture d'écran du code QR, ou enregistrez l'image du code QR sur votre appareil.",
+    "step5_desktop": "Clic droit sur le code QR → \"Enregistrer l'image sous...\"",
+    "step5_mobile": "Appui long sur le code QR → \"Enregistrer dans Photos\" ou prendre une capture d'écran",
+    "step6_title": "Téléchargez vers DesQTA",
+    "step6_desc": "Retournez à DesQTA et utilisez le bouton \"Télécharger le code QR\" pour sélectionner et télécharger votre image enregistrée. DesQTA vous connectera automatiquement !",
+    "help_title": "Besoin de plus d'aide ?",
+    "help_desc": "Si vous ne trouvez pas l'option \"Connecter l'app mobile\", elle peut avoir un nom différent dans votre école, comme :",
+    "help_options": ["Enregistrement d'appareil mobile", "Configuration de l'app", "Configuration du code QR", "Connecter l'appareil"],
+    "help_contact": "Contactez le support informatique de votre école si vous ne trouvez toujours pas cette option.",
+    "got_it": "Compris, merci !"
+  },
+  "dev": {
+    "mock_api": "Backend API factice",
+    "mock_desc": "Remplace les appels API SEQTA en direct par des données factices sûres."
   },
   "about": {
     "title": "À propos de DesQTA",
@@ -778,6 +828,13 @@
     "sign_in": "Se connecter",
     "step_indicator": "Étape {current} sur {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "Configuration après connexion",
+    "usage_stats_title": "Aidez à améliorer DesQTA",
+    "usage_stats_subtitle": "Souhaitez-vous envoyer des statistiques d'utilisation anonymes ? Cela nous aide à comprendre comment l'application est utilisée et à l'améliorer. Aucune donnée personnelle n'est collectée.",
+    "usage_stats_yes": "Oui, aider à améliorer DesQTA",
+    "usage_stats_no": "Non merci"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -837,11 +894,18 @@
     "view_all": "Voir tout",
     "no_notices_today": "Aucun avis disponible aujourd'hui."
   },
+  "documents": {
+    "loading": "Chargement des documents...",
+    "failed_to_load": "Échec du chargement des documents",
+    "error_loading": "Erreur de chargement des documents",
+    "no_documents": "Aucun document disponible"
+  },
   "reports": {
     "failed_to_load": "Échec du chargement des rapports.",
     "error_loading": "Erreur de chargement des rapports.",
     "loading": "Chargement des rapports...",
-    "download": "Télécharger"
+    "download": "Télécharger",
+    "open_failed": "Échec de l'ouverture du rapport"
   },
   "performance": {
     "title": "Résultats des Tests de Performance - DesQTA",

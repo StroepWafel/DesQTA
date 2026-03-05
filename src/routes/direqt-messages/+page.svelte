@@ -315,8 +315,8 @@
   }
 </script>
 
-<div class="flex h-full">
-  <div class="flex w-full h-full max-xl:flex-col">
+<div class="flex flex-col min-h-0 flex-1 overflow-hidden">
+  <div class="flex w-full flex-1 min-h-0 max-xl:flex-col overflow-hidden">
     {#if seqtaLoadFailed}
       <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
         <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">
@@ -390,7 +390,7 @@
             <!-- Spacer for alignment -->
           </div>
 
-          <div class="overflow-y-auto flex-1" in:fade={{ duration: 300 }}>
+          <div class="overflow-y-auto flex-1 min-h-0" style="-webkit-overflow-scrolling: touch;" in:fade={{ duration: 300 }}>
             <MessageDetail
               {selectedMessage}
               {selectedFolder}

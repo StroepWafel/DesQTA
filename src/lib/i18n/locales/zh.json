@@ -17,7 +17,15 @@
     "clear": "清除",
     "refresh": "刷新",
     "settings": "设置",
-    "close_theme_builder": "关闭主题构建器"
+    "close_theme_builder": "关闭主题构建器",
+    "move_up": "上移",
+    "move_down": "下移",
+    "add_folder": "添加文件夹",
+    "retry": "重试",
+    "retrying": "重试中...",
+    "try_again": "再试一次",
+    "saving": "保存中...",
+    "back": "返回"
   },
   "focus_timer": {
     "title": "专注计时器",
@@ -142,6 +150,8 @@
     "scan_camera": "用相机扫描",
     "how_get_qr": "如何获取二维码？",
     "manual_login": "手动登录",
+    "manual_url": "手动URL",
+    "qr_code": "二维码",
     "enter_url": "输入您学校的SEQTA网址",
     "url_placeholder": "school.seqta.com.au",
     "sign_in": "登录DesQTA",
@@ -169,6 +179,46 @@
     "feature_settings_desc": "应用偏好设置",
     "fill_all_fields": "请填写所有字段",
     "failed_credentials": "登录失败。请检查您的凭据。"
+  },
+  "features": {
+    "lightning_fast": "闪电般的性能",
+    "qr_login": "无缝二维码登录",
+    "beautiful_ui": "美观直观的界面",
+    "analytics": "高级分析仪表板",
+    "notifications": "实时通知",
+    "offline": "离线功能支持",
+    "cross_platform": "跨平台兼容",
+    "security": "增强的安全功能",
+    "themes": "可自定义主题",
+    "predictions": "智能成绩预测"
+  },
+  "qr_instructions": {
+    "title": "如何获取您的二维码",
+    "subtitle": "按照以下步骤获取您的SEQTA移动应用二维码",
+    "step1_title": "在浏览器中打开SEQTA",
+    "step1_desc": "访问您学校的SEQTA网址（例如yourschool.seqta.com.au）并使用您的常用凭据登录。",
+    "step2_title": "导航到设置",
+    "step2_desc": "登录后，查找设置部分。通常位于左侧边栏。",
+    "step3_title": "点击“连接移动应用”",
+    "step3_desc": "找到并点击“连接移动应用”或“移动设备”选项。这将启动移动应用连接流程。",
+    "step4_title": "检查您的电子邮件",
+    "step4_desc": "SEQTA将向您注册的学校电子邮件地址发送邮件。该邮件包含您需要的DesQTA二维码。",
+    "step4_note": "邮件可能需要几分钟才能到达。如果没看到，请检查垃圾邮件文件夹。",
+    "step5_title": "截图或保存二维码",
+    "step5_desc": "打开邮件并截取二维码的屏幕截图，或将二维码图片保存到您的设备。",
+    "step5_desktop": "右键点击二维码 → “另存为...”",
+    "step5_mobile": "长按二维码 → “保存到照片”或截屏",
+    "step6_title": "上传到DesQTA",
+    "step6_desc": "返回DesQTA并使用“上传二维码”按钮选择并上传您保存的二维码图片。DesQTA将自动为您登录！",
+    "help_title": "需要更多帮助？",
+    "help_desc": "如果找不到“连接移动应用”选项，它在您学校可能叫不同的名称，例如：",
+    "help_options": ["移动设备注册", "应用设置", "二维码设置", "连接设备"],
+    "help_contact": "如果仍然找不到此选项，请联系您学校的IT支持。",
+    "got_it": "明白了，谢谢！"
+  },
+  "dev": {
+    "mock_api": "模拟API后端",
+    "mock_desc": "用安全的模拟数据替换实时SEQTA API调用。"
   },
   "about": {
     "title": "关于DesQTA",
@@ -775,6 +825,13 @@
     "sign_in": "登录",
     "step_indicator": "第 {current} 步，共 {total} 步"
   },
+  "post_login_prompts": {
+    "aria_label": "登录后设置",
+    "usage_stats_title": "帮助改进 DesQTA",
+    "usage_stats_subtitle": "是否发送匿名使用统计？这有助于我们了解应用的使用方式并改进它。不会收集个人数据。",
+    "usage_stats_yes": "是，帮助改进 DesQTA",
+    "usage_stats_no": "不了，谢谢"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -834,11 +891,18 @@
     "view_all": "查看全部",
     "no_notices_today": "今天没有可用的通知。"
   },
+  "documents": {
+    "loading": "加载文档中...",
+    "failed_to_load": "加载文档失败",
+    "error_loading": "加载文档时出错",
+    "no_documents": "没有可用的文档"
+  },
   "reports": {
     "failed_to_load": "加载报告失败。",
     "error_loading": "加载报告时出错。",
     "loading": "正在加载报告...",
-    "download": "下载"
+    "download": "下载",
+    "open_failed": "打开报告失败"
   },
   "performance": {
     "title": "性能测试结果 - DesQTA",

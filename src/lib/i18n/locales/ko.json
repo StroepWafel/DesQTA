@@ -17,7 +17,15 @@
     "clear": "지우기",
     "refresh": "새로고침",
     "settings": "설정",
-    "close_theme_builder": "테마 빌더 닫기"
+    "close_theme_builder": "테마 빌더 닫기",
+    "move_up": "위로",
+    "move_down": "아래로",
+    "add_folder": "폴더 추가",
+    "retry": "다시 시도",
+    "retrying": "다시 시도 중...",
+    "try_again": "다시 시도",
+    "saving": "저장 중...",
+    "back": "뒤로"
   },
   "focus_timer": {
     "title": "집중 타이머",
@@ -865,6 +873,13 @@
     "sign_in": "로그인",
     "step_indicator": "단계 {current} / {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "로그인 후 설정",
+    "usage_stats_title": "DesQTA 개선에 도움을 주세요",
+    "usage_stats_subtitle": "익명 사용 통계를 보내시겠습니까? 앱 사용 방식을 이해하고 개선하는 데 도움이 됩니다. 개인 데이터는 수집되지 않습니다.",
+    "usage_stats_yes": "예, DesQTA 개선에 도움을 주겠습니다",
+    "usage_stats_no": "아니요, 괜찮습니다"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -924,11 +939,18 @@
     "view_all": "모두 보기",
     "no_notices_today": "오늘 사용 가능한 공지가 없습니다."
   },
+  "documents": {
+    "loading": "문서 로드 중...",
+    "failed_to_load": "문서 로드 실패",
+    "error_loading": "문서 로드 오류",
+    "no_documents": "사용 가능한 문서가 없습니다"
+  },
   "reports": {
     "failed_to_load": "보고서 로드 실패.",
     "error_loading": "보고서 로드 오류.",
     "loading": "보고서 로드 중...",
-    "download": "다운로드"
+    "download": "다운로드",
+    "open_failed": "보고서 열기 실패"
   },
   "performance": {
     "title": "성능 테스트 결과 - DesQTA",

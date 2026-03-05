@@ -23,6 +23,9 @@
   /* Safe area insets: plugin sets --safe-area-inset-top/bottom in Tauri; fallback 0px on desktop */
   --safe-area-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   --safe-area-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  /* Mobile layout: header 4rem, bottom nav 56px (3.5rem) */
+  --mobile-header-height: 4rem;
+  --mobile-bottom-nav-height: 3.5rem;
 
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -406,6 +409,39 @@ html {
   [role="button"] {
     touch-action: manipulation;
   }
+}
+
+/* Mobile modal/popout bounds: account for header + bottom nav (avoid going behind UI) */
+@media (max-width: 768px) {
+  .mobile-modal-inset {
+    top: calc(var(--mobile-header-height) + var(--safe-area-top)) !important;
+    bottom: calc(var(--mobile-bottom-nav-height) + var(--safe-area-bottom)) !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+  .mobile-modal-max-h {
+    max-height: calc(
+      100dvh - var(--mobile-header-height) - var(--mobile-bottom-nav-height) - var(--safe-area-top) -
+        var(--safe-area-bottom)
+    ) !important;
+  }
+}
+
+/* iOS only: safe area padding for notch and home indicator (Android handles differently).
+   Add buffer so content sits slightly down from top and up from bottom. */
+.platform-ios {
+  --safe-area-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 12px);
+  --safe-area-bottom: calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 12px);
+}
+.platform-ios .mobile-bottom-nav {
+  padding-bottom: var(--safe-area-bottom);
+}
+.platform-ios .mobile-main {
+  padding-bottom: calc(56px + var(--safe-area-bottom));
+}
+/* Sidebar scroll area: extra bottom padding on iOS so last items clear nav + home indicator */
+.platform-ios .sidebar-scroll {
+  padding-bottom: calc(72px + var(--safe-area-bottom)) !important;
 }
 
 /* Hide scrollbar utility */
