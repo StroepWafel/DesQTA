@@ -317,7 +317,6 @@ jobs:
         run: |
           echo "Building with JAVA_HOME: $JAVA_HOME"
           JAVA_HOME=$JAVA_HOME GRADLE_OPTS="-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" pnpm tauri android build
-          cd src-tauri/gen/android && ./gradlew assembleRelease
 
       - name: List built APKs
         run: |
