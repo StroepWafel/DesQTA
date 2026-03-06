@@ -401,7 +401,7 @@ jobs:
         run: |
           jq -n \
             --arg version "${{ inputs.version }}" \
-            --argjson notes ${{ toJSON(steps.ai-release-notes.outputs.release_notes) }} \
+            --arg notes "Bug fixes and improvements. See GitHub release for full changelog." \
             --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg sig "${{ steps.read-sigs.outputs.windows_sig }}" \
             --arg url "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.windows_file }}" \
