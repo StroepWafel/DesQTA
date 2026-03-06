@@ -9,6 +9,7 @@
   import MobileBottomNav from '../lib/components/MobileBottomNav.svelte';
   import LoginScreen from '../lib/components/LoginScreen.svelte';
   import SetupAssistant from '../lib/components/SetupAssistant.svelte';
+  import PostLoginPrompts from '../lib/components/PostLoginPrompts.svelte';
   import BiometricGate from '../lib/components/BiometricGate.svelte';
   import LoadingScreen from '../lib/components/LoadingScreen.svelte';
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
@@ -98,6 +99,7 @@
   let versionUpdatePrevious = $state('');
   let showOnboarding = $state(false);
   let hasCompletedSetupAssistant = $state(false);
+  let hasCompletedPostLoginPrompts = $state(false);
   let biometricEnabled = $state(false);
   let biometricUnlocked = $state(false);
   let isFullscreen = $state(false);
@@ -419,13 +421,15 @@
         });
       }
 
-      // Load setup assistant completion status and biometric preference (for first-launch flow)
+      // Load setup assistant completion status, post-login prompts, and biometric preference
       try {
         const setupSettings = await loadSettings([
           'has_completed_setup_assistant',
+          'has_completed_post_login_prompts',
           'biometric_enabled',
         ]);
         hasCompletedSetupAssistant = setupSettings.has_completed_setup_assistant === true;
+        hasCompletedPostLoginPrompts = setupSettings.has_completed_post_login_prompts === true;
         biometricEnabled = setupSettings.biometric_enabled === true;
 
         // Auto-disable biometric if not available (e.g. no face/fingerprint/iris enrolled)
@@ -471,12 +475,13 @@
         logger.debug('layout', 'onMount', 'Could not check onboarding status', { error: e });
       }
 
-      // Check if app was just updated - show What's New modal
+      // Check if app was just updated - show What's New modal (disabled for rc/beta)
       try {
         const versionInfo = await invoke<{ current: string; previousVersion?: string }>(
           'get_version_update_info'
         );
-        if (versionInfo?.previousVersion && !get(needsSetup)) {
+        const isStableRelease = !versionInfo?.current?.includes('rc') && !versionInfo?.current?.includes('beta');
+        if (versionInfo?.previousVersion && !get(needsSetup) && isStableRelease) {
           versionUpdateCurrent = versionInfo.current;
           versionUpdatePrevious = versionInfo.previousVersion;
           try {
@@ -833,7 +838,7 @@
       <main
         class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen || isMobile
           ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 {isMobile && !$needsSetup ? 'pb-[56px] mobile-main' : ''}"
+          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 [scrollbar-gutter:stable] {isMobile && !$needsSetup ? 'pb-[56px] mobile-main' : ''}"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         {#if !$needsSetup}
           <OfflineBanner />
@@ -842,6 +847,8 @@
           <div class="flex items-center justify-center w-full h-full py-12">
             <LoadingScreen inline />
           </div>
+        {:else if !$needsSetup && !hasCompletedPostLoginPrompts}
+          <PostLoginPrompts onComplete={() => (hasCompletedPostLoginPrompts = true)} />
         {:else if showBiometricGate}
           <BiometricGate
             onUnlock={() => (biometricUnlocked = true)}

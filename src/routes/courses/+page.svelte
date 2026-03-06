@@ -562,7 +562,8 @@
   }
 
   $effect(() => {
-    sidebarOpen = !isMobile;
+    // Auto-open sidebar on mobile so users can select a subject; desktop keeps it open
+    sidebarOpen = true;
   });
 
   onMount(() => {

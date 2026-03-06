@@ -319,8 +319,8 @@
     </div>
     </div>
 
-    <!-- Scrollable menu content (enables touch scroll on mobile) -->
-    <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-3 pb-6 sm:py-px sm:pb-3" style="-webkit-overflow-scrolling: touch;">
+    <!-- Scrollable menu content (enables touch scroll on mobile). pb-[72px] on mobile clears the fixed bottom nav so Settings and last items are tappable. sidebar-scroll for iOS safe-area-bottom. -->
+    <div class="sidebar-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-3 pb-[72px] sm:py-px sm:pb-3" style="-webkit-overflow-scrolling: touch;">
     {#if loading}
       <!-- Loading state -->
       <div class="flex items-center justify-center py-4">

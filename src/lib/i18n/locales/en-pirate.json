@@ -17,7 +17,15 @@
     "clear": "Swab the deck",
     "refresh": "Catch a fresh wind",
     "settings": "Ship's orders",
-    "close_theme_builder": "Furl the theme sails"
+    "close_theme_builder": "Furl the theme sails",
+    "move_up": "Hoist aloft",
+    "move_down": "Lower away",
+    "add_folder": "Add a locker",
+    "retry": "Give 'er another go",
+    "retrying": "Givin' it another go...",
+    "try_again": "Try again, matey",
+    "saving": "Stashin' yer loot...",
+    "back": "Aft"
   },
   "focus_timer": {
     "title": "Focus Timer",
@@ -782,6 +790,13 @@
     "sign_in": "Sign in",
     "step_indicator": "Step {current} of {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "Post-login setup",
+    "usage_stats_title": "Help improve DesQTA",
+    "usage_stats_subtitle": "Would ye like to send anonymous usage statistics? This helps us understand how the app be used and improve it. No personal data be collected.",
+    "usage_stats_yes": "Aye, help improve DesQTA",
+    "usage_stats_no": "Nay thanks"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -841,11 +856,18 @@
     "view_all": "View all",
     "no_notices_today": "No notices available today."
   },
+  "documents": {
+    "loading": "Loadin' documents...",
+    "failed_to_load": "Failed to load documents",
+    "error_loading": "Error loadin' documents",
+    "no_documents": "No documents available"
+  },
   "reports": {
     "failed_to_load": "Failed to load treasure reports.",
     "error_loading": "Error loading treasure reports.",
     "loading": "Loading treasure reports...",
-    "download": "Claim Treasure"
+    "download": "Claim Treasure",
+    "open_failed": "Failed to open report"
   },
   "performance": {
     "title": "Performance Test Results - DesQTA",

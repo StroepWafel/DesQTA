@@ -248,7 +248,7 @@ async function prefetchAssessmentsOverview(): Promise<void> {
         await invoke<Record<string, unknown>>('get_settings_subset', {
           keys: ['reminders_enabled'],
         })
-      )?.reminders_enabled ?? true) as boolean;
+      )?.reminders_enabled ?? false) as boolean;
       if (remindersEnabled) {
         const { notificationService } = await import('./notificationService');
         await notificationService.scheduleNotifications(
@@ -295,7 +295,7 @@ async function prefetchAssessmentsOverview(): Promise<void> {
         await invoke<Record<string, unknown>>('get_settings_subset', {
           keys: ['reminders_enabled'],
         })
-      )?.reminders_enabled ?? true;
+      )?.reminders_enabled ?? false;
     if (remindersEnabled && result.assessments?.length) {
       const { notificationService } = await import('./notificationService');
       await notificationService.scheduleNotifications(result.assessments);

@@ -249,6 +249,9 @@ pub struct Settings {
     pub has_been_through_onboarding: bool,
     #[serde(default)]
     pub has_completed_setup_assistant: bool,
+    /// Post-login prompts completed (biometric + usage stats)
+    #[serde(default)]
+    pub has_completed_post_login_prompts: bool,
     /// Enable biometric (Face ID / fingerprint) to unlock app on mobile
     #[serde(default)]
     pub biometric_enabled: bool,
@@ -280,7 +283,7 @@ impl Default for Settings {
             force_use_location: false,
             weather_city: String::new(),
             weather_country: String::new(),
-            reminders_enabled: true,
+            reminders_enabled: false,
             auto_dismiss_message_notifications: false,
             accent_color: "#3b82f6".to_string(), // Default to blue-500
             theme: "dark".to_string(),            // Default color mode: dark (light/dark/system)
@@ -307,6 +310,7 @@ impl Default for Settings {
             menu_order: None,
             has_been_through_onboarding: false,
             has_completed_setup_assistant: false,
+            has_completed_post_login_prompts: false,
             biometric_enabled: false,
             separate_rss_feed: false,
             dashboard_widgets_layout: None,
@@ -619,6 +623,11 @@ impl Settings {
             &existing_json,
             "has_completed_setup_assistant",
             default_settings.has_completed_setup_assistant,
+        );
+        default_settings.has_completed_post_login_prompts = get_bool(
+            &existing_json,
+            "has_completed_post_login_prompts",
+            default_settings.has_completed_post_login_prompts,
         );
         default_settings.biometric_enabled = get_bool(
             &existing_json,

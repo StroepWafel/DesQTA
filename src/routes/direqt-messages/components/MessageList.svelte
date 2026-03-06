@@ -2,16 +2,19 @@
   import { fade } from 'svelte/transition';
   import type { Message } from '../types';
   import MessageItem from '$lib/components/MessageItem.svelte';
+  import { EmptyState } from '$lib/components/ui';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
+  import { Inbox, ExclamationTriangle } from 'svelte-hero-icons';
 
-  let { selectedFolder, messages, loading, error, selectedMessage, openMessage } = $props<{
+  let { selectedFolder, messages, loading, error, selectedMessage, openMessage, embedded } = $props<{
     selectedFolder: string;
     messages: Message[];
     loading: boolean;
     error: string | null;
     selectedMessage: Message | null;
     openMessage: (msg: Message) => void;
+    embedded?: boolean;
   }>();
 
   // Filter messages for the selected folder
@@ -25,9 +28,12 @@
 </script>
 
 <section
-  class="w-full xl:w-md border-r border-zinc-300/50 dark:border-zinc-800/50 flex flex-col bg-white dark:bg-zinc-900 backdrop-blur-xs shadow-md rounded-xl m-2">
+  class="w-full min-w-0 flex flex-col min-h-0 [scrollbar-gutter:stable]
+    {embedded
+    ? 'flex-none min-h-0 bg-transparent'
+    : 'flex-1 overflow-hidden bg-white dark:bg-zinc-900 border-r border-zinc-300/50 dark:border-zinc-800/50 backdrop-blur-xs shadow-md rounded-xl m-2'}">
   <div
-    class="flex items-center p-4 text-base font-semibold border-b text-zinc-900 sm:text-lg border-zinc-300/50 dark:border-zinc-800/50 dark:text-white">
+    class="flex items-center p-4 text-base font-semibold text-zinc-900 sm:text-lg dark:text-white {!embedded ? 'border-b border-zinc-300/50 dark:border-zinc-800/50' : ''}">
     <svg
       xmlns="http://www.w3.org/2000/svg"
       class="mr-2 w-5 h-5"
@@ -39,65 +45,36 @@
   </div>
 
   <div
-    class="overflow-y-auto flex-1 p-1 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent">
+    class="overflow-y-auto flex-1 min-h-0 p-1 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent [scrollbar-gutter:stable]"
+    style="-webkit-overflow-scrolling: touch;">
     {#if loading}
-      <div class="p-2 space-y-2">
-        {#each Array(6) as _, i}
-          <div class="flex gap-3 p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900/40 animate-pulse">
-            <div class="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex-shrink-0"></div>
-            <div class="flex-1 min-w-0 space-y-2">
-              <div class="h-5 w-2/3 rounded bg-zinc-200 dark:bg-zinc-800"></div>
-              <div class="h-4 w-5/6 rounded bg-zinc-200 dark:bg-zinc-800"></div>
-              <div class="h-3.5 w-3/5 rounded bg-zinc-200 dark:bg-zinc-800"></div>
-            </div>
-            <div class="w-12 h-4 self-start rounded bg-zinc-200 dark:bg-zinc-800"></div>
-          </div>
-        {/each}
+      <div class="flex justify-center items-center flex-1 min-h-[200px]" in:fade={{ duration: 400 }}>
+        <div
+          class="w-12 h-12 rounded-full border-4 border-accent-600/30 border-t-accent-600 animate-spin">
+        </div>
       </div>
     {:else if error}
-      <div class="flex justify-center items-center p-8 h-32 text-center text-red-400">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="mr-2 w-6 h-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span class="text-sm sm:text-base">{error}</span>
+      <div class="flex flex-col justify-center items-center flex-1 min-h-[200px]" in:fade={{ duration: 400 }}>
+        <EmptyState
+          title={$_('messages.failed_to_load') || 'Failed to load messages.'}
+          message={error}
+          icon={ExclamationTriangle}
+          size="sm" />
       </div>
     {:else if filteredMessages.length === 0}
-      <div
-        class="flex flex-col justify-center items-center p-8 h-32 text-center text-zinc-600 dark:text-zinc-300">
-        <div
-          class="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-blue-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-8 h-8 sm:w-10 sm:h-10"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-          </svg>
-        </div>
-        <p class="mt-4 text-sm sm:text-base">
-          <T key="messages.no_messages_in_folder" fallback="No messages in this folder." />
-        </p>
+      <div class="flex flex-col justify-center items-center flex-1 min-h-[200px]" in:fade={{ duration: 400 }}>
+        <EmptyState
+          title={$_('messages.no_messages_in_folder') || 'No messages in this folder.'}
+          message={$_('messages.no_messages_in_folder_hint') || 'Select another feed or check back later.'}
+          icon={Inbox}
+          size="sm" />
       </div>
     {:else}
-      <div class="p-2">
+      <div class="p-2 min-w-0">
         {#key messagesKey}
           {#each filteredMessages as message, i (message.id)}
-            <div class="message-item-animate" style="animation-delay: {i * 50}ms;">
-              <MessageItem {message} {selectedMessage} {openMessage} />
+            <div class="message-item-animate min-w-0" style="animation-delay: {i * 50}ms;">
+              <MessageItem {message} {selectedMessage} {openMessage} embedded={embedded} />
             </div>
           {/each}
         {/key}
@@ -139,23 +116,6 @@
       transparent;
   }
 
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
-
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient 3s ease infinite;
-  }
-
   @keyframes fadeInUp {
     from {
       opacity: 0;
@@ -168,7 +128,7 @@
   }
 
   .message-item-animate {
-    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     opacity: 0;
   }
 </style>

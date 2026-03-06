@@ -17,7 +17,15 @@
     "clear": "Wyczyść",
     "refresh": "Odśwież",
     "settings": "Ustawienia",
-    "close_theme_builder": "Zamknij Konstruktor Motywów"
+    "close_theme_builder": "Zamknij Konstruktor Motywów",
+    "move_up": "Przesuń w górę",
+    "move_down": "Przesuń w dół",
+    "add_folder": "Dodaj folder",
+    "retry": "Ponów",
+    "retrying": "Ponawianie...",
+    "try_again": "Spróbuj ponownie",
+    "saving": "Zapisywanie...",
+    "back": "Wstecz"
   },
   "focus_timer": {
     "title": "Zegar koncentracji",
@@ -865,6 +873,13 @@
     "sign_in": "Zaloguj się",
     "step_indicator": "Krok {current} z {total}"
   },
+  "post_login_prompts": {
+    "aria_label": "Konfiguracja po zalogowaniu",
+    "usage_stats_title": "Pomóż ulepszyć DesQTA",
+    "usage_stats_subtitle": "Czy chcesz wysyłać anonimowe statystyki użytkowania? Pomaga nam to zrozumieć, jak aplikacja jest używana i ją ulepszyć. Żadne dane osobowe nie są zbierane.",
+    "usage_stats_yes": "Tak, pomóż ulepszyć DesQTA",
+    "usage_stats_no": "Nie, dziękuję"
+  },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
     "step_dashboard_desc": "Customize widgets, add shortcuts, pick templates. Your command center.",
@@ -924,11 +939,18 @@
     "view_all": "Pokaż wszystkie",
     "no_notices_today": "Brak dostępnych ogłoszeń na dziś."
   },
+  "documents": {
+    "loading": "Ładowanie dokumentów...",
+    "failed_to_load": "Nie udało się załadować dokumentów",
+    "error_loading": "Błąd ładowania dokumentów",
+    "no_documents": "Brak dostępnych dokumentów"
+  },
   "reports": {
     "failed_to_load": "Nie udało się załadować raportów.",
     "error_loading": "Błąd ładowania raportów.",
     "loading": "Ładowanie raportów...",
-    "download": "Pobierz"
+    "download": "Pobierz",
+    "open_failed": "Nie udało się otworzyć raportu"
   },
   "performance": {
     "title": "Performance Test Results - DesQTA",
