@@ -461,10 +461,14 @@
         logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
       });
 
-      // Check if user needs onboarding - show tour for first-time users (post-login only)
+      // Check if user needs onboarding - show tour for first-time users (only after post-login screens)
       try {
         const settings = await loadSettings(['has_been_through_onboarding']);
-        if (!settings.has_been_through_onboarding && !get(needsSetup)) {
+        if (
+          !settings.has_been_through_onboarding &&
+          !get(needsSetup) &&
+          hasCompletedPostLoginPrompts
+        ) {
           // Wait a bit for UI to settle
           setTimeout(() => {
             showOnboarding = true;
@@ -848,7 +852,24 @@
             <LoadingScreen inline />
           </div>
         {:else if !$needsSetup && !hasCompletedPostLoginPrompts}
-          <PostLoginPrompts onComplete={() => (hasCompletedPostLoginPrompts = true)} />
+          <PostLoginPrompts
+            onComplete={async () => {
+              hasCompletedPostLoginPrompts = true;
+              // Show tour after post-login screens (biometric + analytics)
+              try {
+                const settings = await loadSettings(['has_been_through_onboarding']);
+                if (!settings.has_been_through_onboarding && !get(needsSetup)) {
+                  setTimeout(() => {
+                    showOnboarding = true;
+                    sidebarOpen = false;
+                  }, 1000);
+                }
+              } catch (e) {
+                logger.debug('layout', 'PostLoginComplete', 'Could not check onboarding', {
+                  error: e,
+                });
+              }
+            }} />
         {:else if showBiometricGate}
           <BiometricGate
             onUnlock={() => (biometricUnlocked = true)}
