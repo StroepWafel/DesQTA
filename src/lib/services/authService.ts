@@ -106,8 +106,16 @@ export const authService = {
 
   async logout(): Promise<boolean> {
     console.log('[AUTH_SERVICE] Logging out');
-    // Clear user info cache on logout
-    cache.delete('userInfo');
+    // Clear user info cache on logout (profile-aware key)
+    try {
+      const currentProfile = await invoke<{ id: string } | null>('get_current_profile');
+      const cacheKey = currentProfile ? `userInfo:${currentProfile.id}` : 'userInfo';
+      cache.delete(cacheKey);
+      const { idbCacheDelete } = await import('./idb');
+      await idbCacheDelete(cacheKey).catch(() => {});
+    } catch {
+      cache.delete('userInfo');
+    }
 
     // Clean up any lingering login windows
     try {
@@ -125,7 +133,9 @@ export const authService = {
     logger.logFunctionEntry('authService', 'loadUserInfo', { options });
 
     try {
-      const cacheKey = 'userInfo';
+      // Profile-aware cache key so new profile sign-in fetches fresh data (IndexedDB persists across reloads)
+      const currentProfile = await invoke<{ id: string } | null>('get_current_profile');
+      const cacheKey = currentProfile ? `userInfo:${currentProfile.id}` : 'userInfo';
       const TTL_MINUTES = 60; // 1 hour TTL
 
       if (options?.disableSchoolPicture) {
