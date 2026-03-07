@@ -72,7 +72,7 @@
     {:else}
       <div class="p-2 min-w-0">
         {#key messagesKey}
-          {#each filteredMessages as message, i (message.id)}
+          {#each filteredMessages as message, i (`${message.id}-${i}`)}
             <div class="message-item-animate min-w-0" style="animation-delay: {i * 50}ms;">
               <MessageItem {message} {selectedMessage} {openMessage} embedded={embedded} />
             </div>
