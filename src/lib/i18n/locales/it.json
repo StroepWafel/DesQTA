@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "Compila tutti i campi",
-    "failed_credentials": "Accesso fallito. Verifica le tue credenziali."
+    "failed_credentials": "Accesso fallito. Verifica le tue credenziali.",
+    "not_working_try_direct": "Non funziona? ",
+    "try_direct_login_link": "Prova l'accesso diretto"
   },
   "features": {
     "lightning_fast": "Prestazioni fulminee",

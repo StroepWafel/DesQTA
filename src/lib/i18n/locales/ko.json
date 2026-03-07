@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "모든 필드를 입력해 주세요",
-    "failed_credentials": "로그인에 실패했습니다. 자격 증명을 확인하세요."
+    "failed_credentials": "로그인에 실패했습니다. 자격 증명을 확인하세요.",
+    "not_working_try_direct": "작동하지 않나요? ",
+    "try_direct_login_link": "직접 로그인 시도"
   },
   "features": {
     "lightning_fast": "Lightning-fast performance",

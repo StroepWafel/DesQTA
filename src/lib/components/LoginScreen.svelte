@@ -651,11 +651,7 @@
                       <!-- Animated background slider -->
                       <div
                         class="absolute top-1 bottom-1 bg-white/30 dark:bg-zinc-700/40 backdrop-blur-xl rounded-xl shadow-xs transition-all duration-300 ease-in-out border border-white/40 dark:border-zinc-600/40"
-                        style="left: {loginMethod === 'qr'
-                          ? '4px'
-                          : loginMethod === 'url'
-                            ? 'calc(33.333% - 4px)'
-                            : 'calc(66.666% - 4px)'}; width: calc(33.333% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
+                        style="left: {loginMethod === 'qr' ? '4px' : 'calc(50% - 4px)'}; width: calc(50% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                       </div>
                       <button
                         class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
@@ -678,14 +674,6 @@
                           : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
                         onclick={() => (loginMethod = 'url')}>
                         <T key="login.manual_url" fallback="Manual URL" />
-                      </button>
-                      <button
-                        class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
-                        'direct'
-                          ? 'text-indigo-600 dark:text-indigo-400'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
-                        onclick={() => (loginMethod = 'direct')}>
-                        <T key="login.direct_login" fallback="Direct Login" />
                       </button>
                     </div>
                   </div>
@@ -829,13 +817,26 @@
                       </Button>
 
                       <!-- Inline help link under scan button -->
-                      <div class="text-center">
+                      <div class="text-center space-y-2">
                         <button
                           type="button"
                           onclick={openQrInstructionsModal}
                           class="mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
                           <T key="login.how_get_qr" fallback="How do I get a QR code?" />
                         </button>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                          <T
+                            key="login.not_working_try_direct"
+                            fallback="Not working?" />
+                          <button
+                            type="button"
+                            onclick={() => (loginMethod = 'direct')}
+                            class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                            <T
+                              key="login.try_direct_login_link"
+                              fallback="Try direct login instead" />
+                          </button>
+                        </p>
                       </div>
                     </div>
                   {/if}
@@ -876,16 +877,29 @@
                             })}
                             inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
-                        {#if isMobile}
-                          <div class="text-center">
+                        <div class="text-center space-y-2">
+                          {#if isMobile}
                             <button
                               type="button"
                               onclick={() => (loginMethod = 'qr')}
                               class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm transition-all duration-200">
                               <T key="login.use_qr_code" fallback="Use QR code instead" />
                             </button>
-                          </div>
-                        {/if}
+                          {/if}
+                          <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                            <T
+                              key="login.not_working_try_direct"
+                              fallback="Not working?" />
+                            <button
+                              type="button"
+                              onclick={() => (loginMethod = 'direct')}
+                              class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                              <T
+                                key="login.try_direct_login_link"
+                                fallback="Try direct login instead" />
+                            </button>
+                          </p>
+                        </div>
                       </div>
                     </div>
                   {/if}
@@ -964,6 +978,21 @@
                             })}
                             inputClass="w-full py-2.5 px-4 text-sm bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-lg text-zinc-900 dark:text-white placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
+                      </div>
+                      <div class="text-center pt-1">
+                        <button
+                          type="button"
+                          onclick={() => (loginMethod = 'qr')}
+                          class="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                          <T key="login.use_qr_code" fallback="Use QR code instead" />
+                        </button>
+                        <span class="text-zinc-400 dark:text-zinc-500 mx-1">·</span>
+                        <button
+                          type="button"
+                          onclick={() => (loginMethod = 'url')}
+                          class="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                          <T key="login.manual_url" fallback="Manual URL" />
+                        </button>
                       </div>
                     </div>
                   {/if}
@@ -1828,6 +1857,26 @@
           </ul>
           <p class="text-sm text-blue-700 dark:text-blue-300 mt-3">
             Contact your school's IT support if you still can't locate this option.
+          </p>
+        </div>
+
+        <div
+          class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">
+          <p class="text-sm text-amber-700 dark:text-amber-300">
+            <T
+              key="login.not_working_try_direct"
+              fallback="Not working?" />
+            <button
+              type="button"
+              onclick={() => {
+                closeQrInstructionsModal();
+                loginMethod = 'direct';
+              }}
+              class="font-medium text-amber-800 dark:text-amber-200 hover:underline focus:outline-hidden focus:ring-2 focus:ring-amber-500/50 rounded-sm">
+              <T
+                key="login.try_direct_login_link"
+                fallback="Try direct login instead" />
+            </button>
           </p>
         </div>
 

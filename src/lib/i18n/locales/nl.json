@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Prestatiegegevens",
     "feature_settings_desc": "App voorkeuren",
     "fill_all_fields": "Vul alle velden in",
-    "failed_credentials": "Inloggen mislukt. Controleer uw inloggegevens."
+    "failed_credentials": "Inloggen mislukt. Controleer uw inloggegevens.",
+    "not_working_try_direct": "Werkt het niet? ",
+    "try_direct_login_link": "Probeer direct inloggen"
   },
   "features": {
     "lightning_fast": "Bliksemsnelle prestaties",

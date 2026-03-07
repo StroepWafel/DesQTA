@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "Пожалуйста, заполните все поля",
-    "failed_credentials": "Ошибка входа. Проверьте учетные данные."
+    "failed_credentials": "Ошибка входа. Проверьте учетные данные.",
+    "not_working_try_direct": "Не работает? ",
+    "try_direct_login_link": "Попробуйте прямой вход"
   },
   "features": {
     "lightning_fast": "Молниеносная производительность",

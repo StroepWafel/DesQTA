@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Données de performance",
     "feature_settings_desc": "Préférences de l'application",
     "fill_all_fields": "Veuillez remplir tous les champs",
-    "failed_credentials": "Échec de la connexion. Vérifiez vos identifiants."
+    "failed_credentials": "Échec de la connexion. Vérifiez vos identifiants.",
+    "not_working_try_direct": "Ça ne marche pas ? ",
+    "try_direct_login_link": "Essayer la connexion directe"
   },
   "features": {
     "lightning_fast": "Performances ultra-rapides",

@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Datos de rendimiento",
     "feature_settings_desc": "Preferencias de la aplicación",
     "fill_all_fields": "Por favor complete todos los campos",
-    "failed_credentials": "Error de inicio de sesión. Verifique sus credenciales."
+    "failed_credentials": "Error de inicio de sesión. Verifique sus credenciales.",
+    "not_working_try_direct": "¿No funciona? ",
+    "try_direct_login_link": "Probar inicio de sesión directo"
   },
   "features": {
     "lightning_fast": "Rendimiento ultrarrápido",

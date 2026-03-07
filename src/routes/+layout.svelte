@@ -98,7 +98,9 @@
   let versionUpdateCurrent = $state('');
   let versionUpdatePrevious = $state('');
   let showOnboarding = $state(false);
+  let tourPendingAfterReleaseNotes = $state(false);
   let hasCompletedSetupAssistant = $state(false);
+  let profilesExist = $state(false);
   let hasCompletedPostLoginPrompts = $state(false);
   let biometricEnabled = $state(false);
   let biometricUnlocked = $state(false);
@@ -421,14 +423,18 @@
         });
       }
 
-      // Load setup assistant completion status, post-login prompts, and biometric preference
+      // Load setup assistant completion status, post-login prompts, biometric preference, and profile count
       try {
-        const setupSettings = await loadSettings([
-          'has_completed_setup_assistant',
-          'has_completed_post_login_prompts',
-          'biometric_enabled',
+        const [setupSettings, profilesList] = await Promise.all([
+          loadSettings([
+            'has_completed_setup_assistant',
+            'has_completed_post_login_prompts',
+            'biometric_enabled',
+          ]),
+          invoke<unknown[]>('list_profiles').catch(() => []),
         ]);
         hasCompletedSetupAssistant = setupSettings.has_completed_setup_assistant === true;
+        profilesExist = Array.isArray(profilesList) && profilesList.length > 0;
         hasCompletedPostLoginPrompts = setupSettings.has_completed_post_login_prompts === true;
         biometricEnabled = setupSettings.biometric_enabled === true;
 
@@ -469,10 +475,14 @@
           !get(needsSetup) &&
           hasCompletedPostLoginPrompts
         ) {
-          // Wait a bit for UI to settle
+          // Wait a bit for UI to settle; defer if release notes (What's New) will be open
           setTimeout(() => {
-            showOnboarding = true;
-            sidebarOpen = false; // Close mobile nav during tour for better UX
+            if (showWhatsNewModal) {
+              tourPendingAfterReleaseNotes = true;
+            } else {
+              showOnboarding = true;
+              sidebarOpen = false; // Close mobile nav during tour for better UX
+            }
           }, 1000);
         }
       } catch (e) {
@@ -855,13 +865,17 @@
           <PostLoginPrompts
             onComplete={async () => {
               hasCompletedPostLoginPrompts = true;
-              // Show tour after post-login screens (biometric + analytics)
+              // Show tour after post-login screens (biometric + analytics); defer if release notes open
               try {
                 const settings = await loadSettings(['has_been_through_onboarding']);
                 if (!settings.has_been_through_onboarding && !get(needsSetup)) {
                   setTimeout(() => {
-                    showOnboarding = true;
-                    sidebarOpen = false;
+                    if (showWhatsNewModal) {
+                      tourPendingAfterReleaseNotes = true;
+                    } else {
+                      showOnboarding = true;
+                      sidebarOpen = false;
+                    }
                   }, 1000);
                 }
               } catch (e) {
@@ -888,7 +902,7 @@
             }}
           />
         {:else if $needsSetup}
-          {#if !hasCompletedSetupAssistant}
+          {#if !hasCompletedSetupAssistant && !profilesExist}
             <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />
           {:else}
             <LoginScreen
@@ -961,6 +975,15 @@
   currentVersion={versionUpdateCurrent}
   previousVersion={versionUpdatePrevious}
   changelogMarkdown={changelogMarkdown}
-  onclose={() => (showWhatsNewModal = false)}
+  onclose={() => {
+    showWhatsNewModal = false;
+    if (tourPendingAfterReleaseNotes) {
+      tourPendingAfterReleaseNotes = false;
+      setTimeout(() => {
+        showOnboarding = true;
+        sidebarOpen = false;
+      }, 300);
+    }
+  }}
 />
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />

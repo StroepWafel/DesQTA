@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Leistungsdaten",
     "feature_settings_desc": "App-Einstellungen",
     "fill_all_fields": "Bitte füllen Sie alle Felder aus",
-    "failed_credentials": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten."
+    "failed_credentials": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.",
+    "not_working_try_direct": "Funktioniert nicht? ",
+    "try_direct_login_link": "Direktanmeldung versuchen"
   },
   "features": {
     "lightning_fast": "Blitzschnelle Leistung",

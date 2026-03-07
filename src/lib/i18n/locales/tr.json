@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Performans verileri",
     "feature_settings_desc": "Uygulama tercihleri",
     "fill_all_fields": "Lütfen tüm alanları doldurun",
-    "failed_credentials": "Giriş başarısız. Lütfen kimlik bilgilerinizi kontrol edin."
+    "failed_credentials": "Giriş başarısız. Lütfen kimlik bilgilerinizi kontrol edin.",
+    "not_working_try_direct": "Çalışmıyor mu? ",
+    "try_direct_login_link": "Doğrudan giriş deneyin"
   },
   "features": {
     "lightning_fast": "Yıldırım hızında performans",

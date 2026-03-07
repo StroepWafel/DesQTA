@@ -263,7 +263,9 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "Please fill in all fields",
-    "failed_credentials": "Login failed. Please check your credentials."
+    "failed_credentials": "Login failed. Please check your credentials.",
+    "not_working_try_direct": "Not working? ",
+    "try_direct_login_link": "Try direct login instead"
   },
   "features": {
     "lightning_fast": "Lightning-fast performance",

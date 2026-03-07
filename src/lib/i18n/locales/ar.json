@@ -178,7 +178,9 @@
     "feature_analytics_desc": "بيانات الأداء",
     "feature_settings_desc": "تفضيلات التطبيق",
     "fill_all_fields": "يرجى ملء جميع الحقول",
-    "failed_credentials": "فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد."
+    "failed_credentials": "فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد.",
+    "not_working_try_direct": "لا يعمل؟ ",
+    "try_direct_login_link": "جرب تسجيل الدخول المباشر"
   },
   "features": {
     "lightning_fast": "أداء سريع كالبرق",

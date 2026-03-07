@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Dados de desempenho",
     "feature_settings_desc": "Preferências do aplicativo",
     "fill_all_fields": "Por favor, preencha todos os campos",
-    "failed_credentials": "Falha no login. Verifique suas credenciais."
+    "failed_credentials": "Falha no login. Verifique suas credenciais.",
+    "not_working_try_direct": "Não está funcionando? ",
+    "try_direct_login_link": "Tentar login direto"
   },
   "features": {
     "lightning_fast": "Desempenho ultrarrápido",

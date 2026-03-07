@@ -178,7 +178,9 @@
     "feature_analytics_desc": "性能数据",
     "feature_settings_desc": "应用偏好设置",
     "fill_all_fields": "请填写所有字段",
-    "failed_credentials": "登录失败。请检查您的凭据。"
+    "failed_credentials": "登录失败。请检查您的凭据。",
+    "not_working_try_direct": "不工作？",
+    "try_direct_login_link": "尝试直接登录"
   },
   "features": {
     "lightning_fast": "闪电般的性能",

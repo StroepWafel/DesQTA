@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Dane o wydajności",
     "feature_settings_desc": "Preferencje aplikacji",
     "fill_all_fields": "Wypełnij wszystkie pola",
-    "failed_credentials": "Logowanie nie powiodło się. Sprawdź swoje dane uwierzytelniające."
+    "failed_credentials": "Logowanie nie powiodło się. Sprawdź swoje dane uwierzytelniające.",
+    "not_working_try_direct": "Nie działa? ",
+    "try_direct_login_link": "Spróbuj bezpośredniego logowania"
   },
   "features": {
     "lightning_fast": "Błyskawiczna wydajność",

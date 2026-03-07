@@ -171,7 +171,9 @@
     "camera_permission": "Unable to access yer spyglass. Check yer permissions, matey.",
     "live_scan_error": "Failed to start live scan.",
     "fill_all_fields": "Fill in all fields, ye scallywag!",
-    "failed_credentials": "Boarding failed. Check yer credentials, matey."
+    "failed_credentials": "Boarding failed. Check yer credentials, matey.",
+    "not_working_try_direct": "Not workin? ",
+    "try_direct_login_link": "Try direct login instead"
   },
   "features": {
     "lightning_fast": "Swift as a Caribbean wind",

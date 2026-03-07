@@ -178,7 +178,9 @@
     "feature_analytics_desc": "パフォーマンスデータ",
     "feature_settings_desc": "アプリ設定",
     "fill_all_fields": "すべての項目を入力してください",
-    "failed_credentials": "ログインに失敗しました。認証情報を確認してください。"
+    "failed_credentials": "ログインに失敗しました。認証情報を確認してください。",
+    "not_working_try_direct": "うまくいきませんか？",
+    "try_direct_login_link": "直接ログインを試す"
   },
   "features": {
     "lightning_fast": "超高速パフォーマンス",
