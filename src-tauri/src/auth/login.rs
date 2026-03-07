@@ -21,6 +21,12 @@ struct SeqtaSSOPayload {
     n: String, // User number
 }
 
+#[derive(Debug, Deserialize, Clone)]
+struct DesqtaConnectPayload {
+    u: String, // base_url
+    s: String, // jsessionid
+}
+
 #[derive(Debug, Deserialize)]
 struct UserInfoResponse {
     payload: UserInfoPayload,
@@ -217,6 +223,76 @@ fn parse_deeplink(deeplink: &str) -> Result<SeqtaSSOPayload, String> {
         serde_json::from_str(&payload_str).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
     Ok(result)
+}
+
+/// Parse and validate a DesQTA connect deeplink (from BetterSEQTA+ extension)
+fn parse_desqta_connect(deeplink: &str) -> Result<DesqtaConnectPayload, String> {
+    const DEEPLINK_PREFIX: &str = "desqta://connect/";
+
+    if !deeplink.starts_with(DEEPLINK_PREFIX) {
+        return Err("Invalid DesQTA connect deeplink format".to_string());
+    }
+
+    let encoded_payload = &deeplink[DEEPLINK_PREFIX.len()..];
+
+    // First decode the URL encoding
+    let url_decoded =
+        urlencoding::decode(encoded_payload).map_err(|e| format!("Failed to URL decode: {}", e))?;
+
+    // Then decode the base64
+    let decoded_payload = general_purpose::STANDARD
+        .decode(url_decoded.as_bytes())
+        .map_err(|e| format!("Failed to base64 decode: {}", e))?;
+
+    let payload_str = String::from_utf8(decoded_payload)
+        .map_err(|e| format!("Failed to convert to string: {}", e))?;
+
+    let result =
+        serde_json::from_str(&payload_str).map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+    Ok(result)
+}
+
+/// Perform direct session auth from DesQTA connect payload (JSESSIONID + base_url)
+async fn perform_desqta_connect_auth(
+    payload: DesqtaConnectPayload,
+) -> Result<session::Session, String> {
+    let base_url = payload.u;
+    let jsessionid = payload.s;
+
+    use crate::netgrab;
+
+    let client = netgrab::create_client_builder()
+        .cookie_store(true)
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    // Validate session with heartbeat
+    let heartbeat_url = format!("{}/seqta/student/heartbeat", base_url);
+    let heartbeat_body = json!({ "heartbeat": true });
+
+    let heartbeat_response = client
+        .post(&heartbeat_url)
+        .header("Cookie", format!("JSESSIONID={}", jsessionid))
+        .header("Content-Type", "application/json; charset=utf-8")
+        .json(&heartbeat_body)
+        .send()
+        .await
+        .map_err(|e| format!("Heartbeat request failed: {}", e))?;
+
+    if !heartbeat_response.status().is_success() {
+        return Err("Session invalid or expired. Please generate a new QR code.".to_string());
+    }
+
+    let session = session::Session {
+        base_url,
+        jsessionid,
+        additional_cookies: Vec::new(),
+        stored_username: None,
+        stored_password: None,
+    };
+
+    Ok(session)
 }
 
 /// Decode and validate a JWT token
@@ -443,6 +519,39 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
             user_info.user_desc.or(user_info.display_name).or(Some(user_info.user_name.clone())),
         ).map_err(|e| format!("Failed to create/get profile: {}", e))?;
         
+        // Set as current profile
+        profiles::ProfileManager::set_current_profile(profile.id.clone())
+            .map_err(|e| format!("Failed to set current profile: {}", e))?;
+
+        // Save the session (now in profile directory)
+        session
+            .save()
+            .map_err(|e| format!("Failed to save session: {}", e))?;
+
+        // Force reload the app
+        force_reload(app);
+        return Ok(());
+    }
+
+    // Check if this is a DesQTA connect deeplink (from BetterSEQTA+ extension)
+    if url.starts_with("desqta://connect/") {
+        let payload = parse_desqta_connect(&url)?;
+        let session = perform_desqta_connect_auth(payload).await?;
+
+        // Fetch user info to create/get profile
+        let user_info = fetch_user_info(&session.base_url, &session.jsessionid).await?;
+
+        // Create or get profile
+        let profile = profiles::ProfileManager::get_or_create_profile(
+            session.base_url.clone(),
+            user_info.id,
+            user_info
+                .user_desc
+                .or(user_info.display_name)
+                .or(Some(user_info.user_name.clone())),
+        )
+        .map_err(|e| format!("Failed to create/get profile: {}", e))?;
+
         // Set as current profile
         profiles::ProfileManager::set_current_profile(profile.id.clone())
             .map_err(|e| format!("Failed to set current profile: {}", e))?;

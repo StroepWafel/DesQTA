@@ -1800,6 +1800,18 @@
         </div>
 
         <div
+          class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-6">
+          <h3 class="text-lg font-semibold text-indigo-800 dark:text-indigo-200 mb-2">
+            Using BetterSEQTA+?
+          </h3>
+          <p class="text-indigo-700 dark:text-indigo-300 text-sm">
+            If you use the BetterSEQTA+ browser extension, you can also generate a QR code from
+            Settings → Connect Mobile App. This creates an instant sign-in QR without waiting for
+            an email.
+          </p>
+        </div>
+
+        <div
           class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
           <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
             Need More Help?
