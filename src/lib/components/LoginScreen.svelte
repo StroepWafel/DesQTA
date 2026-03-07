@@ -35,17 +35,59 @@
 
   interface Props {
     seqtaUrl: string;
-    onStartLogin: () => void;
+    onStartLogin: () => void | Promise<void>;
     onUrlChange: (url: string) => void;
   }
 
   let { seqtaUrl, onStartLogin, onUrlChange }: Props = $props();
+
+  function validateQrOrDeeplinkFormat(url: string): string | null {
+    const u = (url || '').trim();
+    if (u.startsWith('seqtalearn://') && !u.startsWith('seqtalearn://sso/')) {
+      return get(_)('login.invalid_seqtalearn_format', {
+        default:
+          'Invalid SEQTA link format. QR codes from SEQTA should start with seqtalearn://sso/. Try scanning a fresh QR code from your SEQTA email.',
+      });
+    }
+    if (u.startsWith('desqta://') && !u.startsWith('desqta://connect/')) {
+      return get(_)('login.invalid_desqta_format', {
+        default:
+          'Invalid DesQTA link format. Connect links from BetterSEQTA+ should start with desqta://connect/. Generate a new QR from Settings → Connect Mobile App.',
+      });
+    }
+    if (u.startsWith('desqta://connect/') && u.length < 30) {
+      return get(_)('login.invalid_desqta_connect_payload', {
+        default:
+          'Invalid DesQTA connect link. The link appears incomplete. Generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App).',
+      });
+    }
+    return null;
+  }
+
+  async function startLoginWithErrorHandling(urlOverride?: string) {
+    loginError = '';
+    qrError = '';
+    jwtExpiredError = false;
+    const urlToCheck = urlOverride ?? seqtaUrl ?? mobileSsoUrl ?? '';
+    const formatError = validateQrOrDeeplinkFormat(urlToCheck);
+    if (formatError) {
+      loginError = formatError;
+      return;
+    }
+    try {
+      await (onStartLogin?.() ?? Promise.resolve());
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      loginError = msg || get(_)('login.qr_error_generic', { default: 'Login failed. Please try again.' });
+    }
+  }
 
   const appWindow = Window.getCurrent();
 
   let qrProcessing = $state(false);
   let qrError = $state('');
   let qrSuccess = $state('');
+  let loginError = $state('');
   let jwtExpiredError = $state(false);
   let showLiveScan = $state(false);
   let liveScanError = $state('');
@@ -167,7 +209,7 @@
       );
 
       // Start login with this profile's URL
-      onStartLogin();
+      await startLoginWithErrorHandling();
     } catch (e) {
       console.error('Failed to switch profile:', e);
       alert(`Failed to switch profile: ${e}`);
@@ -290,7 +332,7 @@
         console.debug('[QR] Scan success:', qrCodeData);
         qrSuccess = get(_)('login.qr_success');
         onUrlChange(qrCodeData);
-        onStartLogin();
+        await startLoginWithErrorHandling(qrCodeData);
       } else {
         console.warn('[QR] No QR code found in the image.');
         qrError = get(_)('login.qr_no_code');
@@ -335,10 +377,10 @@
       await html5QrLive.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 300, height: 300 } },
-        (decodedText) => {
+        async (decodedText) => {
           qrSuccess = get(_)('login.qr_success');
           onUrlChange(decodedText);
-          onStartLogin();
+          await startLoginWithErrorHandling(decodedText);
           stopLiveScan();
         },
         (err) => {
@@ -720,14 +762,14 @@
                           <Input
                             type="text"
                             bind:value={mobileSsoUrl}
-                            onkeydown={(e: KeyboardEvent) => {
+                            onkeydown={async (e: KeyboardEvent) => {
                               if (
                                 e.key === 'Enter' &&
                                 mobileSsoUrl.trim().startsWith('seqtalearn://')
                               ) {
                                 jwtExpiredError = false;
                                 onUrlChange(mobileSsoUrl.trim());
-                                onStartLogin();
+                                await startLoginWithErrorHandling();
                               }
                             }}
                             placeholder={$_('login.sso_url_placeholder', {
@@ -866,10 +908,10 @@
                               }
                               onUrlChange(normalized);
                             }}
-                            onkeydown={(e: KeyboardEvent) => {
+                            onkeydown={async (e: KeyboardEvent) => {
                               if (e.key === 'Enter' && seqtaUrl.trim()) {
                                 jwtExpiredError = false;
-                                onStartLogin();
+                                await startLoginWithErrorHandling();
                               }
                             }}
                             placeholder={$_('login.url_placeholder', {
@@ -1052,6 +1094,24 @@
                   </div>
                 {/if}
 
+                {#if loginError}
+                  <div
+                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800 status-message-animate"
+                    transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
+                    <div class="flex items-center space-x-3">
+                      <div class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shrink-0">
+                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fill-rule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <span class="text-red-700 dark:text-red-300 font-medium text-sm">{loginError}</span>
+                    </div>
+                  </div>
+                {/if}
+
                 {#if showDevToggle}
                   <div
                     class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-200 dark:border-purple-800">
@@ -1163,8 +1223,9 @@
                     variant="primary"
                     size="lg"
                     fullWidth={true}
-                    onclick={() => {
+                    onclick={async () => {
                       jwtExpiredError = false;
+                      loginError = '';
                       if (isMobile && showMobileSsoInput && mobileSsoUrl.trim()) {
                         // Use the manually entered SSO URL
                         onUrlChange(mobileSsoUrl.trim());
@@ -1206,7 +1267,7 @@
                           5 * 60 * 1000,
                         );
                       }
-                      onStartLogin();
+                      await startLoginWithErrorHandling();
                     }}
                     disabled={jwtExpiredError ||
                       (loginMethod === 'url' && !seqtaUrl.trim()) ||

@@ -265,7 +265,10 @@
     "fill_all_fields": "Please fill in all fields",
     "failed_credentials": "Login failed. Please check your credentials.",
     "not_working_try_direct": "Not working? ",
-    "try_direct_login_link": "Try direct login instead"
+    "try_direct_login_link": "Try direct login instead",
+    "invalid_seqtalearn_format": "Invalid SEQTA link format. QR codes from SEQTA should start with seqtalearn://sso/. Try scanning a fresh QR code from your SEQTA email.",
+    "invalid_desqta_format": "Invalid DesQTA link format. Connect links from BetterSEQTA+ should start with desqta://connect/. Generate a new QR from Settings → Connect Mobile App.",
+    "invalid_desqta_connect_payload": "Invalid DesQTA connect link. The link appears incomplete. Generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App)."
   },
   "features": {
     "lightning_fast": "Lightning-fast performance",
