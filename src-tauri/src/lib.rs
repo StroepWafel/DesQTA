@@ -895,9 +895,13 @@ pub fn run() {
             #[cfg(desktop)]
             {
                 if let WindowEvent::CloseRequested { api, .. } = event {
-                    // Hide window instead of closing when user clicks X
-                    window.hide().unwrap();
-                    api.prevent_close();
+                    let settings = settings::Settings::load();
+                    if settings.minimize_to_tray {
+                        // Hide window to system tray instead of closing
+                        let _ = window.hide();
+                        api.prevent_close();
+                    }
+                    // Otherwise allow close (app will quit)
                 }
             }
         })

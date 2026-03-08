@@ -657,6 +657,8 @@
     "dark": "ダーク",
     "system": "システム",
     "theme_mode_description": "ライトモード、ダークモードを選択するか、システム設定に従います。",
+    "minimize_to_tray": "閉じたときにシステムトレイでアプリを実行し続ける",
+    "minimize_to_tray_description": "有効にすると、ウィンドウを閉じるとDesQTAがシステムトレイに最小化されます。無効にすると、閉じるとアプリが完全に終了します。",
     "security": "セキュリティ",
     "security_description": "生体認証でアプリを保護",
     "biometric_enabled": "生体認証でロック解除 (Face ID、Touch ID、指紋、Windows Hello)",

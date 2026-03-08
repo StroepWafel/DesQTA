@@ -705,6 +705,8 @@
     "dark": "Dark",
     "system": "System",
     "theme_mode_description": "Choose between light mode, dark mode, or follow your system preference.",
+    "minimize_to_tray": "App in systeemvak laten draaien bij sluiten",
+    "minimize_to_tray_description": "Wanneer ingeschakeld, minimaliseert het sluiten van het venster DesQTA naar het systeemvak. Wanneer uitgeschakeld, sluit het sluiten de app volledig af.",
     "security": "Beveiliging",
     "security_description": "Bescherm de app met biometrische authenticatie",
     "biometric_enabled": "Ontgrendelen met biometrie (Face ID, Touch ID, vingerafdruk, Windows Hello)",

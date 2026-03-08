@@ -755,6 +755,8 @@
     "biometric_verifying": "Verifying biometric...",
     "notifications": "Notifications",
     "notifications_description": "Manage your notification preferences",
+    "minimize_to_tray": "Keep app running in system tray when closed",
+    "minimize_to_tray_description": "When enabled, closing the window hides DesQTA to the system tray. When disabled, closing the window fully quits the app.",
     "zoom": "Interface Zoom",
     "zoom_description": "Adjust the size of interface elements (50%–200%)",
     "zoom_reset": "Reset",

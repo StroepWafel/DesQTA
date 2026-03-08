@@ -104,6 +104,7 @@
   let autoCollapseSidebar = $state(false);
   let autoExpandSidebarHover = $state(false);
   let globalSearchEnabled = $state(true);
+  let minimizeToTray = $state(true);
   let devSensitiveInfoHider = $state(false);
   let devForceOfflineMode = $state(false);
   let showDevSettings = $state(false);
@@ -199,6 +200,7 @@
     autoCollapseSidebar: boolean;
     autoExpandSidebarHover: boolean;
     globalSearchEnabled: boolean;
+    minimizeToTray: boolean;
     devSensitiveInfoHider: boolean;
     devForceOfflineMode: boolean;
     acceptedCloudEula: boolean;
@@ -332,6 +334,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'auto_collapse_sidebar',
           'auto_expand_sidebar_hover',
           'global_search_enabled',
+          'minimize_to_tray',
           'dev_sensitive_info_hider',
           'dev_force_offline_mode',
           'accepted_cloud_eula',
@@ -364,6 +367,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       autoCollapseSidebar = settings.auto_collapse_sidebar ?? false;
       autoExpandSidebarHover = settings.auto_expand_sidebar_hover ?? false;
       globalSearchEnabled = settings.global_search_enabled ?? true;
+      minimizeToTray = settings.minimize_to_tray ?? true;
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
@@ -396,6 +400,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         autoCollapseSidebar,
         autoExpandSidebarHover,
         globalSearchEnabled,
+        minimizeToTray,
         devSensitiveInfoHider,
         devForceOfflineMode,
         acceptedCloudEula,
@@ -437,6 +442,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       autoCollapseSidebar = false;
       autoExpandSidebarHover = false;
       globalSearchEnabled = true;
+      minimizeToTray = true;
       devSensitiveInfoHider = false;
       devForceOfflineMode = false;
       acceptedCloudEula = false;
@@ -511,6 +517,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         auto_collapse_sidebar: autoCollapseSidebar,
         auto_expand_sidebar_hover: autoExpandSidebarHover,
         global_search_enabled: globalSearchEnabled,
+        minimize_to_tray: minimizeToTray,
         dev_sensitive_info_hider: devSensitiveInfoHider,
         dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
@@ -561,6 +568,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.autoCollapseSidebar = autoCollapseSidebar;
         initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
         initialSettings.globalSearchEnabled = globalSearchEnabled;
+        initialSettings.minimizeToTray = minimizeToTray;
         initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
         initialSettings.devForceOfflineMode = devForceOfflineMode;
       initialSettings.acceptedCloudEula = acceptedCloudEula;
@@ -684,6 +692,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     autoCollapseSidebar = cloudSettings.auto_collapse_sidebar ?? false;
     autoExpandSidebarHover = cloudSettings.auto_expand_sidebar_hover ?? false;
     globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
+    minimizeToTray = cloudSettings.minimize_to_tray ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
     syncCloudPfp = cloudSettings.sync_cloud_pfp ?? false;
@@ -715,6 +724,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       initialSettings.autoCollapseSidebar = autoCollapseSidebar;
       initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
       initialSettings.globalSearchEnabled = globalSearchEnabled;
+      initialSettings.minimizeToTray = minimizeToTray;
       initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
       initialSettings.devForceOfflineMode = devForceOfflineMode;
       initialSettings.acceptedCloudEula = acceptedCloudEula;
@@ -767,6 +777,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       autoCollapseSidebar !== initialSettings.autoCollapseSidebar ||
       autoExpandSidebarHover !== initialSettings.autoExpandSidebarHover ||
       globalSearchEnabled !== initialSettings.globalSearchEnabled ||
+      minimizeToTray !== initialSettings.minimizeToTray ||
       devSensitiveInfoHider !== initialSettings.devSensitiveInfoHider ||
       devForceOfflineMode !== initialSettings.devForceOfflineMode ||
       acceptedCloudEula !== initialSettings.acceptedCloudEula ||
@@ -1808,6 +1819,25 @@ The Company reserves the right to terminate your access to the Service at any ti
                 your content, courses, and assessments.
               </p>
             </div>
+            {#if isDesktop}
+              <div class="flex gap-4 items-center mt-4 mb-4">
+                <input
+                  id="minimize-to-tray"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={minimizeToTray} />
+                <label
+                  for="minimize-to-tray"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  <T key="settings.minimize_to_tray" fallback="Keep app running in system tray when closed" />
+                </label>
+              </div>
+              <p class="text-xs text-zinc-600 dark:text-zinc-400">
+                <T
+                  key="settings.minimize_to_tray_description"
+                  fallback="When enabled, closing the window hides DesQTA to the system tray. When disabled, closing the window fully quits the app." />
+              </p>
+            {/if}
           </div>
           <!-- Disable School Picture -->
           <div class="flex gap-4 items-center mt-4">

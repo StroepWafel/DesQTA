@@ -657,6 +657,8 @@
     "dark": "Oscuro",
     "system": "Sistema",
     "theme_mode_description": "Elige entre modo claro, modo oscuro, o seguir la preferencia de tu sistema.",
+    "minimize_to_tray": "Mantener la app en ejecución en la bandeja del sistema al cerrar",
+    "minimize_to_tray_description": "Si está activado, cerrar la ventana minimiza DesQTA en la bandeja del sistema. Si está desactivado, cerrar cierra completamente la aplicación.",
     "security": "Seguridad",
     "security_description": "Protege la app con autenticación biométrica",
     "biometric_enabled": "Desbloquear con biometría (Face ID, Touch ID, huella, Windows Hello)",

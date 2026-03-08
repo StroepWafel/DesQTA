@@ -657,6 +657,8 @@
     "dark": "深色",
     "system": "系统",
     "theme_mode_description": "在浅色模式、深色模式之间选择，或跟随您的系统偏好。",
+    "minimize_to_tray": "关闭时在系统托盘中继续运行应用",
+    "minimize_to_tray_description": "启用后，关闭窗口会将 DesQTA 最小化到系统托盘。禁用后，关闭将完全退出应用。",
     "security": "安全",
     "security_description": "使用生物识别保护您的应用",
     "biometric_enabled": "使用生物识别解锁 (Face ID、Touch ID、指纹、Windows Hello)",

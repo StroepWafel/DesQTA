@@ -272,6 +272,13 @@ pub struct Settings {
     /// Interface zoom level (0.5 to 2.0, default 1.0)
     #[serde(default)]
     pub zoom_level: Option<f64>,
+    /// When true, closing the window hides to system tray. When false, closing fully quits the app.
+    #[serde(default = "default_minimize_to_tray")]
+    pub minimize_to_tray: bool,
+}
+
+fn default_minimize_to_tray() -> bool {
+    true
 }
 
 impl Default for Settings {
@@ -320,6 +327,7 @@ impl Default for Settings {
             downloaded_theme_ids: None,
             downloaded_theme_metadata: None,
             zoom_level: None,
+            minimize_to_tray: true,
         }
     }
 }
@@ -638,6 +646,11 @@ impl Settings {
             &existing_json,
             "separate_rss_feed",
             default_settings.separate_rss_feed,
+        );
+        default_settings.minimize_to_tray = get_bool(
+            &existing_json,
+            "minimize_to_tray",
+            default_settings.minimize_to_tray,
         );
         default_settings.dashboard_widgets_layout = get_opt_string(&existing_json, "dashboard_widgets_layout");
 

@@ -657,6 +657,8 @@
     "dark": "Dunkel",
     "system": "System",
     "theme_mode_description": "Wählen Sie zwischen hellem Modus, dunklem Modus oder folgen Sie Ihrer Systemeinstellung.",
+    "minimize_to_tray": "App beim Schließen in der Systemleiste weiterlaufen lassen",
+    "minimize_to_tray_description": "Wenn aktiviert, wird DesQTA beim Schließen des Fensters in die Systemleiste minimiert. Wenn deaktiviert, wird die App vollständig beendet.",
     "security": "Sicherheit",
     "security_description": "Schützen Sie die App mit biometrischer Authentifizierung",
     "biometric_enabled": "Mit Biometrie entsperren (Face ID, Touch ID, Fingerabdruck, Windows Hello)",

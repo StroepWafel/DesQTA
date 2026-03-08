@@ -660,6 +660,8 @@
     "dark": "Sombre",
     "system": "Système",
     "theme_mode_description": "Choisissez entre le mode clair, le mode sombre, ou suivez la préférence de votre système.",
+    "minimize_to_tray": "Garder l'app en cours d'exécution dans la barre système à la fermeture",
+    "minimize_to_tray_description": "Si activé, la fermeture de la fenêtre minimise DesQTA dans la barre système. Si désactivé, la fermeture quitte complètement l'application.",
     "security": "Sécurité",
     "security_description": "Protégez l'application avec l'authentification biométrique",
     "biometric_enabled": "Déverrouiller avec la biométrie (Face ID, Touch ID, empreinte, Windows Hello)",
