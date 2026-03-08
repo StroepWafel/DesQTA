@@ -58,7 +58,7 @@ jobs:
           path: src-tauri/target/release/bundle/**
 
   build-ios:
-    name: Build Unsigned iOS IPA
+    name: Build Signed iOS IPA
     runs-on: macos-latest
 
     steps:
@@ -92,66 +92,18 @@ jobs:
       - name: Generate app icons
         run: pnpm tauri icon static/app-icon.svg
 
-      - name: Build Frontend
-        run: pnpm build
-
-      - name: Pre-build Rust library for iOS (bypasses xcode-script which requires dev server)
+      - name: Build iOS app (signed)
         env:
-          IPHONEOS_DEPLOYMENT_TARGET: "15.0"
-        run: |
-          cd src-tauri
-          cargo build --release --target aarch64-apple-ios --lib
-          mkdir -p gen/apple/Externals/arm64/release gen/apple/Externals/x86_64/release
-          cp target/aarch64-apple-ios/release/libdesqta_lib.a gen/apple/Externals/arm64/release/libapp.a
-          echo "Rust library built:"
-          ls -la gen/apple/Externals/arm64/release/
-
-      - name: Copy frontend assets for iOS
-        run: |
-          mkdir -p src-tauri/gen/apple/assets
-          cp -r build/* src-tauri/gen/apple/assets/
-
-      - name: Build Unsigned iOS App
-        working-directory: src-tauri/gen/apple
-        run: |
-          PROJECT_NAME=$(ls -d *.xcodeproj | sed 's/\.xcodeproj$//' | head -n 1)
-          SCHEME_NAME="desqta_iOS"
-          echo "Building project: $PROJECT_NAME with scheme: $SCHEME_NAME"
-          xcodebuild build \
-            -project "$PROJECT_NAME.xcodeproj" \
-            -scheme "$SCHEME_NAME" \
-            -configuration release \
-            -sdk iphoneos \
-            -derivedDataPath ./build \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="" \
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            PROVISIONING_PROFILE_REQUIRED=NO \
-            COMPILER_INDEX_STORE_ENABLE=NO
-
-      - name: Package .app into .ipa
-        working-directory: src-tauri/gen/apple
-        run: |
-          PROJECT_NAME=$(ls -d *.xcodeproj | sed 's/\.xcodeproj$//' | head -n 1)
-
-          mkdir -p Payload
-          # Use release or debug output depending on what was built
-          for dir in ./build/Build/Products/Release-iphoneos ./build/Build/Products/release-iphoneos ./build/Build/Products/debug-iphoneos; do
-            if [ -d "$dir" ]; then
-              cp -r "$dir"/*.app Payload/
-              break
-            fi
-          done
-          zip -r "${PROJECT_NAME}_unsigned.ipa" Payload
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
+        run: pnpm tauri ios build
 
       - name: Upload iOS IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-build-outputs
-          path: src-tauri/gen/apple/*_unsigned.ipa
+          path: src-tauri/gen/apple/build/**/*.ipa
           retention-days: 7
 
   build-android:
