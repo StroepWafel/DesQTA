@@ -97,7 +97,7 @@ jobs:
           IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
           IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
           IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
-        run: pnpm tauri ios build
+        run: pnpm tauri ios build --export-method app-store-connect --target aarch64
 
       - name: Upload iOS IPA Artifact
         uses: actions/upload-artifact@v4
