@@ -67,6 +67,7 @@ jobs:
       - name: Build signed iOS app
         env:
           APPLE_DEVELOPMENT_TEAM: 5949S6UQCX
+          TAURI_APPLE_DEVELOPMENT_TEAM: 5949S6UQCX
           IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
           IOS_CERTIFICATE_PASSWORD: ${{ env.IOS_CERTIFICATE_PASSWORD }}
           IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
