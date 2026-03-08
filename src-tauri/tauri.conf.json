@@ -39,6 +39,9 @@
         "installMode": "currentUser"
       }
     },
+    "iOS": {
+      "developmentTeam": "5949S6UQCX"
+    },
     "macOS": {
       "minimumSystemVersion": "10.13"
     },
