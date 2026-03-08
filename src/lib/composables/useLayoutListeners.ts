@@ -7,8 +7,12 @@ export interface LayoutListenersOptions {
   onFullscreenChange: (isFullscreen: boolean) => void;
 }
 
+const isMacOS = import.meta.env.TAURI_ENV_PLATFORM === 'darwin' || import.meta.env.TAURI_ENV_PLATFORM === 'macos';
+
 /**
  * Set up layout event listeners (reload, fullscreen, zoom).
+ * On macOS, we avoid calling isMaximized() in resize/move handlers - it causes
+ * infinite resize loop and 100% CPU hang (tauri-apps/plugins-workspace#1918).
  * Returns cleanup function to call on destroy.
  */
 export async function useLayoutListeners(options: LayoutListenersOptions): Promise<() => void> {
@@ -33,10 +37,8 @@ export async function useLayoutListeners(options: LayoutListenersOptions): Promi
 
   const checkFullscreenState = async () => {
     try {
-      const [currentFullscreen, currentMaximized] = await Promise.all([
-        appWindow.isFullscreen(),
-        appWindow.isMaximized().catch(() => false),
-      ]);
+      const currentFullscreen = await appWindow.isFullscreen();
+      const currentMaximized = isMacOS ? false : await appWindow.isMaximized().catch(() => false);
       const shouldRemoveCorners = currentFullscreen || currentMaximized;
       onFullscreenChange(shouldRemoveCorners);
       logger.debug(
@@ -53,11 +55,19 @@ export async function useLayoutListeners(options: LayoutListenersOptions): Promi
 
   await checkFullscreenState();
 
-  appWindow.onResized(checkFullscreenState);
-  appWindow.onMoved(checkFullscreenState);
+  // On macOS: do NOT register onResized/onMoved - calling isMaximized() from those
+  // handlers triggers infinite resize loop. Backend emits fullscreen-changed instead.
+  let unlistenResized: (() => void) | undefined;
+  let unlistenMoved: (() => void) | undefined;
+  if (!isMacOS) {
+    unlistenResized = appWindow.onResized(checkFullscreenState);
+    unlistenMoved = appWindow.onMoved(checkFullscreenState);
+  }
 
   return () => {
     logger.debug('layout', 'onDestroy', 'Cleaning up layout listeners');
     unlistenReload();
+    unlistenResized?.();
+    unlistenMoved?.();
   };
 }

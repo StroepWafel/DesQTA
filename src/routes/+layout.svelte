@@ -578,11 +578,13 @@
       sendAnalytics();
 
       // Check and apply initial fullscreen state (also check maximized)
+      // On macOS: skip isMaximized() - it can cause issues with undecorated windows (plugins-workspace#1918)
       try {
-        const [currentFullscreen, currentMaximized] = await Promise.all([
-          appWindow.isFullscreen(),
-          appWindow.isMaximized().catch(() => false),
-        ]);
+        const currentFullscreen = await appWindow.isFullscreen();
+        const currentMaximized =
+          (import.meta.env.TAURI_ENV_PLATFORM === 'darwin' || import.meta.env.TAURI_ENV_PLATFORM === 'macos')
+            ? false
+            : await appWindow.isMaximized().catch(() => false);
         isFullscreen = currentFullscreen || currentMaximized;
         logger.debug(
           'layout',

@@ -37,6 +37,7 @@ function createPlatformStore() {
       const supportsBiometric =
         tauriPlatform === 'ios' ||
         tauriPlatform === 'android' ||
+        tauriPlatform === 'darwin' ||
         tauriPlatform === 'macos' ||
         tauriPlatform === 'windows';
       set({ isMobile, isNativeMobile, isSmallViewport, isIOS, isLinux, supportsBiometric });

@@ -253,7 +253,9 @@
     window.addEventListener('keydown', handleKeydown);
 
     // Auto-maximize window on login screen load (desktop only)
-    if (!isMobile) {
+    // On macOS: skip maximize/isMaximized - causes infinite resize loop and 100% CPU with undecorated windows (plugins-workspace#1918)
+    const isMacOS = import.meta.env.TAURI_ENV_PLATFORM === 'darwin' || import.meta.env.TAURI_ENV_PLATFORM === 'macos';
+    if (!isMobile && !isMacOS) {
       // Add a small delay to ensure window is ready, then force maximize
       setTimeout(async () => {
         try {
@@ -261,7 +263,7 @@
           await appWindow.maximize();
           console.log('Window maximize command sent');
 
-          // Double-check after a brief moment
+          // Double-check after a brief moment (skip on macOS - isMaximized causes resize loop)
           setTimeout(async () => {
             try {
               const isMaximized = await appWindow.isMaximized();
