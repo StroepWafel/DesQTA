@@ -895,13 +895,20 @@ pub fn run() {
             #[cfg(desktop)]
             {
                 if let WindowEvent::CloseRequested { api, .. } = event {
-                    let settings = settings::Settings::load();
-                    if settings.minimize_to_tray {
-                        // Hide window to system tray instead of closing
-                        let _ = window.hide();
-                        api.prevent_close();
+                    // On macOS: closing the window should quit the app (no tray reopen flow)
+                    #[cfg(target_os = "macos")]
+                    {
+                        // Always allow close → app quits
                     }
-                    // Otherwise allow close (app will quit)
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        let settings = settings::Settings::load();
+                        if settings.minimize_to_tray {
+                            // Hide window to system tray instead of closing
+                            let _ = window.hide();
+                            api.prevent_close();
+                        }
+                    }
                 }
             }
         })
