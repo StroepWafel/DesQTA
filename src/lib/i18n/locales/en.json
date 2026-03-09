@@ -1035,6 +1035,8 @@
   },
   "reports": {
     "description": "Download your academic reports",
+    "no_reports": "No reports available",
+    "no_reports_message": "Your academic reports will appear here when they are available.",
     "failed_to_load": "Failed to load reports.",
     "error_loading": "Error loading reports.",
     "loading": "Loading reports...",

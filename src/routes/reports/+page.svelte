@@ -8,6 +8,8 @@
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import T from '$lib/components/T.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import { DocumentText } from 'svelte-hero-icons';
   import { _ } from '../../lib/i18n';
   import { getUrlParam } from '$lib/utils/urlParams';
   import { toastStore } from '$lib/stores/toast';
@@ -107,7 +109,7 @@
   });
 </script>
 
-<div class="container px-0 py-5 mx-auto min-h-screen space-y-6">
+<div class="container px-0 py-5 mx-auto space-y-6">
   <div class="flex justify-between items-start">
     <div>
       <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
@@ -135,6 +137,12 @@
       </div>
       <p class="mt-4 text-xl text-zinc-700 dark:text-zinc-300">{error}</p>
     </div>
+  {:else if reports.length === 0}
+    <EmptyState
+      title={$_('reports.no_reports') || 'No reports available'}
+      message={$_('reports.no_reports_message') || 'Your academic reports will appear here when they are available.'}
+      icon={DocumentText}
+      size="lg" />
   {:else}
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {#key reports.length + reports.map((r) => r.uuid || r.id).join(',')}
