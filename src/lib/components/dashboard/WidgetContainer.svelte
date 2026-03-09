@@ -112,7 +112,7 @@
   data-gs-max-h={widget.position.maxH ?? widgetRegistry.get(widget.type)?.maxSize.h ?? 12}
   role="article"
   aria-label={widget.title || `Widget: ${widget.type}`}>
-  <!-- Inner wrapper for smooth hover scale -->
+  <!-- Inner wrapper for widget content -->
   <div
     class="group relative bg-white/95 dark:bg-zinc-900/90 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-md overflow-hidden h-full w-full widget-inner"
     style="transform-origin: center center;">
@@ -218,23 +218,9 @@
     cursor: nesw-resize;
   }
 
-  /* Smooth widget inner hover animation - wrapper approach to avoid GridStack conflicts */
+  /* Widget inner - no hover scale since widgets are display-only (not interactable) */
   :global(.widget-inner) {
     transform-origin: center center;
-    transition:
-      transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-  }
-
-  /* Apply scale on hover to inner wrapper */
-  :global(
-    .widget-container:hover:not(.ui-draggable-dragging):not(.ui-resizable-resizing) .widget-inner
-  ) {
-    transform: scale(1.01);
-    box-shadow:
-      0 20px 25px -5px rgba(0, 0, 0, 0.1),
-      0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
   /* Ensure GridStack's position changes transition smoothly */
