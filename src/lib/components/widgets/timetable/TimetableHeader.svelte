@@ -112,7 +112,7 @@
       </Button>
     </div>
   {:else}
-    <div class="flex-1" />
+    <div class="flex-1"></div>
   {/if}
 
   <!-- Right: View dropdown + Export -->
@@ -125,7 +125,7 @@
         onclick={() => (showViewDropdown = !showViewDropdown)}
         aria-label={$_('timetable.view') || 'View'}
         aria-expanded={showViewDropdown}
-        aria-haspopup="listbox">
+        aria-haspopup="menu">
         <Icon src={currentViewOption.icon} class="w-4 h-4 text-zinc-700 dark:text-zinc-300 group-hover:text-white" />
         <span class="font-medium text-sm text-zinc-900 dark:text-white group-hover:text-white">
           {currentViewOption.label}
@@ -136,13 +136,12 @@
         <div
           class="absolute right-0 z-50 mt-2 w-40 rounded-xl border shadow-lg bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 py-1"
           transition:fly={{ y: -6, duration: 150, easing: cubicInOut }}
-          role="listbox">
+          role="group">
           {#each viewModeOptions as option}
             <button
               type="button"
-              role="option"
+              role="button"
               data-onboarding-view={option.value}
-              aria-selected={viewMode === option.value}
               aria-pressed={viewMode === option.value}
               class="flex gap-2 items-center w-full px-3 py-2.5 text-left text-sm transition-colors {viewMode === option.value
                 ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'

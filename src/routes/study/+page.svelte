@@ -103,7 +103,7 @@
 
   // Tabs
   type TabKey = 'quizzes' | 'tasks' | 'notes';
-  let activeTab: TabKey = 'quizzes';
+  let activeTab = $state<TabKey>('quizzes');
 
   // Upcoming assessments state (real data)
   let upcomingAssessments: AssessmentItem[] = [];
@@ -662,7 +662,7 @@
       <div class="flex items-center gap-3">
         <button
           class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-zinc-300 text-zinc-900 dark:text-white dark:border-zinc-700 bg-white dark:bg-zinc-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm sm:text-base"
-          on:click={() => {
+          onclick={() => {
             /* timer */
           }}
           aria-label={$_('study.open_timer') || 'Open Study Timer'}>
@@ -681,7 +681,7 @@
         'quizzes'
           ? 'accent-bg text-white'
           : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
-        on:click={() => (activeTab = 'quizzes')}
+        onclick={() => (activeTab = 'quizzes')}
         role="tab"
         aria-selected={activeTab === 'quizzes'}
         aria-controls="quizzes-panel"
@@ -693,7 +693,7 @@
         'tasks'
           ? 'accent-bg text-white'
           : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
-        on:click={() => (activeTab = 'tasks')}
+        onclick={() => (activeTab = 'tasks')}
         role="tab"
         aria-selected={activeTab === 'tasks'}
         aria-controls="tasks-panel"
@@ -705,7 +705,7 @@
         'notes'
           ? 'accent-bg text-white'
           : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
-        on:click={() => (activeTab = 'notes')}
+        onclick={() => (activeTab = 'notes')}
         role="tab"
         aria-selected={activeTab === 'notes'}
         aria-controls="notes-panel"
@@ -752,7 +752,7 @@
                   </h2>
                   <button
                     class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium"
-                    on:click={addTodo}
+                    onclick={addTodo}
                     aria-label={$_('study.add_new_task') || 'Add new task'}>
                     + <T key="study.new_task" fallback="New Task" />
                   </button>
@@ -835,7 +835,7 @@
                         <input
                           type="checkbox"
                           checked={todo.completed}
-                          on:change={() => toggleTodo(todo.id)}
+                          onchange={() => toggleTodo(todo.id)}
                           class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring"
                           aria-label={$_('study.toggle_complete') || 'Toggle complete'} />
                         <div class="flex-1 min-w-0">
@@ -851,11 +851,11 @@
                                 )}">{todo.priority ?? 'medium'}</span>
                               <button
                                 class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
-                                on:click={() => (editMode[todo.id] = true)}
+                                onclick={() => (editMode[todo.id] = true)}
                                 ><T key="study.edit" fallback="Edit" /></button>
                               <button
                                 class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-red-500"
-                                on:click={() => removeTodo(todo.id)}
+                                onclick={() => removeTodo(todo.id)}
                                 ><T key="study.delete" fallback="Del" /></button>
                             </div>
                           </div>
@@ -936,7 +936,7 @@
                         <input
                           type="checkbox"
                           checked={todo.completed}
-                          on:change={() => toggleTodo(todo.id)}
+                          onchange={() => toggleTodo(todo.id)}
                           class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring"
                           aria-label={$_('study.toggle_complete', {
                             default: 'Toggle complete',
@@ -951,7 +951,7 @@
                               <select
                                 class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm"
                                 bind:value={todo.priority}
-                                on:change={() => updateField(todo.id, 'priority', todo.priority)}>
+                                onchange={() => updateField(todo.id, 'priority', todo.priority)}>
                                 <option value="low">{$_('study.priority_low') || 'Low'}</option>
                                 <option value="medium"
                                   >{$_('study.priority_medium') || 'Medium'}</option>
@@ -969,12 +969,12 @@
                                 class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
                                 placeholder={$_('study.related_subject') || 'Related subject'}
                                 bind:value={todo.related_subject}
-                                on:input={(e) => {
+                                oninput={(e) => {
                                   subjectQuery[todo.id] = (e.target as HTMLInputElement).value;
                                   showSubjectDropdown[todo.id] = true;
                                 }}
-                                on:focus={() => (showSubjectDropdown[todo.id] = true)}
-                                on:blur={() =>
+                                onfocus={() => (showSubjectDropdown[todo.id] = true)}
+                                onblur={() =>
                                   setTimeout(() => (showSubjectDropdown[todo.id] = false), 150)} />
                               {#if showSubjectDropdown[todo.id]}
                                 <div
@@ -987,7 +987,7 @@
                                               .includes(q)), ) as s}
                                     <button
                                       class="flex items-center w-full px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                                      on:mousedown={() => {
+                                      onmousedown={() => {
                                         todo.related_subject = `${s.code} — ${s.title}`;
                                         subjectQuery[todo.id] = s.code;
                                         showSubjectDropdown[todo.id] = false;
@@ -1008,12 +1008,12 @@
                                 class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
                                 placeholder={$_('study.related_assessment') || 'Related assessment'}
                                 bind:value={todo.related_assessment}
-                                on:input={(e) => {
+                                oninput={(e) => {
                                   assessmentQuery[todo.id] = (e.target as HTMLInputElement).value;
                                   showAssessmentDropdown[todo.id] = true;
                                 }}
-                                on:focus={() => (showAssessmentDropdown[todo.id] = true)}
-                                on:blur={() =>
+                                onfocus={() => (showAssessmentDropdown[todo.id] = true)}
+                                onblur={() =>
                                   setTimeout(
                                     () => (showAssessmentDropdown[todo.id] = false),
                                     150,
@@ -1036,7 +1036,7 @@
                                     .slice(0, 20) as a}
                                     <button
                                       class="flex items-center w-full px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                                      on:mousedown={() => {
+                                      onmousedown={() => {
                                         todo.related_assessment = a.title;
                                         if (!todo.related_subject) {
                                           const subj = subjects.find((s) => s.code === a.code);
@@ -1098,7 +1098,7 @@
                               placeholder={$_('study.tags_comma_separated') ||
                                 'Tags (comma separated)'}
                               value={(todo.tags ?? []).join(', ')}
-                              on:input={(e) => {
+                              oninput={(e) => {
                                 const val = (e.target as HTMLInputElement).value;
                                 updateField(
                                   todo.id,
@@ -1127,11 +1127,11 @@
                                   class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                                   <button
                                     class="px-3 py-1.5 text-xs sm:text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
-                                    on:click={() => addSubtask(todo.id)}
+                                    onclick={() => addSubtask(todo.id)}
                                     >+ <T key="study.add" fallback="Add" /></button>
                                   <button
                                     class="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
-                                    on:click={() => markAllSubtasksDone(todo.id)}
+                                    onclick={() => markAllSubtasksDone(todo.id)}
                                     >✓ <T key="study.all" fallback="All" /></button>
                                 </div>
                               </div>
@@ -1146,14 +1146,14 @@
                                       <input
                                         type="checkbox"
                                         checked={sub.completed}
-                                        on:change={() => toggleSubtask(todo.id, sub.id)}
+                                        onchange={() => toggleSubtask(todo.id, sub.id)}
                                         class="w-4 h-4 shrink-0 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring"
                                         aria-label={$_('study.toggle_subtask') ||
                                           'Toggle subtask'} />
                                       <input
                                         class="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm"
                                         bind:value={sub.title}
-                                        on:blur={() => {
+                                        onblur={() => {
                                           const list = (todo.subtasks ?? []).map((s) =>
                                             s.id === sub.id ? { ...s, title: sub.title } : s,
                                           );
@@ -1171,7 +1171,7 @@
                           <div class="mt-4 flex items-center justify-center sm:justify-end gap-2">
                             <button
                               class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring w-full sm:w-auto"
-                              on:click={() => {
+                              onclick={() => {
                                 editMode[todo.id] = false;
                                 saveTodos();
                               }}><T key="study.save_task" fallback="Save Task" /></button>
@@ -1282,7 +1282,7 @@
                   </h2>
                   <button
                     class="px-3 py-1.5 text-xs rounded-lg bg-white/80 dark:bg-zinc-700/80 backdrop-blur-sm text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 transition-all duration-200 hover:scale-105 border border-zinc-200/50 dark:border-zinc-600/50"
-                    on:click={() => (currentStudyTip = getRandomStudyTip())}
+                    onclick={() => (currentStudyTip = getRandomStudyTip())}
                     aria-label={$_('study.get_new_tip') || 'Get new study tip'}>
                     <T key="study.new_tip" fallback="New Tip" />
                   </button>
