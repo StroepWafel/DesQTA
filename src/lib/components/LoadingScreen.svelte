@@ -6,7 +6,7 @@
 
   const containerClasses = inline
     ? 'relative flex w-full h-full min-h-[16rem] items-center justify-center bg-transparent'
-    : 'fixed inset-0 z-50 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900';
+    : 'fixed inset-0 z-50 flex items-center justify-center theme-bg';
 
   const innerClasses = inline
     ? 'flex flex-col items-center gap-6 py-10'
