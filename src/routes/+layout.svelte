@@ -811,7 +811,7 @@
   <LoadingScreen />
 {:else}
   <div
-    class="flex flex-col h-screen w-screen {isFullscreen || isMobile
+    class="flex flex-col h-screen w-screen {isMobile
       ? ''
       : 'rounded-2xl'} overflow-hidden theme-bg"
     style="outline: none; border: none; margin: 0; padding: 0; padding-top: var(--safe-area-top); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
@@ -852,10 +852,12 @@
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen || isMobile
+        class="flex-1 min-h-0 flex flex-col border-t {!$needsSetup ? 'border-l' : ''} {isMobile
           ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 [scrollbar-gutter:stable] {isMobile && !$needsSetup ? 'pb-[56px] mobile-main' : ''}"
+          : 'rounded-tl-2xl rounded-bl-2xl overflow-hidden'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
+        <div
+          class="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] {isMobile && !$needsSetup ? 'pb-[56px] mobile-main' : ''}">
         {#if !$needsSetup}
           <OfflineBanner />
         {/if}
@@ -915,6 +917,7 @@
         {:else}
           {@render children()}
         {/if}
+        </div>
       </main>
 
       <!-- ThemeBuilder Sidebar -->
