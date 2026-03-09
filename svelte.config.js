@@ -27,8 +27,7 @@ const config = {
 		}),
 		// Optimize for single-page app
 		prerender: {
-			handleHttpError: 'warn',
-			handleUnseenRoutes: 'ignore'
+			handleHttpError: 'warn'
 		}
 	},
 	preprocess: vitePreprocess()

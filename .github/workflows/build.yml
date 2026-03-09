@@ -129,10 +129,26 @@ jobs:
             echo "IOS_CERTIFICATE_PASSWORD=$IOS_CERTIFICATE_PASSWORD_SECRET" >> "$GITHUB_ENV"
           fi
 
+      - name: Create App Store Connect API key file
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        run: |
+          key_dir="$RUNNER_TEMP/private_keys"
+          mkdir -p "$key_dir"
+          key_path="$key_dir/AuthKey_${APPLE_API_KEY}.p8"
+          printf '%b' "$APPLE_API_KEY_CONTENT" > "$key_path"
+          echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+          echo "API_PRIVATE_KEYS_DIR=$key_dir" >> "$GITHUB_ENV"
+
       - name: Build iOS app (signed)
         env:
           APPLE_DEVELOPMENT_TEAM: 5949S6UQCX
           TAURI_APPLE_DEVELOPMENT_TEAM: 5949S6UQCX
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+          API_PRIVATE_KEYS_DIR: ${{ env.API_PRIVATE_KEYS_DIR }}
           IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
           IOS_CERTIFICATE_PASSWORD: ${{ env.IOS_CERTIFICATE_PASSWORD }}
           IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
@@ -144,6 +160,27 @@ jobs:
           name: ios-build-outputs
           path: src-tauri/gen/apple/build/**/*.ipa
           retention-days: 7
+
+      - name: Upload IPA to TestFlight
+        if: github.event_name == 'push'
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          API_PRIVATE_KEYS_DIR: ${{ env.API_PRIVATE_KEYS_DIR }}
+        run: |
+          ipa_path=$(find src-tauri/gen/apple/build -name '*.ipa' -type f | head -1)
+
+          if [ -z "$ipa_path" ]; then
+            echo 'No IPA found to upload.'
+            exit 1
+          fi
+
+          xcrun altool \
+            --upload-app \
+            --type ios \
+            --file "$ipa_path" \
+            --apiKey "$APPLE_API_KEY" \
+            --apiIssuer "$APPLE_API_ISSUER"
 
   build-android:
     runs-on: ubuntu-latest
