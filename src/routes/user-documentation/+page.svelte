@@ -304,7 +304,7 @@
   });
 </script>
 
-<div class="min-h-screen p-4 sm:p-6 md:p-8">
+<div class="container min-h-screen px-0 py-5 mx-auto space-y-6">
   <!-- Header Section -->
   <div class="mb-8 animate-fade-in-up">
     <Card variant="elevated" padding="lg" class="bg-white/80 dark:bg-zinc-900/60 backdrop-blur-sm">

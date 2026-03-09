@@ -320,7 +320,7 @@
   }
 </script>
 
-<div class="container px-6 py-7 mx-auto flex flex-col h-full gap-8">
+<div class="container px-0 py-5 mx-auto flex flex-col h-full gap-8">
   <div class="flex justify-between items-start">
     <div class="flex-1">
       <div class="flex items-center gap-3 mb-2">

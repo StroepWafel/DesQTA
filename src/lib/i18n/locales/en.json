@@ -130,6 +130,7 @@
     "select": "Select"
   },
   "forums": {
+    "description": "Discuss and collaborate with your community",
     "loading": "Loading forums...",
     "error_loading": "Error loading forums",
     "no_forums": "No forums available",
@@ -166,6 +167,9 @@
     "not_enabled_message": "Forums are not enabled for your school. Please contact your administrator if you believe this is an error."
   },
   "folios": {
+    "description": "Create and browse folios",
+    "browse_description": "Explore published folios",
+    "edit_description": "Create and manage your personal folios",
     "invalid_response": "Invalid response format",
     "edit_my_folios": "Edit My Folios",
     "edit_my_folios_description": "Create and manage your personal folios",
@@ -381,6 +385,7 @@
     "view_course": "View Course"
   },
   "courses": {
+    "page_description": "Browse courses and access lesson content",
     "back_to_subjects": "Back to subjects",
     "search_subjects": "Search subjects...",
     "loading_subjects": "Loading subjects...",
@@ -430,6 +435,7 @@
     "go_to_overview": "Go to Course Overview"
   },
   "goals": {
+    "description": "Set and track your academic goals",
     "no_cached_data": "No cached data available",
     "invalid_response": "Invalid response format",
     "loading_years": "Loading years...",
@@ -452,6 +458,7 @@
     "not_enabled_message": "Goals are not enabled for your school. Please contact your administrator if you believe this is an error."
   },
   "assessments": {
+    "description": "View and manage your upcoming assessments",
     "back_to_assessments": "Back to Assessments",
     "status_marked": "Marked",
     "status_overdue": "Overdue",
@@ -476,6 +483,7 @@
     "failed_to_load": "Failed to load assessment details"
   },
   "timetable": {
+    "description": "View your weekly schedule and lessons",
     "monday": "Monday",
     "tuesday": "Tuesday",
     "wednesday": "Wednesday",
@@ -887,6 +895,7 @@
     "next": "Next"
   },
   "portals": {
+    "description": "Access external portals and resources",
     "failed_to_load": "Failed to load portals",
     "count": "{count} portal{plural} available",
     "loading": "Loading portals...",
@@ -1002,11 +1011,13 @@
     "student_avatar": "Student avatar"
   },
   "news": {
+    "description": "Browse news from around the world",
     "no_articles_loaded": "No articles could be loaded from the selected sources.",
     "failed_to_fetch": "Failed to fetch news",
     "no_articles_found": "No news articles found."
   },
   "notices": {
+    "description": "View notices and announcements",
     "failed_to_load": "Failed to load notices.",
     "label": "Label:",
     "all": "All",
@@ -1016,12 +1027,14 @@
     "no_notices_today": "No notices available today."
   },
   "documents": {
+    "description": "Access and download your school documents",
     "loading": "Loading documents...",
     "failed_to_load": "Failed to load documents",
     "error_loading": "Error loading documents",
     "no_documents": "No documents available"
   },
   "reports": {
+    "description": "Download your academic reports",
     "failed_to_load": "Failed to load reports.",
     "error_loading": "Error loading reports.",
     "loading": "Loading reports...",

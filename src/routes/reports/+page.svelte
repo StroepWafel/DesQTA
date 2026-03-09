@@ -107,10 +107,17 @@
   });
 </script>
 
-<div class="p-8 min-h-screen">
-  <h1 class="mb-8 text-3xl font-bold text-zinc-900 dark:text-white">
-    <T key="navigation.reports" fallback="Reports" />
-  </h1>
+<div class="container px-0 py-5 mx-auto min-h-screen space-y-6">
+  <div class="flex justify-between items-start">
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.reports" fallback="Reports" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="reports.description" fallback="Download your academic reports" />
+      </p>
+    </div>
+  </div>
   {#if loading}
     <div class="flex flex-col justify-center items-center py-24">
       <div

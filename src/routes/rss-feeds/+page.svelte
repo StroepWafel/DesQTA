@@ -145,32 +145,46 @@
 </script>
 
 <div class="flex flex-col h-full">
-  <div class="container px-6 py-7 mx-auto flex flex-col flex-1 min-h-0 w-full gap-6">
+  <div class="container px-0 py-5 mx-auto flex flex-col flex-1 min-h-0 w-full gap-6">
     {#if loadingFeeds}
-      <div class="flex justify-center items-center flex-1 min-h-[320px]" in:fade={{ duration: 400 }}>
+      <div
+        class="flex justify-center items-center flex-1 min-h-[320px]"
+        in:fade={{ duration: 400 }}>
         <div
           class="w-12 h-12 rounded-full border-4 border-accent-600/30 border-t-accent-600 animate-spin">
         </div>
       </div>
     {:else if error && feeds.length === 0}
-      <div class="flex flex-col justify-center items-center flex-1 min-h-[320px]" in:fade={{ duration: 400 }}>
+      <div
+        class="flex flex-col justify-center items-center flex-1 min-h-[320px]"
+        in:fade={{ duration: 400 }}>
         <EmptyState
           title={$_('rss_feeds.error_loading') || 'Failed to load RSS feeds.'}
-          message={$_('rss_feeds.add_feeds_in_settings') || 'Add RSS feeds in Settings to get started.'}
+          message={$_('rss_feeds.add_feeds_in_settings') ||
+            'Add RSS feeds in Settings to get started.'}
           icon={ExclamationTriangle}
           size="md" />
-        <Button variant="primary" class="mt-4 accent-bg accent-ring" onclick={() => goto('/settings')}>
+        <Button
+          variant="primary"
+          class="mt-4 accent-bg accent-ring"
+          onclick={() => goto('/settings')}>
           <T key="rss_feeds.manage_feeds_in_settings" fallback="Manage Feeds in Settings" />
         </Button>
       </div>
     {:else if feeds.length === 0}
-      <div class="flex flex-col justify-center items-center flex-1 min-h-[320px]" in:fade={{ duration: 400 }}>
+      <div
+        class="flex flex-col justify-center items-center flex-1 min-h-[320px]"
+        in:fade={{ duration: 400 }}>
         <EmptyState
           title={$_('rss_feeds.no_feeds') || 'No RSS Feeds'}
-          message={$_('rss_feeds.add_feeds_in_settings_empty') || 'Add, edit, or remove RSS feeds in Settings.'}
+          message={$_('rss_feeds.add_feeds_in_settings_empty') ||
+            'Add, edit, or remove RSS feeds in Settings.'}
           icon={Rss}
           size="md" />
-        <Button variant="primary" class="mt-4 accent-bg accent-ring" onclick={() => goto('/settings')}>
+        <Button
+          variant="primary"
+          class="mt-4 accent-bg accent-ring"
+          onclick={() => goto('/settings')}>
           <T key="rss_feeds.manage_feeds_in_settings" fallback="Manage Feeds in Settings" />
         </Button>
       </div>
@@ -183,7 +197,9 @@
           </h1>
         </div>
         <p class="text-zinc-600 dark:text-zinc-400">
-          <T key="rss_feeds.description" fallback="Read and browse your subscribed RSS feeds in one place." />
+          <T
+            key="rss_feeds.description"
+            fallback="Read and browse your subscribed RSS feeds in one place." />
         </p>
       </header>
 
@@ -213,12 +229,13 @@
             onclick={() => (sidebarOpen = false)}
             role="button"
             tabindex="0"
-            aria-label={$_('navigation.close_sidebar') || 'Close sidebar overlay'}></div>
+            aria-label={$_('navigation.close_sidebar') || 'Close sidebar overlay'}>
+          </div>
         {/if}
 
         <!-- Sidebar: feed list -->
         <aside
-            class="rss-sidebar-animate flex flex-col shrink-0 w-64 xl:w-72 overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md {isMobile
+          class="rss-sidebar-animate flex flex-col shrink-0 w-64 xl:w-72 overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md {isMobile
             ? `fixed top-0 left-0 z-30 w-80 h-full ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
             : ''} transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
           <div class="flex justify-between items-center gap-2 p-4 shrink-0 bg-transparent">
@@ -237,7 +254,8 @@
               {/if}
             </div>
           </div>
-          <nav class="flex flex-col flex-1 gap-1 px-2 py-4 overflow-y-auto [scrollbar-gutter:stable]">
+          <nav
+            class="flex flex-col flex-1 gap-1 px-2 py-4 overflow-y-auto [scrollbar-gutter:stable]">
             {#key feeds.length + feeds.map((f) => f.url).join(',')}
               {#each feeds as feed, i}
                 <div class="rss-feed-item-animate" style="animation-delay: {i * 50}ms;">
@@ -258,7 +276,9 @@
         </aside>
 
         <!-- Message list -->
-        <div class="flex flex-1 xl:flex-initial flex-col min-h-0 rss-list-animate min-w-0 xl:w-[28rem] xl:min-w-[28rem] shrink-0 rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md overflow-y-auto [scrollbar-gutter:stable]" style="animation-delay: 100ms;">
+        <div
+          class="flex flex-1 xl:flex-initial flex-col min-h-0 rss-list-animate min-w-0 xl:w-[28rem] xl:min-w-[28rem] shrink-0 rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md overflow-y-auto [scrollbar-gutter:stable]"
+          style="animation-delay: 100ms;">
           <MessageList
             selectedFolder={selectedFeed || ''}
             {messages}
@@ -270,22 +290,26 @@
         </div>
 
         <!-- Message detail: article content -->
-        <div class="flex-1 min-w-0 min-h-0 hidden xl:flex flex-col rss-detail-animate overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md" style="animation-delay: 200ms;">
+        <div
+          class="flex-1 min-w-0 min-h-0 hidden xl:flex flex-col rss-detail-animate overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md"
+          style="animation-delay: 200ms;">
           {#key selectedMessage?.id ?? 'empty'}
-            <div class="w-full h-full flex flex-col min-w-0 overflow-hidden" in:fade={{ duration: 200 }}>
+            <div
+              class="w-full h-full flex flex-col min-w-0 overflow-hidden"
+              in:fade={{ duration: 200 }}>
               <MessageDetail
-            {selectedMessage}
-            selectedFolder={selectedFeed || ''}
-            embedded={true}
-            detailLoading={false}
-            detailError={null}
-            openCompose={async () => {}}
-            starMessage={async () => {}}
-            deleteMessage={async () => {}}
-            restoreMessage={async () => {}}
-            starring={false}
-            deleting={false}
-            restoring={false} />
+                {selectedMessage}
+                selectedFolder={selectedFeed || ''}
+                embedded={true}
+                detailLoading={false}
+                detailError={null}
+                openCompose={async () => {}}
+                starMessage={async () => {}}
+                deleteMessage={async () => {}}
+                restoreMessage={async () => {}}
+                starring={false}
+                deleting={false}
+                restoring={false} />
             </div>
           {/key}
         </div>

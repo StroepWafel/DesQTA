@@ -105,7 +105,7 @@
   });
 </script>
 
-<div class="container px-6 py-7 mx-auto">
+<div class="container px-0 py-5 mx-auto space-y-6">
   {#if foliosEnabled === false}
     <div class="flex justify-center items-center h-64">
       <EmptyState
@@ -115,15 +115,22 @@
         size="md" />
     </div>
   {:else}
-    <div class="flex items-center gap-4 mb-6">
-      <button
-        onclick={() => goto('/folios')}
-        class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-        <Icon src={ChevronLeft} class="w-5 h-5" />
-      </button>
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
-        <T key="folios.browse_folios" fallback="Browse Folios" />
-      </h1>
+    <div class="flex justify-between items-start">
+      <div class="flex items-center gap-4">
+        <button
+          onclick={() => goto('/folios')}
+          class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+          <Icon src={ChevronLeft} class="w-5 h-5" />
+        </button>
+        <div>
+          <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+            <T key="folios.browse_folios" fallback="Browse Folios" />
+          </h1>
+          <p class="text-zinc-600 dark:text-zinc-400">
+            <T key="folios.browse_description" fallback="Explore published folios" />
+          </p>
+        </div>
+      </div>
     </div>
 
     {#if loading}

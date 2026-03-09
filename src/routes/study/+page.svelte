@@ -643,34 +643,32 @@
   });
 </script>
 
-<div class="h-full flex flex-col" in:fade={{ duration: 400, easing: quintOut }}>
-  <!-- Header -->
-  <div
-    class="shrink-0 px-4 sm:px-6 py-4 sm:py-6"
-    in:fly={{ y: -30, duration: 500, easing: quintOut }}>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
-          <T key="navigation.study" fallback="Study" />
-        </h1>
-        <p class="mt-1 text-sm sm:text-base text-zinc-600 dark:text-zinc-300">
-          <T
-            key="study.page_description"
-            fallback="Plan, track, and focus on your upcoming work." />
-        </p>
-      </div>
+<div
+  class="container px-0 py-5 mx-auto flex flex-col h-full gap-6"
+  in:fade={{ duration: 400, easing: quintOut }}>
+  <!-- Header: matches analytics/directory/assessments -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shrink-0" in:fly={{ y: -30, duration: 500, easing: quintOut }}>
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.study" fallback="Study" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T
+          key="study.page_description"
+          fallback="Plan, track, and focus on your upcoming work." />
+      </p>
     </div>
 
-    <!-- Tabs -->
+    <!-- Page switcher: pill-style tabs inline with header (like assessments view selector) -->
     <div
-      class="mt-4 flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-700"
+      class="flex flex-wrap items-center gap-2 shrink-0"
       role="tablist"
       aria-label={$_('study.tabs_label', { default: 'Study sections' })}>
       <button
-        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
+        class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'quizzes'
-          ? 'accent-bg text-white'
-          : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
+          ? 'accent-bg text-white border-transparent'
+          : 'bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
         onclick={() => (activeTab = 'quizzes')}
         role="tab"
         aria-selected={activeTab === 'quizzes'}
@@ -679,10 +677,10 @@
         <T key="study.quizzes" fallback="Quizzes" />
       </button>
       <button
-        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
+        class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'tasks'
-          ? 'accent-bg text-white'
-          : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
+          ? 'accent-bg text-white border-transparent'
+          : 'bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
         onclick={() => (activeTab = 'tasks')}
         role="tab"
         aria-selected={activeTab === 'tasks'}
@@ -691,10 +689,10 @@
         <T key="study.tasks" fallback="Tasks" />
       </button>
       <button
-        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
+        class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'notes'
-          ? 'accent-bg text-white'
-          : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
+          ? 'accent-bg text-white border-transparent'
+          : 'bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
         onclick={() => (activeTab = 'notes')}
         role="tab"
         aria-selected={activeTab === 'notes'}
@@ -706,7 +704,7 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="flex-1 min-h-0 px-4 sm:px-6 pb-4 sm:pb-6">
+  <div class="flex-1 min-h-0">
     {#if activeTab === 'quizzes'}
       <!-- Quizzes Tab -->
       <div
@@ -733,7 +731,7 @@
             out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
             <!-- Modern Header with inline controls -->
             <div
-              class="shrink-0 px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              class="shrink-0 px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <!-- Left side: Title and New Task -->
                 <div class="flex items-center gap-4">
@@ -797,7 +795,7 @@
             </div>
 
             <!-- Tasks List -->
-            <div class="flex-1 min-h-0 p-6 overflow-y-auto">
+            <div class="flex-1 min-h-0 p-4 overflow-y-auto">
               <div class="space-y-3">
                 {#if filteredSortedTodos.length === 0}
                   <div class="text-center py-10 text-zinc-500 dark:text-zinc-400">
@@ -1184,7 +1182,7 @@
             class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col">
             <!-- Header -->
             <div
-              class="px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              class="px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
               <div class="flex items-center justify-between">
                 <h2 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
                   <T key="study.upcoming_assessments" fallback="Upcoming Assessments" />
@@ -1195,7 +1193,7 @@
             </div>
 
             <!-- Content -->
-            <div class="flex-1 min-h-0 p-6 overflow-y-auto">
+            <div class="flex-1 min-h-0 p-4 overflow-y-auto">
               {#if loadingAssessments}
                 <div class="flex items-center justify-center py-6">
                   <div
@@ -1265,7 +1263,7 @@
               in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
               <!-- Header -->
               <div
-                class="px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+                class="px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
                     <T key="study.study_tip" fallback="Study Tip" />
@@ -1279,7 +1277,7 @@
                 </div>
               </div>
               <!-- Content -->
-              <div class="p-6">
+              <div class="p-4">
                 <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">
                   {currentStudyTip}
                 </p>

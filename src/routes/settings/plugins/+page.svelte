@@ -82,7 +82,7 @@
   onMount(loadPlugins);
 </script>
 
-<div class="p-8 mx-auto max-w-4xl">
+<div class="container px-0 py-5 mx-auto max-w-4xl">
   <!-- Notice Banner -->
   <div
     class="p-4 mb-8 text-yellow-200 bg-yellow-900 rounded-lg border border-yellow-700 animate-fade-in">

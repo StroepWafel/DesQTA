@@ -57,7 +57,7 @@
   });
 </script>
 
-<div class="p-4 sm:p-6 min-h-screen {isMobile ? 'pb-4' : ''}">
+<div class="container px-0 py-5 mx-auto min-h-screen space-y-6">
   <!-- Edit Mode Toggle -->
   <div in:fade={{ duration: 400 }}>
     <EditModeToggle

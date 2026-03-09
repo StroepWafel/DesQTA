@@ -432,7 +432,7 @@
   });
 </script>
 
-<div class="px-6 py-7 space-y-6">
+<div class="container px-0 py-5 mx-auto space-y-6">
   <!-- Header -->
   <div class="flex justify-between items-start">
     <div>

@@ -17,7 +17,7 @@
   let { tabs, activeTab, onTabChange }: Props = $props();
 </script>
 
-<div class="container px-6 pt-6 mx-auto">
+<div class="container px-0 pt-6 mx-auto">
   <div class="flex gap-2 border-b dark:border-zinc-800 border-zinc-200">
     {#each tabs as tabItem, index}
       <button

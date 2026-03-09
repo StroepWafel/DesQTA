@@ -289,8 +289,9 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 /* Theme-aware root background - uses CSS variable that themes can override */
+/* Vertical padding only - horizontal padding comes from page containers to avoid double padding */
 #root {
-  padding: 1rem;
+  padding: 1rem 0;
   border-radius: 50px;
   height: 100vh;
   background-color: var(--background-color, var(--background));
@@ -307,10 +308,12 @@ html {
   padding: 0 !important;
 }
 
+/* Ensure no wrapper adds horizontal padding - page containers control their own padding */
 html,
 body,
 #app,
 #svelte,
+#root,
 body > div,
 body > div > div {
   background: transparent !important;

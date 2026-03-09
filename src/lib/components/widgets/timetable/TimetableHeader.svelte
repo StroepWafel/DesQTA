@@ -15,6 +15,8 @@
     weekStart: Date;
     loadingLessons: boolean;
     viewMode: 'week' | 'day' | 'month' | 'list';
+    /** When true, no border/background (for page-level inline use) */
+    inline?: boolean;
     onPrevWeek: () => void;
     onNextWeek: () => void;
     onToday: () => void;
@@ -28,6 +30,7 @@
     weekStart,
     loadingLessons,
     viewMode,
+    inline = false,
     onPrevWeek,
     onNextWeek,
     onToday,
@@ -39,6 +42,15 @@
 
   let showExportMenu = $state(false);
   let showViewDropdown = $state(false);
+
+  const viewModeOptions = [
+    { value: 'week' as const, label: $_('timetable.week') || 'Week', icon: ViewColumns },
+    { value: 'day' as const, label: $_('timetable.day') || 'Day', icon: CalendarDays },
+    { value: 'month' as const, label: $_('timetable.month') || 'Month', icon: Calendar },
+    { value: 'list' as const, label: $_('timetable.list') || 'List', icon: ListBullet },
+  ];
+
+  const currentViewOption = $derived(viewModeOptions.find((o) => o.value === viewMode) ?? viewModeOptions[0]);
 
   function weekRangeLabel(): string {
     const end = new Date(weekStart.valueOf() + 4 * 86400000);
@@ -65,19 +77,10 @@
       document.removeEventListener('click', handleHeaderClickOutside);
     };
   });
-
-  const viewModeOptions = [
-    { value: 'week' as const, label: $_('timetable.week') || 'Week', icon: ViewColumns },
-    { value: 'day' as const, label: $_('timetable.day') || 'Day', icon: CalendarDays },
-    { value: 'month' as const, label: $_('timetable.month') || 'Month', icon: Calendar },
-    { value: 'list' as const, label: $_('timetable.list') || 'List', icon: ListBullet },
-  ];
-
-  const currentViewOption = $derived(viewModeOptions.find((o) => o.value === viewMode) ?? viewModeOptions[0]);
 </script>
 
-<div class="relative z-[100] flex justify-between items-center gap-4 px-4 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
-  <!-- Week Navigation (hidden on mobile when in day view) -->
+<div class="relative z-[100] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between {inline ? 'px-0 py-0' : 'px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30'}">
+  <!-- Left: Week Navigation (hidden on mobile when in day view) -->
   {#if !(isMobile && viewMode === 'day')}
     <div class="flex gap-2 items-center">
       <Button
@@ -87,10 +90,10 @@
         onclick={onPrevWeek}
         disabled={loadingLessons}
         ariaLabel={$_('timetable.previous_week') || 'Previous week'}
-        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl bg-white/80 hover:bg-white dark:bg-zinc-700/80 dark:hover:bg-zinc-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95" />
-      <div class="text-center min-w-[200px]">
-        <h1 class="text-xl font-bold text-zinc-900 dark:text-white">{weekRangeLabel()}</h1>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-lg bg-white/80 hover:bg-white dark:bg-zinc-800/80 dark:hover:bg-zinc-700 border border-zinc-200/50 dark:border-zinc-700/50 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring" />
+      <div class="text-center min-w-[180px]">
+        <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">{weekRangeLabel()}</h2>
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
           {$_('timetable.weekly_schedule') || 'Weekly Schedule'}
         </p>
       </div>
@@ -101,13 +104,13 @@
         onclick={onNextWeek}
         disabled={loadingLessons}
         ariaLabel={$_('timetable.next_week') || 'Next week'}
-        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl bg-white/80 hover:bg-white dark:bg-zinc-700/80 dark:hover:bg-zinc-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95" />
+        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-lg bg-white/80 hover:bg-white dark:bg-zinc-800/80 dark:hover:bg-zinc-700 border border-zinc-200/50 dark:border-zinc-700/50 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring" />
       <Button
         variant="ghost"
         size="sm"
         onclick={onToday}
         disabled={loadingLessons}
-        class="min-h-[44px] px-4 py-2 rounded-xl bg-white/80 hover:bg-white dark:bg-zinc-700/80 dark:hover:bg-zinc-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95">
+        class="min-h-[44px] px-4 py-2 rounded-lg bg-white/80 hover:bg-white dark:bg-zinc-800/80 dark:hover:bg-zinc-700 border border-zinc-200/50 dark:border-zinc-700/50 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring">
         {$_('timetable.today') || 'Today'}
       </Button>
     </div>
@@ -116,33 +119,31 @@
   {/if}
 
   <!-- Right: View dropdown + Export -->
-  <div class="flex gap-2 items-center ml-auto" data-onboarding="timetable-views">
+  <div class="flex flex-wrap items-center gap-2" data-onboarding="timetable-views">
     <div class="relative inline-block view-dropdown-container">
       <button
         type="button"
         data-onboarding-view={viewMode}
-        class="group flex gap-2 items-center min-h-[44px] px-4 py-2 rounded-xl border transition-all duration-200 bg-white hover:accent-bg dark:bg-zinc-700 dark:hover:accent-bg border-zinc-200 dark:border-zinc-600 hover:border-transparent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 accent-ring shadow-sm"
+        class="group flex gap-2 items-center min-h-[44px] px-4 py-2 rounded-lg border transition-all duration-200 bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white hover:bg-white/90 dark:hover:bg-zinc-800/90 focus:outline-hidden focus:ring-2 accent-ring"
         onclick={() => (showViewDropdown = !showViewDropdown)}
         aria-label={$_('timetable.view') || 'View'}
         aria-expanded={showViewDropdown}
-        aria-haspopup="menu">
-        <Icon src={currentViewOption.icon} class="w-4 h-4 text-zinc-700 dark:text-zinc-300 group-hover:text-white" />
-        <span class="font-medium text-sm text-zinc-900 dark:text-white group-hover:text-white">
-          {currentViewOption.label}
-        </span>
-        <Icon src={ChevronDown} class="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white transition-transform duration-200 {showViewDropdown ? 'rotate-180' : ''}" />
+        aria-haspopup="listbox">
+        <Icon src={currentViewOption.icon} class="w-4 h-4 shrink-0 text-zinc-600 dark:text-zinc-400" />
+        <span class="font-medium text-sm">{currentViewOption.label}</span>
+        <Icon src={ChevronDown} class="w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform duration-200 {showViewDropdown ? 'rotate-180' : ''}" />
       </button>
       {#if showViewDropdown}
         <div
-          class="absolute right-0 z-50 mt-2 w-40 rounded-xl border shadow-lg bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 py-1"
+          class="absolute right-0 z-50 mt-2 w-40 rounded-lg border shadow-lg bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 py-1"
           transition:fly={{ y: -6, duration: 150, easing: cubicInOut }}
-          role="group">
+          role="listbox">
           {#each viewModeOptions as option}
             <button
               type="button"
-              role="button"
+              role="option"
               data-onboarding-view={option.value}
-              aria-pressed={viewMode === option.value}
+              aria-selected={viewMode === option.value}
               class="flex gap-2 items-center w-full px-3 py-2.5 text-left text-sm transition-colors {viewMode === option.value
                 ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
                 : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"

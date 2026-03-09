@@ -572,7 +572,23 @@
   });
 </script>
 
-<div class="flex overflow-hidden w-full h-full relative">
+<div class="container px-0 py-5 mx-auto flex flex-col h-full gap-6" in:fade={{ duration: 400 }}>
+  <!-- Page Header: matches analytics/directory/assessments -->
+  <div class="flex justify-between items-start shrink-0">
+    <div>
+      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
+        <T key="navigation.courses" fallback="Courses" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T
+          key="courses.page_description"
+          fallback="Browse courses and access lesson content" />
+      </p>
+    </div>
+  </div>
+
+  <!-- Main content: sidebar + content area -->
+  <div class="flex overflow-hidden flex-1 min-h-0 gap-4 relative">
   <!-- Mobile Sidebar Toggle Button -->
   {#if isMobile}
     <button
@@ -595,9 +611,9 @@
       aria-label={$_('navigation.close_sidebar') || 'Close sidebar overlay'}></div>
   {/if}
 
-  <!-- Unified Navigation Sidebar -->
+  <!-- Unified Navigation Sidebar: card-style like study/directory -->
   <div
-    class="flex flex-col w-80 h-full border-r border-zinc-200 transition-all duration-300 dark:border-zinc-700 theme-bg {isMobile
+    class="flex flex-col w-80 h-full rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg overflow-hidden transition-all duration-300 {isMobile
       ? `fixed top-0 left-0 z-40 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
       : ''}"
     role="region"
@@ -962,8 +978,10 @@
     </div>
   </div>
 
-  <!-- Main Content Area -->
-  <div class="overflow-y-auto flex-1 {isMobile ? 'w-full' : ''} theme-bg" bind:this={contentScrollContainer}>
+  <!-- Main Content Area: card-style like study -->
+  <div
+    class="overflow-y-auto flex-1 min-h-0 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg {isMobile ? 'w-full' : ''}"
+    bind:this={contentScrollContainer}>
     {#if loadingCourse}
       <div class="flex justify-center items-center h-full">
         <LoadingSpinner
@@ -1056,6 +1074,7 @@
           size="lg" />
       </div>
     {/if}
+  </div>
   </div>
 </div>
 

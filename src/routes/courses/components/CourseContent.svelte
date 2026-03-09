@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { getFileIcon, formatFileSize, formatLessonDate, fetchLinkPreview, isValidUrl } from '../utils';
+  import {
+    getFileIcon,
+    formatFileSize,
+    formatLessonDate,
+    fetchLinkPreview,
+    isValidUrl,
+  } from '../utils';
   import { MODULE_TYPE_UUIDS } from '../constants';
   import { logger } from '../../../utils/logger';
   import ModuleList from '$lib/components/ModuleList.svelte';
@@ -108,7 +114,9 @@
     } catch (e) {
       failedResourceIds.add(resource.uuid);
       failedResourceIds = failedResourceIds;
-      toastStore.error($_('courses.resource_download_failed') || 'Failed to download resource. Please try again.');
+      toastStore.error(
+        $_('courses.resource_download_failed') || 'Failed to download resource. Please try again.',
+      );
     }
   }
 
@@ -126,7 +134,9 @@
     } catch (e) {
       failedResourceIds.add(file.uuid);
       failedResourceIds = failedResourceIds;
-      toastStore.error($_('courses.resource_download_failed') || 'Failed to download resource. Please try again.');
+      toastStore.error(
+        $_('courses.resource_download_failed') || 'Failed to download resource. Please try again.',
+      );
     }
   }
 
@@ -261,7 +271,9 @@
           }
         }
       } catch (e) {
-        logger.error('courses', 'parseLessonDocument', 'Error parsing lesson document', { error: e });
+        logger.error('courses', 'parseLessonDocument', 'Error parsing lesson document', {
+          error: e,
+        });
       }
     }
 
@@ -383,7 +395,9 @@
               {#each content.r as resource}
                 <button
                   type="button"
-                  class="flex items-center p-4 bg-white dark:bg-zinc-800 border rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left {failedResourceIds.has(resource.uuid)
+                  class="flex items-center p-4 bg-white dark:bg-zinc-800 border rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left {failedResourceIds.has(
+                    resource.uuid,
+                  )
                     ? 'border-red-500 dark:border-red-600'
                     : 'border-zinc-200 dark:border-zinc-700'}"
                   onclick={async () => {
@@ -400,7 +414,10 @@
                     } catch (e) {
                       failedResourceIds.add(resource.uuid);
                       failedResourceIds = failedResourceIds;
-                      toastStore.error($_('courses.resource_download_failed') || 'Failed to download resource. Please try again.');
+                      toastStore.error(
+                        $_('courses.resource_download_failed') ||
+                          'Failed to download resource. Please try again.',
+                      );
                     }
                   }}>
                   <div class="flex items-center w-full">
@@ -482,7 +499,7 @@
                   enableLinkPreviews={true}
                   linkPreview={linkPreviews}
                   onResourceClick={handleResourceClick}
-                  failedResourceIds={failedResourceIds}
+                  {failedResourceIds}
                   compact={true} />
               </div>
 
@@ -504,14 +521,17 @@
                             <Icon src={Sparkles} class="w-10 h-10 text-white/90" />
                             <div
                               class="absolute inset-0 rounded-2xl animate-pulse bg-white/20"
-                              style="animation-duration: 2s;"></div>
+                              style="animation-duration: 2s;">
+                            </div>
                           </div>
                           <div class="flex flex-col items-center gap-2">
                             <p class="text-lg font-medium text-zinc-900 dark:text-white">
                               {$_('courses.generating_summary') || 'Generating summary...'}
                             </p>
                             <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                              <T key="courses.analyzing_content" fallback="Analyzing lesson content" />
+                              <T
+                                key="courses.analyzing_content"
+                                fallback="Analyzing lesson content" />
                             </p>
                           </div>
                         </div>
@@ -519,7 +539,8 @@
                           {#each [0, 1, 2] as i}
                             <div
                               class="w-2 h-2 rounded-full accent-bg animate-bounce"
-                              style="animation-delay: {i * 150}ms; animation-duration: 0.6s;"></div>
+                              style="animation-delay: {i * 150}ms; animation-duration: 0.6s;">
+                            </div>
                           {/each}
                         </div>
                       </div>
@@ -680,7 +701,8 @@
         <div
           class="p-6 rounded-xl border border-red-500/50 dark:border-red-500/50 bg-red-500/10 dark:bg-red-500/10">
           <p class="text-zinc-900 dark:text-white mb-4">
-            {$_('courses.document_parse_error') || 'Unable to load course content. The document may be corrupted.'}
+            {$_('courses.document_parse_error') ||
+              'Unable to load course content. The document may be corrupted.'}
           </p>
           {#if onRetryCourse}
             <Button variant="primary" onclick={onRetryCourse}>
@@ -694,7 +716,7 @@
           modules={parsedDocument.document.modules}
           enableLinkPreviews={true}
           linkPreview={linkPreviews}
-          failedResourceIds={failedResourceIds}
+          {failedResourceIds}
           compact={true}
           onResourceClick={handleResourceClick} />
       {/if}
@@ -708,7 +730,9 @@
             {#each coursePayload.cf as file}
               <button
                 type="button"
-                class="flex items-center p-4 bg-white dark:bg-zinc-800 border rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left {failedResourceIds.has(file.uuid)
+                class="flex items-center p-4 bg-white dark:bg-zinc-800 border rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left {failedResourceIds.has(
+                  file.uuid,
+                )
                   ? 'border-red-500 dark:border-red-600'
                   : 'border-zinc-200 dark:border-zinc-700'}"
                 onclick={() => handleCourseFileClick(file)}>

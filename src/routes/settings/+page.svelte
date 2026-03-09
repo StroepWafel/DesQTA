@@ -1084,7 +1084,7 @@ The Company reserves the right to terminate your access to the Service at any ti
   }
 </script>
 
-<div class="p-4 mx-auto max-w-4xl sm:p-6 md:p-8">
+<div class="container px-0 py-5 mx-auto max-w-4xl">
   <div
     class="flex sticky top-0 z-20 flex-col gap-4 justify-between items-start px-6 py-4 mb-8 rounded-xl border-b backdrop-blur-md sm:flex-row sm:items-center animate-fade-in-up bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800">
     <h1 class="px-2 py-1 text-xl font-bold rounded-lg sm:text-2xl">

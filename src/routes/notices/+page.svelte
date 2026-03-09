@@ -220,12 +220,17 @@
   });
 </script>
 
-<div class="p-6">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">
-      <T key="navigation.notices" fallback="Notices" />
-    </h1>
-    <div class="flex gap-4 items-center">
+<div class="container px-0 py-5 mx-auto space-y-6">
+  <div class="flex justify-between items-start">
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.notices" fallback="Notices" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="notices.description" fallback="View notices and announcements" />
+      </p>
+    </div>
+    <div class="flex gap-4 items-center shrink-0">
       <input
         type="date"
         value={formatDate(selectedDate)}
@@ -236,7 +241,7 @@
 
   <!-- Label filter dropdown -->
   {#if labels.length > 0}
-    <div class="flex gap-2 items-center mb-6">
+    <div class="flex gap-2 items-center">
       <Label.Root class="font-semibold text-sm">
         <T key="notices.label" fallback="Label:" />
       </Label.Root>
