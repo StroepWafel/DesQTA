@@ -390,7 +390,7 @@
           {#if showStudentDropdown}
             <div
               id="student-dropdown"
-              class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700"
+              class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700 [scrollbar-gutter:stable]"
               transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
               {#if loadingStudents}
                 <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
@@ -465,7 +465,7 @@
         {#if showStaffDropdown}
           <div
             id="staff-dropdown"
-            class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700"
+            class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700 [scrollbar-gutter:stable]"
             transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
             {#if loadingStaff}
               <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
@@ -506,7 +506,7 @@
 
       <!-- Selected recipients -->
       <div
-        class="rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-700">
+        class="rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-700 [scrollbar-gutter:stable]">
         {#if selectedRecipients.length === 0}
           <div class="px-3 py-2 text-sm text-zinc-600 dark:text-zinc-500">
             <T key="messages.no_recipients_selected" fallback="No recipients selected" />
