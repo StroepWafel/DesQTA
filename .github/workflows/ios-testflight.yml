@@ -45,6 +45,15 @@ jobs:
       - name: Generate app icons
         run: pnpm tauri icon static/app-icon.svg
 
+      - name: Strip alpha from iOS app icons
+        run: |
+          if ! command -v magick >/dev/null 2>&1 && ! command -v convert >/dev/null 2>&1; then
+            brew install imagemagick
+          fi
+
+          chmod +x scripts/strip-ios-icon-alpha.sh
+          scripts/strip-ios-icon-alpha.sh
+
       - name: Normalize iOS signing environment
         env:
           IOS_CERTIFICATE_PASSWORD_SECRET: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
