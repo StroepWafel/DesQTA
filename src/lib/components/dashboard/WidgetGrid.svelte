@@ -501,7 +501,9 @@
     }
   }
 
-  // Scroll to the top of the grid (useful when applying templates)
+  // Scroll to the top of the main content area (useful when applying templates or resetting).
+  // Uses the main scroll container directly instead of scrollIntoView to avoid scrolling
+  // the wrong ancestor (e.g. document) which can push the AppHeader out of view.
   async function scrollToTop() {
     if (!gridElement) return;
 
@@ -509,13 +511,14 @@
     await tick();
     await new Promise((resolve) => setTimeout(resolve, 300)); // Wait for GridStack positioning
 
-    // Scroll the grid element into view at the top
-    gridElement.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-      inline: 'nearest',
-    });
-    logger.debug('WidgetGrid', 'scrollToTop', 'Scrolled to top of grid');
+    const main = gridElement.closest('main');
+    if (main) {
+      main.scrollTo({ top: 0, behavior: 'smooth' });
+      logger.debug('WidgetGrid', 'scrollToTop', 'Scrolled main content to top');
+    } else {
+      // Fallback if main not found (e.g. in tests)
+      gridElement.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+    }
   }
 
   // Expose loadLayout for parent component
