@@ -607,42 +607,40 @@
     <!-- Navigation Header -->
     <div
       class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
-      <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
-        {#if selectedSubject}
-          {selectedSubject.title}
-        {:else}
-          <T key="navigation.courses" fallback="Courses" />
-        {/if}
-      </h2>
-      <div class="flex gap-2 items-center">
-        {#if isMobile}
-          <button
-            onclick={() => (sidebarOpen = false)}
-            class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-            title={$_('navigation.close_sidebar') || 'Close sidebar'}
-            aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
-            <Icon src={XMark} class="w-5 h-5" />
-          </button>
-        {/if}
+      <div class="flex items-center gap-2 min-w-0 flex-1">
         {#if selectedSubject}
           <button
             onclick={() => {
-              // Always go back to subject selection, but keep course content visible
               selectedSubject = null;
-              // Don't clear coursePayload, parsedDocument to keep content visible
               selectedLesson = null;
               selectedTermSchedule = null;
               selectedLessonIndex = null;
               selectedLessonContent = null;
               showingOverview = true;
             }}
-            class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            class="p-2 shrink-0 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
             title={$_('courses.back_to_subjects') || 'Back to subjects'}
             aria-label={$_('courses.back_to_subjects') || 'Back to subjects'}>
             <Icon src={ChevronLeft} class="w-5 h-5" />
           </button>
         {/if}
+        <h2 class="text-xl font-bold text-zinc-900 dark:text-white truncate">
+          {#if selectedSubject}
+            {selectedSubject.title}
+          {:else}
+            <T key="navigation.courses" fallback="Courses" />
+          {/if}
+        </h2>
       </div>
+      {#if isMobile}
+        <button
+          onclick={() => (sidebarOpen = false)}
+          class="p-2 shrink-0 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+          title={$_('navigation.close_sidebar') || 'Close sidebar'}
+          aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
+          <Icon src={XMark} class="w-5 h-5" />
+        </button>
+      {/if}
     </div>
 
     <!-- Content Area with Transition -->
