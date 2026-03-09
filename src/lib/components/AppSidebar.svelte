@@ -23,10 +23,11 @@
   interface Props {
     sidebarOpen: boolean;
     menu: MenuItem[];
+    isFullscreen?: boolean;
     onMenuItemClick?: () => void;
   }
 
-  let { sidebarOpen, menu, onMenuItemClick }: Props = $props();
+  let { sidebarOpen, menu, isFullscreen = false, onMenuItemClick }: Props = $props();
 
   let folders = $state<SidebarFolder[]>([]);
   let favorites = $state<string[]>([]);
@@ -278,7 +279,7 @@
 <!-- Parent container that controls width animation -->
 <aside
   bind:this={asideElement}
-  class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative rounded-bl-2xl theme-bg"
+  class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative {isFullscreen ? '' : 'rounded-bl-2xl'} theme-bg"
   class:fixed={sidebarOpen}
   class:top-0={sidebarOpen}
   class:left-0={sidebarOpen}

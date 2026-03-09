@@ -811,7 +811,7 @@
   <LoadingScreen />
 {:else}
   <div
-    class="flex flex-col h-screen w-screen {isMobile
+    class="flex flex-col h-screen w-screen {isMobile || isFullscreen
       ? ''
       : 'rounded-2xl'} overflow-hidden theme-bg"
     style="outline: none; border: none; margin: 0; padding: 0; padding-top: var(--safe-area-top); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
@@ -834,7 +834,7 @@
 
     <div class="flex relative flex-1 min-h-0">
       {#if !$needsSetup && !menuLoading}
-        <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+        <AppSidebar {sidebarOpen} {menu} {isFullscreen} onMenuItemClick={handlePageNavigation} />
       {/if}
 
       <!-- Mobile Sidebar Overlay -->
