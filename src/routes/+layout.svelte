@@ -345,7 +345,7 @@
       const settings = await loadSettings(['has_been_through_onboarding']);
       if (!settings.has_been_through_onboarding) {
         showOnboarding = true;
-        sidebarOpen = false; // Close mobile nav during tour
+        if (isMobile) sidebarOpen = false;
       }
     } catch (e) {
       logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', {
@@ -481,7 +481,7 @@
               tourPendingAfterReleaseNotes = true;
             } else {
               showOnboarding = true;
-              sidebarOpen = false; // Close mobile nav during tour for better UX
+              if (isMobile) sidebarOpen = false;
             }
           }, 1000);
         }
@@ -878,7 +878,7 @@
                       tourPendingAfterReleaseNotes = true;
                     } else {
                       showOnboarding = true;
-                      sidebarOpen = false;
+                      if (isMobile) sidebarOpen = false;
                     }
                   }, 1000);
                 }
@@ -986,7 +986,7 @@
       tourPendingAfterReleaseNotes = false;
       setTimeout(() => {
         showOnboarding = true;
-        sidebarOpen = false;
+        if (isMobile) sidebarOpen = false;
       }, 300);
     }
   }}
