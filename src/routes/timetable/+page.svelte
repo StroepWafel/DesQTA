@@ -108,7 +108,7 @@
   });
 </script>
 
-<div class="h-full w-full min-h-[calc(100vh-4rem)] p-4" data-onboarding="timetable-color">
+<div class="h-full w-full min-h-[calc(100vh-4rem)]" data-onboarding="timetable-color">
   {#if widgetConfig}
     <div class="h-full w-full" transition:fade={{ duration: 400 }}>
       <TimetableWidget widget={widgetConfig} isTemporary={true} initialWeekStart={weekStart} initialViewMode={initialViewMode} {reloadKey} {forceReload} />
