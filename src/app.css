@@ -489,7 +489,7 @@ html {
   opacity: 1 !important;
   min-width: 8rem !important;
   max-width: 20rem !important;
-  height: 6rem !important;
+  height: 12rem !important;
   width: min(var(--bits-select-anchor-width, 11rem), 20rem) !important;
 }
 
