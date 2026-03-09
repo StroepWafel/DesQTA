@@ -215,18 +215,24 @@
   {#if selectedMessage}
     <div class="w-full {embedded ? '' : 'mx-auto max-w-4xl'} animate-fadeIn">
       <div
-        class="{embedded
-        ? ''
-        : 'overflow-hidden rounded-xl border shadow-lg backdrop-blur-xs border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/40'}">
-        <div class="{embedded ? 'px-6 sm:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8' : 'p-4 pb-3 border-b sm:p-6 border-zinc-300/50 dark:border-zinc-800/50'}">
+        class={embedded
+          ? ''
+          : 'overflow-hidden rounded-xl border shadow-lg backdrop-blur-xs border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/40'}>
+        <div
+          class={embedded
+            ? 'px-6 sm:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8'
+            : 'p-4 pb-3 border-b sm:p-6 border-zinc-300/50 dark:border-zinc-800/50'}>
           {#if embedded}
             <!-- Article-style header for RSS -->
             <header class="space-y-5">
-              <h1 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white leading-tight tracking-tight">
+              <h1
+                class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white leading-tight tracking-tight">
                 {selectedMessage.subject}
               </h1>
-              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-500 dark:text-zinc-400">
-                <span class="font-medium text-zinc-600 dark:text-zinc-300">{selectedMessage.sender}</span>
+              <div
+                class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                <span class="font-medium text-zinc-600 dark:text-zinc-300"
+                  >{selectedMessage.sender}</span>
                 <span class="text-zinc-400 dark:text-zinc-500" aria-hidden="true">·</span>
                 <time datetime={selectedMessage.date} class="tabular-nums">
                   {formatArticleDate(selectedMessage.date)}
@@ -235,7 +241,8 @@
               <div class="h-px bg-zinc-200/60 dark:bg-zinc-700/50" role="presentation"></div>
             </header>
           {:else}
-            <div class="mb-3 text-xl font-bold text-zinc-900 dark:text-white sm:text-2xl leading-tight">
+            <div
+              class="mb-3 text-xl font-bold text-zinc-900 dark:text-white sm:text-2xl leading-tight">
               {selectedMessage.subject}
             </div>
 
@@ -258,7 +265,8 @@
                 </div>
                 <div class="space-y-1">
                   <div class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-                    <span class="font-medium text-zinc-700 dark:text-zinc-200">{selectedMessage.sender}</span>
+                    <span class="font-medium text-zinc-700 dark:text-zinc-200"
+                      >{selectedMessage.sender}</span>
                   </div>
                   <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
                     To: <span class="font-medium text-zinc-700 dark:text-zinc-300"
@@ -267,78 +275,81 @@
                 </div>
               </div>
 
-            <div class="flex gap-2 items-center sm:gap-3">
-              {#if selectedFolder === 'Trash'}
-                <button
-                  class="flex flex-col justify-center items-center p-1.5 rounded-lg transition-all duration-200 hover:bg-green-400/20 focus:bg-green-400/30 focus:ring-2 focus:ring-green-400/30 focus:outline-hidden"
-                  title="Restore"
-                  onclick={() => selectedMessage && restoreMessage(selectedMessage)}
-                  disabled={restoring}>
-                  {#if restoring}
-                    <div
-                      class="w-4 h-4 rounded-full border-2 animate-spin border-green-400/30 border-t-green-400">
-                    </div>
-                  {:else}
-                    <Icon src={ArrowUturnLeft} class="mb-0.5 w-4 h-4 text-green-400" />
-                  {/if}
-                  <span class="text-xs font-medium text-green-400 sm:text-sm">Restore</span>
-                </button>
-              {:else if selectedFolder === 'Starred'}
-                <button
-                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
-                  title="Unstar"
-                  onclick={() => selectedMessage && starMessage(selectedMessage)}
-                  disabled={starring || !selectedMessage.starred}>
-                  {#if starring}
-                    <div
-                      class="w-5 h-5 rounded-full border-2 animate-spin border-yellow-400/30 border-t-yellow-400">
-                    </div>
-                  {:else}
-                    <Icon src={Star} class="w-5 h-5 text-yellow-400" solid={true} />
-                  {/if}
-                </button>
-              {:else}
-                <button
-                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
-                  title="Star"
-                  onclick={() => selectedMessage && starMessage(selectedMessage)}
-                  disabled={starring || selectedMessage.starred}>
-                  {#if starring}
-                    <div
-                      class="w-5 h-5 rounded-full border-2 animate-spin border-yellow-400/30 border-t-yellow-400">
-                    </div>
-                  {:else}
-                    <Icon src={Star} class="w-5 h-5 text-yellow-400" />
-                  {/if}
-                </button>
-              {/if}
-
-              <button
-                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-red-400/20 focus:bg-red-400/30 focus:ring-2 focus:ring-red-400/30 focus:outline-hidden"
-                title="Delete"
-                onclick={() => selectedMessage && deleteMessage(selectedMessage)}
-                disabled={deleting}>
-                {#if deleting}
-                  <div
-                    class="w-5 h-5 rounded-full border-2 animate-spin border-red-400/30 border-t-red-400">
-                  </div>
+              <div class="flex gap-2 items-center sm:gap-3">
+                {#if selectedFolder === 'Trash'}
+                  <button
+                    class="flex flex-col justify-center items-center p-1.5 rounded-lg transition-all duration-200 hover:bg-green-400/20 focus:bg-green-400/30 focus:ring-2 focus:ring-green-400/30 focus:outline-hidden"
+                    title="Restore"
+                    onclick={() => selectedMessage && restoreMessage(selectedMessage)}
+                    disabled={restoring}>
+                    {#if restoring}
+                      <div
+                        class="w-4 h-4 rounded-full border-2 animate-spin border-green-400/30 border-t-green-400">
+                      </div>
+                    {:else}
+                      <Icon src={ArrowUturnLeft} class="mb-0.5 w-4 h-4 text-green-400" />
+                    {/if}
+                    <span class="text-xs font-medium text-green-400 sm:text-sm">Restore</span>
+                  </button>
+                {:else if selectedFolder === 'Starred'}
+                  <button
+                    class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
+                    title="Unstar"
+                    onclick={() => selectedMessage && starMessage(selectedMessage)}
+                    disabled={starring || !selectedMessage.starred}>
+                    {#if starring}
+                      <div
+                        class="w-5 h-5 rounded-full border-2 animate-spin border-yellow-400/30 border-t-yellow-400">
+                      </div>
+                    {:else}
+                      <Icon src={Star} class="w-5 h-5 text-yellow-400" solid={true} />
+                    {/if}
+                  </button>
                 {:else}
-                  <Icon src={Trash} class="w-5 h-5 text-red-400" />
+                  <button
+                    class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
+                    title="Star"
+                    onclick={() => selectedMessage && starMessage(selectedMessage)}
+                    disabled={starring || selectedMessage.starred}>
+                    {#if starring}
+                      <div
+                        class="w-5 h-5 rounded-full border-2 animate-spin border-yellow-400/30 border-t-yellow-400">
+                      </div>
+                    {:else}
+                      <Icon src={Star} class="w-5 h-5 text-yellow-400" />
+                    {/if}
+                  </button>
                 {/if}
-              </button>
 
-              <button
-                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-accent-400/20 focus:bg-accent-400/30 focus:ring-2 focus:ring-accent-400/30 focus:outline-hidden"
-                title="Reply"
-                onclick={openCompose}>
-                <Icon src={PencilSquare} class="w-5 h-5 text-accent-400" />
-              </button>
-            </div>
+                <button
+                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-red-400/20 focus:bg-red-400/30 focus:ring-2 focus:ring-red-400/30 focus:outline-hidden"
+                  title="Delete"
+                  onclick={() => selectedMessage && deleteMessage(selectedMessage)}
+                  disabled={deleting}>
+                  {#if deleting}
+                    <div
+                      class="w-5 h-5 rounded-full border-2 animate-spin border-red-400/30 border-t-red-400">
+                    </div>
+                  {:else}
+                    <Icon src={Trash} class="w-5 h-5 text-red-400" />
+                  {/if}
+                </button>
+
+                <button
+                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-accent-400/20 focus:bg-accent-400/30 focus:ring-2 focus:ring-accent-400/30 focus:outline-hidden"
+                  title="Reply"
+                  onclick={openCompose}>
+                  <Icon src={PencilSquare} class="w-5 h-5 text-accent-400" />
+                </button>
+              </div>
             </div>
           {/if}
         </div>
 
-        <div class="{embedded ? 'px-6 sm:px-8 pt-2 pb-8 sm:pb-12 flex-1 min-h-0 overflow-y-auto' : 'p-4 sm:p-6'}">
+        <div
+          class={embedded
+            ? 'px-6 sm:px-8 pt-2 pb-8 sm:pb-12 flex-1 min-h-0 overflow-y-auto'
+            : 'p-4 sm:p-6'}>
           {#if detailLoading}
             <div class="flex justify-center items-center py-12">
               <div
@@ -422,5 +433,5 @@
       </div>
       <p class="mt-4 text-sm sm:text-base">Select a message to view its contents.</p>
     </div>
-  {/if  }
+  {/if}
 </main>

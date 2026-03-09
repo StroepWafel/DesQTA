@@ -69,7 +69,11 @@
     pendingMessageId = idParam ? Number(idParam) : null;
   });
 
-  async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '', forceSkipCache: boolean = false) {
+  async function fetchMessages(
+    folderLabel: string = 'inbox',
+    rssname: string = '',
+    forceSkipCache: boolean = false,
+  ) {
     loading = true;
     error = null;
     seqtaLoadFailed = false;
@@ -88,7 +92,7 @@
           folder: folderLabel,
           rssUrl: null,
         });
-        
+
         // Success - update cache and messages
         messages = msgs;
         cache.set(cacheKey, msgs, 10);
@@ -101,20 +105,20 @@
           error: e,
           folder: folderLabel,
         });
-        
+
         const cached =
           cache.get<Message[]>(cacheKey) ||
           (await getWithIdbFallback<Message[]>(cacheKey, cacheKey, () =>
             cache.get<Message[]>(cacheKey),
           ));
-        
+
         if (cached) {
           // Use cache even if empty (empty inbox is valid)
           messages = cached;
           loading = false;
           return;
         }
-        
+
         // No cache available - show error
         error = get(_)('messages.failed_to_load_no_cache');
         loading = false;
@@ -262,7 +266,9 @@
         }
       }
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.success(newStarred ? get(_)('messages.message_starred') : get(_)('messages.message_unstarred'));
+      toastStore.success(
+        newStarred ? get(_)('messages.message_starred') : get(_)('messages.message_unstarred'),
+      );
     } catch (e) {
       logger.error('messages', 'starMessage', 'Failed to star message', { error: e });
       const { toastStore } = await import('../../lib/stores/toast');
@@ -315,8 +321,8 @@
   }
 </script>
 
-<div class="flex flex-col min-h-0 flex-1 overflow-hidden">
-  <div class="flex w-full flex-1 min-h-0 max-xl:flex-col overflow-hidden">
+<div class="flex flex-col h-full">
+  <div class="flex flex-1 min-h-0 w-full max-xl:flex-col overflow-hidden">
     {#if seqtaLoadFailed}
       <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
         <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">
@@ -324,17 +330,24 @@
         </div>
       </div>
     {:else}
-      <div class="hidden xl:block">
+      <div class="hidden xl:block shrink-0">
         <Sidebar {selectedFolder} {openFolder} {openCompose} />
       </div>
       <MobileFolderTabs {selectedFolder} {openFolder} {openCompose} />
-      <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div class="flex-1 min-h-0 overflow-hidden">
-          <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
-        </div>
+      <!-- Message list: scrollable container (like RSS feeds page) -->
+      <div
+        class="flex flex-1 xl:flex-initial flex-col min-h-0 min-w-0 xl:w-[28rem] xl:min-w-[28rem] shrink-0 overflow-y-auto [scrollbar-gutter:stable] bg-white dark:bg-zinc-900 border-r border-zinc-300/50 dark:border-zinc-800/50">
+        <MessageList
+          {selectedFolder}
+          {messages}
+          {loading}
+          {error}
+          {selectedMessage}
+          {openMessage}
+          embedded={true} />
       </div>
       <!-- Message detail view - full screen on mobile -->
-      <div class="hidden flex-1 xl:block">
+      <div class="hidden flex-1 min-h-0 min-w-0 xl:flex flex-col overflow-hidden">
         <MessageDetail
           {selectedMessage}
           {selectedFolder}
@@ -362,7 +375,7 @@
         className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-none transition-all duration-300"
         showCloseButton={false}
         closeOnBackdrop={false}
-        ariaLabel={$_( 'messages.message_detail' )}>
+        ariaLabel={$_('messages.message_detail')}>
         <div class="flex flex-col h-full">
           <div
             class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
@@ -390,7 +403,10 @@
             <!-- Spacer for alignment -->
           </div>
 
-          <div class="overflow-y-auto flex-1 min-h-0" style="-webkit-overflow-scrolling: touch;" in:fade={{ duration: 300 }}>
+          <div
+            class="overflow-y-auto flex-1 min-h-0"
+            style="-webkit-overflow-scrolling: touch;"
+            in:fade={{ duration: 300 }}>
             <MessageDetail
               {selectedMessage}
               {selectedFolder}
