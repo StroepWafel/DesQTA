@@ -2,14 +2,7 @@
   import { goto } from '$app/navigation';
   import { fly } from 'svelte/transition';
   import { cubicInOut } from 'svelte/easing';
-  import {
-    Icon,
-    BookOpen,
-    DocumentText,
-    AcademicCap,
-    BuildingOffice,
-    Clock,
-  } from 'svelte-hero-icons';
+  import { Icon, BookOpen, DocumentText } from 'svelte-hero-icons';
   import type { TimetableLesson } from '$lib/types/timetable';
   import { formatDate, parseDate } from '$lib/utils/timetableUtils';
   import { tick } from 'svelte';
@@ -45,6 +38,8 @@
     });
   }
 
+  const HEADER_OFFSET = 72; // Min top to avoid app + timetable header
+
   function updatePosition() {
     if (!anchorElement || !popoutElement) return;
 
@@ -55,53 +50,33 @@
     const spacing = 8;
     const margin = 16;
 
-    // Try positioning below first
+    // Prefer below anchor; only go above if it fits and stays below header
     let top = anchorRect.bottom + spacing;
-    let left = anchorRect.left;
-
-    // Check if it fits below
-    const fitsBelow = top + popoutRect.height <= viewportHeight - margin;
     let direction: 'up' | 'down' = 'down';
+    const fitsBelow = top + popoutRect.height <= viewportHeight - margin;
+    const aboveTop = anchorRect.top - popoutRect.height - spacing;
+    const fitsAbove = aboveTop >= HEADER_OFFSET;
 
-    // If it doesn't fit below, try above
-    if (!fitsBelow) {
-      top = anchorRect.top - popoutRect.height - spacing;
+    if (!fitsBelow && fitsAbove) {
+      top = aboveTop;
       direction = 'up';
-      // If it doesn't fit above either, center it vertically in viewport
-      if (top < margin) {
-        top = Math.max(
-          margin,
-          Math.min(
-            viewportHeight - popoutRect.height - margin,
-            (viewportHeight - popoutRect.height) / 2,
-          ),
-        );
-        direction = 'down'; // Default direction when centered
-      }
+    } else if (!fitsBelow && !fitsAbove) {
+      // Neither fits well: keep below but clamp, or center in content area
+      top = Math.max(HEADER_OFFSET, Math.min(viewportHeight - popoutRect.height - margin, anchorRect.bottom + spacing));
+      direction = 'down';
     }
 
-    // Align horizontally - align with left edge of anchor
-    // If it doesn't fit to the right, align with right edge of anchor
+    // Never go under header
+    if (top < HEADER_OFFSET) {
+      top = HEADER_OFFSET;
+    }
+
+    // Horizontal: align with anchor, keep in viewport
+    let left = anchorRect.left;
     if (left + popoutRect.width > viewportWidth - margin) {
       left = anchorRect.right - popoutRect.width;
-      // If still doesn't fit, center horizontally
-      if (left < margin) {
-        left = Math.max(
-          margin,
-          Math.min(
-            viewportWidth - popoutRect.width - margin,
-            (viewportWidth - popoutRect.width) / 2,
-          ),
-        );
-      }
     }
-
-    // Ensure it doesn't go off-screen on the left
-    if (left < margin) {
-      left = margin;
-    }
-
-    // Ensure it doesn't go off-screen on the right
+    if (left < margin) left = margin;
     if (left + popoutRect.width > viewportWidth - margin) {
       left = viewportWidth - popoutRect.width - margin;
     }
@@ -175,85 +150,48 @@
   {#key lesson.id}
     <div
       bind:this={popoutElement}
-      class="fixed z-50 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border shadow-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 max-h-[calc(100vh-2rem)] overflow-y-auto mobile-modal-max-h"
-      style="top: {position.top}px; left: {position.left}px; border-left: 4px solid {lesson.colour};"
+      class="fixed z-[200] w-64 max-w-[calc(100vw-2rem)] rounded-xl border shadow-lg bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 max-h-[calc(100vh-6rem)] overflow-y-auto"
+      style="top: {position.top}px; left: {position.left}px; border-left: 3px solid {lesson.colour};"
       transition:fly={{
-        y: transitionDirection === 'down' ? -10 : 10,
-        duration: 200,
+        y: transitionDirection === 'down' ? -6 : 6,
+        duration: 150,
         easing: cubicInOut,
       }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="lesson-popout-title">
-      <!-- Header -->
-      <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
-        <h2
-          id="lesson-popout-title"
-          class="text-base font-bold text-zinc-900 dark:text-white truncate">
+      <div class="p-3">
+        <h2 id="lesson-popout-title" class="text-sm font-semibold text-zinc-900 dark:text-white truncate">
           {lesson.description}
         </h2>
-        <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{lesson.code}</p>
-      </div>
-
-      <!-- Content - compact info grid -->
-      <div class="p-3 space-y-2">
-        <div class="flex items-center gap-2.5 text-sm">
-          <div class="flex justify-center items-center w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-700 shrink-0">
-            <Icon src={Clock} class="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-zinc-900 dark:text-white truncate">{formatLessonDate(lesson.date)}</p>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">{lesson.from} – {lesson.until}</p>
-          </div>
-        </div>
-
-        {#if lesson.staff}
-          <div class="flex items-center gap-2.5 text-sm">
-            <div class="flex justify-center items-center w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-700 shrink-0">
-              <Icon src={AcademicCap} class="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
-            </div>
-            <p class="text-zinc-900 dark:text-white truncate flex-1">{lesson.staff}</p>
-          </div>
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          {formatLessonDate(lesson.date)} · {lesson.from} – {lesson.until}
+        </p>
+        {#if lesson.staff || lesson.room}
+          <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 truncate">
+            {[lesson.staff, lesson.room].filter(Boolean).join(' · ')}
+          </p>
         {/if}
-
-        {#if lesson.room}
-          <div class="flex items-center gap-2.5 text-sm">
-            <div class="flex justify-center items-center w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-700 shrink-0">
-              <Icon src={BuildingOffice} class="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
-            </div>
-            <p class="text-zinc-900 dark:text-white">Room {lesson.room}</p>
-          </div>
-        {/if}
-
         {#if lesson.attendanceTitle && lesson.attendanceTitle.trim()}
-          <div class="p-2 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
-            <p class="text-xs font-medium text-amber-800 dark:text-amber-200">Attendance</p>
-            <p class="text-xs text-amber-700 dark:text-amber-300 truncate">{lesson.attendanceTitle}</p>
-          </div>
+          <p class="text-xs text-amber-600 dark:text-amber-400 mt-1 truncate">{lesson.attendanceTitle}</p>
         {/if}
-      </div>
-
-      <!-- Actions - consolidated DesQTA style -->
-      <div class="p-2 border-t border-zinc-200 dark:border-zinc-700 space-y-1">
         {#if lesson.programmeID !== 0}
-          <button
-            type="button"
-            class="flex gap-3 items-center min-h-[44px] px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
-            onclick={handleViewCourse}>
-            <div class="flex justify-center items-center w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 group-hover:bg-white/20 shrink-0">
-              <Icon src={BookOpen} class="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
-            </div>
-            <span class="font-medium text-sm">View Course</span>
-          </button>
-          <button
-            type="button"
-            class="flex gap-3 items-center min-h-[44px] px-3 py-2.5 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 dark:text-zinc-200 hover:accent-bg hover:text-white group focus:outline-none focus:ring-2 accent-ring"
-            onclick={handleViewAssessments}>
-            <div class="flex justify-center items-center w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 group-hover:bg-white/20 shrink-0">
-              <Icon src={DocumentText} class="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
-            </div>
-            <span class="font-medium text-sm">View Assessments</span>
-          </button>
+          <div class="flex gap-2 mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+            <button
+              type="button"
+              class="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:accent-bg hover:text-white transition-colors"
+              onclick={handleViewCourse}>
+              <Icon src={BookOpen} class="w-3.5 h-3.5" />
+              <span>Course</span>
+            </button>
+            <button
+              type="button"
+              class="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:accent-bg hover:text-white transition-colors"
+              onclick={handleViewAssessments}>
+              <Icon src={DocumentText} class="w-3.5 h-3.5" />
+              <span>Assessments</span>
+            </button>
+          </div>
         {/if}
       </div>
     </div>

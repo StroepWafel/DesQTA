@@ -113,7 +113,7 @@
   {/if}
 
   <!-- View Mode Switcher -->
-  <div class="flex gap-2 items-center">
+  <div class="flex gap-2 items-center" data-onboarding="timetable-views">
     <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400 mr-1 hidden sm:inline">
       {$_('timetable.view') || 'View:'}
     </span>
