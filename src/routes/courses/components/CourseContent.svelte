@@ -532,13 +532,22 @@
                           <p class="text-center text-red-700 dark:text-red-300 font-medium">
                             {aiSummaryError}
                           </p>
-                          <button
-                            type="button"
-                            class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 bg-red-500 hover:bg-red-600 text-white focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
-                            onclick={generateLessonSummary}>
-                            <Icon src={ArrowPath} class="w-4 h-4" />
-                            <T key="common.retry" fallback="Retry" />
-                          </button>
+                          <div class="flex flex-wrap items-center justify-center gap-3">
+                            <button
+                              type="button"
+                              class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 bg-red-500 hover:bg-red-600 text-white focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                              onclick={generateLessonSummary}>
+                              <Icon src={ArrowPath} class="w-4 h-4" />
+                              <T key="common.retry" fallback="Retry" />
+                            </button>
+                            <button
+                              type="button"
+                              class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                              onclick={expandContent}>
+                              <Icon src={DocumentText} class="w-4 h-4" />
+                              <T key="courses.view_original" fallback="View Original" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     {:else if aiSummary}
