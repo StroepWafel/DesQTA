@@ -152,9 +152,9 @@
       </div>
     {/if}
 
-    <!-- Widget Content -->
+    <!-- Widget Content - minimal padding; widgets control their own spacing -->
     <div
-      class="h-full w-full p-3 sm:p-4 md:p-6 flex flex-col {isEditing
+      class="h-full w-full flex flex-col overflow-hidden p-2 sm:p-3 {isEditing
         ? 'pt-10'
         : ''} transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
       <WidgetFactory {widget} />
