@@ -659,16 +659,6 @@
             fallback="Plan, track, and focus on your upcoming work." />
         </p>
       </div>
-      <div class="flex items-center gap-3">
-        <button
-          class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-zinc-300 text-zinc-900 dark:text-white dark:border-zinc-700 bg-white dark:bg-zinc-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm sm:text-base"
-          onclick={() => {
-            /* timer */
-          }}
-          aria-label={$_('study.open_timer') || 'Open Study Timer'}>
-          <T key="study.open_timer" fallback="Open Timer" />
-        </button>
-      </div>
     </div>
 
     <!-- Tabs -->
