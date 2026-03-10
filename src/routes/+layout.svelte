@@ -765,16 +765,19 @@
 
   const applyMenuOrder = async () => {
     try {
-      const settings = await loadSettings(['menu_order']);
+      const settings = await loadSettings(['menu_order', 'disabled_sidebar_pages']);
       const menuOrder = settings.menu_order as string[] | undefined;
+      const disabledPages = (settings.disabled_sidebar_pages as string[] | undefined) || [];
 
       // Use current menu state instead of DEFAULT_MENU to preserve filters
       const currentMenu = [...menu];
       const currentMenuMap = new Map(currentMenu.map((item) => [item.path, item]));
 
+      let orderedMenu: typeof DEFAULT_MENU;
+
       if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
         // Reorder menu based on saved order, keeping any new items at the end
-        const orderedMenu: typeof DEFAULT_MENU = [];
+        orderedMenu = [];
         const addedPaths = new Set<string>();
 
         // Add items in saved order (only if they exist in current menu)
@@ -792,10 +795,15 @@
             orderedMenu.push(item);
           }
         }
-
-        menu = orderedMenu;
+      } else {
+        orderedMenu = [...currentMenu];
       }
-      // If no menu order, keep current menu (already filtered)
+
+      // Filter out disabled pages (Settings cannot be disabled)
+      const disabledSet = new Set(disabledPages);
+      menu = orderedMenu.filter(
+        (item) => !disabledSet.has(item.path) || item.path === '/settings',
+      );
     } catch (e) {
       logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
       // Don't reset to DEFAULT_MENU on error, keep current filtered menu

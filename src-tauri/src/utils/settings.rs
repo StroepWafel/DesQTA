@@ -263,6 +263,9 @@ pub struct Settings {
     pub sidebar_folders: Option<Vec<SidebarFolder>>,
     #[serde(default)]
     pub sidebar_favorites: Option<Vec<String>>, // Array of paths
+    /// Pages hidden from the sidebar (array of paths)
+    #[serde(default)]
+    pub disabled_sidebar_pages: Option<Vec<String>>,
     #[serde(default)]
     pub sidebar_recent_activity: Option<Vec<RecentActivity>>,
     #[serde(default)]
@@ -323,6 +326,7 @@ impl Default for Settings {
             dashboard_widgets_layout: None,
             sidebar_folders: None,
             sidebar_favorites: None,
+            disabled_sidebar_pages: None,
             sidebar_recent_activity: None,
             downloaded_theme_ids: None,
             downloaded_theme_metadata: None,
@@ -699,6 +703,10 @@ impl Settings {
 
         // Merge sidebar favorites
         default_settings.sidebar_favorites = get_opt_string_array(&existing_json, "sidebar_favorites");
+
+        // Merge disabled sidebar pages
+        default_settings.disabled_sidebar_pages =
+            get_opt_string_array(&existing_json, "disabled_sidebar_pages");
 
         // Merge recent activity
         if let Some(activity_json) = existing_json.get("sidebar_recent_activity").and_then(|v| v.as_array()) {
