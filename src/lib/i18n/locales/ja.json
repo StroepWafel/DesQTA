@@ -178,7 +178,9 @@
     "feature_analytics_desc": "パフォーマンスデータ",
     "feature_settings_desc": "アプリ設定",
     "fill_all_fields": "すべての項目を入力してください",
-    "failed_credentials": "ログインに失敗しました。認証情報を確認してください。"
+    "failed_credentials": "ログインに失敗しました。認証情報を確認してください。",
+    "not_working_try_direct": "うまくいきませんか？",
+    "try_direct_login_link": "直接ログインを試す"
   },
   "features": {
     "lightning_fast": "超高速パフォーマンス",
@@ -547,6 +549,7 @@
     "get_new_tip": "新しい学習のコツを取得"
   },
   "messages": {
+    "page_description": "SEQTAとRSSメッセージを表示・管理します。",
     "failed_to_load": "メッセージの読み込みに失敗しました。",
     "failed_to_load_no_cache": "メッセージの読み込みに失敗し、キャッシュデータもありません",
     "failed_to_load_message": "メッセージの読み込みに失敗しました。",
@@ -655,6 +658,8 @@
     "dark": "ダーク",
     "system": "システム",
     "theme_mode_description": "ライトモード、ダークモードを選択するか、システム設定に従います。",
+    "minimize_to_tray": "閉じたときにシステムトレイでアプリを実行し続ける",
+    "minimize_to_tray_description": "有効にすると、ウィンドウを閉じるとDesQTAがシステムトレイに最小化されます。無効にすると、閉じるとアプリが完全に終了します。",
     "security": "セキュリティ",
     "security_description": "生体認証でアプリを保護",
     "biometric_enabled": "生体認証でロック解除 (Face ID、Touch ID、指紋、Windows Hello)",
@@ -1000,6 +1005,10 @@
     "quizzes": "クイズ",
     "select_assessment": "評価を選択",
     "custom_topic": "カスタムトピック",
+    "topic_source": "1. トピックを選択",
+    "quiz_options": "2. クイズオプション",
+    "change_options": "オプションを変更",
+    "generate_section": "3. 生成",
     "what_to_study": "何を勉強したいですか？",
     "question_count": "問題数",
     "generate_quiz": "クイズを生成",

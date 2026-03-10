@@ -151,7 +151,7 @@
   <AssessmentTabs tabs={availableTabs} activeTab={tab} onTabChange={handleTabChange} />
 
   <!-- Content -->
-  <div class="container px-6 py-8 mx-auto">
+  <div class="container max-w-none w-full p-5 mx-auto">
     {#if loading}
       <div
         class="flex justify-center items-center h-64"

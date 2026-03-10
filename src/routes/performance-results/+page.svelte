@@ -177,7 +177,7 @@
   <title>{$_('performance.title', { default: 'Performance Test Results - DesQTA' })}</title>
 </svelte:head>
 
-<div class="container px-6 py-7 mx-auto flex flex-col h-full gap-8">
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-8">
   <!-- Header -->
   <div class="flex justify-between items-start">
     <div>
@@ -880,7 +880,9 @@
               <T key="performance.overall_test_errors" fallback="Overall Test Errors" />
             </Card.Title>
             <Card.Description>
-              <T key="performance.overall_errors_description" fallback="Errors that occurred during the performance test" />
+              <T
+                key="performance.overall_errors_description"
+                fallback="Errors that occurred during the performance test" />
             </Card.Description>
           </Card.Header>
           <Card.Content>

@@ -171,7 +171,9 @@
     "camera_permission": "Unable to access yer spyglass. Check yer permissions, matey.",
     "live_scan_error": "Failed to start live scan.",
     "fill_all_fields": "Fill in all fields, ye scallywag!",
-    "failed_credentials": "Boarding failed. Check yer credentials, matey."
+    "failed_credentials": "Boarding failed. Check yer credentials, matey.",
+    "not_working_try_direct": "Not workin? ",
+    "try_direct_login_link": "Try direct login instead"
   },
   "features": {
     "lightning_fast": "Swift as a Caribbean wind",
@@ -512,6 +514,7 @@
     "get_new_tip": "Get new sailor's wisdom"
   },
   "messages": {
+    "page_description": "View and manage yer SEQTA and RSS messages, matey.",
     "failed_to_load": "Failed to load messages, matey.",
     "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message, savvy.",
@@ -620,6 +623,8 @@
     "dark": "Moonlight Sailing",
     "system": "Follow the Wind",
     "theme_mode_description": "Choose between daylight sailing, moonlight sailing, or follow the wind's preference.",
+    "minimize_to_tray": "Keep the ship runnin' in the system tray when ye close her",
+    "minimize_to_tray_description": "When enabled, closin' the porthole hides DesQTA to the system tray. When disabled, closin' fully scuttles the app.",
     "security": "Security",
     "security_description": "Protect yer app with biometric authentication",
     "biometric_enabled": "Unlock with biometrics (Face ID, Touch ID, fingerprint, Windows Hello)",
@@ -948,6 +953,10 @@
     "quizzes": "Treasure Quizzes",
     "select_assessment": "Select yer assessment",
     "custom_topic": "Custom topic",
+    "topic_source": "1. Choose yer topic",
+    "quiz_options": "2. Quiz options",
+    "change_options": "Change options",
+    "generate_section": "3. Generate",
     "what_to_study": "What do ye want to study, matey?",
     "question_count": "Number o' questions",
     "generate_quiz": "Generate Quiz",

@@ -98,7 +98,9 @@
   let versionUpdateCurrent = $state('');
   let versionUpdatePrevious = $state('');
   let showOnboarding = $state(false);
+  let tourPendingAfterReleaseNotes = $state(false);
   let hasCompletedSetupAssistant = $state(false);
+  let profilesExist = $state(false);
   let hasCompletedPostLoginPrompts = $state(false);
   let biometricEnabled = $state(false);
   let biometricUnlocked = $state(false);
@@ -343,7 +345,7 @@
       const settings = await loadSettings(['has_been_through_onboarding']);
       if (!settings.has_been_through_onboarding) {
         showOnboarding = true;
-        sidebarOpen = false; // Close mobile nav during tour
+        if (isMobile) sidebarOpen = false;
       }
     } catch (e) {
       logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', {
@@ -421,14 +423,18 @@
         });
       }
 
-      // Load setup assistant completion status, post-login prompts, and biometric preference
+      // Load setup assistant completion status, post-login prompts, biometric preference, and profile count
       try {
-        const setupSettings = await loadSettings([
-          'has_completed_setup_assistant',
-          'has_completed_post_login_prompts',
-          'biometric_enabled',
+        const [setupSettings, profilesList] = await Promise.all([
+          loadSettings([
+            'has_completed_setup_assistant',
+            'has_completed_post_login_prompts',
+            'biometric_enabled',
+          ]),
+          invoke<unknown[]>('list_profiles').catch(() => []),
         ]);
         hasCompletedSetupAssistant = setupSettings.has_completed_setup_assistant === true;
+        profilesExist = Array.isArray(profilesList) && profilesList.length > 0;
         hasCompletedPostLoginPrompts = setupSettings.has_completed_post_login_prompts === true;
         biometricEnabled = setupSettings.biometric_enabled === true;
 
@@ -461,14 +467,22 @@
         logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
       });
 
-      // Check if user needs onboarding - show tour for first-time users (post-login only)
+      // Check if user needs onboarding - show tour for first-time users (only after post-login screens)
       try {
         const settings = await loadSettings(['has_been_through_onboarding']);
-        if (!settings.has_been_through_onboarding && !get(needsSetup)) {
-          // Wait a bit for UI to settle
+        if (
+          !settings.has_been_through_onboarding &&
+          !get(needsSetup) &&
+          hasCompletedPostLoginPrompts
+        ) {
+          // Wait a bit for UI to settle; defer if release notes (What's New) will be open
           setTimeout(() => {
-            showOnboarding = true;
-            sidebarOpen = false; // Close mobile nav during tour for better UX
+            if (showWhatsNewModal) {
+              tourPendingAfterReleaseNotes = true;
+            } else {
+              showOnboarding = true;
+              if (isMobile) sidebarOpen = false;
+            }
           }, 1000);
         }
       } catch (e) {
@@ -564,11 +578,13 @@
       sendAnalytics();
 
       // Check and apply initial fullscreen state (also check maximized)
+      // On macOS: skip isMaximized() - it can cause issues with undecorated windows (plugins-workspace#1918)
       try {
-        const [currentFullscreen, currentMaximized] = await Promise.all([
-          appWindow.isFullscreen(),
-          appWindow.isMaximized().catch(() => false),
-        ]);
+        const currentFullscreen = await appWindow.isFullscreen();
+        const currentMaximized =
+          (import.meta.env.TAURI_ENV_PLATFORM === 'darwin' || import.meta.env.TAURI_ENV_PLATFORM === 'macos')
+            ? false
+            : await appWindow.isMaximized().catch(() => false);
         isFullscreen = currentFullscreen || currentMaximized;
         logger.debug(
           'layout',
@@ -749,16 +765,19 @@
 
   const applyMenuOrder = async () => {
     try {
-      const settings = await loadSettings(['menu_order']);
+      const settings = await loadSettings(['menu_order', 'disabled_sidebar_pages']);
       const menuOrder = settings.menu_order as string[] | undefined;
+      const disabledPages = (settings.disabled_sidebar_pages as string[] | undefined) || [];
 
       // Use current menu state instead of DEFAULT_MENU to preserve filters
       const currentMenu = [...menu];
       const currentMenuMap = new Map(currentMenu.map((item) => [item.path, item]));
 
+      let orderedMenu: typeof DEFAULT_MENU;
+
       if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
         // Reorder menu based on saved order, keeping any new items at the end
-        const orderedMenu: typeof DEFAULT_MENU = [];
+        orderedMenu = [];
         const addedPaths = new Set<string>();
 
         // Add items in saved order (only if they exist in current menu)
@@ -776,10 +795,15 @@
             orderedMenu.push(item);
           }
         }
-
-        menu = orderedMenu;
+      } else {
+        orderedMenu = [...currentMenu];
       }
-      // If no menu order, keep current menu (already filtered)
+
+      // Filter out disabled pages (Settings cannot be disabled)
+      const disabledSet = new Set(disabledPages);
+      menu = orderedMenu.filter(
+        (item) => !disabledSet.has(item.path) || item.path === '/settings',
+      );
     } catch (e) {
       logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
       // Don't reset to DEFAULT_MENU on error, keep current filtered menu
@@ -795,7 +819,7 @@
   <LoadingScreen />
 {:else}
   <div
-    class="flex flex-col h-screen w-screen {isFullscreen || isMobile
+    class="flex flex-col h-screen w-screen {isMobile || isFullscreen
       ? ''
       : 'rounded-2xl'} overflow-hidden theme-bg"
     style="outline: none; border: none; margin: 0; padding: 0; padding-top: var(--safe-area-top); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
@@ -839,10 +863,12 @@
 
       <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen || isMobile
-          ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 [scrollbar-gutter:stable] {isMobile && !$needsSetup ? 'pb-[56px] mobile-main' : ''}"
+        class="flex-1 min-h-0 flex flex-col border-t {!$needsSetup ? 'border-l' : ''} {isMobile
+          ? 'rounded-t-2xl overflow-hidden'
+          : 'rounded-tl-2xl rounded-bl-2xl overflow-hidden'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
+        <div
+          class="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] {isMobile && !$needsSetup ? 'pb-[56px] mobile-main mobile-soft' : ''}">
         {#if !$needsSetup}
           <OfflineBanner />
         {/if}
@@ -851,7 +877,28 @@
             <LoadingScreen inline />
           </div>
         {:else if !$needsSetup && !hasCompletedPostLoginPrompts}
-          <PostLoginPrompts onComplete={() => (hasCompletedPostLoginPrompts = true)} />
+          <PostLoginPrompts
+            onComplete={async () => {
+              hasCompletedPostLoginPrompts = true;
+              // Show tour after post-login screens (biometric + analytics); defer if release notes open
+              try {
+                const settings = await loadSettings(['has_been_through_onboarding']);
+                if (!settings.has_been_through_onboarding && !get(needsSetup)) {
+                  setTimeout(() => {
+                    if (showWhatsNewModal) {
+                      tourPendingAfterReleaseNotes = true;
+                    } else {
+                      showOnboarding = true;
+                      if (isMobile) sidebarOpen = false;
+                    }
+                  }, 1000);
+                }
+              } catch (e) {
+                logger.debug('layout', 'PostLoginComplete', 'Could not check onboarding', {
+                  error: e,
+                });
+              }
+            }} />
         {:else if showBiometricGate}
           <BiometricGate
             onUnlock={() => (biometricUnlocked = true)}
@@ -870,7 +917,7 @@
             }}
           />
         {:else if $needsSetup}
-          {#if !hasCompletedSetupAssistant}
+          {#if !hasCompletedSetupAssistant && !profilesExist}
             <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />
           {:else}
             <LoginScreen
@@ -881,6 +928,7 @@
         {:else}
           {@render children()}
         {/if}
+        </div>
       </main>
 
       <!-- ThemeBuilder Sidebar -->
@@ -943,6 +991,15 @@
   currentVersion={versionUpdateCurrent}
   previousVersion={versionUpdatePrevious}
   changelogMarkdown={changelogMarkdown}
-  onclose={() => (showWhatsNewModal = false)}
+  onclose={() => {
+    showWhatsNewModal = false;
+    if (tourPendingAfterReleaseNotes) {
+      tourPendingAfterReleaseNotes = false;
+      setTimeout(() => {
+        showOnboarding = true;
+        if (isMobile) sidebarOpen = false;
+      }, 300);
+    }
+  }}
 />
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />

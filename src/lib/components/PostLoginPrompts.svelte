@@ -18,11 +18,13 @@
   let { onComplete }: Props = $props();
 
   let supportsBiometric = $derived($platformStore.supportsBiometric);
+  let isNativeMobile = $derived($platformStore.isNativeMobile);
+  let showBiometricOnMobile = $derived(supportsBiometric && isNativeMobile);
   let hasCompletedBiometricPhase = $state(false);
   let phase = $state<'biometric' | 'usage_stats' | 'done'>('usage_stats');
 
   $effect(() => {
-    if (supportsBiometric && !hasCompletedBiometricPhase && phase === 'usage_stats') {
+    if (showBiometricOnMobile && !hasCompletedBiometricPhase && phase === 'usage_stats') {
       phase = 'biometric';
     }
   });

@@ -61,13 +61,14 @@
       // Note: app handle is passed automatically by Tauri
       await invoke('switch_profile', { profileId });
 
-      // Clear userInfo cache so it reloads for the new profile
+      // Clear userInfo cache so it reloads for the new profile (profile-aware key)
       const { cache } = await import('../../utils/cache');
-      cache.delete('userInfo');
+      const cacheKey = `userInfo:${profileId}`;
+      cache.delete(cacheKey);
 
       // Also clear IndexedDB cache
       const { idbCacheDelete } = await import('../services/idb');
-      await idbCacheDelete('userInfo').catch(() => {});
+      await idbCacheDelete(cacheKey).catch(() => {});
 
       // Reload profiles to get updated current
       await loadProfiles();

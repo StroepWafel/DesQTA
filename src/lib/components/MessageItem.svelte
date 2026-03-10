@@ -90,7 +90,7 @@
 <button
   class="group w-full min-w-0 text-left transition-all duration-200 flex gap-3 relative focus:outline-none overflow-hidden
     {embedded
-    ? `p-3 py-2.5 rounded-lg border-0 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${selectedMessage?.id === msg.id ? 'bg-accent/10 dark:bg-accent/15' : 'bg-white/5 dark:bg-zinc-900/5 hover:bg-white/20 dark:hover:bg-zinc-900/20'}`
+    ? `p-3 py-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${selectedMessage?.id === msg.id ? 'bg-accent/10 border border-accent shadow-md' : 'border border-transparent bg-white/5 dark:bg-zinc-900/5 hover:bg-white/20 dark:hover:bg-zinc-900/20'}`
     : 'p-3 sm:p-3.5 mb-2 rounded-xl border transform hover:scale-[1.01] focus:ring-2 accent-ring'}
     {!embedded && selectedMessage?.id === msg.id
     ? 'border-accent-500/70 bg-accent-500/5 shadow-sm'

@@ -104,7 +104,9 @@ export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promis
 
     return response;
   } catch (error) {
-    throw new Error(error instanceof Error ? error.message : 'Unknown fetch error');
+    throw new Error(
+      typeof error === 'string' ? error : ((error as Error)?.message ?? 'Unknown fetch error'),
+    );
   }
 }
 
@@ -116,7 +118,9 @@ export async function getRSS(url: string): Promise<any> {
     return response;
   } catch (error) {
     console.error('getRSS error:', error);
-    throw new Error(error instanceof Error ? error.message : 'Unknown fetch error');
+    throw new Error(
+      typeof error === 'string' ? error : ((error as Error)?.message ?? 'Unknown fetch error'),
+    );
   }
 }
 
@@ -127,7 +131,9 @@ export async function openURL(url: string): Promise<any> {
     });
   } catch (error) {
     console.error('openURL error:', error);
-    throw new Error(error instanceof Error ? error.message : 'Unknown fetch error');
+    throw new Error(
+      typeof error === 'string' ? error : ((error as Error)?.message ?? 'Unknown fetch error'),
+    );
   }
 }
 
@@ -140,6 +146,8 @@ export async function uploadSeqtaFile(fileName: string, filePath: string): Promi
     return response;
   } catch (error) {
     console.error('uploadSeqtaFile error:', error);
-    throw new Error(error instanceof Error ? error.message : 'Unknown upload error');
+    throw new Error(
+      typeof error === 'string' ? error : ((error as Error)?.message ?? 'Unknown fetch error'),
+    );
   }
 }

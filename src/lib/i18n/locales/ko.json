@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "모든 필드를 입력해 주세요",
-    "failed_credentials": "로그인에 실패했습니다. 자격 증명을 확인하세요."
+    "failed_credentials": "로그인에 실패했습니다. 자격 증명을 확인하세요.",
+    "not_working_try_direct": "작동하지 않나요? ",
+    "try_direct_login_link": "직접 로그인 시도"
   },
   "features": {
     "lightning_fast": "Lightning-fast performance",
@@ -549,6 +551,10 @@
     "quizzes": "퀴즈",
     "select_assessment": "평가 선택",
     "custom_topic": "맞춤 주제",
+    "topic_source": "1. 주제 선택",
+    "quiz_options": "2. 퀴즈 옵션",
+    "change_options": "옵션 변경",
+    "generate_section": "3. 생성",
     "what_to_study": "무엇을 공부하고 싶으신가요?",
     "question_count": "문제 수",
     "generate_quiz": "퀴즈 생성",
@@ -595,6 +601,7 @@
     "type_your_answer": "답을 입력하세요..."
   },
   "messages": {
+    "page_description": "SEQTA 및 RSS 메시지를 보고 관리합니다.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "메시지를 불러올 수 없고 캐시된 데이터도 없습니다",
     "failed_to_load_message": "Failed to load message.",
@@ -703,6 +710,8 @@
     "dark": "Dark",
     "system": "System",
     "theme_mode_description": "Choose between light mode, dark mode, or follow your system preference.",
+    "minimize_to_tray": "닫을 때 시스템 트레이에서 앱 계속 실행",
+    "minimize_to_tray_description": "활성화하면 창을 닫을 때 DesQTA가 시스템 트레이로 최소화됩니다. 비활성화하면 닫을 때 앱이 완전히 종료됩니다.",
     "security": "보안",
     "security_description": "생체 인식으로 앱 보호",
     "biometric_enabled": "생체 인식으로 잠금 해제 (Face ID, Touch ID, 지문, Windows Hello)",

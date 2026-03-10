@@ -148,10 +148,17 @@
   });
 </script>
 
-<div class="container px-6 py-7 mx-auto">
-  <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
-    <T key="navigation.goals" fallback="Goals" />
-  </h1>
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
+  <div class="flex justify-between items-start">
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.goals" fallback="Goals" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="goals.description" fallback="Set and track your academic goals" />
+      </p>
+    </div>
+  </div>
 
   {#if goalsEnabled === false}
     <div class="flex justify-center items-center h-64">

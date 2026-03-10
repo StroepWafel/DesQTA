@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "Пожалуйста, заполните все поля",
-    "failed_credentials": "Ошибка входа. Проверьте учетные данные."
+    "failed_credentials": "Ошибка входа. Проверьте учетные данные.",
+    "not_working_try_direct": "Не работает? ",
+    "try_direct_login_link": "Попробуйте прямой вход"
   },
   "features": {
     "lightning_fast": "Молниеносная производительность",
@@ -554,6 +556,10 @@
     "quizzes": "Викторины",
     "select_assessment": "Выбрать оценку",
     "custom_topic": "Своя тема",
+    "topic_source": "1. Выберите тему",
+    "quiz_options": "2. Параметры викторины",
+    "change_options": "Изменить параметры",
+    "generate_section": "3. Создать",
     "what_to_study": "Что вы хотите изучить?",
     "question_count": "Количество вопросов",
     "generate_quiz": "Создать викторину",
@@ -600,6 +606,7 @@
     "type_your_answer": "Введите ответ..."
   },
   "messages": {
+    "page_description": "Просмотр и управление сообщениями SEQTA и RSS.",
     "failed_to_load": "Не удалось загрузить сообщения.",
     "failed_to_load_no_cache": "Не удалось загрузить сообщения, кэшированные данные отсутствуют",
     "failed_to_load_message": "Не удалось загрузить сообщение.",
@@ -708,6 +715,8 @@
     "dark": "Темный",
     "system": "Система",
     "theme_mode_description": "Выберите между светлым режимом, темным режимом или следуйте предпочтениям вашей системы.",
+    "minimize_to_tray": "Оставлять приложение в системном трее при закрытии",
+    "minimize_to_tray_description": "При включении закрытие окна сворачивает DesQTA в системный трей. При выключении закрытие полностью завершает приложение.",
     "security": "Безопасность",
     "security_description": "Защитите приложение биометрической аутентификацией",
     "biometric_enabled": "Разблокировать по биометрии (Face ID, Touch ID, отпечаток, Windows Hello)",

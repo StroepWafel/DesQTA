@@ -207,16 +207,19 @@
   });
 </script>
 
-<div class="p-4 sm:p-6">
-  <!-- Consolidated Header -->
-  <div
-    class="flex flex-col gap-4 mb-6 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
-    <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
         <T key="navigation.assessments" fallback="Assessments" />
       </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="assessments.description" fallback="View and manage your upcoming assessments" />
+      </p>
+    </div>
 
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center shrink-0">
         <!-- Year Filter Dropdown -->
         {#if availableYears && availableYears.length > 0}
           <div class="flex items-center gap-2">
@@ -303,7 +306,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 
   <!-- Content Area -->

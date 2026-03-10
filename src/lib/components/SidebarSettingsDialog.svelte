@@ -10,6 +10,8 @@
     Star,
     Folder,
     PencilSquare,
+    Eye,
+    EyeSlash,
   } from 'svelte-hero-icons';
   import { Button, Input, Dropdown } from '$lib/components/ui';
   import T from './T.svelte';
@@ -32,6 +34,7 @@
 
   let folders = $state<SidebarFolder[]>([]);
   let favorites = $state<string[]>([]);
+  let disabledPages = $state<string[]>([]);
   let editingFolder: SidebarFolder | null = $state(null);
   let newFolderName = $state('');
   let newFolderIcon = $state('');
@@ -106,12 +109,13 @@
   const loadConfig = async () => {
     try {
       const settings = await invoke<any>('get_settings_subset', {
-        keys: ['sidebar_folders', 'sidebar_favorites', 'menu_order'],
+        keys: ['sidebar_folders', 'sidebar_favorites', 'menu_order', 'disabled_sidebar_pages'],
       });
       folders = (settings.sidebar_folders || []).sort(
         (a: SidebarFolder, b: SidebarFolder) => a.order - b.order,
       );
       favorites = settings.sidebar_favorites || [];
+      disabledPages = settings.disabled_sidebar_pages || [];
 
       // Parse combined order from menu_order (supports "folder:ID" format)
       const menuOrder = settings.menu_order as string[] | undefined;
@@ -252,6 +256,18 @@
     editingFolder = null;
   };
 
+  // Toggle page visibility in sidebar (Settings cannot be disabled)
+  const togglePageVisible = (path: string) => {
+    if (path === '/settings') return;
+    if (disabledPages.includes(path)) {
+      disabledPages = disabledPages.filter((p) => p !== path);
+    } else {
+      disabledPages = [...disabledPages, path];
+    }
+  };
+
+  const isPageVisible = (path: string) => !disabledPages.includes(path);
+
   // Toggle favorite
   const toggleFavorite = (path: string) => {
     if (favorites.includes(path)) {
@@ -379,6 +395,7 @@
         menu_order: menuOrder,
         sidebar_folders: folders,
         sidebar_favorites: favorites,
+        disabled_sidebar_pages: disabledPages,
       });
       await flushSettingsQueue();
 
@@ -404,10 +421,12 @@
       updateOrderedList();
 
       // Save the reset state
+      disabledPages = [];
       await saveSettingsWithQueue({
         sidebar_folders: [],
         sidebar_favorites: [],
         menu_order: menu.map((item) => item.path),
+        disabled_sidebar_pages: [],
       });
       await flushSettingsQueue();
     } catch (e) {
@@ -493,7 +512,9 @@
                 {@const currentFolder = folders.find((f) => f.items.includes(item.path))}
                 <div
                   data-id={item.path}
-                  class="flex items-center gap-3 p-4 rounded-lg border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 hover:shadow-md"
+                  class="flex items-center gap-3 p-4 rounded-lg border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 hover:shadow-md {!isPageVisible(item.path)
+                    ? 'opacity-60 border-amber-200/50 dark:border-amber-800/30'
+                    : ''}"
                   style="animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1);"
                   style:animation-delay="{listIndex * 20}ms">
                   <!-- Icon -->
@@ -508,6 +529,27 @@
 
                   <!-- Action Buttons Group -->
                   <div class="flex shrink-0 items-center gap-2">
+                    <!-- Show/Hide in Sidebar Button (Settings cannot be hidden) -->
+                    {#if item.path !== '/settings'}
+                      <button
+                        onclick={(e) => {
+                          e.stopPropagation();
+                          togglePageVisible(item.path);
+                        }}
+                        class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 {isPageVisible(item.path)
+                          ? 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+                          : 'text-amber-500 bg-amber-50 dark:bg-amber-900/20'}"
+                        aria-label={isPageVisible(item.path)
+                          ? $_('settings.hide_from_sidebar') || 'Hide from sidebar'
+                          : $_('settings.show_in_sidebar') || 'Show in sidebar'}
+                        title={isPageVisible(item.path)
+                          ? $_('settings.hide_from_sidebar') || 'Hide from sidebar'
+                          : $_('settings.show_in_sidebar') || 'Show in sidebar'}>
+                        <Icon
+                          src={isPageVisible(item.path) ? Eye : EyeSlash}
+                          class="w-5 h-5" />
+                      </button>
+                    {/if}
                     <!-- Favorite Button -->
                     <button
                       onclick={(e) => {

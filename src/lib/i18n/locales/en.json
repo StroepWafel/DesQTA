@@ -130,6 +130,7 @@
     "select": "Select"
   },
   "forums": {
+    "description": "Discuss and collaborate with your community",
     "loading": "Loading forums...",
     "error_loading": "Error loading forums",
     "no_forums": "No forums available",
@@ -166,6 +167,9 @@
     "not_enabled_message": "Forums are not enabled for your school. Please contact your administrator if you believe this is an error."
   },
   "folios": {
+    "description": "Create and browse folios",
+    "browse_description": "Explore published folios",
+    "edit_description": "Create and manage your personal folios",
     "invalid_response": "Invalid response format",
     "edit_my_folios": "Edit My Folios",
     "edit_my_folios_description": "Create and manage your personal folios",
@@ -263,7 +267,12 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "Please fill in all fields",
-    "failed_credentials": "Login failed. Please check your credentials."
+    "failed_credentials": "Login failed. Please check your credentials.",
+    "not_working_try_direct": "Not working? ",
+    "try_direct_login_link": "Try direct login instead",
+    "invalid_seqtalearn_format": "Invalid SEQTA link format. QR codes from SEQTA should start with seqtalearn://sso/. Try scanning a fresh QR code from your SEQTA email.",
+    "invalid_desqta_format": "Invalid DesQTA link format. Connect links from BetterSEQTA+ should start with desqta://connect/. Generate a new QR from Settings → Connect Mobile App.",
+    "invalid_desqta_connect_payload": "Invalid DesQTA connect link. The link appears incomplete. Generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App)."
   },
   "features": {
     "lightning_fast": "Lightning-fast performance",
@@ -376,7 +385,11 @@
     "view_course": "View Course"
   },
   "courses": {
+    "page_description": "Browse courses and access lesson content",
+    "select_subject_header": "Select a subject",
+    "subject_overview_desc": "Course overview and resources",
     "back_to_subjects": "Back to subjects",
+    "back_to_overview": "Back to overview",
     "search_subjects": "Search subjects...",
     "loading_subjects": "Loading subjects...",
     "error_loading_subjects": "Error loading subjects",
@@ -425,6 +438,7 @@
     "go_to_overview": "Go to Course Overview"
   },
   "goals": {
+    "description": "Set and track your academic goals",
     "no_cached_data": "No cached data available",
     "invalid_response": "Invalid response format",
     "loading_years": "Loading years...",
@@ -447,6 +461,7 @@
     "not_enabled_message": "Goals are not enabled for your school. Please contact your administrator if you believe this is an error."
   },
   "assessments": {
+    "description": "View and manage your upcoming assessments",
     "back_to_assessments": "Back to Assessments",
     "status_marked": "Marked",
     "status_overdue": "Overdue",
@@ -471,6 +486,7 @@
     "failed_to_load": "Failed to load assessment details"
   },
   "timetable": {
+    "description": "View your weekly schedule and lessons",
     "monday": "Monday",
     "tuesday": "Tuesday",
     "wednesday": "Wednesday",
@@ -567,6 +583,10 @@
     "quizzes": "Quizzes",
     "select_assessment": "Select assessment",
     "custom_topic": "Custom topic",
+    "topic_source": "1. Choose topic",
+    "quiz_options": "2. Quiz options",
+    "change_options": "Change options",
+    "generate_section": "3. Generate",
     "what_to_study": "What do you want to study?",
     "question_count": "Number of questions",
     "generate_quiz": "Generate Quiz",
@@ -627,6 +647,7 @@
     "your_feeds": "Your Feeds"
   },
   "messages": {
+    "page_description": "View and manage your SEQTA and RSS messages.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message.",
@@ -750,6 +771,8 @@
     "biometric_verifying": "Verifying biometric...",
     "notifications": "Notifications",
     "notifications_description": "Manage your notification preferences",
+    "minimize_to_tray": "Keep app running in system tray when closed",
+    "minimize_to_tray_description": "When enabled, closing the window hides DesQTA to the system tray. When disabled, closing the window fully quits the app.",
     "zoom": "Interface Zoom",
     "zoom_description": "Adjust the size of interface elements (50%–200%)",
     "zoom_reset": "Reset",
@@ -806,7 +829,9 @@
     "menu_order": "Menu Order",
     "sidebar_settings": "Sidebar Settings",
     "customize_sidebar": "Customize Sidebar",
-    "reorder_pages_description": "Use the arrow buttons to reorder items. Click the star to favorite items. Use the folder button to organize items into folders.",
+    "reorder_pages_description": "Use the arrow buttons to reorder items. Click the eye to hide pages from the sidebar. Click the star to favorite items. Use the folder button to organize items into folders.",
+    "hide_from_sidebar": "Hide from sidebar",
+    "show_in_sidebar": "Show in sidebar",
     "favorites": "Favorites",
     "folders": "Folders",
     "folder_name": "Folder name",
@@ -876,6 +901,7 @@
     "next": "Next"
   },
   "portals": {
+    "description": "Access external portals and resources",
     "failed_to_load": "Failed to load portals",
     "count": "{count} portal{plural} available",
     "loading": "Loading portals...",
@@ -991,11 +1017,13 @@
     "student_avatar": "Student avatar"
   },
   "news": {
+    "description": "Browse news from around the world",
     "no_articles_loaded": "No articles could be loaded from the selected sources.",
     "failed_to_fetch": "Failed to fetch news",
     "no_articles_found": "No news articles found."
   },
   "notices": {
+    "description": "View notices and announcements",
     "failed_to_load": "Failed to load notices.",
     "label": "Label:",
     "all": "All",
@@ -1005,12 +1033,16 @@
     "no_notices_today": "No notices available today."
   },
   "documents": {
+    "description": "Access and download your school documents",
     "loading": "Loading documents...",
     "failed_to_load": "Failed to load documents",
     "error_loading": "Error loading documents",
     "no_documents": "No documents available"
   },
   "reports": {
+    "description": "Download your academic reports",
+    "no_reports": "No reports available",
+    "no_reports_message": "Your academic reports will appear here when they are available.",
     "failed_to_load": "Failed to load reports.",
     "error_loading": "Error loading reports.",
     "loading": "Loading reports...",

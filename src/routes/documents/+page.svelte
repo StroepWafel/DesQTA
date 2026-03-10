@@ -107,14 +107,16 @@
   onMount(loadDocuments);
 </script>
 
-<div class="p-6 sm:p-8 min-h-screen">
-  <div class="flex items-center gap-2 mb-6 sm:mb-8" in:fade={{ duration: 200 }}>
-    <Icon
-      src={DocumentDuplicate}
-      class="w-8 h-8 sm:w-10 sm:h-10 text-accent-600 dark:text-accent-400 transition-all duration-300" />
-    <h1 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white">
-      <T key="navigation.documents" fallback="Documents" />
-    </h1>
+<div class="container max-w-none w-full p-5 mx-auto min-h-screen space-y-6">
+  <div class="flex justify-between items-start" in:fade={{ duration: 200 }}>
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.documents" fallback="Documents" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="documents.description" fallback="Access and download your school documents" />
+      </p>
+    </div>
   </div>
 
   {#if loading}

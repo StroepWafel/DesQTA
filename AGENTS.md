@@ -2,6 +2,8 @@
 
 This document serves as a comprehensive guide to the DesQTA codebase, practices, style, and architecture. It is intended for AI agents and developers to understand the project structure and conventions.
 
+**For agents:** Before editing, check Section 11 (Project Skills) for a matching skill—read and follow it when applicable. Use the Svelte MCP server for Svelte development when available.
+
 ## 1. Tech Stack Overview
 
 ### Core Frameworks
@@ -131,8 +133,9 @@ This document serves as a comprehensive guide to the DesQTA codebase, practices,
 
 - **SSR Disabled:** SvelteKit uses `@sveltejs/adapter-static`. No server-side rendering; purely Client-Side Rendering (CSR) / SSG.
 - **Tauri Context:** APIs like `window`, `navigator` are available, but Node.js APIs are NOT available in the frontend. Use Tauri commands for system access.
-- **Mobile:** Logic exists for mobile (`isMobile` checks), handled via Tauri mobile targets (Android/iOS).
+- **Mobile:** Logic exists for mobile (`isMobile` checks), handled via Tauri mobile targets (Android/iOS). Use `mobile-soft`, `platform-ios` safe areas, and rounded mobile UI patterns when applicable.
 - **Security:** `dev_sensitive_info_hider` mode exists to mask PII during development/demos.
+- **Settings:** Persisted settings must be defined in the Rust backend; frontend-only settings do not survive restarts.
 
 ---
 
@@ -155,8 +158,10 @@ This document serves as a comprehensive guide to the DesQTA codebase, practices,
 - **UI Components:** `src/lib/components/`
 - **Global State:** `src/lib/stores/`
 - **Backend Commands:** `src-tauri/src/` (look for `#[tauri::command]`)
+- **Settings (Rust):** `src-tauri/src/utils/settings.rs` – Settings struct, Default, load logic
 - **Database Schemas/Queries:** `src-tauri/src/utils/database.rs` or `src/lib/services/idb.ts`
 - **API Integration:** `src/lib/utils/netUtil.ts` & `src-tauri/src/utils/netgrab.rs`
+- **Actions (clickOutside, etc.):** `src/lib/actions/`
 
 ---
 
@@ -193,3 +198,55 @@ This document serves as a comprehensive guide to the DesQTA codebase, practices,
 - **Theme Awareness:**
   - Components use `dark:` variants for all color-related classes.
   - Accent colors are applied via CSS variables (e.g., `text-[var(--accent)]` or custom classes `accent-text`).
+
+### DesQTA-Specific Patterns
+
+- **Page Layout Consistency:**
+  - Root: `container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6`
+  - Add `in:fade={{ duration: 400 }}` for page-level fade-in.
+  - Header: `h1` + description paragraph; use `shrink-0` for header wrapper.
+  - Card-style panels: `rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg overflow-hidden`
+  - Reference pages: courses, directory, analytics, direqt-messages.
+
+- **Dropdowns:**
+  - Prefer the analytics-style custom dropdown over Select components.
+  - Use `clickOutside`, `fly` transition, ChevronDown icon.
+  - Reference: `src/routes/analytics/+page.svelte`, `src/routes/notices/+page.svelte`.
+
+- **Flex Scroll Fix:**
+  - When `overflow-y-auto` doesn't scroll inside flex: parent needs `flex-1 min-h-0 overflow-hidden`, child needs `flex-1 min-h-0 overflow-y-auto`.
+  - Avoid `flex-none` on the scroll container—it prevents height constraint.
+  - Reference: `MessageList.svelte` embedded mode.
+
+- **Settings Persistence:**
+  - New settings must be added to Rust backend (`src-tauri/src/utils/settings.rs`) or they will not persist.
+  - Add to Settings struct, Default impl, and load/merge logic.
+  - Frontend: `saveSettingsWithQueue({ key: value })` and `loadSettings(['key'])` or `get_settings_subset`.
+
+- **Sidebar Customization:**
+  - Key files: `SidebarSettingsDialog.svelte`, `+layout.svelte` (`applyMenuOrder`), `settings.rs`.
+  - Never allow disabling `/settings`—users must be able to re-enable pages.
+
+---
+
+## 11. Project Skills
+
+DesQTA has specialized skills in `.cursor/skills/` that provide detailed guidance for specific tasks. **Read the skill file first** when a task matches its scope.
+
+| Skill | Use When |
+| :---- | :------- |
+| **desqta-page-redesign-consistency** | Redesigning a page, making pages look consistent, or matching layout of courses/directory/analytics |
+| **desqta-analytics-dropdown-pattern** | Adding dropdowns, label selectors, or filter pickers that should match analytics styling |
+| **desqta-mobile-ui-soft-rounded** | Improving mobile layout, bottom nav, header, safe areas, or making mobile UI less square |
+| **desqta-settings-rust-backend** | Adding a new setting, config option, or when settings are not saving correctly |
+| **desqta-sidebar-customization** | Extending Customize Sidebar, adding menu visibility toggles, or modifying sidebar behavior |
+| **desqta-flex-scroll-fix** | Content area not scrollable, or `overflow-y-auto` not working inside flex layout |
+| **android-widgets** | Adding Android home screen widgets, RemoteViews, or sharing data with widgets |
+| **create-dashboard-widgets** | Adding new widget types, widget components, templates, or dashboard layouts |
+| **document-features** | Documenting a page/module, creating FEATURES.md, or listing page capabilities |
+| **i18n-component-review** | Reviewing components for i18n, adding UI strings, or fixing translation keys |
+| **mobile-first-optimizations** | Mobile-first UX, touch targets, safe areas, or native mobile feel |
+| **premium-ui-refinement** | Animations, transitions, UI polish, or making elements feel more premium |
+| **soft-rich-ui-patterns** | Styling data viz, article content, RSS feeds, or semi-transparent panels |
+
+**General skills** (in `.cursor/skills/` or `~/.cursor/skills-cursor/`): `create-rule`, `create-skill`, `update-cursor-settings`.

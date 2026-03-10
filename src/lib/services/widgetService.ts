@@ -98,7 +98,7 @@ export const widgetService = {
         id: 'today_schedule',
         type: 'today_schedule',
         enabled: true,
-        position: { x: 0, y: 4, w: 12, h: 5 }, // Full width
+        position: { x: 0, y: 4, w: 12, h: 4 },
       },
       {
         id: 'notices',

@@ -127,6 +127,9 @@
   }: Props = $props();
 
   const appWindow = Window.getCurrent();
+  const isMacOS =
+    (import.meta as any).env?.TAURI_ENV_PLATFORM === 'darwin' ||
+    (import.meta as any).env?.TAURI_ENV_PLATFORM === 'macos';
 
   const pages = [
     { nameKey: 'navigation.dashboard', path: '/dashboard' },
@@ -469,12 +472,39 @@
 
 <header
   class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 theme-bg {isFullscreen || isMobile
-    ? ''
+    ? isMobile
+      ? 'rounded-b-2xl'
+      : ''
     : sidebarOpen
       ? 'rounded-tr-2xl'
-      : 'rounded-t-2xl'}"
+      : 'rounded-t-2xl'} {isMacOS && !isMobile ? 'pl-4' : ''}"
   data-tauri-drag-region>
   <div class="flex items-center space-x-4">
+    <!-- macOS: Traffic lights + app icon on left -->
+    {#if isMacOS && !isMobile}
+      <div class="flex items-center gap-3 shrink-0">
+        <!-- Traffic lights (close, minimize, maximize) -->
+        <div class="flex items-center gap-1.5">
+          <button
+            class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#ff5f57] hover:bg-[#ff7b73] active:scale-95"
+            onclick={() => appWindow.close()}
+            aria-label={$_('header.close', { default: 'Close' })}>
+          </button>
+          <button
+            class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#febc2e] hover:bg-[#fecf5a] active:scale-95"
+            onclick={() => appWindow.minimize()}
+            aria-label={$_('header.minimize', { default: 'Minimize' })}>
+          </button>
+          <button
+            class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#28c840] hover:bg-[#4dd35a] active:scale-95"
+            onclick={() => appWindow.toggleMaximize()}
+            aria-label={$_('header.maximize', { default: 'Maximize' })}>
+          </button>
+        </div>
+        <!-- App icon -->
+        <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-6 h-6 invert dark:invert-0" />
+      </div>
+    {/if}
     <!-- Hamburger: desktop only (mobile uses bottom nav "More" tab) -->
     {#if !isMobile}
       <button
@@ -485,7 +515,9 @@
       </button>
     {/if}
     <div class="flex items-center space-x-3">
-      <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0 {isMobile ? 'w-7 h-7' : ''}" />
+      {#if !isMacOS || isMobile}
+        <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0 {isMobile ? 'w-7 h-7' : ''}" />
+      {/if}
       <h1
         class="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300 {isMobile ? 'text-lg' : ''}">
         DesQTA
@@ -642,8 +674,8 @@
       {/if}
     </div>
 
-    <!-- Window Controls - Desktop Only -->
-    {#if !isMobile}
+    <!-- Window Controls - Desktop Only (hidden on macOS, we use traffic lights on left) -->
+    {#if !isMobile && !isMacOS}
       <div class="flex items-center ml-4 space-x-2">
         <button
           class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"

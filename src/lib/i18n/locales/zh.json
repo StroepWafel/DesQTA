@@ -178,7 +178,9 @@
     "feature_analytics_desc": "性能数据",
     "feature_settings_desc": "应用偏好设置",
     "fill_all_fields": "请填写所有字段",
-    "failed_credentials": "登录失败。请检查您的凭据。"
+    "failed_credentials": "登录失败。请检查您的凭据。",
+    "not_working_try_direct": "不工作？",
+    "try_direct_login_link": "尝试直接登录"
   },
   "features": {
     "lightning_fast": "闪电般的性能",
@@ -547,6 +549,7 @@
     "get_new_tip": "获取新的学习提示"
   },
   "messages": {
+    "page_description": "查看和管理您的 SEQTA 和 RSS 消息。",
     "failed_to_load": "加载消息失败。",
     "failed_to_load_no_cache": "加载消息失败，无可用缓存数据",
     "failed_to_load_message": "加载消息失败。",
@@ -655,6 +658,8 @@
     "dark": "深色",
     "system": "系统",
     "theme_mode_description": "在浅色模式、深色模式之间选择，或跟随您的系统偏好。",
+    "minimize_to_tray": "关闭时在系统托盘中继续运行应用",
+    "minimize_to_tray_description": "启用后，关闭窗口会将 DesQTA 最小化到系统托盘。禁用后，关闭将完全退出应用。",
     "security": "安全",
     "security_description": "使用生物识别保护您的应用",
     "biometric_enabled": "使用生物识别解锁 (Face ID、Touch ID、指纹、Windows Hello)",
@@ -983,6 +988,10 @@
     "quizzes": "测验",
     "select_assessment": "选择评估",
     "custom_topic": "自定义主题",
+    "topic_source": "1. 选择主题",
+    "quiz_options": "2. 测验选项",
+    "change_options": "更改选项",
+    "generate_section": "3. 生成",
     "what_to_study": "你想学什么？",
     "question_count": "题目数量",
     "generate_quiz": "生成测验",
