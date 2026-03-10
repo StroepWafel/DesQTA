@@ -606,6 +606,7 @@
     "type_your_answer": "Digite sua resposta..."
   },
   "messages": {
+    "page_description": "Visualize e gerencie suas mensagens SEQTA e RSS.",
     "failed_to_load": "Falha ao carregar mensagens.",
     "failed_to_load_no_cache": "Falha ao carregar mensagens e nenhum dado em cache disponível",
     "failed_to_load_message": "Falha ao carregar mensagem.",

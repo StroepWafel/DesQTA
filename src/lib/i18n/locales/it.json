@@ -606,6 +606,7 @@
     "type_your_answer": "Scrivi la tua risposta..."
   },
   "messages": {
+    "page_description": "Visualizza e gestisci i tuoi messaggi SEQTA e RSS.",
     "failed_to_load": "Impossibile caricare i messaggi.",
     "failed_to_load_no_cache": "Impossibile caricare i messaggi e nessun dato in cache disponibile",
     "failed_to_load_message": "Impossibile caricare il messaggio.",

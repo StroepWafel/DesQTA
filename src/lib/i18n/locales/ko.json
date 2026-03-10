@@ -601,6 +601,7 @@
     "type_your_answer": "답을 입력하세요..."
   },
   "messages": {
+    "page_description": "SEQTA 및 RSS 메시지를 보고 관리합니다.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "메시지를 불러올 수 없고 캐시된 데이터도 없습니다",
     "failed_to_load_message": "Failed to load message.",

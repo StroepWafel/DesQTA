@@ -549,6 +549,7 @@
     "get_new_tip": "获取新的学习提示"
   },
   "messages": {
+    "page_description": "查看和管理您的 SEQTA 和 RSS 消息。",
     "failed_to_load": "加载消息失败。",
     "failed_to_load_no_cache": "加载消息失败，无可用缓存数据",
     "failed_to_load_message": "加载消息失败。",

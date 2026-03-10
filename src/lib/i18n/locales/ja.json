@@ -549,6 +549,7 @@
     "get_new_tip": "新しい学習のコツを取得"
   },
   "messages": {
+    "page_description": "SEQTAとRSSメッセージを表示・管理します。",
     "failed_to_load": "メッセージの読み込みに失敗しました。",
     "failed_to_load_no_cache": "メッセージの読み込みに失敗し、キャッシュデータもありません",
     "failed_to_load_message": "メッセージの読み込みに失敗しました。",

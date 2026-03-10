@@ -601,6 +601,7 @@
     "type_your_answer": "اكتب إجابتك..."
   },
   "messages": {
+    "page_description": "عرض وإدارة رسائل SEQTA وRSS.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "فشل تحميل الرسائل ولا توجد بيانات مخزنة مؤقتًا",
     "failed_to_load_message": "Failed to load message.",

@@ -601,6 +601,7 @@
     "type_your_answer": "Cevabınızı yazın..."
   },
   "messages": {
+    "page_description": "SEQTA ve RSS mesajlarınızı görüntüleyin ve yönetin.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "Mesajlar yüklenemedi ve önbelleğe alınmış veri yok",
     "failed_to_load_message": "Failed to load message.",

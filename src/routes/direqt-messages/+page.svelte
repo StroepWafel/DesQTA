@@ -321,10 +321,22 @@
   }
 </script>
 
-<div class="flex flex-col h-full">
-  <div class="flex flex-1 min-h-0 w-full max-xl:flex-col overflow-hidden">
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6">
+  <!-- Page header -->
+  <div class="shrink-0">
+    <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
+      <T key="messages.seqta_messages" fallback="SEQTA Messages" />
+    </h1>
+    <p class="text-zinc-600 dark:text-zinc-400">
+      <T key="messages.page_description" fallback="View and manage your SEQTA and RSS messages." />
+    </p>
+  </div>
+
+  <!-- Main content area -->
+  <div class="flex flex-1 min-h-0 w-full max-xl:flex-col overflow-hidden gap-4">
     {#if seqtaLoadFailed}
-      <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
+      <div
+        class="flex flex-col justify-center items-center p-8 w-full h-full text-center rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg">
         <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">
           <T key="messages.seqta_failed_to_load" fallback="SEQTA messaging failed to load." />
         </div>
@@ -334,9 +346,9 @@
         <Sidebar {selectedFolder} {openFolder} {openCompose} />
       </div>
       <MobileFolderTabs {selectedFolder} {openFolder} {openCompose} />
-      <!-- Message list: scrollable container (like RSS feeds page) -->
+      <!-- Message list: card-style panel -->
       <div
-        class="flex flex-1 xl:flex-initial flex-col min-h-0 min-w-0 xl:w-[28rem] xl:min-w-[28rem] shrink-0 overflow-y-auto [scrollbar-gutter:stable] bg-white dark:bg-zinc-900 border-r border-zinc-300/50 dark:border-zinc-800/50">
+        class="flex flex-1 xl:flex-initial flex-col min-h-0 min-w-0 xl:w-[28rem] xl:min-w-[28rem] shrink-0 overflow-hidden rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg [scrollbar-gutter:stable]">
         <MessageList
           {selectedFolder}
           {messages}

@@ -549,6 +549,7 @@
     "get_new_tip": "Obtener nuevo consejo de estudio"
   },
   "messages": {
+    "page_description": "Ver y gestionar tus mensajes SEQTA y RSS.",
     "failed_to_load": "Error al cargar mensajes.",
     "failed_to_load_no_cache": "Error al cargar mensajes y no hay datos en caché disponibles",
     "failed_to_load_message": "Error al cargar mensaje.",

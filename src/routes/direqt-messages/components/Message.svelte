@@ -213,7 +213,7 @@
 
 <main class="flex flex-col flex-1 py-2 overflow-y-auto h-full [scrollbar-gutter:stable]">
   {#if selectedMessage}
-    <div class="w-full {embedded ? '' : 'mx-auto max-w-4xl'} animate-fadeIn">
+    <div class="w-full min-w-0 animate-fadeIn">
       <div
         class={embedded
           ? ''

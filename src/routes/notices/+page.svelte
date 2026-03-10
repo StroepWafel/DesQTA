@@ -1,16 +1,19 @@
 <script lang="ts">
   // Svelte imports
   import { onMount } from 'svelte';
+  import { fly } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
 
   // $lib/ imports
   import { platformStore } from '$lib/stores/platform';
   import { useDataLoader } from '$lib/utils/useDataLoader';
+  import { clickOutside } from '$lib/actions/clickOutside.js';
+  import { Icon } from 'svelte-hero-icons';
+  import { ChevronDown } from 'svelte-hero-icons';
 
   let isMobile = $derived($platformStore.isMobile);
   import { EmptyState, LoadingSpinner } from '$lib/components/ui';
   import { ExclamationTriangle, DocumentText } from 'svelte-hero-icons';
-  import * as Select from '$lib/components/ui/select/index.js';
-  import * as Label from '$lib/components/ui/label/index.js';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
   import { getUrlParam, updateUrlParams } from '$lib/utils/urlParams';
@@ -38,7 +41,7 @@
   let notices: Notice[] = $state([]);
   let labels: Label[] = $state([]);
   let selectedLabel: number | null = $state(null);
-  let selectedLabelString = $state<string | undefined>(undefined);
+  let showLabelDropdown = $state(false);
   let loading = $state(true);
   let error = $state<string | null>(null);
   let selectedDate = $state(new Date());
@@ -161,7 +164,6 @@
       const labelId = parseInt(categoryParam, 10);
       if (!isNaN(labelId)) {
         selectedLabel = labelId;
-        selectedLabelString = labelId.toString();
       }
     }
 
@@ -239,43 +241,72 @@
     </div>
   </div>
 
-  <!-- Label filter dropdown -->
+  <!-- Label filter dropdown (same style as analytics) -->
   {#if labels.length > 0}
-    <div class="flex gap-2 items-center">
-      <Label.Root class="font-semibold text-sm">
-        <T key="notices.label" fallback="Label:" />
-      </Label.Root>
-      <Select.Root
-        type="single"
-        bind:value={selectedLabelString}
-        onValueChange={async (value) => {
-          selectedLabelString = value;
-          selectedLabel = value === undefined || value === 'all' ? null : +value;
-          await updateUrlParams({
-            category: selectedLabel ? selectedLabel.toString() : null,
-            date: formatDate(selectedDate),
-          });
-        }}>
-        <Select.Trigger class="w-44">
-          <span class="truncate">
-            {#if selectedLabelString === undefined}
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="relative" use:clickOutside={() => (showLabelDropdown = false)}>
+        <button
+          type="button"
+          class="flex gap-2 items-center min-h-[44px] w-44 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring transition-all duration-200"
+          onclick={() => (showLabelDropdown = !showLabelDropdown)}
+          aria-expanded={showLabelDropdown}
+          aria-haspopup="listbox">
+          <span class="truncate flex-1 text-left text-sm">
+            {#if selectedLabel === null}
               <T key="notices.all" fallback="All" />
             {:else}
-              {labels.find((l) => l.id.toString() === selectedLabelString)?.title || ''}
+              {labels.find((l) => l.id === selectedLabel)?.title || ''}
             {/if}
           </span>
-        </Select.Trigger>
-        <Select.Content>
-          <Select.Item value="all" label={$_('notices.all') || 'All'}>
-            <T key="notices.all" fallback="All" />
-          </Select.Item>
-          {#each labels as label}
-            <Select.Item value={label.id.toString()} label={label.title}>
-              {label.title}
-            </Select.Item>
-          {/each}
-        </Select.Content>
-      </Select.Root>
+          <Icon src={ChevronDown} class="w-4 h-4 shrink-0 text-zinc-500 transition-transform duration-200 {showLabelDropdown ? 'rotate-180' : ''}" />
+        </button>
+        {#if showLabelDropdown}
+          <div
+            class="absolute left-0 z-50 mt-2 w-56 max-h-48 overflow-y-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1"
+            role="listbox"
+            transition:fly={{ y: -6, duration: 150, easing: cubicOut }}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={selectedLabel === null}
+              class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {selectedLabel === null
+                ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
+                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+              onclick={async () => {
+                selectedLabel = null;
+                showLabelDropdown = false;
+                await updateUrlParams({
+                  category: null,
+                  date: formatDate(selectedDate),
+                });
+              }}>
+              <span class="w-4 shrink-0 flex justify-center">{selectedLabel === null ? '✓' : ''}</span>
+              <T key="notices.all" fallback="All" />
+            </button>
+            {#each labels as label}
+              {@const isSelected = selectedLabel === label.id}
+              <button
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {isSelected
+                  ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
+                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+                onclick={async () => {
+                  selectedLabel = label.id;
+                  showLabelDropdown = false;
+                  await updateUrlParams({
+                    category: label.id.toString(),
+                    date: formatDate(selectedDate),
+                  });
+                }}>
+                <span class="w-4 shrink-0 flex justify-center">{isSelected ? '✓' : ''}</span>
+                <span class="truncate">{label.title}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
     </div>
   {/if}
 

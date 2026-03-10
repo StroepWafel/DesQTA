@@ -601,6 +601,7 @@
     "type_your_answer": "Typ je antwoord..."
   },
   "messages": {
+    "page_description": "Bekijk en beheer je SEQTA- en RSS-berichten.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message.",

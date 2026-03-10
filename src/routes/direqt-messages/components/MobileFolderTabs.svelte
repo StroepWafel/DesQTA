@@ -3,6 +3,8 @@
   import { Plus, Inbox, PaperAirplane, Trash, Star, Rss } from 'svelte-hero-icons';
   import { getRSS } from '../../../utils/netUtil';
   import { invoke } from '@tauri-apps/api/core';
+  import { _ } from '$lib/i18n';
+  import { get } from 'svelte/store';
 
   let { selectedFolder, openFolder, openCompose } = $props<{
     selectedFolder: string;
@@ -19,10 +21,10 @@
     loading = true;
     try {
       const base: Folder[] = [
-        { name: 'Inbox', icon: Inbox, id: 'inbox' },
-        { name: 'Sent', icon: PaperAirplane, id: 'sent' },
-        { name: 'Starred', icon: Star, id: 'starred' },
-        { name: 'Trash', icon: Trash, id: 'trash' },
+        { name: get(_)('messages.inbox') || 'Inbox', icon: Inbox, id: 'inbox' },
+        { name: get(_)('messages.sent') || 'Sent', icon: PaperAirplane, id: 'sent' },
+        { name: get(_)('messages.starred') || 'Starred', icon: Star, id: 'starred' },
+        { name: get(_)('messages.trash') || 'Trash', icon: Trash, id: 'trash' },
       ];
 
       const subset = await invoke<any>('get_settings_subset', { keys: ['feeds', 'separate_rss_feed'] });
@@ -53,10 +55,13 @@
 </script>
 
 <!-- Mobile-only sticky tabs + compose -->
-<div class="xl:hidden p-2 flex sticky top-0 z-20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-zinc-900/60 border-b border-zinc-200/60 dark:border-zinc-800/60">
+<div
+  class="xl:hidden p-3 flex sticky top-0 z-20 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-zinc-900/60">
   <div class="flex flex-1 items-center gap-2 overflow-x-auto scrollbar-thin">
     {#if loading}
-      <div class="px-3 py-1.5 text-xs rounded-full bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-300">Loading…</div>
+      <div class="px-3 py-1.5 text-xs rounded-full bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-300">
+        {get(_)('messages.loading_data') || 'Loading…'}
+      </div>
     {:else}
       {#each folders as folder}
         <button

@@ -647,6 +647,7 @@
     "your_feeds": "Your Feeds"
   },
   "messages": {
+    "page_description": "View and manage your SEQTA and RSS messages.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message.",

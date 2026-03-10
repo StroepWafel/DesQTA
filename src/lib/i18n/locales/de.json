@@ -549,6 +549,7 @@
     "get_new_tip": "Neuen Lerntipp erhalten"
   },
   "messages": {
+    "page_description": "SEQTA- und RSS-Nachrichten anzeigen und verwalten.",
     "failed_to_load": "Fehler beim Laden der Nachrichten.",
     "failed_to_load_no_cache": "Fehler beim Laden der Nachrichten, keine gecachten Daten verfügbar",
     "failed_to_load_message": "Fehler beim Laden der Nachricht.",
