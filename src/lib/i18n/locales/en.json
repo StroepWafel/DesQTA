@@ -386,7 +386,10 @@
   },
   "courses": {
     "page_description": "Browse courses and access lesson content",
+    "select_subject_header": "Select a subject",
+    "subject_overview_desc": "Course overview and resources",
     "back_to_subjects": "Back to subjects",
+    "back_to_overview": "Back to overview",
     "search_subjects": "Search subjects...",
     "loading_subjects": "Loading subjects...",
     "error_loading_subjects": "Error loading subjects",

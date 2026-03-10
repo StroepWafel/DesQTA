@@ -573,17 +573,48 @@
 </script>
 
 <div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6" in:fade={{ duration: 400 }}>
-  <!-- Page Header: matches analytics/directory/assessments -->
-  <div class="flex justify-between items-start shrink-0">
-    <div>
-      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
-        <T key="navigation.courses" fallback="Courses" />
-      </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
-        <T
-          key="courses.page_description"
-          fallback="Browse courses and access lesson content" />
-      </p>
+  <!-- Page Header: dynamic title/description based on context, with back button -->
+  <div class="flex justify-between items-start shrink-0 gap-4">
+    <div class="flex items-start gap-3 min-w-0 flex-1">
+      {#if selectedSubject}
+        <button
+          onclick={() => {
+            if (showingOverview) {
+              selectedSubject = null;
+              selectedLesson = null;
+              selectedTermSchedule = null;
+              selectedLessonIndex = null;
+              selectedLessonContent = null;
+              selectedStandaloneContent = null;
+              showingOverview = true;
+            } else {
+              selectOverview();
+            }
+          }}
+          class="flex shrink-0 justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform theme-bg hover:accent-bg focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95"
+          title={showingOverview
+            ? $_('courses.back_to_subjects') || 'Back to subjects'
+            : $_('courses.back_to_overview') || 'Back to overview'}
+          aria-label={showingOverview
+            ? $_('courses.back_to_subjects') || 'Back to subjects'
+            : $_('courses.back_to_overview') || 'Back to overview'}>
+          <Icon src={ChevronLeft} class="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+        </button>
+      {/if}
+      <div class="min-w-0">
+        <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white truncate">
+          {#if selectedSubject}
+            {selectedSubject.title}
+          {:else}
+            <T key="navigation.courses" fallback="Courses" />
+          {/if}
+        </h1>
+        {#if !selectedSubject}
+          <p class="text-zinc-600 dark:text-zinc-400">
+            <T key="courses.page_description" fallback="Browse courses and access lesson content" />
+          </p>
+        {/if}
+      </div>
     </div>
   </div>
 
@@ -620,35 +651,10 @@
     aria-label="Course navigation"
     tabindex="-1"
     onkeydown={handleSidebarKeydown}>
-    <!-- Navigation Header -->
-    <div
-      class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
-      <div class="flex items-center gap-2 min-w-0 flex-1">
-        {#if selectedSubject}
-          <button
-            onclick={() => {
-              selectedSubject = null;
-              selectedLesson = null;
-              selectedTermSchedule = null;
-              selectedLessonIndex = null;
-              selectedLessonContent = null;
-              showingOverview = true;
-            }}
-            class="p-2 shrink-0 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-            title={$_('courses.back_to_subjects') || 'Back to subjects'}
-            aria-label={$_('courses.back_to_subjects') || 'Back to subjects'}>
-            <Icon src={ChevronLeft} class="w-5 h-5" />
-          </button>
-        {/if}
-        <h2 class="text-xl font-bold text-zinc-900 dark:text-white truncate">
-          {#if selectedSubject}
-            {selectedSubject.title}
-          {:else}
-            <T key="navigation.courses" fallback="Courses" />
-          {/if}
-        </h2>
-      </div>
-      {#if isMobile}
+    <!-- Navigation Header: only when subject list on mobile (for close button); when in course, no header -->
+    {#if !selectedSubject && isMobile}
+      <div
+        class="flex justify-end items-center p-4 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
         <button
           onclick={() => (sidebarOpen = false)}
           class="p-2 shrink-0 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
@@ -656,8 +662,8 @@
           aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
           <Icon src={XMark} class="w-5 h-5" />
         </button>
-      {/if}
-    </div>
+      </div>
+    {/if}
 
     <!-- Content Area with Transition -->
     <div class="overflow-hidden relative flex-1">
@@ -818,7 +824,7 @@
                   class="flex gap-2 items-center w-full px-4 py-2 text-left rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]">
                   <Icon src={ChevronLeft} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
                   <span class="font-medium text-zinc-900 dark:text-white">
-                    <T key="courses.back_to_courses" fallback="Back to Courses" />
+                    <T key="courses.back_to_subjects" fallback="Back to subjects" />
                   </span>
                 </button>
               </div>
@@ -998,46 +1004,6 @@
       </div>
     {:else if coursePayload}
       <div class="h-full flex flex-col">
-        <!-- Breadcrumb / Context Bar -->
-        {#if selectedSubject}
-          <nav
-            class="flex items-center gap-2 px-4 py-2 text-sm border-b border-zinc-200 dark:border-zinc-700 theme-bg text-zinc-600 dark:text-zinc-400 shrink-0"
-            aria-label="Breadcrumb">
-            <span class="font-medium text-zinc-900 dark:text-white truncate">
-              {selectedSubject.title}
-            </span>
-            <span class="text-zinc-400 dark:text-zinc-500">
-              {$_('courses.breadcrumb_separator') || '›'}
-            </span>
-            {#if showingOverview}
-              <span class="text-accent font-medium">
-                <T key="courses.course_overview" fallback="Course Overview" />
-              </span>
-            {:else if selectedLesson && coursePayload?.d}
-              {@const lesson = selectedLesson}
-              {@const ts = lesson
-                ? coursePayload.d.find((t) => t.l.includes(lesson))
-                : undefined}
-              {#if ts}
-                <span class="truncate">
-                  {$_('courses.breadcrumb_term_week', { values: { term: ts.t, week: ts.w } }) ||
-                    `Term ${ts.t} Week ${ts.w}`}
-                </span>
-                <span class="text-zinc-400 dark:text-zinc-500">
-                  {$_('courses.breadcrumb_separator') || '›'}
-                </span>
-                <span class="text-accent font-medium truncate max-w-[200px]" title={selectedLesson.p}>
-                  {selectedLesson.p}
-                </span>
-              {/if}
-            {:else if selectedStandaloneContent}
-              <span class="text-accent font-medium truncate max-w-[200px]"
-                title={selectedStandaloneContent.t || ''}>
-                {selectedStandaloneContent.t || 'Untitled'}
-              </span>
-            {/if}
-          </nav>
-        {/if}
         <div class="overflow-y-auto flex-1 course-content">
           <CourseContent
             {coursePayload}
