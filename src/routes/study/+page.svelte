@@ -644,7 +644,7 @@
 </script>
 
 <div
-  class="container px-0 py-5 mx-auto flex flex-col h-full gap-6"
+  class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6"
   in:fade={{ duration: 400, easing: quintOut }}>
   <!-- Header: matches analytics/directory/assessments -->
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shrink-0" in:fly={{ y: -30, duration: 500, easing: quintOut }}>

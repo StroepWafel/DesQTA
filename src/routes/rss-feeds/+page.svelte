@@ -145,7 +145,7 @@
 </script>
 
 <div class="flex flex-col h-full">
-  <div class="container px-0 py-5 mx-auto flex flex-col flex-1 min-h-0 w-full gap-6">
+  <div class="container max-w-none w-full p-5 mx-auto flex flex-col flex-1 min-h-0 gap-6">
     {#if loadingFeeds}
       <div
         class="flex justify-center items-center flex-1 min-h-[320px]"

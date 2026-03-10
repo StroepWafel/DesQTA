@@ -239,7 +239,7 @@
   }
 </script>
 
-<div class="container px-0 py-5 mx-auto space-y-6">
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
   <div class="flex justify-between items-start">
     <div>
       <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">

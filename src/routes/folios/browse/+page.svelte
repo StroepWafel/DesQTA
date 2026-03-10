@@ -105,7 +105,7 @@
   });
 </script>
 
-<div class="container px-0 py-5 mx-auto space-y-6">
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
   {#if foliosEnabled === false}
     <div class="flex justify-center items-center h-64">
       <EmptyState

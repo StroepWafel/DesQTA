@@ -80,7 +80,7 @@
   });
 </script>
 
-<div class="container px-0 py-5 mx-auto space-y-6">
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
   {#if loading}
     <div class="flex justify-center items-center h-64">
       <LoadingSpinner size="md" message={$_('folios.loading') || 'Loading...'} />
@@ -105,7 +105,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Edit My Folios -->
       <div class="folio-action-card-animate" style="animation-delay: 0ms;">
         <button

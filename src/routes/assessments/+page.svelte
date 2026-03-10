@@ -207,7 +207,7 @@
   });
 </script>
 
-<div class="container px-0 py-5 mx-auto space-y-6">
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
   <!-- Header -->
   <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
     <div>

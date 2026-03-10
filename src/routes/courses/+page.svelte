@@ -572,7 +572,7 @@
   });
 </script>
 
-<div class="container px-0 py-5 mx-auto flex flex-col h-full gap-6" in:fade={{ duration: 400 }}>
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6" in:fade={{ duration: 400 }}>
   <!-- Page Header: matches analytics/directory/assessments -->
   <div class="flex justify-between items-start shrink-0">
     <div>

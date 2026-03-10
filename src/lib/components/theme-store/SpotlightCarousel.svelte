@@ -202,7 +202,7 @@
 
             <!-- Content -->
             <div class="relative z-10 h-full flex items-center" role="presentation">
-              <div class="max-w-7xl mx-auto px-0 lg:px-0 w-full">
+              <div class="w-full mx-auto p-4">
                 <div class="grid lg:grid-cols-2 gap-8 items-center">
                   <!-- Left: Theme Info -->
                   <div class="space-y-6 text-white">

@@ -36,7 +36,7 @@
 
 <div
   class="sticky top-0 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700 shadow-sm">
-  <div class="px-6 py-4 max-w-7xl mx-auto">
+  <div class="px-6 py-4 w-full mx-auto">
     <div class="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
       <!-- Search Bar -->
       <div class="relative flex-1 max-w-md">

@@ -57,7 +57,7 @@
   });
 </script>
 
-<div class="container px-0 py-5 mx-auto min-h-screen space-y-6">
+<div class="container max-w-none w-full p-5 mx-auto min-h-screen space-y-6">
   <!-- Edit Mode Toggle -->
   <div in:fade={{ duration: 400 }}>
     <EditModeToggle

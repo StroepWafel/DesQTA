@@ -177,7 +177,7 @@
   <title>{$_('performance.title', { default: 'Performance Test Results - DesQTA' })}</title>
 </svelte:head>
 
-<div class="container px-0 py-5 mx-auto flex flex-col h-full gap-8">
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-8">
   <!-- Header -->
   <div class="flex justify-between items-start">
     <div>

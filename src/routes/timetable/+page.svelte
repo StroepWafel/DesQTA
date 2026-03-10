@@ -169,7 +169,7 @@
   });
 </script>
 
-<div class="container px-0 py-5 mx-auto flex flex-col h-full gap-6" data-onboarding="timetable-color">
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6" data-onboarding="timetable-color">
   <!-- Header row: page title + timetable controls at same level -->
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shrink-0">
     <div>

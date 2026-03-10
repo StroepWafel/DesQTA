@@ -654,7 +654,7 @@
   class="sticky top-0 z-30 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700 shadow-sm"
   data-onboarding="theme-store"
   transition:fade={{ duration: 200 }}>
-  <div class="max-w-7xl mx-auto px-0 py-4">
+  <div class="w-full mx-auto p-4">
     <div class="flex items-center justify-between gap-4">
       <!-- Left: Back + Title -->
       <div class="flex items-center gap-4 min-w-0 flex-1">
@@ -711,7 +711,7 @@
   <div
     class="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-6 py-3"
     transition:fade={{ duration: 200 }}>
-    <div class="max-w-7xl mx-auto flex items-center gap-3">
+    <div class="w-full mx-auto flex items-center gap-3">
       <Icon
         src={ExclamationTriangle}
         class="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
@@ -726,7 +726,7 @@
 <div
   class="sticky top-[73px] z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700"
   transition:fade={{ duration: 200 }}>
-  <div class="max-w-7xl mx-auto px-0 py-4">
+  <div class="w-full mx-auto p-4">
     <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
       <!-- Search Bar -->
       <div class="relative flex-1 w-full lg:max-w-md">
@@ -795,7 +795,7 @@
 </div>
 
 <!-- Main Content -->
-<div class="container px-0 py-5 mx-auto max-w-7xl">
+<div class="container max-w-none w-full p-5 mx-auto">
   {#if loading}
     <div class="flex justify-center items-center py-16">
       <div class="flex flex-col gap-4 items-center">
