@@ -430,11 +430,33 @@ html {
   }
 }
 
+/* Mobile: softer, more rounded UI (less square, native feel) */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    border-radius: 1.5rem 1.5rem 0 0;
+    border-top: none;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+  }
+  .dark .mobile-bottom-nav {
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+  }
+  /* Softer radius for cards and containers on mobile */
+  .mobile-soft .rounded-lg {
+    border-radius: 1rem;
+  }
+  .mobile-soft .rounded-xl {
+    border-radius: 1.25rem;
+  }
+  .mobile-soft .rounded-2xl {
+    border-radius: 1.5rem;
+  }
+}
+
 /* iOS only: safe area padding for notch and home indicator (Android handles differently).
-   Add buffer so content sits slightly down from top and up from bottom. */
+   Add buffer so content sits slightly down from top and up from bottom (halved for tighter layout). */
 .platform-ios {
-  --safe-area-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 12px);
-  --safe-area-bottom: calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 12px);
+  --safe-area-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 6px);
+  --safe-area-bottom: calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 6px);
 }
 .platform-ios .mobile-bottom-nav {
   padding-bottom: var(--safe-area-bottom);

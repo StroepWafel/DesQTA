@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
+  import { fade } from 'svelte/transition';
   import { platformStore } from '$lib/stores/platform';
   import { seqtaFetch, getRandomDicebearAvatar } from '../../utils/netUtil';
   import { Icon } from 'svelte-hero-icons';
@@ -434,7 +435,7 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
+<div class="container max-w-none w-full p-5 mx-auto space-y-6" in:fade={{ duration: 400 }}>
   <!-- Header -->
   <div class="flex justify-between items-start">
     <div>

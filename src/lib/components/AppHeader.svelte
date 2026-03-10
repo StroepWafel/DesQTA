@@ -477,7 +477,9 @@
 
 <header
   class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 theme-bg {isFullscreen || isMobile
-    ? ''
+    ? isMobile
+      ? 'rounded-b-2xl'
+      : ''
     : sidebarOpen
       ? 'rounded-tr-2xl'
       : 'rounded-t-2xl'} {isMacOS && !isMobile ? 'pl-4' : ''}"
