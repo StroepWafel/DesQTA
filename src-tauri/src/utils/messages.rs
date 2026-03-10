@@ -139,11 +139,72 @@ fn parse_message_json(msg: &Value, folder_label: &str) -> Option<Message> {
     })
 }
 
+/// Return mock messages when dev_sensitive_info_hider is enabled
+fn mock_messages(folder: &str) -> Vec<Message> {
+    let folder_display = if folder.is_empty() {
+        "Inbox".to_string()
+    } else {
+        let mut c = folder.chars();
+        match c.next() {
+            None => String::new(),
+            Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+        }
+    };
+    vec![
+        Message {
+            id: 1001,
+            folder: folder_display.clone(),
+            sender: "Mr. Johnson".to_string(),
+            sender_photo: None,
+            to: "Student Portal".to_string(),
+            subject: "Welcome to DesQTA".to_string(),
+            preview: "Welcome to DesQTA".to_string(),
+            body: String::new(),
+            date: "2025-12-30 10:00".to_string(),
+            unread: true,
+            starred: false,
+            files: None,
+        },
+        Message {
+            id: 1002,
+            folder: folder_display.clone(),
+            sender: "Ms. Smith".to_string(),
+            sender_photo: None,
+            to: "Class Group".to_string(),
+            subject: "Assignment Reminder".to_string(),
+            preview: "Assignment Reminder".to_string(),
+            body: String::new(),
+            date: "2025-12-29 14:30".to_string(),
+            unread: false,
+            starred: true,
+            files: None,
+        },
+        Message {
+            id: 1003,
+            folder: folder_display,
+            sender: "Dr. Williams".to_string(),
+            sender_photo: None,
+            to: "All Students".to_string(),
+            subject: "Important Notice".to_string(),
+            preview: "Important Notice".to_string(),
+            body: String::new(),
+            date: "2025-12-28 09:15".to_string(),
+            unread: false,
+            starred: false,
+            files: None,
+        },
+    ]
+}
+
 #[tauri::command]
 pub async fn fetch_messages(
     folder: String,
     rss_url: Option<String>,
 ) -> Result<Vec<Message>, String> {
+    if crate::settings::Settings::load().dev_sensitive_info_hider {
+        return Ok(mock_messages(&folder));
+    }
+
     if let Some(logger) = logger::get_logger() {
         let _ = logger.log(
             logger::LogLevel::INFO,

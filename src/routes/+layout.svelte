@@ -550,7 +550,7 @@
       // Load cached data from SQLite immediately for instant UI
       // Pass needsSetup so we skip background sync when user is on login screen (or after session invalidation)
       const { initializeApp } = await import('$lib/services/startupService');
-      await initializeApp(get(needsSetup));
+      await initializeApp(get(needsSetup), devMockEnabled);
 
       // Background tasks (warmup already triggered by startupService)
       if (weatherEnabled) {
@@ -713,8 +713,8 @@
 
       menu = [...DEFAULT_MENU]; // Use default menu configuration
 
-      // Filter menu items based on SEQTA config
-      if (latestConfig?.payload) {
+      // Filter menu items based on SEQTA config (skip when mock enabled - show all pages)
+      if (!devMockEnabled && latestConfig?.payload) {
         const goalsEnabled = latestConfig.payload['coneqt-s.page.goals']?.value === 'enabled';
         if (!goalsEnabled) {
           menu = menu.filter((item) => item.path !== '/goals');
@@ -802,8 +802,6 @@
     {#if !$needsSetup}
       <AppHeader
         {sidebarOpen}
-        {weatherEnabled}
-        {weatherData}
         {userInfo}
         {showUserDropdown}
         {isFullscreen}
@@ -818,7 +816,12 @@
 
     <div class="flex relative flex-1 min-h-0">
       {#if !$needsSetup && !menuLoading}
-        <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+        <AppSidebar
+          {sidebarOpen}
+          {menu}
+          onMenuItemClick={handlePageNavigation}
+          {weatherEnabled}
+          {weatherData} />
       {/if}
 
       <!-- Mobile Sidebar Overlay -->

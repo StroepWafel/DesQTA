@@ -533,6 +533,12 @@ The Company reserves the right to terminate your access to the Service at any ti
         invalidateConnectivity();
       }
 
+      // Clear all caches when mock mode is enabled to prevent stale real data
+      if (patch.dev_sensitive_info_hider === true) {
+        const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
+        await clearAllCachesForMockMode();
+      }
+
       saveSuccess = true;
 
       // Show success toast
@@ -1127,6 +1133,82 @@ The Company reserves the right to terminate your access to the Service at any ti
     </div>
   {:else}
     <div class="space-y-6 sm:space-y-8">
+      {#if showDevSettings}
+        <section
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+            <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+              Developer options for debugging and testing
+            </p>
+          </div>
+          <div class="p-4 sm:p-6">
+            <div class="space-y-6">
+              <div class="flex gap-3 items-center">
+                <input
+                  id="dev-sensitive-info-hider-top"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={devSensitiveInfoHider} />
+                <label
+                  for="dev-sensitive-info-hider-top"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  Sensitive Info Hider (API responses replaced with random mock data)
+                </label>
+              </div>
+
+              <div class="flex gap-3 items-center">
+                <input
+                  id="dev-force-offline-mode-top"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={devForceOfflineMode} />
+                <label
+                  for="dev-force-offline-mode-top"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  Force Offline Mode (Prevents all network requests, uses cached data only)
+                </label>
+              </div>
+
+              <div class="pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
+                <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
+                  Performance Testing
+                </h3>
+                <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
+                  Run automated performance testing across all pages. This will navigate through
+                  each page, collect performance metrics including load times, errors, and resource
+                  usage, then save the results as JSON files in your AppData directory.
+                </p>
+
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button
+                    class="flex gap-2 items-center justify-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onclick={runPerformanceTest}
+                    disabled={performanceTestRunning}>
+                    {#if performanceTestRunning}
+                      <div
+                        class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
+                      </div>
+                      <span>Running Test...</span>
+                    {:else}
+                      <Icon src={Cog} class="w-4 h-4" />
+                      <span>Run Performance Test</span>
+                    {/if}
+                  </button>
+
+                  <button
+                    class="flex gap-2 items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 border-zinc-300/70 dark:border-zinc-700/70 text-zinc-800 dark:text-white bg-zinc-100/60 dark:bg-zinc-800/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
+                    onclick={openPerformanceTestsFolder}>
+                    <Icon src={CloudArrowUp} class="w-4 h-4" />
+                    <span>Open Saved Tests</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      {/if}
+
       <!-- Cloud Sync Section -->
       <section
         data-onboarding="cloud-sync"
@@ -1993,83 +2075,6 @@ The Company reserves the right to terminate your access to the Service at any ti
         </div>
       </section>
 
-      {#if showDevSettings}
-        <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-400 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-            <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
-            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Developer options for debugging and testing
-            </p>
-          </div>
-          <div class="p-4 sm:p-6">
-            <div class="space-y-6">
-              <div class="flex gap-3 items-center">
-                <input
-                  id="dev-sensitive-info-hider"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={devSensitiveInfoHider} />
-                <label
-                  for="dev-sensitive-info-hider"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Sensitive Info Hider (API responses replaced with random mock data)
-                </label>
-              </div>
-
-              <div class="flex gap-3 items-center">
-                <input
-                  id="dev-force-offline-mode"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={devForceOfflineMode} />
-                <label
-                  for="dev-force-offline-mode"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Force Offline Mode (Prevents all network requests, uses cached data only)
-                </label>
-              </div>
-
-              <!-- Performance Testing Section -->
-              <div class="pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
-                <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
-                  Performance Testing
-                </h3>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
-                  Run automated performance testing across all pages. This will navigate through
-                  each page, collect performance metrics including load times, errors, and resource
-                  usage, then save the results as JSON files in your AppData directory.
-                </p>
-
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <button
-                    class="flex gap-2 items-center justify-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onclick={runPerformanceTest}
-                    disabled={performanceTestRunning}>
-                    {#if performanceTestRunning}
-                      <div
-                        class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
-                      </div>
-                      <span>Running Test...</span>
-                    {:else}
-                      <Icon src={Cog} class="w-4 h-4" />
-                      <span>Run Performance Test</span>
-                    {/if}
-                  </button>
-
-                  <button
-                    class="flex gap-2 items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 border-zinc-300/70 dark:border-zinc-700/70 text-zinc-800 dark:text-white bg-zinc-100/60 dark:bg-zinc-800/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
-                    onclick={openPerformanceTestsFolder}>
-                    <Icon src={CloudArrowUp} class="w-4 h-4" />
-                    <span>Open Saved Tests</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      {/if}
-
       <!-- RSS Feeds Settings -->
       <section
         class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
@@ -2461,84 +2466,6 @@ The Company reserves the right to terminate your access to the Service at any ti
           </button>
         </div>
       </section>
-
-      <!-- Dev Settings Section -->
-      {#if showDevSettings}
-        <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-400 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-            <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
-            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Developer options for debugging and testing
-            </p>
-          </div>
-          <div class="p-4 sm:p-6">
-            <div class="space-y-6">
-              <div class="flex gap-3 items-center">
-                <input
-                  id="dev-sensitive-info-hider"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={devSensitiveInfoHider} />
-                <label
-                  for="dev-sensitive-info-hider"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Sensitive Info Hider (API responses replaced with random mock data)
-                </label>
-              </div>
-
-              <div class="flex gap-3 items-center">
-                <input
-                  id="dev-force-offline-mode"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={devForceOfflineMode} />
-                <label
-                  for="dev-force-offline-mode"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Force Offline Mode (Prevents all network requests, uses cached data only)
-                </label>
-              </div>
-
-              <!-- Performance Testing Section -->
-              <div class="pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
-                <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
-                  Performance Testing
-                </h3>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
-                  Run automated performance testing across all pages. This will navigate through
-                  each page, collect performance metrics including load times, errors, and resource
-                  usage, then save the results as JSON files in your AppData directory.
-                </p>
-
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <button
-                    class="flex gap-2 items-center justify-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onclick={runPerformanceTest}
-                    disabled={performanceTestRunning}>
-                    {#if performanceTestRunning}
-                      <div
-                        class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
-                      </div>
-                      <span>Running Test...</span>
-                    {:else}
-                      <Icon src={Cog} class="w-4 h-4" />
-                      <span>Run Performance Test</span>
-                    {/if}
-                  </button>
-
-                  <button
-                    class="flex gap-2 items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 border-zinc-300/70 dark:border-zinc-700/70 text-zinc-800 dark:text-white bg-zinc-100/60 dark:bg-zinc-800/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
-                    onclick={openPerformanceTestsFolder}>
-                    <Icon src={CloudArrowUp} class="w-4 h-4" />
-                    <span>Open Saved Tests</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      {/if}
     </div>
   {/if}
 </div>

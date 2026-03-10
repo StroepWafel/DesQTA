@@ -299,7 +299,9 @@
             data-notice-id={notice.id}
             class="rounded-xl shadow-lg bg-white/10 text-(--text) border-t-8 flex flex-col h-96 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-xl notice-card-animate"
             style={`border-top-color: ${getLabelColor(notice.labelId)}; border-top-width: 8px; animation-delay: ${i * 50}ms;`}>
-            <div class="flex overflow-y-auto flex-col flex-1 p-5">
+            <div
+              class="flex overflow-y-auto flex-col flex-1 min-h-0 p-5 overscroll-contain"
+              style="overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
               <h2 class="mb-1 text-2xl font-bold">{notice.title}</h2>
               <div
                 class="mb-1 text-sm font-semibold"

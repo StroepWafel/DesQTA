@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { invoke } from '@tauri-apps/api/core';
   import { platformStore } from '$lib/stores/platform';
   import { Icon } from 'svelte-hero-icons';
 
@@ -50,11 +51,22 @@
     loading = true;
     error = null;
 
+    let skipCache = false;
+    try {
+      const subset = await invoke<{ dev_sensitive_info_hider?: boolean }>('get_settings_subset', {
+        keys: ['dev_sensitive_info_hider'],
+      });
+      skipCache = subset?.dev_sensitive_info_hider === true;
+    } catch {
+      // Tauri not available or settings failed
+    }
+
     const data = await useDataLoader<Portal[]>({
       cacheKey: 'portals',
       ttlMinutes: 10,
       context: 'portals',
       functionName: 'loadPortals',
+      skipCache,
       fetcher: async () => {
         const response = await seqtaFetch('/seqta/student/load/portals', {
           method: 'POST',
@@ -64,11 +76,14 @@
           body: {},
         });
 
-        const parsed: PortalsResponse =
+        const parsed: PortalsResponse & { status?: string | number } =
           typeof response === 'string' ? JSON.parse(response) : response;
 
-        if (parsed.status === '200' && parsed.payload) {
-          return parsed.payload.sort((a, b) => a.priority - b.priority);
+        const payload = parsed.payload;
+        const okStatus =
+          parsed.status === '200' || parsed.status === 200 || parsed.status === 'ok';
+        if (payload && Array.isArray(payload) && (okStatus || !parsed.status)) {
+          return payload.sort((a, b) => a.priority - b.priority);
         }
         throw new Error(get(_)('portals.failed_to_load'));
       },
@@ -76,7 +91,7 @@
         portals = data;
         loading = false;
       },
-      updateOnBackgroundSync: true,
+      updateOnBackgroundSync: !skipCache,
     });
 
     if (!data) {

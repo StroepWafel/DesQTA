@@ -558,6 +558,7 @@ pub fn run() {
             database::db_widget_layout_save,
             database::db_widget_layout_load,
             assessments::get_processed_assessments,
+            assessments::get_assessment_detail,
             courses::get_courses_subjects,
             courses::get_course_content,
             messages::fetch_messages,
