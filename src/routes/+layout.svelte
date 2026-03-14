@@ -206,10 +206,15 @@
   };
 
   const handlePageNavigation = () => {
-    if (autoCollapseSidebar || isMobile) {
-      sidebarOpen = false;
+    try {
+      if (autoCollapseSidebar || isMobile) {
+        sidebarOpen = false;
+      }
+      sidebar.handlePageNavigation();
+    } catch (e) {
+      console.error('[layout] handlePageNavigation error:', e);
+      // Don't rethrow - allow navigation to proceed
     }
-    sidebar.handlePageNavigation();
   };
 
   // Throttle hover handler to reduce layout thrashing and improve performance

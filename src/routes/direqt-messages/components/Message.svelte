@@ -104,7 +104,7 @@
   }
 
   async function updateIframeContent() {
-    if (!selectedMessage || !iframe || !iframe.contentWindow) return;
+    if (!selectedMessage || !iframe || !iframe.contentWindow?.document) return;
 
     // Use async Rust-side sanitization for better performance
     const sanitizedContent = await sanitizeHtmlAsync(selectedMessage.body);

@@ -97,9 +97,23 @@
   let orderedList = $state<ListItem[]>([]);
 
   function handleMenuItemClick() {
-    if (onMenuItemClick) {
-      onMenuItemClick();
+    try {
+      if (onMenuItemClick) {
+        onMenuItemClick();
+      }
+    } catch (e) {
+      console.error('[AppSidebar] handleMenuItemClick error:', e);
+      // Don't rethrow - allow navigation to proceed
     }
+  }
+
+  function handleNavClick(e: MouseEvent, path: string) {
+    e.preventDefault();
+    handleMenuItemClick();
+    goto(path).catch((err) => {
+      console.error('[AppSidebar] goto failed, using location fallback:', err);
+      window.location.assign(path);
+    });
   }
 
   function handleCloseSidebar() {
@@ -120,10 +134,12 @@
 
   function navigateToPage(index: number) {
     if (index >= 0 && index < menu.length) {
-      goto(menu[index].path);
-      if (onMenuItemClick) {
-        onMenuItemClick();
-      }
+      const path = menu[index].path;
+      goto(path).catch((err) => {
+        console.error('[AppSidebar] navigateToPage goto failed:', err);
+        window.location.assign(path);
+      });
+      handleMenuItemClick();
     }
   }
 
@@ -346,7 +362,7 @@
                   : $page.url.pathname.startsWith(item.path)}
               <a
                 href={item.path}
-                onclick={handleMenuItemClick}
+                onclick={(e) => handleNavClick(e, item.path)}
                 class="flex gap-4 items-center text-md px-3 py-3 ml-4 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
                   ? 'bg-accent text-white !text-white'
                   : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}">
@@ -374,7 +390,7 @@
                 : $page.url.pathname.startsWith(item.path)}
             <a
               href={item.path}
-              onclick={handleMenuItemClick}
+              onclick={(e) => handleNavClick(e, item.path)}
               class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
                 ? 'bg-accent text-white !text-white'
                 : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}">
@@ -434,7 +450,7 @@
                           : $page.url.pathname.startsWith(item.path)}
                       <a
                         href={item.path}
-                        onclick={handleMenuItemClick}
+                        onclick={(e) => handleNavClick(e, item.path)}
                         class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden {isActive
                           ? 'bg-accent text-white !text-white'
                           : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}"
