@@ -909,7 +909,7 @@
           : 'rounded-tl-2xl rounded-bl-2xl overflow-hidden'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         <div
-          class="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] {isMobile && !$needsSetup ? 'pb-[56px] mobile-main mobile-soft' : ''}">
+          class="flex-1 min-h-0 overflow-y-auto {!$needsSetup ? '[scrollbar-gutter:stable]' : ''} {isMobile && !$needsSetup ? 'pb-[56px] mobile-main mobile-soft' : ''}">
         {#if !$needsSetup}
           <OfflineBanner />
         {/if}
