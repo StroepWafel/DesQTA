@@ -945,42 +945,44 @@
             </div>
           {:else if !$needsSetup && !hasCompletedPostLoginPrompts}
             <PostLoginPrompts
-              onComplete={async () => {
+              onComplete={() => {
                 hasCompletedPostLoginPrompts = true;
-                try {
-                  const settings = await loadSettings(['has_been_through_onboarding']);
-                  if (!settings.has_been_through_onboarding && !get(needsSetup)) {
-                    setTimeout(() => {
-                      if (showWhatsNewModal) {
-                        tourPendingAfterReleaseNotes = true;
-                      } else {
-                        showOnboarding = true;
-                        if (isMobile) sidebarOpen = false;
-                      }
-                    }, 1000);
-                  }
-                } catch (e) {
-                  logger.debug('layout', 'PostLoginComplete', 'Could not check onboarding', {
-                    error: e,
+                loadSettings(['has_been_through_onboarding'])
+                  .then((settings) => {
+                    if (!settings.has_been_through_onboarding && !get(needsSetup)) {
+                      setTimeout(() => {
+                        if (showWhatsNewModal) {
+                          tourPendingAfterReleaseNotes = true;
+                        } else {
+                          showOnboarding = true;
+                          if (isMobile) sidebarOpen = false;
+                        }
+                      }, 1000);
+                    }
+                  })
+                  .catch((e) => {
+                    logger.debug('layout', 'PostLoginComplete', 'Could not check onboarding', {
+                      error: e,
+                    });
                   });
-                }
               }} />
           {:else if showBiometricGate}
             <BiometricGate
               onUnlock={() => setBiometricSessionUnlocked(true)}
-              onBiometryUnavailable={async () => {
+              onBiometryUnavailable={() => {
                 biometricEnabled = false;
                 setBiometricSessionUnlocked(true);
-                try {
-                  const { saveSettingsWithQueue, flushSettingsQueue } =
-                    await import('$lib/services/settingsSync');
-                  await saveSettingsWithQueue({ biometric_enabled: false });
-                  await flushSettingsQueue();
-                } catch (e) {
-                  logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', {
-                    error: e,
-                  });
-                }
+                import('$lib/services/settingsSync').then(
+                  ({ saveSettingsWithQueue, flushSettingsQueue }) => {
+                    saveSettingsWithQueue({ biometric_enabled: false })
+                      .then(() => flushSettingsQueue())
+                      .catch((e) => {
+                        logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', {
+                          error: e,
+                        });
+                      });
+                  },
+                );
               }} />
           {:else if $needsSetup}
             {#if !hasCompletedSetupAssistant && !profilesExist}
@@ -1001,8 +1003,12 @@
       <!-- Mobile Bottom Navigation -->
       {#if isMobile && !$needsSetup}
         <MobileBottomNav
-          onOpenSidebar={() => (sidebarOpen = true)}
-          onCloseSidebar={() => (sidebarOpen = false)} />
+          onOpenSidebar={() => {
+            sidebarOpen = true;
+          }}
+          onCloseSidebar={() => {
+            sidebarOpen = false;
+          }} />
       {/if}
 
       {#if $themeBuilderSidebarOpen}
@@ -1053,9 +1059,9 @@
         'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95',
     },
   }} />
-<AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
+<AboutModal open={showAboutModal} onclose={() => (showAboutModal = false)} />
 <WhatsNewModal
-  bind:open={showWhatsNewModal}
+  open={showWhatsNewModal}
   currentVersion={versionUpdateCurrent}
   previousVersion={versionUpdatePrevious}
   {changelogMarkdown}
