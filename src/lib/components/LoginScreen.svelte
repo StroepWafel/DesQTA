@@ -26,7 +26,10 @@
   import { scanImageForQrCode } from '$lib/utils/qrScanner';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { invalidateDevSensitiveInfoHiderCache, clearAllCachesForMockMode } from '../../utils/netUtil';
+  import {
+    invalidateDevSensitiveInfoHiderCache,
+    clearAllCachesForMockMode,
+  } from '../../utils/netUtil';
   import { get } from 'svelte/store';
   import T from './T.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
@@ -78,7 +81,8 @@
       await (onStartLogin?.() ?? Promise.resolve());
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      loginError = msg || get(_)('login.qr_error_generic', { default: 'Login failed. Please try again.' });
+      loginError =
+        msg || get(_)('login.qr_error_generic', { default: 'Login failed. Please try again.' });
     }
   }
 
@@ -254,7 +258,9 @@
 
     // Auto-maximize window on login screen load (desktop only)
     // On macOS: skip maximize/isMaximized - causes infinite resize loop and 100% CPU with undecorated windows (plugins-workspace#1918)
-    const isMacOS = import.meta.env.TAURI_ENV_PLATFORM === 'darwin' || import.meta.env.TAURI_ENV_PLATFORM === 'macos';
+    const isMacOS =
+      import.meta.env.TAURI_ENV_PLATFORM === 'darwin' ||
+      import.meta.env.TAURI_ENV_PLATFORM === 'macos';
     if (!isMobile && !isMacOS) {
       // Add a small delay to ensure window is ready, then force maximize
       setTimeout(async () => {
@@ -324,7 +330,9 @@
     console.debug('[QR] File selected:', file.name, 'type:', file.type, 'size:', file.size);
     qrProcessing = true;
     try {
-      console.debug('[QR] Scanning with multi-strategy reader (BarcodeDetector, jsQR, html5-qrcode)...');
+      console.debug(
+        '[QR] Scanning with multi-strategy reader (BarcodeDetector, jsQR, html5-qrcode)...',
+      );
       const qrCodeData = await scanImageForQrCode(file, 'qr-reader-temp');
       if (qrCodeData) {
         console.debug('[QR] Scan success:', qrCodeData);
@@ -690,7 +698,9 @@
                       <!-- Animated background slider -->
                       <div
                         class="absolute top-1 bottom-1 bg-white/30 dark:bg-zinc-700/40 backdrop-blur-xl rounded-xl shadow-xs transition-all duration-300 ease-in-out border border-white/40 dark:border-zinc-600/40"
-                        style="left: {loginMethod === 'qr' ? '4px' : 'calc(50%)'}; width: calc(50% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
+                        style="left: {loginMethod === 'qr'
+                          ? '4px'
+                          : 'calc(50%)'}; width: calc(50% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                       </div>
                       <button
                         class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
@@ -763,7 +773,8 @@
                               const url = mobileSsoUrl.trim();
                               if (
                                 e.key === 'Enter' &&
-                                (url.startsWith('seqtalearn://') || url.startsWith('desqta://connect/'))
+                                (url.startsWith('seqtalearn://') ||
+                                  url.startsWith('desqta://connect/'))
                               ) {
                                 jwtExpiredError = false;
                                 onUrlChange(url);
@@ -870,9 +881,7 @@
                           <T key="login.how_get_qr" fallback="How do I get a QR code?" />
                         </button>
                         <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                          <T
-                            key="login.not_working_try_direct"
-                            fallback="Not working?" />
+                          <T key="login.not_working_try_direct" fallback="Not working?" />
                           <button
                             type="button"
                             onclick={() => (loginMethod = 'direct')}
@@ -932,9 +941,7 @@
                             </button>
                           {/if}
                           <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                            <T
-                              key="login.not_working_try_direct"
-                              fallback="Not working?" />
+                            <T key="login.not_working_try_direct" fallback="Not working?" />
                             <button
                               type="button"
                               onclick={() => (loginMethod = 'direct')}
@@ -1102,7 +1109,8 @@
                     class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800 status-message-animate"
                     transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div class="flex items-center space-x-3">
-                      <div class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shrink-0">
+                      <div
+                        class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shrink-0">
                         <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path
                             fill-rule="evenodd"
@@ -1110,7 +1118,8 @@
                             clip-rule="evenodd" />
                         </svg>
                       </div>
-                      <span class="text-red-700 dark:text-red-300 font-medium text-sm">{loginError}</span>
+                      <span class="text-red-700 dark:text-red-300 font-medium text-sm"
+                        >{loginError}</span>
                     </div>
                   </div>
                 {/if}
@@ -1903,8 +1912,8 @@
           </h3>
           <p class="text-indigo-700 dark:text-indigo-300 text-sm">
             If you use the BetterSEQTA+ browser extension, you can also generate a QR code from
-            Settings → Connect Mobile App. This creates an instant sign-in QR without waiting for
-            an email.
+            Settings → Connect Mobile App. This creates an instant sign-in QR without waiting for an
+            email.
           </p>
         </div>
 
@@ -1931,9 +1940,7 @@
         <div
           class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">
           <p class="text-sm text-amber-700 dark:text-amber-300">
-            <T
-              key="login.not_working_try_direct"
-              fallback="Not working?" />
+            <T key="login.not_working_try_direct" fallback="Not working?" />
             <button
               type="button"
               onclick={() => {
@@ -1941,9 +1948,7 @@
                 loginMethod = 'direct';
               }}
               class="font-medium text-amber-800 dark:text-amber-200 hover:underline focus:outline-hidden focus:ring-2 focus:ring-amber-500/50 rounded-sm">
-              <T
-                key="login.try_direct_login_link"
-                fallback="Try direct login instead" />
+              <T key="login.try_direct_login_link" fallback="Try direct login instead" />
             </button>
           </p>
         </div>
@@ -1965,7 +1970,8 @@
 <!-- Large dimensions allow html5-qrcode to process full-resolution screenshots; hidden off-screen -->
 <div
   id="qr-reader-temp"
-  style="position:absolute;left:-9999px;width:4000px;height:4000px;min-width:4000px;min-height:4000px;overflow:hidden;visibility:hidden;pointer-events:none;"></div>
+  style="position:absolute;left:-9999px;width:4000px;height:4000px;min-width:4000px;min-height:4000px;overflow:hidden;visibility:hidden;pointer-events:none;">
+</div>
 
 <style>
   @keyframes fadeInUp {

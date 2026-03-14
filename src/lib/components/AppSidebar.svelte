@@ -295,7 +295,9 @@
 <!-- Parent container: contain:layout improves performance by isolating layout calculations -->
 <aside
   bind:this={asideElement}
-  class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative contain-[layout] {isFullscreen ? '' : 'rounded-bl-2xl'}"
+  class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative contain-[layout] {isFullscreen
+    ? ''
+    : 'rounded-bl-2xl'}"
   class:fixed={sidebarOpen}
   class:top-0={sidebarOpen}
   class:left-0={sidebarOpen}
@@ -317,45 +319,77 @@
     class="absolute top-0 right-0 w-full sm:w-64 h-full min-h-0 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
     <!-- Fixed header (non-scrolling) -->
     <div class="shrink-0 p-3 pt-3 pb-0 sm:py-px">
-    <!-- Mobile Close Button -->
-    <div class="flex justify-end sm:hidden mb-4">
-      <button
-        onclick={handleCloseSidebar}
-        class="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
-        aria-label={$_('navigation.close_sidebar', { default: 'Close sidebar' })}>
-        <Icon src={XMark} class="w-5 h-5" />
-      </button>
-    </div>
+      <!-- Mobile Close Button -->
+      <div class="flex justify-end sm:hidden mb-4">
+        <button
+          onclick={handleCloseSidebar}
+          class="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+          aria-label={$_('navigation.close_sidebar', { default: 'Close sidebar' })}>
+          <Icon src={XMark} class="w-5 h-5" />
+        </button>
+      </div>
 
-    <!-- Mobile Header -->
-    <div class="sm:hidden mb-6">
-      <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
-        <T key="navigation.menu" fallback="Menu" />
-      </h2>
-      <div class="w-12 h-1 bg-accent-500 rounded-full"></div>
-    </div>
+      <!-- Mobile Header -->
+      <div class="sm:hidden mb-6">
+        <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+          <T key="navigation.menu" fallback="Menu" />
+        </h2>
+        <div class="w-12 h-1 bg-accent-500 rounded-full"></div>
+      </div>
     </div>
 
     <!-- Scrollable menu content (enables touch scroll on mobile). pb-[72px] on mobile clears the fixed bottom nav so Settings and last items are tappable. sidebar-scroll for iOS safe-area-bottom. -->
-    <div class="sidebar-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-3 pb-[72px] sm:py-px sm:pb-3" style="-webkit-overflow-scrolling: touch;">
-    {#if loading}
-      <!-- Loading state -->
-      <div class="flex items-center justify-center py-4">
-        <div
-          class="w-5 h-5 border-2 border-accent-600 border-t-transparent rounded-full animate-spin">
+    <div
+      class="sidebar-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-3 pb-[72px] sm:py-px sm:pb-3"
+      style="-webkit-overflow-scrolling: touch;">
+      {#if loading}
+        <!-- Loading state -->
+        <div class="flex items-center justify-center py-4">
+          <div
+            class="w-5 h-5 border-2 border-accent-600 border-t-transparent rounded-full animate-spin">
+          </div>
         </div>
-      </div>
-    {:else}
-      <div class="flex flex-col space-y-2">
-        <!-- Favorites Section -->
-        {#if favoriteItems().length > 0}
-          <div class="mb-2">
-            <div
-              class="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
-              <Icon src={Star} class="w-4 h-4" />
-              <T key="navigation.favorites" fallback="Favorites" />
+      {:else}
+        <div class="flex flex-col space-y-2">
+          <!-- Favorites Section -->
+          {#if favoriteItems().length > 0}
+            <div class="mb-2">
+              <div
+                class="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+                <Icon src={Star} class="w-4 h-4" />
+                <T key="navigation.favorites" fallback="Favorites" />
+              </div>
+              {#each favoriteItems() as item}
+                {@const isActive =
+                  item.path === '/'
+                    ? $page.url.pathname === '/'
+                    : $page.url.pathname.startsWith(item.path)}
+                <a
+                  href={item.path}
+                  onclick={(e) => handleNavClick(e, item.path)}
+                  class="flex gap-4 items-center text-md px-3 py-3 ml-4 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
+                    ? 'bg-accent text-white !text-white'
+                    : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}">
+                  <Icon
+                    src={item.icon}
+                    class="w-6 h-6 {isActive
+                      ? 'text-white'
+                      : 'text-zinc-600 dark:text-zinc-400'}" />
+                  <span
+                    class={isActive
+                      ? 'text-white !text-white'
+                      : 'text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300'}>
+                    <T key={item.labelKey} fallback={item.labelKey} />
+                  </span>
+                </a>
+              {/each}
             </div>
-            {#each favoriteItems() as item}
+          {/if}
+
+          <!-- Combined Menu Items and Folders (in order) -->
+          {#each orderedList as listItem}
+            {#if listItem.type === 'menu'}
+              {@const item = listItem.item}
               {@const isActive =
                 item.path === '/'
                   ? $page.url.pathname === '/'
@@ -363,7 +397,7 @@
               <a
                 href={item.path}
                 onclick={(e) => handleNavClick(e, item.path)}
-                class="flex gap-4 items-center text-md px-3 py-3 ml-4 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
+                class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
                   ? 'bg-accent text-white !text-white'
                   : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}">
                 <Icon
@@ -376,106 +410,78 @@
                   <T key={item.labelKey} fallback={item.labelKey} />
                 </span>
               </a>
-            {/each}
-          </div>
-        {/if}
+            {:else if listItem.type === 'folder'}
+              {@const folder = listItem.folder}
+              {@const folderItems = getFolderItems(folder)}
+              {#if folderItems.length > 0}
+                <div class="space-y-0 w-full">
+                  <!-- Folder Header (styled exactly like nav item) -->
+                  <button
+                    onclick={() => toggleFolder(folder.id)}
+                    class="w-full flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300">
+                    <!-- Folder Icon (always Heroicon Folder) -->
+                    <Icon src={Folder} class="w-6 h-6 shrink-0 text-zinc-600 dark:text-zinc-400" />
 
-        <!-- Combined Menu Items and Folders (in order) -->
-        {#each orderedList as listItem}
-          {#if listItem.type === 'menu'}
-            {@const item = listItem.item}
-            {@const isActive =
-              item.path === '/'
-                ? $page.url.pathname === '/'
-                : $page.url.pathname.startsWith(item.path)}
-            <a
-              href={item.path}
-              onclick={(e) => handleNavClick(e, item.path)}
-              class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
-                ? 'bg-accent text-white !text-white'
-                : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}">
-              <Icon
-                src={item.icon}
-                class="w-6 h-6 {isActive ? 'text-white' : 'text-zinc-600 dark:text-zinc-400'}" />
-              <span
-                class={isActive
-                  ? 'text-white !text-white'
-                  : 'text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300'}>
-                <T key={item.labelKey} fallback={item.labelKey} />
-              </span>
-            </a>
-          {:else if listItem.type === 'folder'}
-            {@const folder = listItem.folder}
-            {@const folderItems = getFolderItems(folder)}
-            {#if folderItems.length > 0}
-              <div class="space-y-0 w-full">
-                <!-- Folder Header (styled exactly like nav item) -->
-                <button
-                  onclick={() => toggleFolder(folder.id)}
-                  class="w-full flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300">
-                  <!-- Folder Icon (always Heroicon Folder) -->
-                  <Icon src={Folder} class="w-6 h-6 shrink-0 text-zinc-600 dark:text-zinc-400" />
-
-                  <!-- Folder Name -->
-                  <span
-                    class="flex-1 min-w-0 text-left text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300">
-                    {folder.name}
-                    {#if folderItems.length > 0}
-                      <span class="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
-                        ({folderItems.length})
-                      </span>
-                    {/if}
-                  </span>
-
-                  <!-- Chevron Icon (to the right) -->
-                  <div
-                    class="shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] {isFolderCollapsed(
-                      folder.id,
-                    )
-                      ? 'rotate-0'
-                      : 'rotate-90'}">
-                    <Icon src={ChevronRight} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-                  </div>
-                </button>
-
-                <!-- Folder Items (with smooth expand/collapse) -->
-                {#if !isFolderCollapsed(folder.id)}
-                  <div
-                    transition:slide={{ duration: 300, easing: cubicInOut }}
-                    class="ml-4 space-y-0">
-                    {#each folderItems as item, itemIndex}
-                      {@const isActive =
-                        item.path === '/'
-                          ? $page.url.pathname === '/'
-                          : $page.url.pathname.startsWith(item.path)}
-                      <a
-                        href={item.path}
-                        onclick={(e) => handleNavClick(e, item.path)}
-                        class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden {isActive
-                          ? 'bg-accent text-white !text-white'
-                          : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}"
-                        in:fade={{ duration: 200, delay: itemIndex * 30 }}>
-                        <Icon
-                          src={item.icon}
-                          class="w-6 h-6 {isActive
-                            ? 'text-white'
-                            : 'text-zinc-600 dark:text-zinc-400'}" />
-                        <span
-                          class={isActive
-                            ? 'text-white !text-white'
-                            : 'text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300'}>
-                          <T key={item.labelKey} fallback={item.labelKey} />
+                    <!-- Folder Name -->
+                    <span
+                      class="flex-1 min-w-0 text-left text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300">
+                      {folder.name}
+                      {#if folderItems.length > 0}
+                        <span class="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          ({folderItems.length})
                         </span>
-                      </a>
-                    {/each}
-                  </div>
-                {/if}
-              </div>
+                      {/if}
+                    </span>
+
+                    <!-- Chevron Icon (to the right) -->
+                    <div
+                      class="shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] {isFolderCollapsed(
+                        folder.id,
+                      )
+                        ? 'rotate-0'
+                        : 'rotate-90'}">
+                      <Icon src={ChevronRight} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+                    </div>
+                  </button>
+
+                  <!-- Folder Items (with smooth expand/collapse) -->
+                  {#if !isFolderCollapsed(folder.id)}
+                    <div
+                      transition:slide={{ duration: 300, easing: cubicInOut }}
+                      class="ml-4 space-y-0">
+                      {#each folderItems as item, itemIndex}
+                        {@const isActive =
+                          item.path === '/'
+                            ? $page.url.pathname === '/'
+                            : $page.url.pathname.startsWith(item.path)}
+                        <a
+                          href={item.path}
+                          onclick={(e) => handleNavClick(e, item.path)}
+                          class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden {isActive
+                            ? 'bg-accent text-white !text-white'
+                            : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}"
+                          in:fade={{ duration: 200, delay: itemIndex * 30 }}>
+                          <Icon
+                            src={item.icon}
+                            class="w-6 h-6 {isActive
+                              ? 'text-white'
+                              : 'text-zinc-600 dark:text-zinc-400'}" />
+                          <span
+                            class={isActive
+                              ? 'text-white !text-white'
+                              : 'text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300'}>
+                            <T key={item.labelKey} fallback={item.labelKey} />
+                          </span>
+                        </a>
+                      {/each}
+                    </div>
+                  {/if}
+                </div>
+              {/if}
             {/if}
-          {/if}
-        {/each}
-      </div>
-    {/if}
+          {/each}
+        </div>
+      {/if}
     </div>
   </nav>
 </aside>
