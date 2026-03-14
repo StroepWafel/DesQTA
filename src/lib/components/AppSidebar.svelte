@@ -109,11 +109,12 @@
 
   function handleNavClick(e: MouseEvent, path: string) {
     e.preventDefault();
-    handleMenuItemClick();
     goto(path).catch((err) => {
       console.error('[AppSidebar] goto failed, using location fallback:', err);
       window.location.assign(path);
     });
+    // Layout $effect closes sidebar when path changes (auto-collapse)
+    handleMenuItemClick();
   }
 
   function handleCloseSidebar() {

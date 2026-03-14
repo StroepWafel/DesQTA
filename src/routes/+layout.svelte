@@ -206,7 +206,6 @@
 
     if (!isMobile && !get(needsSetup) && autoExpandSidebarHover) {
       sidebarOpen = false;
-      lastHoverUpdate = 0;
     }
   };
 
@@ -224,41 +223,23 @@
     });
   };
 
-  const handlePageNavigation = () => {
-    try {
-      if (autoCollapseSidebar || isMobile) {
-        sidebarOpen = false;
-      }
-      sidebar.handlePageNavigation();
-    } catch (e) {
-      logger.error('layout', 'handlePageNavigation', 'Failed to handle page navigation', {
-        error: e,
-      });
-      // Don't rethrow - allow navigation to proceed
+  const closeSidebarForNavigation = () => {
+    if (autoCollapseSidebar || isMobile) {
+      sidebarOpen = false;
     }
+    sidebar.handlePageNavigation();
   };
 
-  let lastHoverUpdate = 0;
-  const HOVER_THROTTLE_MS = 24;
-  const SIDEBAR_OPEN_ZONE_PX = 24;
-  const SIDEBAR_CLOSE_ZONE_PX = 300;
-  const handleMouseMove = (event: MouseEvent) => {
+  // Hover expand: open when mouse at left edge; close when mouse enters main content
+  const EDGE_ZONE_PX = 20;
+  const handleEdgeHover = (e: MouseEvent) => {
     if (!autoExpandSidebarHover || isMobile || $needsSetup) return;
-
-    const now = Date.now();
-    if (now - lastHoverUpdate < HOVER_THROTTLE_MS) return;
-    lastHoverUpdate = now;
-
-    const x = event.clientX;
-    const target = event.target as Element | null;
-    const hoveringSidebar = Boolean(target?.closest('[data-sidebar-root]'));
-
-    if (!sidebarOpen && x <= SIDEBAR_OPEN_ZONE_PX) {
+    if (!sidebarOpen && e.clientX <= EDGE_ZONE_PX) {
       sidebarOpen = true;
-      return;
     }
-
-    if (sidebarOpen && !hoveringSidebar && x > SIDEBAR_CLOSE_ZONE_PX) {
+  };
+  const handleMainContentEnter = () => {
+    if (autoExpandSidebarHover && sidebarOpen && !isMobile && !$needsSetup) {
       sidebarOpen = false;
     }
   };
@@ -657,22 +638,19 @@
     }
   });
 
-  // Consolidated effects
+  // Sidebar: close on route change (auto-collapse) and reload settings when entering /settings
   let prevPath = $state('');
   $effect(() => {
-    if (autoCollapseSidebar) handlePageNavigation();
     if ($needsSetup) sidebarOpen = false;
-    // Only reload sidebar settings when navigating TO settings (not on every effect run)
     const path = $page.url.pathname;
-    if (path === '/settings' && prevPath !== '/settings') {
-      prevPath = path;
-      reloadSidebarSettings();
-    } else if (path !== '/settings') {
+    if (path !== prevPath) {
+      if (autoCollapseSidebar || isMobile) sidebarOpen = false;
+      if (path === '/settings') reloadSidebarSettings();
       prevPath = path;
     }
   });
 
-  // On mobile: sidebar closed by default on load/refresh (user opens via "More" tab)
+  // Mobile: sidebar closed by default
   let hasInitializedMobileSidebar = $state(false);
   $effect(() => {
     if (isMobile && !$needsSetup && !showOnboarding && !hasInitializedMobileSidebar) {
@@ -681,18 +659,16 @@
     }
   });
 
-  // Desktop hover mode: ensure one-time collapsed start after settings + session settle.
+  // Hover expand: start collapsed once when enabled
   let hasInitializedHoverSidebar = $state(false);
   $effect(() => {
     if (!autoExpandSidebarHover || isMobile || $needsSetup) {
       hasInitializedHoverSidebar = false;
       return;
     }
-
     if (!hasInitializedHoverSidebar) {
       hasInitializedHoverSidebar = true;
       sidebarOpen = false;
-      lastHoverUpdate = 0;
     }
   });
 
@@ -735,7 +711,7 @@
     const events = [
       ['resize', checkMobile],
       ['click', handleClickOutside],
-      ['mousemove', handleMouseMove],
+      ['mousemove', handleEdgeHover],
     ] as const;
 
     events.forEach(([event, handler]) =>
@@ -907,7 +883,7 @@
 
     <div class="flex relative flex-1 min-h-0">
       {#if !$needsSetup && !menuLoading}
-        <AppSidebar {sidebarOpen} {menu} {isFullscreen} onMenuItemClick={handlePageNavigation} />
+        <AppSidebar {sidebarOpen} {menu} {isFullscreen} onMenuItemClick={closeSidebarForNavigation} />
       {/if}
 
       {#if sidebarOpen && isMobile && !$needsSetup}
@@ -921,6 +897,7 @@
       {/if}
 
       <main
+        onmouseenter={handleMainContentEnter}
         class="flex-1 min-h-0 flex flex-col border-t
           {sidebarOpen && !isMobile && !$needsSetup
           ? 'border-l border-zinc-200 dark:border-zinc-700/50'
