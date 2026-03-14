@@ -296,9 +296,10 @@
 <aside
   bind:this={asideElement}
   data-sidebar-root
-  class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative contain-[layout] {isFullscreen
+  class="transition-[width,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative contain-[layout] {isFullscreen
     ? ''
     : 'rounded-bl-2xl'}"
+  style="will-change: width, opacity;"
   class:fixed={sidebarOpen}
   class:top-0={sidebarOpen}
   class:left-0={sidebarOpen}
