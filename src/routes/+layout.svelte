@@ -925,10 +925,12 @@
 
       <!-- Main Content -->
       <main
-        class="flex-1 min-h-0 flex flex-col border-t {!$needsSetup ? 'border-l' : ''} {isMobile
+        class="flex-1 min-h-0 flex flex-col border-t {sidebarOpen && !isMobile && !$needsSetup
+          ? 'border-l border-zinc-200 dark:border-zinc-700/50'
+          : ''} {isMobile
           ? 'rounded-t-2xl overflow-hidden'
-          : 'rounded-tl-2xl overflow-hidden'} border-zinc-200 dark:border-zinc-700/50 theme-bg isolate transition-[margin-right] duration-200"
-        style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
+          : 'rounded-tl-2xl overflow-hidden'} isolate transition-[margin-right] duration-200 bg-transparent"
+        style="margin-left: 0; margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         <div
           class="flex-1 min-h-0 overflow-y-auto {!$needsSetup
             ? '[scrollbar-gutter:stable]'
