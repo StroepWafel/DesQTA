@@ -642,11 +642,11 @@
       aria-label={$_('navigation.close_sidebar') || 'Close sidebar overlay'}></div>
   {/if}
 
-  <!-- Unified Navigation Sidebar: card-style like study/directory -->
+  <!-- Unified Navigation Sidebar: card-style like study/directory; solid bg on mobile for visibility over transparent window -->
   <div
-    class="flex flex-col w-80 h-full rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg overflow-hidden transition-all duration-300 {isMobile
-      ? `fixed top-0 left-0 z-40 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
-      : ''}"
+    class="flex flex-col w-80 h-full rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 shadow-lg overflow-hidden transition-all duration-300 {isMobile
+      ? `fixed top-0 left-0 z-40 bg-white dark:bg-zinc-900 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+      : 'bg-white/80 dark:bg-zinc-900/60'}"
     role="region"
     aria-label="Course navigation"
     tabindex="-1"

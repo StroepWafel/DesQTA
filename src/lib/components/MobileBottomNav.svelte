@@ -22,9 +22,10 @@
 
   interface Props {
     onOpenSidebar: () => void;
+    onCloseSidebar?: () => void;
   }
 
-  let { onOpenSidebar }: Props = $props();
+  let { onOpenSidebar, onCloseSidebar }: Props = $props();
 
   function isActive(item: NavItem): boolean {
     if (item.isMore) return false;
@@ -36,6 +37,7 @@
     if (item.isMore) {
       onOpenSidebar();
     } else if (item.path) {
+      onCloseSidebar?.();
       goto(item.path);
     }
   }
