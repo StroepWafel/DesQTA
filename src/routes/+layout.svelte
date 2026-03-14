@@ -217,20 +217,28 @@
     }
   };
 
-  // Throttle hover handler to reduce layout thrashing and improve performance
+  // Throttle + cooldown to prevent rapid flickering (especially in fullscreen on large screens like 2880x1800)
   let lastHoverUpdate = 0;
-  const HOVER_THROTTLE_MS = 50;
+  let lastSidebarStateChange = 0;
+  const HOVER_THROTTLE_MS = 80;
+  const SIDEBAR_COOLDOWN_MS = 400;
+  const SIDEBAR_COOLDOWN_FULLSCREEN_MS = 600; // Longer in fullscreen - resize events can cause coordinate jitter
   const handleMouseMove = (event: MouseEvent) => {
     if (autoExpandSidebarHover && !isMobile) {
       const now = Date.now();
       if (now - lastHoverUpdate < HOVER_THROTTLE_MS) return;
+      const cooldown = isFullscreen ? SIDEBAR_COOLDOWN_FULLSCREEN_MS : SIDEBAR_COOLDOWN_MS;
+      if (now - lastSidebarStateChange < cooldown) return;
       lastHoverUpdate = now;
       sidebar.handleMouseMove(event);
       const x = event.clientX;
+      // Hysteresis: open zone x<=20, close zone x>300 (avoids flicker at boundary on high-DPI fullscreen)
       if (!sidebarOpen && x <= 20) {
         sidebarOpen = true;
-      } else if (sidebarOpen && x > 280) {
+        lastSidebarStateChange = now;
+      } else if (sidebarOpen && x > 300) {
         sidebarOpen = false;
+        lastSidebarStateChange = now;
       }
     }
   };
