@@ -22,8 +22,8 @@
   import { Input, Button } from '$lib/components/ui';
   import Modal from '$lib/components/Modal.svelte';
 
-  // Remove jsQR import and add html5-qrcode import
   import { Html5Qrcode } from 'html5-qrcode';
+  import { scanImageForQrCode } from '$lib/utils/qrScanner';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { invalidateDevSensitiveInfoHiderCache, clearAllCachesForMockMode } from '../../utils/netUtil';
@@ -314,11 +314,9 @@
     });
   }
 
-  // Remove old QR file input logic and add new handler using html5-qrcode
   async function handleQrFileInput(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
-    // Always clear error/success/expired state on new file selection
     qrError = '';
     qrSuccess = '';
     jwtExpiredError = false;
@@ -326,10 +324,8 @@
     console.debug('[QR] File selected:', file.name, 'type:', file.type, 'size:', file.size);
     qrProcessing = true;
     try {
-      console.debug('[QR] Starting scan...');
-      const html5Qr = new Html5Qrcode('qr-reader-temp');
-      const qrCodeData = await html5Qr.scanFile(file, true);
-      await html5Qr.clear();
+      console.debug('[QR] Scanning with multi-strategy reader (BarcodeDetector, jsQR, html5-qrcode)...');
+      const qrCodeData = await scanImageForQrCode(file, 'qr-reader-temp');
       if (qrCodeData) {
         console.debug('[QR] Scan success:', qrCodeData);
         qrSuccess = get(_)('login.qr_success');
@@ -349,7 +345,6 @@
       }
       qrError = errorMsg;
     } finally {
-      // Reset file input value so user can re-select the same file
       if (input) input.value = '';
       console.debug('[QR] Scan finished.');
       qrProcessing = false;
@@ -765,17 +760,18 @@
                             type="text"
                             bind:value={mobileSsoUrl}
                             onkeydown={async (e: KeyboardEvent) => {
+                              const url = mobileSsoUrl.trim();
                               if (
                                 e.key === 'Enter' &&
-                                mobileSsoUrl.trim().startsWith('seqtalearn://')
+                                (url.startsWith('seqtalearn://') || url.startsWith('desqta://connect/'))
                               ) {
                                 jwtExpiredError = false;
-                                onUrlChange(mobileSsoUrl.trim());
+                                onUrlChange(url);
                                 await startLoginWithErrorHandling();
                               }
                             }}
                             placeholder={$_('login.sso_url_placeholder', {
-                              default: 'seqtalearn://sso/...',
+                              default: 'seqtalearn://sso/... or desqta://connect/...',
                             })}
                             inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
@@ -801,7 +797,7 @@
                         <p class="text-zinc-600 dark:text-zinc-400">
                           <T
                             key="login.qr_description"
-                            fallback="Scan your SEQTA QR code to sign in instantly" />
+                            fallback="Scan SEQTA or BetterSEQTA+ QR code to sign in instantly" />
                         </p>
                       </div>
 
@@ -828,6 +824,11 @@
                                 <T key="login.upload_qr" fallback="Upload QR Code" />
                               </p>
                               <p class="text-sm text-indigo-600 dark:text-indigo-400">
+                                <T
+                                  key="login.upload_qr_hint"
+                                  fallback="Screenshots of any size accepted – we'll find the QR code" />
+                              </p>
+                              <p class="text-xs text-indigo-500 dark:text-indigo-500/80 mt-0.5">
                                 <T
                                   key="login.click_browse"
                                   fallback="Click to browse or drag & drop" />
@@ -1961,7 +1962,10 @@
   </Modal>
 </div>
 
-<div id="qr-reader-temp" style="display:none;"></div>
+<!-- Large dimensions allow html5-qrcode to process full-resolution screenshots; hidden off-screen -->
+<div
+  id="qr-reader-temp"
+  style="position:absolute;left:-9999px;width:4000px;height:4000px;min-width:4000px;min-height:4000px;overflow:hidden;visibility:hidden;pointer-events:none;"></div>
 
 <style>
   @keyframes fadeInUp {
