@@ -106,6 +106,18 @@
   let biometricUnlocked = $state(false);
   let isFullscreen = $state(false);
 
+  const BIOMETRIC_SESSION_UNLOCK_KEY = 'biometric_session_unlocked';
+
+  const setBiometricSessionUnlocked = (unlocked: boolean) => {
+    biometricUnlocked = unlocked;
+    if (typeof sessionStorage === 'undefined') return;
+    if (unlocked) {
+      sessionStorage.setItem(BIOMETRIC_SESSION_UNLOCK_KEY, '1');
+    } else {
+      sessionStorage.removeItem(BIOMETRIC_SESSION_UNLOCK_KEY);
+    }
+  };
+
   // Composables
   const weather = useWeather();
   const sidebar = useSidebar();
@@ -284,6 +296,7 @@
   };
 
   const handleLogout = async () => {
+    setBiometricSessionUnlocked(false);
     await handleLogoutAuth({
       onClearUser: () => (userInfo = undefined),
       onCloseDropdown: () => (showUserDropdown = false),
@@ -381,6 +394,11 @@
 
   onMount(async () => {
     logger.logComponentMount('layout');
+
+    if (typeof sessionStorage !== 'undefined') {
+      biometricUnlocked = sessionStorage.getItem(BIOMETRIC_SESSION_UNLOCK_KEY) === '1';
+    }
+
     unlistenLayout = await useLayoutListeners({
       appWindow,
       onFullscreenChange: (v) => (isFullscreen = v),
@@ -945,10 +963,10 @@
               }} />
           {:else if showBiometricGate}
             <BiometricGate
-              onUnlock={() => (biometricUnlocked = true)}
+              onUnlock={() => setBiometricSessionUnlocked(true)}
               onBiometryUnavailable={async () => {
                 biometricEnabled = false;
-                biometricUnlocked = true;
+                setBiometricSessionUnlocked(true);
                 try {
                   const { saveSettingsWithQueue, flushSettingsQueue } =
                     await import('$lib/services/settingsSync');
