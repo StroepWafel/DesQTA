@@ -540,8 +540,8 @@ The Company reserves the right to terminate your access to the Service at any ti
         invalidateConnectivity();
       }
 
-      // Clear all caches when mock mode is enabled to prevent stale real data
-      if (patch.dev_sensitive_info_hider === true) {
+      // Clear cache when mock mode is toggled: enable = prevent stale real data; disable = clear mock data for fresh real fetch
+      if (patch.dev_sensitive_info_hider === true || patch.dev_sensitive_info_hider === false) {
         const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
         await clearAllCachesForMockMode();
       }
