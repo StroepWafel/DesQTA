@@ -1,6 +1,9 @@
 <script lang="ts">
   import { Window } from '@tauri-apps/api/window';
   import { Icon } from 'svelte-hero-icons';
+  const isMacOS =
+    (import.meta as any).env?.TAURI_ENV_PLATFORM === 'darwin' ||
+    (import.meta as any).env?.TAURI_ENV_PLATFORM === 'macos';
   import {
     Minus,
     Square2Stack,
@@ -502,30 +505,51 @@
       <LanguageSelector compact={true} />
     </div>
 
-    <!-- Window Controls -->
     {#if !isMobile}
-      <div class="flex items-center space-x-1" data-tauri-drag-region>
-        <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          onclick={() => appWindow.minimize()}
-          aria-label="Minimize">
-          <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-        </button>
-        <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          onclick={() => appWindow.toggleMaximize()}
-          aria-label="Maximize">
-          <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-        </button>
-        <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform group hover:bg-red-500/90 hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-          onclick={() => appWindow.close()}
-          aria-label="Close">
-          <Icon
-            src={XMark}
-            class="w-4 h-4 transition duration-200 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
-        </button>
-      </div>
+      {#if isMacOS}
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="flex items-center gap-1.5">
+            <button
+              class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#ff5f57] hover:bg-[#ff7b73] active:scale-95"
+              onclick={() => appWindow.close()}
+              aria-label="Close">
+            </button>
+            <button
+              class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#febc2e] hover:bg-[#fecf5a] active:scale-95"
+              onclick={() => appWindow.minimize()}
+              aria-label="Minimize">
+            </button>
+            <button
+              class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#28c840] hover:bg-[#4dd35a] active:scale-95"
+              onclick={() => appWindow.toggleMaximize()}
+              aria-label="Maximize">
+            </button>
+          </div>
+        </div>
+      {:else}
+        <div class="flex items-center ml-4 space-x-2">
+          <button
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
+            onclick={() => appWindow.minimize()}
+            aria-label="Minimize">
+            <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          </button>
+          <button
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
+            onclick={() => appWindow.toggleMaximize()}
+            aria-label="Maximize">
+            <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          </button>
+          <button
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform group hover:bg-red-500 hover:scale-105 active:scale-95 playful"
+            onclick={() => appWindow.close()}
+            aria-label="Close">
+            <Icon
+              src={XMark}
+              class="w-4 h-4 transition duration-200 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
+          </button>
+        </div>
+      {/if}
     {/if}
   </div>
 
