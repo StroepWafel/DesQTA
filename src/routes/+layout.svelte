@@ -117,8 +117,8 @@
   let loadingWeather = $derived(weather.state.loading);
   let weatherError = $derived(weather.state.error);
   let forceUseLocation = $derived(weather.state.forceUseLocation);
-  let autoCollapseSidebar = $derived(sidebar.state.autoCollapse);
-  let autoExpandSidebarHover = $derived(sidebar.state.autoExpandOnHover);
+  let autoCollapseSidebar = $state(false);
+  let autoExpandSidebarHover = $state(false);
   let isMobile = $derived($platformStore.isMobile);
   let isIOS = $derived($platformStore.isIOS);
   let supportsBiometric = $derived($platformStore.supportsBiometric);
@@ -188,7 +188,14 @@
   });
 
   const reloadSidebarSettings = async () => {
-    await sidebar.loadSettings();
+    const settings = await sidebar.loadSettings();
+    autoCollapseSidebar = settings.autoCollapse;
+    autoExpandSidebarHover = settings.autoExpandOnHover;
+
+    if (!isMobile && !get(needsSetup) && autoExpandSidebarHover) {
+      sidebarOpen = false;
+      lastHoverUpdate = 0;
+    }
   };
 
   const loadUserInfo = async () => {
@@ -217,29 +224,28 @@
     }
   };
 
-  // Throttle + cooldown to prevent rapid flickering (especially in fullscreen on large screens like 2880x1800)
   let lastHoverUpdate = 0;
-  let lastSidebarStateChange = 0;
-  const HOVER_THROTTLE_MS = 80;
-  const SIDEBAR_COOLDOWN_MS = 400;
-  const SIDEBAR_COOLDOWN_FULLSCREEN_MS = 600; // Longer in fullscreen - resize events can cause coordinate jitter
+  const HOVER_THROTTLE_MS = 24;
+  const SIDEBAR_OPEN_ZONE_PX = 24;
+  const SIDEBAR_CLOSE_ZONE_PX = 300;
   const handleMouseMove = (event: MouseEvent) => {
-    if (autoExpandSidebarHover && !isMobile) {
-      const now = Date.now();
-      if (now - lastHoverUpdate < HOVER_THROTTLE_MS) return;
-      const cooldown = isFullscreen ? SIDEBAR_COOLDOWN_FULLSCREEN_MS : SIDEBAR_COOLDOWN_MS;
-      if (now - lastSidebarStateChange < cooldown) return;
-      lastHoverUpdate = now;
-      sidebar.handleMouseMove(event);
-      const x = event.clientX;
-      // Hysteresis: open zone x<=20, close zone x>300 (avoids flicker at boundary on high-DPI fullscreen)
-      if (!sidebarOpen && x <= 20) {
-        sidebarOpen = true;
-        lastSidebarStateChange = now;
-      } else if (sidebarOpen && x > 300) {
-        sidebarOpen = false;
-        lastSidebarStateChange = now;
-      }
+    if (!autoExpandSidebarHover || isMobile || $needsSetup) return;
+
+    const now = Date.now();
+    if (now - lastHoverUpdate < HOVER_THROTTLE_MS) return;
+    lastHoverUpdate = now;
+
+    const x = event.clientX;
+    const target = event.target as Element | null;
+    const hoveringSidebar = Boolean(target?.closest('[data-sidebar-root]'));
+
+    if (!sidebarOpen && x <= SIDEBAR_OPEN_ZONE_PX) {
+      sidebarOpen = true;
+      return;
+    }
+
+    if (sidebarOpen && !hoveringSidebar && x > SIDEBAR_CLOSE_ZONE_PX) {
+      sidebarOpen = false;
     }
   };
 
@@ -655,18 +661,18 @@
     }
   });
 
-  // When hover-to-open is enabled, start with sidebar collapsed (one-time after settings load)
-  let hasInitializedSidebarFromSettings = $state(false);
+  // Desktop hover mode: ensure one-time collapsed start after settings + session settle.
+  let hasInitializedHoverSidebar = $state(false);
   $effect(() => {
-    if (
-      !contentLoading &&
-      !$needsSetup &&
-      !isMobile &&
-      autoExpandSidebarHover &&
-      !hasInitializedSidebarFromSettings
-    ) {
-      hasInitializedSidebarFromSettings = true;
+    if (!autoExpandSidebarHover || isMobile || $needsSetup) {
+      hasInitializedHoverSidebar = false;
+      return;
+    }
+
+    if (!hasInitializedHoverSidebar) {
+      hasInitializedHoverSidebar = true;
       sidebarOpen = false;
+      lastHoverUpdate = 0;
     }
   });
 

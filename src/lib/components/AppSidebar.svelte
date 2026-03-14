@@ -295,6 +295,7 @@
 <!-- Parent container: contain:layout improves performance by isolating layout calculations -->
 <aside
   bind:this={asideElement}
+  data-sidebar-root
   class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative contain-[layout] {isFullscreen
     ? ''
     : 'rounded-bl-2xl'}"
