@@ -212,8 +212,16 @@
     sidebar.handlePageNavigation();
   };
 
+  // Throttle hover handler to reduce layout thrashing and improve performance
+  let lastHoverUpdate = 0;
+  const HOVER_THROTTLE_MS = 50;
   const handleMouseMove = (event: MouseEvent) => {
     if (autoExpandSidebarHover && !isMobile) {
+      // Disable hover-to-open on settings page to prevent rapid flash
+      if (get(page).url.pathname === '/settings') return;
+      const now = Date.now();
+      if (now - lastHoverUpdate < HOVER_THROTTLE_MS) return;
+      lastHoverUpdate = now;
       sidebar.handleMouseMove(event);
       const x = event.clientX;
       if (!sidebarOpen && x <= 20) {
@@ -612,10 +620,18 @@
   });
 
   // Consolidated effects
+  let prevPath = $state('');
   $effect(() => {
     if (autoCollapseSidebar) handlePageNavigation();
     if ($needsSetup) sidebarOpen = false;
-    if ($page.url.pathname === '/settings') reloadSidebarSettings();
+    // Only reload sidebar settings when navigating TO settings (not on every effect run)
+    const path = $page.url.pathname;
+    if (path === '/settings' && prevPath !== '/settings') {
+      prevPath = path;
+      reloadSidebarSettings();
+    } else if (path !== '/settings') {
+      prevPath = path;
+    }
   });
 
   // On mobile: sidebar closed by default on load/refresh (user opens via "More" tab)
@@ -623,6 +639,21 @@
   $effect(() => {
     if (isMobile && !$needsSetup && !showOnboarding && !hasInitializedMobileSidebar) {
       hasInitializedMobileSidebar = true;
+      sidebarOpen = false;
+    }
+  });
+
+  // When hover-to-open is enabled, start with sidebar collapsed (one-time after settings load)
+  let hasInitializedSidebarFromSettings = $state(false);
+  $effect(() => {
+    if (
+      !contentLoading &&
+      !$needsSetup &&
+      !isMobile &&
+      autoExpandSidebarHover &&
+      !hasInitializedSidebarFromSettings
+    ) {
+      hasInitializedSidebarFromSettings = true;
       sidebarOpen = false;
     }
   });

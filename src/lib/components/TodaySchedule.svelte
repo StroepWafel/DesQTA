@@ -236,11 +236,11 @@
       </div>
     </div>
   {:else}
-    <div class="flex flex-1 min-h-0 gap-3 overflow-x-auto overflow-y-hidden">
+    <div class="flex flex-1 min-h-0 gap-0 overflow-x-auto overflow-y-hidden">
       {#each lessons as lesson, i}
         <div
-          class="flex relative flex-col w-64 sm:w-72 shrink-0 border-t-4 group"
-          style="border-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
+          class="flex relative flex-col w-64 sm:w-72 shrink-0 rounded-lg overflow-hidden border border-t-4 border-zinc-200/50 dark:border-zinc-600/40 group"
+          style="border-top-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
           <div class="flex relative flex-col flex-1 gap-2 p-3 backdrop-blur-xs sm:p-4">
             <div class="flex justify-between items-center">
               <span class="text-base font-bold truncate text-zinc-900 sm:text-lg dark:text-white"
