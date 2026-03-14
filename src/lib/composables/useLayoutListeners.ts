@@ -23,12 +23,12 @@ export async function useLayoutListeners(options: LayoutListenersOptions): Promi
     location.reload();
   });
 
-  await listen<boolean>('fullscreen-changed', (event) => {
+  const unlistenFullscreenChanged = await listen<boolean>('fullscreen-changed', (event) => {
     onFullscreenChange(event.payload);
     logger.debug('layout', 'fullscreen_listener', `Window state changed: ${event.payload}`);
   });
 
-  await listen<string>('zoom', async (event) => {
+  const unlistenZoom = await listen<string>('zoom', async (event) => {
     const { zoomIn, zoomOut, zoomReset } = await import('$lib/utils/zoom');
     if (event.payload === 'in') zoomIn();
     else if (event.payload === 'out') zoomOut();
@@ -60,13 +60,15 @@ export async function useLayoutListeners(options: LayoutListenersOptions): Promi
   let unlistenResized: (() => void) | undefined;
   let unlistenMoved: (() => void) | undefined;
   if (!isMacOS) {
-    unlistenResized = appWindow.onResized(checkFullscreenState);
-    unlistenMoved = appWindow.onMoved(checkFullscreenState);
+    unlistenResized = await appWindow.onResized(checkFullscreenState);
+    unlistenMoved = await appWindow.onMoved(checkFullscreenState);
   }
 
   return () => {
     logger.debug('layout', 'onDestroy', 'Cleaning up layout listeners');
     unlistenReload();
+    unlistenFullscreenChanged();
+    unlistenZoom();
     unlistenResized?.();
     unlistenMoved?.();
   };
