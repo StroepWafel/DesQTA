@@ -843,9 +843,8 @@
         <AppSidebar
           {sidebarOpen}
           {menu}
-          onMenuItemClick={handlePageNavigation}
-          {weatherEnabled}
-          {weatherData} />
+          {isFullscreen}
+          onMenuItemClick={handlePageNavigation} />
       {/if}
 
       <!-- Mobile Sidebar Overlay -->

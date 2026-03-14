@@ -159,7 +159,16 @@ export function mockApiResponse(url: string, body?: Record<string, unknown>): st
       payload: {
         id: assessmentId,
         ...ASSESSMENT_DETAIL,
-        resources: [{ name: 'Rubric.pdf', uuid: 'file-uuid-' + id }],
+        resources: [
+          {
+            name: 'Rubric.pdf',
+            userfile: {
+              mimetype: 'application/pdf',
+              size: '102400',
+              uuid: 'file-uuid-' + id,
+            },
+          },
+        ],
       },
     });
   }

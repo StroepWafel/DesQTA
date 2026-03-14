@@ -10,7 +10,6 @@
   import type { SidebarFolder } from '../types/sidebar';
   import { invoke } from '@tauri-apps/api/core';
   import { saveSettingsWithQueue } from '../services/settingsSync';
-  import WeatherWidget from './WeatherWidget.svelte';
 
   interface MenuItem {
     labelKey: string;
@@ -26,11 +25,9 @@
     menu: MenuItem[];
     isFullscreen?: boolean;
     onMenuItemClick?: () => void;
-    weatherEnabled?: boolean;
-    weatherData?: { temperature: number; weathercode: number; location: string; country: string };
   }
 
-  let { sidebarOpen, menu, onMenuItemClick, weatherEnabled = false, weatherData }: Props = $props();
+  let { sidebarOpen, menu, isFullscreen = false, onMenuItemClick }: Props = $props();
 
   let folders = $state<SidebarFolder[]>([]);
   let favorites = $state<string[]>([]);
@@ -464,12 +461,5 @@
       </div>
     {/if}
     </div>
-
-    <!-- Weather widget fixed at bottom of sidebar -->
-    {#if weatherEnabled && weatherData}
-      <div class="shrink-0 p-3 pt-2 border-t border-zinc-200 dark:border-zinc-700/50">
-        <WeatherWidget {weatherData} />
-      </div>
-    {/if}
   </nav>
 </aside>
