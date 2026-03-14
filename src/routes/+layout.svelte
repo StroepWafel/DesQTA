@@ -998,7 +998,9 @@
       <!-- ThemeBuilder Sidebar -->
       <!-- Mobile Bottom Navigation -->
       {#if isMobile && !$needsSetup}
-        <MobileBottomNav onOpenSidebar={() => (sidebarOpen = true)} />
+        <MobileBottomNav
+          onOpenSidebar={() => (sidebarOpen = true)}
+          onCloseSidebar={() => (sidebarOpen = false)} />
       {/if}
 
       {#if $themeBuilderSidebarOpen}
