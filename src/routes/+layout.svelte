@@ -123,7 +123,7 @@
   let isIOS = $derived($platformStore.isIOS);
   let supportsBiometric = $derived($platformStore.supportsBiometric);
   let showBiometricGate = $derived(
-    !$needsSetup && biometricEnabled && supportsBiometric && !biometricUnlocked
+    !$needsSetup && biometricEnabled && supportsBiometric && !biometricUnlocked,
   );
 
   // Settings state
@@ -217,28 +217,14 @@
     }
   };
 
-  // Throttle + cooldown to prevent rapid flickering (especially in fullscreen on large screens like 2880x1800)
-  let lastHoverUpdate = 0;
-  let lastSidebarStateChange = 0;
-  const HOVER_THROTTLE_MS = 80;
-  const SIDEBAR_COOLDOWN_MS = 400;
-  const SIDEBAR_COOLDOWN_FULLSCREEN_MS = 600; // Longer in fullscreen - resize events can cause coordinate jitter
   const handleMouseMove = (event: MouseEvent) => {
     if (autoExpandSidebarHover && !isMobile) {
-      const now = Date.now();
-      if (now - lastHoverUpdate < HOVER_THROTTLE_MS) return;
-      const cooldown = isFullscreen ? SIDEBAR_COOLDOWN_FULLSCREEN_MS : SIDEBAR_COOLDOWN_MS;
-      if (now - lastSidebarStateChange < cooldown) return;
-      lastHoverUpdate = now;
       sidebar.handleMouseMove(event);
       const x = event.clientX;
-      // Hysteresis: open zone x<=20, close zone x>300 (avoids flicker at boundary on high-DPI fullscreen)
       if (!sidebarOpen && x <= 20) {
         sidebarOpen = true;
-        lastSidebarStateChange = now;
-      } else if (sidebarOpen && x > 300) {
+      } else if (sidebarOpen && x > 280) {
         sidebarOpen = false;
-        lastSidebarStateChange = now;
       }
     }
   };
@@ -467,9 +453,8 @@
                 errorCode: status.errorCode,
               });
               biometricEnabled = false;
-              const { saveSettingsWithQueue, flushSettingsQueue } = await import(
-                '$lib/services/settingsSync'
-              );
+              const { saveSettingsWithQueue, flushSettingsQueue } =
+                await import('$lib/services/settingsSync');
               await saveSettingsWithQueue({ biometric_enabled: false });
               await flushSettingsQueue();
             }
@@ -511,9 +496,10 @@
       // Check if app was just updated - show What's New modal (disabled for rc/beta)
       try {
         const versionInfo = await invoke<{ current: string; previousVersion?: string }>(
-          'get_version_update_info'
+          'get_version_update_info',
         );
-        const isStableRelease = !versionInfo?.current?.includes('rc') && !versionInfo?.current?.includes('beta');
+        const isStableRelease =
+          !versionInfo?.current?.includes('rc') && !versionInfo?.current?.includes('beta');
         if (versionInfo?.previousVersion && !get(needsSetup) && isStableRelease) {
           versionUpdateCurrent = versionInfo.current;
           versionUpdatePrevious = versionInfo.previousVersion;
@@ -542,7 +528,7 @@
           }
           showWhatsNewModal = true;
         } catch (e) {
-          logger.debug('layout', 'handleShowWhatsNew', 'Failed to show What\'s New', { error: e });
+          logger.debug('layout', 'handleShowWhatsNew', "Failed to show What's New", { error: e });
         }
       };
       window.addEventListener('show-whats-new', handleShowWhatsNew);
@@ -601,7 +587,8 @@
       try {
         const currentFullscreen = await appWindow.isFullscreen();
         const currentMaximized =
-          (import.meta.env.TAURI_ENV_PLATFORM === 'darwin' || import.meta.env.TAURI_ENV_PLATFORM === 'macos')
+          import.meta.env.TAURI_ENV_PLATFORM === 'darwin' ||
+          import.meta.env.TAURI_ENV_PLATFORM === 'macos'
             ? false
             : await appWindow.isMaximized().catch(() => false);
         isFullscreen = currentFullscreen || currentMaximized;
@@ -843,9 +830,7 @@
 
       // Filter out disabled pages (Settings cannot be disabled)
       const disabledSet = new Set(disabledPages);
-      menu = orderedMenu.filter(
-        (item) => !disabledSet.has(item.path) || item.path === '/settings',
-      );
+      menu = orderedMenu.filter((item) => !disabledSet.has(item.path) || item.path === '/settings');
     } catch (e) {
       logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
       // Don't reset to DEFAULT_MENU on error, keep current filtered menu
@@ -882,11 +867,7 @@
 
     <div class="flex relative flex-1 min-h-0">
       {#if !$needsSetup && !menuLoading}
-        <AppSidebar
-          {sidebarOpen}
-          {menu}
-          {isFullscreen}
-          onMenuItemClick={handlePageNavigation} />
+        <AppSidebar {sidebarOpen} {menu} {isFullscreen} onMenuItemClick={handlePageNavigation} />
       {/if}
 
       <!-- Mobile Sidebar Overlay -->
@@ -909,66 +890,68 @@
           : 'rounded-tl-2xl rounded-bl-2xl overflow-hidden'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
         style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         <div
-          class="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] {isMobile && !$needsSetup ? 'pb-[56px] mobile-main mobile-soft' : ''}">
-        {#if !$needsSetup}
-          <OfflineBanner />
-        {/if}
-        {#if contentLoading}
-          <div class="flex items-center justify-center w-full h-full py-12">
-            <LoadingScreen inline />
-          </div>
-        {:else if !$needsSetup && !hasCompletedPostLoginPrompts}
-          <PostLoginPrompts
-            onComplete={async () => {
-              hasCompletedPostLoginPrompts = true;
-              // Show tour after post-login screens (biometric + analytics); defer if release notes open
-              try {
-                const settings = await loadSettings(['has_been_through_onboarding']);
-                if (!settings.has_been_through_onboarding && !get(needsSetup)) {
-                  setTimeout(() => {
-                    if (showWhatsNewModal) {
-                      tourPendingAfterReleaseNotes = true;
-                    } else {
-                      showOnboarding = true;
-                      if (isMobile) sidebarOpen = false;
-                    }
-                  }, 1000);
-                }
-              } catch (e) {
-                logger.debug('layout', 'PostLoginComplete', 'Could not check onboarding', {
-                  error: e,
-                });
-              }
-            }} />
-        {:else if showBiometricGate}
-          <BiometricGate
-            onUnlock={() => (biometricUnlocked = true)}
-            onBiometryUnavailable={async () => {
-              biometricEnabled = false;
-              biometricUnlocked = true;
-              try {
-                const { saveSettingsWithQueue, flushSettingsQueue } = await import(
-                  '$lib/services/settingsSync'
-                );
-                await saveSettingsWithQueue({ biometric_enabled: false });
-                await flushSettingsQueue();
-              } catch (e) {
-                logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', { error: e });
-              }
-            }}
-          />
-        {:else if $needsSetup}
-          {#if !hasCompletedSetupAssistant && !profilesExist}
-            <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />
-          {:else}
-            <LoginScreen
-              {seqtaUrl}
-              onStartLogin={startLogin}
-              onUrlChange={(url) => (seqtaUrl = url)} />
+          class="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] {isMobile && !$needsSetup
+            ? 'pb-[56px] mobile-main mobile-soft'
+            : ''}">
+          {#if !$needsSetup}
+            <OfflineBanner />
           {/if}
-        {:else}
-          {@render children()}
-        {/if}
+          {#if contentLoading}
+            <div class="flex items-center justify-center w-full h-full py-12">
+              <LoadingScreen inline />
+            </div>
+          {:else if !$needsSetup && !hasCompletedPostLoginPrompts}
+            <PostLoginPrompts
+              onComplete={async () => {
+                hasCompletedPostLoginPrompts = true;
+                // Show tour after post-login screens (biometric + analytics); defer if release notes open
+                try {
+                  const settings = await loadSettings(['has_been_through_onboarding']);
+                  if (!settings.has_been_through_onboarding && !get(needsSetup)) {
+                    setTimeout(() => {
+                      if (showWhatsNewModal) {
+                        tourPendingAfterReleaseNotes = true;
+                      } else {
+                        showOnboarding = true;
+                        if (isMobile) sidebarOpen = false;
+                      }
+                    }, 1000);
+                  }
+                } catch (e) {
+                  logger.debug('layout', 'PostLoginComplete', 'Could not check onboarding', {
+                    error: e,
+                  });
+                }
+              }} />
+          {:else if showBiometricGate}
+            <BiometricGate
+              onUnlock={() => (biometricUnlocked = true)}
+              onBiometryUnavailable={async () => {
+                biometricEnabled = false;
+                biometricUnlocked = true;
+                try {
+                  const { saveSettingsWithQueue, flushSettingsQueue } =
+                    await import('$lib/services/settingsSync');
+                  await saveSettingsWithQueue({ biometric_enabled: false });
+                  await flushSettingsQueue();
+                } catch (e) {
+                  logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', {
+                    error: e,
+                  });
+                }
+              }} />
+          {:else if $needsSetup}
+            {#if !hasCompletedSetupAssistant && !profilesExist}
+              <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />
+            {:else}
+              <LoginScreen
+                {seqtaUrl}
+                onStartLogin={startLogin}
+                onUrlChange={(url) => (seqtaUrl = url)} />
+            {/if}
+          {:else}
+            {@render children()}
+          {/if}
         </div>
       </main>
 
@@ -1033,7 +1016,7 @@
   bind:open={showWhatsNewModal}
   currentVersion={versionUpdateCurrent}
   previousVersion={versionUpdatePrevious}
-  changelogMarkdown={changelogMarkdown}
+  {changelogMarkdown}
   onclose={() => {
     showWhatsNewModal = false;
     if (tourPendingAfterReleaseNotes) {
@@ -1043,6 +1026,5 @@
         if (isMobile) sidebarOpen = false;
       }, 300);
     }
-  }}
-/>
+  }} />
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />
