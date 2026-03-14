@@ -227,9 +227,140 @@ async fn fetch_past_assessments(programme: i32, metaclass: i32) -> Result<Vec<Va
     Ok(result)
 }
 
+/// Return mock assessments when dev_sensitive_info_hider is enabled
+fn mock_processed_assessments_response() -> ProcessedAssessmentsResponse {
+    let subjects = vec![
+        Subject {
+            code: "MATH".to_string(),
+            programme: 1,
+            metaclass: 1,
+            title: Some("Mathematics".to_string()),
+            description: Some("Mathematics".to_string()),
+        },
+        Subject {
+            code: "SCI".to_string(),
+            programme: 1,
+            metaclass: 2,
+            title: Some("Science".to_string()),
+            description: Some("Science".to_string()),
+        },
+        Subject {
+            code: "ENG".to_string(),
+            programme: 2,
+            metaclass: 3,
+            title: Some("English".to_string()),
+            description: Some("English".to_string()),
+        },
+    ];
+    let mut filters = HashMap::new();
+    filters.insert("MATH".to_string(), true);
+    filters.insert("SCI".to_string(), true);
+    filters.insert("ENG".to_string(), true);
+    let assessments = vec![
+        Assessment {
+            id: 201,
+            code: "MATH".to_string(),
+            title: "Assessment 1".to_string(),
+            due: "2026-06-15".to_string(),
+            colour: "#ff0000".to_string(),
+            metaclass: Some(1),
+            extra: HashMap::new(),
+        },
+        Assessment {
+            id: 202,
+            code: "SCI".to_string(),
+            title: "Assessment 2".to_string(),
+            due: "2026-06-20".to_string(),
+            colour: "#00ff00".to_string(),
+            metaclass: Some(2),
+            extra: HashMap::new(),
+        },
+        Assessment {
+            id: 203,
+            code: "ENG".to_string(),
+            title: "Assessment 3".to_string(),
+            due: "2026-06-25".to_string(),
+            colour: "#0000ff".to_string(),
+            metaclass: Some(3),
+            extra: HashMap::new(),
+        },
+    ];
+    ProcessedAssessmentsResponse {
+        assessments,
+        subjects: subjects.clone(),
+        all_subjects: subjects,
+        filters,
+        years: vec![2026, 2025],
+    }
+}
+
+/// Return mock assessment detail when dev_sensitive_info_hider is enabled
+fn mock_assessment_detail(assessment_id: i32) -> String {
+    let payload = json!({
+        "id": assessment_id,
+        "title": "Quadratic Equations and Applications",
+        "description": "This assessment covers solving quadratic equations by factoring, completing the square, and using the quadratic formula. You will also apply these skills to real-world problems.",
+        "due": "2025-11-15",
+        "subject": "Math",
+        "code": "MATH",
+        "marked": true,
+        "submissionSettings": { "fileSubmissionEnabled": false },
+        "expectations": [
+            { "name": "Algebraic Manipulation", "description": "Solve quadratic equations using multiple methods" },
+            { "name": "Problem Solving", "description": "Apply quadratic models to real-world scenarios" }
+        ],
+        "criteria": [
+            { "name": "Correctness", "description": "Accurate solutions with clear working", "results": { "grade": "A", "percentage": 85 } },
+            { "name": "Method Selection", "description": "Appropriate method chosen for each problem", "results": { "grade": "A", "percentage": 85 } }
+        ],
+        "resources": [{ "name": "Rubric.pdf", "uuid": format!("file-uuid-{}", assessment_id) }]
+    });
+    serde_json::json!({ "payload": payload }).to_string()
+}
+
+/// Fetch assessment detail - returns JSON string with { payload: {...} }
+/// Uses mock data when dev_sensitive_info_hider is enabled
+#[tauri::command]
+pub async fn get_assessment_detail(assessment: i32, _student: i32, metaclass: i32) -> Result<String, String> {
+    if crate::settings::Settings::load().dev_sensitive_info_hider {
+        return Ok(mock_assessment_detail(assessment));
+    }
+
+    let body = json!({
+        "assessment": assessment,
+        "student": STUDENT_ID,
+        "metaclass": metaclass
+    });
+
+    let response = netgrab::fetch_api_data(
+        "/seqta/student/assessment/get?",
+        RequestMethod::POST,
+        Some({
+            let mut headers = HashMap::new();
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
+            headers
+        }),
+        Some(body),
+        None,
+        false,
+        false,
+        None,
+    )
+    .await?;
+
+    Ok(response)
+}
+
 /// Process and merge all assessments data
 #[tauri::command]
 pub async fn get_processed_assessments() -> Result<ProcessedAssessmentsResponse, String> {
+    if crate::settings::Settings::load().dev_sensitive_info_hider {
+        return Ok(mock_processed_assessments_response());
+    }
+
     if let Some(logger) = logger::get_logger() {
         let _ = logger.log(
             logger::LogLevel::INFO,

@@ -33,7 +33,7 @@ export function getRandomDicebearAvatar(): string {
 }
 
 // Moved mock implementation to a separate module for clarity and reuse
-import { mockApiResponse } from './mockApi';
+import { mockApiResponse } from '../mock';
 
 // Cache the dev_sensitive_info_hider flag to avoid spamming settings on every request
 let devInfoHiderCache: { value: boolean; timestamp: number } | null = null;
@@ -70,12 +70,24 @@ export function invalidateDevSensitiveInfoHiderCache(): void {
   devInfoHiderCache = null;
 }
 
+/** Clear all caches (memory + SQLite) when mock mode is enabled to prevent stale real data. */
+export async function clearAllCachesForMockMode(): Promise<void> {
+  const { cache } = await import('./cache');
+  cache.clear();
+  try {
+    await invoke('db_cache_clear');
+  } catch {
+    // Ignore - cache may not exist in some contexts
+  }
+  invalidateDevSensitiveInfoHiderCache();
+}
+
 export async function seqtaFetch(input: string, init?: SeqtaRequestInit): Promise<any> {
   // Read once with memoization to prevent dozens of calls on startup
   const useMock = await getDevSensitiveInfoHider();
 
   if (useMock) {
-    return mockApiResponse(input);
+    return mockApiResponse(input, init?.body);
   }
 
   try {

@@ -6,6 +6,7 @@
   import { platformStore } from '$lib/stores/platform';
 
   let isMobile = $derived($platformStore.isMobile);
+  import { invoke } from '@tauri-apps/api/core';
   import { seqtaFetch } from '../../../../utils/netUtil';
   import AssessmentHeader from '../../../../lib/components/AssessmentHeader.svelte';
   import AssessmentTabs from '../../../../lib/components/AssessmentTabs.svelte';
@@ -49,29 +50,36 @@
 
   async function loadAssessmentDetails() {
     try {
-      const res = await seqtaFetch('/seqta/student/assessment/get?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {
-          assessment: parseInt($page.params.id!),
+      const assessmentId = parseInt($page.params.id!);
+      const metaclassId = parseInt($page.params.metaclass!);
+
+      // Use Tauri command when available - handles mock mode internally and avoids seqtaFetch hang
+      let res: string;
+      try {
+        res = await invoke<string>('get_assessment_detail', {
+          assessment: assessmentId,
           student: 69,
-          metaclass: parseInt($page.params.metaclass!),
-        },
-      });
-      assessmentData = JSON.parse(res).payload;
+          metaclass: metaclassId,
+        });
+      } catch {
+        res = await seqtaFetch('/seqta/student/assessment/get?', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: { assessment: assessmentId, student: 69, metaclass: metaclassId },
+        });
+      }
+
+      const parsed = typeof res === 'string' ? JSON.parse(res) : res;
+      assessmentData = parsed.payload;
 
       // Only fetch submissions if file submission is enabled
       if (assessmentData?.submissionSettings?.fileSubmissionEnabled) {
         const subRes = await seqtaFetch('/seqta/student/assessment/submissions/get?', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json; charset=utf-8' },
-          body: {
-            assessment: parseInt($page.params.id!),
-            student: 69,
-            metaclass: parseInt($page.params.metaclass!),
-          },
+          body: { assessment: assessmentId, student: 69, metaclass: metaclassId },
         });
-        const submissions = JSON.parse(subRes).payload;
+        const submissions = (typeof subRes === 'string' ? JSON.parse(subRes) : subRes).payload;
         allSubmissions = submissions;
       } else {
         allSubmissions = [];

@@ -276,8 +276,20 @@ async function checkForUpdatesOnStartup(): Promise<void> {
 /**
  * Initialize startup sequence: load cached data → show UI → sync in background → check for updates
  * @param needsSetup - When true, user is on login screen; skip background sync to avoid 401 race with session
+ * @param devMockEnabled - When true, clear all caches first to prevent stale real data from being shown
  */
-export async function initializeApp(needsSetup = false): Promise<void> {
+export async function initializeApp(needsSetup = false, devMockEnabled = false): Promise<void> {
+  // When mock mode is on, clear all caches so we don't serve stale real data
+  if (devMockEnabled) {
+    try {
+      const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
+      await clearAllCachesForMockMode();
+      logger.info('startup', 'initializeApp', 'Cleared all caches for mock mode');
+    } catch (e) {
+      logger.warn('startup', 'initializeApp', 'Failed to clear caches for mock mode', { error: e });
+    }
+  }
+
   // Step 1: Load cached data from SQLite immediately (blocks until loaded)
   await loadCachedDataOnStartup();
 

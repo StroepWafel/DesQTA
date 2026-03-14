@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Window } from '@tauri-apps/api/window';
-  import WeatherWidget from './WeatherWidget.svelte';
   import UserDropdown from './UserDropdown.svelte';
   import QuestionnaireWidget from './QuestionnaireWidget.svelte';
   import QuestionnaireModal from './QuestionnaireModal.svelte';
@@ -37,8 +36,6 @@
 
   interface Props {
     sidebarOpen: boolean;
-    weatherEnabled: boolean;
-    weatherData: any;
     userInfo?: UserInfo;
     showUserDropdown: boolean;
     isFullscreen?: boolean;
@@ -117,8 +114,6 @@
 
   let {
     sidebarOpen,
-    weatherEnabled,
-    weatherData,
     userInfo,
     showUserDropdown,
     isFullscreen = false,
@@ -527,9 +522,6 @@
         class="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300 {isMobile ? 'text-lg' : ''}">
         DesQTA
       </h1>
-      {#if !isMobile && weatherEnabled && weatherData}
-        <WeatherWidget {weatherData} />
-      {/if}
       {#if !isMobile}
         <QuestionnaireWidget
           onOpenModal={(question) => {

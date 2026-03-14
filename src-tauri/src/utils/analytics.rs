@@ -84,8 +84,59 @@ pub fn save_analytics(data: String) -> Result<(), String> {
     fs::write(path, data).map_err(|e| e.to_string())
 }
 
+fn mock_analytics_json() -> String {
+    let mock = json!([
+        {
+            "id": 201,
+            "title": "Quadratic Equations Test",
+            "subject": "MATH",
+            "status": "MARKS_RELEASED",
+            "due": "2025-11-15",
+            "code": "MATH",
+            "metaclassID": 1,
+            "programmeID": 1,
+            "graded": true,
+            "overdue": false,
+            "hasFeedback": false,
+            "expectationsEnabled": false,
+            "expectationsCompleted": false,
+            "reflectionsEnabled": false,
+            "reflectionsCompleted": false,
+            "availability": "",
+            "finalGrade": 85,
+            "letterGrade": "A",
+            "criteria": [{ "results": { "grade": "A", "percentage": 85 } }]
+        },
+        {
+            "id": 202,
+            "title": "Chemistry Lab Report",
+            "subject": "SCI",
+            "status": "MARKS_RELEASED",
+            "due": "2025-11-20",
+            "code": "SCI",
+            "metaclassID": 2,
+            "programmeID": 1,
+            "graded": true,
+            "overdue": false,
+            "hasFeedback": false,
+            "expectationsEnabled": false,
+            "expectationsCompleted": false,
+            "reflectionsEnabled": false,
+            "reflectionsCompleted": false,
+            "availability": "",
+            "finalGrade": 92,
+            "letterGrade": "A+",
+            "criteria": [{ "results": { "grade": "A+", "percentage": 92 } }]
+        }
+    ]);
+    mock.to_string()
+}
+
 #[tauri::command]
 pub fn load_analytics() -> Result<String, String> {
+    if crate::settings::Settings::load().dev_sensitive_info_hider {
+        return Ok(mock_analytics_json());
+    }
     let path = analytics_file();
     fs::read_to_string(path).map_err(|e| e.to_string())
 }
@@ -278,6 +329,16 @@ fn extract_letter_grade(assessment: &Value) -> Option<String> {
 /// Sync analytics data - fetches new assessments and merges with existing
 #[tauri::command]
 pub async fn sync_analytics_data() -> Result<String, String> {
+    if crate::settings::Settings::load().dev_sensitive_info_hider {
+        let mock = mock_analytics_json();
+        let path = analytics_file();
+        if let Some(parent) = path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        fs::write(&path, &mock).map_err(|e| e.to_string())?;
+        return Ok(mock);
+    }
+
     // Check if we have a valid session before proceeding
     let session = crate::session::Session::load();
     if session.jsessionid.is_empty() || session.base_url.is_empty() {

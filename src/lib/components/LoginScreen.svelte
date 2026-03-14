@@ -26,7 +26,7 @@
   import { Html5Qrcode } from 'html5-qrcode';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { invalidateDevSensitiveInfoHiderCache } from '../../utils/netUtil';
+  import { invalidateDevSensitiveInfoHiderCache, clearAllCachesForMockMode } from '../../utils/netUtil';
   import { get } from 'svelte/store';
   import T from './T.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
@@ -1131,7 +1131,11 @@
                               await invoke('save_settings_merge', {
                                 patch: { dev_sensitive_info_hider: devSensitiveInfoHider },
                               });
-                              invalidateDevSensitiveInfoHiderCache();
+                              if (devSensitiveInfoHider) {
+                                await clearAllCachesForMockMode();
+                              } else {
+                                invalidateDevSensitiveInfoHiderCache();
+                              }
                               setTimeout(() => location.reload(), 150);
                             } catch (e) {
                               console.warn('Failed to toggle mock API backend', e);

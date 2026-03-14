@@ -1,0 +1,45 @@
+export const FORUMS_LIST = [
+  {
+    id: 1,
+    owner_id: 1,
+    title: 'Year 12 General Discussion',
+    owner: 'Mr. Smith',
+    opened: '2025-09-01T08:00:00Z',
+    participants: 24,
+    unread: 2,
+    unread_comments: 1,
+    read: 22,
+    read_comments: 0,
+    closed: null,
+  },
+  {
+    id: 2,
+    owner_id: 2,
+    title: 'Mathematics Help',
+    owner: 'Ms. Jones',
+    opened: '2025-08-15T10:00:00Z',
+    participants: 18,
+    unread: 0,
+    unread_comments: 0,
+    read: 18,
+    read_comments: 0,
+    closed: null,
+  },
+  {
+    id: 3,
+    owner_id: 3,
+    title: 'Science Fair 2025',
+    owner: 'Dr. Brown',
+    opened: '2025-07-20T09:00:00Z',
+    participants: 12,
+    unread: 5,
+    unread_comments: 3,
+    read: 7,
+    read_comments: 0,
+    closed: '2025-12-01T10:00:00Z',
+  },
+];
+
+export const FORUM_DETAIL_MESSAGES = [
+  { id: 1, sent: '2025-12-10T10:00:00Z', contents: '<p>Mock forum message.</p>', comments: [] },
+];
