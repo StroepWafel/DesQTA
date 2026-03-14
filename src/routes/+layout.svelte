@@ -217,8 +217,6 @@
   const HOVER_THROTTLE_MS = 50;
   const handleMouseMove = (event: MouseEvent) => {
     if (autoExpandSidebarHover && !isMobile) {
-      // Disable hover-to-open on settings page to prevent rapid flash
-      if (get(page).url.pathname === '/settings') return;
       const now = Date.now();
       if (now - lastHoverUpdate < HOVER_THROTTLE_MS) return;
       lastHoverUpdate = now;
