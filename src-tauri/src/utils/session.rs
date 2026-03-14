@@ -10,9 +10,17 @@ use std::{
     fs,
     io::{self, Read, Write},
     path::PathBuf,
+    sync::{OnceLock, RwLock},
 };
 use zeroize::Zeroize;
 use crate::profiles;
+
+/// Global in-memory session cache to prevent race conditions during profile switches
+static SESSION_CACHE: OnceLock<RwLock<Option<Session>>> = OnceLock::new();
+
+fn get_cache() -> &'static RwLock<Option<Session>> {
+    SESSION_CACHE.get_or_init(|| RwLock::new(None))
+}
 
 /// Custom nonce sequence for AES-GCM
 struct CounterNonceSequence(u32);
@@ -156,8 +164,35 @@ pub struct Cookie {
 
 #[allow(dead_code)]
 impl Session {
-    /// Load from disk with decryption (desktop) or plain JSON (mobile); returns empty/default if none.
+    /// Invalidate the in-memory session cache. Call this on profile switches.
+    pub fn invalidate_cache() {
+        if let Ok(mut cache) = get_cache().write() {
+            *cache = None;
+        }
+    }
+
+    /// Load from cache if available, otherwise load from disk with decryption (desktop)
+    /// or plain JSON (mobile); returns empty/default if none.
     pub fn load() -> Self {
+        // Fast path: return cached session if available
+        if let Ok(cache) = get_cache().read() {
+            if let Some(ref sess) = *cache {
+                return sess.clone();
+            }
+        }
+
+        // Slow path: load from disk, then populate cache
+        let sess = Self::load_from_disk();
+
+        if let Ok(mut cache) = get_cache().write() {
+            *cache = Some(sess.clone());
+        }
+
+        sess
+    }
+
+    /// Internal: load directly from disk, bypassing cache.
+    fn load_from_disk() -> Self {
         let path = session_file();
 
         #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -292,8 +327,14 @@ impl Session {
         }
     }
 
-    /// Persist to disk with encryption (desktop) or plain JSON (mobile).
+    /// Persist to disk with encryption (desktop) or plain JSON (mobile),
+    /// and update the in-memory cache.
     pub fn save(&self) -> io::Result<()> {
+        // Update cache before writing to disk so all threads see the new session immediately
+        if let Ok(mut cache) = get_cache().write() {
+            *cache = Some(self.clone());
+        }
+
         let path = session_file();
 
         #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -355,6 +396,11 @@ impl Session {
 
     /// Clear the session data, remove the file, and clear encryption key (desktop only)
     pub fn clear_file() -> io::Result<()> {
+        // Invalidate cache first so no thread can get a stale session after clear
+        if let Ok(mut cache) = get_cache().write() {
+            *cache = None;
+        }
+
         let path = session_file();
         if path.exists() {
             fs::remove_file(&path)?;
