@@ -910,10 +910,7 @@
         <AppSidebar {sidebarOpen} {menu} {isFullscreen} onMenuItemClick={handlePageNavigation} />
       {/if}
 
-      <!-- Mobile Sidebar Overlay -->
       {#if sidebarOpen && isMobile && !$needsSetup}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class="fixed inset-0 z-20 bg-black/50 sm:hidden"
           onclick={() => (sidebarOpen = false)}
@@ -923,20 +920,22 @@
         </div>
       {/if}
 
-      <!-- Main Content -->
       <main
-        class="flex-1 min-h-0 flex flex-col border-t {sidebarOpen && !isMobile && !$needsSetup
+        class="flex-1 min-h-0 flex flex-col border-t
+          {sidebarOpen && !isMobile && !$needsSetup
           ? 'border-l border-zinc-200 dark:border-zinc-700/50'
-          : ''} {isMobile
+          : ''}
+          {isMobile
           ? 'rounded-t-2xl overflow-hidden'
           : sidebarOpen
             ? 'rounded-tl-2xl overflow-hidden'
-            : 'rounded-none'} isolate transition-[margin-right, border-radius] duration-300 bg-transparent"
+            : 'rounded-none'}
+          isolate transition-[border-radius,border-color] duration-300 bg-transparent"
         style="margin-left: 0; margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         <div
-          class="flex-1 min-h-0 overflow-y-auto {!$needsSetup
-            ? '[scrollbar-gutter:stable]'
-            : ''} {isMobile && !$needsSetup ? 'pb-[56px] mobile-main mobile-soft' : ''}">
+          class="flex-1 min-h-0 overflow-y-auto
+            {!$needsSetup ? '[scrollbar-gutter:stable]' : ''}
+            {isMobile && !$needsSetup ? 'pb-[56px] mobile-main mobile-soft' : ''}">
           {#if !$needsSetup}
             <OfflineBanner />
           {/if}
@@ -948,7 +947,6 @@
             <PostLoginPrompts
               onComplete={async () => {
                 hasCompletedPostLoginPrompts = true;
-                // Show tour after post-login screens (biometric + analytics); defer if release notes open
                 try {
                   const settings = await loadSettings(['has_been_through_onboarding']);
                   if (!settings.has_been_through_onboarding && !get(needsSetup)) {
