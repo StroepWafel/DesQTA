@@ -109,11 +109,12 @@
 
   function handleNavClick(e: MouseEvent, path: string) {
     e.preventDefault();
-    handleMenuItemClick();
     goto(path).catch((err) => {
       console.error('[AppSidebar] goto failed, using location fallback:', err);
       window.location.assign(path);
     });
+    // Layout $effect closes sidebar when path changes (auto-collapse)
+    handleMenuItemClick();
   }
 
   function handleCloseSidebar() {
@@ -294,9 +295,11 @@
 
 <aside
   bind:this={asideElement}
-  class="transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative {isFullscreen
+  data-sidebar-root
+  class="transition-[width,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative contain-[layout] {isFullscreen
     ? ''
-    : 'rounded-bl-2xl'} theme-bg"
+    : 'rounded-bl-2xl'}"
+  style="will-change: width, opacity;"
   class:fixed={sidebarOpen}
   class:top-0={sidebarOpen}
   class:left-0={sidebarOpen}

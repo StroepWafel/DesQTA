@@ -106,6 +106,18 @@
   let biometricUnlocked = $state(false);
   let isFullscreen = $state(false);
 
+  const BIOMETRIC_SESSION_UNLOCK_KEY = 'biometric_session_unlocked';
+
+  const setBiometricSessionUnlocked = (unlocked: boolean) => {
+    biometricUnlocked = unlocked;
+    if (typeof sessionStorage === 'undefined') return;
+    if (unlocked) {
+      sessionStorage.setItem(BIOMETRIC_SESSION_UNLOCK_KEY, '1');
+    } else {
+      sessionStorage.removeItem(BIOMETRIC_SESSION_UNLOCK_KEY);
+    }
+  };
+
   // Composables
   const weather = useWeather();
   const sidebar = useSidebar();
@@ -117,8 +129,8 @@
   let loadingWeather = $derived(weather.state.loading);
   let weatherError = $derived(weather.state.error);
   let forceUseLocation = $derived(weather.state.forceUseLocation);
-  let autoCollapseSidebar = $derived(sidebar.state.autoCollapse);
-  let autoExpandSidebarHover = $derived(sidebar.state.autoExpandOnHover);
+  let autoCollapseSidebar = $state(false);
+  let autoExpandSidebarHover = $state(false);
   let isMobile = $derived($platformStore.isMobile);
   let isIOS = $derived($platformStore.isIOS);
   let supportsBiometric = $derived($platformStore.supportsBiometric);
@@ -188,7 +200,13 @@
   });
 
   const reloadSidebarSettings = async () => {
-    await sidebar.loadSettings();
+    const settings = await sidebar.loadSettings();
+    autoCollapseSidebar = settings.autoCollapse;
+    autoExpandSidebarHover = settings.autoExpandOnHover;
+
+    if (!isMobile && !get(needsSetup) && autoExpandSidebarHover) {
+      sidebarOpen = false;
+    }
   };
 
   const loadUserInfo = async () => {
@@ -205,27 +223,24 @@
     });
   };
 
-  const handlePageNavigation = () => {
-    try {
-      if (autoCollapseSidebar || isMobile) {
-        sidebarOpen = false;
-      }
-      sidebar.handlePageNavigation();
-    } catch (e) {
-      console.error('[layout] handlePageNavigation error:', e);
-      // Don't rethrow - allow navigation to proceed
+  const closeSidebarForNavigation = () => {
+    if (autoCollapseSidebar || isMobile) {
+      sidebarOpen = false;
     }
+    sidebar.handlePageNavigation();
   };
 
-  const handleMouseMove = (event: MouseEvent) => {
-    if (autoExpandSidebarHover && !isMobile) {
-      sidebar.handleMouseMove(event);
-      const x = event.clientX;
-      if (!sidebarOpen && x <= 20) {
-        sidebarOpen = true;
-      } else if (sidebarOpen && x > 280) {
-        sidebarOpen = false;
-      }
+  // Hover expand: open when mouse at left edge; close when mouse enters main content
+  const EDGE_ZONE_PX = 20;
+  const handleEdgeHover = (e: MouseEvent) => {
+    if (!autoExpandSidebarHover || isMobile || $needsSetup) return;
+    if (!sidebarOpen && e.clientX <= EDGE_ZONE_PX) {
+      sidebarOpen = true;
+    }
+  };
+  const handleMainContentEnter = () => {
+    if (autoExpandSidebarHover && sidebarOpen && !isMobile && !$needsSetup) {
+      sidebarOpen = false;
     }
   };
 
@@ -264,6 +279,7 @@
   };
 
   const handleLogout = async () => {
+    setBiometricSessionUnlocked(false);
     await handleLogoutAuth({
       onClearUser: () => (userInfo = undefined),
       onCloseDropdown: () => (showUserDropdown = false),
@@ -361,6 +377,11 @@
 
   onMount(async () => {
     logger.logComponentMount('layout');
+
+    if (typeof sessionStorage !== 'undefined') {
+      biometricUnlocked = sessionStorage.getItem(BIOMETRIC_SESSION_UNLOCK_KEY) === '1';
+    }
+
     unlistenLayout = await useLayoutListeners({
       appWindow,
       onFullscreenChange: (v) => (isFullscreen = v),
@@ -617,22 +638,19 @@
     }
   });
 
-  // Consolidated effects
+  // Sidebar: close on route change (auto-collapse) and reload settings when entering /settings
   let prevPath = $state('');
   $effect(() => {
-    if (autoCollapseSidebar) handlePageNavigation();
     if ($needsSetup) sidebarOpen = false;
-    // Only reload sidebar settings when navigating TO settings (not on every effect run)
     const path = $page.url.pathname;
-    if (path === '/settings' && prevPath !== '/settings') {
-      prevPath = path;
-      reloadSidebarSettings();
-    } else if (path !== '/settings') {
+    if (path !== prevPath) {
+      if (autoCollapseSidebar || isMobile) sidebarOpen = false;
+      if (path === '/settings') reloadSidebarSettings();
       prevPath = path;
     }
   });
 
-  // On mobile: sidebar closed by default on load/refresh (user opens via "More" tab)
+  // Mobile: sidebar closed by default
   let hasInitializedMobileSidebar = $state(false);
   $effect(() => {
     if (isMobile && !$needsSetup && !showOnboarding && !hasInitializedMobileSidebar) {
@@ -641,17 +659,15 @@
     }
   });
 
-  // When hover-to-open is enabled, start with sidebar collapsed (one-time after settings load)
-  let hasInitializedSidebarFromSettings = $state(false);
+  // Hover expand: start collapsed once when enabled
+  let hasInitializedHoverSidebar = $state(false);
   $effect(() => {
-    if (
-      !contentLoading &&
-      !$needsSetup &&
-      !isMobile &&
-      autoExpandSidebarHover &&
-      !hasInitializedSidebarFromSettings
-    ) {
-      hasInitializedSidebarFromSettings = true;
+    if (!autoExpandSidebarHover || isMobile || $needsSetup) {
+      hasInitializedHoverSidebar = false;
+      return;
+    }
+    if (!hasInitializedHoverSidebar) {
+      hasInitializedHoverSidebar = true;
       sidebarOpen = false;
     }
   });
@@ -695,7 +711,7 @@
     const events = [
       ['resize', checkMobile],
       ['click', handleClickOutside],
-      ['mousemove', handleMouseMove],
+      ['mousemove', handleEdgeHover],
     ] as const;
 
     events.forEach(([event, handler]) =>
@@ -867,13 +883,10 @@
 
     <div class="flex relative flex-1 min-h-0">
       {#if !$needsSetup && !menuLoading}
-        <AppSidebar {sidebarOpen} {menu} {isFullscreen} onMenuItemClick={handlePageNavigation} />
+        <AppSidebar {sidebarOpen} {menu} {isFullscreen} onMenuItemClick={closeSidebarForNavigation} />
       {/if}
 
-      <!-- Mobile Sidebar Overlay -->
       {#if sidebarOpen && isMobile && !$needsSetup}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class="fixed inset-0 z-20 bg-black/50 sm:hidden"
           onclick={() => (sidebarOpen = false)}
@@ -883,16 +896,23 @@
         </div>
       {/if}
 
-      <!-- Main Content -->
       <main
-        class="flex-1 min-h-0 flex flex-col border-t {!$needsSetup ? 'border-l' : ''} {isMobile
+        onmouseenter={handleMainContentEnter}
+        class="flex-1 min-h-0 flex flex-col border-t
+          {sidebarOpen && !isMobile && !$needsSetup
+          ? 'border-l border-zinc-200 dark:border-zinc-700/50'
+          : ''}
+          {isMobile
           ? 'rounded-t-2xl overflow-hidden'
-          : 'rounded-tl-2xl rounded-bl-2xl overflow-hidden'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200"
-        style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
+          : sidebarOpen
+            ? 'rounded-tl-2xl overflow-hidden'
+            : 'rounded-none'}
+          isolate transition-[border-radius,border-color] duration-300 bg-transparent"
+        style="margin-left: 0; margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
         <div
-          class="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] {isMobile && !$needsSetup
-            ? 'pb-[56px] mobile-main mobile-soft'
-            : ''}">
+          class="flex-1 min-h-0 overflow-y-auto
+            {!$needsSetup ? '[scrollbar-gutter:stable]' : ''}
+            {isMobile && !$needsSetup ? 'pb-[56px] mobile-main mobile-soft' : ''}">
           {#if !$needsSetup}
             <OfflineBanner />
           {/if}
@@ -902,43 +922,44 @@
             </div>
           {:else if !$needsSetup && !hasCompletedPostLoginPrompts}
             <PostLoginPrompts
-              onComplete={async () => {
+              onComplete={() => {
                 hasCompletedPostLoginPrompts = true;
-                // Show tour after post-login screens (biometric + analytics); defer if release notes open
-                try {
-                  const settings = await loadSettings(['has_been_through_onboarding']);
-                  if (!settings.has_been_through_onboarding && !get(needsSetup)) {
-                    setTimeout(() => {
-                      if (showWhatsNewModal) {
-                        tourPendingAfterReleaseNotes = true;
-                      } else {
-                        showOnboarding = true;
-                        if (isMobile) sidebarOpen = false;
-                      }
-                    }, 1000);
-                  }
-                } catch (e) {
-                  logger.debug('layout', 'PostLoginComplete', 'Could not check onboarding', {
-                    error: e,
+                loadSettings(['has_been_through_onboarding'])
+                  .then((settings) => {
+                    if (!settings.has_been_through_onboarding && !get(needsSetup)) {
+                      setTimeout(() => {
+                        if (showWhatsNewModal) {
+                          tourPendingAfterReleaseNotes = true;
+                        } else {
+                          showOnboarding = true;
+                          if (isMobile) sidebarOpen = false;
+                        }
+                      }, 1000);
+                    }
+                  })
+                  .catch((e) => {
+                    logger.debug('layout', 'PostLoginComplete', 'Could not check onboarding', {
+                      error: e,
+                    });
                   });
-                }
               }} />
           {:else if showBiometricGate}
             <BiometricGate
-              onUnlock={() => (biometricUnlocked = true)}
-              onBiometryUnavailable={async () => {
+              onUnlock={() => setBiometricSessionUnlocked(true)}
+              onBiometryUnavailable={() => {
                 biometricEnabled = false;
-                biometricUnlocked = true;
-                try {
-                  const { saveSettingsWithQueue, flushSettingsQueue } =
-                    await import('$lib/services/settingsSync');
-                  await saveSettingsWithQueue({ biometric_enabled: false });
-                  await flushSettingsQueue();
-                } catch (e) {
-                  logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', {
-                    error: e,
-                  });
-                }
+                setBiometricSessionUnlocked(true);
+                import('$lib/services/settingsSync').then(
+                  ({ saveSettingsWithQueue, flushSettingsQueue }) => {
+                    saveSettingsWithQueue({ biometric_enabled: false })
+                      .then(() => flushSettingsQueue())
+                      .catch((e) => {
+                        logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', {
+                          error: e,
+                        });
+                      });
+                  },
+                );
               }} />
           {:else if $needsSetup}
             {#if !hasCompletedSetupAssistant && !profilesExist}
@@ -959,8 +980,12 @@
       <!-- Mobile Bottom Navigation -->
       {#if isMobile && !$needsSetup}
         <MobileBottomNav
-          onOpenSidebar={() => (sidebarOpen = true)}
-          onCloseSidebar={() => (sidebarOpen = false)} />
+          onOpenSidebar={() => {
+            sidebarOpen = true;
+          }}
+          onCloseSidebar={() => {
+            sidebarOpen = false;
+          }} />
       {/if}
 
       {#if $themeBuilderSidebarOpen}
@@ -1011,9 +1036,9 @@
         'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95',
     },
   }} />
-<AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
+<AboutModal open={showAboutModal} onclose={() => (showAboutModal = false)} />
 <WhatsNewModal
-  bind:open={showWhatsNewModal}
+  open={showWhatsNewModal}
   currentVersion={versionUpdateCurrent}
   previousVersion={versionUpdatePrevious}
   {changelogMarkdown}
