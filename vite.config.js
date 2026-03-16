@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
 import { compileModule } from 'svelte/compiler';
 // @ts-expect-error - path is a Node.js built-in module
 import path from 'path';
@@ -75,7 +76,7 @@ function cssAsText() {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [layerchartRunesPlugin(), sveltekit(), cssAsText()],
+  plugins: [layerchartRunesPlugin(), tailwindcss(), sveltekit(), cssAsText()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
