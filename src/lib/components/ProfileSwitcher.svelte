@@ -58,26 +58,33 @@
 
     try {
       switching = true;
-      // Note: app handle is passed automatically by Tauri
+      // Note: app handle is passed automatically by Tauri (invalidates session cache + reinit DB)
       await invoke('switch_profile', { profileId });
 
-      // Clear userInfo cache so it reloads for the new profile (profile-aware key)
+      // Clear all userInfo caches (old and new profile) so fresh data loads
       const { cache } = await import('../../utils/cache');
+      const { idbCacheDelete } = await import('../services/idb');
       const cacheKey = `userInfo:${profileId}`;
       cache.delete(cacheKey);
-
-      // Also clear IndexedDB cache
-      const { idbCacheDelete } = await import('../services/idb');
       await idbCacheDelete(cacheKey).catch(() => {});
+      // Also clear old profile's cache if we have it
+      if (currentProfile?.id && currentProfile.id !== profileId) {
+        const oldKey = `userInfo:${currentProfile.id}`;
+        cache.delete(oldKey);
+        await idbCacheDelete(oldKey).catch(() => {});
+      }
+
+      // Clear all frontend caches for a full refresh (memory + SQLite)
+      const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
+      await clearAllCachesForMockMode();
 
       // Reload profiles to get updated current
       await loadProfiles();
 
-      // Reload the app to switch to new profile's data
+      // Full reload: close dropdown and reload the entire app
       if (onProfileSwitch) {
         onProfileSwitch();
       } else {
-        // Default: reload the page
         window.location.reload();
       }
     } catch (e) {
@@ -154,6 +161,9 @@
       await loadProfiles();
 
       if (wasCurrentProfile || profiles.length === 0) {
+        // Clear all caches for full refresh when switching away from deleted profile
+        const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
+        await clearAllCachesForMockMode();
         if (onProfileSwitch) {
           onProfileSwitch();
         } else {
