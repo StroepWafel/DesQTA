@@ -1,10 +1,15 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
-  import { DocumentText } from 'svelte-hero-icons';
+  import { DocumentText, Trash } from 'svelte-hero-icons';
   import FileUploadButton from './FileUploadButton.svelte';
   import FileCard from './FileCard.svelte';
+  import Modal from './Modal.svelte';
+  import { Button } from './ui';
+  import { seqtaFetch } from '../../utils/netUtil';
+  import { toastStore } from '../../lib/stores/toast';
 
   interface Submission {
+    id?: number;
     filename: string;
     mimetype: string;
     size: string;
@@ -19,11 +24,66 @@
     assessmentId: number;
     metaclassId: number;
     onUploadComplete?: () => void;
+    onDeleteComplete?: () => void;
   }
 
-  let { submissions, assessmentId, metaclassId, onUploadComplete }: Props = $props();
+  let { submissions, assessmentId, metaclassId, onUploadComplete, onDeleteComplete }: Props =
+    $props();
 
-  const studentSubmissions = submissions.filter((f) => !f.staff);
+  let deleteModalOpen = $state(false);
+  let fileToDelete = $state<Submission | null>(null);
+  let deletingFileId = $state<number | null>(null);
+
+  const studentSubmissions = $derived(submissions.filter((f) => !f.staff));
+
+  function openDeleteModal(file: Submission) {
+    const fileId = file.id ?? (file as { userfile?: number }).userfile;
+    if (fileId == null) return;
+    fileToDelete = file;
+    deleteModalOpen = true;
+  }
+
+  function closeDeleteModal() {
+    if (deletingFileId == null) {
+      deleteModalOpen = false;
+      fileToDelete = null;
+    }
+  }
+
+  async function confirmDelete() {
+    if (!fileToDelete) return;
+    const fileId = fileToDelete.id ?? (fileToDelete as { userfile?: number }).userfile;
+    if (fileId == null) return;
+
+    try {
+      deletingFileId = fileId as number;
+      const res = await seqtaFetch('/seqta/student/assessment/submissions/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: {
+          action: 'erase',
+          assID: assessmentId,
+          metaclass: metaclassId,
+          fileID: fileId,
+          undo: false,
+        },
+      });
+      const result = typeof res === 'string' ? JSON.parse(res) : res;
+      if (result.status === '200') {
+        toastStore.success(`"${fileToDelete.filename}" removed`);
+        onDeleteComplete?.();
+        deleteModalOpen = false;
+        fileToDelete = null;
+      } else {
+        throw new Error('Delete failed');
+      }
+    } catch (e) {
+      console.error('Failed to delete submission:', e);
+      toastStore.error('Failed to remove file');
+    } finally {
+      deletingFileId = null;
+    }
+  }
 </script>
 
 <div class="grid gap-8 animate-fade-in">
@@ -51,16 +111,54 @@
     {:else}
       <div class="grid gap-3">
         {#each studentSubmissions as file}
-          <FileCard 
+          <FileCard
             {file}
             variant="submission"
             showDownload={false}
+            showDelete={true}
+            onDelete={() => openDeleteModal(file)}
+            deleting={deletingFileId === (file.id ?? (file as { userfile?: number }).userfile)}
           />
         {/each}
       </div>
     {/if}
   </div>
 </div>
+
+<!-- Delete confirmation modal -->
+<Modal
+  bind:open={deleteModalOpen}
+  onclose={closeDeleteModal}
+  title="Delete submission?"
+  maxWidth="max-w-md"
+  showCloseButton={true}
+  ariaLabel="Delete submission confirmation">
+  <div class="px-8 pb-8 pt-2">
+    {#if fileToDelete}
+      <p class="text-zinc-600 dark:text-zinc-400 mb-6">
+        Are you sure you want to remove <strong class="text-zinc-900 dark:text-white">"{fileToDelete.filename}"</strong>? This cannot be undone.
+      </p>
+    {/if}
+    <div class="flex gap-3 justify-end">
+      <Button variant="ghost" onclick={closeDeleteModal} disabled={deletingFileId != null}>
+        Cancel
+      </Button>
+      <Button
+        variant="danger"
+        onclick={confirmDelete}
+        disabled={deletingFileId != null}
+        class="flex items-center gap-2">
+        {#if deletingFileId != null}
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin">
+          </div>
+        {:else}
+          <Icon src={Trash} class="w-4 h-4" />
+        {/if}
+        Delete
+      </Button>
+    </div>
+  </div>
+</Modal>
 
 <style>
   @keyframes fade-in {

@@ -388,6 +388,7 @@ pub fn run() {
             netgrab::proxy_request,
             netgrab::get_seqta_file,
             netgrab::upload_seqta_file,
+            netgrab::upload_and_link_assessment_file,
             login::check_session_exists,
             login::save_session,
             login::create_login_window,

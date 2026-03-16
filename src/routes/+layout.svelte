@@ -15,6 +15,7 @@
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import { Toaster } from 'svelte-sonner';
   import Onboarding from '../lib/components/Onboarding.svelte';
+  import UploadProgressBar from '../lib/components/UploadProgressBar.svelte';
   import OfflineBanner from '../lib/components/OfflineBanner.svelte';
   import {
     checkSession as checkSessionAuth,
@@ -1006,6 +1007,7 @@
     </div>
   </div>
 {/if}
+<UploadProgressBar />
 <Toaster
   position={isMobile ? 'top-center' : 'bottom-right'}
   theme={$theme === 'dark' ? 'dark' : 'light'}

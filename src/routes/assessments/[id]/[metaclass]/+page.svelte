@@ -4,6 +4,7 @@
   import { cubicOut } from 'svelte/easing';
   import { page } from '$app/stores';
   import { platformStore } from '$lib/stores/platform';
+  import { assessmentSubmissionsRefreshStore } from '$lib/stores/assessmentSubmissionsRefresh';
 
   let isMobile = $derived($platformStore.isMobile);
   import { invoke } from '@tauri-apps/api/core';
@@ -92,6 +93,24 @@
     }
   }
 
+  /** Refresh submissions list only (called after upload completes) */
+  async function loadSubmissionsOnly() {
+    if (!assessmentData?.submissionSettings?.fileSubmissionEnabled) return;
+    try {
+      const assessmentId = parseInt($page.params.id!);
+      const metaclassId = parseInt($page.params.metaclass!);
+      const subRes = await seqtaFetch('/seqta/student/assessment/submissions/get?', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: { assessment: assessmentId, student: 69, metaclass: metaclassId },
+      });
+      const submissions = (typeof subRes === 'string' ? JSON.parse(subRes) : subRes).payload;
+      allSubmissions = submissions ?? [];
+    } catch (e) {
+      console.error('Failed to refresh submissions:', e);
+    }
+  }
+
   function handleTabChange(tabId: string) {
     // Prevent switching to submissions if it's not enabled
     if (tabId === 'submissions' && !assessmentData?.submissionSettings?.fileSubmissionEnabled) {
@@ -104,6 +123,23 @@
   $effect(() => {
     if (tab === 'submissions' && !assessmentData?.submissionSettings?.fileSubmissionEnabled) {
       tab = 'overview';
+    }
+  });
+
+  // Reload submissions when an upload completes (works even if user navigated away during upload)
+  $effect(() => {
+    const refresh = $assessmentSubmissionsRefreshStore;
+    if (!refresh) return;
+    const currentId = parseInt($page.params.id ?? '0');
+    const currentMeta = parseInt($page.params.metaclass ?? '0');
+    if (refresh.assessmentId === currentId && refresh.metaclassId === currentMeta) {
+      assessmentSubmissionsRefreshStore.set(null);
+      // Use loadSubmissionsOnly when we already have assessment data (faster), else full reload
+      if (assessmentData?.submissionSettings?.fileSubmissionEnabled) {
+        loadSubmissionsOnly();
+      } else {
+        loadAssessmentDetails();
+      }
     }
   });
 
@@ -183,7 +219,8 @@
             submissions={allSubmissions}
             assessmentId={parseInt($page.params.id!)}
             metaclassId={parseInt($page.params.metaclass!)}
-            onUploadComplete={loadAssessmentDetails} />
+            onUploadComplete={loadAssessmentDetails}
+            onDeleteComplete={loadSubmissionsOnly} />
         </div>
       {/if}
     {/if}

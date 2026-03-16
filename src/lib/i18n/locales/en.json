@@ -484,7 +484,9 @@
     "overview": "Overview",
     "details": "Details",
     "submissions": "Submissions",
-    "failed_to_load": "Failed to load assessment details"
+    "failed_to_load": "Failed to load assessment details",
+    "upload_progress": "Upload progress",
+    "uploading_files": "Uploading files"
   },
   "timetable": {
     "description": "View your weekly schedule and lessons",
