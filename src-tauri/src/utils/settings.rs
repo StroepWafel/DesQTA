@@ -278,6 +278,12 @@ pub struct Settings {
     /// When true, closing the window hides to system tray. When false, closing fully quits the app.
     #[serde(default = "default_minimize_to_tray")]
     pub minimize_to_tray: bool,
+    /// Last settings revision returned by accounts.betterseqta.org (`sync-init` / `POST /api/settings`).
+    #[serde(default)]
+    pub cloud_settings_server_revision: i64,
+    /// ISO 8601 UTC timestamp from server metadata (optional).
+    #[serde(default)]
+    pub cloud_settings_server_updated_at: Option<String>,
 }
 
 fn default_minimize_to_tray() -> bool {
@@ -332,6 +338,8 @@ impl Default for Settings {
             downloaded_theme_metadata: None,
             zoom_level: None,
             minimize_to_tray: true,
+            cloud_settings_server_revision: 0,
+            cloud_settings_server_updated_at: None,
         }
     }
 }
@@ -656,6 +664,12 @@ impl Settings {
             "minimize_to_tray",
             default_settings.minimize_to_tray,
         );
+        default_settings.cloud_settings_server_revision = existing_json
+            .get("cloud_settings_server_revision")
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0);
+        default_settings.cloud_settings_server_updated_at =
+            get_opt_string(&existing_json, "cloud_settings_server_updated_at");
         default_settings.dashboard_widgets_layout = get_opt_string(&existing_json, "dashboard_widgets_layout");
 
         // Merge sidebar folders
@@ -856,6 +870,10 @@ pub fn save_settings_merge(patch: serde_json::Value) -> Result<(), String> {
     // Shallow merge top-level keys from patch into current
     if let (Some(obj_curr), Some(obj_patch)) = (current_val.as_object_mut(), patch.as_object()) {
         for (k, v) in obj_patch.iter() {
+            // Never persist API envelope keys from POST /api/settings
+            if k == "ok" || k == "server" {
+                continue;
+            }
             obj_curr.insert(k.clone(), v.clone());
         }
     }

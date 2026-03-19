@@ -23,10 +23,7 @@
     handleLogout as handleLogoutAuth,
     startLogin as startLoginAuth,
   } from '../lib/services/layoutAuthService';
-  import {
-    autoDownloadSettingsFromCloud,
-    syncCloudSettings,
-  } from '../lib/services/layoutCloudService';
+  import { runCloudSettingsStartupSync } from '../lib/services/layoutCloudService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../lib/services/settingsSync';
   import { authService, type UserInfo } from '../lib/services/authService';
   import { warmUpCommonData } from '../lib/services/warmupService';
@@ -298,9 +295,7 @@
     reloadSidebarSettings,
   };
 
-  const runSyncCloudSettings = () => syncCloudSettings(cloudSyncOptions);
-
-  const runAutoDownloadSettingsFromCloud = () => autoDownloadSettingsFromCloud();
+  const runCloudSettingsStartup = () => runCloudSettingsStartupSync(cloudSyncOptions);
 
   // Language change handler
   const changeLanguage = async (languageCode: string) => {
@@ -439,7 +434,7 @@
         loadWeatherSettings(),
         loadEnhancedAnimationsSetting(),
         reloadSidebarSettings(),
-        runSyncCloudSettings(),
+        runCloudSettingsStartup(),
       ]);
 
       // Usage analytics: increment session count and start hourly check (service checks opt-in internally)
@@ -487,11 +482,6 @@
       } catch (e) {
         logger.debug('layout', 'onMount', 'Could not load setup assistant status', { error: e });
       }
-
-      // Auto-download settings from cloud in background (non-blocking)
-      runAutoDownloadSettingsFromCloud().catch((e) => {
-        logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
-      });
 
       // Check if user needs onboarding - show tour for first-time users (only after post-login screens)
       try {

@@ -1,6 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
 import { cloudAuthService } from './cloudAuthService';
-import { cloudSettingsService } from './cloudSettingsService';
+import {
+  cloudSettingsService,
+  persistCloudSettingsServerMeta,
+} from './cloudSettingsService';
+import { pushFullCloudSettingsSync } from './settingsSync';
 import {
   loadAccentColor,
   loadTheme,
@@ -10,141 +14,32 @@ import { get } from 'svelte/store';
 import { locale } from '$lib/i18n';
 import { logger } from '../../utils/logger';
 
-/**
- * Auto-download settings from cloud when they differ from local.
- * Reloads the page after applying cloud settings.
- */
-export async function autoDownloadSettingsFromCloud(): Promise<void> {
-  try {
-    const cloudUser = await cloudAuthService.getUser();
-    if (!cloudUser) return;
+/** Non-layout callers: background pull + reload when server has newer (e.g. legacy hooks). */
+export { autoDownloadSettingsFromCloud } from './settingsSync';
 
-    const { isOfflineMode } = await import('$lib/utils/offlineMode');
-    const offline = await isOfflineMode();
-    if (offline) {
-      logger.debug('layoutCloud', 'autoDownloadSettingsFromCloud', 'Skipping download (offline mode)');
-      return;
-    }
-
-    const lastReloadTime = sessionStorage.getItem('settings_last_reload');
-    const now = Date.now();
-    if (lastReloadTime && now - parseInt(lastReloadTime) < 5000) {
-      logger.debug('layoutCloud', 'autoDownloadSettingsFromCloud', 'Skipping download (recently reloaded)');
-      return;
-    }
-
-    const cloudSettings = await cloudSettingsService.getSettings();
-    if (!cloudSettings) {
-      logger.debug('layoutCloud', 'autoDownloadSettingsFromCloud', 'No cloud settings found');
-      return;
-    }
-
-    const allKeys = Object.keys(cloudSettings);
-    const localSettings = await invoke<Record<string, unknown>>('get_settings_subset', {
-      keys: allKeys,
-    });
-
-    const compareSettings = (local: Record<string, unknown>, cloud: Record<string, unknown>): boolean => {
-      const allKeysSet = new Set([...Object.keys(local || {}), ...Object.keys(cloud || {})]);
-      const differences: string[] = [];
-
-      for (const key of allKeysSet) {
-        const localValue = local?.[key];
-        const cloudValue = cloud?.[key];
-
-        const normalizeValue = (val: unknown): unknown => {
-          if (val === undefined || val === null) return null;
-          if (Array.isArray(val) && val.length === 0) return [];
-          if (typeof val === 'object' && val !== null && Object.keys(val).length === 0) return {};
-          return val;
-        };
-
-        const normalizedLocal = normalizeValue(localValue);
-        const normalizedCloud = normalizeValue(cloudValue);
-        if (JSON.stringify(normalizedLocal) !== JSON.stringify(normalizedCloud)) {
-          differences.push(key);
+function scheduleReloadForCloudSettings(): void {
+  const now = Date.now();
+  sessionStorage.setItem('settings_last_reload', String(now));
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      try {
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.reload();
+        } else if (typeof location !== 'undefined') {
+          location.reload();
         }
+      } catch (e) {
+        logger.error('layoutCloud', 'scheduleReloadForCloudSettings', 'Reload failed', { error: e });
       }
-
-      if (differences.length > 0) {
-        logger.debug('layoutCloud', 'autoDownloadSettingsFromCloud', 'Settings differ', {
-          differentKeys: differences,
-        });
-        return true;
-      }
-      return false;
-    };
-
-    const cloudSettingsHash = btoa(JSON.stringify(cloudSettings)).slice(0, 32);
-    const lastSyncedHash = sessionStorage.getItem('settings_last_synced_hash');
-
-    if (lastSyncedHash === cloudSettingsHash) {
-      logger.debug('layoutCloud', 'autoDownloadSettingsFromCloud', 'Settings already synced (hash match)');
-      return;
-    }
-
-    if (!compareSettings(localSettings || {}, cloudSettings as Record<string, unknown>)) {
-      logger.debug('layoutCloud', 'autoDownloadSettingsFromCloud', 'Settings are identical');
-      sessionStorage.setItem('settings_last_synced_hash', cloudSettingsHash);
-      return;
-    }
-
-    logger.info('layoutCloud', 'autoDownloadSettingsFromCloud', 'Cloud settings differ, downloading...');
-
-    await invoke('save_settings_merge', { patch: cloudSettings });
-
-    logger.info('layoutCloud', 'autoDownloadSettingsFromCloud', 'Settings downloaded and applied');
-    sessionStorage.setItem('settings_last_synced_hash', cloudSettingsHash);
-    sessionStorage.setItem('settings_last_reload', now.toString());
-
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        try {
-          if (typeof window !== 'undefined' && window.location) {
-            window.location.reload();
-          } else if (typeof location !== 'undefined') {
-            location.reload();
-          }
-        } catch (reloadError) {
-          logger.error('layoutCloud', 'autoDownloadSettingsFromCloud', 'Error during reload', {
-            error: reloadError,
-          });
-        }
-      }, 300);
-    });
-  } catch (e) {
-    logger.debug('layoutCloud', 'autoDownloadSettingsFromCloud', 'Failed to download (non-critical)', {
-      error: e,
-    });
-  }
+    }, 300);
+  });
 }
 
 /**
- * Sync cloud settings on app startup when user is logged in.
+ * Single startup path: one `sync-init`, apply metadata, optional one `client_ahead` POST,
+ * merge + reload when `server_has_newer` (then loaders run after reload).
  */
-/**
- * Check if user was previously signed into cloud but is now signed out (e.g. token expired).
- * If so, show a toast and clear the flag.
- */
-export async function checkCloudSignOutAlert(): Promise<void> {
-  try {
-    const cloudUser = await cloudAuthService.getUser();
-    if (cloudUser) return; // Still signed in
-
-    const state = await invoke<{ previously_signed_into_cloud: boolean }>('get_cloud_state');
-    if (!state?.previously_signed_into_cloud) return;
-
-    const { toastStore } = await import('$lib/stores/toast');
-    toastStore.warning(
-      'You have been signed out of BetterSEQTA Plus. Sign in again in Settings to sync your data.',
-    );
-    await invoke('set_cloud_state_previously_signed', { value: false });
-  } catch (e) {
-    logger.debug('layoutCloud', 'checkCloudSignOutAlert', 'Check failed (non-critical)', { error: e });
-  }
-}
-
-export async function syncCloudSettings(options: {
+export async function runCloudSettingsStartupSync(options: {
   loadWeatherSettings: () => Promise<void>;
   loadEnhancedAnimationsSetting: () => Promise<void>;
   reloadSidebarSettings: () => Promise<void>;
@@ -156,12 +51,89 @@ export async function syncCloudSettings(options: {
       return;
     }
 
-    logger.info('layoutCloud', 'syncCloudSettings', 'Cloud user found, fetching settings');
-    const settings = await cloudSettingsService.getSettings();
-    if (!settings) return;
+    const { isOfflineMode } = await import('$lib/utils/offlineMode');
+    if (await isOfflineMode()) {
+      logger.debug('layoutCloud', 'runCloudSettingsStartupSync', 'Skipping (offline mode)');
+      return;
+    }
 
-    logger.info('layoutCloud', 'syncCloudSettings', 'Applying cloud settings');
-    await invoke('save_settings_merge', { patch: settings });
+    logger.info('layoutCloud', 'runCloudSettingsStartupSync', 'Cloud user found, sync-init');
+
+    let languageFromCloud: string | undefined;
+    let shouldReload = false;
+
+    try {
+      const body = await cloudSettingsService.buildSyncInitBody();
+      const result = await cloudSettingsService.syncInit(body);
+
+      if (result) {
+        const rev = result.server?.settings_revision;
+        const at = result.server?.settings_updated_at ?? null;
+
+        switch (result.status) {
+          case 'no_remote_settings': {
+            if (typeof rev === 'number' && Number.isFinite(rev)) {
+              await persistCloudSettingsServerMeta(rev, at);
+              sessionStorage.setItem('settings_last_synced_hash', `rev:${rev}`);
+            }
+            break;
+          }
+          case 'up_to_date': {
+            if (typeof rev === 'number' && Number.isFinite(rev)) {
+              await persistCloudSettingsServerMeta(rev, at);
+              sessionStorage.setItem('settings_last_synced_hash', `rev:${rev}`);
+            }
+            break;
+          }
+          case 'client_ahead': {
+            logger.info('layoutCloud', 'runCloudSettingsStartupSync', 'client_ahead — uploading');
+            await pushFullCloudSettingsSync();
+            break;
+          }
+          case 'server_has_newer': {
+            if (result.settings && typeof result.settings === 'object' && typeof rev === 'number') {
+              await invoke('save_settings_merge', {
+                patch: {
+                  ...result.settings,
+                  cloud_settings_server_revision: rev,
+                  cloud_settings_server_updated_at: at,
+                },
+              });
+              languageFromCloud =
+                typeof result.settings.language === 'string' ? result.settings.language : undefined;
+              sessionStorage.setItem('settings_last_synced_hash', `rev:${rev}`);
+              shouldReload = true;
+            } else {
+              logger.warn(
+                'layoutCloud',
+                'runCloudSettingsStartupSync',
+                'server_has_newer without settings payload',
+              );
+            }
+            break;
+          }
+          default:
+            logger.warn('layoutCloud', 'runCloudSettingsStartupSync', 'Unknown sync-init status', {
+              status: (result as { status?: string }).status,
+            });
+        }
+      }
+    } catch (e) {
+      logger.warn('layoutCloud', 'runCloudSettingsStartupSync', 'sync-init failed, GET fallback', {
+        error: e,
+      });
+      const settings = await cloudSettingsService.getSettings();
+      if (settings) {
+        await invoke('save_settings_merge', { patch: settings });
+        languageFromCloud = typeof settings.language === 'string' ? settings.language : undefined;
+      }
+    }
+
+    if (shouldReload) {
+      logger.info('layoutCloud', 'runCloudSettingsStartupSync', 'Applied newer cloud settings, reloading');
+      scheduleReloadForCloudSettings();
+      return;
+    }
 
     await Promise.all([
       loadAccentColor(),
@@ -172,11 +144,8 @@ export async function syncCloudSettings(options: {
         await syncCloudPfpToLocal();
       })(),
       (async () => {
-        if (
-          typeof settings.language === 'string' &&
-          settings.language !== get(locale)
-        ) {
-          locale.set(settings.language);
+        if (languageFromCloud && languageFromCloud !== get(locale)) {
+          locale.set(languageFromCloud);
         }
       })(),
       options.loadWeatherSettings(),
@@ -184,6 +153,37 @@ export async function syncCloudSettings(options: {
       options.reloadSidebarSettings(),
     ]);
   } catch (e) {
-    logger.error('layoutCloud', 'syncCloudSettings', 'Failed to sync cloud settings', { error: e });
+    logger.error('layoutCloud', 'runCloudSettingsStartupSync', 'Failed', { error: e });
+  }
+}
+
+/** @deprecated Prefer `runCloudSettingsStartupSync` — kept for call-site compatibility. */
+export async function syncCloudSettings(options: {
+  loadWeatherSettings: () => Promise<void>;
+  loadEnhancedAnimationsSetting: () => Promise<void>;
+  reloadSidebarSettings: () => Promise<void>;
+}): Promise<void> {
+  return runCloudSettingsStartupSync(options);
+}
+
+/**
+ * Check if user was previously signed into cloud but is now signed out (e.g. token expired).
+ * If so, show a toast and clear the flag.
+ */
+export async function checkCloudSignOutAlert(): Promise<void> {
+  try {
+    const cloudUser = await cloudAuthService.getUser();
+    if (cloudUser) return;
+
+    const state = await invoke<{ previously_signed_into_cloud: boolean }>('get_cloud_state');
+    if (!state?.previously_signed_into_cloud) return;
+
+    const { toastStore } = await import('$lib/stores/toast');
+    toastStore.warning(
+      'You have been signed out of BetterSEQTA Plus. Sign in again in Settings to sync your data.',
+    );
+    await invoke('set_cloud_state_previously_signed', { value: false });
+  } catch (e) {
+    logger.debug('layoutCloud', 'checkCloudSignOutAlert', 'Check failed (non-critical)', { error: e });
   }
 }
