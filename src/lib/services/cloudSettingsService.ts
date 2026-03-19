@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { cloudAuthService } from './cloudAuthService';
+import { logger } from '../../utils/logger';
 
 const API_URL = 'https://accounts.betterseqta.org';
 
@@ -54,6 +55,11 @@ async function apiRequest<T>(
     } catch {
       throw new Error('Session expired');
     }
+  }
+
+  if (response.status === 401) {
+    await cloudAuthService.invalidateCloudSessionAfterAuthError();
+    throw new Error('Session expired');
   }
 
   if (!response.ok) throw new Error(`Request failed: ${response.status}`);
@@ -133,7 +139,12 @@ export const cloudSettingsService = {
       });
       return data;
     } catch (e) {
-      console.error('Error fetching settings:', e);
+      const msg = e instanceof Error ? e.message : '';
+      if (msg === 'Session expired') {
+        logger.debug('cloudSettingsService', 'getSettings', 'Session expired');
+      } else {
+        logger.debug('cloudSettingsService', 'getSettings', 'Request failed', { error: e });
+      }
       return null;
     }
   },
@@ -173,6 +184,11 @@ export const cloudSettingsService = {
       } catch {
         throw new Error('Session expired');
       }
+    }
+
+    if (response.status === 401) {
+      await cloudAuthService.invalidateCloudSessionAfterAuthError();
+      throw new Error('Session expired');
     }
 
     if (!response.ok) {
@@ -243,10 +259,15 @@ export const cloudSettingsService = {
         body: JSON.stringify(settings),
       });
       const normalized = await normalizePostSettingsResponse(raw);
-      console.log('Settings synced successfully');
+      logger.debug('cloudSettingsService', 'syncSettings', 'Settings synced successfully');
       return normalized;
     } catch (e) {
-      console.error('Sync failed:', e);
+      const msg = e instanceof Error ? e.message : '';
+      if (msg === 'Session expired') {
+        logger.debug('cloudSettingsService', 'syncSettings', 'Session expired');
+      } else {
+        logger.warn('cloudSettingsService', 'syncSettings', 'Sync failed', { error: e });
+      }
       throw e;
     }
   },

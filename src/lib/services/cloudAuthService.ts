@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { checkCloudSignOutAlert } from './cloudSignOutAlertService';
 
 const API_URL = 'https://accounts.betterseqta.org';
 const DESQTA_REDIRECT_URI = 'desqta://auth/callback';
@@ -193,6 +194,20 @@ export const cloudAuthService = {
   },
 
   /**
+   * Clears tokens after accounts rejected them (401 / refresh failed).
+   * Keeps `previously_signed_into_cloud` so `checkCloudSignOutAlert` can show the re-sign-in toast.
+   */
+  async invalidateCloudSessionAfterAuthError(): Promise<void> {
+    try {
+      await invoke('clear_expired_cloud_session');
+    } catch {
+      /* ignore disk errors */
+    }
+    cloudUserStore.set(null);
+    await checkCloudSignOutAlert();
+  },
+
+  /**
    * Gets the stored access token for the current profile.
    */
   async getToken(): Promise<string | null> {
@@ -232,7 +247,10 @@ export const cloudAuthService = {
    */
   async refresh(): Promise<string> {
     const refreshToken = await this.getRefreshToken();
-    if (!refreshToken) throw new Error('No refresh token');
+    if (!refreshToken) {
+      await this.invalidateCloudSessionAfterAuthError();
+      throw new Error('No refresh token');
+    }
 
     const doRefresh = async (clientId: string) => {
       const res = await fetch(`${API_URL}/api/desqta/refresh`, {
@@ -262,7 +280,7 @@ export const cloudAuthService = {
     }
 
     if (!result.ok) {
-      await this.logout();
+      await this.invalidateCloudSessionAfterAuthError();
       throw new Error(result.errMsg);
     }
 

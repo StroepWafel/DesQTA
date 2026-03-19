@@ -960,6 +960,12 @@ pub fn clear_cloud_token() -> Result<(), String> {
     Ok(())
 }
 
+/// Remove cloud tokens only (401 / refresh failure). Keeps `previously_signed_into_cloud` so the UI can toast "signed out".
+#[tauri::command]
+pub fn clear_expired_cloud_session() -> Result<(), String> {
+    CloudToken::clear_file().map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub fn get_cloud_state() -> CloudState {
     CloudState::load()

@@ -69,10 +69,15 @@ async function autoSyncToCloud(patch: Record<string, unknown>): Promise<void> {
 
       const settingsToSync = { ...currentSettings, ...patch };
       await cloudSettingsService.syncSettings(settingsToSync);
-      console.log('Auto-synced settings to cloud');
+      logger.debug('settingsSync', 'autoSyncToCloud', 'Auto-synced settings to cloud');
     }
   } catch (e) {
-    console.error('Failed to auto-sync to cloud:', e);
+    const msg = e instanceof Error ? e.message : '';
+    if (msg === 'Session expired') {
+      logger.debug('settingsSync', 'autoSyncToCloud', 'Cloud session expired (signed out)');
+    } else {
+      logger.debug('settingsSync', 'autoSyncToCloud', 'Auto-sync failed', { error: e });
+    }
   }
 }
 
