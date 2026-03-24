@@ -310,6 +310,21 @@ pub fn run() {
                             }
                         }
                     });
+                } else if url.starts_with("seqtalearn://") {
+                    // SEQTA mobile SSO link (same as mobile deep link)
+                    println!("[Desqta] Processing SEQTA Learn SSO deeplink (desktop): {}", url);
+                    let app_handle = app.app_handle().clone();
+                    let url_clone = url.clone();
+                    tauri::async_runtime::spawn(async move {
+                        match login::create_login_window(app_handle, url_clone).await {
+                            Ok(_) => {
+                                println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink");
+                            }
+                            Err(e) => {
+                                eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e);
+                            }
+                        }
+                    });
                 } else if url.starts_with("desqta://auth") {
                     // Extract cookie and URL from the deep link (legacy SEQTA auth)
                     let mut cookie = None;
@@ -667,7 +682,7 @@ pub fn run() {
                 eprintln!("Failed to initialize database: {}", e);
             }
 
-            // On desktop: check if app was launched via desqta:// deep link (first launch)
+            // On desktop: check if app was launched via deep link (first launch, before single-instance)
             #[cfg(desktop)]
             {
                 if let Ok(Some(urls)) = app.deep_link().get_current() {
@@ -680,6 +695,17 @@ pub fn run() {
                                 match login::create_login_window(app_handle, url_str).await {
                                     Ok(_) => println!("[Desqta] Successfully processed DesQTA connect deeplink"),
                                     Err(e) => eprintln!("[Desqta] Failed to process DesQTA connect deeplink: {}", e),
+                                }
+                            });
+                            break;
+                        }
+                        if url_str.starts_with("seqtalearn://") {
+                            println!("[Desqta] Processing SEQTA Learn SSO deeplink from first launch: {}", url_str);
+                            let app_handle = app.app_handle().clone();
+                            tauri::async_runtime::spawn(async move {
+                                match login::create_login_window(app_handle, url_str).await {
+                                    Ok(_) => println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink"),
+                                    Err(e) => eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e),
                                 }
                             });
                             break;
