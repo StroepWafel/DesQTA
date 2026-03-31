@@ -76,9 +76,22 @@
   import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
+  import { browser } from '$app/environment';
+  import { isDevTauriPerformance } from '$lib/performance/devTauriContext';
+  import {
+    installDevTauriPerformanceRuntime,
+    teardownDevTauriPerformanceRuntime,
+  } from '$lib/performance/devTauriRuntime';
+  import DevPerfHud from '$lib/components/dev/DevPerfHud.svelte';
+  import PerformanceTestMegaSuiteOverlay from '$lib/components/dev/PerformanceTestMegaSuiteOverlay.svelte';
   export const needsSetup = writable(false);
 
   let { children } = $props();
+
+  // Must run synchronously during layout init: Kit's beforeNavigate/afterNavigate use onMount internally.
+  if (browser && isDevTauriPerformance()) {
+    installDevTauriPerformanceRuntime();
+  }
 
   // Core state
   let seqtaUrl = $state<string>('');
@@ -194,6 +207,9 @@
     window.removeEventListener('redo-onboarding', handleRedoOnboarding);
     if (unlistenShowWhatsNew) {
       window.removeEventListener('show-whats-new', unlistenShowWhatsNew);
+    }
+    if (browser && isDevTauriPerformance()) {
+      teardownDevTauriPerformanceRuntime();
     }
   });
 
@@ -614,6 +630,10 @@
       }
     } finally {
       contentLoading = false;
+      if (import.meta.env.DEV && import.meta.env.TAURI_ENV_PLATFORM) {
+        const { recordStartupPhase } = await import('$lib/performance/hooks');
+        recordStartupPhase('shell_ready');
+      }
     }
   });
 
@@ -1045,3 +1065,5 @@
     }
   }} />
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />
+<DevPerfHud />
+<PerformanceTestMegaSuiteOverlay />

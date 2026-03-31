@@ -76,12 +76,10 @@
           body: {},
         });
 
-        const parsed: PortalsResponse & { status?: string | number } =
-          typeof response === 'string' ? JSON.parse(response) : response;
+        const parsed: PortalsResponse = typeof response === 'string' ? JSON.parse(response) : response;
 
         const payload = parsed.payload;
-        const okStatus =
-          parsed.status === '200' || parsed.status === 200 || parsed.status === 'ok';
+        const okStatus = parsed.status === 'ok' || Number(parsed.status) === 200;
         if (payload && Array.isArray(payload) && (okStatus || !parsed.status)) {
           return payload.sort((a, b) => a.priority - b.priority);
         }

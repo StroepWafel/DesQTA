@@ -1,11 +1,15 @@
 use super::netgrab;
 use super::netgrab::RequestMethod;
 use crate::logger;
+use futures::stream::{self, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 
 const STUDENT_ID: i32 = 69;
+
+/// Concurrent past-assessment requests (matches study page; avoids SEQTA overload vs join_all).
+const PAST_ASSESSMENT_FETCH_CONCURRENCY: usize = 6;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Subject {
@@ -405,16 +409,44 @@ pub async fn get_processed_assessments() -> Result<ProcessedAssessmentsResponse,
         filters.insert(subject.code.clone(), is_active);
     }
 
-    // Step 3: Fetch upcoming assessments
-    let upcoming_assessments = fetch_upcoming_assessments().await?;
-
-    // Step 4: Fetch past assessments for all subjects in parallel
-    let mut past_futures = Vec::new();
-    for subject in &all_subjects {
-        past_futures.push(fetch_past_assessments(subject.programme, subject.metaclass));
+    // Maps for Step 6: avoid O(n²) scans of colours/subjects per assessment
+    let mut colour_by_code: HashMap<String, String> = HashMap::new();
+    for c in &colours {
+        let Some(name) = c.get("name").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let Some(value) = c.get("value").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        if let Some(code) = name.strip_prefix("timetable.subject.colour.") {
+            colour_by_code
+                .entry(code.to_string())
+                .or_insert_with(|| value.to_string());
+        }
+    }
+    let mut metaclass_by_code: HashMap<String, i32> = HashMap::new();
+    for s in &all_subjects {
+        metaclass_by_code
+            .entry(s.code.clone())
+            .or_insert(s.metaclass);
     }
 
-    let past_results = futures::future::join_all(past_futures).await;
+    // Step 3–4: Upcoming + past together; past uses bounded concurrency
+    let past_pairs: Vec<(i32, i32)> = all_subjects
+        .iter()
+        .map(|s| (s.programme, s.metaclass))
+        .collect();
+
+    let (upcoming_assessments, past_results) = tokio::join!(
+        fetch_upcoming_assessments(),
+        stream::iter(past_pairs.into_iter().map(|(programme, metaclass)| {
+            fetch_past_assessments(programme, metaclass)
+        }))
+        .buffer_unordered(PAST_ASSESSMENT_FETCH_CONCURRENCY)
+        .collect::<Vec<Result<Vec<Value>, String>>>()
+    );
+
+    let upcoming_assessments = upcoming_assessments?;
     let past_assessments: Vec<Value> = past_results
         .into_iter()
         .filter_map(|r| r.ok())
@@ -437,81 +469,72 @@ pub async fn get_processed_assessments() -> Result<ProcessedAssessmentsResponse,
     }
 
     // Step 6: Process assessments - add colours and metaclass
-    let mut processed_assessments: Vec<Assessment> = Vec::new();
+    // Performance notes:
+    // - Move JSON object into `extra_map` (no cloning of every value).
+    // - Precompute the due-date "YYYY-MM-DD" key once so sorting doesn't repeatedly split.
+    let mut processed_with_due_key: Vec<(String, Assessment)> = Vec::new();
     for (_, assessment_value) in unique_assessments_map {
-        let assessment_obj = assessment_value.as_object().cloned().unwrap_or_default();
+        let extra_map: HashMap<String, Value> = match assessment_value {
+            Value::Object(map) => map.into_iter().collect(),
+            _ => continue,
+        };
 
-        // Get assessment code
-        let code = assessment_obj
+        let code = extra_map
             .get("code")
             .and_then(|v| v.as_str())
             .unwrap_or("")
             .to_string();
 
-        // Find colour from preferences
-        let pref_name = format!("timetable.subject.colour.{}", code);
-        let colour = colours
-            .iter()
-            .find(|c| c.get("name").and_then(|v| v.as_str()) == Some(&pref_name))
-            .and_then(|c| c.get("value").and_then(|v| v.as_str()))
-            .unwrap_or("#8e8e8e")
+        let colour = colour_by_code
+            .get(&code)
+            .cloned()
+            .unwrap_or_else(|| "#8e8e8e".to_string());
+
+        let metaclass = metaclass_by_code.get(&code).copied();
+
+        let id = extra_map
+            .get("id")
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0) as i32;
+
+        let title = extra_map
+            .get("title")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
             .to_string();
 
-        // Get metaclass from subject
-        let metaclass = all_subjects
-            .iter()
-            .find(|s| s.code == code)
-            .map(|s| s.metaclass);
+        let due = extra_map
+            .get("due")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
 
-        // Build assessment struct
-        let extra_map: HashMap<String, Value> = assessment_obj
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
+        let due_key = due
+            .split('T')
+            .next()
+            .or_else(|| due.split(' ').next())
+            .unwrap_or(&due)
+            .to_string();
 
         let assessment = Assessment {
-            id: assessment_obj
-                .get("id")
-                .and_then(|v| v.as_i64())
-                .unwrap_or(0) as i32,
-            code: code.clone(),
-            title: assessment_obj
-                .get("title")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .to_string(),
-            due: assessment_obj
-                .get("due")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .to_string(),
+            id,
+            code,
+            title,
+            due,
             colour,
             metaclass,
             extra: extra_map,
         };
 
-        processed_assessments.push(assessment);
+        processed_with_due_key.push((due_key, assessment));
     }
 
     // Step 7: Sort by due date (descending)
-    processed_assessments.sort_by(|a, b| {
-        // Parse dates - format is typically "YYYY-MM-DDTHH:mm:ss" or "YYYY-MM-DD HH:mm:ss"
-        // Extract date part and compare as strings (ISO format sorts correctly)
-        let date_a_str =
-            if let Some(date_part) = a.due.split('T').next().or_else(|| a.due.split(' ').next()) {
-                date_part
-            } else {
-                &a.due
-            };
-        let date_b_str =
-            if let Some(date_part) = b.due.split('T').next().or_else(|| b.due.split(' ').next()) {
-                date_part
-            } else {
-                &b.due
-            };
-        // Compare dates (ISO format YYYY-MM-DD sorts correctly as strings)
-        date_b_str.cmp(date_a_str)
-    });
+    processed_with_due_key.sort_by(|a, b| b.0.cmp(&a.0));
+    let processed_assessments: Vec<Assessment> = processed_with_due_key
+        .into_iter()
+        .map(|(_, assessment)| assessment)
+        .collect();
 
     // Step 8: Extract years
     let mut years_set: HashSet<i32> = HashSet::new();

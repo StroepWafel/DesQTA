@@ -7,6 +7,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { cache } from '../../utils/cache';
+import { devTimeAsync } from '$lib/performance/devPerfHelpers';
 import { logger } from '../../utils/logger';
 import { idbCacheGet } from '../services/idb';
 import { isOfflineMode } from '../utils/offlineMode';
@@ -279,59 +280,61 @@ async function checkForUpdatesOnStartup(): Promise<void> {
  * @param devMockEnabled - When true, clear all caches first to prevent stale real data from being shown
  */
 export async function initializeApp(needsSetup = false, devMockEnabled = false): Promise<void> {
-  // When mock mode is on, clear all caches so we don't serve stale real data
-  if (devMockEnabled) {
-    try {
-      const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
-      await clearAllCachesForMockMode();
-      logger.info('startup', 'initializeApp', 'Cleared all caches for mock mode');
-    } catch (e) {
-      logger.warn('startup', 'initializeApp', 'Failed to clear caches for mock mode', { error: e });
+  await devTimeAsync('startup_initializeApp', 'startup', 'initializeApp', async () => {
+    // When mock mode is on, clear all caches so we don't serve stale real data
+    if (devMockEnabled) {
+      try {
+        const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
+        await clearAllCachesForMockMode();
+        logger.info('startup', 'initializeApp', 'Cleared all caches for mock mode');
+      } catch (e) {
+        logger.warn('startup', 'initializeApp', 'Failed to clear caches for mock mode', { error: e });
+      }
     }
-  }
 
-  // Step 1: Load cached data from SQLite immediately (blocks until loaded)
-  await loadCachedDataOnStartup();
+    // Step 1: Load cached data from SQLite immediately (blocks until loaded)
+    await loadCachedDataOnStartup();
 
-  // Step 2: Initialize notification system
-  try {
-    // Migrate localStorage data to database (one-time)
-    await notificationService.migrateLocalStorageData();
+    // Step 2: Initialize notification system
+    try {
+      // Migrate localStorage data to database (one-time)
+      await notificationService.migrateLocalStorageData();
 
-    // Start background notification checker
-    notificationService.startBackgroundChecker();
+      // Start background notification checker
+      notificationService.startBackgroundChecker();
 
-    // Run initial notification check
-    notificationService.checkAndSendDueNotifications().catch((e) => {
-      logger.error('startup', 'initializeApp', 'Initial notification check failed', { error: e });
-    });
+      // Run initial notification check
+      notificationService.checkAndSendDueNotifications().catch((e) => {
+        logger.error('startup', 'initializeApp', 'Initial notification check failed', { error: e });
+      });
 
-    // Cleanup old notifications (keep last 30 days)
-    notificationService.cleanupOldNotifications(30).catch((e) => {
-      logger.debug('startup', 'initializeApp', 'Notification cleanup error (non-critical)', {
+      // Cleanup old notifications (keep last 30 days)
+      notificationService.cleanupOldNotifications(30).catch((e) => {
+        logger.debug('startup', 'initializeApp', 'Notification cleanup error (non-critical)', {
+          error: e,
+        });
+      });
+    } catch (e) {
+      logger.error('startup', 'initializeApp', 'Failed to initialize notification system', {
         error: e,
       });
+    }
+
+    // Step 3: Trigger background sync (non-blocking) - skip when on login screen to avoid session race
+    if (!needsSetup) {
+      triggerBackgroundSync();
+    } else {
+      logger.debug('startup', 'initializeApp', 'Skipping background sync (user on login screen)');
+    }
+
+    // Step 5: Download theme store images in background (non-blocking)
+    downloadThemeStoreImages().catch((e) => {
+      logger.debug('startup', 'initializeApp', 'Theme image download error (non-critical)', { error: e });
     });
-  } catch (e) {
-    logger.error('startup', 'initializeApp', 'Failed to initialize notification system', {
-      error: e,
+
+    // Step 6: Check for updates silently in background (non-blocking, desktop only)
+    checkForUpdatesOnStartup().catch((e) => {
+      logger.debug('startup', 'initializeApp', 'Update check error (non-critical)', { error: e });
     });
-  }
-
-  // Step 3: Trigger background sync (non-blocking) - skip when on login screen to avoid session race
-  if (!needsSetup) {
-    triggerBackgroundSync();
-  } else {
-    logger.debug('startup', 'initializeApp', 'Skipping background sync (user on login screen)');
-  }
-
-  // Step 5: Download theme store images in background (non-blocking)
-  downloadThemeStoreImages().catch((e) => {
-    logger.debug('startup', 'initializeApp', 'Theme image download error (non-critical)', { error: e });
-  });
-
-  // Step 6: Check for updates silently in background (non-blocking, desktop only)
-  checkForUpdatesOnStartup().catch((e) => {
-    logger.debug('startup', 'initializeApp', 'Update check error (non-critical)', { error: e });
   });
 }

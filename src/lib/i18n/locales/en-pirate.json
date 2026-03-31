@@ -935,7 +935,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Runnin' th' benchmark rigging",
+    "mega_suite_overlay_body": "Ye crawled th' pages. Now synthetic checks be sailin'—often half a glass to a glass an' a half o' rum (30–90s). Hold fast; th' treasure map opens when it be done."
   },
   "plugins": {
     "installed_title": "Plugin Installed",

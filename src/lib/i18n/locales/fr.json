@@ -973,7 +973,9 @@
     "avg_gpu": "GPU Moyen",
     "errors_count": "{count} erreurs",
     "warnings_count": "{count} avertissements",
-    "no_issues": "Aucun problème"
+    "no_issues": "Aucun problème",
+    "mega_suite_overlay_title": "Exécution de la suite de benchmarks",
+    "mega_suite_overlay_body": "Le parcours des pages est terminé. Les vérifications synthétiques (démarrage, UI, données, backend) sont en cours—souvent 30 à 90 secondes. Veuillez patienter ; les résultats s’ouvriront ensuite."
   },
   "plugins": {
     "installed_title": "Extension Installée",

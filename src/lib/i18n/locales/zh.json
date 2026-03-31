@@ -970,7 +970,9 @@
     "avg_gpu": "平均GPU",
     "errors_count": "{count} 个错误",
     "warnings_count": "{count} 个警告",
-    "no_issues": "无问题"
+    "no_issues": "无问题",
+    "mega_suite_overlay_title": "正在运行基准测试套件",
+    "mega_suite_overlay_body": "页面遍历已完成。正在运行合成检查（启动、界面、数据、后端），通常需要 30–90 秒。请稍候；完成后将打开结果。"
   },
   "plugins": {
     "installed_title": "插件已安装",

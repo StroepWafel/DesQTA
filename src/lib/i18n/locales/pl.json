@@ -1022,7 +1022,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Uruchamianie pakietu benchmarków",
+    "mega_suite_overlay_body": "Crawlowanie stron zakończone. Trwają syntetyczne testy (start, UI, dane, backend)—zwykle 30–90 sekund. Proszę czekać; wyniki otworzą się po zakończeniu."
   },
   "plugins": {
     "installed_title": "Wtyczka Zainstalowana",

@@ -1,4 +1,4 @@
-import { Node } from '@tiptap/core';
+import { Node, type NodeViewRendererProps } from '@tiptap/core';
 import { createIconSVG } from '../utils/iconUtils';
 import { logger } from '../../../../utils/logger';
 import {
@@ -144,7 +144,8 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
   },
 
   addNodeView() {
-    return ({ node, getPos, editor }: { node: any; getPos?: () => number; editor?: any }) => {
+    return (props: NodeViewRendererProps) => {
+      const { node, getPos, editor } = props;
       const container = document.createElement('div');
       container.className =
         'seqta-content-block-card relative group p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-800/50 dark:to-zinc-900/50 shadow-md hover:shadow-lg transition-all duration-200 my-4';

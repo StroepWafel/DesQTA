@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { openPath } from '@tauri-apps/plugin-opener';
   import {
     accentColor,
     loadAccentColor,
@@ -1052,8 +1053,9 @@ The Company reserves the right to terminate your access to the Service at any ti
 
   async function openPerformanceTestsFolder() {
     try {
-      const performanceDir = await invoke('get_performance_tests_directory');
-      await invoke('open_url', { url: `file://${performanceDir}` });
+      const performanceDir = await invoke<string>('get_performance_tests_directory');
+      // Use system file manager — `open_url` is for SEQTA login webviews, not file:// paths.
+      await openPath(performanceDir);
 
       toastStore.success('Performance tests folder opened');
     } catch (error) {

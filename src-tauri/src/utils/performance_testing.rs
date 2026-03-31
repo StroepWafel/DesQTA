@@ -86,6 +86,9 @@ pub struct TestResults {
     pub summary: TestSummary,
     pub timestamp: String,
     pub version: String,
+    /// Optional dev/Tauri in-app metrics + synthetic benchmark attachment (frontend-defined shape).
+    #[serde(rename = "megaPerf")]
+    pub mega_perf: Option<serde_json::Value>,
 }
 
 fn get_performance_tests_dir(app: &AppHandle) -> Result<PathBuf, String> {

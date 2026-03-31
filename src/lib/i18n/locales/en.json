@@ -1117,7 +1117,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Running benchmark suite",
+    "mega_suite_overlay_body": "The page crawl is done. Synthetic startup, UI, data, and backend checks are running—this often takes 30–90 seconds. Please wait; the results will open when everything finishes."
   },
   "plugins": {
     "installed_title": "Plugin Installed",

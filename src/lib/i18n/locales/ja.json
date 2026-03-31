@@ -987,7 +987,9 @@
     "avg_gpu": "平均GPU",
     "errors_count": "{count}個のエラー",
     "warnings_count": "{count}個の警告",
-    "no_issues": "問題なし"
+    "no_issues": "問題なし",
+    "mega_suite_overlay_title": "ベンチマークを実行中",
+    "mega_suite_overlay_body": "ページ巡回は完了しました。起動・UI・データ・バックエンドの合成チェックを実行中です。通常30〜90秒かかります。完了までお待ちください。終了後に結果が開きます。"
   },
   "plugins": {
     "installed_title": "プラグインがインストールされました",

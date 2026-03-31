@@ -29,6 +29,8 @@
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import { checkAndCalculateNewGrades } from '$lib/services/backgroundGradeService';
   import { notificationService } from '$lib/services/notificationService';
+  import { invokeGetProcessedAssessments } from '$lib/services/processedAssessmentsInvoke';
+  import { shouldRefreshProcessedAssessments } from '$lib/services/processedAssessmentsInvoke';
 
   // Types
   import type { Assessment, Subject, LessonColour, AssessmentsOverviewData } from '$lib/types';
@@ -92,13 +94,7 @@
       context: 'assessments',
       functionName: 'loadAssessments',
       fetcher: async () => {
-        const result = await invoke<{
-          assessments: Assessment[];
-          subjects: Subject[];
-          all_subjects: Subject[];
-          filters: Record<string, boolean>;
-          years: number[];
-        }>('get_processed_assessments');
+        const result = await invokeGetProcessedAssessments();
 
         return {
           assessments: result.assessments,
@@ -121,7 +117,9 @@
           logger.error('assessments', '+page', 'Background grade check failed', { error: e });
         });
       },
-      shouldSyncInBackground: () => true, // Always sync if online - subjects are critical
+      // Avoid re-running the heavy `get_processed_assessments` immediately if warmup/page/search
+      // already completed very recently. This targets the bg metric cost shown in your report.
+      shouldSyncInBackground: () => shouldRefreshProcessedAssessments(10 * 60 * 1000),
       updateOnBackgroundSync: true, // Update UI when fresh data arrives
     });
 

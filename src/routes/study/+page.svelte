@@ -181,6 +181,34 @@
     cache.set('lesson_colours_map', subjectColours, 10 * 60 * 1000);
   }
 
+  /** Limits parallel SEQTA calls so Study does not open dozens of sockets at once. */
+  const PAST_ASSESSMENT_FETCH_CONCURRENCY = 5;
+
+  async function fetchPastTasksForSubjects(
+    subjectList: SubjectItem[],
+    studentId: number,
+  ): Promise<any[]> {
+    if (subjectList.length === 0) return [];
+    const buckets: any[][] = new Array(subjectList.length);
+    let next = 0;
+    async function worker() {
+      while (true) {
+        const i = next++;
+        if (i >= subjectList.length) break;
+        const s = subjectList[i];
+        const res = await seqtaFetch('/seqta/student/assessment/list/past?', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: { programme: s.programme, metaclass: s.metaclass, student: studentId },
+        });
+        buckets[i] = JSON.parse(res).payload.tasks || [];
+      }
+    }
+    const pool = Math.min(PAST_ASSESSMENT_FETCH_CONCURRENCY, subjectList.length);
+    await Promise.all(Array.from({ length: pool }, () => worker()));
+    return buckets.flat();
+  }
+
   async function loadAllAssessments() {
     // Check cache
     const cached = cache.get<FullAssessment[]>('seqta_all_assessments_flat');
@@ -201,16 +229,7 @@
     // load subjects list if not loaded for past requests
     if (!subjects.length) await loadSubjectsAndColours();
 
-    // past per subject
-    const pastPromises = subjects.map((s) =>
-      seqtaFetch('/seqta/student/assessment/list/past?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: { programme: s.programme, metaclass: s.metaclass, student: studentId },
-      }),
-    );
-    const pastResponses = await Promise.all(pastPromises);
-    const past = pastResponses.map((res) => JSON.parse(res).payload.tasks || []).flat();
+    const past = await fetchPastTasksForSubjects(subjects, studentId);
 
     // combine + dedupe by id, enrich with colours
     const allCombined = [...upcoming, ...past];
@@ -635,11 +654,14 @@
   }
   onMount(async () => {
     currentStudyTip = getRandomStudyTip();
-    await Promise.all([
-      loadTodos(),
-      loadUpcomingAssessments(),
-      loadSubjectsAndColours().then(loadAllAssessments),
-    ]);
+    await Promise.all([loadTodos(), loadUpcomingAssessments(), loadSubjectsAndColours()]);
+    const runHeavyAssessments = () =>
+      loadAllAssessments().catch((e) => console.error('loadAllAssessments', e));
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(runHeavyAssessments, { timeout: 2500 });
+    } else {
+      setTimeout(runHeavyAssessments, 0);
+    }
   });
 </script>
 

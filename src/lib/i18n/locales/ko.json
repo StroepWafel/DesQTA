@@ -1022,7 +1022,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "문제 없음"
+    "no_issues": "문제 없음",
+    "mega_suite_overlay_title": "벤치마크 실행 중",
+    "mega_suite_overlay_body": "페이지 크롤이 끝났습니다. 합성 검사(시작, UI, 데이터, 백엔드)가 진행 중이며 보통 30~90초 걸립니다. 완료될 때까지 기다려 주세요. 이후 결과 화면이 열립니다."
   },
   "plugins": {
     "installed_title": "플러그인 설치됨",

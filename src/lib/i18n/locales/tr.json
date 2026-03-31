@@ -1039,7 +1039,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Kıyaslama paketi çalışıyor",
+    "mega_suite_overlay_body": "Sayfa taraması bitti. Sentetik kontroller (açılış, arayüz, veri, arka uç) çalışıyor—genelde 30–90 saniye sürer. Lütfen bekleyin; bittiğinde sonuçlar açılacak."
   },
   "plugins": {
     "installed_title": "Eklenti Yüklendi",

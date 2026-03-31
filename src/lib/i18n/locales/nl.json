@@ -1022,7 +1022,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Benchmarksuite wordt uitgevoerd",
+    "mega_suite_overlay_body": "Het doorlopen van de pagina’s is klaar. Synthetische controles (opstart, UI, data, backend) duren—vaak 30–90 seconden. Even geduld; de resultaten openen daarna."
   },
   "plugins": {
     "installed_title": "Plugin Geïnstalleerd",

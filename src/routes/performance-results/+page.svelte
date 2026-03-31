@@ -18,6 +18,7 @@
   import * as Card from '$lib/components/ui/card/index.js';
   import { Button } from '$lib/components/ui';
   import PerformanceLineChart from '../../lib/components/performance/PerformanceLineChart.svelte';
+  import MegaPerfPanel from '../../lib/components/performance/MegaPerfPanel.svelte';
   import PerformanceGraph from '../../lib/components/PerformanceGraph.svelte';
   import T from '../../lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
@@ -333,6 +334,10 @@
         {/if}
       {/key}
     </div>
+
+    {#if results.megaPerf}
+      <MegaPerfPanel mega={results.megaPerf} />
+    {/if}
 
     <!-- Performance Charts -->
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" in:fade={{ duration: 400, delay: 100 }}>

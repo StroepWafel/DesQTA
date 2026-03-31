@@ -30,6 +30,24 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-desktop-${{ hashFiles('src-tauri/Cargo.lock') }}
+          shared-key: 'tauri-desktop'
+          cache-directories: |
+            src-tauri/target
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/pnpm/store
+            ${{ github.workspace }}/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
       - name: Install Linux dependencies (Ubuntu only)
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -109,6 +127,21 @@ jobs:
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-ios-${{ hashFiles('src-tauri/Cargo.lock') }}
+          shared-key: 'tauri-ios'
+          cache-directories: |
+            src-tauri/target
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/pnpm/store
+            ${{ github.workspace }}/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli
@@ -216,6 +249,44 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-android-${{ hashFiles('src-tauri/Cargo.lock') }}
+          shared-key: 'tauri-android'
+          cache-targets: false
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/pnpm/store
+            ${{ github.workspace }}/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Cache Android NDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.ANDROID_NDK_HOME }}
+            ${{ env.ANDROID_HOME }}/ndk
+          key: ${{ runner.os }}-android-ndk-${{ env.NDK_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-android-ndk-
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ${{ github.workspace }}/src-tauri/gen/android/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('src-tauri/gen/android/build.gradle*', 'src-tauri/gen/android/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Install Rust Android targets
         run: |

@@ -970,7 +970,9 @@
     "avg_gpu": "GPU Promedio",
     "errors_count": "{count} errores",
     "warnings_count": "{count} advertencias",
-    "no_issues": "Sin problemas"
+    "no_issues": "Sin problemas",
+    "mega_suite_overlay_title": "Ejecutando suite de pruebas",
+    "mega_suite_overlay_body": "El recorrido de páginas terminó. Las comprobaciones sintéticas (inicio, UI, datos, backend) están en curso—suele tardar 30–90 segundos. Espere; los resultados se abrirán al terminar."
   },
   "plugins": {
     "installed_title": "Complemento Instalado",

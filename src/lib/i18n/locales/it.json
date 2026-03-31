@@ -1027,7 +1027,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Esecuzione suite di benchmark",
+    "mega_suite_overlay_body": "La scansione delle pagine è completata. I controlli sintetici (avvio, UI, dati, backend) sono in esecuzione—spesso 30–90 secondi. Attendere; i risultati si apriranno al termine."
   },
   "plugins": {
     "installed_title": "Plugin Installato",

@@ -970,7 +970,9 @@
     "avg_gpu": "Durchschnittliche GPU",
     "errors_count": "{count} Fehler",
     "warnings_count": "{count} Warnungen",
-    "no_issues": "Keine Probleme"
+    "no_issues": "Keine Probleme",
+    "mega_suite_overlay_title": "Benchmark-Suite wird ausgeführt",
+    "mega_suite_overlay_body": "Der Seiten-Crawl ist fertig. Synthetische Tests (Startup, UI, Daten, Backend) laufen—oft 30–90 Sekunden. Bitte warten; die Ergebnisse öffnen sich danach."
   },
   "plugins": {
     "installed_title": "Plugin Installiert",

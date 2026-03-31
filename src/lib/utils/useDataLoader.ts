@@ -1,7 +1,11 @@
 import { cache } from '../../utils/cache';
 import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
 import { logger } from '../../utils/logger';
+import { devTimeAsync } from '$lib/performance/devPerfHelpers';
 import { isOfflineMode } from './offlineMode';
+
+// Avoid spinning up multiple identical background sync jobs for the same cacheKey.
+const backgroundSyncInFlight = new Map<string, Promise<void>>();
 
 export type SyncState = 'cached' | 'fresh' | 'syncing' | 'failed';
 
@@ -40,13 +44,22 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
     reportSyncState,
   } = options;
 
+  const fetchTracked = (phase: string) =>
+    devTimeAsync(
+      `dl_${context}_${functionName}_${cacheKey}_${phase}`,
+      'cache',
+      `DataLoader ${context}/${functionName} (${phase})`,
+      fetcher,
+      { cacheKey },
+    );
+
   try {
     // If skipCache is true, bypass all caching and always fetch fresh
     if (skipCache) {
       logger.debug(context, functionName, `Skipping cache - fetching fresh data`, {
         key: cacheKey,
       });
-      const freshData = await fetcher();
+      const freshData = await fetchTracked('skip');
       if (onDataLoaded) {
         await onDataLoaded(freshData);
       }
@@ -105,7 +118,7 @@ export async function useDataLoader<T>(options: DataLoaderOptions<T>): Promise<T
 
     // Step 3: No cache - fetch fresh data
     logger.debug(context, functionName, `Cache miss - fetching fresh data`, { key: cacheKey });
-    const freshData = await fetcher();
+    const freshData = await fetchTracked('miss');
 
     // Cache the fresh data
     cache.set(cacheKey, freshData, ttlMinutes);
@@ -153,8 +166,23 @@ async function triggerBackgroundSync<T>(
   logger.debug(context, functionName, 'Starting background sync', { key: cacheKey });
   reportSyncState?.('syncing');
 
+  const syncKey = `${context}|${functionName}|${cacheKey}`;
+  const existing = backgroundSyncInFlight.get(syncKey);
+  if (existing) {
+    logger.debug(context, functionName, 'Background sync already in-flight; skipping duplicate', {
+      key: cacheKey,
+    });
+    return;
+  }
+
   // Sync in background without blocking
-  fetcher()
+  const bgPromise = devTimeAsync(
+    `dl_${context}_${functionName}_${cacheKey}_bg`,
+    'cache',
+    `DataLoader ${context}/${functionName} (bg)`,
+    fetcher,
+    { cacheKey },
+  )
     .then(async (freshData) => {
       cache.set(cacheKey, freshData, ttlMinutes);
       await setIdb(cacheKey, freshData).catch((e) => {
@@ -186,5 +214,10 @@ async function triggerBackgroundSync<T>(
         error: e,
       });
       reportSyncState?.('cached');
+    })
+    .finally(() => {
+      backgroundSyncInFlight.delete(syncKey);
     });
+
+  backgroundSyncInFlight.set(syncKey, bgPromise);
 }

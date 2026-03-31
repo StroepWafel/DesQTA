@@ -32,6 +32,7 @@
   import { sanitizeSearchQuery } from '../../../utils/sanitization';
   import { getUrlParam, updateUrlParam, updateUrlParams } from '../../utils/urlParams';
   import { invoke } from '@tauri-apps/api/core';
+  import { invokeGetProcessedAssessments } from '$lib/services/processedAssessmentsInvoke';
   import type { Assessment, Subject } from '$lib/types';
   import type { Folder } from '../../../routes/courses/types';
   import { Clock } from 'svelte-hero-icons';
@@ -879,11 +880,7 @@
       } else {
         // Try to fetch fresh data from API
         try {
-          const assessmentsData = await invoke<{
-            assessments: Assessment[];
-            subjects: Subject[];
-            all_subjects: Subject[];
-          }>('get_processed_assessments').catch(() => null);
+          const assessmentsData = await invokeGetProcessedAssessments().catch(() => null);
 
           if (assessmentsData?.assessments) {
             const sortedAssessments = [...assessmentsData.assessments]
@@ -1089,11 +1086,7 @@
         // Fallback to full data fetch if database search didn't return results
         const assessmentsData = cachedAssessments
           ? cachedAssessments
-          : await invoke<{
-              assessments: Assessment[];
-              subjects: Subject[];
-              all_subjects: Subject[];
-            }>('get_processed_assessments').catch(() => null);
+          : await invokeGetProcessedAssessments().catch(() => null);
 
         // Process assessments from full data
         if (assessmentsData?.assessments) {

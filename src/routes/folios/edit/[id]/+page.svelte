@@ -189,7 +189,7 @@
       const currentContent = editorInstance.getHTML();
       // Only set if editor is empty or just has empty paragraph
       if (!currentContent || currentContent === '<p></p>' || currentContent.trim() === '') {
-        editorInstance.commands.setContent(folioData.contents, false);
+        editorInstance.commands.setContent(folioData.contents, { emitUpdate: false });
         contentInitialized = true;
       }
     }
