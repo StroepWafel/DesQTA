@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
   import { DocumentText } from 'svelte-hero-icons';
+  import { decodeHtmlEntities } from '../../utils/sanitization';
 
   interface Criterion {
     results?: {
