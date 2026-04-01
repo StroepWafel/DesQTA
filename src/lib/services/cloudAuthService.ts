@@ -6,11 +6,15 @@ import { checkCloudSignOutAlert } from './cloudSignOutAlertService';
 const API_URL = 'https://accounts.betterseqta.org';
 const DESQTA_REDIRECT_URI = 'desqta://auth/callback';
 
-/** Detects if a failed response indicates an expired/invalid client_id (7-day inactivity). */
+/** Detects if a failed response indicates an expired/invalid reserved client_id. */
 function isClientIdExpired(status: number, errMsg?: string): boolean {
-  if (status === 401 || status === 404) return true;
+  if (status === 404) return true;
   const msg = (errMsg ?? '').toLowerCase();
   return msg.includes('invalid client_id') || msg.includes('invalid client id');
+}
+
+function isUnauthorized(status: number): boolean {
+  return status === 401;
 }
 
 interface ReservedClientResult {
@@ -242,8 +246,8 @@ export const cloudAuthService = {
 
   /**
    * Refreshes the access token using the refresh token (rolling sessions).
-   * On failure, clears tokens and throws.
-   * Retries with a fresh client_id if the stored one has expired.
+   * Reserved client state is only bootstrap metadata and must not be treated as
+   * the authority for an existing durable BetterSEQTA Cloud session.
    */
   async refresh(): Promise<string> {
     const refreshToken = await this.getRefreshToken();
@@ -252,14 +256,19 @@ export const cloudAuthService = {
       throw new Error('No refresh token');
     }
 
-    const doRefresh = async (clientId: string) => {
+    const doRefresh = async (clientId?: string | null) => {
+      const body: Record<string, string> = {
+        refresh_token: refreshToken,
+      };
+
+      if (clientId) {
+        body.client_id = clientId;
+      }
+
       const res = await fetch(`${API_URL}/api/desqta/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          refresh_token: refreshToken,
-          client_id: clientId,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -270,17 +279,23 @@ export const cloudAuthService = {
       return { ok: true as const, data };
     };
 
-    const { client_id } = await this.ensureClientId();
-    let result = await doRefresh(client_id);
+    const reservedClient = await invoke<{ client_id: string; redirect_uri: string } | null>('get_reserved_client').catch(
+      () => null,
+    );
+
+    let result = await doRefresh(reservedClient?.client_id ?? null);
 
     if (!result.ok && isClientIdExpired(result.status, result.errMsg)) {
       await this.clearReservedClient();
-      const { client_id: newId } = await this.ensureClientId();
-      result = await doRefresh(newId);
+      result = await doRefresh(null);
+    }
+
+    if (!result.ok && isUnauthorized(result.status)) {
+      await this.invalidateCloudSessionAfterAuthError();
+      throw new Error(result.errMsg);
     }
 
     if (!result.ok) {
-      await this.invalidateCloudSessionAfterAuthError();
       throw new Error(result.errMsg);
     }
 
@@ -297,25 +312,41 @@ export const cloudAuthService = {
 
   /**
    * Fetches the latest user profile from the server and updates the current profile.
+   * If the access token expired, silently refreshes once before failing.
    */
   async getProfile(): Promise<CloudUser> {
-    const token = await this.getToken();
-    if (!token) throw new Error('Not authenticated');
+    let token = await this.getToken();
+    if (!token) {
+      token = await this.refresh();
+    }
 
-    const response = await fetch(`${API_URL}/api/auth/me`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const doRequest = async (accessToken: string) =>
+      fetch(`${API_URL}/api/auth/me`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+    let response = await doRequest(token);
+
+    if (response.status === 401) {
+      token = await this.refresh();
+      response = await doRequest(token);
+    }
+
+    if (response.status === 401) {
+      await this.invalidateCloudSessionAfterAuthError();
+      throw new Error('Failed to fetch profile');
+    }
 
     if (!response.ok) throw new Error('Failed to fetch profile');
-    const data = await response.json();
+    const data = (await response.json()) as CloudUser;
 
-    // Update backend (profile-specific) with latest user data
+    // Update backend (profile-specific) with latest user data while preserving refresh state.
     await invoke<CloudUser>('save_cloud_token', {
       token,
-      refreshToken: null,
+      refreshToken: await this.getRefreshToken(),
       userJson: data ? JSON.stringify(normalizeUserForBackend(data)) : null,
     });
 

@@ -277,7 +277,7 @@ The Company reserves the right to terminate your access to the Service at any ti
   // Profile picture state
   let customProfilePicture = $state<string | null>(null);
   let uploading = $state(false);
-  let fileInput: HTMLInputElement;
+  let fileInput = $state<HTMLInputElement | undefined>(undefined);
   let showCropModal = $state(false);
   let cropImageSrc = $state<string | null>(null);
 
@@ -288,14 +288,13 @@ The Company reserves the right to terminate your access to the Service at any ti
       const user = await cloudAuthService.init();
       cloudUser = user;
 
-      // If we have a user, verify session in background
+      // If we have a user, verify session in background.
+      // The auth service now performs a silent refresh before considering the session invalid.
       if (user) {
         cloudAuthService
           .getProfile()
           .then((u) => (cloudUser = u))
-          .catch(async () => {
-            // Token likely expired
-            await cloudAuthService.logout();
+          .catch(() => {
             cloudUser = null;
           });
       }
