@@ -349,6 +349,14 @@ export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
+export function decodeHtmlEntities(text: string): string{
+  if (!text) return '';
+
+  const textArea = document.createElement('textarea')
+  textArea.innerHTML = text;
+  return textArea.value;
+}
+
 /**
  * Sanitize CSS - remove potentially dangerous CSS
  */
