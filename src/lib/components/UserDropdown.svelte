@@ -106,6 +106,14 @@
   // Close dropdown when userInfo becomes undefined (except we keep it open for sign-out option)
   // Only close if we had userInfo and now we don't - but we still render the button for sign-out
   const hasValidSession = $derived(!!userInfo);
+
+  // When mock is on, always show fake name - never expose real student name
+  const displayName = $derived(
+    devSensitiveInfoHider ? 'Demo Student' : (userInfo?.userDesc || userInfo?.userName || '?')
+  );
+  const displayInitial = $derived(
+    devSensitiveInfoHider ? 'D' : (userInfo?.displayName || userInfo?.userName || '?')[0]
+  );
 </script>
 
 <div class="relative user-dropdown-container">
@@ -137,11 +145,11 @@
       {:else}
         <div
           class="flex items-center justify-center w-8 h-8 md:w-8 md:h-8 rounded-full bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-white font-bold text-base border-2 shadow-xs border-white/60 dark:border-zinc-600/60">
-          {(userInfo.displayName || userInfo.userName || '?')[0]}
+          {displayInitial}
         </div>
       {/if}
       <span class="hidden font-semibold text-zinc-900 md:inline dark:text-white">
-        {userInfo.userDesc || userInfo.userName}
+        {displayName}
       </span>
     {:else}
       <!-- Session invalid: show placeholder so user can still access Sign out -->

@@ -21,6 +21,12 @@ struct SeqtaSSOPayload {
     n: String, // User number
 }
 
+#[derive(Debug, Deserialize, Clone)]
+struct DesqtaConnectPayload {
+    u: String, // base_url
+    s: String, // jsessionid
+}
+
 #[derive(Debug, Deserialize)]
 struct UserInfoResponse {
     payload: UserInfoPayload,
@@ -196,27 +202,105 @@ fn parse_deeplink(deeplink: &str) -> Result<SeqtaSSOPayload, String> {
     const DEEPLINK_PREFIX: &str = "seqtalearn://sso/";
 
     if !deeplink.starts_with(DEEPLINK_PREFIX) {
-        return Err("Invalid Seqta Learn deeplink format".to_string());
+        return Err("This doesn't look like a valid SEQTA QR code. Please scan a QR code from the SEQTA mobile app email, or use Manual URL / Direct Login instead.".to_string());
     }
 
     let encoded_payload = &deeplink[DEEPLINK_PREFIX.len()..];
 
     // First decode the URL encoding
-    let url_decoded =
-        urlencoding::decode(encoded_payload).map_err(|e| format!("Failed to URL decode: {}", e))?;
+    let url_decoded = urlencoding::decode(encoded_payload).map_err(|_| {
+        "Invalid QR code format. Please try a fresh QR code from SEQTA (Settings → Connect Mobile App).".to_string()
+    })?;
 
     // Then decode the base64
-    let decoded_payload = general_purpose::STANDARD
-        .decode(url_decoded.as_bytes())
-        .map_err(|e| format!("Failed to base64 decode: {}", e))?;
+    let decoded_payload = general_purpose::STANDARD.decode(url_decoded.as_bytes()).map_err(|_| {
+        "Invalid QR code format. Please try a fresh QR code from SEQTA (Settings → Connect Mobile App).".to_string()
+    })?;
 
     let payload_str = String::from_utf8(decoded_payload)
-        .map_err(|e| format!("Failed to convert to string: {}", e))?;
+        .map_err(|_| {
+            "Invalid QR code format. Please try a fresh QR code from SEQTA (Settings → Connect Mobile App).".to_string()
+        })?;
 
-    let result =
-        serde_json::from_str(&payload_str).map_err(|e| format!("Failed to parse JSON: {}", e))?;
+    let result = serde_json::from_str(&payload_str).map_err(|_| {
+        "Invalid QR code format. Please try a fresh QR code from SEQTA (Settings → Connect Mobile App).".to_string()
+    })?;
 
     Ok(result)
+}
+
+/// Parse and validate a DesQTA connect deeplink (from BetterSEQTA+ extension)
+fn parse_desqta_connect(deeplink: &str) -> Result<DesqtaConnectPayload, String> {
+    const DEEPLINK_PREFIX: &str = "desqta://connect/";
+
+    if !deeplink.starts_with(DEEPLINK_PREFIX) {
+        return Err("This doesn't look like a valid DesQTA connect link. Please generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App).".to_string());
+    }
+
+    let encoded_payload = &deeplink[DEEPLINK_PREFIX.len()..];
+
+    // First decode the URL encoding
+    let url_decoded = urlencoding::decode(encoded_payload).map_err(|_| {
+        "Invalid DesQTA connect link format. Please generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App).".to_string()
+    })?;
+
+    // Then decode the base64
+    let decoded_payload = general_purpose::STANDARD.decode(url_decoded.as_bytes()).map_err(|_| {
+        "Invalid DesQTA connect link format. Please generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App).".to_string()
+    })?;
+
+    let payload_str = String::from_utf8(decoded_payload)
+        .map_err(|_| {
+            "Invalid DesQTA connect link format. Please generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App).".to_string()
+        })?;
+
+    let result = serde_json::from_str(&payload_str).map_err(|_| {
+        "Invalid DesQTA connect link format. Please generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App).".to_string()
+    })?;
+
+    Ok(result)
+}
+
+/// Perform direct session auth from DesQTA connect payload (JSESSIONID + base_url)
+async fn perform_desqta_connect_auth(
+    payload: DesqtaConnectPayload,
+) -> Result<session::Session, String> {
+    let base_url = payload.u;
+    let jsessionid = payload.s;
+
+    use crate::netgrab;
+
+    let client = netgrab::create_client_builder()
+        .cookie_store(true)
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    // Validate session with heartbeat
+    let heartbeat_url = format!("{}/seqta/student/heartbeat", base_url);
+    let heartbeat_body = json!({ "heartbeat": true });
+
+    let heartbeat_response = client
+        .post(&heartbeat_url)
+        .header("Cookie", format!("JSESSIONID={}", jsessionid))
+        .header("Content-Type", "application/json; charset=utf-8")
+        .json(&heartbeat_body)
+        .send()
+        .await
+        .map_err(|e| format!("Heartbeat request failed: {}", e))?;
+
+    if !heartbeat_response.status().is_success() {
+        return Err("This DesQTA connect link has expired or the session is no longer valid. Please generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App) and try again.".to_string());
+    }
+
+    let session = session::Session {
+        base_url,
+        jsessionid,
+        additional_cookies: Vec::new(),
+        stored_username: None,
+        stored_password: None,
+    };
+
+    Ok(session)
 }
 
 /// Decode and validate a JWT token
@@ -225,7 +309,7 @@ fn decode_jwt(token: &str) -> Result<SeqtaJWT, String> {
     // In production, you'd want to verify the signature
     let parts: Vec<&str> = token.split('.').collect();
     if parts.len() != 3 {
-        return Err("Invalid JWT format".to_string());
+        return Err("Invalid QR code format. Please try a fresh QR code from SEQTA (Settings → Connect Mobile App).".to_string());
     }
 
     let payload = parts[1];
@@ -236,15 +320,18 @@ fn decode_jwt(token: &str) -> Result<SeqtaJWT, String> {
         padded_payload.push('=');
     }
 
-    let decoded_payload = general_purpose::STANDARD
-        .decode(&padded_payload)
-        .map_err(|e| format!("Failed to decode JWT payload: {}", e))?;
+    let decoded_payload = general_purpose::STANDARD.decode(&padded_payload).map_err(|_| {
+        "Invalid QR code format. Please try a fresh QR code from SEQTA (Settings → Connect Mobile App).".to_string()
+    })?;
 
     let payload_str = String::from_utf8(decoded_payload)
-        .map_err(|e| format!("Failed to convert JWT payload to string: {}", e))?;
+        .map_err(|_| {
+            "Invalid QR code format. Please try a fresh QR code from SEQTA (Settings → Connect Mobile App).".to_string()
+        })?;
 
-    let result = serde_json::from_str(&payload_str)
-        .map_err(|e| format!("Failed to parse JWT payload: {}", e))?;
+    let result = serde_json::from_str(&payload_str).map_err(|_| {
+        "Invalid QR code format. Please try a fresh QR code from SEQTA (Settings → Connect Mobile App).".to_string()
+    })?;
 
     Ok(result)
 }
@@ -289,7 +376,7 @@ fn validate_token(token: &str) -> Result<bool, String> {
     let is_valid = decoded.exp > now;
 
     if !is_valid {
-        return Err("JWT token has expired".to_string());
+        return Err("This QR code has expired. Request a new one from SEQTA (Settings → Connect Mobile App) and try again.".to_string());
     }
 
     Ok(is_valid)
@@ -348,8 +435,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         .map_err(|e| format!("First login request failed: {}", e))?;
 
     if !first_response.status().is_success() {
-        let status = first_response.status();
-        return Err(format!("First login failed with status: {}", status));
+        return Err("QR code login failed. The code may have expired. Request a new one from SEQTA (Settings → Connect Mobile App) and try again.".to_string());
     }
 
     // Step 2: Second login request with JWT (this is where we get the user data and JSESSIONID)
@@ -365,8 +451,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         .map_err(|e| format!("Second login request failed: {}", e))?;
 
     if !second_response.status().is_success() {
-        let status = second_response.status();
-        return Err(format!("Second login failed with status: {}", status));
+        return Err("QR code login failed. The code may have expired. Request a new one from SEQTA (Settings → Connect Mobile App) and try again.".to_string());
     }
 
     // Step 3 - get cookie (which should be stored here)
@@ -403,8 +488,7 @@ async fn perform_qr_auth(sso_payload: SeqtaSSOPayload) -> Result<session::Sessio
         .map_err(|e| format!("Heartbeat request failed: {}", e))?;
 
     if !heartbeat_response.status().is_success() {
-        let status = heartbeat_response.status();
-        return Err(format!("Heartbeat failed with status: {}", status));
+        return Err("QR code login failed. The code may have expired. Request a new one from SEQTA (Settings → Connect Mobile App) and try again.".to_string());
     }
 
     // Create session with the newly obtained JSESSIONID as the token
@@ -443,6 +527,39 @@ pub async fn create_login_window(app: tauri::AppHandle, url: String) -> Result<(
             user_info.user_desc.or(user_info.display_name).or(Some(user_info.user_name.clone())),
         ).map_err(|e| format!("Failed to create/get profile: {}", e))?;
         
+        // Set as current profile
+        profiles::ProfileManager::set_current_profile(profile.id.clone())
+            .map_err(|e| format!("Failed to set current profile: {}", e))?;
+
+        // Save the session (now in profile directory)
+        session
+            .save()
+            .map_err(|e| format!("Failed to save session: {}", e))?;
+
+        // Force reload the app
+        force_reload(app);
+        return Ok(());
+    }
+
+    // Check if this is a DesQTA connect deeplink (from BetterSEQTA+ extension)
+    if url.starts_with("desqta://connect/") {
+        let payload = parse_desqta_connect(&url)?;
+        let session = perform_desqta_connect_auth(payload).await?;
+
+        // Fetch user info to create/get profile
+        let user_info = fetch_user_info(&session.base_url, &session.jsessionid).await?;
+
+        // Create or get profile
+        let profile = profiles::ProfileManager::get_or_create_profile(
+            session.base_url.clone(),
+            user_info.id,
+            user_info
+                .user_desc
+                .or(user_info.display_name)
+                .or(Some(user_info.user_name.clone())),
+        )
+        .map_err(|e| format!("Failed to create/get profile: {}", e))?;
+
         // Set as current profile
         profiles::ProfileManager::set_current_profile(profile.id.clone())
             .map_err(|e| format!("Failed to set current profile: {}", e))?;

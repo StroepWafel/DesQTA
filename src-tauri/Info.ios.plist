@@ -4,5 +4,7 @@
 <dict>
   <key>NSFaceIDUsageDescription</key>
   <string>Authenticate with Face ID or Touch ID to unlock DesQTA and keep your data secure.</string>
+  <key>NSCameraUsageDescription</key>
+  <string>DesQTA uses the camera to scan QR codes for quick sign-in.</string>
 </dict>
 </plist>

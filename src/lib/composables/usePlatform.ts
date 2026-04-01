@@ -38,6 +38,11 @@ export function usePlatform() {
     state.isNativeMobile = tauri_platform === 'ios' || tauri_platform === 'android';
     state.isIOS = tauri_platform === 'ios';
     state.isLinux = tauri_platform === 'linux';
+    const isMac =
+      tauri_platform === 'macos' ||
+      tauri_platform === 'ios' ||
+      (typeof navigator !== 'undefined' &&
+        /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent));
     state.isSmallViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
     state.isMobile = state.isNativeMobile || state.isSmallViewport;
     state.supportsBiometric =
@@ -51,6 +56,7 @@ export function usePlatform() {
       isSmallViewport: state.isSmallViewport,
       isIOS: state.isIOS,
       isLinux: state.isLinux,
+      isMac,
       supportsBiometric: state.supportsBiometric,
     });
     return {

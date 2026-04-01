@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Dados de desempenho",
     "feature_settings_desc": "Preferências do aplicativo",
     "fill_all_fields": "Por favor, preencha todos os campos",
-    "failed_credentials": "Falha no login. Verifique suas credenciais."
+    "failed_credentials": "Falha no login. Verifique suas credenciais.",
+    "not_working_try_direct": "Não está funcionando? ",
+    "try_direct_login_link": "Tentar login direto"
   },
   "features": {
     "lightning_fast": "Desempenho ultrarrápido",
@@ -554,6 +556,10 @@
     "quizzes": "Questionários",
     "select_assessment": "Selecionar avaliação",
     "custom_topic": "Tópico personalizado",
+    "topic_source": "1. Escolher tópico",
+    "quiz_options": "2. Opções do quiz",
+    "change_options": "Alterar opções",
+    "generate_section": "3. Gerar",
     "what_to_study": "O que você quer estudar?",
     "question_count": "Número de perguntas",
     "generate_quiz": "Gerar questionário",
@@ -600,6 +606,7 @@
     "type_your_answer": "Digite sua resposta..."
   },
   "messages": {
+    "page_description": "Visualize e gerencie suas mensagens SEQTA e RSS.",
     "failed_to_load": "Falha ao carregar mensagens.",
     "failed_to_load_no_cache": "Falha ao carregar mensagens e nenhum dado em cache disponível",
     "failed_to_load_message": "Falha ao carregar mensagem.",
@@ -708,6 +715,8 @@
     "dark": "Escuro",
     "system": "Sistema",
     "theme_mode_description": "Escolha entre modo claro, modo escuro ou siga a preferência do seu sistema.",
+    "minimize_to_tray": "Manter o app em execução na bandeja do sistema ao fechar",
+    "minimize_to_tray_description": "Quando ativado, fechar a janela minimiza o DesQTA na bandeja do sistema. Quando desativado, fechar encerra completamente o app.",
     "security": "Segurança",
     "security_description": "Proteja o app com autenticação biométrica",
     "biometric_enabled": "Desbloquear com biometria (Face ID, Touch ID, impressão digital, Windows Hello)",
@@ -1018,7 +1027,9 @@
     "avg_gpu": "GPU Média",
     "errors_count": "{count} erros",
     "warnings_count": "{count} avisos",
-    "no_issues": "Sem problemas"
+    "no_issues": "Sem problemas",
+    "mega_suite_overlay_title": "A executar suite de benchmarks",
+    "mega_suite_overlay_body": "A navegação pelas páginas terminou. As verificações sintéticas (arranque, UI, dados, backend) estão a correr—geralmente 30–90 segundos. Aguarde; os resultados abrem quando terminar."
   },
   "plugins": {
     "installed_title": "Plugin Instalado",

@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "Compila tutti i campi",
-    "failed_credentials": "Accesso fallito. Verifica le tue credenziali."
+    "failed_credentials": "Accesso fallito. Verifica le tue credenziali.",
+    "not_working_try_direct": "Non funziona? ",
+    "try_direct_login_link": "Prova l'accesso diretto"
   },
   "features": {
     "lightning_fast": "Prestazioni fulminee",
@@ -554,6 +556,10 @@
     "quizzes": "Quiz",
     "select_assessment": "Seleziona valutazione",
     "custom_topic": "Argomento personalizzato",
+    "topic_source": "1. Scegli argomento",
+    "quiz_options": "2. Opzioni quiz",
+    "change_options": "Modifica opzioni",
+    "generate_section": "3. Genera",
     "what_to_study": "Cosa vuoi studiare?",
     "question_count": "Numero di domande",
     "generate_quiz": "Genera quiz",
@@ -600,6 +606,7 @@
     "type_your_answer": "Scrivi la tua risposta..."
   },
   "messages": {
+    "page_description": "Visualizza e gestisci i tuoi messaggi SEQTA e RSS.",
     "failed_to_load": "Impossibile caricare i messaggi.",
     "failed_to_load_no_cache": "Impossibile caricare i messaggi e nessun dato in cache disponibile",
     "failed_to_load_message": "Impossibile caricare il messaggio.",
@@ -708,6 +715,8 @@
     "dark": "Scuro",
     "system": "Sistema",
     "theme_mode_description": "Scegli tra modalità chiara, modalità scura o segui la preferenza del tuo sistema.",
+    "minimize_to_tray": "Mantieni l'app in esecuzione nella barra di sistema alla chiusura",
+    "minimize_to_tray_description": "Se attivato, chiudere la finestra minimizza DesQTA nella barra di sistema. Se disattivato, chiudere termina completamente l'app.",
     "security": "Sicurezza",
     "security_description": "Proteggi l'app con l'autenticazione biometrica",
     "biometric_enabled": "Sblocca con biometria (Face ID, Touch ID, impronta, Windows Hello)",
@@ -1018,7 +1027,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Esecuzione suite di benchmark",
+    "mega_suite_overlay_body": "La scansione delle pagine è completata. I controlli sintetici (avvio, UI, dati, backend) sono in esecuzione—spesso 30–90 secondi. Attendere; i risultati si apriranno al termine."
   },
   "plugins": {
     "installed_title": "Plugin Installato",

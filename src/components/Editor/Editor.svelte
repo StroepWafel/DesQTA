@@ -84,6 +84,10 @@
           }),
           BubbleMenu.configure({
             element: document.querySelector('.menu') as HTMLElement,
+            shouldShow: ({ state }) => {
+              const { from, to } = state.selection;
+              return from !== to;
+            },
           }),
           Dropcursor.configure({ width: 5, color: '#ddeeff' }),
           Image.configure({
@@ -158,6 +162,8 @@
     tabindex="-1">
   </div>
   <CommandList bind:this={commandListInstance} />
+  <!-- Wrapper prevents bubble menu from affecting layout before Tiptap moves it to the floating layer -->
+  <div class="absolute left-0 top-0 w-0 h-0 overflow-hidden pointer-events-none">
+    <BubbleMenuComponent bind:editor />
+  </div>
 </div>
-
-<BubbleMenuComponent bind:editor />

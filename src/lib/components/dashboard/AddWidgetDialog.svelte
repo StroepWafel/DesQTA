@@ -76,10 +76,10 @@
         settings: { ...definition.defaultSettings },
       };
 
-      await widgetService.addWidget(newWidget);
-
       if (onAdd) {
         onAdd(newWidget);
+      } else {
+        await widgetService.addWidget(newWidget);
       }
 
       onClose();

@@ -159,7 +159,7 @@
       in:fly={{ y: 20, duration: 400, delay: 300, easing: cubicOut }}>
       <h2 class="text-xl font-bold transition-all duration-200">Resources</h2>
       <div class="grid gap-4">
-        {#each assessmentData.resources.filter((r): r is Resource & { userfile: NonNullable<Resource['userfile']> } => r.userfile !== null) as resource, index}
+        {#each assessmentData.resources.filter((r): r is Resource & { userfile: NonNullable<Resource['userfile']> } => r.userfile != null && r.userfile.mimetype != null && r.userfile.size != null && r.userfile.uuid != null) as resource, index}
           <div in:fly={{ y: 10, duration: 300, delay: 400 + (index * 50), easing: cubicOut }}>
             <FileCard 
               file={{

@@ -42,10 +42,10 @@
         settings: { ...settings },
       };
 
-      await widgetService.updateWidgetConfig(widget.id, { settings: updatedWidget.settings });
-
       if (onSave) {
         onSave(updatedWidget);
+      } else {
+        await widgetService.updateWidgetConfig(widget.id, { settings: updatedWidget.settings });
       }
 
       onClose();

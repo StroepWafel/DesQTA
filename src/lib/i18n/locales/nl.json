@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Prestatiegegevens",
     "feature_settings_desc": "App voorkeuren",
     "fill_all_fields": "Vul alle velden in",
-    "failed_credentials": "Inloggen mislukt. Controleer uw inloggegevens."
+    "failed_credentials": "Inloggen mislukt. Controleer uw inloggegevens.",
+    "not_working_try_direct": "Werkt het niet? ",
+    "try_direct_login_link": "Probeer direct inloggen"
   },
   "features": {
     "lightning_fast": "Bliksemsnelle prestaties",
@@ -549,6 +551,10 @@
     "quizzes": "Quizzen",
     "select_assessment": "Selecteer beoordeling",
     "custom_topic": "Aangepast onderwerp",
+    "topic_source": "1. Kies onderwerp",
+    "quiz_options": "2. Quizopties",
+    "change_options": "Opties wijzigen",
+    "generate_section": "3. Genereren",
     "what_to_study": "Wat wil je studeren?",
     "question_count": "Aantal vragen",
     "generate_quiz": "Quiz genereren",
@@ -595,6 +601,7 @@
     "type_your_answer": "Typ je antwoord..."
   },
   "messages": {
+    "page_description": "Bekijk en beheer je SEQTA- en RSS-berichten.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message.",
@@ -703,6 +710,8 @@
     "dark": "Dark",
     "system": "System",
     "theme_mode_description": "Choose between light mode, dark mode, or follow your system preference.",
+    "minimize_to_tray": "App in systeemvak laten draaien bij sluiten",
+    "minimize_to_tray_description": "Wanneer ingeschakeld, minimaliseert het sluiten van het venster DesQTA naar het systeemvak. Wanneer uitgeschakeld, sluit het sluiten de app volledig af.",
     "security": "Beveiliging",
     "security_description": "Bescherm de app met biometrische authenticatie",
     "biometric_enabled": "Ontgrendelen met biometrie (Face ID, Touch ID, vingerafdruk, Windows Hello)",
@@ -1013,7 +1022,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Benchmarksuite wordt uitgevoerd",
+    "mega_suite_overlay_body": "Het doorlopen van de pagina’s is klaar. Synthetische controles (opstart, UI, data, backend) duren—vaak 30–90 seconden. Even geduld; de resultaten openen daarna."
   },
   "plugins": {
     "installed_title": "Plugin Geïnstalleerd",

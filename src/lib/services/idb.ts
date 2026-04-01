@@ -35,6 +35,18 @@ export async function idbCacheGet<T>(key: string): Promise<T | undefined> {
   }
 }
 
+export async function idbCacheGetMany<T>(keys: string[]): Promise<Record<string, T | undefined>> {
+  try {
+    const result = await invoke<Record<string, T | null>>('db_cache_get_many', { keys });
+    return Object.fromEntries(
+      Object.entries(result).map(([key, value]) => [key, value ?? undefined]),
+    ) as Record<string, T | undefined>;
+  } catch (error) {
+    console.error('Failed to get many cache values:', error);
+    return Object.fromEntries(keys.map((key) => [key, undefined])) as Record<string, T | undefined>;
+  }
+}
+
 export async function idbCacheDelete(key: string): Promise<void> {
   try {
     await invoke('db_cache_delete', { key });

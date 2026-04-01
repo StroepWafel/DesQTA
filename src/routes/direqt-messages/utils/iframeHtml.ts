@@ -17,7 +17,7 @@ export function buildIframeHtml(content: string): string {
   const forwardPreambleText = isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(24,24,27,0.7)';
 
   const styleRules = [
-    `body{font-family:system-ui,-apple-system,sans-serif;color:${textColor};margin:0 auto;padding:0 0 2rem;background-color:transparent;line-height:1.75;font-size:16px;max-width:65ch}`,
+    `body{font-family:system-ui,-apple-system,sans-serif;color:${textColor};margin:0;padding:0 0 2rem;background-color:transparent;line-height:1.75;font-size:16px;max-width:100%;box-sizing:border-box}`,
     `a{color:${linkColor};text-decoration:none;cursor:pointer}`,
     'a:hover{text-decoration:underline}',
     'p{margin:0 0 1.25em}',

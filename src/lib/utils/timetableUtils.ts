@@ -13,6 +13,35 @@ export interface LessonPosition {
 }
 
 /**
+ * Get time range from seqtaConfig (attendance.defaults.time_from / time_to)
+ * with optional padding (minutes before start, minutes after end).
+ * Returns { start, end } in HH:mm format. Defaults to 08:00-16:00 if config missing.
+ */
+export function getTimeRangeFromSeqtaConfig(
+  seqtaConfig: { payload?: Record<string, { value?: string }> } | null,
+  paddingMinutes = 30,
+): TimeRange {
+  const defaultRange: TimeRange = { start: '08:00', end: '16:00' };
+  if (!seqtaConfig?.payload) return defaultRange;
+
+  const timeFrom = seqtaConfig.payload['attendance.defaults.time_from']?.value;
+  const timeTo = seqtaConfig.payload['attendance.defaults.time_to']?.value;
+
+  if (!timeFrom || !timeTo) return defaultRange;
+
+  const fromMins = timeToMinutes(timeFrom.substring(0, 5));
+  const toMins = timeToMinutes(timeTo.substring(0, 5));
+
+  const startMins = Math.max(0, fromMins - paddingMinutes);
+  const endMins = Math.min(24 * 60 - 1, toMins + paddingMinutes);
+
+  return {
+    start: minutesToTime(startMins),
+    end: minutesToTime(endMins),
+  };
+}
+
+/**
  * Convert time string (HH:mm) to minutes since midnight
  */
 export function timeToMinutes(time: string): number {

@@ -6,28 +6,38 @@
     widget: WidgetConfig;
   }
 
-  let { widget }: Props = $props();
+  const FALLBACK_WIDGET: WidgetConfig = {
+    id: 'missing-widget',
+    type: 'quick_notes',
+    enabled: false,
+    position: { x: 0, y: 0, w: 1, h: 1 },
+    settings: {},
+    title: 'Missing widget',
+  };
 
-  const definition = widgetRegistry.get(widget.type);
-  const Component = definition?.component;
+  let { widget = FALLBACK_WIDGET }: Props = $props();
 
-  // Merge default settings with widget settings
-  const settings = $derived(
-    definition?.defaultSettings
-      ? { ...definition.defaultSettings, ...(widget.settings || {}) }
-      : widget.settings || {},
-  );
+  const safeWidget = $derived(widget ?? FALLBACK_WIDGET);
+  const definition = $derived(widgetRegistry.get(safeWidget.type));
+  const Component = $derived(definition?.component);
+
+  const settings = $derived.by(() => {
+    const defaultSettings = definition?.defaultSettings;
+    const widgetSettings = safeWidget.settings || {};
+
+    return defaultSettings ? { ...defaultSettings, ...widgetSettings } : widgetSettings;
+  });
 </script>
 
 {#if Component}
   <!-- Pass widget and settings to component, maintaining backward compatibility -->
   {@const WidgetComponent = Component}
-  <WidgetComponent {widget} {settings} />
+  <WidgetComponent widget={safeWidget} {settings} />
 {:else}
   <div
     class="flex flex-col items-center justify-center h-full p-4 text-center bg-white/80 dark:bg-zinc-900/60 rounded-xl border border-zinc-200 dark:border-zinc-800">
     <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-      Widget type "{widget.type}" not found
+      Widget type "{safeWidget.type}" not found
     </p>
     <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
       This widget may not be available yet

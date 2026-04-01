@@ -7,6 +7,11 @@ export interface SidebarState {
   autoExpandOnHover: boolean;
 }
 
+export interface SidebarSettingsResult {
+  autoCollapse: boolean;
+  autoExpandOnHover: boolean;
+}
+
 /**
  * Sidebar composable for managing sidebar state and behavior
  * Returns state object that can be used with $state() in Svelte components
@@ -18,7 +23,7 @@ export function useSidebar() {
     autoExpandOnHover: false,
   };
 
-  const loadSettings = async () => {
+  const loadSettings = async (): Promise<SidebarSettingsResult> => {
     try {
       const subset = await invoke<{
         auto_collapse_sidebar?: boolean;
@@ -28,8 +33,16 @@ export function useSidebar() {
       });
       state.autoCollapse = subset?.auto_collapse_sidebar ?? false;
       state.autoExpandOnHover = subset?.auto_expand_sidebar_hover ?? false;
+      return {
+        autoCollapse: state.autoCollapse,
+        autoExpandOnHover: state.autoExpandOnHover,
+      };
     } catch (e) {
       logger.error('sidebar', 'loadSettings', `Failed to load sidebar settings: ${e}`, { error: e });
+      return {
+        autoCollapse: state.autoCollapse,
+        autoExpandOnHover: state.autoExpandOnHover,
+      };
     }
   };
 

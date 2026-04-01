@@ -59,8 +59,8 @@
   onMount(async () => {
     // Always enable both tabs regardless of SEQTA config
     seqtaMessagesEnabled = true;
-    // Initial load: fetch inbox messages (skip cache to ensure fresh data)
-    fetchMessages('inbox', '', true);
+    // Initial load: use cache-first loading for inbox, then refresh in background if needed
+    fetchMessages('inbox', '');
   });
 
   // Watch URL for messageID parameter and store it until messages load
@@ -69,7 +69,10 @@
     pendingMessageId = idParam ? Number(idParam) : null;
   });
 
-  async function fetchMessages(folderLabel: string = 'inbox', rssname: string = '', forceSkipCache: boolean = false) {
+  async function fetchMessages(
+    folderLabel: string = 'inbox',
+    rssname: string = '',
+  ) {
     loading = true;
     error = null;
     seqtaLoadFailed = false;
@@ -79,50 +82,7 @@
     const isRSSFeed = folderLabel.includes('rss-');
     const isOnline = navigator.onLine;
 
-    // For inbox, try API first (when online), then fall back to cache if unavailable
-    // For other folders, use normal caching behavior
-    if (folderLabel === 'inbox' && isOnline && !isRSSFeed) {
-      try {
-        // Try to fetch fresh data first
-        const msgs = await invoke<Message[]>('fetch_messages', {
-          folder: folderLabel,
-          rssUrl: null,
-        });
-        
-        // Success - update cache and messages
-        messages = msgs;
-        cache.set(cacheKey, msgs, 10);
-        await setIdb(cacheKey, msgs);
-        loading = false;
-        return;
-      } catch (e) {
-        // API failed - fall back to cache
-        logger.debug('messages', 'fetchMessages', `API fetch failed, falling back to cache`, {
-          error: e,
-          folder: folderLabel,
-        });
-        
-        const cached =
-          cache.get<Message[]>(cacheKey) ||
-          (await getWithIdbFallback<Message[]>(cacheKey, cacheKey, () =>
-            cache.get<Message[]>(cacheKey),
-          ));
-        
-        if (cached) {
-          // Use cache even if empty (empty inbox is valid)
-          messages = cached;
-          loading = false;
-          return;
-        }
-        
-        // No cache available - show error
-        error = get(_)('messages.failed_to_load_no_cache');
-        loading = false;
-        return;
-      }
-    }
-
-    // Normal behavior for other folders or RSS feeds
+    // Normal behavior for inbox, other folders, and RSS feeds with cache-first rendering.
     const data = await useDataLoader<Message[]>({
       cacheKey,
       ttlMinutes: 10,
@@ -146,7 +106,8 @@
         messages = data;
         loading = false;
       },
-      shouldSyncInBackground: (data) => data.length > 0,
+      shouldSyncInBackground: (data) => data.length > 0 && isOnline,
+      updateOnBackgroundSync: true,
     });
 
     if (!data || data.length === 0) {
@@ -262,7 +223,9 @@
         }
       }
       const { toastStore } = await import('../../lib/stores/toast');
-      toastStore.success(newStarred ? get(_)('messages.message_starred') : get(_)('messages.message_unstarred'));
+      toastStore.success(
+        newStarred ? get(_)('messages.message_starred') : get(_)('messages.message_unstarred'),
+      );
     } catch (e) {
       logger.error('messages', 'starMessage', 'Failed to star message', { error: e });
       const { toastStore } = await import('../../lib/stores/toast');
@@ -315,26 +278,45 @@
   }
 </script>
 
-<div class="flex flex-col min-h-0 flex-1 overflow-hidden">
-  <div class="flex w-full flex-1 min-h-0 max-xl:flex-col overflow-hidden">
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6">
+  <!-- Page header -->
+  <div class="shrink-0">
+    <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
+      <T key="messages.seqta_messages" fallback="SEQTA Messages" />
+    </h1>
+    <p class="text-zinc-600 dark:text-zinc-400">
+      <T key="messages.page_description" fallback="View and manage your SEQTA and RSS messages." />
+    </p>
+  </div>
+
+  <!-- Main content area -->
+  <div class="flex flex-1 min-h-0 w-full max-xl:flex-col overflow-hidden gap-4">
     {#if seqtaLoadFailed}
-      <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center">
+      <div
+        class="flex flex-col justify-center items-center p-8 w-full h-full text-center rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg">
         <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">
           <T key="messages.seqta_failed_to_load" fallback="SEQTA messaging failed to load." />
         </div>
       </div>
     {:else}
-      <div class="hidden xl:block">
+      <div class="hidden xl:block shrink-0">
         <Sidebar {selectedFolder} {openFolder} {openCompose} />
       </div>
       <MobileFolderTabs {selectedFolder} {openFolder} {openCompose} />
-      <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div class="flex-1 min-h-0 overflow-hidden">
-          <MessageList {selectedFolder} {messages} {loading} {error} {selectedMessage} {openMessage} />
-        </div>
+      <!-- Message list: card-style panel -->
+      <div
+        class="flex flex-1 xl:flex-initial flex-col min-h-0 min-w-0 xl:w-md xl:min-w-md shrink-0 overflow-hidden rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg [scrollbar-gutter:stable]">
+        <MessageList
+          {selectedFolder}
+          {messages}
+          {loading}
+          {error}
+          {selectedMessage}
+          {openMessage}
+          embedded={true} />
       </div>
       <!-- Message detail view - full screen on mobile -->
-      <div class="hidden flex-1 xl:block">
+      <div class="hidden flex-1 min-h-0 min-w-0 xl:flex flex-col overflow-hidden">
         <MessageDetail
           {selectedMessage}
           {selectedFolder}
@@ -362,7 +344,7 @@
         className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-none transition-all duration-300"
         showCloseButton={false}
         closeOnBackdrop={false}
-        ariaLabel={$_( 'messages.message_detail' )}>
+        ariaLabel={$_('messages.message_detail')}>
         <div class="flex flex-col h-full">
           <div
             class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
@@ -390,7 +372,10 @@
             <!-- Spacer for alignment -->
           </div>
 
-          <div class="overflow-y-auto flex-1 min-h-0" style="-webkit-overflow-scrolling: touch;" in:fade={{ duration: 300 }}>
+          <div
+            class="overflow-y-auto flex-1 min-h-0"
+            style="-webkit-overflow-scrolling: touch;"
+            in:fade={{ duration: 300 }}>
             <MessageDetail
               {selectedMessage}
               {selectedFolder}

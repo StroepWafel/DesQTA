@@ -1,6 +1,9 @@
 <script lang="ts">
   import { Window } from '@tauri-apps/api/window';
   import { Icon } from 'svelte-hero-icons';
+  const isMacOS =
+    (import.meta as any).env?.TAURI_ENV_PLATFORM === 'darwin' ||
+    (import.meta as any).env?.TAURI_ENV_PLATFORM === 'macos';
   import {
     Minus,
     Square2Stack,
@@ -22,11 +25,14 @@
   import { Input, Button } from '$lib/components/ui';
   import Modal from '$lib/components/Modal.svelte';
 
-  // Remove jsQR import and add html5-qrcode import
   import { Html5Qrcode } from 'html5-qrcode';
+  import { scanImageForQrCode } from '$lib/utils/qrScanner';
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { invalidateDevSensitiveInfoHiderCache } from '../../utils/netUtil';
+  import {
+    invalidateDevSensitiveInfoHiderCache,
+    clearAllCachesForMockMode,
+  } from '../../utils/netUtil';
   import { get } from 'svelte/store';
   import T from './T.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
@@ -35,17 +41,60 @@
 
   interface Props {
     seqtaUrl: string;
-    onStartLogin: () => void;
+    onStartLogin: () => void | Promise<void>;
     onUrlChange: (url: string) => void;
   }
 
   let { seqtaUrl, onStartLogin, onUrlChange }: Props = $props();
+
+  function validateQrOrDeeplinkFormat(url: string): string | null {
+    const u = (url || '').trim();
+    if (u.startsWith('seqtalearn://') && !u.startsWith('seqtalearn://sso/')) {
+      return get(_)('login.invalid_seqtalearn_format', {
+        default:
+          'Invalid SEQTA link format. QR codes from SEQTA should start with seqtalearn://sso/. Try scanning a fresh QR code from your SEQTA email.',
+      });
+    }
+    if (u.startsWith('desqta://') && !u.startsWith('desqta://connect/')) {
+      return get(_)('login.invalid_desqta_format', {
+        default:
+          'Invalid DesQTA link format. Connect links from BetterSEQTA+ should start with desqta://connect/. Generate a new QR from Settings → Connect Mobile App.',
+      });
+    }
+    if (u.startsWith('desqta://connect/') && u.length < 30) {
+      return get(_)('login.invalid_desqta_connect_payload', {
+        default:
+          'Invalid DesQTA connect link. The link appears incomplete. Generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App).',
+      });
+    }
+    return null;
+  }
+
+  async function startLoginWithErrorHandling(urlOverride?: string) {
+    loginError = '';
+    qrError = '';
+    jwtExpiredError = false;
+    const urlToCheck = urlOverride ?? seqtaUrl ?? mobileSsoUrl ?? '';
+    const formatError = validateQrOrDeeplinkFormat(urlToCheck);
+    if (formatError) {
+      loginError = formatError;
+      return;
+    }
+    try {
+      await (onStartLogin?.() ?? Promise.resolve());
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      loginError =
+        msg || get(_)('login.qr_error_generic', { default: 'Login failed. Please try again.' });
+    }
+  }
 
   const appWindow = Window.getCurrent();
 
   let qrProcessing = $state(false);
   let qrError = $state('');
   let qrSuccess = $state('');
+  let loginError = $state('');
   let jwtExpiredError = $state(false);
   let showLiveScan = $state(false);
   let liveScanError = $state('');
@@ -167,7 +216,7 @@
       );
 
       // Start login with this profile's URL
-      onStartLogin();
+      await startLoginWithErrorHandling();
     } catch (e) {
       console.error('Failed to switch profile:', e);
       alert(`Failed to switch profile: ${e}`);
@@ -211,7 +260,11 @@
     window.addEventListener('keydown', handleKeydown);
 
     // Auto-maximize window on login screen load (desktop only)
-    if (!isMobile) {
+    // On macOS: skip maximize/isMaximized - causes infinite resize loop and 100% CPU with undecorated windows (plugins-workspace#1918)
+    const isMacOS =
+      import.meta.env.TAURI_ENV_PLATFORM === 'darwin' ||
+      import.meta.env.TAURI_ENV_PLATFORM === 'macos';
+    if (!isMobile && !isMacOS) {
       // Add a small delay to ensure window is ready, then force maximize
       setTimeout(async () => {
         try {
@@ -219,7 +272,7 @@
           await appWindow.maximize();
           console.log('Window maximize command sent');
 
-          // Double-check after a brief moment
+          // Double-check after a brief moment (skip on macOS - isMaximized causes resize loop)
           setTimeout(async () => {
             try {
               const isMaximized = await appWindow.isMaximized();
@@ -270,11 +323,9 @@
     });
   }
 
-  // Remove old QR file input logic and add new handler using html5-qrcode
   async function handleQrFileInput(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
-    // Always clear error/success/expired state on new file selection
     qrError = '';
     qrSuccess = '';
     jwtExpiredError = false;
@@ -282,15 +333,15 @@
     console.debug('[QR] File selected:', file.name, 'type:', file.type, 'size:', file.size);
     qrProcessing = true;
     try {
-      console.debug('[QR] Starting scan...');
-      const html5Qr = new Html5Qrcode('qr-reader-temp');
-      const qrCodeData = await html5Qr.scanFile(file, true);
-      await html5Qr.clear();
+      console.debug(
+        '[QR] Scanning with multi-strategy reader (BarcodeDetector, jsQR, html5-qrcode)...',
+      );
+      const qrCodeData = await scanImageForQrCode(file, 'qr-reader-temp');
       if (qrCodeData) {
         console.debug('[QR] Scan success:', qrCodeData);
         qrSuccess = get(_)('login.qr_success');
         onUrlChange(qrCodeData);
-        onStartLogin();
+        await startLoginWithErrorHandling(qrCodeData);
       } else {
         console.warn('[QR] No QR code found in the image.');
         qrError = get(_)('login.qr_no_code');
@@ -305,7 +356,6 @@
       }
       qrError = errorMsg;
     } finally {
-      // Reset file input value so user can re-select the same file
       if (input) input.value = '';
       console.debug('[QR] Scan finished.');
       qrProcessing = false;
@@ -335,10 +385,10 @@
       await html5QrLive.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 300, height: 300 } },
-        (decodedText) => {
+        async (decodedText) => {
           qrSuccess = get(_)('login.qr_success');
           onUrlChange(decodedText);
-          onStartLogin();
+          await startLoginWithErrorHandling(decodedText);
           stopLiveScan();
         },
         (err) => {
@@ -455,30 +505,51 @@
       <LanguageSelector compact={true} />
     </div>
 
-    <!-- Window Controls -->
     {#if !isMobile}
-      <div class="flex items-center space-x-1" data-tauri-drag-region>
-        <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          onclick={() => appWindow.minimize()}
-          aria-label="Minimize">
-          <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-        </button>
-        <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          onclick={() => appWindow.toggleMaximize()}
-          aria-label="Maximize">
-          <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-        </button>
-        <button
-          class="flex justify-center items-center w-10 h-10 rounded-full transition-all duration-200 ease-in-out transform group hover:bg-red-500/90 hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-          onclick={() => appWindow.close()}
-          aria-label="Close">
-          <Icon
-            src={XMark}
-            class="w-4 h-4 transition duration-200 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
-        </button>
-      </div>
+      {#if isMacOS}
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="flex items-center gap-1.5">
+            <button
+              class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#ff5f57] hover:bg-[#ff7b73] active:scale-95"
+              onclick={() => appWindow.close()}
+              aria-label="Close">
+            </button>
+            <button
+              class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#febc2e] hover:bg-[#fecf5a] active:scale-95"
+              onclick={() => appWindow.minimize()}
+              aria-label="Minimize">
+            </button>
+            <button
+              class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#28c840] hover:bg-[#4dd35a] active:scale-95"
+              onclick={() => appWindow.toggleMaximize()}
+              aria-label="Maximize">
+            </button>
+          </div>
+        </div>
+      {:else}
+        <div class="flex items-center ml-4 space-x-2">
+          <button
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
+            onclick={() => appWindow.minimize()}
+            aria-label="Minimize">
+            <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          </button>
+          <button
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
+            onclick={() => appWindow.toggleMaximize()}
+            aria-label="Maximize">
+            <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          </button>
+          <button
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform group hover:bg-red-500 hover:scale-105 active:scale-95 playful"
+            onclick={() => appWindow.close()}
+            aria-label="Close">
+            <Icon
+              src={XMark}
+              class="w-4 h-4 transition duration-200 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
+          </button>
+        </div>
+      {/if}
     {/if}
   </div>
 
@@ -653,9 +724,7 @@
                         class="absolute top-1 bottom-1 bg-white/30 dark:bg-zinc-700/40 backdrop-blur-xl rounded-xl shadow-xs transition-all duration-300 ease-in-out border border-white/40 dark:border-zinc-600/40"
                         style="left: {loginMethod === 'qr'
                           ? '4px'
-                          : loginMethod === 'url'
-                            ? 'calc(33.333% - 4px)'
-                            : 'calc(66.666% - 4px)'}; width: calc(33.333% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
+                          : 'calc(50%)'}; width: calc(50% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                       </div>
                       <button
                         class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
@@ -678,14 +747,6 @@
                           : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
                         onclick={() => (loginMethod = 'url')}>
                         <T key="login.manual_url" fallback="Manual URL" />
-                      </button>
-                      <button
-                        class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
-                        'direct'
-                          ? 'text-indigo-600 dark:text-indigo-400'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
-                        onclick={() => (loginMethod = 'direct')}>
-                        <T key="login.direct_login" fallback="Direct Login" />
                       </button>
                     </div>
                   </div>
@@ -732,18 +793,20 @@
                           <Input
                             type="text"
                             bind:value={mobileSsoUrl}
-                            onkeydown={(e: KeyboardEvent) => {
+                            onkeydown={async (e: KeyboardEvent) => {
+                              const url = mobileSsoUrl.trim();
                               if (
                                 e.key === 'Enter' &&
-                                mobileSsoUrl.trim().startsWith('seqtalearn://')
+                                (url.startsWith('seqtalearn://') ||
+                                  url.startsWith('desqta://connect/'))
                               ) {
                                 jwtExpiredError = false;
-                                onUrlChange(mobileSsoUrl.trim());
-                                onStartLogin();
+                                onUrlChange(url);
+                                await startLoginWithErrorHandling();
                               }
                             }}
                             placeholder={$_('login.sso_url_placeholder', {
-                              default: 'seqtalearn://sso/...',
+                              default: 'seqtalearn://sso/... or desqta://connect/...',
                             })}
                             inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
@@ -769,7 +832,7 @@
                         <p class="text-zinc-600 dark:text-zinc-400">
                           <T
                             key="login.qr_description"
-                            fallback="Scan your SEQTA QR code to sign in instantly" />
+                            fallback="Scan SEQTA or BetterSEQTA+ QR code to sign in instantly" />
                         </p>
                       </div>
 
@@ -796,6 +859,11 @@
                                 <T key="login.upload_qr" fallback="Upload QR Code" />
                               </p>
                               <p class="text-sm text-indigo-600 dark:text-indigo-400">
+                                <T
+                                  key="login.upload_qr_hint"
+                                  fallback="Screenshots of any size accepted – we'll find the QR code" />
+                              </p>
+                              <p class="text-xs text-indigo-500 dark:text-indigo-500/80 mt-0.5">
                                 <T
                                   key="login.click_browse"
                                   fallback="Click to browse or drag & drop" />
@@ -829,13 +897,24 @@
                       </Button>
 
                       <!-- Inline help link under scan button -->
-                      <div class="text-center">
+                      <div class="text-center space-y-2">
                         <button
                           type="button"
                           onclick={openQrInstructionsModal}
                           class="mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
                           <T key="login.how_get_qr" fallback="How do I get a QR code?" />
                         </button>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                          <T key="login.not_working_try_direct" fallback="Not working?" />
+                          <button
+                            type="button"
+                            onclick={() => (loginMethod = 'direct')}
+                            class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                            <T
+                              key="login.try_direct_login_link"
+                              fallback="Try direct login instead" />
+                          </button>
+                        </p>
                       </div>
                     </div>
                   {/if}
@@ -865,10 +944,10 @@
                               }
                               onUrlChange(normalized);
                             }}
-                            onkeydown={(e: KeyboardEvent) => {
+                            onkeydown={async (e: KeyboardEvent) => {
                               if (e.key === 'Enter' && seqtaUrl.trim()) {
                                 jwtExpiredError = false;
-                                onStartLogin();
+                                await startLoginWithErrorHandling();
                               }
                             }}
                             placeholder={$_('login.url_placeholder', {
@@ -876,16 +955,27 @@
                             })}
                             inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
-                        {#if isMobile}
-                          <div class="text-center">
+                        <div class="text-center space-y-2">
+                          {#if isMobile}
                             <button
                               type="button"
                               onclick={() => (loginMethod = 'qr')}
                               class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm transition-all duration-200">
                               <T key="login.use_qr_code" fallback="Use QR code instead" />
                             </button>
-                          </div>
-                        {/if}
+                          {/if}
+                          <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                            <T key="login.not_working_try_direct" fallback="Not working?" />
+                            <button
+                              type="button"
+                              onclick={() => (loginMethod = 'direct')}
+                              class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                              <T
+                                key="login.try_direct_login_link"
+                                fallback="Try direct login instead" />
+                            </button>
+                          </p>
+                        </div>
                       </div>
                     </div>
                   {/if}
@@ -965,6 +1055,21 @@
                             inputClass="w-full py-2.5 px-4 text-sm bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-lg text-zinc-900 dark:text-white placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
                       </div>
+                      <div class="text-center pt-1">
+                        <button
+                          type="button"
+                          onclick={() => (loginMethod = 'qr')}
+                          class="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                          <T key="login.use_qr_code" fallback="Use QR code instead" />
+                        </button>
+                        <span class="text-zinc-400 dark:text-zinc-500 mx-1">·</span>
+                        <button
+                          type="button"
+                          onclick={() => (loginMethod = 'url')}
+                          class="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                          <T key="login.manual_url" fallback="Manual URL" />
+                        </button>
+                      </div>
                     </div>
                   {/if}
                 </div>
@@ -1023,6 +1128,26 @@
                   </div>
                 {/if}
 
+                {#if loginError}
+                  <div
+                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800 status-message-animate"
+                    transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
+                    <div class="flex items-center space-x-3">
+                      <div
+                        class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shrink-0">
+                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fill-rule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <span class="text-red-700 dark:text-red-300 font-medium text-sm"
+                        >{loginError}</span>
+                    </div>
+                  </div>
+                {/if}
+
                 {#if showDevToggle}
                   <div
                     class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-200 dark:border-purple-800">
@@ -1040,7 +1165,11 @@
                               await invoke('save_settings_merge', {
                                 patch: { dev_sensitive_info_hider: devSensitiveInfoHider },
                               });
-                              invalidateDevSensitiveInfoHiderCache();
+                              if (devSensitiveInfoHider) {
+                                await clearAllCachesForMockMode();
+                              } else {
+                                invalidateDevSensitiveInfoHiderCache();
+                              }
                               setTimeout(() => location.reload(), 150);
                             } catch (e) {
                               console.warn('Failed to toggle mock API backend', e);
@@ -1134,8 +1263,9 @@
                     variant="primary"
                     size="lg"
                     fullWidth={true}
-                    onclick={() => {
+                    onclick={async () => {
                       jwtExpiredError = false;
+                      loginError = '';
                       if (isMobile && showMobileSsoInput && mobileSsoUrl.trim()) {
                         // Use the manually entered SSO URL
                         onUrlChange(mobileSsoUrl.trim());
@@ -1177,7 +1307,7 @@
                           5 * 60 * 1000,
                         );
                       }
-                      onStartLogin();
+                      await startLoginWithErrorHandling();
                     }}
                     disabled={jwtExpiredError ||
                       (loginMethod === 'url' && !seqtaUrl.trim()) ||
@@ -1800,6 +1930,18 @@
         </div>
 
         <div
+          class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-6">
+          <h3 class="text-lg font-semibold text-indigo-800 dark:text-indigo-200 mb-2">
+            Using BetterSEQTA+?
+          </h3>
+          <p class="text-indigo-700 dark:text-indigo-300 text-sm">
+            If you use the BetterSEQTA+ browser extension, you can also generate a QR code from
+            Settings → Connect Mobile App. This creates an instant sign-in QR without waiting for an
+            email.
+          </p>
+        </div>
+
+        <div
           class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
           <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
             Need More Help?
@@ -1819,6 +1961,22 @@
           </p>
         </div>
 
+        <div
+          class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">
+          <p class="text-sm text-amber-700 dark:text-amber-300">
+            <T key="login.not_working_try_direct" fallback="Not working?" />
+            <button
+              type="button"
+              onclick={() => {
+                closeQrInstructionsModal();
+                loginMethod = 'direct';
+              }}
+              class="font-medium text-amber-800 dark:text-amber-200 hover:underline focus:outline-hidden focus:ring-2 focus:ring-amber-500/50 rounded-sm">
+              <T key="login.try_direct_login_link" fallback="Try direct login instead" />
+            </button>
+          </p>
+        </div>
+
         <div class="text-center">
           <Button
             variant="primary"
@@ -1833,7 +1991,11 @@
   </Modal>
 </div>
 
-<div id="qr-reader-temp" style="display:none;"></div>
+<!-- Large dimensions allow html5-qrcode to process full-resolution screenshots; hidden off-screen -->
+<div
+  id="qr-reader-temp"
+  style="position:absolute;left:-9999px;width:4000px;height:4000px;min-width:4000px;min-height:4000px;overflow:hidden;visibility:hidden;pointer-events:none;">
+</div>
 
 <style>
   @keyframes fadeInUp {

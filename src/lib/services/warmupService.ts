@@ -1,9 +1,11 @@
 import { cache } from '../../utils/cache';
 import { seqtaFetch } from '../../utils/netUtil';
+import { devTimeAsync } from '$lib/performance/devPerfHelpers';
 import { logger } from '../../utils/logger';
 import { setIdb } from './idbCache';
 import { isOfflineMode } from '../utils/offlineMode';
 import { forumPhotoSyncService } from './forumPhotoSyncService';
+import { invokeGetProcessedAssessments } from './processedAssessmentsInvoke';
 
 // Centralized background warm-up of frequently used SEQTA endpoints.
 // This primes the in-memory cache so pages can render instantly.
@@ -207,33 +209,35 @@ export async function updateNextLessonWidget(): Promise<void> {
 }
 
 export async function warmUpCommonData(): Promise<void> {
-  // Check if offline mode is forced
-  const offline = await isOfflineMode();
-  if (offline) {
-    logger.info('warmup', 'warmUpCommonData', 'Skipping warmup (offline mode)');
-    return;
-  }
+  await devTimeAsync('warmup_common_data', 'startup', 'warmUpCommonData', async () => {
+    // Check if offline mode is forced
+    const offline = await isOfflineMode();
+    if (offline) {
+      logger.info('warmup', 'warmUpCommonData', 'Skipping warmup (offline mode)');
+      return;
+    }
 
-  // Run in parallel, ignore individual failures
-  await Promise.allSettled([
-    prefetchLessonColours(),
-    prefetchTimetableWeek(),
-    updateNextLessonWidget(),
-    prefetchUpcomingAssessments(),
-    prefetchAssessmentsOverview(),
-    prefetchNoticesLabels(),
-    prefetchTodayNotices(),
-    prefetchAnalyticsSync(),
-    prefetchFoliosSettings(),
-    prefetchGoalsSettings(),
-    prefetchForumsSettings(),
-    prefetchForumsList(),
-  ]);
+    // Run in parallel, ignore individual failures
+    await Promise.allSettled([
+      prefetchLessonColours(),
+      prefetchTimetableWeek(),
+      updateNextLessonWidget(),
+      prefetchUpcomingAssessments(),
+      prefetchAssessmentsOverview(),
+      prefetchNoticesLabels(),
+      prefetchTodayNotices(),
+      prefetchAnalyticsSync(),
+      prefetchFoliosSettings(),
+      prefetchGoalsSettings(),
+      prefetchForumsSettings(),
+      prefetchForumsList(),
+    ]);
 
-  // Run forum photo sync in background (non-blocking)
-  // This is a longer operation, so we don't wait for it
-  forumPhotoSyncService.syncAllPhotos().catch((e) => {
-    logger.error('warmup', 'warmUpCommonData', `Forum photo sync failed: ${e}`, { error: e });
+    // Run forum photo sync in background (non-blocking)
+    // This is a longer operation, so we don't wait for it
+    forumPhotoSyncService.syncAllPhotos().catch((e) => {
+      logger.error('warmup', 'warmUpCommonData', `Forum photo sync failed: ${e}`, { error: e });
+    });
   });
 }
 
@@ -258,15 +262,8 @@ async function prefetchAssessmentsOverview(): Promise<void> {
       return;
     }
 
-    // Use Rust backend to process all assessments data
-    const { invoke } = await import('@tauri-apps/api/core');
-    const result = await invoke<{
-      assessments: any[];
-      subjects: any[];
-      all_subjects: any[];
-      filters: Record<string, boolean>;
-      years: number[];
-    }>('get_processed_assessments');
+    // Use Rust backend to process all assessments data (deduped with page/search/notifications)
+    const result = await invokeGetProcessedAssessments();
 
     // Store cache object exactly as page expects (10 minute TTL)
     const overviewData = {
@@ -290,6 +287,7 @@ async function prefetchAssessmentsOverview(): Promise<void> {
     );
 
     // Schedule push notifications for assessments (respects reminders_enabled)
+    const { invoke } = await import('@tauri-apps/api/core');
     const remindersEnabled =
       (
         await invoke<Record<string, unknown>>('get_settings_subset', {

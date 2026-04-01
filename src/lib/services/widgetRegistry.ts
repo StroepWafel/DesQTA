@@ -92,8 +92,8 @@ export const widgetRegistry = new Map<WidgetType, WidgetDefinition>([
       name: "Today's Schedule",
       description: 'View your schedule for today',
       icon: CalendarDays,
-      defaultSize: { w: 12, h: 6 },
-      minSize: { w: 6, h: 5 },
+      defaultSize: { w: 12, h: 4 },
+      minSize: { w: 4, h: 4 },
       maxSize: { w: 12, h: 10 },
       component: TodaySchedule,
       settingsSchema: {

@@ -48,37 +48,46 @@
     return date.toLocaleString('default', { month: 'long', year: 'numeric' });
   }
 
-  function getAssessmentsByMonth() {
+  // Precompute expensive groupings once per `assessments` change.
+  const assessmentsBySubject = $derived.by(() => {
     const grouped = new Map<string, Assessment[]>();
-    assessments.forEach((assessment) => {
+    for (const a of assessments) {
+      const list = grouped.get(a.code) ?? [];
+      list.push(a);
+      grouped.set(a.code, list);
+    }
+    return grouped;
+  });
+
+  const assessmentsByMonth = $derived.by(() => {
+    const grouped = new Map<string, Assessment[]>();
+    for (const assessment of assessments) {
       const date = new Date(assessment.due);
       const monthKey = getMonthName(date);
-      if (!grouped.has(monthKey)) {
-        grouped.set(monthKey, []);
-      }
-      grouped.get(monthKey)?.push(assessment);
-    });
+      const list = grouped.get(monthKey) ?? [];
+      list.push(assessment);
+      grouped.set(monthKey, list);
+    }
     return Array.from(grouped.entries()).sort((a, b) => {
       const dateA = new Date(a[0]);
       const dateB = new Date(b[0]);
       return dateA.getTime() - dateB.getTime();
     });
-  }
+  });
 
-  function getAssessmentsByStatus() {
+  const assessmentsByStatus = $derived.by(() => {
     const grouped = new Map<string, Assessment[]>();
-    assessments.forEach((assessment) => {
+    for (const assessment of assessments) {
       const status = getStatusBadge(assessment.status, assessment.due).text;
-      if (!grouped.has(status)) {
-        grouped.set(status, []);
-      }
-      grouped.get(status)?.push(assessment);
-    });
+      const list = grouped.get(status) ?? [];
+      list.push(assessment);
+      grouped.set(status, list);
+    }
     return Array.from(grouped.entries()).sort((a, b) => {
       const order = ['Overdue', 'Due Soon', 'Upcoming', 'Marked'];
       return order.indexOf(a[0]) - order.indexOf(b[0]);
     });
-  }
+  });
 </script>
 
 <div class="space-y-6">
@@ -86,7 +95,7 @@
     class="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-zinc-300/20 dark:scrollbar-track-zinc-800/10">
     {#key assessmentsKey}
       {#if groupBy === 'subject'}
-        {#each subjects.filter( (subject) => assessments.some((a) => a.code === subject.code), ) as subject, columnIndex}
+        {#each subjects.filter((subject) => assessmentsBySubject.has(subject.code)) as subject, columnIndex}
           <div
             class="shrink-0 w-72 sm:w-80 board-column-animate"
             style="animation-delay: {columnIndex * 100}ms;">
@@ -108,7 +117,7 @@
               </div>
             </div>
             <div class="space-y-4">
-              {#each assessments.filter((a) => a.code === subject.code) as assessment, cardIndex}
+              {#each (assessmentsBySubject.get(subject.code) || []) as assessment, cardIndex}
                 <div class="board-card-animate" style="animation-delay: {cardIndex * 50}ms;">
                   <AssessmentCard {assessment} />
                 </div>
@@ -117,7 +126,7 @@
           </div>
         {/each}
       {:else if groupBy === 'month'}
-        {#each getAssessmentsByMonth() as [month, monthAssessments], columnIndex}
+        {#each assessmentsByMonth as [month, monthAssessments], columnIndex}
           <div
             class="shrink-0 w-72 sm:w-80 board-column-animate"
             style="animation-delay: {columnIndex * 100}ms;">
@@ -140,7 +149,7 @@
           </div>
         {/each}
       {:else if groupBy === 'status'}
-        {#each getAssessmentsByStatus() as [status, statusAssessments], columnIndex}
+        {#each assessmentsByStatus as [status, statusAssessments], columnIndex}
           <div
             class="shrink-0 w-72 sm:w-80 board-column-animate"
             style="animation-delay: {columnIndex * 100}ms;">

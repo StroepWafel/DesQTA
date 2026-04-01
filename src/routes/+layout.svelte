@@ -15,6 +15,7 @@
   import ThemeBuilder from '../lib/components/ThemeBuilder.svelte';
   import { Toaster } from 'svelte-sonner';
   import Onboarding from '../lib/components/Onboarding.svelte';
+  import UploadProgressBar from '../lib/components/UploadProgressBar.svelte';
   import OfflineBanner from '../lib/components/OfflineBanner.svelte';
   import {
     checkSession as checkSessionAuth,
@@ -22,10 +23,7 @@
     handleLogout as handleLogoutAuth,
     startLogin as startLoginAuth,
   } from '../lib/services/layoutAuthService';
-  import {
-    autoDownloadSettingsFromCloud,
-    syncCloudSettings,
-  } from '../lib/services/layoutCloudService';
+  import { runCloudSettingsStartupSync } from '../lib/services/layoutCloudService';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../lib/services/settingsSync';
   import { authService, type UserInfo } from '../lib/services/authService';
   import { warmUpCommonData } from '../lib/services/warmupService';
@@ -78,9 +76,22 @@
   import { writable, get } from 'svelte/store';
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
+  import { browser } from '$app/environment';
+  import { isDevTauriPerformance } from '$lib/performance/devTauriContext';
+  import {
+    installDevTauriPerformanceRuntime,
+    teardownDevTauriPerformanceRuntime,
+  } from '$lib/performance/devTauriRuntime';
+  import DevPerfHud from '$lib/components/dev/DevPerfHud.svelte';
+  import PerformanceTestMegaSuiteOverlay from '$lib/components/dev/PerformanceTestMegaSuiteOverlay.svelte';
   export const needsSetup = writable(false);
 
   let { children } = $props();
+
+  // Must run synchronously during layout init: Kit's beforeNavigate/afterNavigate use onMount internally.
+  if (browser && isDevTauriPerformance()) {
+    installDevTauriPerformanceRuntime();
+  }
 
   // Core state
   let seqtaUrl = $state<string>('');
@@ -98,11 +109,25 @@
   let versionUpdateCurrent = $state('');
   let versionUpdatePrevious = $state('');
   let showOnboarding = $state(false);
+  let tourPendingAfterReleaseNotes = $state(false);
   let hasCompletedSetupAssistant = $state(false);
+  let profilesExist = $state(false);
   let hasCompletedPostLoginPrompts = $state(false);
   let biometricEnabled = $state(false);
   let biometricUnlocked = $state(false);
   let isFullscreen = $state(false);
+
+  const BIOMETRIC_SESSION_UNLOCK_KEY = 'biometric_session_unlocked';
+
+  const setBiometricSessionUnlocked = (unlocked: boolean) => {
+    biometricUnlocked = unlocked;
+    if (typeof sessionStorage === 'undefined') return;
+    if (unlocked) {
+      sessionStorage.setItem(BIOMETRIC_SESSION_UNLOCK_KEY, '1');
+    } else {
+      sessionStorage.removeItem(BIOMETRIC_SESSION_UNLOCK_KEY);
+    }
+  };
 
   // Composables
   const weather = useWeather();
@@ -115,13 +140,13 @@
   let loadingWeather = $derived(weather.state.loading);
   let weatherError = $derived(weather.state.error);
   let forceUseLocation = $derived(weather.state.forceUseLocation);
-  let autoCollapseSidebar = $derived(sidebar.state.autoCollapse);
-  let autoExpandSidebarHover = $derived(sidebar.state.autoExpandOnHover);
+  let autoCollapseSidebar = $state(false);
+  let autoExpandSidebarHover = $state(false);
   let isMobile = $derived($platformStore.isMobile);
   let isIOS = $derived($platformStore.isIOS);
   let supportsBiometric = $derived($platformStore.supportsBiometric);
   let showBiometricGate = $derived(
-    !$needsSetup && biometricEnabled && supportsBiometric && !biometricUnlocked
+    !$needsSetup && biometricEnabled && supportsBiometric && !biometricUnlocked,
   );
 
   // Settings state
@@ -183,10 +208,19 @@
     if (unlistenShowWhatsNew) {
       window.removeEventListener('show-whats-new', unlistenShowWhatsNew);
     }
+    if (browser && isDevTauriPerformance()) {
+      teardownDevTauriPerformanceRuntime();
+    }
   });
 
   const reloadSidebarSettings = async () => {
-    await sidebar.loadSettings();
+    const settings = await sidebar.loadSettings();
+    autoCollapseSidebar = settings.autoCollapse;
+    autoExpandSidebarHover = settings.autoExpandOnHover;
+
+    if (!isMobile && !get(needsSetup) && autoExpandSidebarHover) {
+      sidebarOpen = false;
+    }
   };
 
   const loadUserInfo = async () => {
@@ -203,22 +237,24 @@
     });
   };
 
-  const handlePageNavigation = () => {
+  const closeSidebarForNavigation = () => {
     if (autoCollapseSidebar || isMobile) {
       sidebarOpen = false;
     }
     sidebar.handlePageNavigation();
   };
 
-  const handleMouseMove = (event: MouseEvent) => {
-    if (autoExpandSidebarHover && !isMobile) {
-      sidebar.handleMouseMove(event);
-      const x = event.clientX;
-      if (!sidebarOpen && x <= 20) {
-        sidebarOpen = true;
-      } else if (sidebarOpen && x > 280) {
-        sidebarOpen = false;
-      }
+  // Hover expand: open when mouse at left edge; close when mouse enters main content
+  const EDGE_ZONE_PX = 20;
+  const handleEdgeHover = (e: MouseEvent) => {
+    if (!autoExpandSidebarHover || isMobile || $needsSetup) return;
+    if (!sidebarOpen && e.clientX <= EDGE_ZONE_PX) {
+      sidebarOpen = true;
+    }
+  };
+  const handleMainContentEnter = () => {
+    if (autoExpandSidebarHover && sidebarOpen && !isMobile && !$needsSetup) {
+      sidebarOpen = false;
     }
   };
 
@@ -257,6 +293,7 @@
   };
 
   const handleLogout = async () => {
+    setBiometricSessionUnlocked(false);
     await handleLogoutAuth({
       onClearUser: () => (userInfo = undefined),
       onCloseDropdown: () => (showUserDropdown = false),
@@ -274,9 +311,7 @@
     reloadSidebarSettings,
   };
 
-  const runSyncCloudSettings = () => syncCloudSettings(cloudSyncOptions);
-
-  const runAutoDownloadSettingsFromCloud = () => autoDownloadSettingsFromCloud();
+  const runCloudSettingsStartup = () => runCloudSettingsStartupSync(cloudSyncOptions);
 
   // Language change handler
   const changeLanguage = async (languageCode: string) => {
@@ -343,7 +378,7 @@
       const settings = await loadSettings(['has_been_through_onboarding']);
       if (!settings.has_been_through_onboarding) {
         showOnboarding = true;
-        sidebarOpen = false; // Close mobile nav during tour
+        if (isMobile) sidebarOpen = false;
       }
     } catch (e) {
       logger.debug('layout', 'handleRedoOnboarding', 'Could not check onboarding status', {
@@ -354,6 +389,11 @@
 
   onMount(async () => {
     logger.logComponentMount('layout');
+
+    if (typeof sessionStorage !== 'undefined') {
+      biometricUnlocked = sessionStorage.getItem(BIOMETRIC_SESSION_UNLOCK_KEY) === '1';
+    }
+
     unlistenLayout = await useLayoutListeners({
       appWindow,
       onFullscreenChange: (v) => (isFullscreen = v),
@@ -410,7 +450,7 @@
         loadWeatherSettings(),
         loadEnhancedAnimationsSetting(),
         reloadSidebarSettings(),
-        runSyncCloudSettings(),
+        runCloudSettingsStartup(),
       ]);
 
       // Usage analytics: increment session count and start hourly check (service checks opt-in internally)
@@ -421,14 +461,18 @@
         });
       }
 
-      // Load setup assistant completion status, post-login prompts, and biometric preference
+      // Load setup assistant completion status, post-login prompts, biometric preference, and profile count
       try {
-        const setupSettings = await loadSettings([
-          'has_completed_setup_assistant',
-          'has_completed_post_login_prompts',
-          'biometric_enabled',
+        const [setupSettings, profilesList] = await Promise.all([
+          loadSettings([
+            'has_completed_setup_assistant',
+            'has_completed_post_login_prompts',
+            'biometric_enabled',
+          ]),
+          invoke<unknown[]>('list_profiles').catch(() => []),
         ]);
         hasCompletedSetupAssistant = setupSettings.has_completed_setup_assistant === true;
+        profilesExist = Array.isArray(profilesList) && profilesList.length > 0;
         hasCompletedPostLoginPrompts = setupSettings.has_completed_post_login_prompts === true;
         biometricEnabled = setupSettings.biometric_enabled === true;
 
@@ -442,9 +486,8 @@
                 errorCode: status.errorCode,
               });
               biometricEnabled = false;
-              const { saveSettingsWithQueue, flushSettingsQueue } = await import(
-                '$lib/services/settingsSync'
-              );
+              const { saveSettingsWithQueue, flushSettingsQueue } =
+                await import('$lib/services/settingsSync');
               await saveSettingsWithQueue({ biometric_enabled: false });
               await flushSettingsQueue();
             }
@@ -456,19 +499,22 @@
         logger.debug('layout', 'onMount', 'Could not load setup assistant status', { error: e });
       }
 
-      // Auto-download settings from cloud in background (non-blocking)
-      runAutoDownloadSettingsFromCloud().catch((e) => {
-        logger.debug('layout', 'onMount', 'Settings download error (non-critical)', { error: e });
-      });
-
-      // Check if user needs onboarding - show tour for first-time users (post-login only)
+      // Check if user needs onboarding - show tour for first-time users (only after post-login screens)
       try {
         const settings = await loadSettings(['has_been_through_onboarding']);
-        if (!settings.has_been_through_onboarding && !get(needsSetup)) {
-          // Wait a bit for UI to settle
+        if (
+          !settings.has_been_through_onboarding &&
+          !get(needsSetup) &&
+          hasCompletedPostLoginPrompts
+        ) {
+          // Wait a bit for UI to settle; defer if release notes (What's New) will be open
           setTimeout(() => {
-            showOnboarding = true;
-            sidebarOpen = false; // Close mobile nav during tour for better UX
+            if (showWhatsNewModal) {
+              tourPendingAfterReleaseNotes = true;
+            } else {
+              showOnboarding = true;
+              if (isMobile) sidebarOpen = false;
+            }
           }, 1000);
         }
       } catch (e) {
@@ -478,9 +524,10 @@
       // Check if app was just updated - show What's New modal (disabled for rc/beta)
       try {
         const versionInfo = await invoke<{ current: string; previousVersion?: string }>(
-          'get_version_update_info'
+          'get_version_update_info',
         );
-        const isStableRelease = !versionInfo?.current?.includes('rc') && !versionInfo?.current?.includes('beta');
+        const isStableRelease =
+          !versionInfo?.current?.includes('rc') && !versionInfo?.current?.includes('beta');
         if (versionInfo?.previousVersion && !get(needsSetup) && isStableRelease) {
           versionUpdateCurrent = versionInfo.current;
           versionUpdatePrevious = versionInfo.previousVersion;
@@ -509,7 +556,7 @@
           }
           showWhatsNewModal = true;
         } catch (e) {
-          logger.debug('layout', 'handleShowWhatsNew', 'Failed to show What\'s New', { error: e });
+          logger.debug('layout', 'handleShowWhatsNew', "Failed to show What's New", { error: e });
         }
       };
       window.addEventListener('show-whats-new', handleShowWhatsNew);
@@ -550,25 +597,31 @@
       // Load cached data from SQLite immediately for instant UI
       // Pass needsSetup so we skip background sync when user is on login screen (or after session invalidation)
       const { initializeApp } = await import('$lib/services/startupService');
-      await initializeApp(get(needsSetup));
+      await initializeApp(get(needsSetup), devMockEnabled);
+      contentLoading = false;
 
       // Background tasks (warmup already triggered by startupService)
       if (weatherEnabled) {
         fetchWeather(!forceUseLocation);
       }
 
-      // Run a one-time heartbeat health check on app open
-      await healthCheck();
+      // Run a one-time heartbeat health check on app open without blocking initial content render
+      healthCheck().catch((e) => {
+        logger.debug('layout', 'onMount', 'Health check failed', { error: e });
+      });
 
       // Send startup analytics
       sendAnalytics();
 
       // Check and apply initial fullscreen state (also check maximized)
+      // On macOS: skip isMaximized() - it can cause issues with undecorated windows (plugins-workspace#1918)
       try {
-        const [currentFullscreen, currentMaximized] = await Promise.all([
-          appWindow.isFullscreen(),
-          appWindow.isMaximized().catch(() => false),
-        ]);
+        const currentFullscreen = await appWindow.isFullscreen();
+        const currentMaximized =
+          import.meta.env.TAURI_ENV_PLATFORM === 'darwin' ||
+          import.meta.env.TAURI_ENV_PLATFORM === 'macos'
+            ? false
+            : await appWindow.isMaximized().catch(() => false);
         isFullscreen = currentFullscreen || currentMaximized;
         logger.debug(
           'layout',
@@ -579,7 +632,13 @@
         logger.debug('layout', 'onMount', 'Failed to check initial fullscreen state', { error: e });
       }
     } finally {
-      contentLoading = false;
+      if (contentLoading) {
+        contentLoading = false;
+      }
+      if (import.meta.env.DEV && import.meta.env.TAURI_ENV_PLATFORM) {
+        const { recordStartupPhase } = await import('$lib/performance/hooks');
+        recordStartupPhase('shell_ready');
+      }
     }
   });
 
@@ -595,18 +654,36 @@
     }
   });
 
-  // Consolidated effects
+  // Sidebar: close on route change (auto-collapse) and reload settings when entering /settings
+  let prevPath = $state('');
   $effect(() => {
-    if (autoCollapseSidebar) handlePageNavigation();
     if ($needsSetup) sidebarOpen = false;
-    if ($page.url.pathname === '/settings') reloadSidebarSettings();
+    const path = $page.url.pathname;
+    if (path !== prevPath) {
+      if (autoCollapseSidebar || isMobile) sidebarOpen = false;
+      if (path === '/settings') reloadSidebarSettings();
+      prevPath = path;
+    }
   });
 
-  // On mobile: sidebar closed by default on load/refresh (user opens via "More" tab)
+  // Mobile: sidebar closed by default
   let hasInitializedMobileSidebar = $state(false);
   $effect(() => {
     if (isMobile && !$needsSetup && !showOnboarding && !hasInitializedMobileSidebar) {
       hasInitializedMobileSidebar = true;
+      sidebarOpen = false;
+    }
+  });
+
+  // Hover expand: start collapsed once when enabled
+  let hasInitializedHoverSidebar = $state(false);
+  $effect(() => {
+    if (!autoExpandSidebarHover || isMobile || $needsSetup) {
+      hasInitializedHoverSidebar = false;
+      return;
+    }
+    if (!hasInitializedHoverSidebar) {
+      hasInitializedHoverSidebar = true;
       sidebarOpen = false;
     }
   });
@@ -650,7 +727,7 @@
     const events = [
       ['resize', checkMobile],
       ['click', handleClickOutside],
-      ['mousemove', handleMouseMove],
+      ['mousemove', handleEdgeHover],
     ] as const;
 
     events.forEach(([event, handler]) =>
@@ -713,8 +790,8 @@
 
       menu = [...DEFAULT_MENU]; // Use default menu configuration
 
-      // Filter menu items based on SEQTA config
-      if (latestConfig?.payload) {
+      // Filter menu items based on SEQTA config (skip when mock enabled - show all pages)
+      if (!devMockEnabled && latestConfig?.payload) {
         const goalsEnabled = latestConfig.payload['coneqt-s.page.goals']?.value === 'enabled';
         if (!goalsEnabled) {
           menu = menu.filter((item) => item.path !== '/goals');
@@ -749,16 +826,19 @@
 
   const applyMenuOrder = async () => {
     try {
-      const settings = await loadSettings(['menu_order']);
+      const settings = await loadSettings(['menu_order', 'disabled_sidebar_pages']);
       const menuOrder = settings.menu_order as string[] | undefined;
+      const disabledPages = (settings.disabled_sidebar_pages as string[] | undefined) || [];
 
       // Use current menu state instead of DEFAULT_MENU to preserve filters
       const currentMenu = [...menu];
       const currentMenuMap = new Map(currentMenu.map((item) => [item.path, item]));
 
+      let orderedMenu: typeof DEFAULT_MENU;
+
       if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
         // Reorder menu based on saved order, keeping any new items at the end
-        const orderedMenu: typeof DEFAULT_MENU = [];
+        orderedMenu = [];
         const addedPaths = new Set<string>();
 
         // Add items in saved order (only if they exist in current menu)
@@ -776,10 +856,13 @@
             orderedMenu.push(item);
           }
         }
-
-        menu = orderedMenu;
+      } else {
+        orderedMenu = [...currentMenu];
       }
-      // If no menu order, keep current menu (already filtered)
+
+      // Filter out disabled pages (Settings cannot be disabled)
+      const disabledSet = new Set(disabledPages);
+      menu = orderedMenu.filter((item) => !disabledSet.has(item.path) || item.path === '/settings');
     } catch (e) {
       logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
       // Don't reset to DEFAULT_MENU on error, keep current filtered menu
@@ -795,15 +878,13 @@
   <LoadingScreen />
 {:else}
   <div
-    class="flex flex-col h-screen w-screen {isFullscreen || isMobile
+    class="flex flex-col h-screen w-screen {isMobile || isFullscreen
       ? ''
       : 'rounded-2xl'} overflow-hidden theme-bg"
     style="outline: none; border: none; margin: 0; padding: 0; padding-top: var(--safe-area-top); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
     {#if !$needsSetup}
       <AppHeader
         {sidebarOpen}
-        {weatherEnabled}
-        {weatherData}
         {userInfo}
         {showUserDropdown}
         {isFullscreen}
@@ -818,13 +899,10 @@
 
     <div class="flex relative flex-1 min-h-0">
       {#if !$needsSetup && !menuLoading}
-        <AppSidebar {sidebarOpen} {menu} onMenuItemClick={handlePageNavigation} />
+        <AppSidebar {sidebarOpen} {menu} {isFullscreen} onMenuItemClick={closeSidebarForNavigation} />
       {/if}
 
-      <!-- Mobile Sidebar Overlay -->
       {#if sidebarOpen && isMobile && !$needsSetup}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class="fixed inset-0 z-20 bg-black/50 sm:hidden"
           onclick={() => (sidebarOpen = false)}
@@ -834,56 +912,96 @@
         </div>
       {/if}
 
-      <!-- Main Content -->
       <main
-        class="overflow-y-auto flex-1 border-t {!$needsSetup ? 'border-l' : ''} {isFullscreen || isMobile
-          ? ''
-          : 'rounded-br-2xl'} border-zinc-200 dark:border-zinc-700/50 theme-bg transition-all duration-200 [scrollbar-gutter:stable] {isMobile && !$needsSetup ? 'pb-[56px] mobile-main' : ''}"
-        style="margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
-        {#if !$needsSetup}
-          <OfflineBanner />
-        {/if}
-        {#if contentLoading}
-          <div class="flex items-center justify-center w-full h-full py-12">
-            <LoadingScreen inline />
-          </div>
-        {:else if !$needsSetup && !hasCompletedPostLoginPrompts}
-          <PostLoginPrompts onComplete={() => (hasCompletedPostLoginPrompts = true)} />
-        {:else if showBiometricGate}
-          <BiometricGate
-            onUnlock={() => (biometricUnlocked = true)}
-            onBiometryUnavailable={async () => {
-              biometricEnabled = false;
-              biometricUnlocked = true;
-              try {
-                const { saveSettingsWithQueue, flushSettingsQueue } = await import(
-                  '$lib/services/settingsSync'
-                );
-                await saveSettingsWithQueue({ biometric_enabled: false });
-                await flushSettingsQueue();
-              } catch (e) {
-                logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', { error: e });
-              }
-            }}
-          />
-        {:else if $needsSetup}
-          {#if !hasCompletedSetupAssistant}
-            <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />
-          {:else}
-            <LoginScreen
-              {seqtaUrl}
-              onStartLogin={startLogin}
-              onUrlChange={(url) => (seqtaUrl = url)} />
+        onmouseenter={handleMainContentEnter}
+        class="flex-1 min-h-0 flex flex-col border-t
+          {sidebarOpen && !isMobile && !$needsSetup
+          ? 'border-l border-zinc-200 dark:border-zinc-700/50'
+          : ''}
+          {isMobile
+          ? 'rounded-t-2xl overflow-hidden'
+          : sidebarOpen
+            ? 'rounded-tl-2xl overflow-hidden'
+            : 'rounded-none'}
+          isolate transition-[border-radius,border-color] duration-300 bg-transparent"
+        style="margin-left: 0; margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
+        <div
+          class="flex-1 min-h-0 overflow-y-auto
+            {!$needsSetup ? '[scrollbar-gutter:stable]' : ''}
+            {isMobile && !$needsSetup ? 'pb-[56px] mobile-main mobile-soft' : ''}">
+          {#if !$needsSetup}
+            <OfflineBanner />
           {/if}
-        {:else}
-          {@render children()}
-        {/if}
+          {#if contentLoading}
+            <div class="flex items-center justify-center w-full h-full py-12">
+              <LoadingScreen inline />
+            </div>
+          {:else if !$needsSetup && !hasCompletedPostLoginPrompts}
+            <PostLoginPrompts
+              onComplete={() => {
+                hasCompletedPostLoginPrompts = true;
+                loadSettings(['has_been_through_onboarding'])
+                  .then((settings) => {
+                    if (!settings.has_been_through_onboarding && !get(needsSetup)) {
+                      setTimeout(() => {
+                        if (showWhatsNewModal) {
+                          tourPendingAfterReleaseNotes = true;
+                        } else {
+                          showOnboarding = true;
+                          if (isMobile) sidebarOpen = false;
+                        }
+                      }, 1000);
+                    }
+                  })
+                  .catch((e) => {
+                    logger.debug('layout', 'PostLoginComplete', 'Could not check onboarding', {
+                      error: e,
+                    });
+                  });
+              }} />
+          {:else if showBiometricGate}
+            <BiometricGate
+              onUnlock={() => setBiometricSessionUnlocked(true)}
+              onBiometryUnavailable={() => {
+                biometricEnabled = false;
+                setBiometricSessionUnlocked(true);
+                import('$lib/services/settingsSync').then(
+                  ({ saveSettingsWithQueue, flushSettingsQueue }) => {
+                    saveSettingsWithQueue({ biometric_enabled: false })
+                      .then(() => flushSettingsQueue())
+                      .catch((e) => {
+                        logger.debug('layout', 'BiometricGate', 'Failed to disable biometric', {
+                          error: e,
+                        });
+                      });
+                  },
+                );
+              }} />
+          {:else if $needsSetup}
+            {#if !hasCompletedSetupAssistant && !profilesExist}
+              <SetupAssistant onComplete={() => (hasCompletedSetupAssistant = true)} />
+            {:else}
+              <LoginScreen
+                {seqtaUrl}
+                onStartLogin={startLogin}
+                onUrlChange={(url) => (seqtaUrl = url)} />
+            {/if}
+          {:else}
+            {@render children()}
+          {/if}
+        </div>
       </main>
 
       <!-- ThemeBuilder Sidebar -->
       <!-- Mobile Bottom Navigation -->
       {#if isMobile && !$needsSetup}
-        <MobileBottomNav onOpenSidebar={() => (sidebarOpen = true)} />
+        <MobileBottomNav
+          onOpenSidebar={() => {
+            sidebarOpen = true;
+          }}
+          onCloseSidebar={() => {
+            sidebarOpen = false;
+          }} />
       {/if}
 
       {#if $themeBuilderSidebarOpen}
@@ -904,6 +1022,7 @@
     </div>
   </div>
 {/if}
+<UploadProgressBar />
 <Toaster
   position={isMobile ? 'top-center' : 'bottom-right'}
   theme={$theme === 'dark' ? 'dark' : 'light'}
@@ -934,12 +1053,22 @@
         'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95',
     },
   }} />
-<AboutModal bind:open={showAboutModal} onclose={() => (showAboutModal = false)} />
+<AboutModal open={showAboutModal} onclose={() => (showAboutModal = false)} />
 <WhatsNewModal
-  bind:open={showWhatsNewModal}
+  open={showWhatsNewModal}
   currentVersion={versionUpdateCurrent}
   previousVersion={versionUpdatePrevious}
-  changelogMarkdown={changelogMarkdown}
-  onclose={() => (showWhatsNewModal = false)}
-/>
+  {changelogMarkdown}
+  onclose={() => {
+    showWhatsNewModal = false;
+    if (tourPendingAfterReleaseNotes) {
+      tourPendingAfterReleaseNotes = false;
+      setTimeout(() => {
+        showOnboarding = true;
+        if (isMobile) sidebarOpen = false;
+      }, 300);
+    }
+  }} />
 <Onboarding open={showOnboarding} onComplete={() => (showOnboarding = false)} />
+<DevPerfHud />
+<PerformanceTestMegaSuiteOverlay />

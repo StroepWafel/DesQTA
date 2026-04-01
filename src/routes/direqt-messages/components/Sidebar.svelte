@@ -59,7 +59,7 @@
 </script>
 
 <aside
-  class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs overflow-y-auto xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent">
+  class="flex flex-col h-full rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg overflow-hidden overflow-y-auto xl:w-64 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent">
   <div class="p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
     <button
       class="flex gap-2 items-center min-h-[44px] px-4 py-3 w-full text-sm font-semibold text-white rounded-2xl shadow-md transition-all duration-200 bg-accent/80 border-accent sm:text-base hover:opacity-95 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"

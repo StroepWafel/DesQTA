@@ -81,7 +81,13 @@
   class="fixed inset-0 z-[9999] flex flex-col bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-800"
   role="dialog"
   aria-label={$_('setup_assistant.aria_label', { default: 'Setup Assistant' })}
-  aria-live="polite">
+  aria-live="polite"
+  style="-webkit-app-region: no-drag; app-region: no-drag;">
+  <!-- Drag region: confine to top bar only so buttons below receive clicks (macOS frameless window) -->
+  <div
+    class="absolute top-0 left-0 right-0 h-14 z-0"
+    data-tauri-drag-region
+    aria-hidden="true"></div>
   <!-- Skip button -->
   <div class="absolute top-4 right-4 z-10">
     <button

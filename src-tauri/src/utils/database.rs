@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use chrono::Utc;
-use rusqlite::{params, Connection, Result as SqlResult, OptionalExtension};
+use rusqlite::{params, Connection, Result as SqlResult};
 use serde_json::Value;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -399,7 +399,7 @@ where
 #[tauri::command]
 pub fn db_cache_get(key: String) -> Result<Option<Value>, String> {
     let now = Utc::now().timestamp();
-    
+
     with_conn(|conn| {
         let mut stmt = conn
             .prepare("SELECT value FROM cache WHERE key = ? AND (expires_at IS NULL OR expires_at > ?)")
@@ -416,6 +416,37 @@ pub fn db_cache_get(key: String) -> Result<Option<Value>, String> {
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
             Err(e) => Err(anyhow::anyhow!("Query error: {}", e)),
         }
+    }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn db_cache_get_many(keys: Vec<String>) -> Result<Value, String> {
+    let now = Utc::now().timestamp();
+
+    with_conn(|conn| {
+        let mut results = serde_json::Map::new();
+
+        let mut stmt = conn
+            .prepare("SELECT value FROM cache WHERE key = ?1 AND (expires_at IS NULL OR expires_at > ?2)")
+            .map_err(|e| anyhow::anyhow!("Failed to prepare statement: {}", e))?;
+
+        for key in keys {
+            let result: SqlResult<String> = stmt.query_row(params![&key, now], |row| row.get(0));
+
+            match result {
+                Ok(value_str) => {
+                    let value: Value = serde_json::from_str(&value_str)
+                        .map_err(|e| anyhow::anyhow!("Failed to parse JSON for key {}: {}", key, e))?;
+                    results.insert(key, value);
+                }
+                Err(rusqlite::Error::QueryReturnedNoRows) => {
+                    results.insert(key, Value::Null);
+                }
+                Err(e) => return Err(anyhow::anyhow!("Query error: {}", e)),
+            }
+        }
+
+        Ok(Value::Object(results))
     }).map_err(|e| e.to_string())
 }
 

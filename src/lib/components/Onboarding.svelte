@@ -78,7 +78,7 @@
       descKey: 'onboarding.step_timetable_desc',
       titleFallback: 'View Your Timetable in New Ways',
       descFallback: 'Switch between week, day, month, and list views.',
-      targetSelector: '[data-onboarding="timetable-color"]',
+      targetSelector: '[data-onboarding="timetable-views"]',
       page: '/timetable',
       scrollTo: null,
       icon: CalendarDays,
@@ -308,27 +308,27 @@
 
   const highlightRect = $derived.by(() => getHighlightRect());
 
+  const HEADER_OFFSET = 80; // Keep tooltip below app + page headers
+
   const tooltipStyle = $derived.by(() => {
     if (highlightRect) {
-      const tooltipWidth = 400; // max-w-md
-      const tooltipHeight = 300; // approximate height
-      const spacing = 20;
+      const tooltipWidth = 400;
+      const tooltipHeight = 300;
+      const spacing = 16;
 
-      // Try to position below the element first
       let top = highlightRect.top + highlightRect.height + spacing;
       let left = highlightRect.left;
 
-      // If it would go off the bottom of the viewport, position above instead
-      if (top + tooltipHeight > window.innerHeight) {
-        top = highlightRect.top - tooltipHeight - spacing;
+      if (top + tooltipHeight > window.innerHeight - spacing) {
+        top = Math.max(HEADER_OFFSET, highlightRect.top - tooltipHeight - spacing);
+      }
+      if (top < HEADER_OFFSET) {
+        top = HEADER_OFFSET;
+      }
+      if (top + tooltipHeight > window.innerHeight - spacing) {
+        top = window.innerHeight - tooltipHeight - spacing;
       }
 
-      // Ensure it doesn't go above the viewport
-      if (top < 0) {
-        top = spacing;
-      }
-
-      // Center horizontally relative to the element, but keep within viewport
       left = Math.max(spacing, Math.min(left, window.innerWidth - tooltipWidth - spacing));
 
       return `top: ${top}px; left: ${left}px;`;

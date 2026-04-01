@@ -18,6 +18,7 @@
   import * as Card from '$lib/components/ui/card/index.js';
   import { Button } from '$lib/components/ui';
   import PerformanceLineChart from '../../lib/components/performance/PerformanceLineChart.svelte';
+  import MegaPerfPanel from '../../lib/components/performance/MegaPerfPanel.svelte';
   import PerformanceGraph from '../../lib/components/PerformanceGraph.svelte';
   import T from '../../lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
@@ -177,7 +178,7 @@
   <title>{$_('performance.title', { default: 'Performance Test Results - DesQTA' })}</title>
 </svelte:head>
 
-<div class="container px-6 py-7 mx-auto flex flex-col h-full gap-8">
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-8">
   <!-- Header -->
   <div class="flex justify-between items-start">
     <div>
@@ -333,6 +334,10 @@
         {/if}
       {/key}
     </div>
+
+    {#if results.megaPerf}
+      <MegaPerfPanel mega={results.megaPerf} />
+    {/if}
 
     <!-- Performance Charts -->
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" in:fade={{ duration: 400, delay: 100 }}>
@@ -880,7 +885,9 @@
               <T key="performance.overall_test_errors" fallback="Overall Test Errors" />
             </Card.Title>
             <Card.Description>
-              <T key="performance.overall_errors_description" fallback="Errors that occurred during the performance test" />
+              <T
+                key="performance.overall_errors_description"
+                fallback="Errors that occurred during the performance test" />
             </Card.Description>
           </Card.Header>
           <Card.Content>

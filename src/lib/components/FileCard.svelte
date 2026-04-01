@@ -1,10 +1,17 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
-  import { DocumentText, VideoCamera, PresentationChartLine, Photo } from 'svelte-hero-icons';
+  import {
+    DocumentText,
+    VideoCamera,
+    PresentationChartLine,
+    Photo,
+    Trash,
+  } from 'svelte-hero-icons';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
 
   interface FileData {
+    id?: number;
     name?: string;
     filename?: string;
     mimetype: string;
@@ -19,10 +26,21 @@
     file: FileData;
     showDownload?: boolean;
     showMetadata?: boolean;
+    showDelete?: boolean;
     variant?: 'resource' | 'submission';
+    onDelete?: () => void;
+    deleting?: boolean;
   }
 
-  let { file, showDownload = true, showMetadata = true, variant = 'resource' }: Props = $props();
+  let {
+    file,
+    showDownload = true,
+    showMetadata = true,
+    showDelete = false,
+    variant = 'resource',
+    onDelete,
+    deleting = false,
+  }: Props = $props();
 
   function getFileIcon(mimetype: string) {
     if (mimetype.startsWith('video/')) return VideoCamera;
@@ -88,6 +106,23 @@
       class="px-3 py-1 text-sm font-medium rounded-lg transition-all duration-200 text-white bg-accent-bg hover:bg-accent-ring"
       onclick={handleDownload}>
       Download
+    </button>
+  {/if}
+  {#if showDelete && onDelete}
+    <button
+      type="button"
+      class="flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-lg transition-all duration-200 text-red-600 hover:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+      onclick={onDelete}
+      disabled={deleting}
+      aria-label="Delete file">
+      {#if deleting}
+        <div
+          class="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin">
+        </div>
+      {:else}
+        <Icon src={Trash} class="w-4 h-4" />
+      {/if}
+      Delete
     </button>
   {/if}
 </div> 

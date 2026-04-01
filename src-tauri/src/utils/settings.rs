@@ -263,6 +263,9 @@ pub struct Settings {
     pub sidebar_folders: Option<Vec<SidebarFolder>>,
     #[serde(default)]
     pub sidebar_favorites: Option<Vec<String>>, // Array of paths
+    /// Pages hidden from the sidebar (array of paths)
+    #[serde(default)]
+    pub disabled_sidebar_pages: Option<Vec<String>>,
     #[serde(default)]
     pub sidebar_recent_activity: Option<Vec<RecentActivity>>,
     #[serde(default)]
@@ -272,6 +275,19 @@ pub struct Settings {
     /// Interface zoom level (0.5 to 2.0, default 1.0)
     #[serde(default)]
     pub zoom_level: Option<f64>,
+    /// When true, closing the window hides to system tray. When false, closing fully quits the app.
+    #[serde(default = "default_minimize_to_tray")]
+    pub minimize_to_tray: bool,
+    /// Last settings revision returned by accounts.betterseqta.org (`sync-init` / `POST /api/settings`).
+    #[serde(default)]
+    pub cloud_settings_server_revision: i64,
+    /// ISO 8601 UTC timestamp from server metadata (optional).
+    #[serde(default)]
+    pub cloud_settings_server_updated_at: Option<String>,
+}
+
+fn default_minimize_to_tray() -> bool {
+    true
 }
 
 impl Default for Settings {
@@ -316,10 +332,14 @@ impl Default for Settings {
             dashboard_widgets_layout: None,
             sidebar_folders: None,
             sidebar_favorites: None,
+            disabled_sidebar_pages: None,
             sidebar_recent_activity: None,
             downloaded_theme_ids: None,
             downloaded_theme_metadata: None,
             zoom_level: None,
+            minimize_to_tray: true,
+            cloud_settings_server_revision: 0,
+            cloud_settings_server_updated_at: None,
         }
     }
 }
@@ -639,6 +659,17 @@ impl Settings {
             "separate_rss_feed",
             default_settings.separate_rss_feed,
         );
+        default_settings.minimize_to_tray = get_bool(
+            &existing_json,
+            "minimize_to_tray",
+            default_settings.minimize_to_tray,
+        );
+        default_settings.cloud_settings_server_revision = existing_json
+            .get("cloud_settings_server_revision")
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0);
+        default_settings.cloud_settings_server_updated_at =
+            get_opt_string(&existing_json, "cloud_settings_server_updated_at");
         default_settings.dashboard_widgets_layout = get_opt_string(&existing_json, "dashboard_widgets_layout");
 
         // Merge sidebar folders
@@ -686,6 +717,10 @@ impl Settings {
 
         // Merge sidebar favorites
         default_settings.sidebar_favorites = get_opt_string_array(&existing_json, "sidebar_favorites");
+
+        // Merge disabled sidebar pages
+        default_settings.disabled_sidebar_pages =
+            get_opt_string_array(&existing_json, "disabled_sidebar_pages");
 
         // Merge recent activity
         if let Some(activity_json) = existing_json.get("sidebar_recent_activity").and_then(|v| v.as_array()) {
@@ -835,6 +870,10 @@ pub fn save_settings_merge(patch: serde_json::Value) -> Result<(), String> {
     // Shallow merge top-level keys from patch into current
     if let (Some(obj_curr), Some(obj_patch)) = (current_val.as_object_mut(), patch.as_object()) {
         for (k, v) in obj_patch.iter() {
+            // Never persist API envelope keys from POST /api/settings
+            if k == "ok" || k == "server" {
+                continue;
+            }
             obj_curr.insert(k.clone(), v.clone());
         }
     }
@@ -919,6 +958,12 @@ pub fn clear_cloud_token() -> Result<(), String> {
     state.previously_signed_into_cloud = false;
     state.save().map_err(|e| e.to_string())?;
     Ok(())
+}
+
+/// Remove cloud tokens only (401 / refresh failure). Keeps `previously_signed_into_cloud` so the UI can toast "signed out".
+#[tauri::command]
+pub fn clear_expired_cloud_session() -> Result<(), String> {
+    CloudToken::clear_file().map_err(|e| e.to_string())
 }
 
 #[tauri::command]

@@ -1,6 +1,36 @@
 import { invoke } from '@tauri-apps/api/core';
 import { logger } from '../../utils/logger';
-import type { WidgetLayout, WidgetConfig } from '../types/widgets';
+import type { WidgetLayout, WidgetConfig, WidgetPosition } from '../types/widgets';
+
+function cloneWidgetPosition(position: WidgetPosition): WidgetPosition {
+  return { ...position };
+}
+
+function cloneWidgetConfig(widget: WidgetConfig): WidgetConfig {
+  return {
+    ...widget,
+    position: cloneWidgetPosition(widget.position),
+    settings: widget.settings ? { ...widget.settings } : undefined,
+  };
+}
+
+function cloneWidgetLayout(layout: WidgetLayout): WidgetLayout {
+  const widgets = Array.isArray(layout.widgets) ? layout.widgets.map(cloneWidgetConfig) : [];
+
+  return {
+    ...layout,
+    widgets,
+    lastModified:
+      typeof layout.lastModified === 'string' ? new Date(layout.lastModified) : new Date(layout.lastModified),
+  };
+}
+
+function updateLayoutTimestamp(layout: WidgetLayout): WidgetLayout {
+  return {
+    ...layout,
+    lastModified: new Date(),
+  };
+}
 
 export const widgetService = {
   async loadLayout(): Promise<WidgetLayout> {
@@ -24,7 +54,7 @@ export const widgetService = {
           version: layout.version,
         });
 
-        return layoutWithDate;
+        return cloneWidgetLayout(layoutWithDate);
       }
 
       // No layout found in database, return default
@@ -33,11 +63,11 @@ export const widgetService = {
         'loadLayout',
         'No saved layout found in database, returning default',
       );
-      return this.getDefaultLayout();
+      return cloneWidgetLayout(this.getDefaultLayout());
     } catch (e) {
       logger.error('widgetService', 'loadLayout', `Failed to load layout: ${e}`, { error: e });
       // On error, return default layout
-      return this.getDefaultLayout();
+      return cloneWidgetLayout(this.getDefaultLayout());
     }
   },
 
@@ -98,7 +128,7 @@ export const widgetService = {
         id: 'today_schedule',
         type: 'today_schedule',
         enabled: true,
-        position: { x: 0, y: 4, w: 12, h: 5 }, // Full width
+        position: { x: 0, y: 4, w: 12, h: 4 },
       },
       {
         id: 'notices',
@@ -151,48 +181,72 @@ export const widgetService = {
     };
   },
 
-  async updateWidgetConfig(widgetId: string, updates: Partial<WidgetConfig>): Promise<void> {
-    // Don't save temporary widget configs (e.g., timetable page widget)
+  updateWidgetInLayout(
+    layout: WidgetLayout,
+    widgetId: string,
+    updates: Omit<Partial<WidgetConfig>, 'position'> & { position?: Partial<WidgetConfig['position']> },
+  ): WidgetLayout {
     if (widgetId === 'timetable-page-widget') {
-      logger.debug('widgetService', 'updateWidgetConfig', 'Skipping save for temporary widget', {
-        widgetId,
-      });
-      return;
+      return cloneWidgetLayout(layout);
     }
-    const layout = await this.loadLayout();
-    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
-    const widget = widgets.find((w) => w.id === widgetId);
-    if (widget) {
-      Object.assign(widget, updates);
-      await this.saveLayout({ ...layout, widgets });
+
+    const nextLayout = cloneWidgetLayout(layout);
+    const widget = nextLayout.widgets.find((entry) => entry.id === widgetId);
+    if (!widget) {
+      return nextLayout;
     }
+
+    const nextPosition = updates.position
+      ? { ...widget.position, ...updates.position }
+      : widget.position;
+
+    Object.assign(widget, updates);
+    widget.position = nextPosition;
+
+    return updateLayoutTimestamp(nextLayout);
+  },
+
+  insertWidgetIntoLayout(layout: WidgetLayout, widget: WidgetConfig): WidgetLayout {
+    const nextLayout = cloneWidgetLayout(layout);
+    nextLayout.widgets.push(cloneWidgetConfig(widget));
+    return updateLayoutTimestamp(nextLayout);
+  },
+
+  removeWidgetFromLayout(layout: WidgetLayout, widgetId: string): WidgetLayout {
+    const nextLayout = cloneWidgetLayout(layout);
+    nextLayout.widgets = nextLayout.widgets.filter((widget) => widget.id !== widgetId);
+    return updateLayoutTimestamp(nextLayout);
+  },
+
+  updateWidgetPositionInLayout(
+    layout: WidgetLayout,
+    widgetId: string,
+    position: Partial<WidgetConfig['position']>,
+  ): WidgetLayout {
+    return this.updateWidgetInLayout(layout, widgetId, { position });
+  },
+
+  async updateWidgetConfig(widgetId: string, updates: Partial<WidgetConfig>): Promise<void> {
+    const nextLayout = this.updateWidgetInLayout(await this.loadLayout(), widgetId, updates);
+    await this.saveLayout(nextLayout);
   },
 
   async addWidget(widget: WidgetConfig): Promise<void> {
-    const layout = await this.loadLayout();
-    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
-    widgets.push(widget);
-    await this.saveLayout({ ...layout, widgets });
+    const nextLayout = this.insertWidgetIntoLayout(await this.loadLayout(), widget);
+    await this.saveLayout(nextLayout);
   },
 
   async removeWidget(widgetId: string): Promise<void> {
-    const layout = await this.loadLayout();
-    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
-    const filteredWidgets = widgets.filter((w) => w.id !== widgetId);
-    await this.saveLayout({ ...layout, widgets: filteredWidgets });
+    const nextLayout = this.removeWidgetFromLayout(await this.loadLayout(), widgetId);
+    await this.saveLayout(nextLayout);
   },
 
   async updateWidgetPosition(
     widgetId: string,
     position: Partial<WidgetConfig['position']>,
   ): Promise<void> {
-    const layout = await this.loadLayout();
-    const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
-    const widget = widgets.find((w) => w.id === widgetId);
-    if (widget) {
-      widget.position = { ...widget.position, ...position };
-      await this.saveLayout({ ...layout, widgets });
-    }
+    const nextLayout = this.updateWidgetPositionInLayout(await this.loadLayout(), widgetId, position);
+    await this.saveLayout(nextLayout);
   },
 
   /**

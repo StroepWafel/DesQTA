@@ -39,6 +39,7 @@
   let calculatingForSubject = $state<string | null>(null);
   let expandedSubjects = $state<Record<string, boolean>>({});
   let showDisclaimer = $state(false);
+  const assessmentCodes = $derived.by(() => new Set(assessments.map((a) => a.code)));
 
   function getLetterGrade(percentage: number): string {
     if (percentage >= 90) return 'A+';
@@ -228,7 +229,7 @@
       class="sticky top-6 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
       <h3 class="mb-3 text-sm font-semibold text-zinc-600 dark:text-zinc-400">Quick Jump</h3>
       <div class="space-y-2">
-        {#each subjects.filter( (subject) => assessments.some((a) => a.code === subject.code), ) as subject}
+        {#each subjects.filter((subject) => assessmentCodes.has(subject.code)) as subject}
           <a
             href="#subject-{subject.code}"
             class="flex gap-2 items-center px-3 py-2 rounded-lg transition-all duration-300 cursor-pointer hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"

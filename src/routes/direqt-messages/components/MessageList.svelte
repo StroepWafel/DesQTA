@@ -7,15 +7,16 @@
   import { _ } from '../../../lib/i18n';
   import { Inbox, ExclamationTriangle } from 'svelte-hero-icons';
 
-  let { selectedFolder, messages, loading, error, selectedMessage, openMessage, embedded } = $props<{
-    selectedFolder: string;
-    messages: Message[];
-    loading: boolean;
-    error: string | null;
-    selectedMessage: Message | null;
-    openMessage: (msg: Message) => void;
-    embedded?: boolean;
-  }>();
+  let { selectedFolder, messages, loading, error, selectedMessage, openMessage, embedded } =
+    $props<{
+      selectedFolder: string;
+      messages: Message[];
+      loading: boolean;
+      error: string | null;
+      selectedMessage: Message | null;
+      openMessage: (msg: Message) => void;
+      embedded?: boolean;
+    }>();
 
   // Filter messages for the selected folder
   const filteredMessages = $derived(messages.filter((m: Message) => m.folder === selectedFolder));
@@ -30,10 +31,12 @@
 <section
   class="w-full min-w-0 flex flex-col min-h-0 [scrollbar-gutter:stable]
     {embedded
-    ? 'flex-none min-h-0 bg-transparent'
-    : 'flex-1 overflow-hidden bg-white dark:bg-zinc-900 border-r border-zinc-300/50 dark:border-zinc-800/50 backdrop-blur-xs shadow-md rounded-xl m-2'}">
+    ? 'flex-1 min-h-0 overflow-hidden bg-transparent pt-4'
+    : 'flex-1 overflow-hidden rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg'}">
   <div
-    class="flex items-center p-4 text-base font-semibold text-zinc-900 sm:text-lg dark:text-white {!embedded ? 'border-b border-zinc-300/50 dark:border-zinc-800/50' : ''}">
+    class="flex items-center p-4 text-base font-semibold text-zinc-900 sm:text-lg dark:text-white {!embedded
+      ? 'border-b border-zinc-300/50 dark:border-zinc-800/50'
+      : ''}">
     <svg
       xmlns="http://www.w3.org/2000/svg"
       class="mr-2 w-5 h-5"
@@ -45,16 +48,20 @@
   </div>
 
   <div
-    class="overflow-y-auto flex-1 min-h-0 p-1 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent [scrollbar-gutter:stable]"
+    class="overflow-y-auto flex-1 min-h-0 p-1 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent [scrollbar-gutter:stable] {embedded ? 'pb-4' : ''}"
     style="-webkit-overflow-scrolling: touch;">
     {#if loading}
-      <div class="flex justify-center items-center flex-1 min-h-[200px]" in:fade={{ duration: 400 }}>
+      <div
+        class="flex justify-center items-center flex-1 min-h-[200px]"
+        in:fade={{ duration: 400 }}>
         <div
           class="w-12 h-12 rounded-full border-4 border-accent-600/30 border-t-accent-600 animate-spin">
         </div>
       </div>
     {:else if error}
-      <div class="flex flex-col justify-center items-center flex-1 min-h-[200px]" in:fade={{ duration: 400 }}>
+      <div
+        class="flex flex-col justify-center items-center flex-1 min-h-[200px]"
+        in:fade={{ duration: 400 }}>
         <EmptyState
           title={$_('messages.failed_to_load') || 'Failed to load messages.'}
           message={error}
@@ -62,19 +69,22 @@
           size="sm" />
       </div>
     {:else if filteredMessages.length === 0}
-      <div class="flex flex-col justify-center items-center flex-1 min-h-[200px]" in:fade={{ duration: 400 }}>
+      <div
+        class="flex flex-col justify-center items-center flex-1 min-h-[200px]"
+        in:fade={{ duration: 400 }}>
         <EmptyState
           title={$_('messages.no_messages_in_folder') || 'No messages in this folder.'}
-          message={$_('messages.no_messages_in_folder_hint') || 'Select another feed or check back later.'}
+          message={$_('messages.no_messages_in_folder_hint') ||
+            'Select another feed or check back later.'}
           icon={Inbox}
           size="sm" />
       </div>
     {:else}
       <div class="p-2 min-w-0">
         {#key messagesKey}
-          {#each filteredMessages as message, i (message.id)}
+          {#each filteredMessages as message, i (`${message.id}-${i}`)}
             <div class="message-item-animate min-w-0" style="animation-delay: {i * 50}ms;">
-              <MessageItem {message} {selectedMessage} {openMessage} embedded={embedded} />
+              <MessageItem {message} {selectedMessage} {openMessage} {embedded} />
             </div>
           {/each}
         {/key}

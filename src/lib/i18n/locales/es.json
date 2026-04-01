@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Datos de rendimiento",
     "feature_settings_desc": "Preferencias de la aplicación",
     "fill_all_fields": "Por favor complete todos los campos",
-    "failed_credentials": "Error de inicio de sesión. Verifique sus credenciales."
+    "failed_credentials": "Error de inicio de sesión. Verifique sus credenciales.",
+    "not_working_try_direct": "¿No funciona? ",
+    "try_direct_login_link": "Probar inicio de sesión directo"
   },
   "features": {
     "lightning_fast": "Rendimiento ultrarrápido",
@@ -547,6 +549,7 @@
     "get_new_tip": "Obtener nuevo consejo de estudio"
   },
   "messages": {
+    "page_description": "Ver y gestionar tus mensajes SEQTA y RSS.",
     "failed_to_load": "Error al cargar mensajes.",
     "failed_to_load_no_cache": "Error al cargar mensajes y no hay datos en caché disponibles",
     "failed_to_load_message": "Error al cargar mensaje.",
@@ -655,6 +658,8 @@
     "dark": "Oscuro",
     "system": "Sistema",
     "theme_mode_description": "Elige entre modo claro, modo oscuro, o seguir la preferencia de tu sistema.",
+    "minimize_to_tray": "Mantener la app en ejecución en la bandeja del sistema al cerrar",
+    "minimize_to_tray_description": "Si está activado, cerrar la ventana minimiza DesQTA en la bandeja del sistema. Si está desactivado, cerrar cierra completamente la aplicación.",
     "security": "Seguridad",
     "security_description": "Protege la app con autenticación biométrica",
     "biometric_enabled": "Desbloquear con biometría (Face ID, Touch ID, huella, Windows Hello)",
@@ -965,7 +970,9 @@
     "avg_gpu": "GPU Promedio",
     "errors_count": "{count} errores",
     "warnings_count": "{count} advertencias",
-    "no_issues": "Sin problemas"
+    "no_issues": "Sin problemas",
+    "mega_suite_overlay_title": "Ejecutando suite de pruebas",
+    "mega_suite_overlay_body": "El recorrido de páginas terminó. Las comprobaciones sintéticas (inicio, UI, datos, backend) están en curso—suele tardar 30–90 segundos. Espere; los resultados se abrirán al terminar."
   },
   "plugins": {
     "installed_title": "Complemento Instalado",
@@ -983,6 +990,10 @@
     "quizzes": "Cuestionarios",
     "select_assessment": "Seleccionar evaluación",
     "custom_topic": "Tema personalizado",
+    "topic_source": "1. Elegir tema",
+    "quiz_options": "2. Opciones del quiz",
+    "change_options": "Cambiar opciones",
+    "generate_section": "3. Generar",
     "what_to_study": "¿Qué quieres estudiar?",
     "question_count": "Número de preguntas",
     "generate_quiz": "Generar cuestionario",

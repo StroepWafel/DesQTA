@@ -164,9 +164,9 @@
 </script>
 
 <div
-  class="overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+  class="flex flex-col h-full w-full min-h-0 overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
   <div
-    class="flex flex-col gap-3 sm:gap-4 justify-between items-start px-3 py-3 bg-linear-to-r border-b sm:flex-row sm:items-center sm:px-4 border-zinc-300/50 dark:border-zinc-700/50 from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30">
+    class="flex flex-col gap-3 sm:gap-4 justify-between items-start px-3 py-3 shrink-0 bg-linear-to-r border-b sm:flex-row sm:items-center sm:px-4 border-zinc-300/50 dark:border-zinc-700/50 from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30">
     <span class="text-xl font-semibold text-zinc-900 dark:text-white shrink-0">{lessonsSubtitle()}</span>
     <!-- Mobile: date + Today + nav on one row for more vertical space for lessons -->
     <div class="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
@@ -236,11 +236,11 @@
       </div>
     </div>
   {:else}
-    <div class="flex overflow-x-scroll">
+    <div class="flex flex-1 min-h-0 gap-0 overflow-x-auto overflow-y-hidden">
       {#each lessons as lesson, i}
         <div
-          class="flex relative flex-col w-full max-w-xs border-t-4 group"
-          style="border-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
+          class="flex relative flex-col w-64 sm:w-72 shrink-0 rounded-lg overflow-hidden border border-t-4 border-zinc-200/50 dark:border-zinc-600/40 group"
+          style="border-top-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
           <div class="flex relative flex-col flex-1 gap-2 p-3 backdrop-blur-xs sm:p-4">
             <div class="flex justify-between items-center">
               <span class="text-base font-bold truncate text-zinc-900 sm:text-lg dark:text-white"

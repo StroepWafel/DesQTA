@@ -189,7 +189,7 @@
       const currentContent = editorInstance.getHTML();
       // Only set if editor is empty or just has empty paragraph
       if (!currentContent || currentContent === '<p></p>' || currentContent.trim() === '') {
-        editorInstance.commands.setContent(folioData.contents, false);
+        editorInstance.commands.setContent(folioData.contents, { emitUpdate: false });
         contentInitialized = true;
       }
     }
@@ -543,7 +543,7 @@
             size="md" />
         </div>
       {:else if folioData}
-        <div class="max-w-6xl mx-auto p-6 space-y-6">
+        <div class="w-full mx-auto p-6 space-y-6">
           <!-- Tags Section -->
           <div
             class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">

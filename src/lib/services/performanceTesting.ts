@@ -1,5 +1,10 @@
 import { goto } from '$app/navigation';
+import { get, writable } from 'svelte/store';
 import { logger } from '../../utils/logger';
+import type { MegaPerfReport } from './megaPerfTypes';
+
+/** True while Settings performance test runs the dev synthetic benchmark suite (after page crawl). */
+export const performanceTestMegaSuiteRunning = writable(false);
 
 export interface SystemMetrics {
   timestamp: number;
@@ -79,6 +84,8 @@ export interface TestResults {
   };
   timestamp?: string; // ISO timestamp string
   version?: string; // App version
+  /** Dev Tauri only: in-app metrics + synthetic benchmark suite snapshot */
+  megaPerf?: MegaPerfReport;
 }
 
 export class PerformanceTester {
@@ -201,6 +208,8 @@ export class PerformanceTester {
           : undefined;
       const peakMemoryUsage = memoryUsages.length > 0 ? Math.max(...memoryUsages) : undefined;
 
+      const megaPerf = await this.attachMegaPerfIfDevTauri();
+
       this.results = {
         startTime,
         endTime,
@@ -223,7 +232,8 @@ export class PerformanceTester {
           peakMemoryUsage,
         },
         timestamp: new Date().toISOString(),
-        version: '1.0.0-rc.9', // Match Cargo.toml version
+        version: '1.0.0-rc.10', // Match Cargo.toml version
+        megaPerf,
       };
 
       logger.info('PerformanceTester', 'startPerformanceTest', 'Performance testing completed', {
@@ -634,6 +644,109 @@ export class PerformanceTester {
     if (this.metricsCollectionInterval !== null) {
       clearInterval(this.metricsCollectionInterval);
       this.metricsCollectionInterval = null;
+    }
+  }
+
+  /**
+   * After the navigation crawl, snapshot `$lib/performance` session metrics (before synthetic
+   * benchmarks, which clear the session store), run the optional suite, and merge summaries.
+   */
+  private async attachMegaPerfIfDevTauri(): Promise<MegaPerfReport | undefined> {
+    // This function is only called from `startPerformanceTest()` (Settings UI button).
+    // So it is safe to allow the mega suite in built/prod too, but it will not run unless
+    // explicitly invoked from Settings performance testing.
+    if (!import.meta.env.TAURI_ENV_PLATFORM) return undefined;
+
+    const CRAWL_CAP = 4000;
+    const DETAIL_RUNS = 12;
+    const DETAIL_METRICS_PER_RUN = 35;
+
+    try {
+      const {
+        sessionMetrics,
+        benchmarkHistory,
+        runCompleteBenchmarkSuite,
+      } = await import('$lib/performance');
+
+      const crawlFull = get(sessionMetrics);
+      const trimmed = crawlFull.length > CRAWL_CAP;
+      const crawlSource = trimmed ? crawlFull.slice(-CRAWL_CAP) : [...crawlFull];
+
+      const crawlMetrics = crawlSource.map((m) => ({
+        name: m.name,
+        category: m.category,
+        value: m.value,
+        unit: m.unit,
+        status: m.status,
+        timestamp: m.timestamp,
+      }));
+
+      const categoryCounts: Record<string, number> = {};
+      for (const m of crawlMetrics) {
+        categoryCounts[m.category] = (categoryCounts[m.category] ?? 0) + 1;
+      }
+
+      const benchStartLen = get(benchmarkHistory).length;
+
+      let syntheticSuite: MegaPerfReport['syntheticSuite'] | undefined;
+      let syntheticError: string | undefined;
+      performanceTestMegaSuiteRunning.set(true);
+      try {
+        const suiteReturn = await runCompleteBenchmarkSuite({ iterations: 1 });
+        syntheticSuite = {
+          success: suiteReturn.success,
+          report: suiteReturn.report,
+          suiteResults: suiteReturn.results,
+        };
+      } catch (e) {
+        syntheticError = String(e);
+      } finally {
+        performanceTestMegaSuiteRunning.set(false);
+      }
+
+      const newBenches = get(benchmarkHistory).slice(benchStartLen);
+      const benchmarkRuns = newBenches.map((b) => ({
+        benchmarkId: b.benchmarkId,
+        timestamp: b.timestamp,
+        overallScore: b.overallScore,
+        passed: b.passed,
+        metricCount: b.metrics.length,
+        criticalCount: b.metrics.filter((x) => x.status === 'critical').length,
+        warningCount: b.metrics.filter((x) => x.status === 'warning').length,
+      }));
+
+      const benchmarkDetail = newBenches.slice(0, DETAIL_RUNS).map((b) => ({
+        benchmarkId: b.benchmarkId,
+        metrics: b.metrics.slice(0, DETAIL_METRICS_PER_RUN),
+      }));
+
+      const report: MegaPerfReport = {
+        version: 1,
+        capturedAt: Date.now(),
+        crawlSessionMetricCount: crawlFull.length,
+        crawlMetricsTrimmed: trimmed,
+        crawlMetrics,
+        benchmarkRuns,
+        benchmarkDetail,
+        syntheticSuite,
+        syntheticError,
+        categoryCounts,
+      };
+
+      logger.info('PerformanceTester', 'attachMegaPerfIfDevTauri', 'Mega perf attachment built', {
+        crawlRows: crawlMetrics.length,
+        benchmarkRuns: benchmarkRuns.length,
+      } as Record<string, any>);
+
+      return report;
+    } catch (e) {
+      logger.warn(
+        'PerformanceTester',
+        'attachMegaPerfIfDevTauri',
+        'Mega perf attachment skipped',
+        { error: String(e) },
+      );
+      return undefined;
     }
   }
 

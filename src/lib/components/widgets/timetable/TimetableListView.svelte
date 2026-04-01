@@ -2,7 +2,8 @@
   import { fade } from 'svelte/transition';
   import TimetableLessonBlock from './TimetableLessonBlock.svelte';
   import { Button, Input } from '../../ui';
-  import { Icon, MagnifyingGlass, Funnel } from 'svelte-hero-icons';
+  import EmptyState from '../../EmptyState.svelte';
+  import { Icon, MagnifyingGlass, Funnel, CalendarDays } from 'svelte-hero-icons';
   import type { TimetableLesson, TimetableWidgetSettings } from '$lib/types/timetable';
   import { formatDate, parseDate, sortLessonsByTime } from '$lib/utils/timetableUtils';
   import { _ } from '$lib/i18n';
@@ -156,23 +157,16 @@
   <!-- Lessons List -->
   <div class="flex-1 overflow-y-auto p-4">
     {#if filteredLessons.length === 0}
-      <div
-        class="flex flex-col justify-center items-center h-full py-16"
-        transition:fade={{ duration: 200 }}>
-        <div
-          class="w-24 h-24 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-4xl shadow-lg mb-6">
-          📚
-        </div>
-        <h3 class="text-xl font-bold text-zinc-700 dark:text-zinc-300 mb-2">
-          {searchQuery || filterSubject || filterDay !== null
+      <div class="flex flex-col justify-center items-center h-full py-16" transition:fade={{ duration: 200 }}>
+        <EmptyState
+          title={searchQuery || filterSubject || filterDay !== null
             ? $_('timetable.no_results') || 'No Results'
             : $_('timetable.no_lessons') || 'No Lessons'}
-        </h3>
-        <p class="text-zinc-600 dark:text-zinc-400 text-center max-w-md">
-          {searchQuery || filterSubject || filterDay !== null
+          message={searchQuery || filterSubject || filterDay !== null
             ? $_('timetable.try_different_filters') || 'Try adjusting your search or filters.'
             : $_('timetable.no_lessons_message') || 'No lessons found for this period.'}
-        </p>
+          icon={CalendarDays}
+          size="lg" />
       </div>
     {:else}
       <div class="space-y-6">

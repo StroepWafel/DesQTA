@@ -106,8 +106,16 @@ export const authService = {
 
   async logout(): Promise<boolean> {
     console.log('[AUTH_SERVICE] Logging out');
-    // Clear user info cache on logout
-    cache.delete('userInfo');
+    // Clear user info cache on logout (profile-aware key)
+    try {
+      const currentProfile = await invoke<{ id: string } | null>('get_current_profile');
+      const cacheKey = currentProfile ? `userInfo:${currentProfile.id}` : 'userInfo';
+      cache.delete(cacheKey);
+      const { idbCacheDelete } = await import('./idb');
+      await idbCacheDelete(cacheKey).catch(() => {});
+    } catch {
+      cache.delete('userInfo');
+    }
 
     // Clean up any lingering login windows
     try {
@@ -125,25 +133,43 @@ export const authService = {
     logger.logFunctionEntry('authService', 'loadUserInfo', { options });
 
     try {
-      const cacheKey = 'userInfo';
+      // Profile-aware cache key so new profile sign-in fetches fresh data (IndexedDB persists across reloads)
+      const currentProfile = await invoke<{ id: string } | null>('get_current_profile');
+      const cacheKey = currentProfile ? `userInfo:${currentProfile.id}` : 'userInfo';
       const TTL_MINUTES = 60; // 1 hour TTL
+
+      // When mock/sensitive-info-hider is on, never use cache - always fetch mock data
+      let devSensitiveInfoHider = false;
+      try {
+        const subset = await invoke<any>('get_settings_subset', {
+          keys: ['dev_sensitive_info_hider'],
+        });
+        devSensitiveInfoHider = subset?.dev_sensitive_info_hider ?? false;
+      } catch {
+        devSensitiveInfoHider = false;
+      }
+      if (devSensitiveInfoHider) {
+        cache.delete(cacheKey);
+        const { idbCacheDelete } = await import('./idb');
+        await idbCacheDelete(cacheKey).catch(() => {});
+      }
 
       if (options?.disableSchoolPicture) {
         logger.debug('authService', 'loadUserInfo', 'Disabling school picture, clearing cache');
         cache.delete(cacheKey);
       }
 
-      // Step 1: Check memory cache first (respects TTL)
-      const memCached = cache.get<UserInfo>(cacheKey);
+      // Step 1: Check memory cache first (respects TTL) - skipped when mock is on
+      const memCached = devSensitiveInfoHider ? null : cache.get<UserInfo>(cacheKey);
       if (memCached) {
         logger.debug('authService', 'loadUserInfo', 'Returning cached user info (memory)');
         logger.logFunctionExit('authService', 'loadUserInfo', { cached: true });
         return memCached;
       }
 
-      // Step 2: Check DB if memory cache expired/missing
+      // Step 2: Check DB if memory cache expired/missing - skipped when mock is on
       const { getWithIdbFallback, setIdb } = await import('./idbCache');
-      const idbCached = await getWithIdbFallback<UserInfo>(cacheKey, cacheKey, () => null);
+      const idbCached = devSensitiveInfoHider ? null : await getWithIdbFallback<UserInfo>(cacheKey, cacheKey, () => null);
       if (idbCached) {
         // Validate cached data has required fields (handle schema changes)
         if (!idbCached.userName || !idbCached.userCode || !idbCached.personUUID) {
@@ -186,17 +212,6 @@ export const authService = {
 
       const userInfo: UserInfo = JSON.parse(res).payload;
 
-      // Check if sensitive content hider mode is enabled
-      let devSensitiveInfoHider = false;
-      try {
-        const subset = await invoke<any>('get_settings_subset', {
-          keys: ['dev_sensitive_info_hider'],
-        });
-        devSensitiveInfoHider = subset?.dev_sensitive_info_hider ?? false;
-      } catch (e) {
-        devSensitiveInfoHider = false;
-      }
-
       if (devSensitiveInfoHider) {
         // Use random Dicebear avatar in sensitive content hider mode
         userInfo.profilePicture = getRandomDicebearAvatar();
@@ -208,10 +223,12 @@ export const authService = {
         userInfo.profilePicture = `data:image/png;base64,${profileImage}`;
       }
 
-      // Always cache the data (for offline use), even when online
-      logger.debug('authService', 'loadUserInfo', 'Caching user info (mem+idb)');
-      cache.set(cacheKey, userInfo, TTL_MINUTES);
-      await setIdb(cacheKey, userInfo, TTL_MINUTES);
+      // Cache the data (for offline use) - but not when mock is on, to avoid showing mock name after disabling mock
+      if (!devSensitiveInfoHider) {
+        logger.debug('authService', 'loadUserInfo', 'Caching user info (mem+idb)');
+        cache.set(cacheKey, userInfo, TTL_MINUTES);
+        await setIdb(cacheKey, userInfo, TTL_MINUTES);
+      }
       logger.logFunctionExit('authService', 'loadUserInfo', { success: true });
       return userInfo;
     } catch (e) {

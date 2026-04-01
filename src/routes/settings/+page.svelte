@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { openPath } from '@tauri-apps/plugin-opener';
   import {
     accentColor,
     loadAccentColor,
@@ -104,6 +105,7 @@
   let autoCollapseSidebar = $state(false);
   let autoExpandSidebarHover = $state(false);
   let globalSearchEnabled = $state(true);
+  let minimizeToTray = $state(true);
   let devSensitiveInfoHider = $state(false);
   let devForceOfflineMode = $state(false);
   let showDevSettings = $state(false);
@@ -199,6 +201,7 @@
     autoCollapseSidebar: boolean;
     autoExpandSidebarHover: boolean;
     globalSearchEnabled: boolean;
+    minimizeToTray: boolean;
     devSensitiveInfoHider: boolean;
     devForceOfflineMode: boolean;
     acceptedCloudEula: boolean;
@@ -274,7 +277,7 @@ The Company reserves the right to terminate your access to the Service at any ti
   // Profile picture state
   let customProfilePicture = $state<string | null>(null);
   let uploading = $state(false);
-  let fileInput: HTMLInputElement;
+  let fileInput = $state<HTMLInputElement | undefined>(undefined);
   let showCropModal = $state(false);
   let cropImageSrc = $state<string | null>(null);
 
@@ -285,14 +288,13 @@ The Company reserves the right to terminate your access to the Service at any ti
       const user = await cloudAuthService.init();
       cloudUser = user;
 
-      // If we have a user, verify session in background
+      // If we have a user, verify session in background.
+      // The auth service now performs a silent refresh before considering the session invalid.
       if (user) {
         cloudAuthService
           .getProfile()
           .then((u) => (cloudUser = u))
-          .catch(async () => {
-            // Token likely expired
-            await cloudAuthService.logout();
+          .catch(() => {
             cloudUser = null;
           });
       }
@@ -332,6 +334,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'auto_collapse_sidebar',
           'auto_expand_sidebar_hover',
           'global_search_enabled',
+          'minimize_to_tray',
           'dev_sensitive_info_hider',
           'dev_force_offline_mode',
           'accepted_cloud_eula',
@@ -364,6 +367,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       autoCollapseSidebar = settings.auto_collapse_sidebar ?? false;
       autoExpandSidebarHover = settings.auto_expand_sidebar_hover ?? false;
       globalSearchEnabled = settings.global_search_enabled ?? true;
+      minimizeToTray = settings.minimize_to_tray ?? true;
       devSensitiveInfoHider = settings.dev_sensitive_info_hider ?? false;
       devForceOfflineMode = settings.dev_force_offline_mode ?? false;
       acceptedCloudEula = settings.accepted_cloud_eula ?? false;
@@ -396,6 +400,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         autoCollapseSidebar,
         autoExpandSidebarHover,
         globalSearchEnabled,
+        minimizeToTray,
         devSensitiveInfoHider,
         devForceOfflineMode,
         acceptedCloudEula,
@@ -437,6 +442,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       autoCollapseSidebar = false;
       autoExpandSidebarHover = false;
       globalSearchEnabled = true;
+      minimizeToTray = true;
       devSensitiveInfoHider = false;
       devForceOfflineMode = false;
       acceptedCloudEula = false;
@@ -511,6 +517,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         auto_collapse_sidebar: autoCollapseSidebar,
         auto_expand_sidebar_hover: autoExpandSidebarHover,
         global_search_enabled: globalSearchEnabled,
+        minimize_to_tray: minimizeToTray,
         dev_sensitive_info_hider: devSensitiveInfoHider,
         dev_force_offline_mode: devForceOfflineMode,
         accepted_cloud_eula: acceptedCloudEula,
@@ -531,6 +538,12 @@ The Company reserves the right to terminate your access to the Service at any ti
         const { invalidateConnectivity } = await import('$lib/stores/connectivity');
         invalidateOfflineModeCache();
         invalidateConnectivity();
+      }
+
+      // Clear cache when mock mode is toggled: enable = prevent stale real data; disable = clear mock data for fresh real fetch
+      if (patch.dev_sensitive_info_hider === true || patch.dev_sensitive_info_hider === false) {
+        const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
+        await clearAllCachesForMockMode();
       }
 
       saveSuccess = true;
@@ -561,6 +574,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.autoCollapseSidebar = autoCollapseSidebar;
         initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
         initialSettings.globalSearchEnabled = globalSearchEnabled;
+        initialSettings.minimizeToTray = minimizeToTray;
         initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
         initialSettings.devForceOfflineMode = devForceOfflineMode;
       initialSettings.acceptedCloudEula = acceptedCloudEula;
@@ -684,6 +698,7 @@ The Company reserves the right to terminate your access to the Service at any ti
     autoCollapseSidebar = cloudSettings.auto_collapse_sidebar ?? false;
     autoExpandSidebarHover = cloudSettings.auto_expand_sidebar_hover ?? false;
     globalSearchEnabled = cloudSettings.global_search_enabled ?? true;
+    minimizeToTray = cloudSettings.minimize_to_tray ?? true;
     devSensitiveInfoHider = cloudSettings.dev_sensitive_info_hider ?? false;
     acceptedCloudEula = cloudSettings.accepted_cloud_eula ?? false;
     syncCloudPfp = cloudSettings.sync_cloud_pfp ?? false;
@@ -715,6 +730,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       initialSettings.autoCollapseSidebar = autoCollapseSidebar;
       initialSettings.autoExpandSidebarHover = autoExpandSidebarHover;
       initialSettings.globalSearchEnabled = globalSearchEnabled;
+      initialSettings.minimizeToTray = minimizeToTray;
       initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
       initialSettings.devForceOfflineMode = devForceOfflineMode;
       initialSettings.acceptedCloudEula = acceptedCloudEula;
@@ -767,6 +783,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       autoCollapseSidebar !== initialSettings.autoCollapseSidebar ||
       autoExpandSidebarHover !== initialSettings.autoExpandSidebarHover ||
       globalSearchEnabled !== initialSettings.globalSearchEnabled ||
+      minimizeToTray !== initialSettings.minimizeToTray ||
       devSensitiveInfoHider !== initialSettings.devSensitiveInfoHider ||
       devForceOfflineMode !== initialSettings.devForceOfflineMode ||
       acceptedCloudEula !== initialSettings.acceptedCloudEula ||
@@ -1018,7 +1035,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             totalWarnings: 0,
           },
           timestamp: new Date().toISOString(),
-          version: '1.0.0-rc.9',
+          version: '1.0.0-rc.10',
         };
 
         await invoke('save_performance_test_results', { results: errorResults });
@@ -1035,8 +1052,9 @@ The Company reserves the right to terminate your access to the Service at any ti
 
   async function openPerformanceTestsFolder() {
     try {
-      const performanceDir = await invoke('get_performance_tests_directory');
-      await invoke('open_url', { url: `file://${performanceDir}` });
+      const performanceDir = await invoke<string>('get_performance_tests_directory');
+      // Use system file manager — `open_url` is for SEQTA login webviews, not file:// paths.
+      await openPath(performanceDir);
 
       toastStore.success('Performance tests folder opened');
     } catch (error) {
@@ -1073,7 +1091,7 @@ The Company reserves the right to terminate your access to the Service at any ti
   }
 </script>
 
-<div class="p-4 mx-auto max-w-4xl sm:p-6 md:p-8">
+<div class="container max-w-none w-full p-5 mx-auto">
   <div
     class="flex sticky top-0 z-20 flex-col gap-4 justify-between items-start px-6 py-4 mb-8 rounded-xl border-b backdrop-blur-md sm:flex-row sm:items-center animate-fade-in-up bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800">
     <h1 class="px-2 py-1 text-xl font-bold rounded-lg sm:text-2xl">
@@ -1127,6 +1145,82 @@ The Company reserves the right to terminate your access to the Service at any ti
     </div>
   {:else}
     <div class="space-y-6 sm:space-y-8">
+      {#if showDevSettings}
+        <section
+          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+            <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
+            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+              Developer options for debugging and testing
+            </p>
+          </div>
+          <div class="p-4 sm:p-6">
+            <div class="space-y-6">
+              <div class="flex gap-3 items-center">
+                <input
+                  id="dev-sensitive-info-hider-top"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={devSensitiveInfoHider} />
+                <label
+                  for="dev-sensitive-info-hider-top"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  Sensitive Info Hider (API responses replaced with random mock data)
+                </label>
+              </div>
+
+              <div class="flex gap-3 items-center">
+                <input
+                  id="dev-force-offline-mode-top"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={devForceOfflineMode} />
+                <label
+                  for="dev-force-offline-mode-top"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  Force Offline Mode (Prevents all network requests, uses cached data only)
+                </label>
+              </div>
+
+              <div class="pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
+                <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
+                  Performance Testing
+                </h3>
+                <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
+                  Run automated performance testing across all pages. This will navigate through
+                  each page, collect performance metrics including load times, errors, and resource
+                  usage, then save the results as JSON files in your AppData directory.
+                </p>
+
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button
+                    class="flex gap-2 items-center justify-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onclick={runPerformanceTest}
+                    disabled={performanceTestRunning}>
+                    {#if performanceTestRunning}
+                      <div
+                        class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
+                      </div>
+                      <span>Running Test...</span>
+                    {:else}
+                      <Icon src={Cog} class="w-4 h-4" />
+                      <span>Run Performance Test</span>
+                    {/if}
+                  </button>
+
+                  <button
+                    class="flex gap-2 items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 border-zinc-300/70 dark:border-zinc-700/70 text-zinc-800 dark:text-white bg-zinc-100/60 dark:bg-zinc-800/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
+                    onclick={openPerformanceTestsFolder}>
+                    <Icon src={CloudArrowUp} class="w-4 h-4" />
+                    <span>Open Saved Tests</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      {/if}
+
       <!-- Cloud Sync Section -->
       <section
         data-onboarding="cloud-sync"
@@ -1808,6 +1902,25 @@ The Company reserves the right to terminate your access to the Service at any ti
                 your content, courses, and assessments.
               </p>
             </div>
+            {#if isDesktop}
+              <div class="flex gap-4 items-center mt-4 mb-4">
+                <input
+                  id="minimize-to-tray"
+                  type="checkbox"
+                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
+                  bind:checked={minimizeToTray} />
+                <label
+                  for="minimize-to-tray"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  <T key="settings.minimize_to_tray" fallback="Keep app running in system tray when closed" />
+                </label>
+              </div>
+              <p class="text-xs text-zinc-600 dark:text-zinc-400">
+                <T
+                  key="settings.minimize_to_tray_description"
+                  fallback="When enabled, closing the window hides DesQTA to the system tray. When disabled, closing the window fully quits the app." />
+              </p>
+            {/if}
           </div>
           <!-- Disable School Picture -->
           <div class="flex gap-4 items-center mt-4">
@@ -1992,83 +2105,6 @@ The Company reserves the right to terminate your access to the Service at any ti
           </div>
         </div>
       </section>
-
-      {#if showDevSettings}
-        <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-400 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-            <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
-            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Developer options for debugging and testing
-            </p>
-          </div>
-          <div class="p-4 sm:p-6">
-            <div class="space-y-6">
-              <div class="flex gap-3 items-center">
-                <input
-                  id="dev-sensitive-info-hider"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={devSensitiveInfoHider} />
-                <label
-                  for="dev-sensitive-info-hider"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Sensitive Info Hider (API responses replaced with random mock data)
-                </label>
-              </div>
-
-              <div class="flex gap-3 items-center">
-                <input
-                  id="dev-force-offline-mode"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={devForceOfflineMode} />
-                <label
-                  for="dev-force-offline-mode"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Force Offline Mode (Prevents all network requests, uses cached data only)
-                </label>
-              </div>
-
-              <!-- Performance Testing Section -->
-              <div class="pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
-                <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
-                  Performance Testing
-                </h3>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
-                  Run automated performance testing across all pages. This will navigate through
-                  each page, collect performance metrics including load times, errors, and resource
-                  usage, then save the results as JSON files in your AppData directory.
-                </p>
-
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <button
-                    class="flex gap-2 items-center justify-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onclick={runPerformanceTest}
-                    disabled={performanceTestRunning}>
-                    {#if performanceTestRunning}
-                      <div
-                        class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
-                      </div>
-                      <span>Running Test...</span>
-                    {:else}
-                      <Icon src={Cog} class="w-4 h-4" />
-                      <span>Run Performance Test</span>
-                    {/if}
-                  </button>
-
-                  <button
-                    class="flex gap-2 items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 border-zinc-300/70 dark:border-zinc-700/70 text-zinc-800 dark:text-white bg-zinc-100/60 dark:bg-zinc-800/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
-                    onclick={openPerformanceTestsFolder}>
-                    <Icon src={CloudArrowUp} class="w-4 h-4" />
-                    <span>Open Saved Tests</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      {/if}
 
       <!-- RSS Feeds Settings -->
       <section
@@ -2461,84 +2497,6 @@ The Company reserves the right to terminate your access to the Service at any ti
           </button>
         </div>
       </section>
-
-      <!-- Dev Settings Section -->
-      {#if showDevSettings}
-        <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-400 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
-            <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
-            <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              Developer options for debugging and testing
-            </p>
-          </div>
-          <div class="p-4 sm:p-6">
-            <div class="space-y-6">
-              <div class="flex gap-3 items-center">
-                <input
-                  id="dev-sensitive-info-hider"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={devSensitiveInfoHider} />
-                <label
-                  for="dev-sensitive-info-hider"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Sensitive Info Hider (API responses replaced with random mock data)
-                </label>
-              </div>
-
-              <div class="flex gap-3 items-center">
-                <input
-                  id="dev-force-offline-mode"
-                  type="checkbox"
-                  class="w-4 h-4 accent-blue-600 sm:w-5 sm:h-5"
-                  bind:checked={devForceOfflineMode} />
-                <label
-                  for="dev-force-offline-mode"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  Force Offline Mode (Prevents all network requests, uses cached data only)
-                </label>
-              </div>
-
-              <!-- Performance Testing Section -->
-              <div class="pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
-                <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
-                  Performance Testing
-                </h3>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
-                  Run automated performance testing across all pages. This will navigate through
-                  each page, collect performance metrics including load times, errors, and resource
-                  usage, then save the results as JSON files in your AppData directory.
-                </p>
-
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <button
-                    class="flex gap-2 items-center justify-center px-4 py-2 text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onclick={runPerformanceTest}
-                    disabled={performanceTestRunning}>
-                    {#if performanceTestRunning}
-                      <div
-                        class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
-                      </div>
-                      <span>Running Test...</span>
-                    {:else}
-                      <Icon src={Cog} class="w-4 h-4" />
-                      <span>Run Performance Test</span>
-                    {/if}
-                  </button>
-
-                  <button
-                    class="flex gap-2 items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 border-zinc-300/70 dark:border-zinc-700/70 text-zinc-800 dark:text-white bg-zinc-100/60 dark:bg-zinc-800/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105"
-                    onclick={openPerformanceTestsFolder}>
-                    <Icon src={CloudArrowUp} class="w-4 h-4" />
-                    <span>Open Saved Tests</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      {/if}
     </div>
   {/if}
 </div>

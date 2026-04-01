@@ -9,6 +9,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { notify } from '../../utils/notify';
 import { logger } from '../../utils/logger';
 import type { Assessment } from '../types';
+import { invokeGetProcessedAssessments } from './processedAssessmentsInvoke';
 
 export type NotificationType = 'reminder_3days' | 'reminder_1day' | 'due_date' | 'overdue';
 
@@ -160,9 +161,7 @@ class NotificationService {
       // Fetch assessments to get titles and details
       let assessmentsData: { assessments: Assessment[] } | null = null;
       try {
-        assessmentsData = await invoke<{
-          assessments: Assessment[];
-        }>('get_processed_assessments');
+        assessmentsData = await invokeGetProcessedAssessments();
       } catch (error) {
         logger.warn(
           'notificationService',

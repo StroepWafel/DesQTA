@@ -80,7 +80,7 @@
   });
 </script>
 
-<div class="container px-6 py-7 mx-auto">
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
   {#if loading}
     <div class="flex justify-center items-center h-64">
       <LoadingSpinner size="md" message={$_('folios.loading') || 'Loading...'} />
@@ -94,11 +94,18 @@
         size="md" />
     </div>
   {:else}
-    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
-      <T key="navigation.folios" fallback="Folios" />
-    </h1>
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+          <T key="navigation.folios" fallback="Folios" />
+        </h1>
+        <p class="text-zinc-600 dark:text-zinc-400">
+          <T key="folios.description" fallback="Create and browse folios" />
+        </p>
+      </div>
+    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Edit My Folios -->
       <div class="folio-action-card-animate" style="animation-delay: 0ms;">
         <button

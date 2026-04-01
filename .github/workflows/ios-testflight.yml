@@ -1,0 +1,111 @@
+name: iOS TestFlight
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-upload:
+    name: Build and Upload to TestFlight
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
+      - name: Strip alpha from iOS app icons
+        run: |
+          if ! command -v magick >/dev/null 2>&1 && ! command -v convert >/dev/null 2>&1; then
+            brew install imagemagick
+          fi
+
+          chmod +x scripts/strip-ios-icon-alpha.sh
+          scripts/strip-ios-icon-alpha.sh
+
+      - name: Normalize iOS signing environment
+        env:
+          IOS_CERTIFICATE_PASSWORD_SECRET: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ "$IOS_CERTIFICATE_PASSWORD_SECRET" = "__EMPTY__" ]; then
+            echo "IOS_CERTIFICATE_PASSWORD=" >> "$GITHUB_ENV"
+          else
+            echo "IOS_CERTIFICATE_PASSWORD=$IOS_CERTIFICATE_PASSWORD_SECRET" >> "$GITHUB_ENV"
+          fi
+
+      - name: Create App Store Connect API key file
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        run: |
+          key_path="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8"
+          printf '%b' "$APPLE_API_KEY_CONTENT" > "$key_path"
+          echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
+      - name: Build signed iOS app
+        env:
+          APPLE_DEVELOPMENT_TEAM: 5949S6UQCX
+          TAURI_APPLE_DEVELOPMENT_TEAM: 5949S6UQCX
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ env.IOS_CERTIFICATE_PASSWORD }}
+          IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: pnpm tauri ios build --export-method app-store-connect --target aarch64
+
+      - name: Upload iOS IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-testflight-build
+          path: src-tauri/gen/apple/build/**/*.ipa
+          retention-days: 14
+
+      - name: Upload IPA to TestFlight
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: |
+          ipa_path=$(find src-tauri/gen/apple/build -name '*.ipa' -type f | head -1)
+
+          if [ -z "$ipa_path" ]; then
+            echo 'No IPA found to upload.'
+            exit 1
+          fi
+
+          xcrun altool \
+            --upload-app \
+            --type ios \
+            --file "$ipa_path" \
+            --apiKey "$APPLE_API_KEY" \
+            --apiIssuer "$APPLE_API_ISSUER"

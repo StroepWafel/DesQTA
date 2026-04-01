@@ -249,7 +249,7 @@
 
   // React to content changes from parent (when switching notes)
   $: if (editor && content && noteId !== lastNoteId) {
-    editor.commands.setContent(content, false);
+    editor.commands.setContent(content, { emitUpdate: false });
     lastNoteId = noteId;
   }
 
@@ -354,7 +354,7 @@
   }
 
   export function setContent(newContent: string) {
-    editor?.commands.setContent(newContent, false);
+    editor?.commands.setContent(newContent, { emitUpdate: false });
   }
 
   export function insertText(text: string) {

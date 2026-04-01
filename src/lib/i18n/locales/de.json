@@ -178,7 +178,9 @@
     "feature_analytics_desc": "Leistungsdaten",
     "feature_settings_desc": "App-Einstellungen",
     "fill_all_fields": "Bitte füllen Sie alle Felder aus",
-    "failed_credentials": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten."
+    "failed_credentials": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.",
+    "not_working_try_direct": "Funktioniert nicht? ",
+    "try_direct_login_link": "Direktanmeldung versuchen"
   },
   "features": {
     "lightning_fast": "Blitzschnelle Leistung",
@@ -547,6 +549,7 @@
     "get_new_tip": "Neuen Lerntipp erhalten"
   },
   "messages": {
+    "page_description": "SEQTA- und RSS-Nachrichten anzeigen und verwalten.",
     "failed_to_load": "Fehler beim Laden der Nachrichten.",
     "failed_to_load_no_cache": "Fehler beim Laden der Nachrichten, keine gecachten Daten verfügbar",
     "failed_to_load_message": "Fehler beim Laden der Nachricht.",
@@ -655,6 +658,8 @@
     "dark": "Dunkel",
     "system": "System",
     "theme_mode_description": "Wählen Sie zwischen hellem Modus, dunklem Modus oder folgen Sie Ihrer Systemeinstellung.",
+    "minimize_to_tray": "App beim Schließen in der Systemleiste weiterlaufen lassen",
+    "minimize_to_tray_description": "Wenn aktiviert, wird DesQTA beim Schließen des Fensters in die Systemleiste minimiert. Wenn deaktiviert, wird die App vollständig beendet.",
     "security": "Sicherheit",
     "security_description": "Schützen Sie die App mit biometrischer Authentifizierung",
     "biometric_enabled": "Mit Biometrie entsperren (Face ID, Touch ID, Fingerabdruck, Windows Hello)",
@@ -965,7 +970,9 @@
     "avg_gpu": "Durchschnittliche GPU",
     "errors_count": "{count} Fehler",
     "warnings_count": "{count} Warnungen",
-    "no_issues": "Keine Probleme"
+    "no_issues": "Keine Probleme",
+    "mega_suite_overlay_title": "Benchmark-Suite wird ausgeführt",
+    "mega_suite_overlay_body": "Der Seiten-Crawl ist fertig. Synthetische Tests (Startup, UI, Daten, Backend) laufen—oft 30–90 Sekunden. Bitte warten; die Ergebnisse öffnen sich danach."
   },
   "plugins": {
     "installed_title": "Plugin Installiert",
@@ -983,6 +990,10 @@
     "quizzes": "Quiz",
     "select_assessment": "Bewertung auswählen",
     "custom_topic": "Eigenes Thema",
+    "topic_source": "1. Thema wählen",
+    "quiz_options": "2. Quiz-Optionen",
+    "change_options": "Optionen ändern",
+    "generate_section": "3. Generieren",
     "what_to_study": "Was möchtest du lernen?",
     "question_count": "Anzahl der Fragen",
     "generate_quiz": "Quiz erstellen",

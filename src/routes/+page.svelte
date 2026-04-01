@@ -13,23 +13,21 @@
   let isEditing = $state(false);
   let selectedWidget = $state<WidgetConfig | null>(null);
   let showSettings = $state(false);
-  let widgetGridRef: any = null;
+  let widgetGridRef: { reloadLayout: (widgetIdToScroll?: string) => Promise<void> } | null = null;
+  let widgetLayoutPrepared = $state(false);
 
   function handleEditToggle(editing: boolean) {
     isEditing = editing;
   }
 
-  function handleLayoutChange(widgetId?: string) {
-    // Layout changed, reload grid (called from EditModeToggle)
-    logger.debug('dashboard', 'handleLayoutChange', 'Layout changed', { widgetId });
-    if (widgetGridRef && typeof widgetGridRef.reloadLayout === 'function') {
-      widgetGridRef.reloadLayout(widgetId);
+  async function handleLayoutChange(widgetId?: string) {
+    logger.debug('dashboard', 'handleLayoutChange', 'Layout change requested', { widgetId });
+    if (widgetGridRef) {
+      await widgetGridRef.reloadLayout(widgetId);
     }
   }
 
-  function handleGridLayoutChange(layout: WidgetLayout) {
-    // Called from WidgetGrid when layout changes (e.g., drag/resize)
-    // We don't need to do anything here since WidgetGrid handles its own state
+  function handleGridLayoutChange(_layout: WidgetLayout) {
     logger.debug('dashboard', 'handleGridLayoutChange', 'Grid layout changed');
   }
 
@@ -45,19 +43,25 @@
     selectedWidget = null;
   }
 
-  function handleSettingsSave(widget: WidgetConfig) {
+  async function handleSettingsSave(widget: WidgetConfig) {
     selectedWidget = widget;
-    handleLayoutChange();
+    await handleLayoutChange();
+  }
+
+  async function ensureWidgetLayoutPrepared() {
+    if (widgetLayoutPrepared) return;
+
+    await migrateToWidgetSystem();
+    await validateAndFixLayout();
+    widgetLayoutPrepared = true;
   }
 
   onMount(async () => {
-    // Run migration on mount
-    await migrateToWidgetSystem();
-    await validateAndFixLayout();
+    await ensureWidgetLayoutPrepared();
   });
 </script>
 
-<div class="p-4 sm:p-6 min-h-screen {isMobile ? 'pb-4' : ''}">
+<div class="container max-w-none w-full p-5 mx-auto min-h-screen space-y-6">
   <!-- Edit Mode Toggle -->
   <div in:fade={{ duration: 400 }}>
     <EditModeToggle

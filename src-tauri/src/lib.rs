@@ -75,6 +75,8 @@ use tauri_plugin_notification;
 use tauri_plugin_single_instance;
 
 #[cfg(desktop)]
+use tauri_plugin_deep_link::DeepLinkExt;
+#[cfg(desktop)]
 use url::form_urlencoded::parse;
 
 /// Boilerplate example command
@@ -293,6 +295,36 @@ pub fn run() {
                     } else {
                         eprintln!("[Desqta] Missing required Discord OAuth parameters. Need both token and user_id.");
                     }
+                } else if url.starts_with("desqta://connect/") {
+                    // Handle DesQTA connect deeplink from BetterSEQTA+ extension
+                    println!("[Desqta] Processing DesQTA connect deeplink: {}", url);
+                    let app_handle = app.app_handle().clone();
+                    let url_clone = url.clone();
+                    tauri::async_runtime::spawn(async move {
+                        match login::create_login_window(app_handle, url_clone).await {
+                            Ok(_) => {
+                                println!("[Desqta] Successfully processed DesQTA connect deeplink");
+                            }
+                            Err(e) => {
+                                eprintln!("[Desqta] Failed to process DesQTA connect deeplink: {}", e);
+                            }
+                        }
+                    });
+                } else if url.starts_with("seqtalearn://") {
+                    // SEQTA mobile SSO link (same as mobile deep link)
+                    println!("[Desqta] Processing SEQTA Learn SSO deeplink (desktop): {}", url);
+                    let app_handle = app.app_handle().clone();
+                    let url_clone = url.clone();
+                    tauri::async_runtime::spawn(async move {
+                        match login::create_login_window(app_handle, url_clone).await {
+                            Ok(_) => {
+                                println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink");
+                            }
+                            Err(e) => {
+                                eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e);
+                            }
+                        }
+                    });
                 } else if url.starts_with("desqta://auth") {
                     // Extract cookie and URL from the deep link (legacy SEQTA auth)
                     let mut cookie = None;
@@ -371,6 +403,7 @@ pub fn run() {
             netgrab::proxy_request,
             netgrab::get_seqta_file,
             netgrab::upload_seqta_file,
+            netgrab::upload_and_link_assessment_file,
             login::check_session_exists,
             login::save_session,
             login::create_login_window,
@@ -399,6 +432,7 @@ pub fn run() {
             settings::save_cloud_token,
             settings::get_cloud_user,
             settings::clear_cloud_token,
+            settings::clear_expired_cloud_session,
             settings::get_cloud_state,
             settings::set_cloud_state_previously_signed,
             settings::get_reserved_client,
@@ -528,6 +562,7 @@ pub fn run() {
             system_monitor::get_detailed_system_info,
             system_monitor::start_system_monitoring,
             database::db_cache_get,
+            database::db_cache_get_many,
             database::db_cache_set,
             database::db_cache_delete,
             database::db_cache_clear,
@@ -558,6 +593,7 @@ pub fn run() {
             database::db_widget_layout_save,
             database::db_widget_layout_load,
             assessments::get_processed_assessments,
+            assessments::get_assessment_detail,
             courses::get_courses_subjects,
             courses::get_course_content,
             messages::fetch_messages,
@@ -647,6 +683,38 @@ pub fn run() {
                 eprintln!("Failed to initialize database: {}", e);
             }
 
+            // On desktop: check if app was launched via deep link (first launch, before single-instance)
+            #[cfg(desktop)]
+            {
+                if let Ok(Some(urls)) = app.deep_link().get_current() {
+                    for url in urls {
+                        let url_str: String = url.to_string();
+                        if url_str.starts_with("desqta://connect/") {
+                            println!("[Desqta] Processing DesQTA connect deeplink from first launch: {}", url_str);
+                            let app_handle = app.app_handle().clone();
+                            tauri::async_runtime::spawn(async move {
+                                match login::create_login_window(app_handle, url_str).await {
+                                    Ok(_) => println!("[Desqta] Successfully processed DesQTA connect deeplink"),
+                                    Err(e) => eprintln!("[Desqta] Failed to process DesQTA connect deeplink: {}", e),
+                                }
+                            });
+                            break;
+                        }
+                        if url_str.starts_with("seqtalearn://") {
+                            println!("[Desqta] Processing SEQTA Learn SSO deeplink from first launch: {}", url_str);
+                            let app_handle = app.app_handle().clone();
+                            tauri::async_runtime::spawn(async move {
+                                match login::create_login_window(app_handle, url_str).await {
+                                    Ok(_) => println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink"),
+                                    Err(e) => eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e),
+                                }
+                            });
+                            break;
+                        }
+                    }
+                }
+            }
+
             // Listen for deep link events (mobile only - desktop uses single instance handler)
             #[cfg(any(target_os = "android", target_os = "ios"))]
             {
@@ -717,6 +785,20 @@ pub fn run() {
                                         let _ = window.emit("discord-oauth-callback", payload);
                                     }
                                 }
+                            } else if url.starts_with("desqta://connect/") {
+                                println!("[Desqta] Processing DesQTA connect deeplink (mobile): {}", url);
+                                let app_handle_clone = app_handle.clone();
+                                let url_clone = url.clone();
+                                tauri::async_runtime::spawn(async move {
+                                    match login::create_login_window(app_handle_clone, url_clone).await {
+                                        Ok(_) => {
+                                            println!("[Desqta] Successfully processed DesQTA connect deeplink");
+                                        }
+                                        Err(e) => {
+                                            eprintln!("[Desqta] Failed to process DesQTA connect deeplink: {}", e);
+                                        }
+                                    }
+                                });
                             } else if url.starts_with("seqtalearn://") {
                                 println!("[Desqta] Processing SEQTA Learn SSO deeplink: {}", url);
                                 let app_handle_clone = app_handle.clone();
@@ -843,9 +925,20 @@ pub fn run() {
             #[cfg(desktop)]
             {
                 if let WindowEvent::CloseRequested { api, .. } = event {
-                    // Hide window instead of closing when user clicks X
-                    window.hide().unwrap();
-                    api.prevent_close();
+                    // On macOS: closing the window should quit the app (no tray reopen flow)
+                    #[cfg(target_os = "macos")]
+                    {
+                        // Always allow close → app quits
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        let settings = settings::Settings::load();
+                        if settings.minimize_to_tray {
+                            // Hide window to system tray instead of closing
+                            let _ = window.hide();
+                            api.prevent_close();
+                        }
+                    }
                 }
             }
         })
