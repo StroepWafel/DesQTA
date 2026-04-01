@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
   import { DocumentText } from 'svelte-hero-icons';
-  import { decodeHtmlEntities } from '../../utils/sanitization';
+  import { decodeHtmlEntities, sanitizeHtml } from '../../utils/sanitization';
 
   interface Criterion {
     results?: {
@@ -74,7 +74,7 @@
         class="p-4 mb-4 rounded-xl transition-all duration-300 dark:bg-zinc-800 bg-zinc-200 hover:shadow-lg hover:shadow-accent-500/5">
         <div class="mb-1 font-semibold">Teacher feedback</div>
         <div class="dark:text-zinc-300 text-zinc-700">
-          {decodeHtmlEntities(assessmentData.engagement.feedbackComment)}
+          {@html sanitizeHtml(decodeHtmlEntities(assessmentData.engagement.feedbackComment ?? ''))}
         </div>
       </div>
     {:else if assessmentData.marked}
