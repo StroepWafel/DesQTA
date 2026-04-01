@@ -232,7 +232,7 @@ export class PerformanceTester {
           peakMemoryUsage,
         },
         timestamp: new Date().toISOString(),
-        version: '1.0.0-rc.9', // Match Cargo.toml version
+        version: '1.0.0-rc.10', // Match Cargo.toml version
         megaPerf,
       };
 
