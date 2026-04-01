@@ -92,27 +92,27 @@
   let error: string | null = null;
 
   // UI state
-  let filter: FilterKey = 'all';
-  let sortBy: SortKey = 'due';
-  let query = '';
-  let editMode: Record<string, boolean> = {};
+  let filter = $state<FilterKey>('all');
+  let sortBy = $state<SortKey>('due');
+  let query = $state('');
+  let editMode = $state<Record<string, boolean>>({});
 
   // Animation state
-  let deletingTasks: Set<string> = new Set();
-  let completingTasks: Set<string> = new Set();
+  let deletingTasks = $state<Set<string>>(new Set());
+  let completingTasks = $state<Set<string>>(new Set());
 
   // Tabs
   type TabKey = 'quizzes' | 'tasks' | 'notes';
   let activeTab = $state<TabKey>('quizzes');
 
   // Upcoming assessments state (real data)
-  let upcomingAssessments: AssessmentItem[] = [];
-  let loadingAssessments = true;
+  let upcomingAssessments = $state<AssessmentItem[]>([]);
+  let loadingAssessments = $state(true);
 
   // SEQTA data stores
-  let subjects: SubjectItem[] = [];
-  let subjectColours: Record<string, string> = {};
-  let assessmentsAll: FullAssessment[] = [];
+  let subjects = $state<SubjectItem[]>([]);
+  let subjectColours = $state<Record<string, string>>({});
+  let assessmentsAll = $state<FullAssessment[]>([]);
 
   // Per-task typeahead states
   let subjectQuery: Record<string, string> = {};
@@ -630,7 +630,7 @@
   );
 
   // Random study tip selection
-  let currentStudyTip = '';
+  let currentStudyTip = $state('');
 
   const lastStudyIndexes: number[] = [];
 

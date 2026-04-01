@@ -7,7 +7,10 @@
  */
 
 export { isDevTauriPerformance } from './devTauriContext';
-export { installDevTauriPerformanceRuntime, teardownDevTauriPerformanceRuntime } from './devTauriRuntime';
+export {
+  installDevTauriPerformanceRuntime,
+  teardownDevTauriPerformanceRuntime,
+} from './devTauriRuntime';
 export type { DevPerfGlobal } from './devTauriRuntime';
 
 // ============================================================================
@@ -106,8 +109,86 @@ export {
   benchmarkGlobalSearch,
   benchmarkLoggingPerformance,
 
+  // Widget benchmarks
+  runWidgetBenchmarkSuite,
+  runQuickWidgetBenchmark,
+  benchmarkWidgetInitialization,
+  benchmarkWidgetGridLayout,
+  benchmarkWidgetResizeOperations,
+  benchmarkWidgetDataRefresh,
+  benchmarkWidgetDragDrop,
+  benchmarkWidgetConfiguration,
+  benchmarkWidgetMemoryUsage,
+  benchmarkTimetableWidget,
+  benchmarkGradeTrendsWidget,
+  benchmarkQuickNotesWidget,
+
+  // Service benchmarks
+  runServiceBenchmarkSuite,
+  runQuickServiceBenchmark,
+  benchmarkAuthOperations,
+  benchmarkConcurrentAuth,
+  benchmarkCacheEviction,
+  benchmarkCacheConsistency,
+  benchmarkSyncOperations,
+  benchmarkDeltaSync,
+  benchmarkWidgetRegistry,
+  benchmarkWidgetLayout,
+  benchmarkSettingsPersistence,
+  benchmarkNotificationDispatch,
+  benchmarkRequestDeduplication,
+  benchmarkRequestRetry,
+
+  // Memory & leak detection benchmarks
+  runMemoryBenchmarkSuite,
+  runQuickMemoryBenchmark,
+  benchmarkWidgetGridMemory,
+  benchmarkNotesEditorMemory,
+  benchmarkAssessmentDataMemory,
+  benchmarkRouteMemoryLeaks,
+  benchmarkWidgetLifecycleLeaks,
+  benchmarkEventListenerLeaks,
+  benchmarkGCPauseImpact,
+  benchmarkMemoryFragmentation,
+  benchmarkTimetableMemory,
+  benchmarkAnalyticsChartsMemory,
+  type MemorySnapshot,
+  type MemoryGrowthReport,
+  getMemorySnapshot,
+  calculateMemoryDelta,
+  forceGarbageCollection,
+  waitForStableMemory,
+
+  // Route & page benchmarks
+  runRouteBenchmarkSuite,
+  runQuickRouteBenchmark,
+  benchmarkSingleRouteTransitions,
+  benchmarkNavigationPatterns,
+  benchmarkRapidNavigation,
+  benchmarkDashboardPage,
+  benchmarkAnalyticsPage,
+  benchmarkAssessmentsPage,
+  benchmarkNoticesPage,
+  benchmarkMessagesPage,
+  benchmarkSettingsPage,
+  benchmarkLazyLoading,
+  benchmarkPreloading,
+
+  // Network benchmarks
+  runNetworkBenchmarkSuite,
+  runQuickNetworkBenchmark,
+  benchmarkRequestLatency,
+  benchmarkConcurrentRequests,
+  benchmarkCacheStrategies,
+  benchmarkCacheInvalidation,
+  benchmarkPayloadSizes,
+  benchmarkConnectionPooling,
+  benchmarkRetryStrategies,
+  benchmarkNetworkConditions,
+
   // Complete suite
   runCompleteBenchmarkSuite,
+  runQuickBenchmarkSuite,
 } from './benchmarks';
 
 // ============================================================================

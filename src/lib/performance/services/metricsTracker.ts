@@ -223,7 +223,8 @@ export function endTimer(
 	name: string,
 	description: string,
 	category: MetricCategory,
-	unit: 'ms' | 'count' | 'bytes' | 'percent' = 'ms'
+	unitOrContext: 'ms' | 'count' | 'bytes' | 'percent' | Record<string, any> = 'ms',
+	context?: Record<string, any>
 ): PerformanceMetric | null {
 	const timer = activeTimers.get(name);
 	if (!timer) {
@@ -234,7 +235,14 @@ export function endTimer(
 	const elapsed = performance.now() - timer.startTime;
 	activeTimers.delete(name);
 
-	return recordMetric(name, description, category, elapsed, unit, timer.context);
+	const unit = typeof unitOrContext === 'string' ? unitOrContext : 'ms';
+	const mergedContext = {
+		...(timer.context ?? {}),
+		...(typeof unitOrContext === 'object' && unitOrContext !== null ? unitOrContext : {}),
+		...(context ?? {}),
+	};
+
+	return recordMetric(name, description, category, elapsed, unit, mergedContext);
 }
 
 // ============================================================================

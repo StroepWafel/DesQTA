@@ -9,7 +9,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { cache } from '../../utils/cache';
 import { devTimeAsync } from '$lib/performance/devPerfHelpers';
 import { logger } from '../../utils/logger';
-import { idbCacheGet } from '../services/idb';
+import { idbCacheGetMany } from '../services/idb';
 import { isOfflineMode } from '../utils/offlineMode';
 import { notificationService } from './notificationService';
 import { themeStoreService, resolveImageUrl } from './themeStoreService';
@@ -65,38 +65,35 @@ export async function loadCachedDataOnStartup(): Promise<void> {
       'forums_list',
     );
 
-    // Load all cached data in parallel
-    const loadPromises = cacheKeys.map(async (key) => {
-      try {
-        const cached = await idbCacheGet(key);
-        if (cached) {
-          // Restore to memory cache with appropriate TTL
-          let ttl = 60; // default 60 minutes
-          if (key === 'lesson_colours') ttl = 10;
-          else if (key.startsWith('timetable_')) ttl = 30;
-          else if (key.startsWith('notices_')) ttl = 30;
-          else if (key === 'assessments_overview_data') ttl = 10;
-          else if (
-            key === 'folios_settings_enabled' ||
-            key === 'goals_settings_enabled' ||
-            key === 'forums_settings_enabled'
-          )
-            ttl = 60;
-          else if (key === 'goals_years') ttl = 30;
-          else if (key === 'forums_list') ttl = 15;
+    const getTtlForKey = (key: string): number => {
+      if (key === 'lesson_colours') return 10;
+      if (key.startsWith('timetable_')) return 30;
+      if (key.startsWith('notices_')) return 30;
+      if (key === 'assessments_overview_data') return 10;
+      if (
+        key === 'folios_settings_enabled' ||
+        key === 'goals_settings_enabled' ||
+        key === 'forums_settings_enabled'
+      )
+        return 60;
+      if (key === 'goals_years') return 30;
+      if (key === 'forums_list') return 15;
+      return 60;
+    };
 
-          cache.set(key, cached, ttl);
-          logger.debug('startup', 'loadCachedDataOnStartup', `Loaded ${key} from SQLite`, {
-            hasData: !!cached,
-            size: JSON.stringify(cached)?.length,
-          });
-        }
-      } catch (e) {
-        logger.warn('startup', 'loadCachedDataOnStartup', `Failed to load ${key}`, { error: e });
-      }
-    });
+    const cachedEntries = await idbCacheGetMany<unknown>(cacheKeys);
 
-    await Promise.allSettled(loadPromises);
+    for (const key of cacheKeys) {
+      const cached = cachedEntries[key];
+      if (typeof cached === 'undefined') continue;
+
+      const ttl = getTtlForKey(key);
+      cache.set(key, cached, ttl);
+      logger.debug('startup', 'loadCachedDataOnStartup', `Loaded ${key} from SQLite`, {
+        hasData: true,
+        size: JSON.stringify(cached)?.length,
+      });
+    }
 
     logger.info('startup', 'loadCachedDataOnStartup', 'Finished loading cached data from SQLite');
   } catch (e) {
@@ -292,33 +289,30 @@ export async function initializeApp(needsSetup = false, devMockEnabled = false):
       }
     }
 
+    const notificationSetupPromise = (async () => {
+      try {
+        await notificationService.migrateLocalStorageData();
+        notificationService.startBackgroundChecker();
+        notificationService.checkAndSendDueNotifications().catch((e) => {
+          logger.error('startup', 'initializeApp', 'Initial notification check failed', { error: e });
+        });
+        notificationService.cleanupOldNotifications(30).catch((e) => {
+          logger.debug('startup', 'initializeApp', 'Notification cleanup error (non-critical)', {
+            error: e,
+          });
+        });
+      } catch (e) {
+        logger.error('startup', 'initializeApp', 'Failed to initialize notification system', {
+          error: e,
+        });
+      }
+    })();
+
     // Step 1: Load cached data from SQLite immediately (blocks until loaded)
     await loadCachedDataOnStartup();
 
-    // Step 2: Initialize notification system
-    try {
-      // Migrate localStorage data to database (one-time)
-      await notificationService.migrateLocalStorageData();
-
-      // Start background notification checker
-      notificationService.startBackgroundChecker();
-
-      // Run initial notification check
-      notificationService.checkAndSendDueNotifications().catch((e) => {
-        logger.error('startup', 'initializeApp', 'Initial notification check failed', { error: e });
-      });
-
-      // Cleanup old notifications (keep last 30 days)
-      notificationService.cleanupOldNotifications(30).catch((e) => {
-        logger.debug('startup', 'initializeApp', 'Notification cleanup error (non-critical)', {
-          error: e,
-        });
-      });
-    } catch (e) {
-      logger.error('startup', 'initializeApp', 'Failed to initialize notification system', {
-        error: e,
-      });
-    }
+    // Step 2: Notification setup continues in the background while UI can unblock
+    void notificationSetupPromise;
 
     // Step 3: Trigger background sync (non-blocking) - skip when on login screen to avoid session race
     if (!needsSetup) {

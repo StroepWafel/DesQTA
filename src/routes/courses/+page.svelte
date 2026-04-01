@@ -4,7 +4,6 @@
   import { fade } from 'svelte/transition';
 
   // $lib/ imports
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import { SearchInput, LoadingSpinner, EmptyState, Button } from '$lib/components/ui';
   import {
     Icon,
@@ -25,8 +24,11 @@
   import { platformStore } from '$lib/stores/platform';
 
   // Relative imports
-  import { cache } from '../../utils/cache';
   import { courseService } from '$lib/services/courseService';
+  import {
+    loadParsedCourseContent,
+    shouldRefreshCourseContent,
+  } from '$lib/services/courseDataLoader';
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import CourseContent from './components/CourseContent.svelte';
 
@@ -70,7 +72,7 @@
   let showingOverview = $state(true); // Start with overview by default
   let contentScrollContainer: HTMLElement;
   // bind:this sets this ref when the lesson list mounts
-  let lessonListScrollContainer: HTMLDivElement | undefined;
+  let lessonListScrollContainer = $state<HTMLDivElement | undefined>(undefined);
   let sidebarOpen = $state(false);
   let isMobile = $derived($platformStore.isMobile);
 
@@ -114,6 +116,16 @@
     }
   }
 
+  function applyParsedCourseData(data: {
+    payload: CoursePayload;
+    parsedDocument: ParsedDocument | null;
+    documentParseError: boolean;
+  }) {
+    coursePayload = data.payload;
+    parsedDocument = data.parsedDocument;
+    documentParseError = data.documentParseError;
+  }
+
   async function loadCourseContent(subject: Subject) {
     loadingCourse = true;
     courseError = null;
@@ -126,26 +138,17 @@
     selectedLessonContent = null;
     selectedStandaloneContent = null;
 
-    const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
-
-    const data = await useDataLoader<CoursePayload>({
-      cacheKey,
-      ttlMinutes: 60,
-      context: 'courses',
-      functionName: 'loadCourseContent',
-      fetcher: () => courseService.loadCourseContent(subject),
-      onDataLoaded: async (payload) => {
-        coursePayload = payload;
-        const { parsed, error } = courseService.parseDocument(payload);
-        parsedDocument = parsed;
-        documentParseError = error;
+    const data = await loadParsedCourseContent(subject, {
+      onDataLoaded: async (courseData) => {
+        applyParsedCourseData(courseData);
         loadingCourse = false;
       },
+      shouldSyncInBackground: () => shouldRefreshCourseContent(subject),
+      updateOnBackgroundSync: true,
     });
 
     if (!data) {
-      const errorMessage = 'Failed to load course content';
-      courseError = errorMessage;
+      courseError = 'Failed to load course content';
       loadingCourse = false;
     }
   }
@@ -155,24 +158,15 @@
     loadingCourse = true;
     courseError = null;
     documentParseError = false;
-    const cacheKey = `course_${selectedSubject.programme}_${selectedSubject.metaclass}`;
     const ts = selectedTermSchedule;
     const idx = selectedLessonIndex;
     try {
-      await useDataLoader<CoursePayload>({
-        cacheKey,
-        ttlMinutes: 60,
-        context: 'courses',
-        functionName: 'refreshLessonContent',
-        fetcher: () => courseService.loadCourseContent(selectedSubject!),
+      await loadParsedCourseContent(selectedSubject, {
         skipCache: true,
-        onDataLoaded: async (p) => {
-          coursePayload = p;
-          const { parsed, error } = courseService.parseDocument(p);
-          parsedDocument = parsed;
-          documentParseError = error;
-          if (ts && idx !== null && p?.w?.[ts.n]?.[idx]) {
-            selectedLessonContent = p.w[ts.n][idx];
+        onDataLoaded: async (courseData) => {
+          applyParsedCourseData(courseData);
+          if (ts && idx !== null && courseData.payload?.w?.[ts.n]?.[idx]) {
+            selectedLessonContent = courseData.payload.w[ts.n][idx];
           }
         },
       });
@@ -385,44 +379,13 @@
     selectedTermSchedule = null;
     selectedLessonIndex = null;
     selectedLessonContent = null;
-    const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
-    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
-    const offline = await isOfflineMode();
-
-    // Only use cache when offline - always fetch fresh data when online
-    if (offline) {
-      const cached =
-        cache.get<CoursePayload>(cacheKey) ||
-        (await getWithIdbFallback<CoursePayload>(cacheKey, cacheKey, () =>
-          cache.get<CoursePayload>(cacheKey),
-        ));
-      if (cached) {
-        coursePayload = cached;
-        documentParseError = false;
-        const { parsed, error } = courseService.parseDocument(coursePayload);
-          parsedDocument = parsed;
-          documentParseError = error;
-        loadingCourse = false;
-        // Continue with lesson/content finding logic below
-        // (handled in the main logic after fetching)
-      }
-    }
-
-    // Fetch fresh data if online or if cache miss when offline
     try {
-      const data = await useDataLoader<CoursePayload>({
-        cacheKey,
-        ttlMinutes: 60,
-        context: 'courses',
-        functionName: 'autoSelectFromQuery',
-        fetcher: () => courseService.loadCourseContent(subject),
-        onDataLoaded: async (payload) => {
-          coursePayload = payload;
-          const { parsed, error } = courseService.parseDocument(payload);
-          parsedDocument = parsed;
-          documentParseError = error;
+      const data = await loadParsedCourseContent(subject, {
+        onDataLoaded: async (courseData) => {
+          applyParsedCourseData(courseData);
         },
-        shouldSyncInBackground: () => false, // Always fetch fresh when online
+        shouldSyncInBackground: () => shouldRefreshCourseContent(subject),
+        updateOnBackgroundSync: true,
       });
 
       if (!data) {
@@ -431,8 +394,10 @@
         return;
       }
 
+      const loadedPayload = data.payload;
+
       // Handle courses with lessons (d array has items)
-      if (coursePayload?.d && coursePayload.d.length > 0 && coursePayload?.w) {
+      if (loadedPayload?.d && loadedPayload.d.length > 0 && loadedPayload?.w) {
         let targetLesson: {
           termSchedule: TermSchedule | null;
           lesson: Lesson | null;
@@ -445,7 +410,7 @@
           const weekNum = parseInt(week, 10);
           const lessonIndex = parseInt(lesson, 10);
 
-          const termSchedule = coursePayload.d.find((ts) => ts.t === termNum && ts.w === weekNum);
+          const termSchedule = loadedPayload.d.find((ts) => ts.t === termNum && ts.w === weekNum);
 
           if (termSchedule && termSchedule.l[lessonIndex]) {
             targetLesson = {
@@ -470,7 +435,7 @@
             diff: Infinity,
           };
           const targetDate = new Date(date);
-          coursePayload.d.forEach((termSchedule, termIdx) => {
+          loadedPayload.d.forEach((termSchedule) => {
             termSchedule.l.forEach((lesson, lessonIndex) => {
               const lessonDate = new Date(lesson.d);
               const diff = Math.abs(lessonDate.getTime() - targetDate.getTime());
@@ -493,9 +458,9 @@
           // Don't update URL here since we're reading from it
           selectedLesson = targetLesson.lesson;
           showingOverview = false;
-          if (coursePayload?.w?.[targetLesson.termSchedule.n]?.[targetLesson.lessonIndex]) {
+          if (loadedPayload?.w?.[targetLesson.termSchedule.n]?.[targetLesson.lessonIndex]) {
             selectedLessonContent =
-              coursePayload.w[targetLesson.termSchedule.n][targetLesson.lessonIndex];
+              loadedPayload.w[targetLesson.termSchedule.n][targetLesson.lessonIndex];
           } else {
             selectedLessonContent = null;
           }
@@ -504,11 +469,11 @@
           selectedSubject = subject;
           showingOverview = true;
         }
-      } else if (coursePayload?.w && coursePayload.d.length === 0) {
+      } else if (loadedPayload?.w && loadedPayload.d.length === 0) {
         // Handle standalone content items (d is empty but w has content)
         if (lesson !== null) {
           const lessonIndex = parseInt(lesson, 10);
-          const flattened = coursePayload.w.flat();
+          const flattened = loadedPayload.w.flat();
           const sortedItems = flattened.sort((a, b) => (a.i || 0) - (b.i || 0));
           const targetContent = sortedItems.find((item) => item.i === lessonIndex);
 
@@ -643,6 +608,7 @@
   {/if}
 
   <!-- Unified Navigation Sidebar: card-style like study/directory; solid bg on mobile for visibility over transparent window -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="flex flex-col w-80 h-full rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 shadow-lg overflow-hidden transition-all duration-300 {isMobile
       ? `fixed top-0 left-0 z-40 bg-white dark:bg-zinc-900 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`

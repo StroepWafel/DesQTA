@@ -598,14 +598,17 @@
       // Pass needsSetup so we skip background sync when user is on login screen (or after session invalidation)
       const { initializeApp } = await import('$lib/services/startupService');
       await initializeApp(get(needsSetup), devMockEnabled);
+      contentLoading = false;
 
       // Background tasks (warmup already triggered by startupService)
       if (weatherEnabled) {
         fetchWeather(!forceUseLocation);
       }
 
-      // Run a one-time heartbeat health check on app open
-      await healthCheck();
+      // Run a one-time heartbeat health check on app open without blocking initial content render
+      healthCheck().catch((e) => {
+        logger.debug('layout', 'onMount', 'Health check failed', { error: e });
+      });
 
       // Send startup analytics
       sendAnalytics();
@@ -629,7 +632,9 @@
         logger.debug('layout', 'onMount', 'Failed to check initial fullscreen state', { error: e });
       }
     } finally {
-      contentLoading = false;
+      if (contentLoading) {
+        contentLoading = false;
+      }
       if (import.meta.env.DEV && import.meta.env.TAURI_ENV_PLATFORM) {
         const { recordStartupPhase } = await import('$lib/performance/hooks');
         recordStartupPhase('shell_ready');

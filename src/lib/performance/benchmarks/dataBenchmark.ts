@@ -17,7 +17,7 @@ import {
   calculateStats,
 } from '../services/metricsTracker';
 import { cache } from '../../../utils/cache';
-import { idbCacheGet, idbCacheSet } from '../../services/idb';
+import { idbCacheGet, idbCacheGetMany, idbCacheSet } from '../../services/idb';
 import { logger } from '../../../utils/logger';
 
 // ============================================================================
@@ -110,13 +110,11 @@ export async function benchmarkIndexedDB(): Promise<void> {
     const payload = { data: 'x'.repeat(size), timestamp: Date.now() };
     const baseKey = `benchmark_idb_${name}`;
 
-    // Benchmark writes
     startTimer(`cache_idb_write_${name}`);
     for (let i = 0; i < iterations; i++) {
       try {
         await idbCacheSet(`${baseKey}_${i}`, payload, 60);
       } catch (e) {
-        // IDB might fail in some environments
         logger.warn('performance', 'benchmarkIndexedDB', `IDB write failed for ${name}`, { error: e });
         break;
       }
@@ -124,7 +122,7 @@ export async function benchmarkIndexedDB(): Promise<void> {
     const writeMetric = endTimer(
       `cache_idb_write_${name}`,
       `IndexedDB write (${name})`,
-      'cache'
+      'cache',
     );
 
     if (writeMetric) {
@@ -134,11 +132,10 @@ export async function benchmarkIndexedDB(): Promise<void> {
         'cache',
         writeMetric.value / iterations,
         'ms',
-        { size, iterations }
+        { size, iterations },
       );
     }
 
-    // Benchmark reads
     startTimer(`cache_idb_read_${name}`);
     for (let i = 0; i < iterations; i++) {
       try {
@@ -150,7 +147,7 @@ export async function benchmarkIndexedDB(): Promise<void> {
     const readMetric = endTimer(
       `cache_idb_read_${name}`,
       `IndexedDB read (${name})`,
-      'cache'
+      'cache',
     );
 
     if (readMetric) {
@@ -160,16 +157,49 @@ export async function benchmarkIndexedDB(): Promise<void> {
         'cache',
         readMetric.value / iterations,
         'ms',
-        { size, iterations }
+        { size, iterations },
       );
     }
 
-    // Cleanup
+    const batchedKeys = Array.from({ length: Math.min(iterations, 5) }, (_, i) => `${baseKey}_${i}`);
+    startTimer(`cache_idb_read_many_${name}`);
+    for (let i = 0; i < iterations; i++) {
+      try {
+        await idbCacheGetMany(batchedKeys);
+      } catch (e) {
+        break;
+      }
+    }
+    const batchedReadMetric = endTimer(
+      `cache_idb_read_many_${name}`,
+      `IndexedDB read many (${name})`,
+      'cache',
+    );
+
+    if (batchedReadMetric && readMetric) {
+      recordMetric(
+        `cache_idb_read_many_per_op_${name}`,
+        `IndexedDB read many per operation (${name})`,
+        'cache',
+        batchedReadMetric.value / iterations,
+        'ms',
+        { size, iterations, keys: batchedKeys.length },
+      );
+
+      recordMetric(
+        `cache_idb_batched_read_improvement_${name}`,
+        `IndexedDB batched read improvement (${name})`,
+        'cache',
+        (Math.max(0, readMetric.value - batchedReadMetric.value) / readMetric.value) * 100,
+        'percent',
+        { singleReadMs: readMetric.value / iterations, batchedReadMs: batchedReadMetric.value / iterations },
+      );
+    }
+
     for (let i = 0; i < iterations; i++) {
       try {
         await idbCacheSet(`${baseKey}_${i}`, null, 0);
       } catch (e) {
-        // Ignore cleanup errors
       }
     }
   }

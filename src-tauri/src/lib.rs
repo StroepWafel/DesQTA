@@ -562,6 +562,7 @@ pub fn run() {
             system_monitor::get_detailed_system_info,
             system_monitor::start_system_monitoring,
             database::db_cache_get,
+            database::db_cache_get_many,
             database::db_cache_set,
             database::db_cache_delete,
             database::db_cache_clear,

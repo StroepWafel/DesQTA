@@ -18,6 +18,7 @@ import {
 } from '../services/metricsTracker';
 import { invoke } from '@tauri-apps/api/core';
 import { logger } from '../../../utils/logger';
+import { idbCacheGet, idbCacheGetMany, idbCacheSet } from '../../services/idb';
 
 // ============================================================================
 // Command Latency Benchmarks
@@ -30,57 +31,104 @@ import { logger } from '../../../utils/logger';
 export async function benchmarkCommandLatency(): Promise<void> {
   logger.info('performance', 'benchmarkCommandLatency', 'Starting command latency benchmark');
 
-  // Ping/pong test for baseline latency
-  const iterations = 100;
+  const iterations = 40;
+  const hotKeys = [
+    'assessments_overview_data',
+    'upcoming_assessments_data',
+    'lesson_colours',
+    'notices_labels',
+  ];
 
-  startTimer('backend_ping_baseline');
-
+  startTimer('backend_cache_get_single');
   for (let i = 0; i < iterations; i++) {
-    try {
-      // Simple ping command
-      await invoke('greet', { name: 'benchmark' });
-    } catch (e) {
-      // Command might not exist, simulate latency
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    await idbCacheGet('assessments_overview_data');
   }
-
-  const pingMetric = endTimer(
-    'backend_ping_baseline',
-    'Backend ping baseline',
-    'backend_command'
+  const singleMetric = endTimer(
+    'backend_cache_get_single',
+    'Backend cache get (single key)',
+    'backend_command',
   );
 
-  if (pingMetric) {
-    recordBackendCommand('ping_baseline', pingMetric.value / iterations);
+  if (singleMetric) {
+    recordBackendCommand('cache_get_single', singleMetric.value / iterations);
   }
 
-  // Batch command test
-  const batchSizes = [1, 5, 10, 25];
+  startTimer('backend_cache_get_many');
+  for (let i = 0; i < iterations; i++) {
+    await idbCacheGetMany(hotKeys);
+  }
+  const batchedMetric = endTimer(
+    'backend_cache_get_many',
+    'Backend cache get many',
+    'backend_command',
+  );
 
-  for (const batchSize of batchSizes) {
-    startTimer(`backend_batch_${batchSize}`);
+  if (batchedMetric) {
+    recordBackendCommand('cache_get_many', batchedMetric.value / iterations);
+  }
 
-    const promises: Promise<any>[] = [];
-    for (let i = 0; i < batchSize; i++) {
-      promises.push(
-        invoke('greet', { name: `batch_${i}` }).catch(() =>
-          new Promise((resolve) => setTimeout(resolve, 5))
-        )
-      );
-    }
-
-    await Promise.all(promises);
-
-    const batchMetric = endTimer(
-      `backend_batch_${batchSize}`,
-      `Backend batch (${batchSize})`,
-      'backend_command'
+  if (singleMetric && batchedMetric) {
+    recordMetric(
+      'backend_cache_get_many_improvement',
+      'Batched cache hydration improvement',
+      'backend_command',
+      (Math.max(0, singleMetric.value - batchedMetric.value) / singleMetric.value) * 100,
+      'percent',
+      {
+        singlePerRunMs: singleMetric.value / iterations,
+        batchedPerRunMs: batchedMetric.value / iterations,
+        keys: hotKeys.length,
+      },
     );
+  }
 
-    if (batchMetric) {
-      recordBackendCommand(`batch_${batchSize}`, batchMetric.value / batchSize);
-    }
+  const payload = {
+    meta: { title: 'Benchmark payload', generatedAt: Date.now() },
+    items: Array.from({ length: 120 }, (_, i) => ({
+      id: i,
+      code: `ITEM_${i}`,
+      title: `Benchmark item ${i}`,
+      detail: 'x'.repeat(200),
+      score: i % 10,
+      nested: { even: i % 2 === 0, tags: ['perf', 'batch', `item-${i}`] },
+    })),
+  };
+
+  const jsIterations = 30;
+  startTimer('backend_payload_js_roundtrip');
+  for (let i = 0; i < jsIterations; i++) {
+    const serialized = JSON.stringify(payload);
+    JSON.parse(serialized);
+  }
+  const jsRoundtripMetric = endTimer(
+    'backend_payload_js_roundtrip',
+    'Frontend payload roundtrip',
+    'backend_command',
+  );
+
+  startTimer('backend_payload_tauri_roundtrip');
+  for (let i = 0; i < jsIterations; i++) {
+    await idbCacheSet(`benchmark_payload_${i}`, payload, 1);
+    await idbCacheGet(`benchmark_payload_${i}`);
+  }
+  const tauriRoundtripMetric = endTimer(
+    'backend_payload_tauri_roundtrip',
+    'Rust bridge payload roundtrip',
+    'backend_command',
+  );
+
+  if (jsRoundtripMetric && tauriRoundtripMetric) {
+    recordMetric(
+      'backend_frontend_vs_tauri_roundtrip_ratio',
+      'Frontend vs Rust payload roundtrip ratio',
+      'backend_command',
+      tauriRoundtripMetric.value / jsRoundtripMetric.value,
+      'count',
+      {
+        jsPerRunMs: jsRoundtripMetric.value / jsIterations,
+        tauriPerRunMs: tauriRoundtripMetric.value / jsIterations,
+      },
+    );
   }
 }
 

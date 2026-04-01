@@ -59,8 +59,8 @@
   onMount(async () => {
     // Always enable both tabs regardless of SEQTA config
     seqtaMessagesEnabled = true;
-    // Initial load: fetch inbox messages (skip cache to ensure fresh data)
-    fetchMessages('inbox', '', true);
+    // Initial load: use cache-first loading for inbox, then refresh in background if needed
+    fetchMessages('inbox', '');
   });
 
   // Watch URL for messageID parameter and store it until messages load
@@ -72,7 +72,6 @@
   async function fetchMessages(
     folderLabel: string = 'inbox',
     rssname: string = '',
-    forceSkipCache: boolean = false,
   ) {
     loading = true;
     error = null;
@@ -83,50 +82,7 @@
     const isRSSFeed = folderLabel.includes('rss-');
     const isOnline = navigator.onLine;
 
-    // For inbox, try API first (when online), then fall back to cache if unavailable
-    // For other folders, use normal caching behavior
-    if (folderLabel === 'inbox' && isOnline && !isRSSFeed) {
-      try {
-        // Try to fetch fresh data first
-        const msgs = await invoke<Message[]>('fetch_messages', {
-          folder: folderLabel,
-          rssUrl: null,
-        });
-
-        // Success - update cache and messages
-        messages = msgs;
-        cache.set(cacheKey, msgs, 10);
-        await setIdb(cacheKey, msgs);
-        loading = false;
-        return;
-      } catch (e) {
-        // API failed - fall back to cache
-        logger.debug('messages', 'fetchMessages', `API fetch failed, falling back to cache`, {
-          error: e,
-          folder: folderLabel,
-        });
-
-        const cached =
-          cache.get<Message[]>(cacheKey) ||
-          (await getWithIdbFallback<Message[]>(cacheKey, cacheKey, () =>
-            cache.get<Message[]>(cacheKey),
-          ));
-
-        if (cached) {
-          // Use cache even if empty (empty inbox is valid)
-          messages = cached;
-          loading = false;
-          return;
-        }
-
-        // No cache available - show error
-        error = get(_)('messages.failed_to_load_no_cache');
-        loading = false;
-        return;
-      }
-    }
-
-    // Normal behavior for other folders or RSS feeds
+    // Normal behavior for inbox, other folders, and RSS feeds with cache-first rendering.
     const data = await useDataLoader<Message[]>({
       cacheKey,
       ttlMinutes: 10,
@@ -150,7 +106,8 @@
         messages = data;
         loading = false;
       },
-      shouldSyncInBackground: (data) => data.length > 0,
+      shouldSyncInBackground: (data) => data.length > 0 && isOnline,
+      updateOnBackgroundSync: true,
     });
 
     if (!data || data.length === 0) {
@@ -348,7 +305,7 @@
       <MobileFolderTabs {selectedFolder} {openFolder} {openCompose} />
       <!-- Message list: card-style panel -->
       <div
-        class="flex flex-1 xl:flex-initial flex-col min-h-0 min-w-0 xl:w-[28rem] xl:min-w-[28rem] shrink-0 overflow-hidden rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg [scrollbar-gutter:stable]">
+        class="flex flex-1 xl:flex-initial flex-col min-h-0 min-w-0 xl:w-md xl:min-w-md shrink-0 overflow-hidden rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg [scrollbar-gutter:stable]">
         <MessageList
           {selectedFolder}
           {messages}
