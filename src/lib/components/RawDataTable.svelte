@@ -7,6 +7,7 @@
   import { Icon, ChevronUp, ChevronDown } from 'svelte-hero-icons';
   import T from './T.svelte';
   import { _ } from '../i18n';
+  import { hasGradeToShow, primaryGradeDisplay } from '$lib/utils/gradeDisplay';
 
   let { data }: { data: Assessment[] } = $props();
 
@@ -27,28 +28,6 @@
   // Sorting state
   let sortColumn = $state<keyof Assessment | null>(null);
   let sortDirection = $state<'asc' | 'desc'>('asc');
-
-  function getLetterGrade(assessment: Assessment): string {
-    // Use letter grade from assessment if available
-    if (assessment.letterGrade) {
-      return assessment.letterGrade;
-    }
-    
-    // Fallback to custom scale based on percentage
-    const percentage = assessment.finalGrade;
-    if (percentage === undefined) return '';
-    if (percentage >= 90) return 'A+';
-    if (percentage >= 85) return 'A';
-    if (percentage >= 80) return 'A-';
-    if (percentage >= 75) return 'B+';
-    if (percentage >= 70) return 'B';
-    if (percentage >= 65) return 'B-';
-    if (percentage >= 60) return 'C+';
-    if (percentage >= 55) return 'C';
-    if (percentage >= 50) return 'C-';
-    if (percentage >= 40) return 'D';
-    return 'E';
-  }
 
   function getStatusVariant(status: string) {
     switch (status) {
@@ -199,10 +178,9 @@
               </Badge>
             </Table.Cell>
             <Table.Cell class="text-right pr-4">
-              {#if assessment.finalGrade !== undefined}
-                <div>
-                  <div class="font-medium text-zinc-900 dark:text-zinc-100">{assessment.finalGrade}%</div>
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400">{getLetterGrade(assessment)}</div>
+              {#if hasGradeToShow(assessment)}
+                <div class="font-medium text-zinc-900 dark:text-zinc-100">
+                  {primaryGradeDisplay(assessment)}
                 </div>
               {:else}
                 <span class="text-zinc-500 dark:text-zinc-400">—</span>

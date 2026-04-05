@@ -16,49 +16,11 @@ on:
         required: false
         type: string
         default: 'Windows 10+, macOS 10.13+, Android 8+'
-      detail_level:
-        description: 'Release notes depth'
-        required: false
-        type: choice
-        default: standard
-        options:
-          - brief
-          - standard
-          - detailed
-      model:
-        description: 'Groq model override (empty = use action default)'
-        required: false
+      tauri_release_notes:
+        description: 'In-app updater notes (Tauri update manifest `notes` field). Shown to users checking for updates.'
+        required: true
         type: string
-      notes_style:
-        description: 'Release notes layout (desqta = emoji sections, github = standard)'
-        required: false
-        type: choice
-        default: desqta
-        options:
-          - desqta
-          - github
-      plain_language:
-        description: 'Use simple, jargon-free language anyone can understand'
-        required: false
-        type: boolean
-        default: true
-      body_template:
-        description: 'Custom structure for release notes (multiline). Empty = use DesQTA layout'
-        required: false
-        type: string
-      show_diff_section:
-        description: 'Append diff section at bottom of release notes'
-        required: false
-        type: boolean
-        default: false
-      prompt_append:
-        description: 'Extra instructions for AI (tone, audience, context)'
-        required: false
-        type: string
-      system_append:
-        description: 'Extra system constraints/behavior for AI'
-        required: false
-        type: string
+        default: 'Bug fixes and features'
 
 permissions:
   contents: write
@@ -474,34 +436,40 @@ jobs:
           paths="${paths%,}"
           echo "paths=$paths" >> $GITHUB_OUTPUT
 
-      - name: Generate Release Notes
-        id: ai-release-notes
-        uses: StroepWafel/AI-Release-Notes@v1.0.0
-        with:
-          groq_api_key: ${{ secrets.GROQ_API_KEY }}
-          tag_name: v${{ inputs.version }}
-          previous_tag: ${{ inputs.previous_tag }}
-          release_name: DesQTA v${{ inputs.version }}
-          draft: true
-          detail_level: ${{ inputs.detail_level }}
-          compatibility: ${{ inputs.compatibility }}
-          model: ${{ inputs.model }}
-          notes_style: ${{ inputs.notes_style }}
-          product_name: DesQTA
-          plain_language: ${{ inputs.plain_language }}
-          body_template: ${{ inputs.body_template }}
-          show_diff_section: ${{ inputs.show_diff_section }}
-          prompt_append: ${{ inputs.prompt_append }}
-          system_append: ${{ inputs.system_append }}
-          files: ${{ steps.artifact-paths.outputs.paths }}
+      - name: Create draft release and upload assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="v${{ inputs.version }}"
+          mapfile -t ASSETS < <(echo "${{ steps.artifact-paths.outputs.paths }}" | tr ',' '\n' | grep -v '^$' || true)
+          VALID_ASSETS=()
+          for f in "${ASSETS[@]}"; do
+            [ -f "$f" ] && VALID_ASSETS+=("$f")
+          done
+          TITLE="DesQTA v${{ inputs.version }}"
+          EMPTY_NOTES=$(mktemp)
+          : > "$EMPTY_NOTES"
+          trap 'rm -f "$EMPTY_NOTES"' EXIT
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file "$EMPTY_NOTES"
+            for f in "${VALID_ASSETS[@]}"; do
+              gh release upload "$TAG" "$f" --clobber
+            done
+          else
+            if [ ${#VALID_ASSETS[@]} -eq 0 ]; then
+              gh release create "$TAG" --draft --title "$TITLE" --notes-file "$EMPTY_NOTES"
+            else
+              gh release create "$TAG" --draft --title "$TITLE" --notes-file "$EMPTY_NOTES" "${VALID_ASSETS[@]}"
+            fi
+          fi
 
       - name: Generate update manifest
         run: |
           jq -n \
             --arg version "${{ inputs.version }}" \
-            --arg notes "Bug fixes and improvements. See GitHub release for full changelog." \
+            --arg notes "${{ inputs.tauri_release_notes }}" \
+            --arg compat "${{ inputs.compatibility }}" \
             --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg windows_sig "${{ steps.read-sigs.outputs.windows_sig }}" \
             --arg windows_url "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.windows_file }}" \
@@ -519,7 +487,7 @@ jobs:
               end;
             {
               version: $version,
-              notes: $notes,
+              notes: ($notes + "\n\n**Compatibility:** " + $compat),
               pub_date: $pub_date,
               platforms: (
                 {
