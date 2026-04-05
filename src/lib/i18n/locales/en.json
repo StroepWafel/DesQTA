@@ -486,7 +486,15 @@
     "submissions": "Submissions",
     "failed_to_load": "Failed to load assessment details",
     "upload_progress": "Upload progress",
-    "uploading_files": "Uploading files"
+    "uploading_files": "Uploading files",
+    "grade_not_yet_available": "Grade not yet available",
+    "rubric_title": "Rubric",
+    "teacher_marking_feedback": "Teacher marking and feedback",
+    "no_feedback_title": "No Feedback Available",
+    "no_feedback_body": "This assessment has been marked but no detailed feedback is available yet.",
+    "not_marked_title": "Assessment Not Yet Marked",
+    "not_marked_body": "This assessment hasn't been marked yet. Check back later for grades and feedback.",
+    "not_marked_feedback_pending": "Teacher feedback will appear here once available."
   },
   "timetable": {
     "description": "View your weekly schedule and lessons",

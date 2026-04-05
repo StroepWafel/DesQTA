@@ -41,20 +41,6 @@
   let showDisclaimer = $state(false);
   const assessmentCodes = $derived.by(() => new Set(assessments.map((a) => a.code)));
 
-  function getLetterGrade(percentage: number): string {
-    if (percentage >= 90) return 'A+';
-    if (percentage >= 85) return 'A';
-    if (percentage >= 80) return 'A-';
-    if (percentage >= 75) return 'B+';
-    if (percentage >= 70) return 'B';
-    if (percentage >= 65) return 'B-';
-    if (percentage >= 60) return 'C+';
-    if (percentage >= 55) return 'C';
-    if (percentage >= 50) return 'C-';
-    if (percentage >= 40) return 'D';
-    return 'E';
-  }
-
   function getWeightedGradeColor(grade: number): string {
     if (grade >= 90) return 'text-green-600 dark:text-green-400';
     else if (grade >= 80) return 'text-blue-600 dark:text-blue-400';
@@ -328,7 +314,6 @@
             {#if weightedPredictions[subject.code]}
               {@const prediction = weightedPredictions[subject.code]}
               {@const isExpanded = expandedSubjects[subject.code] || false}
-              {@const letterGrade = getLetterGrade(prediction.predictedGrade)}
               <div class="px-4 pt-4 pb-2">
                 <div class="flex items-center justify-between mb-1">
                   <span class="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -363,11 +348,6 @@
                           class="text-lg font-bold tracking-wide text-white drop-shadow-xs"
                           style="text-shadow: 0 2px 8px #000a">
                           {Math.round(prediction.predictedGrade)}%
-                        </span>
-                        <span
-                          class="text-sm font-semibold text-white/90 drop-shadow-xs"
-                          style="text-shadow: 0 2px 8px #000a">
-                          ({letterGrade})
                         </span>
                       </div>
                       <div class="flex gap-2 items-center">

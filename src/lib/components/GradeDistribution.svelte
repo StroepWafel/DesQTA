@@ -14,21 +14,6 @@
   let barPaths: { path: string; count: number; status: string }[] = [];
   let yLabels: string[] = [];
 
-  function getLetterGrade(percentage: number | undefined): string {
-    if (percentage === undefined) return '';
-    if (percentage >= 90) return 'A+';
-    if (percentage >= 85) return 'A';
-    if (percentage >= 80) return 'A-';
-    if (percentage >= 75) return 'B+';
-    if (percentage >= 70) return 'B';
-    if (percentage >= 65) return 'B-';
-    if (percentage >= 60) return 'C+';
-    if (percentage >= 55) return 'C';
-    if (percentage >= 50) return 'C-';
-    if (percentage >= 40) return 'D';
-    return 'E';
-  }
-
   function getStatusColor(status: string): string {
     const grade = parseInt(status.split('-')[0]);
     if (grade >= 90) return 'rgb(34, 197, 94)'; // green
@@ -137,12 +122,7 @@
             y={height - padding + 20}
             class="text-xs fill-zinc-500 dark:fill-zinc-400"
             text-anchor="middle">
-            {status}% {getLetterGrade(
-              (() => {
-                const [min] = status.split('-');
-                return Number(min);
-              })(),
-            )}
+            {status}%
           </text>
           <text
             x={padding + i * (barWidth + barSpacing) + barWidth / 2}
