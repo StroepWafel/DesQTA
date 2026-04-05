@@ -16,6 +16,11 @@ on:
         required: false
         type: string
         default: 'Windows 10+, macOS 10.13+, Android 8+'
+      tauri_release_notes:
+        description: 'In-app updater notes (Tauri update manifest `notes` field). Shown to users checking for updates.'
+        required: true
+        type: string
+        default: 'Bug fixes and features'
 
 permissions:
   contents: write
@@ -437,56 +442,34 @@ jobs:
         run: |
           set -euo pipefail
           TAG="v${{ inputs.version }}"
-          PREV="${{ inputs.previous_tag }}"
-          if [ -z "$PREV" ]; then
-            PREV=$(git describe --tags --abbrev=0 2>/dev/null || true)
-          fi
-          NOTE_FILE=$(mktemp)
-          {
-            echo "## Changes"
-            echo ""
-            if [ -n "$PREV" ] && git rev-parse "$PREV" >/dev/null 2>&1; then
-              git log "${PREV}..HEAD" --pretty=format:'- %s' | head -400 || true
-            else
-              git log -50 --pretty=format:'- %s' || true
-            fi
-            echo ""
-            echo "**Compatibility:** ${{ inputs.compatibility }}"
-          } > "$NOTE_FILE"
-          if ! grep -q '^- ' "$NOTE_FILE"; then
-            {
-              echo "## Changes"
-              echo ""
-              echo "- See commit history on GitHub for this tag."
-              echo ""
-              echo "**Compatibility:** ${{ inputs.compatibility }}"
-            } > "$NOTE_FILE"
-          fi
           mapfile -t ASSETS < <(echo "${{ steps.artifact-paths.outputs.paths }}" | tr ',' '\n' | grep -v '^$' || true)
           VALID_ASSETS=()
           for f in "${ASSETS[@]}"; do
             [ -f "$f" ] && VALID_ASSETS+=("$f")
           done
           TITLE="DesQTA v${{ inputs.version }}"
+          EMPTY_NOTES=$(mktemp)
+          : > "$EMPTY_NOTES"
+          trap 'rm -f "$EMPTY_NOTES"' EXIT
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --notes-file "$NOTE_FILE"
+            gh release edit "$TAG" --notes-file "$EMPTY_NOTES"
             for f in "${VALID_ASSETS[@]}"; do
               gh release upload "$TAG" "$f" --clobber
             done
           else
             if [ ${#VALID_ASSETS[@]} -eq 0 ]; then
-              gh release create "$TAG" --draft --title "$TITLE" --notes-file "$NOTE_FILE"
+              gh release create "$TAG" --draft --title "$TITLE" --notes-file "$EMPTY_NOTES"
             else
-              gh release create "$TAG" --draft --title "$TITLE" --notes-file "$NOTE_FILE" "${VALID_ASSETS[@]}"
+              gh release create "$TAG" --draft --title "$TITLE" --notes-file "$EMPTY_NOTES" "${VALID_ASSETS[@]}"
             fi
           fi
-          rm -f "$NOTE_FILE"
 
       - name: Generate update manifest
         run: |
           jq -n \
             --arg version "${{ inputs.version }}" \
-            --arg notes "Bug fixes and improvements. See GitHub release for full changelog." \
+            --arg notes "${{ inputs.tauri_release_notes }}" \
+            --arg compat "${{ inputs.compatibility }}" \
             --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg windows_sig "${{ steps.read-sigs.outputs.windows_sig }}" \
             --arg windows_url "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.windows_file }}" \
@@ -504,7 +487,7 @@ jobs:
               end;
             {
               version: $version,
-              notes: $notes,
+              notes: ($notes + "\n\n**Compatibility:** " + $compat),
               pub_date: $pub_date,
               platforms: (
                 {
