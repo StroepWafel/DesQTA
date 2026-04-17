@@ -9,6 +9,10 @@ import {
 } from './weightedGradeCacheService';
 import { extractWeightingsForAssessments } from './weightingService';
 import type { Assessment } from '../types';
+import {
+  resolveNumericGradeFromAssessmentPayload,
+  extractLetterGradeStringFromPayload,
+} from '$lib/utils/letterGradeScale';
 
 const STUDENT_ID = 69;
 
@@ -103,9 +107,13 @@ async function getReleasedAssessmentsWithGrades(
       continue;
     }
 
-    // If already has grade, use it directly
-    if (assessment.finalGrade !== undefined && assessment.finalGrade !== null) {
-      assessmentsWithGrades.push(assessment);
+    const fromList = resolveNumericGradeFromAssessmentPayload(assessment as any);
+    if (fromList !== undefined && !isNaN(fromList)) {
+      assessmentsWithGrades.push({
+        ...assessment,
+        finalGrade: fromList,
+        letterGrade: extractLetterGradeStringFromPayload(assessment as any) ?? assessment.letterGrade,
+      });
       continue;
     }
 
@@ -136,20 +144,13 @@ async function getReleasedAssessmentsWithGrades(
       const hasResults = firstCriterion?.results;
 
       if (isMarked && hasResults) {
-        // Extract grade from criteria[0].results.percentage
-        let finalGrade: number | undefined = undefined;
-
-        if (firstCriterion.results.percentage !== undefined) {
-          finalGrade = Number(firstCriterion.results.percentage);
-        } else if (assessmentData.results?.percentage !== undefined) {
-          finalGrade = Number(assessmentData.results.percentage);
-        }
-
+        const finalGrade = resolveNumericGradeFromAssessmentPayload(assessmentData);
         if (finalGrade !== undefined && !isNaN(finalGrade)) {
           assessmentsWithGrades.push({
             ...assessment,
             status: 'MARKS_RELEASED' as const,
             finalGrade,
+            letterGrade: extractLetterGradeStringFromPayload(assessmentData) ?? assessment.letterGrade,
             metaclassID: assessment.metaclassID || 0,
           });
         }

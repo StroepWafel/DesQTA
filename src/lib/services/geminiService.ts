@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { QuizQuestion, QuizFeedback } from '$lib/types/studyTools';
+import { resolveNumericGradeFromAssessmentPayload } from '$lib/utils/letterGradeScale';
 
 interface AssessmentData {
   id: number;
@@ -85,10 +86,12 @@ export class GeminiService {
       const predictions: GradePrediction[] = [];
 
       for (const [subject, subjectAssessments] of assessmentsBySubject) {
-        // Filter for completed assessments with grades
-        const completedAssessments = subjectAssessments.filter(
-          (a) => a.status === 'MARKS_RELEASED' && a.finalGrade !== undefined,
-        );
+        // Released marks with a numeric equivalent (percentage or letter → approx %)
+        const completedAssessments = subjectAssessments.filter((a) => {
+          if (a.status !== 'MARKS_RELEASED') return false;
+          const n = resolveNumericGradeFromAssessmentPayload(a as any);
+          return n !== undefined && !isNaN(n);
+        });
 
         if (completedAssessments.length === 0) {
           // No completed assessments, skip prediction
@@ -98,8 +101,8 @@ export class GeminiService {
         // Prepare data for the AI
         const assessmentData = completedAssessments.map((a) => ({
           title: a.title,
-          grade: a.finalGrade,
-          dueDate: a.due,
+          grade: resolveNumericGradeFromAssessmentPayload(a as any),
+          due: a.due,
           status: a.status,
         }));
 

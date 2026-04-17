@@ -47,20 +47,8 @@
         return assessmentYear === selectedYear;
       });
 
-      // Add final grades to assessments that have been marked
-      const assessmentsWithGrades = yearAssessments.map((a: any) => {
-        let finalGrade = undefined;
-        if (a.status === 'MARKS_RELEASED') {
-          if (a.criteria && a.criteria[0]?.results?.percentage !== undefined) {
-            finalGrade = a.criteria[0].results.percentage;
-          } else if (a.results && a.results.percentage !== undefined) {
-            finalGrade = a.results.percentage;
-          }
-        }
-        return { ...a, finalGrade };
-      });
-
-      const predictions = await GeminiService.predictGrades(assessmentsWithGrades);
+      // predictGrades resolves percentage or letter → approx % (letter-only schools)
+      const predictions = await GeminiService.predictGrades(yearAssessments as any);
 
       // Store predictions in the map
       const predictionsMap = new Map();
