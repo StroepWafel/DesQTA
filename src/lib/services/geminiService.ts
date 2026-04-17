@@ -36,6 +36,8 @@ export interface LessonSummary {
 const GEMINI_API_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
+/** See https://inference-docs.cerebras.ai/models/overview — old ids (e.g. llama-3.3-70b) return 404. */
+const CEREBRAS_MODEL = 'gpt-oss-120b';
 
 type AIProvider = 'gemini' | 'cerebras';
 
@@ -239,7 +241,7 @@ Be realistic and consider that the prediction should be based on demonstrated pe
           'User-Agent': 'DesQTA/1.0',
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b',
+          model: CEREBRAS_MODEL,
           messages: [
             {
               role: 'user',
@@ -338,7 +340,7 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
             'User-Agent': 'DesQTA/1.0',
           },
           body: JSON.stringify({
-            model: 'llama-3.3-70b',
+            model: CEREBRAS_MODEL,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.3,
             max_tokens: 1024,
@@ -415,7 +417,7 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
             'User-Agent': 'DesQTA/1.0',
           },
           body: JSON.stringify({
-            model: 'llama-3.3-70b',
+            model: CEREBRAS_MODEL,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.3,
             max_tokens: maxTokens,
