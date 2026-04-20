@@ -1,0 +1,112 @@
+name: Build Signed Windows Binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: "Git branch, tag, or commit to build"
+        required: false
+        default: "main"
+        type: string
+      review_window_confirmation:
+        description: "I understand this is usually reviewed between 08:00–23:00 CEST (17:30–08:30 ACDT)"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build-signed-windows:
+    name: Build signed Windows artifacts
+    runs-on: windows-latest
+    environment: OSSign
+
+    steps:
+      - name: Verify review window confirmation
+        if: ${{ inputs.review_window_confirmation != true }}
+        shell: pwsh
+        run: |
+          Write-Error "Please check the confirmation box before starting this workflow."
+          exit 1
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 1
+
+      - name: Install OSSign CLI
+        uses: ossign/ossign@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          installOnly: true
+
+      - name: Inject OSSign sign command into Tauri config
+        shell: pwsh
+        run: |
+          $configPath = "src-tauri/tauri.conf.json"
+          $raw = Get-Content $configPath -Raw
+          $config = $raw | ConvertFrom-Json -Depth 100
+
+          if (-not $config.bundle.windows) {
+            $config.bundle | Add-Member -NotePropertyName windows -NotePropertyValue (@{})
+          }
+
+          $config.bundle.windows | Add-Member -NotePropertyName signCommand -NotePropertyValue "powershell -ExecutionPolicy Bypass -File sign.ps1 %1" -Force
+          ($config | ConvertTo-Json -Depth 100) | Set-Content $configPath
+
+      - name: Create signing script
+        shell: pwsh
+        run: |
+          @'
+          param(
+            [Parameter(Mandatory = $true)]
+            [string]$File
+          )
+
+          $ErrorActionPreference = "Stop"
+          $extension = [System.IO.Path]::GetExtension($File).ToLowerInvariant()
+          $signType = if ($extension -eq ".msi") { "msi" } else { "pecoff" }
+
+          Write-Host "Signing file '$File' as '$signType'"
+          ossign -t $signType -o "$File" "$File"
+          '@ | Set-Content src-tauri/sign.ps1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
+      - name: Build signed Windows binaries
+        env:
+          OSSIGN_CONFIG: ${{ secrets.OSSIGN_CONFIG }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: pnpm tauri build --target x86_64-pc-windows-msvc
+
+      - name: Upload signed Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-windows-x86_64
+          path: |
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**
+            src-tauri/target/x86_64-pc-windows-msvc/release/*.sig
