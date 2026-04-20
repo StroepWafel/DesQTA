@@ -15,11 +15,6 @@ on:
       release_name:
         description: "Release title"
         required: true
-      prerelease:
-        description: "Mark GitHub release as prerelease"
-        type: boolean
-        required: false
-        default: true
 
 permissions:
   contents: write
@@ -118,10 +113,11 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ github.event.inputs.release_name }}
-          tag_name: windows-signed-${{ github.run_id }}
+          name: "Windows Signed Pre-release - ${{ github.event.inputs.release_name }}"
+          tag_name: prerelease-windows-signed-${{ github.run_id }}
           draft: false
-          prerelease: ${{ github.event.inputs.prerelease }}
+          prerelease: true
+          make_latest: false
           body: |
             Windows binaries signed with OSSign.
             OSSign integration reference: https://github.com/BetterSEQTA/BetterSEQTA-DesQTA-ossign
