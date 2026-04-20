@@ -17,7 +17,15 @@
     "clear": "مسح",
     "refresh": "تحديث",
     "settings": "الإعدادات",
-    "close_theme_builder": "إغلاق منشئ المظهر"
+    "close_theme_builder": "إغلاق منشئ المظهر",
+    "move_up": "تحريك لأعلى",
+    "move_down": "تحريك لأسفل",
+    "add_folder": "إضافة مجلد",
+    "retry": "إعادة المحاولة",
+    "retrying": "جاري إعادة المحاولة...",
+    "try_again": "حاول مرة أخرى",
+    "saving": "جاري الحفظ...",
+    "back": "رجوع"
   },
   "focus_timer": {
     "title": "مؤقت التركيز",
@@ -109,6 +117,7 @@
     "folios": "المحافظ",
     "close_sidebar": "إغلاق لوحة الجانب",
     "menu": "القائمة",
+    "more": "المزيد",
     "qr_signin": "تسجيل الدخول برمز QR",
     "welcome": "مرحباً"
   },
@@ -122,7 +131,11 @@
     "minimize": "تصغير",
     "maximize": "تكبير",
     "close": "إغلاق",
-    "notifications": "الإشعارات"
+    "notifications": "الإشعارات",
+    "cloud_signed_in": "تم تسجيل الدخول إلى BetterSEQTA Plus",
+    "cloud_not_signed_in": "لم يتم تسجيل الدخول إلى BetterSEQTA Plus",
+    "cloud_signed_out_message": "تم تسجيل خروجك من BetterSEQTA Plus. سجّل الدخول عبر الإعدادات لمزامنة بياناتك عبر الأجهزة.",
+    "cloud_go_to_settings": "الذهاب إلى الإعدادات"
   },
   "login": {
     "welcome_to": "مرحباً بك في",
@@ -165,7 +178,9 @@
     "feature_analytics_desc": "بيانات الأداء",
     "feature_settings_desc": "تفضيلات التطبيق",
     "fill_all_fields": "يرجى ملء جميع الحقول",
-    "failed_credentials": "فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد."
+    "failed_credentials": "فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد.",
+    "not_working_try_direct": "لا يعمل؟ ",
+    "try_direct_login_link": "جرب تسجيل الدخول المباشر"
   },
   "features": {
     "lightning_fast": "أداء سريع كالبرق",
@@ -293,12 +308,31 @@
     "select_subject": "Select a subject from the sidebar to get started",
     "ai_lesson_summary": "AI Lesson Summary",
     "ai_summary_desc": "Generate an AI-powered summary and actionable steps for this lesson's content and resources.",
-    "generating": "Generating...",
-    "generate_summary": "Generate Summary",
-    "summary": "Summary",
+    "generating": "جاري التوليد...",
+    "generating_summary": "جاري إنشاء الملخص...",
+    "generate_summary": "إنشاء الملخص",
+    "summarize": "تلخيص",
+    "expand_content": "توسيع المحتوى",
+    "view_original": "عرض الأصل",
+    "view_ai_summary": "عرض ملخص الذكاء الاصطناعي",
+    "regenerate": "إعادة التوليد",
+    "analyzing_content": "تحليل محتوى الدرس",
+    "summary": "الملخص",
     "steps": "Steps",
     "homework_notes": "Homework/Notes",
-    "lesson_resources": "Lesson Resources"
+    "lesson_resources": "Lesson Resources",
+    "resource_download_failed": "فشل تنزيل المورد. يرجى المحاولة مرة أخرى.",
+    "document_parse_error": "تعذر تحميل محتوى الدورة. قد يكون المستند تالفًا.",
+    "course_files": "ملفات الدورة",
+    "today": "اليوم",
+    "tomorrow": "غداً",
+    "yesterday": "أمس",
+    "breadcrumb_separator": "›",
+    "breadcrumb_term_week": "الفصل {term} الأسبوع {week}",
+    "no_lesson_content": "لا يوجد محتوى للدرس بعد",
+    "no_lesson_content_desc": "قد لا يكون محتوى هذا الدرس قد نُشر بعد. حدّث للتحقق من التحديثات.",
+    "refresh_from_api": "تحديث من الخادم",
+    "go_to_overview": "الذهاب إلى نظرة عامة على الدورة"
   },
   "goals": {
     "no_cached_data": "لا توجد بيانات مخزنة مؤقتاً",
@@ -463,7 +497,10 @@
     "export_pdf": "Export as PDF",
     "pdf_description": "Portable document format",
     "export_ical": "Export as iCal",
-    "ical_description": "Calendar (.ics) format"
+    "ical_description": "Calendar (.ics) format",
+    "download_csv_success": "Timetable downloaded to Downloads",
+    "download_pdf_success": "Timetable downloaded to Downloads",
+    "download_ical_success": "Timetable downloaded to Downloads"
   },
   "study": {
     "page_description": "Plan, track, and focus on your upcoming work.",
@@ -514,6 +551,10 @@
     "quizzes": "اختبارات",
     "select_assessment": "اختر التقييم",
     "custom_topic": "موضوع مخصص",
+    "topic_source": "1. اختر الموضوع",
+    "quiz_options": "2. خيارات الاختبار",
+    "change_options": "تغيير الخيارات",
+    "generate_section": "3. إنشاء",
     "what_to_study": "ماذا تريد أن تدرس؟",
     "question_count": "عدد الأسئلة",
     "generate_quiz": "إنشاء اختبار",
@@ -560,6 +601,7 @@
     "type_your_answer": "اكتب إجابتك..."
   },
   "messages": {
+    "page_description": "عرض وإدارة رسائل SEQTA وRSS.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "فشل تحميل الرسائل ولا توجد بيانات مخزنة مؤقتًا",
     "failed_to_load_message": "Failed to load message.",
@@ -622,10 +664,16 @@
     "accept_cloud_eula": "Accept BetterSEQTA Cloud EULA",
     "cloud_eula_description": "You must read and accept the Cloud Sync EULA before using cloud features.",
     "read_accept": "Read & Accept",
+    "sync_cloud_pfp": "استخدام صورة ملف تعريف BetterSEQTA السحابية كصورة محلية",
+    "sync_cloud_pfp_description": "قم بتنزيل ومزامنة الصورة الرمزية السحابية مع رأس التطبيق.",
     "personal_settings": "Personal Settings",
     "personal_settings_description": "Customize your personal profile and preferences",
     "custom_profile_picture": "Custom Profile Picture",
     "profile_picture_description": "Upload a custom profile picture that will appear in the app header",
+    "crop": "قص",
+    "crop_profile_picture": "قص صورة الملف الشخصي",
+    "save_crop": "حفظ",
+    "saving": "جاري الحفظ...",
     "uploading": "Uploading...",
     "upload": "Upload",
     "language": "Language",
@@ -662,6 +710,12 @@
     "dark": "Dark",
     "system": "System",
     "theme_mode_description": "Choose between light mode, dark mode, or follow your system preference.",
+    "minimize_to_tray": "إبقاء التطبيق يعمل في علبة النظام عند الإغلاق",
+    "minimize_to_tray_description": "عند التفعيل، يؤدي إغلاق النافذة إلى تصغير DesQTA إلى علبة النظام. عند التعطيل، يؤدي الإغلاق إلى إنهاء التطبيق بالكامل.",
+    "security": "الأمان",
+    "security_description": "حماية التطبيق بالمصادقة البيومترية",
+    "biometric_enabled": "فتح القفل بالبيومترية (Face ID، Touch ID، البصمة، Windows Hello)",
+    "biometric_enabled_description": "المطالبة بالمصادقة البيومترية عند فتح التطبيق",
     "notifications": "Notifications",
     "notifications_description": "Manage your notification preferences",
     "enable_reminder_notifications": "Enable assessment reminder notifications",
@@ -817,10 +871,23 @@
     "login_url_desc": "أدخل رابط المدرسة",
     "login_direct": "تسجيل دخول مباشر",
     "login_direct_desc": "اسم المستخدم وكلمة المرور",
+    "biometric_title": "فتح القفل بالبيومترية",
+    "biometric_subtitle": "استخدم Face ID أو Touch ID أو البصمة أو Windows Hello لفتح قفل DesQTA بسرعة.",
+    "biometric_enable": "تفعيل فتح القفل بالبيومترية",
+    "biometric_skip": "تخطي الآن",
+    "biometric_unlock": "فتح القفل",
+    "biometric_unavailable": "المصادقة البيومترية غير متوفرة على هذا الجهاز.",
     "ready_title": "كل شيء جاهز!",
     "ready_subtitle": "سجّل الدخول لاستكشاف لوحة التحكم وأدوات الدراسة والمزيد.",
     "sign_in": "تسجيل الدخول",
     "step_indicator": "الخطوة {current} من {total}"
+  },
+  "post_login_prompts": {
+    "aria_label": "الإعداد بعد تسجيل الدخول",
+    "usage_stats_title": "ساعد في تحسين DesQTA",
+    "usage_stats_subtitle": "هل تريد إرسال إحصائيات استخدام مجهولة؟ هذا يساعدنا على فهم كيفية استخدام التطبيق وتحسينه. لا يتم جمع أي بيانات شخصية.",
+    "usage_stats_yes": "نعم، ساعد في تحسين DesQTA",
+    "usage_stats_no": "لا شكراً"
   },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
@@ -881,11 +948,18 @@
     "view_all": "عرض الكل",
     "no_notices_today": "لا توجد إشعارات متاحة اليوم."
   },
+  "documents": {
+    "loading": "جاري تحميل المستندات...",
+    "failed_to_load": "فشل في تحميل المستندات",
+    "error_loading": "خطأ في تحميل المستندات",
+    "no_documents": "لا توجد مستندات متاحة"
+  },
   "reports": {
     "failed_to_load": "فشل في تحميل التقارير.",
     "error_loading": "خطأ في تحميل التقارير.",
     "loading": "جاري تحميل التقارير...",
-    "download": "تحميل"
+    "download": "تحميل",
+    "open_failed": "فشل في فتح التقرير"
   },
   "performance": {
     "title": "Performance Test Results - DesQTA",
@@ -948,7 +1022,9 @@
     "avg_gpu": "متوسط معالج الرسوميات",
     "errors_count": "{count} خطأ",
     "warnings_count": "{count} تحذير",
-    "no_issues": "لا توجد مشاكل"
+    "no_issues": "لا توجد مشاكل",
+    "mega_suite_overlay_title": "تشغيل مجموعة اختبارات الأداء",
+    "mega_suite_overlay_body": "اكتمل فحص الصفحات. تتجري فحوصات تركيبية (البدء، الواجهة، البيانات، الخادم)—غالباً 30–90 ثانية. يرجى الانتظار؛ ستفتح النتائج عند الانتهاء."
   },
   "plugins": {
     "installed_title": "تم تثبيت المكون الإضافي",

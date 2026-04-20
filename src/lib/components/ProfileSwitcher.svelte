@@ -58,25 +58,33 @@
 
     try {
       switching = true;
-      // Note: app handle is passed automatically by Tauri
+      // Note: app handle is passed automatically by Tauri (invalidates session cache + reinit DB)
       await invoke('switch_profile', { profileId });
 
-      // Clear userInfo cache so it reloads for the new profile
+      // Clear all userInfo caches (old and new profile) so fresh data loads
       const { cache } = await import('../../utils/cache');
-      cache.delete('userInfo');
-
-      // Also clear IndexedDB cache
       const { idbCacheDelete } = await import('../services/idb');
-      await idbCacheDelete('userInfo').catch(() => {});
+      const cacheKey = `userInfo:${profileId}`;
+      cache.delete(cacheKey);
+      await idbCacheDelete(cacheKey).catch(() => {});
+      // Also clear old profile's cache if we have it
+      if (currentProfile?.id && currentProfile.id !== profileId) {
+        const oldKey = `userInfo:${currentProfile.id}`;
+        cache.delete(oldKey);
+        await idbCacheDelete(oldKey).catch(() => {});
+      }
+
+      // Clear all frontend caches for a full refresh (memory + SQLite)
+      const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
+      await clearAllCachesForMockMode();
 
       // Reload profiles to get updated current
       await loadProfiles();
 
-      // Reload the app to switch to new profile's data
+      // Full reload: close dropdown and reload the entire app
       if (onProfileSwitch) {
         onProfileSwitch();
       } else {
-        // Default: reload the page
         window.location.reload();
       }
     } catch (e) {
@@ -153,6 +161,9 @@
       await loadProfiles();
 
       if (wasCurrentProfile || profiles.length === 0) {
+        // Clear all caches for full refresh when switching away from deleted profile
+        const { clearAllCachesForMockMode } = await import('../../utils/netUtil');
+        await clearAllCachesForMockMode();
         if (onProfileSwitch) {
           onProfileSwitch();
         } else {
@@ -252,7 +263,8 @@
                 aria-label={$_('profile.delete_profile', { default: 'Delete profile' })}>
                 {#if deletingProfileId === profile.id}
                   <div
-                    class="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                    class="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin">
+                  </div>
                 {:else}
                   <Icon src={Trash} class="w-4 h-4" />
                 {/if}
@@ -289,7 +301,7 @@
       aria-modal="true"
       aria-labelledby="add-account-title"
       tabindex="-1"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm mobile-modal-inset"
       transition:fade={{ duration: 200 }}
       onclick={(e) => {
         if (e.target === e.currentTarget) closeAddAccountModal();

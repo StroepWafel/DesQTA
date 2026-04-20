@@ -39,20 +39,7 @@
   let calculatingForSubject = $state<string | null>(null);
   let expandedSubjects = $state<Record<string, boolean>>({});
   let showDisclaimer = $state(false);
-
-  function getLetterGrade(percentage: number): string {
-    if (percentage >= 90) return 'A+';
-    if (percentage >= 85) return 'A';
-    if (percentage >= 80) return 'A-';
-    if (percentage >= 75) return 'B+';
-    if (percentage >= 70) return 'B';
-    if (percentage >= 65) return 'B-';
-    if (percentage >= 60) return 'C+';
-    if (percentage >= 55) return 'C';
-    if (percentage >= 50) return 'C-';
-    if (percentage >= 40) return 'D';
-    return 'E';
-  }
+  const assessmentCodes = $derived.by(() => new Set(assessments.map((a) => a.code)));
 
   function getWeightedGradeColor(grade: number): string {
     if (grade >= 90) return 'text-green-600 dark:text-green-400';
@@ -228,7 +215,7 @@
       class="sticky top-6 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
       <h3 class="mb-3 text-sm font-semibold text-zinc-600 dark:text-zinc-400">Quick Jump</h3>
       <div class="space-y-2">
-        {#each subjects.filter( (subject) => assessments.some((a) => a.code === subject.code), ) as subject}
+        {#each subjects.filter((subject) => assessmentCodes.has(subject.code)) as subject}
           <a
             href="#subject-{subject.code}"
             class="flex gap-2 items-center px-3 py-2 rounded-lg transition-all duration-300 cursor-pointer hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
@@ -327,7 +314,6 @@
             {#if weightedPredictions[subject.code]}
               {@const prediction = weightedPredictions[subject.code]}
               {@const isExpanded = expandedSubjects[subject.code] || false}
-              {@const letterGrade = getLetterGrade(prediction.predictedGrade)}
               <div class="px-4 pt-4 pb-2">
                 <div class="flex items-center justify-between mb-1">
                   <span class="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -362,11 +348,6 @@
                           class="text-lg font-bold tracking-wide text-white drop-shadow-xs"
                           style="text-shadow: 0 2px 8px #000a">
                           {Math.round(prediction.predictedGrade)}%
-                        </span>
-                        <span
-                          class="text-sm font-semibold text-white/90 drop-shadow-xs"
-                          style="text-shadow: 0 2px 8px #000a">
-                          ({letterGrade})
                         </span>
                       </div>
                       <div class="flex gap-2 items-center">

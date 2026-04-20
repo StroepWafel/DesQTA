@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { themeService, type ThemeManifest } from '$lib/services/themeService';
   import {
     themeStoreService,
@@ -637,12 +640,21 @@
   }
 </script>
 
+<svelte:head>
+  {#if collections[0]?.cover_image_url}
+    {@const firstUrl = resolveImageUrlSync(collections[0].cover_image_url)}
+    {#if firstUrl}
+      <link rel="preload" as="image" href={firstUrl} fetchpriority="high" />
+    {/if}
+  {/if}
+</svelte:head>
+
 <!-- Minimal Store Header -->
 <div
   class="sticky top-0 z-30 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700 shadow-sm"
   data-onboarding="theme-store"
   transition:fade={{ duration: 200 }}>
-  <div class="max-w-7xl mx-auto px-6 py-4">
+  <div class="w-full mx-auto p-4">
     <div class="flex items-center justify-between gap-4">
       <!-- Left: Back + Title -->
       <div class="flex items-center gap-4 min-w-0 flex-1">
@@ -699,7 +711,7 @@
   <div
     class="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-6 py-3"
     transition:fade={{ duration: 200 }}>
-    <div class="max-w-7xl mx-auto flex items-center gap-3">
+    <div class="w-full mx-auto flex items-center gap-3">
       <Icon
         src={ExclamationTriangle}
         class="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
@@ -714,7 +726,7 @@
 <div
   class="sticky top-[73px] z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700"
   transition:fade={{ duration: 200 }}>
-  <div class="max-w-7xl mx-auto px-6 py-4">
+  <div class="w-full mx-auto p-4">
     <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
       <!-- Search Bar -->
       <div class="relative flex-1 w-full lg:max-w-md">
@@ -783,7 +795,7 @@
 </div>
 
 <!-- Main Content -->
-<div class="px-6 py-6 max-w-7xl mx-auto">
+<div class="container max-w-none w-full p-5 mx-auto">
   {#if loading}
     <div class="flex justify-center items-center py-16">
       <div class="flex flex-col gap-4 items-center">
@@ -810,7 +822,7 @@
     </div>
   {:else}
     <!-- Featured Carousel -->
-    {#if spotlightThemes && spotlightThemes.length > 0}
+    {#if spotlightThemes && spotlightThemes.length > 0 && !searchQuery.trim()}
       <div class="mb-16">
         <SpotlightCarousel
           themes={spotlightThemes}
@@ -828,7 +840,7 @@
     {/if}
 
     <!-- Collections Section -->
-    {#if collections && collections.length > 0}
+    {#if collections && collections.length > 0 && !searchQuery.trim()}
       <div class="mb-16">
         <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Collections</h2>
         <div class="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
@@ -841,11 +853,13 @@
                   selectedCollection = collection;
                   collectionModalOpen = true;
                 }}
-                transition:fly={{ x: 20, duration: 300, delay: i * 50, easing: cubicOut }}>
+                transition:fly={{ x: 20, duration: i === 0 ? 0 : 300, delay: i * 50, easing: cubicOut }}>
                 {#if collection.cover_image_url}
                   <img
                     src={resolveImageUrlSync(collection.cover_image_url) || ''}
                     alt={collection.name}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    fetchpriority={i === 0 ? 'high' : undefined}
                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                 {:else}
                   <div
@@ -1071,7 +1085,7 @@
 <!-- Collection Modal -->
 {#if collectionModalOpen && selectedCollection}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 mobile-modal-inset"
     role="dialog"
     aria-modal="true"
     aria-labelledby="collection-modal-title"
@@ -1085,7 +1099,7 @@
 
     <!-- Modal Content -->
     <div
-      class="relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden flex flex-col"
+      class="relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden flex flex-col mobile-modal-max-h"
       role="document"
       transition:fly={{ y: 20, duration: 300, easing: cubicOut }}>
       <!-- Header -->

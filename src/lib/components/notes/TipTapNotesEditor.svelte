@@ -9,7 +9,7 @@
   import Link from '@tiptap/extension-link';
   import BubbleMenu from '@tiptap/extension-bubble-menu';
   import Underline from '@tiptap/extension-underline';
-  import Table from '@tiptap/extension-table';
+  import { Table } from '@tiptap/extension-table';
   import TableRow from '@tiptap/extension-table-row';
   import TableHeader from '@tiptap/extension-table-header';
   import TableCell from '@tiptap/extension-table-cell';
@@ -249,7 +249,7 @@
 
   // React to content changes from parent (when switching notes)
   $: if (editor && content && noteId !== lastNoteId) {
-    editor.commands.setContent(content, false);
+    editor.commands.setContent(content, { emitUpdate: false });
     lastNoteId = noteId;
   }
 
@@ -354,7 +354,7 @@
   }
 
   export function setContent(newContent: string) {
-    editor?.commands.setContent(newContent, false);
+    editor?.commands.setContent(newContent, { emitUpdate: false });
   }
 
   export function insertText(text: string) {

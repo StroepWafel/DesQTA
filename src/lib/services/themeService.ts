@@ -113,6 +113,7 @@ class ThemeService {
   }
 
   private removeStyleTag(id: string) {
+    if (typeof document === 'undefined') return;
     const el = document.getElementById(id);
     if (el && el.parentNode) el.parentNode.removeChild(el);
   }

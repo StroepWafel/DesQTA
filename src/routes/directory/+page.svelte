@@ -1,8 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
+  import { fade } from 'svelte/transition';
+  import { platformStore } from '$lib/stores/platform';
   import { seqtaFetch, getRandomDicebearAvatar } from '../../utils/netUtil';
   import { Icon } from 'svelte-hero-icons';
-  import { MagnifyingGlass, Funnel, User, AcademicCap, MapPin } from 'svelte-hero-icons';
+
+  let isMobile = $derived($platformStore.isMobile);
+  import { MagnifyingGlass, Funnel, User, UserGroup, AcademicCap, MapPin } from 'svelte-hero-icons';
   import { invoke } from '@tauri-apps/api/core';
   import { cache } from '../../utils/cache';
   import { setIdb } from '$lib/services/idbCache';
@@ -329,11 +333,13 @@
     return Math.ceil(getFilteredStudents().length / itemsPerPage);
   }
 
-  // Create unique key for students to force re-render with animations
-  const studentsKey = $derived.by(() => {
+  // Track which students have already been shown (to avoid re-animating on search/filter changes)
+  let animatedStudentIds = $state<Set<number>>(new Set());
+
+  $effect(() => {
     const paginated = getPaginatedStudents();
-    const ids = paginated.map((s) => s.id).join(',');
-    return `${search}-${selectedYear}-${selectedSubSchool}-${selectedHouse}-${selectedCampus}-${filterHasPhoto}-${currentPage}-${ids}`;
+    const ids = new Set(paginated.map((s) => s.id));
+    animatedStudentIds = new Set([...untrack(() => animatedStudentIds), ...ids]);
   });
 
   // Create a stable key for the current page to track if we've loaded photos
@@ -429,7 +435,7 @@
   });
 </script>
 
-<div class="px-6 py-7 space-y-6">
+<div class="container max-w-none w-full p-5 mx-auto space-y-6" in:fade={{ duration: 400 }}>
   <!-- Header -->
   <div class="flex justify-between items-start">
     <div>
@@ -443,14 +449,14 @@
 
     <div class="flex items-center gap-2">
       <button
-        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="flex items-center gap-2 min-h-[44px] px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         onclick={() => (showFiltersModal = true)}>
         <Icon src={Funnel} class="w-4 h-4" />
         <T key="directory.filters" fallback="Filters" />
       </button>
 
       <button
-        class="px-4 py-2 text-sm font-medium text-white accent-bg rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="min-h-[44px] px-4 py-2 text-sm font-medium text-white accent-bg rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
         onclick={clearFilters}>
         <T key="directory.clear_all" fallback="Clear All" />
       </button>
@@ -499,16 +505,15 @@
       emptyTitle={$_('directory.no_students_found') || 'No students found'}
       emptyMessage={$_('directory.no_students_message') ||
         "Try adjusting your search or filters to find what you're looking for."}
-      emptyIcon="👥"
+      emptyIcon={UserGroup}
       componentName="Directory">
       {#snippet children()}
         <!-- Students Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {#key studentsKey}
-            {#each getPaginatedStudents() as student, i (student.id)}
+          {#each getPaginatedStudents() as student, i (student.id)}
               <div
-                class="bg-white dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-700/50 rounded-lg p-4 transition-all duration-200 transform hover:scale-[1.02] directory-card-animate"
-                style="animation-delay: {i * 50}ms;">
+                class="bg-white dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-700/50 rounded-lg p-4 transition-all duration-200 transform hover:scale-[1.02] {animatedStudentIds.has(student.id) ? '' : 'directory-card-animate'}"
+                style={animatedStudentIds.has(student.id) ? '' : `animation-delay: ${i * 50}ms`}>
                 <!-- Student Avatar -->
                 <div class="flex items-center gap-3 mb-3">
                   {#if devSensitiveInfoHider}
@@ -601,7 +606,6 @@
                 </div>
               </div>
             {/each}
-          {/key}
         </div>
 
         <!-- Pagination -->

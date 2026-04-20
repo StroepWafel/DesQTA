@@ -17,7 +17,15 @@
     "clear": "Wissen",
     "refresh": "Vernieuwen",
     "settings": "Instellingen",
-    "close_theme_builder": "Thema Builder Sluiten"
+    "close_theme_builder": "Thema Builder Sluiten",
+    "move_up": "Omhoog",
+    "move_down": "Omlaag",
+    "add_folder": "Map toevoegen",
+    "retry": "Opnieuw proberen",
+    "retrying": "Opnieuw proberen...",
+    "try_again": "Opnieuw proberen",
+    "saving": "Opslaan...",
+    "back": "Terug"
   },
   "focus_timer": {
     "title": "Focustimer",
@@ -109,6 +117,7 @@
     "folios": "Portefeuilles",
     "close_sidebar": "Zijbalk overlay sluiten",
     "menu": "Menu",
+    "more": "Meer",
     "qr_signin": "QR Inloggen",
     "welcome": "Welkom"
   },
@@ -122,7 +131,11 @@
     "minimize": "Minimaliseren",
     "maximize": "Maximaliseren",
     "close": "Sluiten",
-    "notifications": "Meldingen"
+    "notifications": "Meldingen",
+    "cloud_signed_in": "Ingelogd bij BetterSEQTA Plus",
+    "cloud_not_signed_in": "Niet ingelogd bij BetterSEQTA Plus",
+    "cloud_signed_out_message": "Je bent uitgelogd bij BetterSEQTA Plus. Log in via Instellingen om je gegevens tussen apparaten te synchroniseren.",
+    "cloud_go_to_settings": "Naar instellingen"
   },
   "login": {
     "welcome_to": "Welkom bij",
@@ -165,7 +178,9 @@
     "feature_analytics_desc": "Prestatiegegevens",
     "feature_settings_desc": "App voorkeuren",
     "fill_all_fields": "Vul alle velden in",
-    "failed_credentials": "Inloggen mislukt. Controleer uw inloggegevens."
+    "failed_credentials": "Inloggen mislukt. Controleer uw inloggegevens.",
+    "not_working_try_direct": "Werkt het niet? ",
+    "try_direct_login_link": "Probeer direct inloggen"
   },
   "features": {
     "lightning_fast": "Bliksemsnelle prestaties",
@@ -293,12 +308,31 @@
     "select_subject": "Select a subject from the sidebar to get started",
     "ai_lesson_summary": "AI Lesson Summary",
     "ai_summary_desc": "Generate an AI-powered summary and actionable steps for this lesson's content and resources.",
-    "generating": "Generating...",
-    "generate_summary": "Generate Summary",
-    "summary": "Summary",
+    "generating": "Genereren...",
+    "generating_summary": "Samenvatting genereren...",
+    "generate_summary": "Samenvatting genereren",
+    "summarize": "Samenvatten",
+    "expand_content": "Inhoud uitklappen",
+    "view_original": "Origineel bekijken",
+    "view_ai_summary": "AI-samenvatting bekijken",
+    "regenerate": "Opnieuw genereren",
+    "analyzing_content": "Lesinhoud analyseren",
+    "summary": "Samenvatting",
     "steps": "Steps",
     "homework_notes": "Homework/Notes",
-    "lesson_resources": "Lesson Resources"
+    "lesson_resources": "Lesson Resources",
+    "resource_download_failed": "Kan resource niet downloaden. Probeer het opnieuw.",
+    "document_parse_error": "Kan cursusinhoud niet laden. Het document is mogelijk beschadigd.",
+    "course_files": "Cursusbestanden",
+    "today": "Vandaag",
+    "tomorrow": "Morgen",
+    "yesterday": "Gisteren",
+    "breadcrumb_separator": "›",
+    "breadcrumb_term_week": "Termijn {term} Week {week}",
+    "no_lesson_content": "Nog geen lesinhoud beschikbaar",
+    "no_lesson_content_desc": "De inhoud voor deze les is mogelijk nog niet gepubliceerd. Vernieuw om te controleren op updates.",
+    "refresh_from_api": "Vernieuwen van server",
+    "go_to_overview": "Naar cursusoverzicht"
   },
   "goals": {
     "no_cached_data": "Geen gecachte gegevens beschikbaar",
@@ -463,7 +497,10 @@
     "export_pdf": "Export as PDF",
     "pdf_description": "Portable document format",
     "export_ical": "Export as iCal",
-    "ical_description": "Calendar (.ics) format"
+    "ical_description": "Calendar (.ics) format",
+    "download_csv_success": "Rooster gedownload naar Downloads",
+    "download_pdf_success": "Rooster gedownload naar Downloads",
+    "download_ical_success": "Rooster gedownload naar Downloads"
   },
   "study": {
     "page_description": "Plan, track, and focus on your upcoming work.",
@@ -514,6 +551,10 @@
     "quizzes": "Quizzen",
     "select_assessment": "Selecteer beoordeling",
     "custom_topic": "Aangepast onderwerp",
+    "topic_source": "1. Kies onderwerp",
+    "quiz_options": "2. Quizopties",
+    "change_options": "Opties wijzigen",
+    "generate_section": "3. Genereren",
     "what_to_study": "Wat wil je studeren?",
     "question_count": "Aantal vragen",
     "generate_quiz": "Quiz genereren",
@@ -560,6 +601,7 @@
     "type_your_answer": "Typ je antwoord..."
   },
   "messages": {
+    "page_description": "Bekijk en beheer je SEQTA- en RSS-berichten.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message.",
@@ -622,10 +664,16 @@
     "accept_cloud_eula": "Accept BetterSEQTA Cloud EULA",
     "cloud_eula_description": "You must read and accept the Cloud Sync EULA before using cloud features.",
     "read_accept": "Read & Accept",
+    "sync_cloud_pfp": "BetterSEQTA cloud profielfoto als lokaal foto gebruiken",
+    "sync_cloud_pfp_description": "Download en houd je cloud-avatar gesynchroniseerd met de app-header.",
     "personal_settings": "Personal Settings",
     "personal_settings_description": "Customize your personal profile and preferences",
     "custom_profile_picture": "Custom Profile Picture",
     "profile_picture_description": "Upload a custom profile picture that will appear in the app header",
+    "crop": "Bijsnijden",
+    "crop_profile_picture": "Profielfoto bijsnijden",
+    "save_crop": "Opslaan",
+    "saving": "Opslaan...",
     "uploading": "Uploading...",
     "upload": "Upload",
     "language": "Language",
@@ -662,6 +710,12 @@
     "dark": "Dark",
     "system": "System",
     "theme_mode_description": "Choose between light mode, dark mode, or follow your system preference.",
+    "minimize_to_tray": "App in systeemvak laten draaien bij sluiten",
+    "minimize_to_tray_description": "Wanneer ingeschakeld, minimaliseert het sluiten van het venster DesQTA naar het systeemvak. Wanneer uitgeschakeld, sluit het sluiten de app volledig af.",
+    "security": "Beveiliging",
+    "security_description": "Bescherm de app met biometrische authenticatie",
+    "biometric_enabled": "Ontgrendelen met biometrie (Face ID, Touch ID, vingerafdruk, Windows Hello)",
+    "biometric_enabled_description": "Biometrische authenticatie vereisen bij het openen van de app",
     "notifications": "Notifications",
     "notifications_description": "Manage your notification preferences",
     "enable_reminder_notifications": "Enable assessment reminder notifications",
@@ -817,10 +871,23 @@
     "login_url_desc": "School-URL invoeren",
     "login_direct": "Direct inloggen",
     "login_direct_desc": "Gebruikersnaam en wachtwoord",
+    "biometric_title": "Ontgrendelen met biometrie",
+    "biometric_subtitle": "Gebruik Face ID, Touch ID, vingerafdruk of Windows Hello om DesQTA snel te ontgrendelen.",
+    "biometric_enable": "Biometrische ontgrendeling inschakelen",
+    "biometric_skip": "Nu overslaan",
+    "biometric_unlock": "Ontgrendelen",
+    "biometric_unavailable": "Biometrische authenticatie is niet beschikbaar op dit apparaat.",
     "ready_title": "Alles klaar!",
     "ready_subtitle": "Log in om je dashboard, studietools en meer te verkennen.",
     "sign_in": "Inloggen",
     "step_indicator": "Stap {current} van {total}"
+  },
+  "post_login_prompts": {
+    "aria_label": "Instellingen na inloggen",
+    "usage_stats_title": "Help DesQTA te verbeteren",
+    "usage_stats_subtitle": "Wilt u anonieme gebruiksstatistieken verzenden? Dit helpt ons begrijpen hoe de app wordt gebruikt en deze te verbeteren. Er worden geen persoonlijke gegevens verzameld.",
+    "usage_stats_yes": "Ja, help DesQTA te verbeteren",
+    "usage_stats_no": "Nee bedankt"
   },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
@@ -881,11 +948,18 @@
     "view_all": "Alles bekijken",
     "no_notices_today": "Geen mededelingen beschikbaar vandaag."
   },
+  "documents": {
+    "loading": "Documenten laden...",
+    "failed_to_load": "Documenten laden mislukt",
+    "error_loading": "Fout bij laden van documenten",
+    "no_documents": "Geen documenten beschikbaar"
+  },
   "reports": {
     "failed_to_load": "Rapporten laden mislukt.",
     "error_loading": "Fout bij laden van rapporten.",
     "loading": "Rapporten laden...",
-    "download": "Downloaden"
+    "download": "Downloaden",
+    "open_failed": "Rapport openen mislukt"
   },
   "performance": {
     "title": "Performance Test Results - DesQTA",
@@ -948,7 +1022,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Benchmarksuite wordt uitgevoerd",
+    "mega_suite_overlay_body": "Het doorlopen van de pagina’s is klaar. Synthetische controles (opstart, UI, data, backend) duren—vaak 30–90 seconden. Even geduld; de resultaten openen daarna."
   },
   "plugins": {
     "installed_title": "Plugin Geïnstalleerd",

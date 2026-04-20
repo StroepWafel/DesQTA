@@ -59,10 +59,10 @@
 </script>
 
 <aside
-  class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs overflow-y-auto xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent">
+  class="flex flex-col h-full rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg overflow-hidden overflow-y-auto xl:w-64 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent">
   <div class="p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
     <button
-      class="flex gap-2 items-center px-4 py-3 w-full text-sm font-semibold text-white rounded-2xl shadow-md transition-all duration-200 bg-accent/80 border-accent sm:text-base hover:opacity-95 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
+      class="flex gap-2 items-center min-h-[44px] px-4 py-3 w-full text-sm font-semibold text-white rounded-2xl shadow-md transition-all duration-200 bg-accent/80 border-accent sm:text-base hover:opacity-95 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
       onclick={openCompose}>
       <Icon src={Plus} class="w-5 h-5" />
       <span><T key="messages.new_message" fallback="New message" /></span>
@@ -74,7 +74,7 @@
     <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
       {#each folders as folder}
         <button
-          class="w-full flex items-center border gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group transform
+          class="w-full flex items-center min-h-[44px] border gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group transform
             {selectedFolder === folder.name
             ? 'bg-accent/10 border-accent dark:text-white pl-5 shadow-md'
             : 'border-transparent text-zinc-700 dark:text-white hover:bg-accent-100/10 dark:hover:bg-accent/10 hover:scale-[1.02]'}

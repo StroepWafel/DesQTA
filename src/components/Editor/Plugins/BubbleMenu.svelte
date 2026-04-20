@@ -128,9 +128,9 @@
         {#if showTurnInto}
           <M.div 
             class="absolute left-0 top-full z-50 mt-1 w-48 bg-white rounded-lg border shadow-xl dark:bg-zinc-800 border-zinc-200/40 dark:border-zinc-700/40"
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            initial={{ opacity: 0, y: '-0.625rem', scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            exit={{ opacity: 0, y: '-0.625rem', scale: 0.95 }}
             transition={{ duration: 0.15 }}
           >
             {#each turnIntoOptions as option}

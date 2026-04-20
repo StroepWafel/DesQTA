@@ -1,10 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { seqtaFetch } from '../../utils/netUtil';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import T from '$lib/components/T.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import { DocumentText } from 'svelte-hero-icons';
   import { _ } from '../../lib/i18n';
   import { getUrlParam } from '$lib/utils/urlParams';
   import { toastStore } from '$lib/stores/toast';
@@ -104,10 +109,17 @@
   });
 </script>
 
-<div class="p-8 min-h-screen">
-  <h1 class="mb-8 text-3xl font-bold text-zinc-900 dark:text-white">
-    <T key="navigation.reports" fallback="Reports" />
-  </h1>
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
+  <div class="flex justify-between items-start">
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.reports" fallback="Reports" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="reports.description" fallback="Download your academic reports" />
+      </p>
+    </div>
+  </div>
   {#if loading}
     <div class="flex flex-col justify-center items-center py-24">
       <div
@@ -125,6 +137,12 @@
       </div>
       <p class="mt-4 text-xl text-zinc-700 dark:text-zinc-300">{error}</p>
     </div>
+  {:else if reports.length === 0}
+    <EmptyState
+      title={$_('reports.no_reports') || 'No reports available'}
+      message={$_('reports.no_reports_message') || 'Your academic reports will appear here when they are available.'}
+      icon={DocumentText}
+      size="lg" />
   {:else}
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {#key reports.length + reports.map((r) => r.uuid || r.id).join(',')}

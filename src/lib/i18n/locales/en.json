@@ -120,6 +120,7 @@
     "close_sidebar": "Close sidebar overlay",
     "toggle_sidebar": "Toggle sidebar",
     "menu": "Menu",
+    "more": "More",
     "qr_signin": "QR Sign In",
     "welcome": "Welcome"
   },
@@ -129,6 +130,7 @@
     "select": "Select"
   },
   "forums": {
+    "description": "Discuss and collaborate with your community",
     "loading": "Loading forums...",
     "error_loading": "Error loading forums",
     "no_forums": "No forums available",
@@ -165,6 +167,9 @@
     "not_enabled_message": "Forums are not enabled for your school. Please contact your administrator if you believe this is an error."
   },
   "folios": {
+    "description": "Create and browse folios",
+    "browse_description": "Explore published folios",
+    "edit_description": "Create and manage your personal folios",
     "invalid_response": "Invalid response format",
     "edit_my_folios": "Edit My Folios",
     "edit_my_folios_description": "Create and manage your personal folios",
@@ -215,7 +220,11 @@
     "minimize": "Minimize",
     "maximize": "Maximize",
     "close": "Close",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "cloud_signed_in": "Signed in to BetterSEQTA Plus",
+    "cloud_not_signed_in": "Not signed in to BetterSEQTA Plus",
+    "cloud_signed_out_message": "You're signed out of BetterSEQTA Plus. Sign in via Settings to sync your data across devices.",
+    "cloud_go_to_settings": "Go to Settings"
   },
   "login": {
     "welcome_to": "Welcome to",
@@ -223,8 +232,9 @@
     "subtitle": "Experience SEQTA Learn like never before with our powerful, modern desktop application",
     "subtitle_mobile": "Experience SEQTA Learn like never before",
     "quick_login": "Quick Login",
-    "qr_description": "Scan your SEQTA QR code to sign in instantly",
+    "qr_description": "Scan SEQTA or BetterSEQTA+ QR code to sign in instantly",
     "upload_qr": "Upload QR Code",
+    "upload_qr_hint": "Screenshots of any size accepted – we'll find the QR code",
     "click_browse": "Click to browse or drag & drop",
     "or": "or",
     "scan_camera": "Scan with Camera",
@@ -237,7 +247,7 @@
     "sign_in": "Sign In to DesQTA",
     "processing_qr": "Processing QR code...",
     "qr_success": "QR code scanned successfully!",
-    "qr_error_generic": "Failed to scan QR code. Please try a clearer image.",
+    "qr_error_generic": "Could not read QR code. Try a clearer image, ensure the QR is fully visible, or crop to just the QR code.",
     "qr_no_code": "No QR code found in the image.",
     "qr_expired_title": "QR Code Expired",
     "qr_expired_desc": "The QR code from your mobile login email has expired. Please request a new QR code and try again.",
@@ -258,7 +268,12 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "Please fill in all fields",
-    "failed_credentials": "Login failed. Please check your credentials."
+    "failed_credentials": "Login failed. Please check your credentials.",
+    "not_working_try_direct": "Not working? ",
+    "try_direct_login_link": "Try direct login instead",
+    "invalid_seqtalearn_format": "Invalid SEQTA link format. QR codes from SEQTA should start with seqtalearn://sso/. Try scanning a fresh QR code from your SEQTA email.",
+    "invalid_desqta_format": "Invalid DesQTA link format. Connect links from BetterSEQTA+ should start with desqta://connect/. Generate a new QR from Settings → Connect Mobile App.",
+    "invalid_desqta_connect_payload": "Invalid DesQTA connect link. The link appears incomplete. Generate a new QR code from BetterSEQTA+ (Settings → Connect Mobile App)."
   },
   "features": {
     "lightning_fast": "Lightning-fast performance",
@@ -289,7 +304,7 @@
     "step5_desktop": "Right-click the QR code → \"Save image as...\"",
     "step5_mobile": "Long press the QR code → \"Save to Photos\" or take a screenshot",
     "step6_title": "Upload to DesQTA",
-    "step6_desc": "Return to DesQTA and use the \"Upload QR Code\" button to select and upload your saved QR code image. DesQTA will automatically log you in!",
+    "step6_desc": "Return to DesQTA and use the \"Upload QR Code\" button to select and upload your saved QR code image (screenshots of any size work). DesQTA will find the QR and log you in! Supports both SEQTA and BetterSEQTA+ (Settings → Connect Mobile App) QR codes.",
     "help_title": "Need More Help?",
     "help_desc": "If you can't find the \"Connect Mobile App\" option, it might be called something different at your school, such as:",
     "help_options": ["Mobile Device Registration", "App Setup", "QR Code Setup", "Connect Device"],
@@ -336,6 +351,13 @@
     "official_website": "Official website",
     "copyright": "© 2026 DesQTA. Licensed under MIT License."
   },
+  "whats_new": {
+    "title": "What's New",
+    "subtitle": "DesQTA has been updated from",
+    "to": " to ",
+    "modal_aria_label": "What's New",
+    "loading": "Loading changelog..."
+  },
   "dashboard": {
     "quick_links": "Quick Links",
     "recent_news": "Recent News",
@@ -364,7 +386,11 @@
     "view_course": "View Course"
   },
   "courses": {
+    "page_description": "Browse courses and access lesson content",
+    "select_subject_header": "Select a subject",
+    "subject_overview_desc": "Course overview and resources",
     "back_to_subjects": "Back to subjects",
+    "back_to_overview": "Back to overview",
     "search_subjects": "Search subjects...",
     "loading_subjects": "Loading subjects...",
     "error_loading_subjects": "Error loading subjects",
@@ -387,13 +413,33 @@
     "ai_lesson_summary": "AI Lesson Summary",
     "ai_summary_desc": "Generate an AI-powered summary and actionable steps for this lesson's content and resources.",
     "generating": "Generating...",
+    "generating_summary": "Generating summary...",
     "generate_summary": "Generate Summary",
+    "summarize": "Summarize",
+    "expand_content": "Expand Content",
+    "view_original": "View Original",
+    "view_ai_summary": "View AI Summary",
+    "regenerate": "Regenerate",
+    "analyzing_content": "Analyzing lesson content",
     "summary": "Summary",
     "steps": "Steps",
     "homework_notes": "Homework/Notes",
-    "lesson_resources": "Lesson Resources"
+    "lesson_resources": "Lesson Resources",
+    "resource_download_failed": "Failed to download resource. Please try again.",
+    "document_parse_error": "Unable to load course content. The document may be corrupted.",
+    "course_files": "Course Files",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "breadcrumb_separator": "›",
+    "breadcrumb_term_week": "Term {term} Week {week}",
+    "no_lesson_content": "No lesson content available yet",
+    "no_lesson_content_desc": "Content for this lesson may not have been published yet. Try refreshing to check for updates.",
+    "refresh_from_api": "Refresh from server",
+    "go_to_overview": "Go to Course Overview"
   },
   "goals": {
+    "description": "Set and track your academic goals",
     "no_cached_data": "No cached data available",
     "invalid_response": "Invalid response format",
     "loading_years": "Loading years...",
@@ -416,6 +462,7 @@
     "not_enabled_message": "Goals are not enabled for your school. Please contact your administrator if you believe this is an error."
   },
   "assessments": {
+    "description": "View and manage your upcoming assessments",
     "back_to_assessments": "Back to Assessments",
     "status_marked": "Marked",
     "status_overdue": "Overdue",
@@ -437,9 +484,20 @@
     "overview": "Overview",
     "details": "Details",
     "submissions": "Submissions",
-    "failed_to_load": "Failed to load assessment details"
+    "failed_to_load": "Failed to load assessment details",
+    "upload_progress": "Upload progress",
+    "uploading_files": "Uploading files",
+    "grade_not_yet_available": "Grade not yet available",
+    "rubric_title": "Rubric",
+    "teacher_marking_feedback": "Teacher marking and feedback",
+    "no_feedback_title": "No Feedback Available",
+    "no_feedback_body": "This assessment has been marked but no detailed feedback is available yet.",
+    "not_marked_title": "Assessment Not Yet Marked",
+    "not_marked_body": "This assessment hasn't been marked yet. Check back later for grades and feedback.",
+    "not_marked_feedback_pending": "Teacher feedback will appear here once available."
   },
   "timetable": {
+    "description": "View your weekly schedule and lessons",
     "monday": "Monday",
     "tuesday": "Tuesday",
     "wednesday": "Wednesday",
@@ -475,6 +533,9 @@
     "pdf_description": "Portable document format",
     "export_ical": "Export as iCal",
     "ical_description": "Calendar (.ics) format",
+    "download_csv_success": "Timetable downloaded to Downloads",
+    "download_pdf_success": "Timetable downloaded to Downloads",
+    "download_ical_success": "Timetable downloaded to Downloads",
     "week": "Week",
     "month": "Month",
     "list": "List",
@@ -533,6 +594,10 @@
     "quizzes": "Quizzes",
     "select_assessment": "Select assessment",
     "custom_topic": "Custom topic",
+    "topic_source": "1. Choose topic",
+    "quiz_options": "2. Quiz options",
+    "change_options": "Change options",
+    "generate_section": "3. Generate",
     "what_to_study": "What do you want to study?",
     "question_count": "Number of questions",
     "generate_quiz": "Generate Quiz",
@@ -580,6 +645,7 @@
   },
   "rss_feeds": {
     "title": "RSS Feeds",
+    "description": "Read and browse your subscribed RSS feeds in one place.",
     "no_feeds": "No RSS Feeds",
     "add_feeds_in_settings": "Add RSS feeds in Settings to get started.",
     "add_feeds_in_settings_empty": "Add, edit, or remove RSS feeds in Settings.",
@@ -588,9 +654,11 @@
     "feed_item_detail": "RSS Feed Item Detail",
     "manage_feeds_in_settings": "Manage Feeds in Settings",
     "manage_feeds": "Manage feeds",
-    "select_feed": "Select Feed"
+    "select_feed": "Select Feed",
+    "your_feeds": "Your Feeds"
   },
   "messages": {
+    "page_description": "View and manage your SEQTA and RSS messages.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "Failed to load messages and no cached data available",
     "failed_to_load_message": "Failed to load message.",
@@ -608,6 +676,7 @@
     "loading_data": "Loading Data...",
     "error": "Error! {error}",
     "no_messages_in_folder": "No messages in this folder.",
+    "no_messages_in_folder_hint": "Select another folder or check back later.",
     "compose_message": "Compose message",
     "subject": "Subject",
     "subject_placeholder": "Subject...",
@@ -653,10 +722,21 @@
     "accept_cloud_eula": "Accept BetterSEQTA Cloud EULA",
     "cloud_eula_description": "You must read and accept the Cloud Sync EULA before using cloud features.",
     "read_accept": "Read & Accept",
+    "sync_cloud_pfp": "Use BetterSEQTA cloud profile picture as local picture",
+    "sync_cloud_pfp_description": "Download and keep your cloud avatar in sync with the app header.",
+    "send_anonymous_usage_statistics": "Send anonymous usage statistics",
+    "send_anonymous_usage_statistics_description": "Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected.",
+    "analytics_test_send": "Test Send",
+    "analytics_test_sent": "Test report sent successfully",
+    "analytics_test_failed": "Failed to send",
     "personal_settings": "Personal Settings",
     "personal_settings_description": "Customize your personal profile and preferences",
     "custom_profile_picture": "Custom Profile Picture",
     "profile_picture_description": "Upload a custom profile picture that will appear in the app header",
+    "crop": "Crop",
+    "crop_profile_picture": "Crop Profile Picture",
+    "save_crop": "Save",
+    "saving": "Saving...",
     "uploading": "Uploading...",
     "upload": "Upload",
     "language": "Language",
@@ -693,8 +773,17 @@
     "dark": "Dark",
     "system": "System",
     "theme_mode_description": "Choose between light mode, dark mode, or follow your system preference.",
+    "security": "Security",
+    "security_description": "Protect your app with biometric authentication",
+    "biometric_enabled": "Unlock with biometrics (Face ID, Touch ID, fingerprint, Windows Hello)",
+    "biometric_enabled_description": "Require biometric authentication when opening the app",
+    "biometric_enabled_success": "Biometric unlock enabled",
+    "biometric_enable_failed": "Could not enable biometric unlock",
+    "biometric_verifying": "Verifying biometric...",
     "notifications": "Notifications",
     "notifications_description": "Manage your notification preferences",
+    "minimize_to_tray": "Keep app running in system tray when closed",
+    "minimize_to_tray_description": "When enabled, closing the window hides DesQTA to the system tray. When disabled, closing the window fully quits the app.",
     "zoom": "Interface Zoom",
     "zoom_description": "Adjust the size of interface elements (50%–200%)",
     "zoom_reset": "Reset",
@@ -745,11 +834,15 @@
     "clear_filters": "Clear Filters",
     "redo_onboarding": "Redo Walkthrough",
     "redo_onboarding_description": "Restart the onboarding walkthrough to learn about DesQTA features.",
+    "whats_new_description": "View the changelog and latest features.",
+    "view_changelog": "View",
     "resetting": "Resetting...",
     "menu_order": "Menu Order",
     "sidebar_settings": "Sidebar Settings",
     "customize_sidebar": "Customize Sidebar",
-    "reorder_pages_description": "Use the arrow buttons to reorder items. Click the star to favorite items. Use the folder button to organize items into folders.",
+    "reorder_pages_description": "Use the arrow buttons to reorder items. Click the eye to hide pages from the sidebar. Click the star to favorite items. Use the folder button to organize items into folders.",
+    "hide_from_sidebar": "Hide from sidebar",
+    "show_in_sidebar": "Show in sidebar",
     "favorites": "Favorites",
     "folders": "Folders",
     "folder_name": "Folder name",
@@ -819,6 +912,7 @@
     "next": "Next"
   },
   "portals": {
+    "description": "Access external portals and resources",
     "failed_to_load": "Failed to load portals",
     "count": "{count} portal{plural} available",
     "loading": "Loading portals...",
@@ -868,10 +962,23 @@
     "login_url_desc": "Enter school URL",
     "login_direct": "Direct Login",
     "login_direct_desc": "Username & password",
+    "biometric_title": "Unlock with biometrics",
+    "biometric_subtitle": "Use Face ID, Touch ID, fingerprint, or Windows Hello to quickly unlock DesQTA when you open the app.",
+    "biometric_enable": "Enable biometric unlock",
+    "biometric_skip": "Skip for now",
+    "biometric_unlock": "Unlock",
+    "biometric_unavailable": "Biometric authentication is not available on this device.",
     "ready_title": "You're all set!",
     "ready_subtitle": "Sign in to get started and explore your dashboard, study tools, and more.",
     "sign_in": "Sign in",
     "step_indicator": "Step {current} of {total}"
+  },
+  "post_login_prompts": {
+    "aria_label": "Post-login setup",
+    "usage_stats_title": "Help improve DesQTA",
+    "usage_stats_subtitle": "Would you like to send anonymous usage statistics? This helps us understand how the app is used and improve it. No personal data is collected.",
+    "usage_stats_yes": "Yes, help improve DesQTA",
+    "usage_stats_no": "No thanks"
   },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
@@ -886,6 +993,8 @@
     "step_theme_desc": "Themes, accent colors, dark mode.",
     "step_cloud_title": "Sync Across Devices",
     "step_cloud_desc": "Keep data in sync on all your devices.",
+    "step_analytics_optin_title": "Send anonymous usage statistics",
+    "step_analytics_optin_desc": "Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected.",
     "step_profile_title": "Your Profile",
     "step_profile_desc": "Account, preferences, and more.",
     "step_x_of_y": "Step {current} of {total}",
@@ -919,11 +1028,13 @@
     "student_avatar": "Student avatar"
   },
   "news": {
+    "description": "Browse news from around the world",
     "no_articles_loaded": "No articles could be loaded from the selected sources.",
     "failed_to_fetch": "Failed to fetch news",
     "no_articles_found": "No news articles found."
   },
   "notices": {
+    "description": "View notices and announcements",
     "failed_to_load": "Failed to load notices.",
     "label": "Label:",
     "all": "All",
@@ -933,12 +1044,16 @@
     "no_notices_today": "No notices available today."
   },
   "documents": {
+    "description": "Access and download your school documents",
     "loading": "Loading documents...",
     "failed_to_load": "Failed to load documents",
     "error_loading": "Error loading documents",
     "no_documents": "No documents available"
   },
   "reports": {
+    "description": "Download your academic reports",
+    "no_reports": "No reports available",
+    "no_reports_message": "Your academic reports will appear here when they are available.",
     "failed_to_load": "Failed to load reports.",
     "error_loading": "Error loading reports.",
     "loading": "Loading reports...",
@@ -1010,7 +1125,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Running benchmark suite",
+    "mega_suite_overlay_body": "The page crawl is done. Synthetic startup, UI, data, and backend checks are running—this often takes 30–90 seconds. Please wait; the results will open when everything finishes."
   },
   "plugins": {
     "installed_title": "Plugin Installed",
@@ -1035,6 +1152,7 @@
   },
   "user": {
     "user_menu": "User menu",
+    "session_expired": "Session expired",
     "about": "About",
     "app_information": "App information",
     "get_help": "Get Help",

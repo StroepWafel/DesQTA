@@ -1,9 +1,11 @@
 import { cache } from '../../utils/cache';
 import { seqtaFetch } from '../../utils/netUtil';
+import { devTimeAsync } from '$lib/performance/devPerfHelpers';
 import { logger } from '../../utils/logger';
 import { setIdb } from './idbCache';
 import { isOfflineMode } from '../utils/offlineMode';
 import { forumPhotoSyncService } from './forumPhotoSyncService';
+import { invokeGetProcessedAssessments } from './processedAssessmentsInvoke';
 
 // Centralized background warm-up of frequently used SEQTA endpoints.
 // This primes the in-memory cache so pages can render instantly.
@@ -137,33 +139,105 @@ async function prefetchUpcomingAssessments(): Promise<void> {
   }
 }
 
-export async function warmUpCommonData(): Promise<void> {
-  // Check if offline mode is forced
-  const offline = await isOfflineMode();
-  if (offline) {
-    logger.info('warmup', 'warmUpCommonData', 'Skipping warmup (offline mode)');
-    return;
+/** Fetches timetable across days and updates the Android Next Lesson widget with the absolute next lesson. */
+export async function updateNextLessonWidget(): Promise<void> {
+  try {
+    const today = new Date();
+    const from = formatDate(today);
+    const untilDate = new Date(today.getTime() + 14 * 86400000);
+    const until = formatDate(untilDate);
+
+    const colours = await prefetchLessonColours();
+    const res = await seqtaFetch('/seqta/student/load/timetable?', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { from, until, student: STUDENT_ID },
+    });
+
+    const items = JSON.parse(res).payload?.items ?? [];
+    const now = new Date();
+    const nowMs = now.getTime();
+
+    const lessons = items
+      .map((l: any) => ({
+        date: l.date,
+        from: (l.from || '').substring(0, 5),
+        until: (l.until || '').substring(0, 5),
+        description: l.description || l.code || '',
+        room: l.room || '',
+      }))
+      .filter((l: any) => l.from && l.date)
+      .sort((a: any, b: any) => {
+        const da = new Date(`${a.date}T${a.from}`).getTime();
+        const db = new Date(`${b.date}T${b.from}`).getTime();
+        return da - db;
+      });
+
+    const next = lessons.find((l: any) => {
+      const start = new Date(`${l.date}T${l.from}`).getTime();
+      return start > nowMs;
+    });
+
+    if (!next) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('set_next_lesson_for_widget', { name: null, time: null, room: null });
+      return;
+    }
+
+    const lessonDate = new Date(next.date);
+    const todayStr = today.toDateString();
+    const tomorrow = new Date(today.getTime() + 86400000).toDateString();
+    let dayLabel: string;
+    if (lessonDate.toDateString() === todayStr) {
+      dayLabel = 'Today';
+    } else if (lessonDate.toDateString() === tomorrow) {
+      dayLabel = 'Tomorrow';
+    } else {
+      dayLabel = lessonDate.toLocaleDateString('en-AU', { weekday: 'short' });
+    }
+    const timeStr = `${dayLabel}, ${next.from} – ${next.until}`;
+
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('set_next_lesson_for_widget', {
+      name: next.description,
+      time: timeStr,
+      room: next.room || null,
+    });
+  } catch {
+    // ignore - widget is Android-only, invoke may fail on desktop
   }
+}
 
-  // Run in parallel, ignore individual failures
-  await Promise.allSettled([
-    prefetchLessonColours(),
-    prefetchTimetableWeek(),
-    prefetchUpcomingAssessments(),
-    prefetchAssessmentsOverview(),
-    prefetchNoticesLabels(),
-    prefetchTodayNotices(),
-    prefetchAnalyticsSync(),
-    prefetchFoliosSettings(),
-    prefetchGoalsSettings(),
-    prefetchForumsSettings(),
-    prefetchForumsList(),
-  ]);
+export async function warmUpCommonData(): Promise<void> {
+  await devTimeAsync('warmup_common_data', 'startup', 'warmUpCommonData', async () => {
+    // Check if offline mode is forced
+    const offline = await isOfflineMode();
+    if (offline) {
+      logger.info('warmup', 'warmUpCommonData', 'Skipping warmup (offline mode)');
+      return;
+    }
 
-  // Run forum photo sync in background (non-blocking)
-  // This is a longer operation, so we don't wait for it
-  forumPhotoSyncService.syncAllPhotos().catch((e) => {
-    logger.error('warmup', 'warmUpCommonData', `Forum photo sync failed: ${e}`, { error: e });
+    // Run in parallel, ignore individual failures
+    await Promise.allSettled([
+      prefetchLessonColours(),
+      prefetchTimetableWeek(),
+      updateNextLessonWidget(),
+      prefetchUpcomingAssessments(),
+      prefetchAssessmentsOverview(),
+      prefetchNoticesLabels(),
+      prefetchTodayNotices(),
+      prefetchAnalyticsSync(),
+      prefetchFoliosSettings(),
+      prefetchGoalsSettings(),
+      prefetchForumsSettings(),
+      prefetchForumsList(),
+    ]);
+
+    // Run forum photo sync in background (non-blocking)
+    // This is a longer operation, so we don't wait for it
+    forumPhotoSyncService.syncAllPhotos().catch((e) => {
+      logger.error('warmup', 'warmUpCommonData', `Forum photo sync failed: ${e}`, { error: e });
+    });
   });
 }
 
@@ -178,7 +252,7 @@ async function prefetchAssessmentsOverview(): Promise<void> {
         await invoke<Record<string, unknown>>('get_settings_subset', {
           keys: ['reminders_enabled'],
         })
-      )?.reminders_enabled ?? true) as boolean;
+      )?.reminders_enabled ?? false) as boolean;
       if (remindersEnabled) {
         const { notificationService } = await import('./notificationService');
         await notificationService.scheduleNotifications(
@@ -188,15 +262,8 @@ async function prefetchAssessmentsOverview(): Promise<void> {
       return;
     }
 
-    // Use Rust backend to process all assessments data
-    const { invoke } = await import('@tauri-apps/api/core');
-    const result = await invoke<{
-      assessments: any[];
-      subjects: any[];
-      all_subjects: any[];
-      filters: Record<string, boolean>;
-      years: number[];
-    }>('get_processed_assessments');
+    // Use Rust backend to process all assessments data (deduped with page/search/notifications)
+    const result = await invokeGetProcessedAssessments();
 
     // Store cache object exactly as page expects (10 minute TTL)
     const overviewData = {
@@ -220,12 +287,13 @@ async function prefetchAssessmentsOverview(): Promise<void> {
     );
 
     // Schedule push notifications for assessments (respects reminders_enabled)
+    const { invoke } = await import('@tauri-apps/api/core');
     const remindersEnabled =
       (
         await invoke<Record<string, unknown>>('get_settings_subset', {
           keys: ['reminders_enabled'],
         })
-      )?.reminders_enabled ?? true;
+      )?.reminders_enabled ?? false;
     if (remindersEnabled && result.assessments?.length) {
       const { notificationService } = await import('./notificationService');
       await notificationService.scheduleNotifications(result.assessments);

@@ -14,7 +14,10 @@
   } from 'svelte-hero-icons';
   import { invoke } from '@tauri-apps/api/core';
   import { cloudAuthService, type CloudUser } from '../services/cloudAuthService';
-  import { cloudSettingsService } from '../services/cloudSettingsService';
+  import {
+    cloudSettingsService,
+    persistCloudSettingsServerMeta,
+  } from '../services/cloudSettingsService';
   import { toastStore } from '../stores/toast';
 
   const dispatch = createEventDispatcher();
@@ -83,6 +86,7 @@
       success = 'Successfully authenticated with BetterSEQTA Plus account';
       password = ''; // Clear password
       toastStore.success('Successfully authenticated with BetterSEQTA Plus');
+      dispatch('cloudauthchange');
     } catch (err) {
       error = `Authentication failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
       toastStore.error('Authentication failed');
@@ -117,6 +121,7 @@
       isAuthenticated = true;
       success = 'Successfully authenticated with Discord';
       toastStore.success('Successfully authenticated with Discord');
+      dispatch('cloudauthchange');
     } catch (err) {
       error = `Discord authentication failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
       toastStore.error('Discord authentication failed');
@@ -133,6 +138,7 @@
       isAuthenticated = false;
       success = 'Successfully logged out';
       toastStore.success('Successfully logged out');
+      dispatch('cloudauthchange');
     } catch (err) {
       error = `Logout failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
       toastStore.error('Logout failed');
@@ -191,6 +197,7 @@
           'language',
           'separate_rss_feed',
           'zoom_level',
+          'biometric_enabled',
         ],
       });
 
@@ -220,28 +227,105 @@
     operation = 'downloading';
 
     try {
-      const cloudSettings = await cloudSettingsService.getSettings();
+      /** Same sync-init contract as `runCloudSettingsStartupSync`; GET only as fallback. */
+      let mergedPayload: Record<string, unknown> | null = null;
+      let doneWithoutReload = false;
 
-      if (!cloudSettings) {
-        throw new Error('No settings found in cloud');
+      try {
+        const body = await cloudSettingsService.buildSyncInitBody();
+        const r = await cloudSettingsService.syncInit(body);
+
+        if (!r) {
+          throw new Error('fallback');
+        }
+
+        if (r.status === 'no_remote_settings') {
+          throw new Error('No settings found in cloud');
+        }
+
+        if (r.status === 'up_to_date') {
+          const rev = r.server.settings_revision;
+          if (typeof rev === 'number' && Number.isFinite(rev)) {
+            await persistCloudSettingsServerMeta(rev, r.server.settings_updated_at ?? null);
+          }
+          success = 'Already in sync with the cloud';
+          toastStore.success(success);
+          doneWithoutReload = true;
+        } else if (r.status === 'client_ahead') {
+          error =
+            'Your settings are newer than the cloud. Use Upload to sync your device to the cloud.';
+          toastStore.warning(error);
+          doneWithoutReload = true;
+        } else if (
+          r.status === 'server_has_newer' &&
+          r.settings &&
+          typeof r.settings === 'object' &&
+          typeof r.server?.settings_revision === 'number'
+        ) {
+          await invoke('save_settings_merge', {
+            patch: {
+              ...r.settings,
+              cloud_settings_server_revision: r.server.settings_revision,
+              cloud_settings_server_updated_at: r.server.settings_updated_at ?? null,
+            },
+          });
+          mergedPayload = r.settings as Record<string, unknown>;
+        } else {
+          throw new Error('fallback');
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message === 'No settings found in cloud') {
+          throw e;
+        }
+        mergedPayload = null;
+        doneWithoutReload = false;
       }
 
-      // Save the downloaded settings using the existing backend command
-      // We might need to ensure the format matches what 'save_settings_merge' expects.
-      // The guide says 'settings' object.
+      if (doneWithoutReload) {
+        return;
+      }
 
-      // If the cloud settings are wrapped in a 'data' property or similar, we might need to unwrap.
-      // Assuming cloudSettings IS the settings object.
+      if (!mergedPayload) {
+        const cloudSettings = await cloudSettingsService.getSettings();
+        if (!cloudSettings) {
+          throw new Error('No settings found in cloud');
+        }
+        await invoke('save_settings_merge', { patch: cloudSettings });
+        mergedPayload = cloudSettings;
 
-      await invoke('save_settings_merge', {
-        patch: cloudSettings,
-      });
+        try {
+          const body = await cloudSettingsService.buildSyncInitBody();
+          const r2 = await cloudSettingsService.syncInit(body);
+          if (
+            r2?.status === 'server_has_newer' &&
+            r2.settings &&
+            typeof r2.server?.settings_revision === 'number'
+          ) {
+            await invoke('save_settings_merge', {
+              patch: {
+                ...r2.settings,
+                cloud_settings_server_revision: r2.server.settings_revision,
+                cloud_settings_server_updated_at: r2.server.settings_updated_at ?? null,
+              },
+            });
+            mergedPayload = r2.settings as Record<string, unknown>;
+          } else if (
+            (r2?.status === 'up_to_date' || r2?.status === 'no_remote_settings') &&
+            typeof r2?.server?.settings_revision === 'number'
+          ) {
+            await persistCloudSettingsServerMeta(
+              r2.server.settings_revision,
+              r2.server.settings_updated_at ?? null,
+            );
+          }
+        } catch {
+          /* metadata aligns on next startup */
+        }
+      }
 
       success = 'Settings successfully downloaded from cloud';
-      toastStore.success('Settings successfully downloaded from cloud');
-      onSettingsDownload(cloudSettings);
-      
-      // Reload the page to apply the new settings
+      toastStore.success(success);
+      onSettingsDownload(mergedPayload);
       setTimeout(() => {
         location.reload();
       }, 500);
@@ -269,7 +353,7 @@
 
 {#if show}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 mobile-modal-inset"
     transition:fade={{ duration: 200 }}>
     <!-- Backdrop -->
     <div
@@ -350,7 +434,7 @@
 
             <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
               <a
-                href="https://accounts.betterseqta.org"
+                href="https://accounts.betterseqta.org/register"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-blue-600 dark:text-blue-400 hover:underline">
@@ -428,7 +512,7 @@
               Sync your DesQTA settings across devices using BetterSEQTA Plus account cloud syncing.
               Your settings are encrypted and secure.
               <a
-                href="https://accounts.betterseqta.org"
+                href="https://accounts.betterseqta.org/register"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-blue-600 dark:text-blue-400 hover:underline">

@@ -49,7 +49,9 @@
         target="_blank"
         rel="noopener noreferrer"
         class="flex items-center text-sm font-medium transition-all duration-200 accent-text hover:accent-bg-hover hover:scale-105">
-        <Icon src={Link} class="mr-1 w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+        <Icon
+          src={Link}
+          class="mr-1 w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
         Open
       </a>
     </div>
@@ -126,7 +128,9 @@
             >{getDomainName(url)}</span>
           <span
             class="inline-flex items-center text-sm font-medium transition-all duration-300 accent-text group-hover:accent-bg-hover group-hover:translate-x-1">
-            <Icon src={Link} class="mr-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            <Icon
+              src={Link}
+              class="mr-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             Visit Link
           </span>
         </div>
@@ -162,7 +166,9 @@
         </div>
         <span
           class="inline-flex items-center text-sm font-medium transition-all duration-300 accent-text group-hover:accent-bg-hover group-hover:translate-x-1">
-          <Icon src={Link} class="mr-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          <Icon
+            src={Link}
+            class="mr-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           Visit Link
         </span>
       </div>

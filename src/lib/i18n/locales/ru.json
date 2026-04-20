@@ -17,7 +17,15 @@
     "clear": "Очистить",
     "refresh": "Обновить",
     "settings": "Настройки",
-    "close_theme_builder": "Закрыть конструктор тем"
+    "close_theme_builder": "Закрыть конструктор тем",
+    "move_up": "Вверх",
+    "move_down": "Вниз",
+    "add_folder": "Добавить папку",
+    "retry": "Повторить",
+    "retrying": "Повторение...",
+    "try_again": "Попробовать снова",
+    "saving": "Сохранение...",
+    "back": "Назад"
   },
   "focus_timer": {
     "title": "Таймер фокуса",
@@ -109,6 +117,7 @@
     "folios": "Портфолио",
     "close_sidebar": "Закрыть боковую панель",
     "menu": "Меню",
+    "more": "Ещё",
     "qr_signin": "Вход по QR",
     "welcome": "Добро пожаловать"
   },
@@ -122,7 +131,11 @@
     "minimize": "Свернуть",
     "maximize": "Развернуть",
     "close": "Закрыть",
-    "notifications": "Уведомления"
+    "notifications": "Уведомления",
+    "cloud_signed_in": "Вход в BetterSEQTA Plus выполнен",
+    "cloud_not_signed_in": "Не выполнен вход в BetterSEQTA Plus",
+    "cloud_signed_out_message": "Вы вышли из BetterSEQTA Plus. Войдите в Настройках для синхронизации данных между устройствами.",
+    "cloud_go_to_settings": "Перейти в настройки"
   },
   "login": {
     "welcome_to": "Добро пожаловать в",
@@ -165,7 +178,9 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "Пожалуйста, заполните все поля",
-    "failed_credentials": "Ошибка входа. Проверьте учетные данные."
+    "failed_credentials": "Ошибка входа. Проверьте учетные данные.",
+    "not_working_try_direct": "Не работает? ",
+    "try_direct_login_link": "Попробуйте прямой вход"
   },
   "features": {
     "lightning_fast": "Молниеносная производительность",
@@ -299,11 +314,30 @@
     "ai_lesson_summary": "Итоги урока с ИИ",
     "ai_summary_desc": "Создайте сводку на основе ИИ и практические шаги для содержания и ресурсов этого урока.",
     "generating": "Генерация...",
+    "generating_summary": "Создание сводки...",
     "generate_summary": "Создать сводку",
+    "summarize": "Суммировать",
+    "expand_content": "Развернуть содержимое",
+    "view_original": "Показать оригинал",
+    "view_ai_summary": "Показать сводку ИИ",
+    "regenerate": "Перегенерировать",
+    "analyzing_content": "Анализ содержания урока",
     "summary": "Сводка",
     "steps": "Шаги",
     "homework_notes": "Домашнее задание/Заметки",
-    "lesson_resources": "Ресурсы урока"
+    "lesson_resources": "Ресурсы урока",
+    "resource_download_failed": "Не удалось загрузить ресурс. Попробуйте снова.",
+    "document_parse_error": "Не удалось загрузить содержимое курса. Документ может быть повреждён.",
+    "course_files": "Файлы курса",
+    "today": "Сегодня",
+    "tomorrow": "Завтра",
+    "yesterday": "Вчера",
+    "breadcrumb_separator": "›",
+    "breadcrumb_term_week": "Термин {term} Неделя {week}",
+    "no_lesson_content": "Содержимое урока пока недоступно",
+    "no_lesson_content_desc": "Содержимое этого урока, возможно, ещё не опубликовано. Обновите страницу, чтобы проверить обновления.",
+    "refresh_from_api": "Обновить с сервера",
+    "go_to_overview": "Перейти к обзору курса"
   },
   "goals": {
     "no_cached_data": "Нет кэшированных данных",
@@ -468,7 +502,10 @@
     "export_pdf": "Экспорт как PDF",
     "pdf_description": "Формат переносимого документа",
     "export_ical": "Экспорт как iCal",
-    "ical_description": "Формат календаря (.ics)"
+    "ical_description": "Формат календаря (.ics)",
+    "download_csv_success": "Расписание загружено в папку «Загрузки»",
+    "download_pdf_success": "Расписание загружено в папку «Загрузки»",
+    "download_ical_success": "Расписание загружено в папку «Загрузки»"
   },
   "study": {
     "page_description": "Планируйте, отслеживайте и сосредоточьтесь на предстоящей работе.",
@@ -519,6 +556,10 @@
     "quizzes": "Викторины",
     "select_assessment": "Выбрать оценку",
     "custom_topic": "Своя тема",
+    "topic_source": "1. Выберите тему",
+    "quiz_options": "2. Параметры викторины",
+    "change_options": "Изменить параметры",
+    "generate_section": "3. Создать",
     "what_to_study": "Что вы хотите изучить?",
     "question_count": "Количество вопросов",
     "generate_quiz": "Создать викторину",
@@ -565,6 +606,7 @@
     "type_your_answer": "Введите ответ..."
   },
   "messages": {
+    "page_description": "Просмотр и управление сообщениями SEQTA и RSS.",
     "failed_to_load": "Не удалось загрузить сообщения.",
     "failed_to_load_no_cache": "Не удалось загрузить сообщения, кэшированные данные отсутствуют",
     "failed_to_load_message": "Не удалось загрузить сообщение.",
@@ -627,10 +669,16 @@
     "accept_cloud_eula": "Принять EULA облака BetterSEQTA",
     "cloud_eula_description": "Вы должны прочитать и принять EULA облачной синхронизации перед использованием облачных функций.",
     "read_accept": "Прочитать и принять",
+    "sync_cloud_pfp": "Использовать фото профиля BetterSEQTA Cloud как локальное",
+    "sync_cloud_pfp_description": "Загрузите и синхронизируйте аватар из облака с заголовком приложения.",
     "personal_settings": "Личные настройки",
     "personal_settings_description": "Настройте свой личный профиль и предпочтения",
     "custom_profile_picture": "Пользовательское фото профиля",
     "profile_picture_description": "Загрузите пользовательское фото профиля, которое будет отображаться в заголовке приложения",
+    "crop": "Обрезать",
+    "crop_profile_picture": "Обрезать фото профиля",
+    "save_crop": "Сохранить",
+    "saving": "Сохранение...",
     "uploading": "Загрузка...",
     "upload": "Загрузить",
     "language": "Язык",
@@ -667,6 +715,12 @@
     "dark": "Темный",
     "system": "Система",
     "theme_mode_description": "Выберите между светлым режимом, темным режимом или следуйте предпочтениям вашей системы.",
+    "minimize_to_tray": "Оставлять приложение в системном трее при закрытии",
+    "minimize_to_tray_description": "При включении закрытие окна сворачивает DesQTA в системный трей. При выключении закрытие полностью завершает приложение.",
+    "security": "Безопасность",
+    "security_description": "Защитите приложение биометрической аутентификацией",
+    "biometric_enabled": "Разблокировать по биометрии (Face ID, Touch ID, отпечаток, Windows Hello)",
+    "biometric_enabled_description": "Требовать биометрическую аутентификацию при открытии приложения",
     "notifications": "Уведомления",
     "notifications_description": "Управляйте своими предпочтениями уведомлений",
     "enable_reminder_notifications": "Включить уведомления-напоминания об оценках",
@@ -822,10 +876,23 @@
     "login_url_desc": "Введите URL школы",
     "login_direct": "Прямой вход",
     "login_direct_desc": "Логин и пароль",
+    "biometric_title": "Разблокировка по биометрии",
+    "biometric_subtitle": "Используйте Face ID, Touch ID, отпечаток пальца или Windows Hello для быстрой разблокировки DesQTA.",
+    "biometric_enable": "Включить биометрическую разблокировку",
+    "biometric_skip": "Пропустить",
+    "biometric_unlock": "Разблокировать",
+    "biometric_unavailable": "Биометрическая аутентификация недоступна на этом устройстве.",
     "ready_title": "Всё готово!",
     "ready_subtitle": "Войдите, чтобы изучить панель управления, инструменты для учёбы и многое другое.",
     "sign_in": "Войти",
     "step_indicator": "Шаг {current} из {total}"
+  },
+  "post_login_prompts": {
+    "aria_label": "Настройка после входа",
+    "usage_stats_title": "Помогите улучшить DesQTA",
+    "usage_stats_subtitle": "Хотите отправлять анонимную статистику использования? Это поможет нам понять, как используется приложение, и улучшить его. Персональные данные не собираются.",
+    "usage_stats_yes": "Да, помочь улучшить DesQTA",
+    "usage_stats_no": "Нет, спасибо"
   },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
@@ -886,11 +953,18 @@
     "view_all": "Показать все",
     "no_notices_today": "Сегодня нет доступных уведомлений."
   },
+  "documents": {
+    "loading": "Загрузка документов...",
+    "failed_to_load": "Не удалось загрузить документы",
+    "error_loading": "Ошибка загрузки документов",
+    "no_documents": "Нет доступных документов"
+  },
   "reports": {
     "failed_to_load": "Не удалось загрузить отчеты.",
     "error_loading": "Ошибка загрузки отчетов.",
     "loading": "Загрузка отчетов...",
-    "download": "Скачать"
+    "download": "Скачать",
+    "open_failed": "Не удалось открыть отчет"
   },
   "performance": {
     "title": "Результаты теста производительности - DesQTA",
@@ -953,7 +1027,9 @@
     "avg_gpu": "Среднее GPU",
     "errors_count": "{count} ошибок",
     "warnings_count": "{count} предупреждений",
-    "no_issues": "Нет проблем"
+    "no_issues": "Нет проблем",
+    "mega_suite_overlay_title": "Запуск набора бенчмарков",
+    "mega_suite_overlay_body": "Обход страниц завершён. Выполняются синтетические проверки (запуск, UI, данные, бэкенд)—обычно 30–90 секунд. Подождите; результаты откроются по готовности."
   },
   "plugins": {
     "installed_title": "Плагин установлен",

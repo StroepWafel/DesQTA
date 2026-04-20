@@ -91,12 +91,14 @@
               {theme}
               manifest={manifests.get(theme.id)}
               isActive={theme.slug === currentThemeSlug}
-              isDownloaded={installedThemeSlugs.has(theme.slug)}
+              isDownloaded={downloadedThemeIds.has(theme.id)}
               isFavorited={themeUserStatus.get(theme.id)?.is_favorited || false}
               hasUpdate={themeUpdates.get(theme.id)?.hasUpdate || false}
               updateInfo={themeUpdates.get(theme.id)}
               animationDelay={j * 50}
-              {onPreview}
+              onQuickPreview={
+                onPreview ? async (id) => onPreview(id) : undefined
+              }
               {onDownload}
               {onUpdate}
               {onFavorite}

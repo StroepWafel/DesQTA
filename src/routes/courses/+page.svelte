@@ -1,10 +1,9 @@
 <script lang="ts">
   // Svelte imports
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { fade } from 'svelte/transition';
 
   // $lib/ imports
-  import { getWithIdbFallback, setIdb } from '$lib/services/idbCache';
   import { SearchInput, LoadingSpinner, EmptyState, Button } from '$lib/components/ui';
   import {
     Icon,
@@ -21,11 +20,15 @@
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
   import { updateUrlParams, getUrlParam } from '$lib/utils/urlParams';
+  import { formatLessonDate } from './utils';
+  import { platformStore } from '$lib/stores/platform';
 
   // Relative imports
-  import { invoke } from '@tauri-apps/api/core';
-  import { cache } from '../../utils/cache';
-  import { logger } from '../../utils/logger';
+  import { courseService } from '$lib/services/courseService';
+  import {
+    loadParsedCourseContent,
+    shouldRefreshCourseContent,
+  } from '$lib/services/courseDataLoader';
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import CourseContent from './components/CourseContent.svelte';
 
@@ -55,18 +58,23 @@
   let selectedSubject: Subject | null = $state(null);
   let coursePayload: CoursePayload | null = $state(null);
   let parsedDocument: ParsedDocument | null = $state(null);
+  let documentParseError = $state(false);
   let loadingCourse = $state(false);
   let courseError: string | null = $state(null);
   let search = $state('');
 
   // Schedule navigation state
   let selectedLesson: Lesson | null = $state(null);
+  let selectedTermSchedule: TermSchedule | null = $state(null);
+  let selectedLessonIndex: number | null = $state(null);
   let selectedLessonContent: WeeklyLessonContent | null = $state(null);
   let selectedStandaloneContent: WeeklyLessonContent | null = $state(null);
   let showingOverview = $state(true); // Start with overview by default
   let contentScrollContainer: HTMLElement;
+  // bind:this sets this ref when the lesson list mounts
+  let lessonListScrollContainer = $state<HTMLDivElement | undefined>(undefined);
   let sidebarOpen = $state(false);
-  let isMobile = $state(false);
+  let isMobile = $derived($platformStore.isMobile);
 
   async function loadSubjects() {
     loading = true;
@@ -87,9 +95,7 @@
         ttlMinutes: 60,
         context: 'courses',
         functionName: 'loadSubjects',
-        fetcher: async () => {
-          return await invoke<Folder[]>('get_courses_subjects');
-        },
+        fetcher: () => courseService.loadSubjects(),
         onDataLoaded: (foldersData) => {
           processFolders(foldersData);
           loading = false;
@@ -110,46 +116,63 @@
     }
   }
 
+  function applyParsedCourseData(data: {
+    payload: CoursePayload;
+    parsedDocument: ParsedDocument | null;
+    documentParseError: boolean;
+  }) {
+    coursePayload = data.payload;
+    parsedDocument = data.parsedDocument;
+    documentParseError = data.documentParseError;
+  }
+
   async function loadCourseContent(subject: Subject) {
     loadingCourse = true;
     courseError = null;
+    documentParseError = false;
     coursePayload = null;
     parsedDocument = null;
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
     selectedStandaloneContent = null;
 
-    const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
-
-    const data = await useDataLoader<CoursePayload>({
-      cacheKey,
-      ttlMinutes: 60,
-      context: 'courses',
-      functionName: 'loadCourseContent',
-      fetcher: async () => {
-        return await invoke<CoursePayload>('get_course_content', {
-          programme: subject.programme,
-          metaclass: subject.metaclass,
-        });
-      },
-      onDataLoaded: async (payload) => {
-        coursePayload = payload;
-        if (payload?.document) {
-          try {
-            parsedDocument = JSON.parse(payload.document);
-          } catch (e) {
-            logger.error('courses', 'loadCourseContent', 'Failed to parse document JSON', {
-              error: e,
-            });
-          }
-        }
+    const data = await loadParsedCourseContent(subject, {
+      onDataLoaded: async (courseData) => {
+        applyParsedCourseData(courseData);
         loadingCourse = false;
       },
+      shouldSyncInBackground: () => shouldRefreshCourseContent(subject),
+      updateOnBackgroundSync: true,
     });
 
     if (!data) {
-      const errorMessage = 'Failed to load course content';
-      courseError = errorMessage;
+      courseError = 'Failed to load course content';
+      loadingCourse = false;
+    }
+  }
+
+  async function refreshLessonContent() {
+    if (!selectedSubject || selectedTermSchedule === null || selectedLessonIndex === null) return;
+    loadingCourse = true;
+    courseError = null;
+    documentParseError = false;
+    const ts = selectedTermSchedule;
+    const idx = selectedLessonIndex;
+    try {
+      await loadParsedCourseContent(selectedSubject, {
+        skipCache: true,
+        onDataLoaded: async (courseData) => {
+          applyParsedCourseData(courseData);
+          if (ts && idx !== null && courseData.payload?.w?.[ts.n]?.[idx]) {
+            selectedLessonContent = courseData.payload.w[ts.n][idx];
+          }
+        },
+      });
+    } catch (e) {
+      courseError = e instanceof Error ? e.message : String(e);
+    } finally {
       loadingCourse = false;
     }
   }
@@ -158,6 +181,8 @@
     selectedSubject = subject;
     showingOverview = true; // Reset to overview when selecting a new subject
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
     selectedStandaloneContent = null;
     
@@ -179,6 +204,8 @@
 
   async function selectLesson(termSchedule: TermSchedule, lesson: Lesson, lessonIndex: number) {
     selectedLesson = lesson;
+    selectedTermSchedule = termSchedule;
+    selectedLessonIndex = lessonIndex;
     selectedStandaloneContent = null;
     showingOverview = false;
 
@@ -214,6 +241,8 @@
   async function selectStandaloneContent(content: WeeklyLessonContent) {
     selectedStandaloneContent = content;
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
     showingOverview = false;
 
@@ -242,6 +271,8 @@
   async function selectOverview() {
     showingOverview = true;
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
     selectedStandaloneContent = null;
 
@@ -299,6 +330,29 @@
     return folder.code.toLowerCase().includes(q) || folder.subjects.some(subjectMatches);
   }
 
+  // Scroll selected lesson into view when deep-linking
+  $effect(() => {
+    if (showingOverview || !lessonListScrollContainer) return;
+    let id: string | null = null;
+    if (selectedStandaloneContent && 'i' in selectedStandaloneContent) {
+      id = `lesson-standalone-${selectedStandaloneContent.i}`;
+    } else if (selectedLesson && coursePayload?.d) {
+      for (const ts of coursePayload.d) {
+        const idx = ts.l.indexOf(selectedLesson);
+        if (idx >= 0) {
+          id = `lesson-${ts.n}-${idx}`;
+          break;
+        }
+      }
+    }
+    if (id) {
+      tick().then(() => {
+        const el = lessonListScrollContainer?.querySelector(`[data-lesson-id="${id}"]`);
+        if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    }
+  });
+
   function getQueryParams() {
     return {
       code: getUrlParam('code'),
@@ -318,64 +372,20 @@
     // Load course content for the subject
     loadingCourse = true;
     courseError = null;
+    documentParseError = false;
     coursePayload = null;
     parsedDocument = null;
     selectedLesson = null;
+    selectedTermSchedule = null;
+    selectedLessonIndex = null;
     selectedLessonContent = null;
-    const cacheKey = `course_${subject.programme}_${subject.metaclass}`;
-    const { isOfflineMode } = await import('../../lib/utils/offlineMode');
-    const offline = await isOfflineMode();
-
-    // Only use cache when offline - always fetch fresh data when online
-    if (offline) {
-      const cached =
-        cache.get<CoursePayload>(cacheKey) ||
-        (await getWithIdbFallback<CoursePayload>(cacheKey, cacheKey, () =>
-          cache.get<CoursePayload>(cacheKey),
-        ));
-      if (cached) {
-        coursePayload = cached;
-        if (coursePayload?.document) {
-          try {
-            parsedDocument = JSON.parse(coursePayload.document);
-          } catch (e) {
-            logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', {
-              error: e,
-            });
-          }
-        }
-        loadingCourse = false;
-        // Continue with lesson/content finding logic below
-        // (handled in the main logic after fetching)
-      }
-    }
-
-    // Fetch fresh data if online or if cache miss when offline
     try {
-      const data = await useDataLoader<CoursePayload>({
-        cacheKey,
-        ttlMinutes: 60,
-        context: 'courses',
-        functionName: 'autoSelectFromQuery',
-        fetcher: async () => {
-          return await invoke<CoursePayload>('get_course_content', {
-            programme: subject.programme,
-            metaclass: subject.metaclass,
-          });
+      const data = await loadParsedCourseContent(subject, {
+        onDataLoaded: async (courseData) => {
+          applyParsedCourseData(courseData);
         },
-        onDataLoaded: async (payload) => {
-          coursePayload = payload;
-          if (payload?.document) {
-            try {
-              parsedDocument = JSON.parse(payload.document);
-            } catch (e) {
-              logger.error('courses', 'autoSelectFromQuery', 'Failed to parse document JSON', {
-                error: e,
-              });
-            }
-          }
-        },
-        shouldSyncInBackground: () => false, // Always fetch fresh when online
+        shouldSyncInBackground: () => shouldRefreshCourseContent(subject),
+        updateOnBackgroundSync: true,
       });
 
       if (!data) {
@@ -384,8 +394,10 @@
         return;
       }
 
+      const loadedPayload = data.payload;
+
       // Handle courses with lessons (d array has items)
-      if (coursePayload?.d && coursePayload.d.length > 0 && coursePayload?.w) {
+      if (loadedPayload?.d && loadedPayload.d.length > 0 && loadedPayload?.w) {
         let targetLesson: {
           termSchedule: TermSchedule | null;
           lesson: Lesson | null;
@@ -398,7 +410,7 @@
           const weekNum = parseInt(week, 10);
           const lessonIndex = parseInt(lesson, 10);
 
-          const termSchedule = coursePayload.d.find((ts) => ts.t === termNum && ts.w === weekNum);
+          const termSchedule = loadedPayload.d.find((ts) => ts.t === termNum && ts.w === weekNum);
 
           if (termSchedule && termSchedule.l[lessonIndex]) {
             targetLesson = {
@@ -423,7 +435,7 @@
             diff: Infinity,
           };
           const targetDate = new Date(date);
-          coursePayload.d.forEach((termSchedule, termIdx) => {
+          loadedPayload.d.forEach((termSchedule) => {
             termSchedule.l.forEach((lesson, lessonIndex) => {
               const lessonDate = new Date(lesson.d);
               const diff = Math.abs(lessonDate.getTime() - targetDate.getTime());
@@ -446,9 +458,9 @@
           // Don't update URL here since we're reading from it
           selectedLesson = targetLesson.lesson;
           showingOverview = false;
-          if (coursePayload?.w?.[targetLesson.termSchedule.n]?.[targetLesson.lessonIndex]) {
+          if (loadedPayload?.w?.[targetLesson.termSchedule.n]?.[targetLesson.lessonIndex]) {
             selectedLessonContent =
-              coursePayload.w[targetLesson.termSchedule.n][targetLesson.lessonIndex];
+              loadedPayload.w[targetLesson.termSchedule.n][targetLesson.lessonIndex];
           } else {
             selectedLessonContent = null;
           }
@@ -457,11 +469,11 @@
           selectedSubject = subject;
           showingOverview = true;
         }
-      } else if (coursePayload?.w && coursePayload.d.length === 0) {
+      } else if (loadedPayload?.w && loadedPayload.d.length === 0) {
         // Handle standalone content items (d is empty but w has content)
         if (lesson !== null) {
           const lessonIndex = parseInt(lesson, 10);
-          const flattened = coursePayload.w.flat();
+          const flattened = loadedPayload.w.flat();
           const sortedItems = flattened.sort((a, b) => (a.i || 0) - (b.i || 0));
           const targetContent = sortedItems.find((item) => item.i === lessonIndex);
 
@@ -487,52 +499,92 @@
   }
 
   // Check if mobile
-  function checkMobile() {
-    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
-    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
-    const mql = window.matchMedia('(max-width: 640px)');
-    const isSmallViewport = mql.matches;
-    isMobile = isNativeMobile || isSmallViewport;
-    
-    // Close sidebar on mobile by default
-    if (isMobile) {
+  function handleSidebarKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && isMobile && sidebarOpen) {
       sidebarOpen = false;
-    } else {
-      sidebarOpen = true;
+      e.preventDefault();
+      return;
+    }
+
+    if (!coursePayload) return;
+    const target = e.target as HTMLElement;
+    if (!target.closest('[data-lesson-id]')) return;
+
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+
+    const buttons = Array.from(
+      lessonListScrollContainer?.querySelectorAll<HTMLElement>('[data-lesson-id]') ?? [],
+    );
+    const idx = buttons.indexOf(target);
+    if (idx < 0) return;
+
+    e.preventDefault();
+    if (e.key === 'ArrowDown' && idx < buttons.length - 1) {
+      buttons[idx + 1].focus();
+    } else if (e.key === 'ArrowUp' && idx > 0) {
+      buttons[idx - 1].focus();
     }
   }
+
+  $effect(() => {
+    // Auto-open sidebar on mobile so users can select a subject; desktop keeps it open
+    sidebarOpen = true;
+  });
 
   onMount(() => {
     loadSubjects();
     autoSelectFromQuery();
-    checkMobile();
-    
-    const mql = window.matchMedia('(max-width: 640px)');
-    const onMqlChange = () => checkMobile();
-    
-    try {
-      mql.addEventListener('change', onMqlChange);
-    } catch {
-      // Safari fallback
-      // @ts-ignore
-      mql.addListener(onMqlChange);
-    }
-    
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      try {
-        mql.removeEventListener('change', onMqlChange);
-      } catch {
-        // @ts-ignore
-        mql.removeListener(onMqlChange);
-      }
-    };
   });
 </script>
 
-<div class="flex overflow-hidden w-full h-full relative">
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6" in:fade={{ duration: 400 }}>
+  <!-- Page Header: dynamic title/description based on context, with back button -->
+  <div class="flex justify-between items-start shrink-0 gap-4">
+    <div class="flex items-start gap-3 min-w-0 flex-1">
+      {#if selectedSubject}
+        <button
+          onclick={() => {
+            if (showingOverview) {
+              selectedSubject = null;
+              selectedLesson = null;
+              selectedTermSchedule = null;
+              selectedLessonIndex = null;
+              selectedLessonContent = null;
+              selectedStandaloneContent = null;
+              showingOverview = true;
+            } else {
+              selectOverview();
+            }
+          }}
+          class="flex shrink-0 justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform theme-bg hover:accent-bg focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95"
+          title={showingOverview
+            ? $_('courses.back_to_subjects') || 'Back to subjects'
+            : $_('courses.back_to_overview') || 'Back to overview'}
+          aria-label={showingOverview
+            ? $_('courses.back_to_subjects') || 'Back to subjects'
+            : $_('courses.back_to_overview') || 'Back to overview'}>
+          <Icon src={ChevronLeft} class="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+        </button>
+      {/if}
+      <div class="min-w-0">
+        <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white truncate">
+          {#if selectedSubject}
+            {selectedSubject.title}
+          {:else}
+            <T key="navigation.courses" fallback="Courses" />
+          {/if}
+        </h1>
+        {#if !selectedSubject}
+          <p class="text-zinc-600 dark:text-zinc-400">
+            <T key="courses.page_description" fallback="Browse courses and access lesson content" />
+          </p>
+        {/if}
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content: sidebar + content area -->
+  <div class="flex overflow-hidden flex-1 min-h-0 gap-4 relative">
   <!-- Mobile Sidebar Toggle Button -->
   {#if isMobile}
     <button
@@ -555,49 +607,29 @@
       aria-label={$_('navigation.close_sidebar') || 'Close sidebar overlay'}></div>
   {/if}
 
-  <!-- Unified Navigation Sidebar -->
+  <!-- Unified Navigation Sidebar: card-style like study/directory; solid bg on mobile for visibility over transparent window -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
-    class="flex flex-col w-80 h-full border-r border-zinc-200 transition-all duration-300 dark:border-zinc-700 theme-bg {isMobile
-      ? `fixed top-0 left-0 z-40 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
-      : ''}">
-    <!-- Navigation Header -->
-    <div
-      class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
-      <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
-        {#if selectedSubject}
-          {selectedSubject.title}
-        {:else}
-          <T key="navigation.courses" fallback="Courses" />
-        {/if}
-      </h2>
-      <div class="flex gap-2 items-center">
-        {#if isMobile}
-          <button
-            onclick={() => (sidebarOpen = false)}
-            class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-            title={$_('navigation.close_sidebar') || 'Close sidebar'}
-            aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
-            <Icon src={XMark} class="w-5 h-5" />
-          </button>
-        {/if}
-        {#if selectedSubject}
-          <button
-            onclick={() => {
-              // Always go back to subject selection, but keep course content visible
-              selectedSubject = null;
-              // Don't clear coursePayload, parsedDocument to keep content visible
-              selectedLesson = null;
-              selectedLessonContent = null;
-              showingOverview = true;
-            }}
-            class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-            title={$_('courses.back_to_subjects') || 'Back to subjects'}
-            aria-label={$_('courses.back_to_subjects') || 'Back to subjects'}>
-            <Icon src={ChevronLeft} class="w-5 h-5" />
-          </button>
-        {/if}
+    class="flex flex-col w-80 h-full rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 shadow-lg overflow-hidden transition-all duration-300 {isMobile
+      ? `fixed top-0 left-0 z-40 bg-white dark:bg-zinc-900 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+      : 'bg-white/80 dark:bg-zinc-900/60'}"
+    role="region"
+    aria-label="Course navigation"
+    tabindex="-1"
+    onkeydown={handleSidebarKeydown}>
+    <!-- Navigation Header: only when subject list on mobile (for close button); when in course, no header -->
+    {#if !selectedSubject && isMobile}
+      <div
+        class="flex justify-end items-center p-4 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
+        <button
+          onclick={() => (sidebarOpen = false)}
+          class="p-2 shrink-0 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+          title={$_('navigation.close_sidebar') || 'Close sidebar'}
+          aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
+          <Icon src={XMark} class="w-5 h-5" />
+        </button>
       </div>
-    </div>
+    {/if}
 
     <!-- Content Area with Transition -->
     <div class="overflow-hidden relative flex-1">
@@ -748,6 +780,8 @@
                   onclick={() => {
                     selectedSubject = null;
                     selectedLesson = null;
+                    selectedTermSchedule = null;
+                    selectedLessonIndex = null;
                     selectedLessonContent = null;
                     selectedStandaloneContent = null;
                     showingOverview = true;
@@ -756,7 +790,7 @@
                   class="flex gap-2 items-center w-full px-4 py-2 text-left rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]">
                   <Icon src={ChevronLeft} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
                   <span class="font-medium text-zinc-900 dark:text-white">
-                    <T key="courses.back_to_courses" fallback="Back to Courses" />
+                    <T key="courses.back_to_subjects" fallback="Back to subjects" />
                   </span>
                 </button>
               </div>
@@ -834,7 +868,10 @@
             </div>
 
             <!-- Lesson Schedule or Standalone Content -->
-            <div class="overflow-y-auto flex-1">
+            <div
+              class="overflow-y-auto flex-1"
+              bind:this={lessonListScrollContainer}
+              role="list">
               {#if coursePayload.d && Array.isArray(coursePayload.d) && coursePayload.d.length > 0}
                 <!-- Regular lessons -->
                 {#each coursePayload.d as termSchedule}
@@ -851,6 +888,7 @@
                       {@const lessonContent = coursePayload?.w?.[termSchedule.n]?.[lessonIndex]}
                       {@const lessonTopic = lessonContent?.t}
                       <button
+                        data-lesson-id="lesson-{termSchedule.n}-{lessonIndex}"
                         class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
                           ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
                           : 'border-transparent hover:border-accent/50'}"
@@ -864,10 +902,10 @@
                           </div>
                         {/if}
                         <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                          {new Date(lesson.d).toLocaleDateString('en-AU', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
+                          {formatLessonDate(lesson.d, {
+                            today: $_('courses.today') || 'Today',
+                            tomorrow: $_('courses.tomorrow') || 'Tomorrow',
+                            yesterday: $_('courses.yesterday') || 'Yesterday',
                           })}
                         </div>
                         <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
@@ -888,6 +926,7 @@
                     {@const isSelected =
                       selectedStandaloneContent === contentItem && !showingOverview}
                     <button
+                      data-lesson-id="lesson-standalone-{contentItem.i}"
                       class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
                         ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
                         : 'border-transparent hover:border-accent/50'}"
@@ -911,8 +950,10 @@
     </div>
   </div>
 
-  <!-- Main Content Area -->
-  <div class="overflow-y-auto flex-1 {isMobile ? 'w-full' : ''} theme-bg" bind:this={contentScrollContainer}>
+  <!-- Main Content Area: card-style like study -->
+  <div
+    class="overflow-y-auto flex-1 min-h-0 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg {isMobile ? 'w-full' : ''}"
+    bind:this={contentScrollContainer}>
     {#if loadingCourse}
       <div class="flex justify-center items-center h-full">
         <LoadingSpinner
@@ -928,14 +969,31 @@
           size="md" />
       </div>
     {:else if coursePayload}
-      <div class="h-full">
-        <div class="overflow-y-auto h-full course-content">
+      <div class="h-full flex flex-col">
+        <div class="overflow-y-auto flex-1 course-content">
           <CourseContent
             {coursePayload}
             {parsedDocument}
+            documentParseError={documentParseError}
+            onRetryCourse={
+              selectedSubject
+                ? () => {
+                    if (selectedSubject) loadCourseContent(selectedSubject);
+                  }
+                : undefined
+            }
             {selectedLessonContent}
             {selectedStandaloneContent}
-            {showingOverview} />
+            {showingOverview}
+            lessonWithoutContent={
+              !showingOverview &&
+              !!selectedLesson &&
+              selectedLessonContent === null &&
+              selectedStandaloneContent === null
+            }
+            {selectedLesson}
+            onRefreshLesson={refreshLessonContent}
+            onGoToOverview={selectOverview} />
         </div>
       </div>
     {:else}
@@ -948,6 +1006,7 @@
           size="lg" />
       </div>
     {/if}
+  </div>
   </div>
 </div>
 

@@ -54,18 +54,18 @@
 
 {#if open}
   <div
-    class="flex fixed right-0 bottom-0 left-0 top-16 z-50 justify-center items-center p-6"
+    class="flex fixed inset-x-0 top-16 bottom-0 z-50 justify-center items-center p-6 mobile-modal-inset"
     style="background-color: transparent;"
     role="dialog"
     aria-modal="true"
-    aria-label={ariaLabel}>
+    aria-label={ariaLabel}
+    transition:fade={{ duration: 250, easing: (t) => t * (2 - t) }}>
     <div
-      class="fixed right-0 bottom-0 left-0 top-16 backdrop-blur-md bg-black/40"
+      class="fixed inset-x-0 top-16 bottom-0 backdrop-blur-md bg-black/40 mobile-modal-inset"
       onclick={handleBackdropClick}
       onkeydown={handleKeydown}
       role="button"
-      tabindex="0"
-      transition:fade={{ duration: 200, easing: (t) => t * (2 - t) }}>
+      tabindex="0">
     </div>
     <div
       class="overflow-hidden relative w-full {maxWidth} {maxHeight} {className} rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/90 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/60"
@@ -75,7 +75,7 @@
       role="button"
       tabindex="0"
       aria-label={ariaLabel}
-      transition:scale={{ duration: 300, start: 0.9, easing: (t) => t * (2 - t) }}>
+      transition:scale={{ duration: 250, start: 0.9, easing: (t) => t * (2 - t) }}>
       {#if showCloseButton}
         <div class="absolute top-6 right-6 z-10">
           <Button

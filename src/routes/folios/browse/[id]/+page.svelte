@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { seqtaFetch } from '../../../../utils/netUtil';
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import {
@@ -317,7 +320,7 @@
             size="md" />
         </div>
       {:else if folioData}
-        <div class="max-w-4xl mx-auto p-6 space-y-6">
+        <div class="w-full mx-auto p-6 space-y-6">
           <!-- Folio Info -->
           <div
             class="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">

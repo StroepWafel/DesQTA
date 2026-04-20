@@ -17,7 +17,15 @@
     "clear": "Limpar",
     "refresh": "Atualizar",
     "settings": "Configurações",
-    "close_theme_builder": "Fechar Construtor de Temas"
+    "close_theme_builder": "Fechar Construtor de Temas",
+    "move_up": "Mover para cima",
+    "move_down": "Mover para baixo",
+    "add_folder": "Adicionar pasta",
+    "retry": "Tentar novamente",
+    "retrying": "Tentando novamente...",
+    "try_again": "Tentar novamente",
+    "saving": "Salvando...",
+    "back": "Voltar"
   },
   "focus_timer": {
     "title": "Timer de foco",
@@ -109,6 +117,7 @@
     "folios": "Portfólios",
     "close_sidebar": "Fechar sobreposição da barra lateral",
     "menu": "Menu",
+    "more": "Mais",
     "qr_signin": "Entrar com QR",
     "welcome": "Bem-vindo"
   },
@@ -122,7 +131,11 @@
     "minimize": "Minimizar",
     "maximize": "Maximizar",
     "close": "Fechar",
-    "notifications": "Notificações"
+    "notifications": "Notificações",
+    "cloud_signed_in": "Conectado ao BetterSEQTA Plus",
+    "cloud_not_signed_in": "Não conectado ao BetterSEQTA Plus",
+    "cloud_signed_out_message": "Você saiu do BetterSEQTA Plus. Entre nas Configurações para sincronizar seus dados entre dispositivos.",
+    "cloud_go_to_settings": "Ir para Configurações"
   },
   "login": {
     "welcome_to": "Bem-vindo ao",
@@ -165,7 +178,9 @@
     "feature_analytics_desc": "Dados de desempenho",
     "feature_settings_desc": "Preferências do aplicativo",
     "fill_all_fields": "Por favor, preencha todos os campos",
-    "failed_credentials": "Falha no login. Verifique suas credenciais."
+    "failed_credentials": "Falha no login. Verifique suas credenciais.",
+    "not_working_try_direct": "Não está funcionando? ",
+    "try_direct_login_link": "Tentar login direto"
   },
   "features": {
     "lightning_fast": "Desempenho ultrarrápido",
@@ -299,11 +314,30 @@
     "ai_lesson_summary": "Resumo da Aula com IA",
     "ai_summary_desc": "Gere um resumo com IA e etapas acionáveis para o conteúdo e recursos desta aula.",
     "generating": "Gerando...",
+    "generating_summary": "Gerando resumo...",
     "generate_summary": "Gerar Resumo",
+    "summarize": "Resumir",
+    "expand_content": "Expandir conteúdo",
+    "view_original": "Ver original",
+    "view_ai_summary": "Ver resumo IA",
+    "regenerate": "Regenerar",
+    "analyzing_content": "Analisando conteúdo da aula",
     "summary": "Resumo",
     "steps": "Etapas",
     "homework_notes": "Tarefas/Notas",
-    "lesson_resources": "Recursos da Aula"
+    "lesson_resources": "Recursos da Aula",
+    "resource_download_failed": "Falha ao baixar o recurso. Tente novamente.",
+    "document_parse_error": "Não foi possível carregar o conteúdo do curso. O documento pode estar corrompido.",
+    "course_files": "Arquivos do curso",
+    "today": "Hoje",
+    "tomorrow": "Amanhã",
+    "yesterday": "Ontem",
+    "breadcrumb_separator": "›",
+    "breadcrumb_term_week": "Período {term} Semana {week}",
+    "no_lesson_content": "Nenhum conteúdo da aula disponível",
+    "no_lesson_content_desc": "O conteúdo desta aula pode ainda não ter sido publicado. Atualize para verificar se há novidades.",
+    "refresh_from_api": "Atualizar do servidor",
+    "go_to_overview": "Ir para visão geral do curso"
   },
   "goals": {
     "no_cached_data": "Nenhum dado em cache disponível",
@@ -468,7 +502,10 @@
     "export_pdf": "Exportar como PDF",
     "pdf_description": "Formato de documento portátil",
     "export_ical": "Exportar como iCal",
-    "ical_description": "Formato de calendário (.ics)"
+    "ical_description": "Formato de calendário (.ics)",
+    "download_csv_success": "Horário baixado para Downloads",
+    "download_pdf_success": "Horário baixado para Downloads",
+    "download_ical_success": "Horário baixado para Downloads"
   },
   "study": {
     "page_description": "Planeje, acompanhe e foque no seu trabalho futuro.",
@@ -519,6 +556,10 @@
     "quizzes": "Questionários",
     "select_assessment": "Selecionar avaliação",
     "custom_topic": "Tópico personalizado",
+    "topic_source": "1. Escolher tópico",
+    "quiz_options": "2. Opções do quiz",
+    "change_options": "Alterar opções",
+    "generate_section": "3. Gerar",
     "what_to_study": "O que você quer estudar?",
     "question_count": "Número de perguntas",
     "generate_quiz": "Gerar questionário",
@@ -565,6 +606,7 @@
     "type_your_answer": "Digite sua resposta..."
   },
   "messages": {
+    "page_description": "Visualize e gerencie suas mensagens SEQTA e RSS.",
     "failed_to_load": "Falha ao carregar mensagens.",
     "failed_to_load_no_cache": "Falha ao carregar mensagens e nenhum dado em cache disponível",
     "failed_to_load_message": "Falha ao carregar mensagem.",
@@ -627,10 +669,16 @@
     "accept_cloud_eula": "Aceitar EULA da Nuvem BetterSEQTA",
     "cloud_eula_description": "Você deve ler e aceitar o EULA de Sincronização na Nuvem antes de usar os recursos na nuvem.",
     "read_accept": "Ler e Aceitar",
+    "sync_cloud_pfp": "Usar foto de perfil da nuvem BetterSEQTA como imagem local",
+    "sync_cloud_pfp_description": "Baixe e mantenha seu avatar da nuvem sincronizado com o cabeçalho do aplicativo.",
     "personal_settings": "Configurações Pessoais",
     "personal_settings_description": "Personalize seu perfil pessoal e preferências",
     "custom_profile_picture": "Foto de Perfil Personalizada",
     "profile_picture_description": "Envie uma foto de perfil personalizada que aparecerá no cabeçalho do aplicativo",
+    "crop": "Recortar",
+    "crop_profile_picture": "Recortar foto de perfil",
+    "save_crop": "Salvar",
+    "saving": "Salvando...",
     "uploading": "Enviando...",
     "upload": "Enviar",
     "language": "Idioma",
@@ -667,6 +715,12 @@
     "dark": "Escuro",
     "system": "Sistema",
     "theme_mode_description": "Escolha entre modo claro, modo escuro ou siga a preferência do seu sistema.",
+    "minimize_to_tray": "Manter o app em execução na bandeja do sistema ao fechar",
+    "minimize_to_tray_description": "Quando ativado, fechar a janela minimiza o DesQTA na bandeja do sistema. Quando desativado, fechar encerra completamente o app.",
+    "security": "Segurança",
+    "security_description": "Proteja o app com autenticação biométrica",
+    "biometric_enabled": "Desbloquear com biometria (Face ID, Touch ID, impressão digital, Windows Hello)",
+    "biometric_enabled_description": "Exigir autenticação biométrica ao abrir o app",
     "notifications": "Notificações",
     "notifications_description": "Gerencie suas preferências de notificação",
     "enable_reminder_notifications": "Habilitar notificações de lembrete de avaliação",
@@ -822,10 +876,23 @@
     "login_url_desc": "Digitar URL da escola",
     "login_direct": "Login direto",
     "login_direct_desc": "Usuário e senha",
+    "biometric_title": "Desbloquear com biometria",
+    "biometric_subtitle": "Use Face ID, Touch ID, impressão digital ou Windows Hello para desbloquear o DesQTA rapidamente.",
+    "biometric_enable": "Ativar desbloqueio biométrico",
+    "biometric_skip": "Pular por agora",
+    "biometric_unlock": "Desbloquear",
+    "biometric_unavailable": "A autenticação biométrica não está disponível neste dispositivo.",
     "ready_title": "Tudo pronto!",
     "ready_subtitle": "Entre para explorar seu painel, ferramentas de estudo e muito mais.",
     "sign_in": "Entrar",
     "step_indicator": "Passo {current} de {total}"
+  },
+  "post_login_prompts": {
+    "aria_label": "Configuração pós-login",
+    "usage_stats_title": "Ajude a melhorar o DesQTA",
+    "usage_stats_subtitle": "Gostaria de enviar estatísticas de uso anônimas? Isso nos ajuda a entender como o app é usado e melhorá-lo. Nenhum dado pessoal é coletado.",
+    "usage_stats_yes": "Sim, ajudar a melhorar o DesQTA",
+    "usage_stats_no": "Não, obrigado"
   },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
@@ -886,11 +953,18 @@
     "view_all": "Ver todos",
     "no_notices_today": "Nenhum aviso disponível hoje."
   },
+  "documents": {
+    "loading": "Carregando documentos...",
+    "failed_to_load": "Falha ao carregar documentos",
+    "error_loading": "Erro ao carregar documentos",
+    "no_documents": "Nenhum documento disponível"
+  },
   "reports": {
     "failed_to_load": "Falha ao carregar relatórios.",
     "error_loading": "Erro ao carregar relatórios.",
     "loading": "Carregando relatórios...",
-    "download": "Baixar"
+    "download": "Baixar",
+    "open_failed": "Falha ao abrir relatório"
   },
   "performance": {
     "title": "Resultados do Teste de Desempenho - DesQTA",
@@ -953,7 +1027,9 @@
     "avg_gpu": "GPU Média",
     "errors_count": "{count} erros",
     "warnings_count": "{count} avisos",
-    "no_issues": "Sem problemas"
+    "no_issues": "Sem problemas",
+    "mega_suite_overlay_title": "A executar suite de benchmarks",
+    "mega_suite_overlay_body": "A navegação pelas páginas terminou. As verificações sintéticas (arranque, UI, dados, backend) estão a correr—geralmente 30–90 segundos. Aguarde; os resultados abrem quando terminar."
   },
   "plugins": {
     "installed_title": "Plugin Instalado",

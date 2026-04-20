@@ -7,11 +7,20 @@ on:
         description: 'Release version (e.g., 1.0.1)'
         required: true
         type: string
-      release_notes:
-        description: 'Release notes'
+      previous_tag:
+        description: 'Previous release tag to compare (e.g., v1.0.0). Empty = auto-detect latest'
         required: false
         type: string
-        default: 'Bug fixes and improvements'
+      compatibility:
+        description: 'Platform compatibility (e.g., Windows 10+, macOS 10.13+, Android 8+)'
+        required: false
+        type: string
+        default: 'Windows 10+, macOS 10.13+, Android 8+'
+      tauri_release_notes:
+        description: 'In-app updater notes (Tauri update manifest `notes` field). Shown to users checking for updates.'
+        required: true
+        type: string
+        default: 'Bug fixes and features'
 
 permissions:
   contents: write
@@ -41,6 +50,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
 
       - name: Build Windows
         env:
@@ -81,8 +93,36 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
+      - name: Normalize macOS signing environment
+        env:
+          APPLE_CERTIFICATE_PASSWORD_SECRET: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ "$APPLE_CERTIFICATE_PASSWORD_SECRET" = "__EMPTY__" ]; then
+            echo "APPLE_CERTIFICATE_PASSWORD=" >> "$GITHUB_ENV"
+          else
+            echo "APPLE_CERTIFICATE_PASSWORD=$APPLE_CERTIFICATE_PASSWORD_SECRET" >> "$GITHUB_ENV"
+          fi
+
+      - name: Create App Store Connect API key file
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        run: |
+          key_path="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8"
+          printf '%b' "$APPLE_API_KEY_CONTENT" > "$key_path"
+          echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
       - name: Build macOS Intel
         env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ env.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: pnpm tauri build --target x86_64-apple-darwin
@@ -120,8 +160,36 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
+      - name: Normalize macOS signing environment
+        env:
+          APPLE_CERTIFICATE_PASSWORD_SECRET: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ "$APPLE_CERTIFICATE_PASSWORD_SECRET" = "__EMPTY__" ]; then
+            echo "APPLE_CERTIFICATE_PASSWORD=" >> "$GITHUB_ENV"
+          else
+            echo "APPLE_CERTIFICATE_PASSWORD=$APPLE_CERTIFICATE_PASSWORD_SECRET" >> "$GITHUB_ENV"
+          fi
+
+      - name: Create App Store Connect API key file
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        run: |
+          key_path="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8"
+          printf '%b' "$APPLE_API_KEY_CONTENT" > "$key_path"
+          echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
       - name: Build macOS ARM
         env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ env.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: pnpm tauri build --target aarch64-apple-darwin
@@ -133,6 +201,49 @@ jobs:
           path: |
             src-tauri/target/aarch64-apple-darwin/release/bundle/**
             src-tauri/target/aarch64-apple-darwin/release/*.sig
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev libgtk-3-dev build-essential libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
+      - name: Build Linux (.deb, .AppImage, .rpm)
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: pnpm tauri build
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-builds
+          path: src-tauri/target/release/bundle/
 
   build-android:
     runs-on: ubuntu-latest
@@ -164,6 +275,8 @@ jobs:
         run: |
           rustup target add aarch64-linux-android
           rustup target add armv7-linux-androideabi
+          rustup target add i686-linux-android
+          rustup target add x86_64-linux-android
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
@@ -187,6 +300,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
       - name: Accept Android licenses
         run: |
           yes | sdkmanager --licenses || true
@@ -203,66 +319,69 @@ jobs:
       - name: Fix Gradle Java home
         run: |
           echo "Fixing Gradle Java home for Linux..."
-
-          # Check if gradle.properties exists and show current content
-          echo "Current gradle.properties content:"
-          cat src-tauri/gen/android/gradle.properties || echo "gradle.properties not found"
-
-          # Create gradle.properties with all necessary properties
           cat > src-tauri/gen/android/gradle.properties << EOF
           org.gradle.java.home=$JAVA_HOME
           android.useAndroidX=true
           android.enableJetifier=true
           org.gradle.jvmargs=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
           org.gradle.daemon=false
-          org.gradle.parallel=true
+          org.gradle.parallel=false
           org.gradle.configureondemand=true
+          android.suppressUnsupportedCompileSdk=36
           EOF
 
-          # Also check and fix gradle-wrapper.properties if needed
-          echo "Current gradle-wrapper.properties content:"
-          cat src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties || echo "gradle-wrapper.properties not found"
-
-          echo "Fixed gradle.properties:"
-          cat src-tauri/gen/android/gradle.properties
-
-          echo "JAVA_HOME value: $JAVA_HOME"
-
-      - name: Build Android APK
+      - name: Build Android APKs (all architectures)
         run: |
           echo "Building with JAVA_HOME: $JAVA_HOME"
-          echo "Building with GRADLE_OPTS: $GRADLE_OPTS"
           JAVA_HOME=$JAVA_HOME GRADLE_OPTS="-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" pnpm tauri android build
 
-          # Verify only the APK exists (not AAB or other files)
-          echo "Built Android artifacts:"
-          find src-tauri/gen/android/app/build/outputs -type f -name "*.apk" | head -10
+      - name: List built APKs
+        run: |
+          echo "Built Android APKs:"
+          find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -type f
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-builds
-          path: |
-            src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/*/release/*.apk
 
   create-release:
-    needs: [build-windows, build-macos-intel, build-macos-arm, build-android]
+    needs: [build-windows, build-macos-intel, build-macos-arm, build-linux, build-android]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Find artifact files
+      - name: Find updater artifact files
         id: find-files
         run: |
-          windows_exe=$(find artifacts/windows-x86_64 -name '*.exe' -not -name '*.sig' | head -1)
-          windows_file=$(basename "$windows_exe")
-          echo "windows_file=$windows_file" >> $GITHUB_OUTPUT
+          output_file() {
+            local key="$1"
+            local path="$2"
+            if [ -n "$path" ]; then
+              echo "$key=$(basename "$path")" >> "$GITHUB_OUTPUT"
+            else
+              echo "$key=" >> "$GITHUB_OUTPUT"
+            fi
+          }
+
+          windows_exe=$(find artifacts/windows-x86_64 -type f \( -name '*.exe' -o -name '*.msi' \) -not -name '*.sig' | head -1)
+          macos_x86_app=$(find artifacts/darwin-x86_64 -type f \( -name '*.app.tar.gz' -o -name '*.dmg' \) -not -name '*.sig' | head -1)
+          macos_arm_app=$(find artifacts/darwin-aarch64 -type f \( -name '*.app.tar.gz' -o -name '*.dmg' \) -not -name '*.sig' | head -1)
+          linux_appimage=$(find artifacts/linux-builds -type f -name '*.AppImage.tar.gz' -not -name '*.sig' | head -1)
+
+          output_file windows_file "$windows_exe"
+          output_file macos_x86_file "$macos_x86_app"
+          output_file macos_arm_file "$macos_arm_app"
+          output_file linux_x86_file "$linux_appimage"
 
       - name: Get release asset URLs
         id: get-urls
@@ -271,59 +390,121 @@ jobs:
           REPO="BetterSEQTA/DesQTA"
           echo "base_url=https://github.com/$REPO/releases/download/$RELEASE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Read signature files
+      - name: Read updater signatures
         id: read-sigs
         run: |
-          # Find Windows signature (for .exe file)
-          windows_sig_file=$(find artifacts/windows-x86_64 -name '*.exe.sig' -o -name '*setup.exe.sig' | head -1)
+          read_sig() {
+            local file_path="$1"
+            if [ -n "$file_path" ] && [ -f "$file_path" ]; then
+              tr -d '\n' < "$file_path"
+            fi
+          }
+
+          windows_sig_file=$(find artifacts/windows-x86_64 -type f \( -name '*.exe.sig' -o -name '*.msi.sig' -o -name '*setup.exe.sig' \) | head -1)
           if [ -z "$windows_sig_file" ]; then
-            windows_sig_file=$(find artifacts/windows-x86_64 -name '*.sig' | grep -E '(exe|setup)' | head -1)
+            windows_sig_file=$(find artifacts/windows-x86_64 -type f -name '*.sig' | grep -E '(exe|msi|setup)' | head -1)
           fi
-          windows_sig=$(cat "$windows_sig_file" | tr -d '\n')
+          macos_x86_sig_file=$(find artifacts/darwin-x86_64 -type f \( -name '*.app.tar.gz.sig' -o -name '*.dmg.sig' \) | head -1)
+          macos_arm_sig_file=$(find artifacts/darwin-aarch64 -type f \( -name '*.app.tar.gz.sig' -o -name '*.dmg.sig' \) | head -1)
+          linux_x86_sig_file=$(find artifacts/linux-builds -type f -name '*.AppImage.tar.gz.sig' | head -1)
+
+          windows_sig=$(read_sig "$windows_sig_file")
+          macos_x86_sig=$(read_sig "$macos_x86_sig_file")
+          macos_arm_sig=$(read_sig "$macos_arm_sig_file")
+          linux_x86_sig=$(read_sig "$linux_x86_sig_file")
+
           echo "windows_sig<<EOF" >> $GITHUB_OUTPUT
           echo "$windows_sig" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+          echo "macos_x86_sig<<EOF" >> $GITHUB_OUTPUT
+          echo "$macos_x86_sig" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "macos_arm_sig<<EOF" >> $GITHUB_OUTPUT
+          echo "$macos_arm_sig" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "linux_x86_sig<<EOF" >> $GITHUB_OUTPUT
+          echo "$linux_x86_sig" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Collect artifact paths for release
+        id: artifact-paths
+        run: |
+          paths=$(find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.sig' -o -name '*.dmg' -o -name '*.apk' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.rpm' \) | tr '\n' ',')
+          paths="${paths%,}"
+          echo "paths=$paths" >> $GITHUB_OUTPUT
+
+      - name: Create draft release and upload assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="v${{ inputs.version }}"
+          mapfile -t ASSETS < <(echo "${{ steps.artifact-paths.outputs.paths }}" | tr ',' '\n' | grep -v '^$' || true)
+          VALID_ASSETS=()
+          for f in "${ASSETS[@]}"; do
+            [ -f "$f" ] && VALID_ASSETS+=("$f")
+          done
+          TITLE="DesQTA v${{ inputs.version }}"
+          EMPTY_NOTES=$(mktemp)
+          : > "$EMPTY_NOTES"
+          trap 'rm -f "$EMPTY_NOTES"' EXIT
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file "$EMPTY_NOTES"
+            for f in "${VALID_ASSETS[@]}"; do
+              gh release upload "$TAG" "$f" --clobber
+            done
+          else
+            if [ ${#VALID_ASSETS[@]} -eq 0 ]; then
+              gh release create "$TAG" --draft --title "$TITLE" --notes-file "$EMPTY_NOTES"
+            else
+              gh release create "$TAG" --draft --title "$TITLE" --notes-file "$EMPTY_NOTES" "${VALID_ASSETS[@]}"
+            fi
+          fi
+
       - name: Generate update manifest
         run: |
-          cat > update-manifest.json <<EOF
-          {
-            "version": "${{ inputs.version }}",
-            "notes": "${{ inputs.release_notes }}",
-            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "platforms": {
-              "windows-x86_64": {
-                "signature": "${{ steps.read-sigs.outputs.windows_sig }}",
-                "url": "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.windows_file }}"
-              }
+          jq -n \
+            --arg version "${{ inputs.version }}" \
+            --arg notes "${{ inputs.tauri_release_notes }}" \
+            --arg compat "${{ inputs.compatibility }}" \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg windows_sig "${{ steps.read-sigs.outputs.windows_sig }}" \
+            --arg windows_url "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.windows_file }}" \
+            --arg macos_x86_sig "${{ steps.read-sigs.outputs.macos_x86_sig }}" \
+            --arg macos_x86_url "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.macos_x86_file }}" \
+            --arg macos_arm_sig "${{ steps.read-sigs.outputs.macos_arm_sig }}" \
+            --arg macos_arm_url "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.macos_arm_file }}" \
+            --arg linux_x86_sig "${{ steps.read-sigs.outputs.linux_x86_sig }}" \
+            --arg linux_x86_url "${{ steps.get-urls.outputs.base_url }}/${{ steps.find-files.outputs.linux_x86_file }}" \
+            '
+            def platform(sig; url):
+              if (sig | length) > 0 and (url | length) > 0 and (url | endswith("/") | not)
+              then { signature: sig, url: url }
+              else null
+              end;
+            {
+              version: $version,
+              notes: ($notes + "\n\n**Compatibility:** " + $compat),
+              pub_date: $pub_date,
+              platforms: (
+                {
+                  "windows-x86_64": platform($windows_sig; $windows_url),
+                  "darwin-x86_64": platform($macos_x86_sig; $macos_x86_url),
+                  "darwin-aarch64": platform($macos_arm_sig; $macos_arm_url),
+                  "linux-x86_64": platform($linux_x86_sig; $linux_x86_url)
+                }
+                | with_entries(select(.value != null))
+              )
             }
-          }
-          EOF
+            ' > update-manifest.json
           cat update-manifest.json
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ inputs.version }}
-          name: 'DesQTA v${{ inputs.version }}'
-          body: |
-            ${{ inputs.release_notes }}
-
-            ## Downloads
-            - **Windows (x64)**: `DesQTA_Setup.exe`
-            - **macOS (Intel)**: `DesQTA_1.0.0-3_x64.dmg`
-            - **macOS (Apple Silicon)**: `DesQTA_1.0.0-3_aarch64.dmg`
-            - **Android**: APK files available in release assets
-          draft: true
-          files: |
-            artifacts/windows-x86_64/**/*.exe
-            artifacts/windows-x86_64/**/*.msi
-            artifacts/windows-x86_64/**/*.exe.sig
-            artifacts/windows-x86_64/**/*.msi.sig
-            artifacts/darwin-x86_64/**/*.dmg
-            artifacts/darwin-aarch64/**/*.dmg
-            artifacts/android-builds/**/*.apk
-            update-manifest.json
+      - name: Upload manifest to release
+        run: |
+          gh release upload "v${{ inputs.version }}" update-manifest.json --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

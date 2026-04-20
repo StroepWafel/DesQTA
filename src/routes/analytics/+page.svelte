@@ -2,15 +2,20 @@
   import { onMount, onDestroy } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import type { AnalyticsData, Assessment } from '$lib/types';
-  import { fade } from 'svelte/transition';
+  import { fade, fly } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { Button, Badge, SearchInput, EmptyState } from '$lib/components/ui';
   import { ExclamationTriangle, ChartBar } from 'svelte-hero-icons';
   import RawDataTable from '$lib/components/RawDataTable.svelte';
   import AnalyticsAreaChart from '$lib/components/analytics/AnalyticsAreaChart.svelte';
   import AnalyticsBarChart from '$lib/components/analytics/AnalyticsBarChart.svelte';
   import * as Card from '$lib/components/ui/card/index.js';
-  import * as Select from '$lib/components/ui/select/index.js';
   import * as Label from '$lib/components/ui/label/index.js';
+  import { clickOutside } from '$lib/actions/clickOutside.js';
+  import { ChevronDown } from 'svelte-hero-icons';
   import { Slider } from '$lib/components/ui/slider/index.js';
   import { Icon } from 'svelte-hero-icons';
   import T from '$lib/components/T.svelte';
@@ -42,6 +47,7 @@
   let filterMaxGrade: number | null = $state(null);
   let filterSearch = $state('');
   let gradeRange = $state([0, 100]);
+  let showSubjectsDropdown = $state(false);
 
   function isValidDate(dateStr: string): boolean {
     const date = new Date(dateStr);
@@ -317,7 +323,7 @@
   }
 </script>
 
-<div class="container px-6 py-7 mx-auto flex flex-col h-full gap-8">
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-8">
   <div class="flex justify-between items-start">
     <div class="flex-1">
       <div class="flex items-center gap-3 mb-2">
@@ -355,9 +361,14 @@
   {:else if analyticsData && analyticsData.length > 0}
     <!-- Compact filters near heading -->
     <div class="flex flex-wrap items-center gap-4 -mb-4" in:fade={{ duration: 400 }}>
-      <Select.Root type="multiple" bind:value={filterSubjects}>
-        <Select.Trigger class="w-44">
-          <span class="truncate">
+      <div class="relative" use:clickOutside={() => (showSubjectsDropdown = false)}>
+        <button
+          type="button"
+          class="flex gap-2 items-center min-h-[44px] w-44 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring transition-all duration-200"
+          onclick={() => (showSubjectsDropdown = !showSubjectsDropdown)}
+          aria-expanded={showSubjectsDropdown}
+          aria-haspopup="listbox">
+          <span class="truncate flex-1 text-left text-sm">
             {#if filterSubjects.length === 0}
               <T key="analytics.all_subjects" fallback="All Subjects" />
             {:else if filterSubjects.length === 1}
@@ -369,13 +380,48 @@
                 values={{ count: filterSubjects.length }} />
             {/if}
           </span>
-        </Select.Trigger>
-        <Select.Content>
-          {#each uniqueSubjects() as subject}
-            <Select.Item value={subject} label={subject}>{subject}</Select.Item>
-          {/each}
-        </Select.Content>
-      </Select.Root>
+          <Icon src={ChevronDown} class="w-4 h-4 shrink-0 text-zinc-500 transition-transform duration-200 {showSubjectsDropdown ? 'rotate-180' : ''}" />
+        </button>
+        {#if showSubjectsDropdown}
+          <div
+            class="absolute left-0 z-50 mt-2 w-56 max-h-48 overflow-y-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1"
+            role="listbox"
+            transition:fly={{ y: -6, duration: 150, easing: cubicOut }}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={filterSubjects.length === 0}
+              class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {filterSubjects.length === 0
+                ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
+                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+              onclick={() => {
+                filterSubjects = [];
+                showSubjectsDropdown = false;
+              }}>
+              <span class="w-4 shrink-0 flex justify-center">{filterSubjects.length === 0 ? '✓' : ''}</span>
+              <T key="analytics.all_subjects" fallback="All Subjects" />
+            </button>
+            {#each uniqueSubjects() as subject}
+              {@const isSelected = filterSubjects.includes(subject)}
+              <button
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {isSelected
+                  ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
+                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+                onclick={() => {
+                  filterSubjects = isSelected
+                    ? filterSubjects.filter((s) => s !== subject)
+                    : [...filterSubjects, subject];
+                }}>
+                <span class="w-4 shrink-0 flex justify-center">{isSelected ? '✓' : ''}</span>
+                <span class="truncate">{subject}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
 
       <div class="flex items-center gap-2">
         <Label.Root class="text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">

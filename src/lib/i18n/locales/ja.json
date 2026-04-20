@@ -17,7 +17,15 @@
     "clear": "クリア",
     "refresh": "更新",
     "settings": "設定",
-    "close_theme_builder": "テーマビルダーを閉じる"
+    "close_theme_builder": "テーマビルダーを閉じる",
+    "move_up": "上へ",
+    "move_down": "下へ",
+    "add_folder": "フォルダを追加",
+    "retry": "再試行",
+    "retrying": "再試行中...",
+    "try_again": "もう一度試す",
+    "saving": "保存中...",
+    "back": "戻る"
   },
   "focus_timer": {
     "title": "集中タイマー",
@@ -109,6 +117,7 @@
     "folios": "ポートフォリオ",
     "close_sidebar": "サイドバーを閉じる",
     "menu": "メニュー",
+    "more": "その他",
     "qr_signin": "QRサインイン",
     "welcome": "ようこそ"
   },
@@ -122,7 +131,11 @@
     "minimize": "最小化",
     "maximize": "最大化",
     "close": "閉じる",
-    "notifications": "通知"
+    "notifications": "通知",
+    "cloud_signed_in": "BetterSEQTA Plusにサインイン中",
+    "cloud_not_signed_in": "BetterSEQTA Plusにサインインしていません",
+    "cloud_signed_out_message": "BetterSEQTA Plusからサインアウトしました。設定でサインインしてデバイス間でデータを同期してください。",
+    "cloud_go_to_settings": "設定へ"
   },
   "login": {
     "welcome_to": "ようこそ",
@@ -137,6 +150,8 @@
     "scan_camera": "カメラでスキャン",
     "how_get_qr": "QRコードの取得方法は？",
     "manual_login": "手動ログイン",
+    "manual_url": "手動URL",
+    "qr_code": "QRコード",
     "enter_url": "学校のSEQTA URLを入力",
     "url_placeholder": "school.seqta.com.au",
     "sign_in": "DesQTAにサインイン",
@@ -163,7 +178,49 @@
     "feature_analytics_desc": "パフォーマンスデータ",
     "feature_settings_desc": "アプリ設定",
     "fill_all_fields": "すべての項目を入力してください",
-    "failed_credentials": "ログインに失敗しました。認証情報を確認してください。"
+    "failed_credentials": "ログインに失敗しました。認証情報を確認してください。",
+    "not_working_try_direct": "うまくいきませんか？",
+    "try_direct_login_link": "直接ログインを試す"
+  },
+  "features": {
+    "lightning_fast": "超高速パフォーマンス",
+    "qr_login": "シームレスなQRコードログイン",
+    "beautiful_ui": "美しく直感的なインターフェース",
+    "analytics": "高度な分析ダッシュボード",
+    "notifications": "リアルタイム通知",
+    "offline": "オフライン対応",
+    "cross_platform": "クロスプラットフォーム互換性",
+    "security": "強化されたセキュリティ機能",
+    "themes": "カスタマイズ可能なテーマ",
+    "predictions": "スマート成績予測"
+  },
+  "qr_instructions": {
+    "title": "QRコードの取得方法",
+    "subtitle": "SEQTAモバイルアプリのQRコードを取得する手順",
+    "step1_title": "ブラウザでSEQTAを開く",
+    "step1_desc": "学校のSEQTA URL（例：yourschool.seqta.com.au）にアクセスし、通常の認証情報でログインしてください。",
+    "step2_title": "設定に移動",
+    "step2_desc": "ログイン後、設定セクションを探してください。通常は左サイドバーにあります。",
+    "step3_title": "「モバイルアプリを接続」をクリック",
+    "step3_desc": "「モバイルアプリを接続」または「モバイルデバイス」オプションを見つけてクリックしてください。これでモバイルアプリ接続プロセスが開始されます。",
+    "step4_title": "メールを確認",
+    "step4_desc": "SEQTAが登録済みの学校メールアドレスにメールを送信します。このメールにDesQTAに必要なQRコードが含まれています。",
+    "step4_note": "メールが届くまで数分かかる場合があります。見つからない場合は迷惑メールフォルダを確認してください。",
+    "step5_title": "QRコードをスクリーンショットまたは保存",
+    "step5_desc": "メールを開き、QRコードのスクリーンショットを撮るか、QRコード画像をデバイスに保存してください。",
+    "step5_desktop": "QRコードを右クリック → 「画像として保存...」",
+    "step5_mobile": "QRコードを長押し → 「写真に保存」またはスクリーンショット",
+    "step6_title": "DesQTAにアップロード",
+    "step6_desc": "DesQTAに戻り、「QRコードをアップロード」ボタンを使用して保存した画像を選択してアップロードしてください。DesQTAが自動的にログインします！",
+    "help_title": "さらにヘルプが必要ですか？",
+    "help_desc": "「モバイルアプリを接続」オプションが見つからない場合、学校によって異なる名前で呼ばれている可能性があります：",
+    "help_options": ["モバイルデバイス登録", "アプリ設定", "QRコード設定", "デバイスを接続"],
+    "help_contact": "まだこのオプションが見つからない場合は、学校のITサポートにお問い合わせください。",
+    "got_it": "わかりました、ありがとう！"
+  },
+  "dev": {
+    "mock_api": "モックAPIバックエンド",
+    "mock_desc": "ライブSEQTA API呼び出しを安全なモックデータに置き換えます。"
   },
   "about": {
     "title": "DesQTAについて",
@@ -252,11 +309,30 @@
     "ai_lesson_summary": "AI授業要約",
     "ai_summary_desc": "この授業のコンテンツとリソースに対してAI駆動の要約と実行可能なステップを生成します。",
     "generating": "生成中...",
+    "generating_summary": "要約を生成中...",
     "generate_summary": "要約を生成",
+    "summarize": "要約する",
+    "expand_content": "コンテンツを展開",
+    "view_original": "元の表示",
+    "view_ai_summary": "AI要約を表示",
+    "regenerate": "再生成",
+    "analyzing_content": "授業内容を分析中",
     "summary": "要約",
     "steps": "ステップ",
     "homework_notes": "宿題/ノート",
-    "lesson_resources": "授業リソース"
+    "lesson_resources": "授業リソース",
+    "resource_download_failed": "リソースのダウンロードに失敗しました。もう一度お試しください。",
+    "document_parse_error": "コースコンテンツを読み込めません。ドキュメントが破損している可能性があります。",
+    "course_files": "コースファイル",
+    "today": "今日",
+    "tomorrow": "明日",
+    "yesterday": "昨日",
+    "breadcrumb_separator": "›",
+    "breadcrumb_term_week": "学期{term} 第{week}週",
+    "no_lesson_content": "レッスンコンテンツはまだ利用できません",
+    "no_lesson_content_desc": "このレッスンのコンテンツはまだ公開されていない可能性があります。更新を確認するには更新してください。",
+    "refresh_from_api": "サーバーから更新",
+    "go_to_overview": "コース概要へ"
   },
   "goals": {
     "no_cached_data": "キャッシュされたデータがありません",
@@ -421,7 +497,10 @@
     "export_pdf": "PDFとしてエクスポート",
     "pdf_description": "ポータブルドキュメント形式",
     "export_ical": "iCalとしてエクスポート",
-    "ical_description": "カレンダー（.ics）形式"
+    "ical_description": "カレンダー（.ics）形式",
+    "download_csv_success": "時間割をダウンロードフォルダに保存しました",
+    "download_pdf_success": "時間割をダウンロードフォルダに保存しました",
+    "download_ical_success": "時間割をダウンロードフォルダに保存しました"
   },
   "study": {
     "page_description": "今後の作業を計画し、追跡し、集中しましょう。",
@@ -470,6 +549,7 @@
     "get_new_tip": "新しい学習のコツを取得"
   },
   "messages": {
+    "page_description": "SEQTAとRSSメッセージを表示・管理します。",
     "failed_to_load": "メッセージの読み込みに失敗しました。",
     "failed_to_load_no_cache": "メッセージの読み込みに失敗し、キャッシュデータもありません",
     "failed_to_load_message": "メッセージの読み込みに失敗しました。",
@@ -532,10 +612,16 @@
     "accept_cloud_eula": "BetterSEQTAクラウドEULAに同意",
     "cloud_eula_description": "クラウド機能を使用する前に、クラウド同期EULAを読んで同意する必要があります。",
     "read_accept": "読んで同意",
+    "sync_cloud_pfp": "BetterSEQTA クラウドのプロフィール写真をローカル写真として使用",
+    "sync_cloud_pfp_description": "クラウドのアバターをダウンロードしてアプリヘッダーと同期させます。",
     "personal_settings": "個人設定",
     "personal_settings_description": "個人プロファイルと設定をカスタマイズ",
     "custom_profile_picture": "カスタムプロファイル画像",
     "profile_picture_description": "アプリヘッダーに表示されるカスタムプロファイル画像をアップロード",
+    "crop": "切り抜き",
+    "crop_profile_picture": "プロフィール画像を切り抜く",
+    "save_crop": "保存",
+    "saving": "保存中...",
     "uploading": "アップロード中...",
     "upload": "アップロード",
     "language": "言語",
@@ -572,6 +658,12 @@
     "dark": "ダーク",
     "system": "システム",
     "theme_mode_description": "ライトモード、ダークモードを選択するか、システム設定に従います。",
+    "minimize_to_tray": "閉じたときにシステムトレイでアプリを実行し続ける",
+    "minimize_to_tray_description": "有効にすると、ウィンドウを閉じるとDesQTAがシステムトレイに最小化されます。無効にすると、閉じるとアプリが完全に終了します。",
+    "security": "セキュリティ",
+    "security_description": "生体認証でアプリを保護",
+    "biometric_enabled": "生体認証でロック解除 (Face ID、Touch ID、指紋、Windows Hello)",
+    "biometric_enabled_description": "アプリを開くときに生体認証を要求",
     "notifications": "通知",
     "notifications_description": "通知設定を管理",
     "enable_reminder_notifications": "評価リマインダー通知を有効にする",
@@ -692,6 +784,23 @@
     "no_content": "このポータルには利用可能なコンテンツがありません。",
     "failed_to_load_content": "ポータルコンテンツの読み込みに失敗しました"
   },
+  "custom_pages": {
+    "title": "カスタムページ",
+    "description": "サイドバーメニューに表示される全画面ウェブサイト埋め込みを追加",
+    "add": "カスタムページを追加",
+    "edit": "編集",
+    "delete": "削除",
+    "open_external": "新しいウィンドウで開く",
+    "embed_blocked": "このサイトは埋め込めません",
+    "embed_blocked_description": "このウェブサイトはiframeでの表示をブロックしています。新しいウィンドウで開くことができます。",
+    "loading": "読み込み中...",
+    "not_found": "カスタムページが見つかりません",
+    "not_found_description": "このカスタムページは削除されたか、リンクが無効です。",
+    "go_to_settings": "設定へ",
+    "title_placeholder": "ページタイトル",
+    "no_pages": "カスタムページが設定されていません",
+    "no_pages_hint": "サイドバーに全画面ページとして埋め込むウェブサイトを追加"
+  },
   "welcome_portal": {
     "title": "ウェルカムポータル",
     "open_full_screen": "全画面で開く",
@@ -727,10 +836,23 @@
     "login_url_desc": "学校のURLを入力",
     "login_direct": "直接ログイン",
     "login_direct_desc": "ユーザー名とパスワード",
+    "biometric_title": "生体認証でロック解除",
+    "biometric_subtitle": "Face ID、Touch ID、指紋、または Windows Hello で DesQTA を素早くロック解除できます。",
+    "biometric_enable": "生体認証ロック解除を有効にする",
+    "biometric_skip": "今はスキップ",
+    "biometric_unlock": "ロック解除",
+    "biometric_unavailable": "このデバイスでは生体認証は利用できません。",
     "ready_title": "準備完了！",
     "ready_subtitle": "サインインしてダッシュボード、学習ツールなどを探索しましょう。",
     "sign_in": "サインイン",
     "step_indicator": "ステップ {current} / {total}"
+  },
+  "post_login_prompts": {
+    "aria_label": "ログイン後の設定",
+    "usage_stats_title": "DesQTAの改善にご協力ください",
+    "usage_stats_subtitle": "匿名の使用統計を送信しますか？アプリの使用方法を理解し、改善するのに役立ちます。個人データは収集されません。",
+    "usage_stats_yes": "はい、DesQTAの改善に協力します",
+    "usage_stats_no": "いいえ、結構です"
   },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
@@ -791,11 +913,18 @@
     "view_all": "すべて表示",
     "no_notices_today": "本日の通知はありません。"
   },
+  "documents": {
+    "loading": "ドキュメントを読み込み中...",
+    "failed_to_load": "ドキュメントの読み込みに失敗しました",
+    "error_loading": "ドキュメントの読み込みエラー",
+    "no_documents": "ドキュメントがありません"
+  },
   "reports": {
     "failed_to_load": "レポートの読み込みに失敗しました。",
     "error_loading": "レポートの読み込みエラー。",
     "loading": "レポートを読み込み中...",
-    "download": "ダウンロード"
+    "download": "ダウンロード",
+    "open_failed": "レポートを開けませんでした"
   },
   "performance": {
     "title": "パフォーマンステスト結果 - DesQTA",
@@ -858,7 +987,9 @@
     "avg_gpu": "平均GPU",
     "errors_count": "{count}個のエラー",
     "warnings_count": "{count}個の警告",
-    "no_issues": "問題なし"
+    "no_issues": "問題なし",
+    "mega_suite_overlay_title": "ベンチマークを実行中",
+    "mega_suite_overlay_body": "ページ巡回は完了しました。起動・UI・データ・バックエンドの合成チェックを実行中です。通常30〜90秒かかります。完了までお待ちください。終了後に結果が開きます。"
   },
   "plugins": {
     "installed_title": "プラグインがインストールされました",
@@ -876,6 +1007,10 @@
     "quizzes": "クイズ",
     "select_assessment": "評価を選択",
     "custom_topic": "カスタムトピック",
+    "topic_source": "1. トピックを選択",
+    "quiz_options": "2. クイズオプション",
+    "change_options": "オプションを変更",
+    "generate_section": "3. 生成",
     "what_to_study": "何を勉強したいですか？",
     "question_count": "問題数",
     "generate_quiz": "クイズを生成",

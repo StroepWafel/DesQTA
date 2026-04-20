@@ -3,6 +3,11 @@
   import { fade, fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import { page } from '$app/stores';
+  import { platformStore } from '$lib/stores/platform';
+  import { assessmentSubmissionsRefreshStore } from '$lib/stores/assessmentSubmissionsRefresh';
+
+  let isMobile = $derived($platformStore.isMobile);
+  import { invoke } from '@tauri-apps/api/core';
   import { seqtaFetch } from '../../../../utils/netUtil';
   import AssessmentHeader from '../../../../lib/components/AssessmentHeader.svelte';
   import AssessmentTabs from '../../../../lib/components/AssessmentTabs.svelte';
@@ -46,29 +51,36 @@
 
   async function loadAssessmentDetails() {
     try {
-      const res = await seqtaFetch('/seqta/student/assessment/get?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: {
-          assessment: parseInt($page.params.id!),
+      const assessmentId = parseInt($page.params.id!);
+      const metaclassId = parseInt($page.params.metaclass!);
+
+      // Use Tauri command when available - handles mock mode internally and avoids seqtaFetch hang
+      let res: string;
+      try {
+        res = await invoke<string>('get_assessment_detail', {
+          assessment: assessmentId,
           student: 69,
-          metaclass: parseInt($page.params.metaclass!),
-        },
-      });
-      assessmentData = JSON.parse(res).payload;
+          metaclass: metaclassId,
+        });
+      } catch {
+        res = await seqtaFetch('/seqta/student/assessment/get?', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: { assessment: assessmentId, student: 69, metaclass: metaclassId },
+        });
+      }
+
+      const parsed = typeof res === 'string' ? JSON.parse(res) : res;
+      assessmentData = parsed.payload;
 
       // Only fetch submissions if file submission is enabled
       if (assessmentData?.submissionSettings?.fileSubmissionEnabled) {
         const subRes = await seqtaFetch('/seqta/student/assessment/submissions/get?', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json; charset=utf-8' },
-          body: {
-            assessment: parseInt($page.params.id!),
-            student: 69,
-            metaclass: parseInt($page.params.metaclass!),
-          },
+          body: { assessment: assessmentId, student: 69, metaclass: metaclassId },
         });
-        const submissions = JSON.parse(subRes).payload;
+        const submissions = (typeof subRes === 'string' ? JSON.parse(subRes) : subRes).payload;
         allSubmissions = submissions;
       } else {
         allSubmissions = [];
@@ -78,6 +90,24 @@
       error = $_('assessments.failed_to_load') || 'Failed to load assessment details';
     } finally {
       loading = false;
+    }
+  }
+
+  /** Refresh submissions list only (called after upload completes) */
+  async function loadSubmissionsOnly() {
+    if (!assessmentData?.submissionSettings?.fileSubmissionEnabled) return;
+    try {
+      const assessmentId = parseInt($page.params.id!);
+      const metaclassId = parseInt($page.params.metaclass!);
+      const subRes = await seqtaFetch('/seqta/student/assessment/submissions/get?', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: { assessment: assessmentId, student: 69, metaclass: metaclassId },
+      });
+      const submissions = (typeof subRes === 'string' ? JSON.parse(subRes) : subRes).payload;
+      allSubmissions = submissions ?? [];
+    } catch (e) {
+      console.error('Failed to refresh submissions:', e);
     }
   }
 
@@ -93,6 +123,23 @@
   $effect(() => {
     if (tab === 'submissions' && !assessmentData?.submissionSettings?.fileSubmissionEnabled) {
       tab = 'overview';
+    }
+  });
+
+  // Reload submissions when an upload completes (works even if user navigated away during upload)
+  $effect(() => {
+    const refresh = $assessmentSubmissionsRefreshStore;
+    if (!refresh) return;
+    const currentId = parseInt($page.params.id ?? '0');
+    const currentMeta = parseInt($page.params.metaclass ?? '0');
+    if (refresh.assessmentId === currentId && refresh.metaclassId === currentMeta) {
+      assessmentSubmissionsRefreshStore.set(null);
+      // Use loadSubmissionsOnly when we already have assessment data (faster), else full reload
+      if (assessmentData?.submissionSettings?.fileSubmissionEnabled) {
+        loadSubmissionsOnly();
+      } else {
+        loadAssessmentDetails();
+      }
     }
   });
 
@@ -140,7 +187,7 @@
   <AssessmentTabs tabs={availableTabs} activeTab={tab} onTabChange={handleTabChange} />
 
   <!-- Content -->
-  <div class="container px-6 py-8 mx-auto">
+  <div class="container max-w-none w-full p-5 mx-auto">
     {#if loading}
       <div
         class="flex justify-center items-center h-64"
@@ -172,7 +219,8 @@
             submissions={allSubmissions}
             assessmentId={parseInt($page.params.id!)}
             metaclassId={parseInt($page.params.metaclass!)}
-            onUploadComplete={loadAssessmentDetails} />
+            onUploadComplete={loadAssessmentDetails}
+            onDeleteComplete={loadSubmissionsOnly} />
         </div>
       {/if}
     {/if}

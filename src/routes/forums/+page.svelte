@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
   import { seqtaFetch } from '../../utils/netUtil';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import {
     Icon,
@@ -292,10 +295,17 @@
   });
 </script>
 
-<div class="container px-6 py-7 mx-auto">
-  <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
-    <T key="navigation.forums" fallback="Forums" />
-  </h1>
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
+  <div class="flex justify-between items-start">
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.forums" fallback="Forums" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="forums.description" fallback="Discuss and collaborate with your community" />
+      </p>
+    </div>
+  </div>
 
   {#if forumsEnabled === false}
     <div class="flex justify-center items-center h-64">
@@ -500,7 +510,8 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }  .forum-card-animate {
+  }
+  .forum-card-animate {
     animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     opacity: 0;
   }

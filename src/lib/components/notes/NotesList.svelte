@@ -636,7 +636,7 @@
 <!-- Move Note Modal -->
 {#if showMoveNoteModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs mobile-modal-inset"
     transition:fly={{ y: 50, duration: 200 }}>
     <div
       class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-md"

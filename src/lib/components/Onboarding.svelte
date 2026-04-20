@@ -17,6 +17,7 @@
     CalendarDays,
     PaintBrush,
     Cloud,
+    ChartBarSquare,
     UserCircle,
   } from 'svelte-hero-icons';
   import { _ } from '../i18n';
@@ -77,7 +78,7 @@
       descKey: 'onboarding.step_timetable_desc',
       titleFallback: 'View Your Timetable in New Ways',
       descFallback: 'Switch between week, day, month, and list views.',
-      targetSelector: '[data-onboarding="timetable-color"]',
+      targetSelector: '[data-onboarding="timetable-views"]',
       page: '/timetable',
       scrollTo: null,
       icon: CalendarDays,
@@ -103,6 +104,17 @@
       page: '/settings',
       scrollTo: 'cloud-sync',
       icon: Cloud,
+    },
+    {
+      id: 'analytics-optin',
+      titleKey: 'onboarding.step_analytics_optin_title',
+      descKey: 'onboarding.step_analytics_optin_desc',
+      titleFallback: 'Send anonymous usage statistics',
+      descFallback: 'Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected.',
+      targetSelector: '[data-onboarding="analytics-optin"]',
+      page: '/settings',
+      scrollTo: 'analytics-optin',
+      icon: ChartBarSquare,
     },
     {
       id: 'user-dropdown',
@@ -186,6 +198,14 @@
       if (element) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         await new Promise((resolve) => setTimeout(resolve, 600));
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+    }
+    // Special handling for analytics-optin: scroll to element
+    if (step.id === 'analytics-optin') {
+      const element = document.querySelector(`[data-onboarding="analytics-optin"]`);
+      if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         await new Promise((resolve) => setTimeout(resolve, 400));
       }
@@ -288,27 +308,27 @@
 
   const highlightRect = $derived.by(() => getHighlightRect());
 
+  const HEADER_OFFSET = 80; // Keep tooltip below app + page headers
+
   const tooltipStyle = $derived.by(() => {
     if (highlightRect) {
-      const tooltipWidth = 400; // max-w-md
-      const tooltipHeight = 300; // approximate height
-      const spacing = 20;
+      const tooltipWidth = 400;
+      const tooltipHeight = 300;
+      const spacing = 16;
 
-      // Try to position below the element first
       let top = highlightRect.top + highlightRect.height + spacing;
       let left = highlightRect.left;
 
-      // If it would go off the bottom of the viewport, position above instead
-      if (top + tooltipHeight > window.innerHeight) {
-        top = highlightRect.top - tooltipHeight - spacing;
+      if (top + tooltipHeight > window.innerHeight - spacing) {
+        top = Math.max(HEADER_OFFSET, highlightRect.top - tooltipHeight - spacing);
+      }
+      if (top < HEADER_OFFSET) {
+        top = HEADER_OFFSET;
+      }
+      if (top + tooltipHeight > window.innerHeight - spacing) {
+        top = window.innerHeight - tooltipHeight - spacing;
       }
 
-      // Ensure it doesn't go above the viewport
-      if (top < 0) {
-        top = spacing;
-      }
-
-      // Center horizontally relative to the element, but keep within viewport
       left = Math.max(spacing, Math.min(left, window.innerWidth - tooltipWidth - spacing));
 
       return `top: ${top}px; left: ${left}px;`;
@@ -400,7 +420,7 @@
         </div>
         <button
           onclick={skipOnboarding}
-          class="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+          class="min-h-[44px] min-w-[44px] flex items-center justify-center p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200"
           aria-label={$_('onboarding.skip_tour', { default: 'Skip tour' })}>
           <Icon src={XMark} class="w-5 h-5" />
         </button>
@@ -430,20 +450,20 @@
       <div class="flex items-center justify-between gap-3">
         <button
           onclick={skipOnboarding}
-          class="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+          class="min-h-[44px] px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-all duration-200">
           <T key="onboarding.skip_tour" fallback="Skip tour" />
         </button>
         <div class="flex items-center gap-3">
           <button
             onclick={prevStep}
             disabled={currentStep === 0}
-            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+            class="flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
             <Icon src={ChevronLeft} class="w-4 h-4" />
             <span><T key="common.back" fallback="Back" /></span>
           </button>
           <button
             onclick={nextStep}
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            class="flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-lg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style="background-color: var(--accent); --tw-ring-color: var(--accent);"
             onmouseenter={(e) => {
               e.currentTarget.style.opacity = '0.9';

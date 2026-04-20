@@ -3,7 +3,7 @@
   import { PencilSquare, Trash, Star, ArrowUturnLeft, PaperClip } from 'svelte-hero-icons';
   import type { Message, MessageFile } from '../types';
   import { sanitizeHtmlAsync } from '../../../utils/sanitization';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import { buildIframeHtml } from '../utils/iframeHtml';
@@ -21,6 +21,7 @@
     starring,
     deleting,
     restoring,
+    embedded = false,
   } = $props<{
     selectedMessage: Message | null;
     selectedFolder: string;
@@ -33,6 +34,7 @@
     starring: boolean;
     deleting: boolean;
     restoring: boolean;
+    embedded?: boolean;
   }>();
 
   let iframe: HTMLIFrameElement | null = $state(null);
@@ -51,6 +53,16 @@
     } catch (e) {
       console.error('Failed to get SEQTA base URL:', e);
     }
+  }
+
+  function formatArticleDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(undefined, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   }
 
   function formatFileSize(size: string): string {
@@ -92,7 +104,7 @@
   }
 
   async function updateIframeContent() {
-    if (!selectedMessage || !iframe || !iframe.contentWindow) return;
+    if (!selectedMessage || !iframe || !iframe.contentWindow?.document) return;
 
     // Use async Rust-side sanitization for better performance
     const sanitizedContent = await sanitizeHtmlAsync(selectedMessage.body);
@@ -167,26 +179,31 @@
     // Load SEQTA base URL
     loadSeqtaBaseUrl();
 
-    // Set up a resize observer to handle window resizing
-    if (window.ResizeObserver && iframe) {
-      const currentIframe = iframe; // Capture for closure
-      const resizeObserver = new ResizeObserver(() => {
-        if (currentIframe) adjustIframeHeight();
-      });
+    let resizeObserver: ResizeObserver | null = null;
+    let observedEl: HTMLIFrameElement | null = null;
 
-      resizeObserver.observe(currentIframe);
-
-      return () => {
-        resizeObserver.unobserve(currentIframe);
-        // Clean up message listener on unmount
-        if (messageListenerCleanup) {
-          messageListenerCleanup();
-        }
-      };
-    }
+    // Defer observer setup so iframe bind:this is populated (rAF avoids ResizeObserver loop errors)
+    const setupObserver = async () => {
+      await tick();
+      if (window.ResizeObserver && iframe) {
+        observedEl = iframe;
+        let rafId: number | null = null;
+        resizeObserver = new ResizeObserver(() => {
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(() => {
+            if (observedEl) adjustIframeHeight();
+            rafId = null;
+          });
+        });
+        resizeObserver.observe(iframe);
+      }
+    };
+    void setupObserver();
 
     return () => {
-      // Clean up message listener on unmount
+      if (resizeObserver && observedEl) {
+        resizeObserver.unobserve(observedEl);
+      }
       if (messageListenerCleanup) {
         messageListenerCleanup();
       }
@@ -194,115 +211,145 @@
   });
 </script>
 
-<main class="flex flex-col flex-1 py-2 overflow-y-scroll h-full">
+<main class="flex flex-col flex-1 py-2 overflow-y-auto h-full [scrollbar-gutter:stable]">
   {#if selectedMessage}
-    <div class="mx-auto w-full max-w-4xl animate-fadeIn">
+    <div class="w-full min-w-0 animate-fadeIn">
       <div
-        class="overflow-hidden rounded-xl border shadow-lg backdrop-blur-xs border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/40">
-        <div class="p-4 pb-3 border-b sm:p-6 border-zinc-300/50 dark:border-zinc-800/50">
-          <div class="mb-4 text-xl font-bold text-zinc-800 dark:text-zinc-100 sm:text-2xl">
-            {selectedMessage.subject}
-          </div>
-
-          <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-end">
-            <div class="flex items-start gap-3">
-              <div class="shrink-0">
-                {#if detailAvatarUrl && !detailAvatarFailed}
-                  <img
-                    src={detailAvatarUrl}
-                    alt={`Avatar of ${selectedMessage.sender}`}
-                    class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover bg-zinc-200 dark:bg-zinc-800"
-                    onerror={() => (detailAvatarFailed = true)} />
-                {:else}
-                  <div
-                    class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
-                    <span class="text-lg font-bold sm:text-lg"
-                      >{initial(selectedMessage.sender)}</span>
-                  </div>
-                {/if}
+        class={embedded
+          ? ''
+          : 'overflow-hidden rounded-xl border shadow-lg backdrop-blur-xs border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/40'}>
+        <div
+          class={embedded
+            ? 'px-6 sm:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8'
+            : 'p-4 pb-3 border-b sm:p-6 border-zinc-300/50 dark:border-zinc-800/50'}>
+          {#if embedded}
+            <!-- Article-style header for RSS -->
+            <header class="space-y-5">
+              <h1
+                class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white leading-tight tracking-tight">
+                {selectedMessage.subject}
+              </h1>
+              <div
+                class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                <span class="font-medium text-zinc-600 dark:text-zinc-300"
+                  >{selectedMessage.sender}</span>
+                <span class="text-zinc-400 dark:text-zinc-500" aria-hidden="true">·</span>
+                <time datetime={selectedMessage.date} class="tabular-nums">
+                  {formatArticleDate(selectedMessage.date)}
+                </time>
               </div>
-              <div class="space-y-1">
-                <div class="text-sm sm:text-base text-zinc-700 dark:text-zinc-200">
-                  <span class="font-medium">{selectedMessage.sender}</span>
-                </div>
-                <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-                  To: <span class="font-medium text-zinc-700 dark:text-zinc-300"
-                    >{selectedMessage.to}</span>
-                </div>
-              </div>
+              <div class="h-px bg-zinc-200/60 dark:bg-zinc-700/50" role="presentation"></div>
+            </header>
+          {:else}
+            <div
+              class="mb-3 text-xl font-bold text-zinc-900 dark:text-white sm:text-2xl leading-tight">
+              {selectedMessage.subject}
             </div>
 
-            <div class="flex gap-2 items-center sm:gap-3">
-              {#if selectedFolder === 'Trash'}
-                <button
-                  class="flex flex-col justify-center items-center p-1.5 rounded-lg transition-all duration-200 hover:bg-green-400/20 focus:bg-green-400/30 focus:ring-2 focus:ring-green-400/30 focus:outline-hidden"
-                  title="Restore"
-                  onclick={() => selectedMessage && restoreMessage(selectedMessage)}
-                  disabled={restoring}>
-                  {#if restoring}
-                    <div
-                      class="w-4 h-4 rounded-full border-2 animate-spin border-green-400/30 border-t-green-400">
-                    </div>
+            <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-end">
+              <div class="flex items-start gap-3">
+                <div class="shrink-0">
+                  {#if detailAvatarUrl && !detailAvatarFailed}
+                    <img
+                      src={detailAvatarUrl}
+                      alt={`Avatar of ${selectedMessage.sender}`}
+                      class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover bg-zinc-200 dark:bg-zinc-800"
+                      onerror={() => (detailAvatarFailed = true)} />
                   {:else}
-                    <Icon src={ArrowUturnLeft} class="mb-0.5 w-4 h-4 text-green-400" />
-                  {/if}
-                  <span class="text-xs font-medium text-green-400 sm:text-sm">Restore</span>
-                </button>
-              {:else if selectedFolder === 'Starred'}
-                <button
-                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
-                  title="Unstar"
-                  onclick={() => selectedMessage && starMessage(selectedMessage)}
-                  disabled={starring || !selectedMessage.starred}>
-                  {#if starring}
                     <div
-                      class="w-5 h-5 rounded-full border-2 animate-spin border-yellow-400/30 border-t-yellow-400">
+                      class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300">
+                      <span class="text-lg font-bold sm:text-lg"
+                        >{initial(selectedMessage.sender)}</span>
                     </div>
-                  {:else}
-                    <Icon src={Star} class="w-5 h-5 text-yellow-400" solid={true} />
                   {/if}
-                </button>
-              {:else}
-                <button
-                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
-                  title="Star"
-                  onclick={() => selectedMessage && starMessage(selectedMessage)}
-                  disabled={starring || selectedMessage.starred}>
-                  {#if starring}
-                    <div
-                      class="w-5 h-5 rounded-full border-2 animate-spin border-yellow-400/30 border-t-yellow-400">
-                    </div>
-                  {:else}
-                    <Icon src={Star} class="w-5 h-5 text-yellow-400" />
-                  {/if}
-                </button>
-              {/if}
-
-              <button
-                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-red-400/20 focus:bg-red-400/30 focus:ring-2 focus:ring-red-400/30 focus:outline-hidden"
-                title="Delete"
-                onclick={() => selectedMessage && deleteMessage(selectedMessage)}
-                disabled={deleting}>
-                {#if deleting}
-                  <div
-                    class="w-5 h-5 rounded-full border-2 animate-spin border-red-400/30 border-t-red-400">
+                </div>
+                <div class="space-y-1">
+                  <div class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
+                    <span class="font-medium text-zinc-700 dark:text-zinc-200"
+                      >{selectedMessage.sender}</span>
                   </div>
-                {:else}
-                  <Icon src={Trash} class="w-5 h-5 text-red-400" />
-                {/if}
-              </button>
+                  <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+                    To: <span class="font-medium text-zinc-700 dark:text-zinc-300"
+                      >{selectedMessage.to}</span>
+                  </div>
+                </div>
+              </div>
 
-              <button
-                class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-accent-400/20 focus:bg-accent-400/30 focus:ring-2 focus:ring-accent-400/30 focus:outline-hidden"
-                title="Reply"
-                onclick={openCompose}>
-                <Icon src={PencilSquare} class="w-5 h-5 text-accent-400" />
-              </button>
+              <div class="flex gap-2 items-center sm:gap-3">
+                {#if selectedFolder === 'Trash'}
+                  <button
+                    class="flex flex-col justify-center items-center p-1.5 rounded-lg transition-all duration-200 hover:bg-green-400/20 focus:bg-green-400/30 focus:ring-2 focus:ring-green-400/30 focus:outline-hidden"
+                    title="Restore"
+                    onclick={() => selectedMessage && restoreMessage(selectedMessage)}
+                    disabled={restoring}>
+                    {#if restoring}
+                      <div
+                        class="w-4 h-4 rounded-full border-2 animate-spin border-green-400/30 border-t-green-400">
+                      </div>
+                    {:else}
+                      <Icon src={ArrowUturnLeft} class="mb-0.5 w-4 h-4 text-green-400" />
+                    {/if}
+                    <span class="text-xs font-medium text-green-400 sm:text-sm">Restore</span>
+                  </button>
+                {:else if selectedFolder === 'Starred'}
+                  <button
+                    class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
+                    title="Unstar"
+                    onclick={() => selectedMessage && starMessage(selectedMessage)}
+                    disabled={starring || !selectedMessage.starred}>
+                    {#if starring}
+                      <div
+                        class="w-5 h-5 rounded-full border-2 animate-spin border-yellow-400/30 border-t-yellow-400">
+                      </div>
+                    {:else}
+                      <Icon src={Star} class="w-5 h-5 text-yellow-400" solid={true} />
+                    {/if}
+                  </button>
+                {:else}
+                  <button
+                    class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-yellow-400/20 focus:bg-yellow-400/30 focus:ring-2 focus:ring-yellow-400/30 focus:outline-hidden"
+                    title="Star"
+                    onclick={() => selectedMessage && starMessage(selectedMessage)}
+                    disabled={starring || selectedMessage.starred}>
+                    {#if starring}
+                      <div
+                        class="w-5 h-5 rounded-full border-2 animate-spin border-yellow-400/30 border-t-yellow-400">
+                      </div>
+                    {:else}
+                      <Icon src={Star} class="w-5 h-5 text-yellow-400" />
+                    {/if}
+                  </button>
+                {/if}
+
+                <button
+                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-red-400/20 focus:bg-red-400/30 focus:ring-2 focus:ring-red-400/30 focus:outline-hidden"
+                  title="Delete"
+                  onclick={() => selectedMessage && deleteMessage(selectedMessage)}
+                  disabled={deleting}>
+                  {#if deleting}
+                    <div
+                      class="w-5 h-5 rounded-full border-2 animate-spin border-red-400/30 border-t-red-400">
+                    </div>
+                  {:else}
+                    <Icon src={Trash} class="w-5 h-5 text-red-400" />
+                  {/if}
+                </button>
+
+                <button
+                  class="flex justify-center items-center w-8 h-8 rounded-full transition-all duration-200 sm:w-9 sm:h-9 hover:bg-accent-400/20 focus:bg-accent-400/30 focus:ring-2 focus:ring-accent-400/30 focus:outline-hidden"
+                  title="Reply"
+                  onclick={openCompose}>
+                  <Icon src={PencilSquare} class="w-5 h-5 text-accent-400" />
+                </button>
+              </div>
             </div>
-          </div>
+          {/if}
         </div>
 
-        <div class="p-4 sm:p-6">
+        <div
+          class={embedded
+            ? 'px-6 sm:px-8 pt-2 pb-8 sm:pb-12 flex-1 min-h-0 overflow-y-auto'
+            : 'p-4 sm:p-6'}>
           {#if detailLoading}
             <div class="flex justify-center items-center py-12">
               <div
@@ -370,7 +417,7 @@
     <div
       class="flex flex-col justify-center items-center h-full text-center text-zinc-600 dark:text-zinc-400">
       <div
-        class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-linear-to-br from-accent-500 to-accent-500 text-2xl sm:text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] animate-gradient">
+        class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-accent/10 text-accent-600 dark:text-accent-400 text-2xl sm:text-3xl">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="w-8 h-8 sm:w-10 sm:h-10"
@@ -388,22 +435,3 @@
     </div>
   {/if}
 </main>
-
-<style>
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
-
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient 3s ease infinite;
-  }
-</style>

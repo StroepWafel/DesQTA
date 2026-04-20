@@ -273,7 +273,10 @@ pub fn list_profiles() -> Vec<Profile> {
 #[tauri::command]
 pub fn switch_profile(profile_id: String, app: tauri::AppHandle) -> Result<(), String> {
     ProfileManager::set_current_profile(profile_id.clone())?;
-    
+
+    // Invalidate session cache so API calls use the new profile's session (not stale in-memory cache)
+    crate::session::Session::invalidate_cache();
+
     // Reinitialize database for new profile
     crate::database::reinit_database(&app)
         .map_err(|e| format!("Failed to reinitialize database: {}", e))?;

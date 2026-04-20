@@ -1342,7 +1342,7 @@
 
 <!-- Load Theme Modal -->
 {#if showLoadThemeModal}
-  <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" transition:fade>
+  <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 mobile-modal-inset" transition:fade>
     <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl w-full max-w-md" transition:scale>
       <div class="p-6">
         <div class="flex items-center justify-between mb-4">

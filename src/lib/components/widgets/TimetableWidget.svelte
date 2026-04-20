@@ -12,6 +12,8 @@
   import { getMonday, formatDate, parseDate, getDayIndex } from '../../utils/timetableUtils';
   import { exportToCSV, exportToPDF, exportToiCal } from '../../utils/timetableExport';
   import { updateUrlParam } from '../../utils/urlParams';
+  import { toastStore } from '../../stores/toast';
+  import { _ } from '../../i18n';
   import TimetableHeader from './timetable/TimetableHeader.svelte';
   import TimetableWeekView from './timetable/TimetableWeekView.svelte';
   import TimetableDayView from './timetable/TimetableDayView.svelte';
@@ -26,9 +28,39 @@
     initialViewMode?: 'week' | 'day' | 'month' | 'list'; // Initial view mode
     reloadKey?: number; // Key to force reload when changed
     forceReload?: boolean; // If true, force fresh API query (for back navigation)
+    hideHeader?: boolean; // If true, don't render header (for page-level header)
+    /** Controlled mode: when provided, widget uses these instead of internal state */
+    weekStart?: Date;
+    viewMode?: 'week' | 'day' | 'month' | 'list';
+    selectedDate?: Date;
+    onWeekStartChange?: (d: Date) => void;
+    onViewModeChange?: (mode: 'week' | 'day' | 'month' | 'list') => void;
+    onSelectedDateChange?: (d: Date) => void;
+    /** Called when widget is ready for page-level header (handlers + loading state) */
+    onPageHeaderStateReady?: (state: {
+      loadingLessons: boolean;
+      onExportCsv: () => void;
+      onExportPdf: () => void;
+      onExportIcal: () => void;
+    }) => void;
   }
 
-  let { widget, isTemporary = false, initialWeekStart, initialViewMode, reloadKey = 0, forceReload = false }: Props = $props();
+  let {
+    widget,
+    isTemporary = false,
+    initialWeekStart,
+    initialViewMode,
+    reloadKey = 0,
+    forceReload = false,
+    hideHeader = false,
+    weekStart: controlledWeekStart,
+    viewMode: controlledViewMode,
+    selectedDate: controlledSelectedDate,
+    onWeekStartChange,
+    onViewModeChange,
+    onSelectedDateChange,
+    onPageHeaderStateReady,
+  }: Props = $props();
 
   const studentId = 69; // From existing code
 
@@ -37,12 +69,17 @@
   let loadingLessons = $state(true);
   let isLoadingFromNavigation = $state(false); // Track if loading is from navigation (back/forward)
   let error = $state<string | null>(null);
-  let weekStart = $state(initialWeekStart ? getMonday(initialWeekStart) : getMonday(new Date()));
-  let selectedDate = $state(initialWeekStart || new Date());
-  let viewMode = $state<'week' | 'day' | 'month' | 'list'>('week');
+  let internalWeekStart = $state(getMonday(new Date()));
+  let internalSelectedDate = $state(new Date());
+  let internalViewMode = $state<'week' | 'day' | 'month' | 'list'>('week');
   let selectedLesson = $state<TimetableLesson | null>(null);
   let showLessonPopout = $state(false);
   let lessonAnchorElement = $state<HTMLElement | null>(null);
+
+  const isControlled = $derived(!!(controlledWeekStart !== undefined && controlledViewMode !== undefined));
+  const weekStart = $derived(isControlled && controlledWeekStart ? getMonday(controlledWeekStart) : internalWeekStart);
+  const selectedDate = $derived(isControlled && controlledSelectedDate ? controlledSelectedDate : internalSelectedDate);
+  const viewMode = $derived(isControlled && controlledViewMode !== undefined ? controlledViewMode : internalViewMode);
 
   const settings = $derived<TimetableWidgetSettings>({
     viewMode: widget.settings?.viewMode || 'week',
@@ -57,10 +94,11 @@
 
   // Initialize view mode: use initialViewMode if provided, otherwise use settings (only if not temporary)
   $effect(() => {
+    if (isControlled) return;
     if (initialViewMode) {
-      viewMode = initialViewMode;
+      internalViewMode = initialViewMode;
     } else if (!isTemporary && settings.viewMode) {
-      viewMode = settings.viewMode;
+      internalViewMode = settings.viewMode;
     }
   });
 
@@ -177,9 +215,13 @@
     const newDate = new Date(weekStart);
     newDate.setDate(weekStart.getDate() - 7);
     const newWeekStart = getMonday(newDate);
-    weekStart = newWeekStart;
-    selectedDate = newWeekStart;
-    // Update URL for back/forward navigation
+    if (isControlled && onWeekStartChange) {
+      onWeekStartChange(newWeekStart);
+      onSelectedDateChange?.(newWeekStart);
+    } else {
+      internalWeekStart = newWeekStart;
+      internalSelectedDate = newWeekStart;
+    }
     if (isTemporary) {
       await updateUrlParam('date', formatDate(newWeekStart));
     }
@@ -189,9 +231,13 @@
     const newDate = new Date(weekStart);
     newDate.setDate(weekStart.getDate() + 7);
     const newWeekStart = getMonday(newDate);
-    weekStart = newWeekStart;
-    selectedDate = newWeekStart;
-    // Update URL for back/forward navigation
+    if (isControlled && onWeekStartChange) {
+      onWeekStartChange(newWeekStart);
+      onSelectedDateChange?.(newWeekStart);
+    } else {
+      internalWeekStart = newWeekStart;
+      internalSelectedDate = newWeekStart;
+    }
     if (isTemporary) {
       await updateUrlParam('date', formatDate(newWeekStart));
     }
@@ -200,16 +246,24 @@
   async function handleToday() {
     const today = new Date();
     const todayWeekStart = getMonday(today);
-    weekStart = todayWeekStart;
-    selectedDate = today;
-    // Update URL for back/forward navigation
+    if (isControlled && onWeekStartChange) {
+      onWeekStartChange(todayWeekStart);
+      onSelectedDateChange?.(today);
+    } else {
+      internalWeekStart = todayWeekStart;
+      internalSelectedDate = today;
+    }
     if (isTemporary) {
       await updateUrlParam('date', formatDate(today));
     }
   }
 
   function handleViewModeChange(mode: 'week' | 'day' | 'month' | 'list') {
-    viewMode = mode;
+    if (isControlled && onViewModeChange) {
+      onViewModeChange(mode);
+    } else {
+      internalViewMode = mode;
+    }
   }
 
   function handleLessonClick(lesson: TimetableLesson, element: HTMLElement) {
@@ -223,7 +277,9 @@
       const lessonDate = parseDate(lesson.date);
       return lessonDate >= weekStart && lessonDate <= new Date(weekStart.getTime() + 4 * 86400000);
     });
-    exportToCSV(weekLessons, weekStart);
+    if (exportToCSV(weekLessons, weekStart)) {
+      toastStore.success($_('timetable.download_csv_success') || 'Timetable downloaded to Downloads');
+    }
   }
 
   function handleExportPdf() {
@@ -231,7 +287,9 @@
       const lessonDate = parseDate(lesson.date);
       return lessonDate >= weekStart && lessonDate <= new Date(weekStart.getTime() + 4 * 86400000);
     });
-    exportToPDF(weekLessons, weekStart);
+    if (exportToPDF(weekLessons, weekStart)) {
+      toastStore.success($_('timetable.download_pdf_success') || 'Timetable downloaded to Downloads');
+    }
   }
 
   function handleExportIcal() {
@@ -239,7 +297,9 @@
       const lessonDate = parseDate(lesson.date);
       return lessonDate >= weekStart && lessonDate <= new Date(weekStart.getTime() + 4 * 86400000);
     });
-    exportToiCal(weekLessons, weekStart);
+    if (exportToiCal(weekLessons, weekStart)) {
+      toastStore.success($_('timetable.download_ical_success') || 'Timetable downloaded to Downloads');
+    }
   }
 
   // Reload lessons when reloadKey changes (for back/forward navigation)
@@ -257,18 +317,33 @@
     }
   });
 
-  // Update weekStart when initialWeekStart changes
+  // Update weekStart when initialWeekStart changes (uncontrolled only)
   $effect(() => {
-    if (initialWeekStart && isTemporary) {
-      const newWeekStart = getMonday(initialWeekStart);
-      if (newWeekStart.getTime() !== weekStart.getTime()) {
-        weekStart = newWeekStart;
-        selectedDate = initialWeekStart;
-      }
+    const init = initialWeekStart;
+    if (isControlled || !init || !isTemporary) return;
+    const newWeekStart = getMonday(init);
+    if (newWeekStart.getTime() !== internalWeekStart.getTime()) {
+      internalWeekStart = newWeekStart;
+      internalSelectedDate = init;
+    }
+  });
+
+  $effect(() => {
+    if (hideHeader && onPageHeaderStateReady) {
+      onPageHeaderStateReady({
+        loadingLessons: loadingLessons && !isLoadingFromNavigation,
+        onExportCsv: handleExportCsv,
+        onExportPdf: handleExportPdf,
+        onExportIcal: handleExportIcal,
+      });
     }
   });
 
   onMount(() => {
+    if (!isControlled && initialWeekStart) {
+      internalWeekStart = getMonday(initialWeekStart);
+      internalSelectedDate = initialWeekStart;
+    }
     loadLessons();
   });
 </script>
@@ -306,18 +381,20 @@
       <p class="text-zinc-600 dark:text-zinc-400">Please wait while we fetch your schedule...</p>
     </div>
   {:else}
-    <!-- Header -->
-    <TimetableHeader
-      {weekStart}
-      loadingLessons={loadingLessons && !isLoadingFromNavigation}
-      {viewMode}
-      onPrevWeek={handlePrevWeek}
-      onNextWeek={handleNextWeek}
-      onToday={handleToday}
-      onViewModeChange={handleViewModeChange}
-      onExportCsv={handleExportCsv}
-      onExportPdf={handleExportPdf}
-      onExportIcal={handleExportIcal} />
+    {#if !hideHeader}
+      <!-- Header (inside widget card when not using page-level header) -->
+      <TimetableHeader
+        {weekStart}
+        loadingLessons={loadingLessons && !isLoadingFromNavigation}
+        {viewMode}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
+        onToday={handleToday}
+        onViewModeChange={handleViewModeChange}
+        onExportCsv={handleExportCsv}
+        onExportPdf={handleExportPdf}
+        onExportIcal={handleExportIcal} />
+    {/if}
 
     <!-- View Content -->
     <div class="flex-1 min-h-0 overflow-hidden">
@@ -335,8 +412,13 @@
           {selectedLesson}
           onLessonClick={handleLessonClick}
           onDateChange={(date) => {
-            selectedDate = date;
-            weekStart = getMonday(date);
+            if (isControlled && onSelectedDateChange && onWeekStartChange) {
+              onSelectedDateChange(date);
+              onWeekStartChange(getMonday(date));
+            } else {
+              internalSelectedDate = date;
+              internalWeekStart = getMonday(date);
+            }
           }}
           {settings} />
       {:else if viewMode === 'month'}
@@ -346,9 +428,15 @@
           {selectedLesson}
           onLessonClick={handleLessonClick}
           onDateSelect={(date) => {
-            selectedDate = date;
-            weekStart = getMonday(date);
-            viewMode = 'day';
+            if (isControlled && onSelectedDateChange && onWeekStartChange && onViewModeChange) {
+              onSelectedDateChange(date);
+              onWeekStartChange(getMonday(date));
+              onViewModeChange('day');
+            } else {
+              internalSelectedDate = date;
+              internalWeekStart = getMonday(date);
+              internalViewMode = 'day';
+            }
           }}
           {settings} />
       {:else if viewMode === 'list'}

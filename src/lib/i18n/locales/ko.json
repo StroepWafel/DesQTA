@@ -17,7 +17,15 @@
     "clear": "지우기",
     "refresh": "새로고침",
     "settings": "설정",
-    "close_theme_builder": "테마 빌더 닫기"
+    "close_theme_builder": "테마 빌더 닫기",
+    "move_up": "위로",
+    "move_down": "아래로",
+    "add_folder": "폴더 추가",
+    "retry": "다시 시도",
+    "retrying": "다시 시도 중...",
+    "try_again": "다시 시도",
+    "saving": "저장 중...",
+    "back": "뒤로"
   },
   "focus_timer": {
     "title": "집중 타이머",
@@ -109,6 +117,7 @@
     "folios": "포트폴리오",
     "close_sidebar": "사이드바 오버레이 닫기",
     "menu": "메뉴",
+    "more": "더보기",
     "qr_signin": "QR 로그인",
     "welcome": "환영합니다"
   },
@@ -122,7 +131,11 @@
     "minimize": "최소화",
     "maximize": "최대화",
     "close": "닫기",
-    "notifications": "알림"
+    "notifications": "알림",
+    "cloud_signed_in": "BetterSEQTA Plus에 로그인됨",
+    "cloud_not_signed_in": "BetterSEQTA Plus에 로그인되지 않음",
+    "cloud_signed_out_message": "BetterSEQTA Plus에서 로그아웃되었습니다. 설정에서 로그인하여 기기 간 데이터를 동기화하세요.",
+    "cloud_go_to_settings": "설정으로 이동"
   },
   "login": {
     "welcome_to": "환영합니다",
@@ -165,7 +178,9 @@
     "feature_analytics_desc": "Performance data",
     "feature_settings_desc": "App preferences",
     "fill_all_fields": "모든 필드를 입력해 주세요",
-    "failed_credentials": "로그인에 실패했습니다. 자격 증명을 확인하세요."
+    "failed_credentials": "로그인에 실패했습니다. 자격 증명을 확인하세요.",
+    "not_working_try_direct": "작동하지 않나요? ",
+    "try_direct_login_link": "직접 로그인 시도"
   },
   "features": {
     "lightning_fast": "Lightning-fast performance",
@@ -293,12 +308,31 @@
     "select_subject": "Select a subject from the sidebar to get started",
     "ai_lesson_summary": "AI Lesson Summary",
     "ai_summary_desc": "Generate an AI-powered summary and actionable steps for this lesson's content and resources.",
-    "generating": "Generating...",
-    "generate_summary": "Generate Summary",
-    "summary": "Summary",
+    "generating": "생성 중...",
+    "generating_summary": "요약 생성 중...",
+    "generate_summary": "요약 생성",
+    "summarize": "요약",
+    "expand_content": "내용 펼치기",
+    "view_original": "원본 보기",
+    "view_ai_summary": "AI 요약 보기",
+    "regenerate": "다시 생성",
+    "analyzing_content": "수업 내용 분석 중",
+    "summary": "요약",
     "steps": "Steps",
     "homework_notes": "Homework/Notes",
-    "lesson_resources": "Lesson Resources"
+    "lesson_resources": "Lesson Resources",
+    "resource_download_failed": "리소스 다운로드에 실패했습니다. 다시 시도해 주세요.",
+    "document_parse_error": "강의 내용을 불러올 수 없습니다. 문서가 손상되었을 수 있습니다.",
+    "course_files": "강의 파일",
+    "today": "오늘",
+    "tomorrow": "내일",
+    "yesterday": "어제",
+    "breadcrumb_separator": "›",
+    "breadcrumb_term_week": "학기 {term} 주 {week}",
+    "no_lesson_content": "아직 수업 내용을 사용할 수 없습니다",
+    "no_lesson_content_desc": "이 수업의 내용이 아직 게시되지 않았을 수 있습니다. 업데이트를 확인하려면 새로고침하세요.",
+    "refresh_from_api": "서버에서 새로고침",
+    "go_to_overview": "강의 개요로 이동"
   },
   "goals": {
     "no_cached_data": "캐시된 데이터가 없습니다",
@@ -463,7 +497,10 @@
     "export_pdf": "Export as PDF",
     "pdf_description": "Portable document format",
     "export_ical": "Export as iCal",
-    "ical_description": "Calendar (.ics) format"
+    "ical_description": "Calendar (.ics) format",
+    "download_csv_success": "Timetable downloaded to Downloads",
+    "download_pdf_success": "Timetable downloaded to Downloads",
+    "download_ical_success": "Timetable downloaded to Downloads"
   },
   "study": {
     "page_description": "Plan, track, and focus on your upcoming work.",
@@ -514,6 +551,10 @@
     "quizzes": "퀴즈",
     "select_assessment": "평가 선택",
     "custom_topic": "맞춤 주제",
+    "topic_source": "1. 주제 선택",
+    "quiz_options": "2. 퀴즈 옵션",
+    "change_options": "옵션 변경",
+    "generate_section": "3. 생성",
     "what_to_study": "무엇을 공부하고 싶으신가요?",
     "question_count": "문제 수",
     "generate_quiz": "퀴즈 생성",
@@ -560,6 +601,7 @@
     "type_your_answer": "답을 입력하세요..."
   },
   "messages": {
+    "page_description": "SEQTA 및 RSS 메시지를 보고 관리합니다.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "메시지를 불러올 수 없고 캐시된 데이터도 없습니다",
     "failed_to_load_message": "Failed to load message.",
@@ -622,10 +664,16 @@
     "accept_cloud_eula": "Accept BetterSEQTA Cloud EULA",
     "cloud_eula_description": "You must read and accept the Cloud Sync EULA before using cloud features.",
     "read_accept": "Read & Accept",
+    "sync_cloud_pfp": "BetterSEQTA 클라우드 프로필 사진을 로컬 사진으로 사용",
+    "sync_cloud_pfp_description": "클라우드 아바타를 다운로드하여 앱 헤더와 동기화합니다.",
     "personal_settings": "Personal Settings",
     "personal_settings_description": "Customize your personal profile and preferences",
     "custom_profile_picture": "Custom Profile Picture",
     "profile_picture_description": "Upload a custom profile picture that will appear in the app header",
+    "crop": "자르기",
+    "crop_profile_picture": "프로필 사진 자르기",
+    "save_crop": "저장",
+    "saving": "저장 중...",
     "uploading": "Uploading...",
     "upload": "Upload",
     "language": "Language",
@@ -662,6 +710,12 @@
     "dark": "Dark",
     "system": "System",
     "theme_mode_description": "Choose between light mode, dark mode, or follow your system preference.",
+    "minimize_to_tray": "닫을 때 시스템 트레이에서 앱 계속 실행",
+    "minimize_to_tray_description": "활성화하면 창을 닫을 때 DesQTA가 시스템 트레이로 최소화됩니다. 비활성화하면 닫을 때 앱이 완전히 종료됩니다.",
+    "security": "보안",
+    "security_description": "생체 인식으로 앱 보호",
+    "biometric_enabled": "생체 인식으로 잠금 해제 (Face ID, Touch ID, 지문, Windows Hello)",
+    "biometric_enabled_description": "앱을 열 때 생체 인식 인증 필요",
     "notifications": "Notifications",
     "notifications_description": "Manage your notification preferences",
     "enable_reminder_notifications": "Enable assessment reminder notifications",
@@ -817,10 +871,23 @@
     "login_url_desc": "학교 URL 입력",
     "login_direct": "직접 로그인",
     "login_direct_desc": "사용자 이름 및 비밀번호",
+    "biometric_title": "생체 인식으로 잠금 해제",
+    "biometric_subtitle": "Face ID, Touch ID, 지문 또는 Windows Hello를 사용하여 DesQTA를 빠르게 잠금 해제하세요.",
+    "biometric_enable": "생체 인식 잠금 해제 활성화",
+    "biometric_skip": "나중에 하기",
+    "biometric_unlock": "잠금 해제",
+    "biometric_unavailable": "이 기기에서는 생체 인식 인증을 사용할 수 없습니다.",
     "ready_title": "준비 완료!",
     "ready_subtitle": "로그인하여 대시보드, 학습 도구 등을 탐색하세요.",
     "sign_in": "로그인",
     "step_indicator": "단계 {current} / {total}"
+  },
+  "post_login_prompts": {
+    "aria_label": "로그인 후 설정",
+    "usage_stats_title": "DesQTA 개선에 도움을 주세요",
+    "usage_stats_subtitle": "익명 사용 통계를 보내시겠습니까? 앱 사용 방식을 이해하고 개선하는 데 도움이 됩니다. 개인 데이터는 수집되지 않습니다.",
+    "usage_stats_yes": "예, DesQTA 개선에 도움을 주겠습니다",
+    "usage_stats_no": "아니요, 괜찮습니다"
   },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
@@ -881,11 +948,18 @@
     "view_all": "모두 보기",
     "no_notices_today": "오늘 사용 가능한 공지가 없습니다."
   },
+  "documents": {
+    "loading": "문서 로드 중...",
+    "failed_to_load": "문서 로드 실패",
+    "error_loading": "문서 로드 오류",
+    "no_documents": "사용 가능한 문서가 없습니다"
+  },
   "reports": {
     "failed_to_load": "보고서 로드 실패.",
     "error_loading": "보고서 로드 오류.",
     "loading": "보고서 로드 중...",
-    "download": "다운로드"
+    "download": "다운로드",
+    "open_failed": "보고서 열기 실패"
   },
   "performance": {
     "title": "성능 테스트 결과 - DesQTA",
@@ -948,7 +1022,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "문제 없음"
+    "no_issues": "문제 없음",
+    "mega_suite_overlay_title": "벤치마크 실행 중",
+    "mega_suite_overlay_body": "페이지 크롤이 끝났습니다. 합성 검사(시작, UI, 데이터, 백엔드)가 진행 중이며 보통 30~90초 걸립니다. 완료될 때까지 기다려 주세요. 이후 결과 화면이 열립니다."
   },
   "plugins": {
     "installed_title": "플러그인 설치됨",

@@ -33,16 +33,26 @@
     return date.toLocaleString('default', { month: 'long', year: 'numeric' });
   }
 
-  function getAssessmentsForDate(date: Date) {
-    return assessments.filter((a) => {
-      const assessmentDate = new Date(a.due);
-      return (
-        assessmentDate.getDate() === date.getDate() &&
-        assessmentDate.getMonth() === date.getMonth() &&
-        assessmentDate.getFullYear() === date.getFullYear()
-      );
-    });
+  function getLocalDateKey(date: Date): string {
+    // Use local date parts (matches how existing code compares getDate/getMonth/getFullYear)
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
+
+  // Avoid re-filtering `assessments` for every day cell (calendar can render ~42 cells).
+  const assessmentsByDateKey = $derived.by(() => {
+    const grouped = new Map<string, Assessment[]>();
+    for (const assessment of assessments) {
+      const assessmentDate = new Date(assessment.due);
+      const key = getLocalDateKey(assessmentDate);
+      const list = grouped.get(key) ?? [];
+      list.push(assessment);
+      grouped.set(key, list);
+    }
+    return grouped;
+  });
 
   function prevMonth() {
     currentDate = new Date(currentYear, currentMonth - 1, 1);
@@ -110,7 +120,7 @@
 
     {#each Array(getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth())) as _, i}
       {@const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), i + 1)}
-      {@const assessments = getAssessmentsForDate(date)}
+      {@const assessments = assessmentsByDateKey.get(getLocalDateKey(date)) || []}
       {@const isToday = date.toDateString() === new Date().toDateString()}
       <div class="p-1 aspect-square">
         <div

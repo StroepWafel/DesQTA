@@ -65,7 +65,7 @@
 {#if open && lesson}
   <!-- Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm mobile-modal-inset"
     transition:fade={{ duration: 200 }}
     onclick={handleBackdropClick}
     onkeydown={(e) => {
@@ -79,7 +79,7 @@
     tabindex="-1">
     <!-- Modal -->
     <div
-      class="relative w-full max-w-md rounded-2xl border shadow-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200 dark:border-zinc-700 max-h-[90vh] overflow-y-auto"
+      class="relative w-full max-w-md rounded-2xl border shadow-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200 dark:border-zinc-700 max-h-[90vh] overflow-y-auto mobile-modal-max-h"
       transition:scale={{ duration: 300, easing: cubicInOut }}
       style="border-left-color: {lesson.colour}; border-left-width: 4px;">
       <!-- Header -->

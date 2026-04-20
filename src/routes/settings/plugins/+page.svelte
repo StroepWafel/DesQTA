@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { platformStore } from '$lib/stores/platform';
   import { marked } from 'marked';
+
+  let isMobile = $derived($platformStore.isMobile);
   import T from '$lib/components/T.svelte';
   import { _ } from '../../../lib/i18n';
 
@@ -79,7 +82,7 @@
   onMount(loadPlugins);
 </script>
 
-<div class="p-8 mx-auto max-w-4xl">
+<div class="container max-w-none w-full p-5 mx-auto">
   <!-- Notice Banner -->
   <div
     class="p-4 mb-8 text-yellow-200 bg-yellow-900 rounded-lg border border-yellow-700 animate-fade-in">

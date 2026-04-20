@@ -89,6 +89,42 @@ pub async fn has_custom_profile_picture() -> Result<bool, String> {
     Ok(profile_path.exists())
 }
 
+/// Download an image from URL and save as the user's profile picture.
+/// Used for syncing BetterSEQTA cloud profile picture to local.
+#[tauri::command]
+pub async fn save_profile_picture_from_url(url: String) -> Result<String, String> {
+    let client = reqwest::Client::builder()
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch image: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!(
+            "Failed to fetch image: HTTP {}",
+            response.status().as_u16()
+        ));
+    }
+
+    let image_data = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read image bytes: {}", e))?;
+
+    let profile_path = get_profile_picture_path()?;
+    fs::write(&profile_path, &image_data)
+        .map_err(|e| format!("Failed to save profile picture: {}", e))?;
+
+    profile_path
+        .to_str()
+        .ok_or("Failed to convert path to string".to_string())
+        .map(|s| s.to_string())
+}
+
 /// Get profile picture as base64 data URL for web display
 #[tauri::command]
 pub async fn get_profile_picture_data_url() -> Result<Option<String>, String> {

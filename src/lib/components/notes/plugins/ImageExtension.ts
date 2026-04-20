@@ -205,7 +205,9 @@ export const ImageExtension = Node.create<ImageOptions>({
         e.stopPropagation();
         if (typeof getPos === 'function') {
           const pos = getPos();
-          editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
+          if (pos !== undefined) {
+            editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
+          }
         }
       };
 

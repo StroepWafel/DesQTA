@@ -3,7 +3,6 @@
   import { Icon, PencilSquare, Check, Plus, Squares2x2, ArrowPath } from 'svelte-hero-icons';
   import AddWidgetDialog from './AddWidgetDialog.svelte';
   import WidgetTemplates from './WidgetTemplates.svelte';
-  import { widgetService } from '../../services/widgetService';
   import { logger } from '../../../utils/logger';
 
   interface Props {
@@ -31,7 +30,6 @@
   async function handleReset() {
     if (isResetting) return;
 
-    // Confirm reset
     if (
       !confirm(
         'Are you sure you want to reset the layout to default? This will remove all your customizations.',
@@ -42,12 +40,8 @@
 
     isResetting = true;
     try {
-      await widgetService.resetLayout();
-      logger.debug('EditModeToggle', 'handleReset', 'Layout reset successfully');
-      // Trigger layout reload
-      if (onLayoutChange) {
-        onLayoutChange();
-      }
+      logger.debug('EditModeToggle', 'handleReset', 'Layout reset requested');
+      onLayoutChange?.();
     } catch (e) {
       logger.error('EditModeToggle', 'handleReset', `Failed to reset layout: ${e}`, { error: e });
       alert('Failed to reset layout. Please try again.');

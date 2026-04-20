@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { seqtaFetch } from '../../../utils/netUtil';
   import { LoadingSpinner, EmptyState, Button } from '$lib/components/ui';
   import { Icon, Flag, ExclamationTriangle, ChevronLeft, Plus, Check } from 'svelte-hero-icons';
@@ -199,7 +202,7 @@
       const currentContent = editorInstance.getHTML();
       // Only set if editor is empty or just has empty paragraph
       if (!currentContent || currentContent === '<p></p>' || currentContent.trim() === '') {
-        editorInstance.commands.setContent(goalsData.student_notes, false);
+        editorInstance.commands.setContent(goalsData.student_notes, { emitUpdate: false });
         contentInitialized = true;
       }
     }

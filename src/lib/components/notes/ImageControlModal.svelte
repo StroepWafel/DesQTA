@@ -43,7 +43,7 @@
 {#if isOpen}
   <!-- Modal Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs mobile-modal-inset"
     transition:fly={{ y: -50, duration: 200 }}
     onclick={() => dispatch('close')}
     onkeydown={(e) => e.key === 'Escape' && dispatch('close')}

@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import { platformStore } from '$lib/stores/platform';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { Icon } from 'svelte-hero-icons';
   import {
     ChartBar,
@@ -15,6 +18,7 @@
   import * as Card from '$lib/components/ui/card/index.js';
   import { Button } from '$lib/components/ui';
   import PerformanceLineChart from '../../lib/components/performance/PerformanceLineChart.svelte';
+  import MegaPerfPanel from '../../lib/components/performance/MegaPerfPanel.svelte';
   import PerformanceGraph from '../../lib/components/PerformanceGraph.svelte';
   import T from '../../lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
@@ -24,9 +28,9 @@
     SystemMetrics,
   } from '../../lib/services/performanceTesting';
 
-  let results: TestResults | null = null;
-  let loading = true;
-  let error: string | null = null;
+  let results = $state<TestResults | null>(null);
+  let loading = $state(true);
+  let error = $state<string | null>(null);
 
   onMount(() => {
     // Get results from URL params or session storage
@@ -34,7 +38,7 @@
 
     if (resultsParam) {
       try {
-        results = JSON.parse(decodeURIComponent(resultsParam));
+        results = JSON.parse(decodeURIComponent(resultsParam)) as TestResults;
         loading = false;
       } catch (e) {
         error = $_('performance.failed_to_parse_results', {
@@ -47,7 +51,7 @@
       const storedResults = sessionStorage.getItem('performance-test-results');
       if (storedResults) {
         try {
-          results = JSON.parse(storedResults);
+          results = JSON.parse(storedResults) as TestResults;
           loading = false;
         } catch (e) {
           error = $_('performance.failed_to_parse_stored', {
@@ -174,7 +178,7 @@
   <title>{$_('performance.title', { default: 'Performance Test Results - DesQTA' })}</title>
 </svelte:head>
 
-<div class="container px-6 py-7 mx-auto flex flex-col h-full gap-8">
+<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-8">
   <!-- Header -->
   <div class="flex justify-between items-start">
     <div>
@@ -330,6 +334,10 @@
         {/if}
       {/key}
     </div>
+
+    {#if results.megaPerf}
+      <MegaPerfPanel mega={results.megaPerf} />
+    {/if}
 
     <!-- Performance Charts -->
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" in:fade={{ duration: 400, delay: 100 }}>
@@ -877,7 +885,9 @@
               <T key="performance.overall_test_errors" fallback="Overall Test Errors" />
             </Card.Title>
             <Card.Description>
-              <T key="performance.overall_errors_description" fallback="Errors that occurred during the performance test" />
+              <T
+                key="performance.overall_errors_description"
+                fallback="Errors that occurred during the performance test" />
             </Card.Description>
           </Card.Header>
           <Card.Content>

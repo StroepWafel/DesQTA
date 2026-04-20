@@ -64,7 +64,7 @@
         const colourPrefName = `timetable.subject.colour.${lesson.code}`;
         const subjectColour = colours.find((c: any) => c.name === colourPrefName);
 
-        lesson.colour = subjectColour ? `${subjectColour.value}` : `transparent`;
+        lesson.colour = subjectColour ? `${subjectColour.value}` : `var(--accent)`;
 
         lesson.from = lesson.from.substring(0, 5);
         lesson.until = lesson.until.substring(0, 5);
@@ -78,6 +78,14 @@
     if (lessonInterval) clearInterval(lessonInterval);
     checkCurrentLessons();
     lessonInterval = setInterval(checkCurrentLessons, 60_000);
+
+    // Update Android home screen widget with next lesson (any day)
+    try {
+      const { updateNextLessonWidget } = await import('$lib/services/warmupService');
+      await updateNextLessonWidget();
+    } catch {
+      /* ignore */
+    }
   }
 
   function checkCurrentLessons() {
@@ -156,34 +164,34 @@
 </script>
 
 <div
-  class="overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
+  class="flex flex-col h-full w-full min-h-0 overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50">
   <div
-    class="flex flex-col gap-4 justify-between items-start px-3 py-3 bg-linear-to-r border-b sm:flex-row sm:items-center sm:px-4 border-zinc-300/50 dark:border-zinc-700/50 from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30">
-    <span class="text-xl font-semibold text-zinc-900 dark:text-white">{lessonsSubtitle()}</span>
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
-      <!-- Date Picker -->
-      <div class="relative w-full sm:w-auto">
-        <input
-          type="date"
-          value={formatDate(currentSelectedDate)}
-          onchange={onDateChange}
-          class="w-full sm:w-auto px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-accent-500 hover:border-accent-400 dark:hover:border-accent-400"
-          title={$_('dashboard.select_date') || 'Select a date'} />
-        <Icon
-          src={CalendarDays}
-          class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+    class="flex flex-col gap-3 sm:gap-4 justify-between items-start px-3 py-3 shrink-0 bg-linear-to-r border-b sm:flex-row sm:items-center sm:px-4 border-zinc-300/50 dark:border-zinc-700/50 from-zinc-100/70 dark:from-zinc-800/70 to-zinc-100/30 dark:to-zinc-800/30">
+    <span class="text-xl font-semibold text-zinc-900 dark:text-white shrink-0">{lessonsSubtitle()}</span>
+    <!-- Mobile: date + Today + nav on one row for more vertical space for lessons -->
+    <div class="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+      <!-- Date Picker + Today Button (side by side on mobile) -->
+      <div class="flex flex-row items-center gap-2 flex-1 min-w-0 sm:flex-initial">
+        <div class="relative flex-1 min-w-0 sm:w-auto">
+          <input
+            type="date"
+            value={formatDate(currentSelectedDate)}
+            onchange={onDateChange}
+            class="w-full sm:w-auto px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-accent-500 hover:border-accent-400 dark:hover:border-accent-400"
+            title={$_('dashboard.select_date') || 'Select a date'} />
+          <Icon
+            src={CalendarDays}
+            class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+        </div>
+        <button
+          onclick={goToToday}
+          class="shrink-0 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-200 text-zinc-700 dark:text-zinc-300 bg-zinc-200/70 dark:bg-zinc-800/70 hover:accent-bg-hover hover:text-white border-zinc-300/50 dark:border-zinc-700/50 hover:accent-border"
+          title={$_('dashboard.go_to_today') || 'Go to today'}>
+          <T key="dashboard.today" fallback="Today" />
+        </button>
       </div>
-
-      <!-- Today Button -->
-      <button
-        onclick={goToToday}
-        class="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-200 text-zinc-700 dark:text-zinc-300 bg-zinc-200/70 dark:bg-zinc-800/70 hover:accent-bg-hover hover:text-white border-zinc-300/50 dark:border-zinc-700/50 hover:accent-border"
-        title={$_('dashboard.go_to_today') || 'Go to today'}>
-        <T key="dashboard.today" fallback="Today" />
-      </button>
-
       <!-- Navigation Buttons -->
-      <div class="flex gap-1 justify-center sm:justify-start">
+      <div class="flex gap-1 shrink-0">
         <button
           onclick={prevDay}
           class="flex justify-center items-center w-8 h-8 rounded-lg border transition-all duration-300 text-zinc-600 hover:accent-bg-hover dark:text-zinc-400 hover:text-white border-zinc-300/50 dark:border-zinc-700/50 hover:accent-border hover:accent-shadow"
@@ -228,11 +236,11 @@
       </div>
     </div>
   {:else}
-    <div class="flex overflow-x-scroll">
+    <div class="flex flex-1 min-h-0 gap-0 overflow-x-auto overflow-y-hidden">
       {#each lessons as lesson, i}
         <div
-          class="flex relative flex-col w-full max-w-xs border-t-4 group"
-          style="border-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
+          class="flex relative flex-col w-64 sm:w-72 shrink-0 rounded-lg overflow-hidden border border-t-4 border-zinc-200/50 dark:border-zinc-600/40 group"
+          style="border-top-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
           <div class="flex relative flex-col flex-1 gap-2 p-3 backdrop-blur-xs sm:p-4">
             <div class="flex justify-between items-center">
               <span class="text-base font-bold truncate text-zinc-900 sm:text-lg dark:text-white"

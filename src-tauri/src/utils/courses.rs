@@ -30,7 +30,9 @@ pub struct Folder {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileItem {
+    #[serde(default)]
     pub filename: String,
+    #[serde(default)]
     pub size: String,
     pub context_uuid: Option<String>,
     pub mimetype: String,
@@ -59,8 +61,10 @@ pub struct TermSchedule {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserFile {
     pub userfile: Option<i32>,
+    #[serde(default)]
     pub filename: String,
     pub t: String,
+    #[serde(default)]
     pub size: String,
     pub context_uuid: Option<String>,
     pub i: Option<i32>,
@@ -150,8 +154,59 @@ where
 
 // --- Commands ---
 
+/// Return mock folders when dev_sensitive_info_hider is enabled
+fn mock_courses_folders() -> Vec<Folder> {
+    vec![
+        Folder {
+            code: "FOLDER1".to_string(),
+            description: Some("Core Subjects".to_string()),
+            id: Some(1),
+            active: true,
+            subjects: vec![
+                Subject {
+                    code: "MATH".to_string(),
+                    classunit: Some(101),
+                    description: Some("Mathematics".to_string()),
+                    metaclass: 1,
+                    title: "Mathematics".to_string(),
+                    programme: 1,
+                    marksbook_type: Some("A".to_string()),
+                },
+                Subject {
+                    code: "SCI".to_string(),
+                    classunit: Some(102),
+                    description: Some("Science".to_string()),
+                    metaclass: 2,
+                    title: "Science".to_string(),
+                    programme: 1,
+                    marksbook_type: Some("A".to_string()),
+                },
+            ],
+        },
+        Folder {
+            code: "FOLDER2".to_string(),
+            description: Some("Languages".to_string()),
+            id: Some(2),
+            active: true,
+            subjects: vec![Subject {
+                code: "ENG".to_string(),
+                classunit: Some(201),
+                description: Some("English".to_string()),
+                metaclass: 3,
+                title: "English".to_string(),
+                programme: 2,
+                marksbook_type: Some("B".to_string()),
+            }],
+        },
+    ]
+}
+
 #[tauri::command]
 pub async fn get_courses_subjects() -> Result<Vec<Folder>, String> {
+    if crate::settings::Settings::load().dev_sensitive_info_hider {
+        return Ok(mock_courses_folders());
+    }
+
     if let Some(logger) = logger::get_logger() {
         let _ = logger.log(
             logger::LogLevel::INFO,
@@ -203,8 +258,98 @@ pub async fn get_courses_subjects() -> Result<Vec<Folder>, String> {
     Ok(folders)
 }
 
+/// Return mock course content when dev_sensitive_info_hider is enabled
+fn mock_course_content(programme: i32, metaclass: i32) -> CoursePayload {
+    let (code, title) = match (programme, metaclass) {
+        (1, 1) => ("MATH".to_string(), "Mathematics".to_string()),
+        (1, 2) => ("SCI".to_string(), "Science".to_string()),
+        (2, 3) => ("ENG".to_string(), "English".to_string()),
+        _ => ("MOCK".to_string(), "Mock Course".to_string()),
+    };
+
+    let document = json!({
+        "document": {
+            "modules": [
+                {
+                    "uuid": "mod-1",
+                    "type": "title",
+                    "prevModule": null,
+                    "nextModule": "mod-2",
+                    "parentModule": null,
+                    "content": { "value": "Welcome to Mock Course Content" }
+                },
+                {
+                    "uuid": "mod-2",
+                    "type": "textblock",
+                    "prevModule": "mod-1",
+                    "nextModule": null,
+                    "parentModule": null,
+                    "content": {
+                        "content": {
+                            "blocks": [{
+                                "key": "a1",
+                                "text": "This is mock content for demonstration. All data is simulated.",
+                                "type": "unstyled",
+                                "depth": 0,
+                                "inlineStyleRanges": [],
+                                "entityRanges": [],
+                                "data": {}
+                            }],
+                            "entityMap": {}
+                        },
+                        "subcontent": null
+                    }
+                }
+            ],
+            "theme": "default"
+        }
+    });
+
+    let term_schedule = TermSchedule {
+        t: 1,
+        w: 1,
+        l: vec![Lesson {
+            p: Some("1".to_string()),
+            s: "09:00".to_string(),
+            d: "2025-09-01".to_string(),
+            e: "10:00".to_string(),
+        }],
+        n: 0,
+    };
+
+    let lesson_content = WeeklyLessonContent {
+        t: Some("Introduction".to_string()),
+        document: Some(LessonDocument {
+            updated_by: Some(1),
+            contents: "<p>Mock lesson content for demonstration.</p>".to_string(),
+            id: Some(1),
+            updated_date: Some(vec![2025, 9, 1, 9, 0, 0, 0]),
+        }),
+        h: Some("Complete reading and exercises.".to_string()),
+        i: Some(0),
+        l: None,
+        n: Some(0),
+        r: None,
+    };
+
+    CoursePayload {
+        c: code,
+        cf: vec![],
+        t: title,
+        im: None,
+        d: vec![term_schedule],
+        u: Some(format!("mock-{}-{}", programme, metaclass)),
+        document: Some(document.to_string()),
+        w: vec![vec![lesson_content]],
+    }
+}
+
 #[tauri::command]
 pub async fn get_course_content(programme: i32, metaclass: i32) -> Result<CoursePayload, String> {
+    if crate::settings::Settings::load().dev_sensitive_info_hider {
+        return Ok(mock_course_content(programme, metaclass));
+    }
+
     if let Some(logger) = logger::get_logger() {
         let _ = logger.log(
             logger::LogLevel::INFO,

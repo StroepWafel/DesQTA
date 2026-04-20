@@ -3,7 +3,8 @@
   import { onMount, onDestroy } from 'svelte';
   import TimetableLessonBlock from './TimetableLessonBlock.svelte';
   import { Button } from '../../ui';
-  import { Icon, ChevronLeft, ChevronRight } from 'svelte-hero-icons';
+  import EmptyState from '../../EmptyState.svelte';
+  import { Icon, ChevronLeft, ChevronRight, CalendarDays } from 'svelte-hero-icons';
   import type { TimetableLesson, TimetableWidgetSettings } from '$lib/types/timetable';
   import {
     calculateLessonPosition,
@@ -156,7 +157,7 @@
         icon={ChevronLeft}
         onclick={prevDay}
         ariaLabel={$_('timetable.previous_day') || 'Previous day'}
-        class="w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
+        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
       
       <div class="text-center min-w-[200px]">
         <h2
@@ -181,14 +182,14 @@
         icon={ChevronRight}
         onclick={nextDay}
         ariaLabel={$_('timetable.next_day') || 'Next day'}
-        class="w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
+        class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
       
       {#if !isToday}
         <Button
           variant="ghost"
           size="sm"
           onclick={goToToday}
-          class="px-4 py-2 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95">
+          class="min-h-[44px] px-4 py-2 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95">
           {$_('timetable.today') || 'Today'}
         </Button>
       {/if}
@@ -231,19 +232,12 @@
         <!-- Lessons Column -->
         <div class="absolute top-0 right-0 left-[80px] h-full px-4">
           {#if dayLessons.length === 0}
-            <div
-              class="flex flex-col justify-center items-center h-full py-16"
-              transition:fade={{ duration: 200 }}>
-              <div
-                class="w-24 h-24 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-4xl shadow-lg mb-6">
-                📚
-              </div>
-              <h3 class="text-xl font-bold text-zinc-700 dark:text-zinc-300 mb-2">
-                {$_('timetable.no_lessons_today') || 'No Lessons Today'}
-              </h3>
-              <p class="text-zinc-600 dark:text-zinc-400 text-center max-w-md">
-                {$_('timetable.no_lessons_message') || 'Enjoy your free time!'}
-              </p>
+            <div class="flex flex-col justify-center items-center h-full py-16" transition:fade={{ duration: 200 }}>
+              <EmptyState
+                title={$_('timetable.no_lessons_today') || 'No Lessons Today'}
+                message={$_('timetable.no_lessons_message') || 'Enjoy your free time!'}
+                icon={CalendarDays}
+                size="lg" />
             </div>
           {:else}
             {#each dayLessons as lesson, index}

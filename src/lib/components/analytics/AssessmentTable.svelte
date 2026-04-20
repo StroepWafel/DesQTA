@@ -2,6 +2,7 @@
   import type { Assessment } from '$lib/types';
   import { Icon, ChevronDown, ChevronRight } from 'svelte-hero-icons';
   import { slide } from 'svelte/transition';
+  import { hasGradeToShow, primaryGradeDisplay } from '$lib/utils/gradeDisplay';
 
   interface Props {
     data: Assessment[];
@@ -13,28 +14,6 @@
 
   function toggleSubject(subject: string) {
     expandedSubjects[subject] = !expandedSubjects[subject];
-  }
-
-  function getLetterGrade(assessment: Assessment): string {
-    // Use letter grade from assessment if available
-    if (assessment.letterGrade) {
-      return assessment.letterGrade;
-    }
-    
-    // Fallback to custom scale based on percentage
-    const percentage = assessment.finalGrade;
-    if (percentage === undefined) return '';
-    if (percentage >= 90) return 'A+';
-    if (percentage >= 85) return 'A';
-    if (percentage >= 80) return 'A-';
-    if (percentage >= 75) return 'B+';
-    if (percentage >= 70) return 'B';
-    if (percentage >= 65) return 'B-';
-    if (percentage >= 60) return 'C+';
-    if (percentage >= 55) return 'C';
-    if (percentage >= 50) return 'C-';
-    if (percentage >= 40) return 'D';
-    return 'E';
   }
 
   function getStatusColor(status: string): string {
@@ -112,13 +91,10 @@
                   </div>
                 </div>
                 
-                {#if assessment.finalGrade !== undefined}
+                {#if hasGradeToShow(assessment)}
                   <div class="text-right">
                     <div class="text-lg font-bold text-zinc-900 dark:text-white">
-                      {assessment.finalGrade}%
-                    </div>
-                    <div class="text-sm text-zinc-600 dark:text-zinc-400">
-                      {getLetterGrade(assessment)}
+                      {primaryGradeDisplay(assessment)}
                     </div>
                   </div>
                 {:else}

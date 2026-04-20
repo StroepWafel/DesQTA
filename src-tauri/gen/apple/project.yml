@@ -2,7 +2,7 @@ name: desqta
 options:
   bundleIdPrefix: com.desqta.app
   deploymentTarget:
-    iOS: 13.0
+    iOS: 15.0
 fileGroups: [../../src]
 configs:
   debug: debug
@@ -61,9 +61,13 @@ targets:
         RUST_LOG: info
     settings:
       base:
+        CODE_SIGN_IDENTITY: Apple Distribution
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: 5949S6UQCX
+        PROVISIONING_PROFILE_SPECIFIER: Desqta CI
         ENABLE_BITCODE: false
         ARCHS: [arm64, x86_64]
-        VALID_ARCHS: arm64  x86_64 
+        VALID_ARCHS: arm64  x86_64
         LIBRARY_SEARCH_PATHS[arch=x86_64]: $(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)
         LIBRARY_SEARCH_PATHS[arch=arm64]: $(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: true
@@ -80,7 +84,12 @@ targets:
       - sdk: UIKit.framework
       - sdk: WebKit.framework
     preBuildScripts:
-      - script: npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
+      - script: |
+          if [ -f "${SRCROOT:-.}/Externals/arm64/${CONFIGURATION}/libapp.a" ]; then
+            echo "libapp.a exists, skipping Tauri xcode-script (CI pre-build)"
+            exit 0
+          fi
+          npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
         name: Build Rust Code
         basedOnDependencyAnalysis: false
         outputFiles:

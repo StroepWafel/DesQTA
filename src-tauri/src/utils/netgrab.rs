@@ -793,6 +793,97 @@ pub async fn upload_seqta_file(file_name: String, file_path: String) -> Result<S
     }
 }
 
+/// Upload a file and link it to an assessment in one backend operation.
+/// This avoids frontend/seqtaFetch issues when the user navigates away during upload.
+#[tauri::command]
+pub async fn upload_and_link_assessment_file(
+    file_name: String,
+    file_path: String,
+    assessment_id: i32,
+    metaclass_id: i32,
+) -> Result<String, String> {
+    // Step 1: Upload the file
+    let upload_response = upload_seqta_file(file_name.clone(), file_path).await?;
+    let upload_result: Value = serde_json::from_str(&upload_response)
+        .map_err(|e| format!("Failed to parse upload response: {}", e))?;
+
+    let status = upload_result.get("status").and_then(|s| s.as_str());
+    let payload = upload_result.get("payload");
+
+    fn extract_id(v: &Value) -> Option<i64> {
+        if let Some(id) = v.get("id") {
+            return id.as_i64()
+                .or_else(|| id.as_u64().map(|u| u as i64))
+                .or_else(|| id.as_str().and_then(|s| s.parse().ok()));
+        }
+        if let Some(id) = v.get("fileId") {
+            return id.as_i64()
+                .or_else(|| id.as_u64().map(|u| u as i64))
+                .or_else(|| id.as_str().and_then(|s| s.parse().ok()));
+        }
+        // payload might be the id directly (e.g. payload: 12345)
+        v.as_i64()
+            .or_else(|| v.as_u64().map(|u| u as i64))
+            .or_else(|| v.as_str().and_then(|s| s.parse().ok()))
+    }
+
+    let file_id: i64 = payload
+        .and_then(|p| extract_id(p))
+        .or_else(|| extract_id(&upload_result))
+        .ok_or_else(|| {
+            format!(
+                "Upload response missing file id. Response: {}",
+                &upload_response[..upload_response.len().min(300)]
+            )
+        })?;
+
+    let ok_status = status == Some("200")
+        || upload_result.get("status").and_then(|s| s.as_i64()) == Some(200);
+    if !ok_status {
+        return Err(format!(
+            "Upload failed. Response: {}",
+            &upload_response[..upload_response.len().min(200)]
+        ));
+    }
+
+    // Step 2: Link the file to the assessment (all in backend - no frontend dependency)
+    let link_body = json!({
+        "action": "link",
+        "assID": assessment_id,
+        "metaclass": metaclass_id,
+        "files": [file_id]
+    });
+
+    let link_response = fetch_api_data(
+        "/seqta/student/assessment/submissions/save",
+        RequestMethod::POST,
+        Some({
+            let mut headers = HashMap::new();
+            headers.insert(
+                "Content-Type".to_string(),
+                "application/json; charset=utf-8".to_string(),
+            );
+            headers
+        }),
+        Some(link_body),
+        None,
+        false,
+        false,
+        None,
+    )
+    .await?;
+
+    let link_result: Value = serde_json::from_str(&link_response)
+        .map_err(|e| format!("Failed to parse link response: {}", e))?;
+
+    let link_status = link_result.get("status").and_then(|s| s.as_str());
+    if link_status != Some("200") {
+        return Err("Failed to link file to assessment".to_string());
+    }
+
+    Ok(upload_response)
+}
+
 #[tauri::command]
 pub async fn get_rss_feed(feed: &str) -> Result<Value, String> {
     let client = Client::builder()

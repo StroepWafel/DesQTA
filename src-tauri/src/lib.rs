@@ -75,6 +75,8 @@ use tauri_plugin_notification;
 use tauri_plugin_single_instance;
 
 #[cfg(desktop)]
+use tauri_plugin_deep_link::DeepLinkExt;
+#[cfg(desktop)]
 use url::form_urlencoded::parse;
 
 /// Boilerplate example command
@@ -134,13 +136,78 @@ fn get_seqta_base_url() -> String {
     session.base_url
 }
 
+fn get_version_app_data_dir() -> std::path::PathBuf {
+    if cfg!(target_os = "android") {
+        let mut dir = std::path::PathBuf::from("/data/data/com.desqta.app/files");
+        dir.push("DesQTA");
+        dir
+    } else {
+        let mut dir = dirs_next::data_dir().expect("Unable to determine data dir");
+        dir.push("DesQTA");
+        dir
+    }
+}
+
+/// Path for the next-lesson widget data file (Android widget reads from same location).
+fn next_lesson_widget_file_path() -> std::path::PathBuf {
+    let app_data = get_version_app_data_dir();
+    app_data.parent().unwrap().join("next_lesson.json")
+}
+
+/// Set the next lesson for the Android home screen widget.
+/// Call from the frontend when schedule/timetable data is loaded.
+#[tauri::command]
+fn set_next_lesson_for_widget(
+    name: Option<String>,
+    time: Option<String>,
+    room: Option<String>,
+) -> Result<(), String> {
+    let path = next_lesson_widget_file_path();
+    let data = serde_json::json!({
+        "name": name.unwrap_or_default(),
+        "time": time.unwrap_or_default(),
+        "room": room.unwrap_or_default()
+    });
+    fs::write(&path, data.to_string()).map_err(|e| e.to_string())
+}
+
+/// Returns current app version and previous version (if app was just updated).
+#[tauri::command]
+fn get_version_update_info(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let current = app.package_info().version.to_string();
+    let app_data_dir = get_version_app_data_dir();
+    let whats_new_file = app_data_dir.join("previous_version_for_whats_new");
+    let previous_version = fs::read_to_string(&whats_new_file).ok().filter(|s| !s.is_empty());
+    Ok(serde_json::json!({
+        "current": current,
+        "previousVersion": previous_version
+    }))
+}
+
+/// Clears the "just updated" flag after user dismisses What's New modal.
+#[tauri::command]
+fn clear_version_update_info() -> Result<(), String> {
+    let app_data_dir = get_version_app_data_dir();
+    let whats_new_file = app_data_dir.join("previous_version_for_whats_new");
+    let _ = fs::remove_file(&whats_new_file);
+    Ok(())
+}
+
+/// Returns the current app version string.
+#[tauri::command]
+fn get_app_version(app: tauri::AppHandle) -> String {
+    app.package_info().version.to_string()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_dialog::init());
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_safe_area_insets_css::init())
+        .plugin(tauri_plugin_biometry::init());
 
     #[cfg(desktop)]
     {
@@ -228,6 +295,36 @@ pub fn run() {
                     } else {
                         eprintln!("[Desqta] Missing required Discord OAuth parameters. Need both token and user_id.");
                     }
+                } else if url.starts_with("desqta://connect/") {
+                    // Handle DesQTA connect deeplink from BetterSEQTA+ extension
+                    println!("[Desqta] Processing DesQTA connect deeplink: {}", url);
+                    let app_handle = app.app_handle().clone();
+                    let url_clone = url.clone();
+                    tauri::async_runtime::spawn(async move {
+                        match login::create_login_window(app_handle, url_clone).await {
+                            Ok(_) => {
+                                println!("[Desqta] Successfully processed DesQTA connect deeplink");
+                            }
+                            Err(e) => {
+                                eprintln!("[Desqta] Failed to process DesQTA connect deeplink: {}", e);
+                            }
+                        }
+                    });
+                } else if url.starts_with("seqtalearn://") {
+                    // SEQTA mobile SSO link (same as mobile deep link)
+                    println!("[Desqta] Processing SEQTA Learn SSO deeplink (desktop): {}", url);
+                    let app_handle = app.app_handle().clone();
+                    let url_clone = url.clone();
+                    tauri::async_runtime::spawn(async move {
+                        match login::create_login_window(app_handle, url_clone).await {
+                            Ok(_) => {
+                                println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink");
+                            }
+                            Err(e) => {
+                                eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e);
+                            }
+                        }
+                    });
                 } else if url.starts_with("desqta://auth") {
                     // Extract cookie and URL from the deep link (legacy SEQTA auth)
                     let mut cookie = None;
@@ -306,6 +403,7 @@ pub fn run() {
             netgrab::proxy_request,
             netgrab::get_seqta_file,
             netgrab::upload_seqta_file,
+            netgrab::upload_and_link_assessment_file,
             login::check_session_exists,
             login::save_session,
             login::create_login_window,
@@ -317,6 +415,10 @@ pub fn run() {
             login::direct_login,
             login::reauthenticate,
             get_seqta_base_url,
+            set_next_lesson_for_widget,
+            get_version_update_info,
+            clear_version_update_info,
+            get_app_version,
             profiles::get_current_profile,
             profiles::list_profiles,
             profiles::switch_profile,
@@ -330,9 +432,16 @@ pub fn run() {
             settings::save_cloud_token,
             settings::get_cloud_user,
             settings::clear_cloud_token,
+            settings::clear_expired_cloud_session,
+            settings::get_cloud_state,
+            settings::set_cloud_state_previously_signed,
             settings::get_reserved_client,
             settings::clear_reserved_client,
             settings::save_reserved_client,
+            settings::get_usage_analytics_state,
+            settings::increment_usage_analytics_session,
+            settings::mark_usage_analytics_sent_and_reset,
+            settings::send_usage_analytics_report,
             settings::get_cloud_base_url,
             settings::set_cloud_base_url,
             settings::upload_settings_to_cloud,
@@ -434,6 +543,7 @@ pub fn run() {
             notes_filesystem::cleanup_unused_images_filesystem,
             notes_filesystem::get_file_tree,
             profile_picture::save_profile_picture,
+            profile_picture::save_profile_picture_from_url,
             profile_picture::get_profile_picture_path_cmd,
             profile_picture::delete_profile_picture,
             profile_picture::has_custom_profile_picture,
@@ -452,6 +562,7 @@ pub fn run() {
             system_monitor::get_detailed_system_info,
             system_monitor::start_system_monitoring,
             database::db_cache_get,
+            database::db_cache_get_many,
             database::db_cache_set,
             database::db_cache_delete,
             database::db_cache_clear,
@@ -482,6 +593,7 @@ pub fn run() {
             database::db_widget_layout_save,
             database::db_widget_layout_load,
             assessments::get_processed_assessments,
+            assessments::get_assessment_detail,
             courses::get_courses_subjects,
             courses::get_course_content,
             messages::fetch_messages,
@@ -527,12 +639,18 @@ pub fn run() {
             // Read the previous version
             let last_version = fs::read_to_string(&version_file).unwrap_or_default();
 
-            // If versions differ, clear the cache
+            // If versions differ, clear the cache and record previous version for What's New
             if current_version != last_version {
                 println!(
                     "[DesQTA] Version changed from '{}' to '{}'. Clearing webview cache...",
                     last_version, current_version
                 );
+
+                // Record previous version so frontend can show What's New modal
+                if !last_version.is_empty() {
+                    let whats_new_file = app_data_dir.join("previous_version_for_whats_new");
+                    let _ = fs::write(&whats_new_file, &last_version);
+                }
 
                 // Get the main window and clear data
                 if let Some(window) = app.webview_windows().get("main") {
@@ -563,6 +681,38 @@ pub fn run() {
             // Initialize database (after migration and profile setup)
             if let Err(e) = database::init_database(app.app_handle()) {
                 eprintln!("Failed to initialize database: {}", e);
+            }
+
+            // On desktop: check if app was launched via deep link (first launch, before single-instance)
+            #[cfg(desktop)]
+            {
+                if let Ok(Some(urls)) = app.deep_link().get_current() {
+                    for url in urls {
+                        let url_str: String = url.to_string();
+                        if url_str.starts_with("desqta://connect/") {
+                            println!("[Desqta] Processing DesQTA connect deeplink from first launch: {}", url_str);
+                            let app_handle = app.app_handle().clone();
+                            tauri::async_runtime::spawn(async move {
+                                match login::create_login_window(app_handle, url_str).await {
+                                    Ok(_) => println!("[Desqta] Successfully processed DesQTA connect deeplink"),
+                                    Err(e) => eprintln!("[Desqta] Failed to process DesQTA connect deeplink: {}", e),
+                                }
+                            });
+                            break;
+                        }
+                        if url_str.starts_with("seqtalearn://") {
+                            println!("[Desqta] Processing SEQTA Learn SSO deeplink from first launch: {}", url_str);
+                            let app_handle = app.app_handle().clone();
+                            tauri::async_runtime::spawn(async move {
+                                match login::create_login_window(app_handle, url_str).await {
+                                    Ok(_) => println!("[Desqta] Successfully processed SEQTA Learn SSO deeplink"),
+                                    Err(e) => eprintln!("[Desqta] Failed to process SEQTA Learn SSO deeplink: {}", e),
+                                }
+                            });
+                            break;
+                        }
+                    }
+                }
             }
 
             // Listen for deep link events (mobile only - desktop uses single instance handler)
@@ -635,6 +785,20 @@ pub fn run() {
                                         let _ = window.emit("discord-oauth-callback", payload);
                                     }
                                 }
+                            } else if url.starts_with("desqta://connect/") {
+                                println!("[Desqta] Processing DesQTA connect deeplink (mobile): {}", url);
+                                let app_handle_clone = app_handle.clone();
+                                let url_clone = url.clone();
+                                tauri::async_runtime::spawn(async move {
+                                    match login::create_login_window(app_handle_clone, url_clone).await {
+                                        Ok(_) => {
+                                            println!("[Desqta] Successfully processed DesQTA connect deeplink");
+                                        }
+                                        Err(e) => {
+                                            eprintln!("[Desqta] Failed to process DesQTA connect deeplink: {}", e);
+                                        }
+                                    }
+                                });
                             } else if url.starts_with("seqtalearn://") {
                                 println!("[Desqta] Processing SEQTA Learn SSO deeplink: {}", url);
                                 let app_handle_clone = app_handle.clone();
@@ -668,6 +832,9 @@ pub fn run() {
                     
                     let window_clone = window.clone();
                     let current_fullscreen = Cell::new(window.is_fullscreen().unwrap_or(false));
+                    #[cfg(target_os = "macos")]
+                    let current_maximized = Cell::new(false); // Avoid is_maximized() on macOS (plugins-workspace#1918)
+                    #[cfg(not(target_os = "macos"))]
                     let current_maximized = Cell::new(window.is_maximized().unwrap_or(false));
                     
                     // Helper function to check and emit window state changes
@@ -675,6 +842,11 @@ pub fn run() {
                         let window_ref = window_clone.clone();
                         move || {
                             let is_fullscreen = window_ref.is_fullscreen().unwrap_or(false);
+                            // On macOS with undecorated windows: is_maximized() in Resized handler
+                            // causes infinite resize loop → 100% CPU hang (tauri-apps/plugins-workspace#1918)
+                            #[cfg(target_os = "macos")]
+                            let is_maximized = false;
+                            #[cfg(not(target_os = "macos"))]
                             let is_maximized = window_ref.is_maximized().unwrap_or(false);
                             let should_remove_corners = is_fullscreen || is_maximized;
                             
@@ -733,15 +905,40 @@ pub fn run() {
                     .expect("Error while setting up tray menu");
             }
 
+            // Bring main window to front on startup (fixes installer/updater launch where window
+            // opens behind other windows). Short delay helps when launched by another process.
+            #[cfg(desktop)]
+            {
+                let app_handle = app.app_handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(300));
+                    if let Some(window) = app_handle.webview_windows().get("main") {
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
+                });
+            }
+
             Ok(())
         })
         .on_window_event(|window, event| {
             #[cfg(desktop)]
             {
                 if let WindowEvent::CloseRequested { api, .. } = event {
-                    // Hide window instead of closing when user clicks X
-                    window.hide().unwrap();
-                    api.prevent_close();
+                    // On macOS: closing the window should quit the app (no tray reopen flow)
+                    #[cfg(target_os = "macos")]
+                    {
+                        // Always allow close → app quits
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        let settings = settings::Settings::load();
+                        if settings.minimize_to_tray {
+                            // Hide window to system tray instead of closing
+                            let _ = window.hide();
+                            api.prevent_close();
+                        }
+                    }
                 }
             }
         })

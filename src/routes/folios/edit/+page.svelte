@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
   import { seqtaFetch } from '../../../utils/netUtil';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { LoadingSpinner, EmptyState } from '$lib/components/ui';
   import Modal from '$lib/components/Modal.svelte';
   import {
@@ -216,7 +219,7 @@
   });
 </script>
 
-<div class="container px-6 py-7 mx-auto">
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
   {#if foliosEnabled === false}
     <div class="flex justify-center items-center h-64">
       <EmptyState
@@ -226,21 +229,26 @@
         size="md" />
     </div>
   {:else}
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex justify-between items-start">
       <div class="flex items-center gap-4">
         <button
           onclick={() => goto('/folios')}
           class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
           <Icon src={ChevronLeft} class="w-5 h-5" />
         </button>
-        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
-          <T key="folios.edit_my_folios" fallback="Edit My Folios" />
-        </h1>
+        <div>
+          <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+            <T key="folios.edit_my_folios" fallback="Edit My Folios" />
+          </h1>
+          <p class="text-zinc-600 dark:text-zinc-400">
+            <T key="folios.edit_description" fallback="Create and manage your personal folios" />
+          </p>
+        </div>
       </div>
       <button
         onclick={createNewFolio}
         disabled={creating}
-        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white transition-all duration-200 hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white transition-all duration-200 hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 shrink-0">
         <Icon src={Plus} class="w-5 h-5" />
         {creating ? $_('folios.creating') || 'Creating...' : $_('folios.new_folio') || 'New Folio'}
       </button>

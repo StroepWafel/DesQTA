@@ -1,6 +1,7 @@
 <script lang="ts">
   import TimetableLesson from './TimetableLesson.svelte';
-  import { Icon, ChevronLeft, ChevronRight } from 'svelte-hero-icons';
+  import EmptyState from './EmptyState.svelte';
+  import { Icon, ChevronLeft, ChevronRight, CalendarDays } from 'svelte-hero-icons';
   import { onMount } from 'svelte';
   import T from './T.svelte';
   import { _ } from '../i18n';
@@ -280,16 +281,11 @@
       </div>
     {:else}
       <div class="flex flex-col justify-center items-center py-16">
-        <div
-          class="w-24 h-24 flex items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-purple-600 text-4xl shadow-[0_0_30px_rgba(99,102,241,0.3)] animate-pulse mb-6">
-          📚
-        </div>
-        <h3 class="text-xl font-bold text-zinc-700 dark:text-zinc-300 mb-2">
-          <T key="timetable.no_lessons" fallback="No Lessons This Week" />
-        </h3>
-        <p class="text-zinc-600 dark:text-zinc-400 text-center max-w-md">
-          <T key="timetable.no_lessons_message" fallback="It looks like there are no scheduled lessons for this week. Check back later or try a different week." />
-        </p>
+        <EmptyState
+          title={$_('timetable.no_lessons') || 'No Lessons This Week'}
+          message={$_('timetable.no_lessons_message') || 'It looks like there are no scheduled lessons for this week. Check back later or try a different week.'}
+          icon={CalendarDays}
+          size="lg" />
       </div>
     {/if}
   </div>

@@ -17,7 +17,15 @@
     "clear": "Löschen",
     "refresh": "Aktualisieren",
     "settings": "Einstellungen",
-    "close_theme_builder": "Themen-Builder Schließen"
+    "close_theme_builder": "Themen-Builder Schließen",
+    "move_up": "Nach oben",
+    "move_down": "Nach unten",
+    "add_folder": "Ordner hinzufügen",
+    "retry": "Wiederholen",
+    "retrying": "Wird wiederholt...",
+    "try_again": "Erneut versuchen",
+    "saving": "Wird gespeichert...",
+    "back": "Zurück"
   },
   "focus_timer": {
     "title": "Fokus-Timer",
@@ -109,6 +117,7 @@
     "folios": "Portfolios",
     "close_sidebar": "Seitenleiste schließen",
     "menu": "Menü",
+    "more": "Mehr",
     "qr_signin": "QR-Anmeldung",
     "welcome": "Willkommen"
   },
@@ -122,7 +131,11 @@
     "minimize": "Minimieren",
     "maximize": "Maximieren",
     "close": "Schließen",
-    "notifications": "Benachrichtigungen"
+    "notifications": "Benachrichtigungen",
+    "cloud_signed_in": "Bei BetterSEQTA Plus angemeldet",
+    "cloud_not_signed_in": "Nicht bei BetterSEQTA Plus angemeldet",
+    "cloud_signed_out_message": "Sie sind von BetterSEQTA Plus abgemeldet. Melden Sie sich in den Einstellungen an, um Ihre Daten geräteübergreifend zu synchronisieren.",
+    "cloud_go_to_settings": "Zu Einstellungen"
   },
   "login": {
     "welcome_to": "Willkommen bei",
@@ -137,6 +150,8 @@
     "scan_camera": "Mit Kamera Scannen",
     "how_get_qr": "Wie bekomme ich einen QR-Code?",
     "manual_login": "Manuelle Anmeldung",
+    "manual_url": "Manuelle URL",
+    "qr_code": "QR-Code",
     "enter_url": "Geben Sie die SEQTA-URL Ihrer Schule ein",
     "url_placeholder": "schule.seqta.com.au",
     "sign_in": "Bei DesQTA Anmelden",
@@ -163,7 +178,49 @@
     "feature_analytics_desc": "Leistungsdaten",
     "feature_settings_desc": "App-Einstellungen",
     "fill_all_fields": "Bitte füllen Sie alle Felder aus",
-    "failed_credentials": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten."
+    "failed_credentials": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.",
+    "not_working_try_direct": "Funktioniert nicht? ",
+    "try_direct_login_link": "Direktanmeldung versuchen"
+  },
+  "features": {
+    "lightning_fast": "Blitzschnelle Leistung",
+    "qr_login": "Nahtlose QR-Code-Anmeldung",
+    "beautiful_ui": "Schöne, intuitive Oberfläche",
+    "analytics": "Erweitertes Analyse-Dashboard",
+    "notifications": "Echtzeit-Benachrichtigungen",
+    "offline": "Offline-Unterstützung",
+    "cross_platform": "Plattformübergreifende Kompatibilität",
+    "security": "Erweiterte Sicherheitsfunktionen",
+    "themes": "Anpassbare Themen",
+    "predictions": "Intelligente Notenvorhersagen"
+  },
+  "qr_instructions": {
+    "title": "So erhalten Sie Ihren QR-Code",
+    "subtitle": "Folgen Sie diesen Schritten, um Ihren SEQTA-Mobil-App-QR-Code zu erhalten",
+    "step1_title": "SEQTA in Ihrem Browser öffnen",
+    "step1_desc": "Gehen Sie zur SEQTA-URL Ihrer Schule (z.B. ihreschule.seqta.com.au) und melden Sie sich mit Ihren üblichen Anmeldedaten an.",
+    "step2_title": "Zu Einstellungen navigieren",
+    "step2_desc": "Suchen Sie nach der Anmeldung den Bereich Einstellungen. Dieser befindet sich normalerweise in der linken Seitenleiste.",
+    "step3_title": "Auf \"Mobil-App verbinden\" klicken",
+    "step3_desc": "Finden und klicken Sie auf die Option \"Mobil-App verbinden\" oder \"Mobilgerät\". Dies startet den Verbindungsprozess.",
+    "step4_title": "E-Mail prüfen",
+    "step4_desc": "SEQTA sendet eine E-Mail an Ihre registrierte Schul-E-Mail-Adresse. Diese E-Mail enthält den QR-Code, den Sie für DesQTA benötigen.",
+    "step4_note": "Die E-Mail kann einige Minuten dauern. Prüfen Sie Ihren Spam-Ordner, falls Sie sie nicht sehen.",
+    "step5_title": "Screenshot oder QR-Code speichern",
+    "step5_desc": "Öffnen Sie die E-Mail und machen Sie einen Screenshot des QR-Codes oder speichern Sie das QR-Code-Bild auf Ihrem Gerät.",
+    "step5_desktop": "Rechtsklick auf den QR-Code → \"Bild speichern unter...\"",
+    "step5_mobile": "Langer Druck auf den QR-Code → \"In Fotos speichern\" oder Screenshot machen",
+    "step6_title": "In DesQTA hochladen",
+    "step6_desc": "Kehren Sie zu DesQTA zurück und verwenden Sie die Schaltfläche \"QR-Code hochladen\", um Ihr gespeichertes Bild auszuwählen und hochzuladen. DesQTA meldet Sie automatisch an!",
+    "help_title": "Brauchen Sie mehr Hilfe?",
+    "help_desc": "Wenn Sie die Option \"Mobil-App verbinden\" nicht finden, könnte sie an Ihrer Schule anders heißen, z.B.:",
+    "help_options": ["Mobilgerät-Registrierung", "App-Einrichtung", "QR-Code-Einrichtung", "Gerät verbinden"],
+    "help_contact": "Kontaktieren Sie die IT-Unterstützung Ihrer Schule, wenn Sie diese Option weiterhin nicht finden.",
+    "got_it": "Alles klar, danke!"
+  },
+  "dev": {
+    "mock_api": "Mock-API-Backend",
+    "mock_desc": "Ersetzt Live-SEQTA-API-Aufrufe durch sichere Mock-Daten."
   },
   "about": {
     "title": "Über DesQTA",
@@ -252,11 +309,30 @@
     "ai_lesson_summary": "KI-Stundenzusammenfassung",
     "ai_summary_desc": "Erstellen Sie eine KI-gestützte Zusammenfassung und umsetzbare Schritte für den Inhalt und die Ressourcen dieser Stunde.",
     "generating": "Wird generiert...",
+    "generating_summary": "Zusammenfassung wird erstellt...",
     "generate_summary": "Zusammenfassung Erstellen",
+    "summarize": "Zusammenfassen",
+    "expand_content": "Inhalt erweitern",
+    "view_original": "Original anzeigen",
+    "view_ai_summary": "KI-Zusammenfassung anzeigen",
+    "regenerate": "Erneut generieren",
+    "analyzing_content": "Lektionsinhalt wird analysiert",
     "summary": "Zusammenfassung",
     "steps": "Schritte",
     "homework_notes": "Hausaufgaben/Notizen",
-    "lesson_resources": "Stundenressourcen"
+    "lesson_resources": "Stundenressourcen",
+    "resource_download_failed": "Ressource konnte nicht heruntergeladen werden. Bitte erneut versuchen.",
+    "document_parse_error": "Kursinhalt konnte nicht geladen werden. Das Dokument könnte beschädigt sein.",
+    "course_files": "Kursdateien",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "yesterday": "Gestern",
+    "breadcrumb_separator": "›",
+    "breadcrumb_term_week": "Term {term} Woche {week}",
+    "no_lesson_content": "Noch keine Unterrichtsinhalte verfügbar",
+    "no_lesson_content_desc": "Die Inhalte für diese Stunde wurden möglicherweise noch nicht veröffentlicht. Aktualisieren Sie, um nach Updates zu suchen.",
+    "refresh_from_api": "Vom Server aktualisieren",
+    "go_to_overview": "Zur Kursübersicht"
   },
   "goals": {
     "no_cached_data": "Keine gecachten Daten verfügbar",
@@ -421,7 +497,10 @@
     "export_pdf": "Als PDF exportieren",
     "pdf_description": "Portables Dokumentformat",
     "export_ical": "Als iCal exportieren",
-    "ical_description": "Kalenderformat (.ics)"
+    "ical_description": "Kalenderformat (.ics)",
+    "download_csv_success": "Stundenplan in Downloads gespeichert",
+    "download_pdf_success": "Stundenplan in Downloads gespeichert",
+    "download_ical_success": "Stundenplan in Downloads gespeichert"
   },
   "study": {
     "page_description": "Planen, verfolgen und konzentrieren Sie sich auf Ihre anstehende Arbeit.",
@@ -470,6 +549,7 @@
     "get_new_tip": "Neuen Lerntipp erhalten"
   },
   "messages": {
+    "page_description": "SEQTA- und RSS-Nachrichten anzeigen und verwalten.",
     "failed_to_load": "Fehler beim Laden der Nachrichten.",
     "failed_to_load_no_cache": "Fehler beim Laden der Nachrichten, keine gecachten Daten verfügbar",
     "failed_to_load_message": "Fehler beim Laden der Nachricht.",
@@ -532,10 +612,16 @@
     "accept_cloud_eula": "BetterSEQTA Cloud EULA Akzeptieren",
     "cloud_eula_description": "Sie müssen die Cloud-Sync EULA lesen und akzeptieren, bevor Sie Cloud-Funktionen verwenden können.",
     "read_accept": "Lesen & Akzeptieren",
+    "sync_cloud_pfp": "BetterSEQTA Cloud-Profilbild als lokales Bild verwenden",
+    "sync_cloud_pfp_description": "Laden Sie Ihr Cloud-Avatar herunter und halten Sie es mit dem App-Header synchron.",
     "personal_settings": "Persönliche Einstellungen",
     "personal_settings_description": "Passen Sie Ihr persönliches Profil und Ihre Einstellungen an",
     "custom_profile_picture": "Benutzerdefiniertes Profilbild",
     "profile_picture_description": "Laden Sie ein benutzerdefiniertes Profilbild hoch, das in der App-Kopfzeile angezeigt wird",
+    "crop": "Zuschneiden",
+    "crop_profile_picture": "Profilbild zuschneiden",
+    "save_crop": "Speichern",
+    "saving": "Speichern...",
     "uploading": "Hochladen...",
     "upload": "Hochladen",
     "language": "Sprache",
@@ -572,6 +658,12 @@
     "dark": "Dunkel",
     "system": "System",
     "theme_mode_description": "Wählen Sie zwischen hellem Modus, dunklem Modus oder folgen Sie Ihrer Systemeinstellung.",
+    "minimize_to_tray": "App beim Schließen in der Systemleiste weiterlaufen lassen",
+    "minimize_to_tray_description": "Wenn aktiviert, wird DesQTA beim Schließen des Fensters in die Systemleiste minimiert. Wenn deaktiviert, wird die App vollständig beendet.",
+    "security": "Sicherheit",
+    "security_description": "Schützen Sie die App mit biometrischer Authentifizierung",
+    "biometric_enabled": "Mit Biometrie entsperren (Face ID, Touch ID, Fingerabdruck, Windows Hello)",
+    "biometric_enabled_description": "Biometrische Authentifizierung beim Öffnen der App erforderlich",
     "notifications": "Benachrichtigungen",
     "notifications_description": "Verwalten Sie Ihre Benachrichtigungseinstellungen",
     "enable_reminder_notifications": "Bewertungserinnerungsbenachrichtigungen aktivieren",
@@ -727,10 +819,23 @@
     "login_url_desc": "Schul-URL eingeben",
     "login_direct": "Direkte Anmeldung",
     "login_direct_desc": "Benutzername & Passwort",
+    "biometric_title": "Mit Biometrie entsperren",
+    "biometric_subtitle": "Nutze Face ID, Touch ID, Fingerabdruck oder Windows Hello, um DesQTA beim Öffnen schnell zu entsperren.",
+    "biometric_enable": "Biometrische Entsperrung aktivieren",
+    "biometric_skip": "Jetzt überspringen",
+    "biometric_unlock": "Entsperren",
+    "biometric_unavailable": "Biometrische Authentifizierung ist auf diesem Gerät nicht verfügbar.",
     "ready_title": "Alles bereit!",
     "ready_subtitle": "Melden Sie sich an, um Ihr Dashboard, Lernwerkzeuge und mehr zu erkunden.",
     "sign_in": "Anmelden",
     "step_indicator": "Schritt {current} von {total}"
+  },
+  "post_login_prompts": {
+    "aria_label": "Einrichtung nach der Anmeldung",
+    "usage_stats_title": "Helfen Sie DesQTA zu verbessern",
+    "usage_stats_subtitle": "Möchten Sie anonyme Nutzungsstatistiken senden? Das hilft uns zu verstehen, wie die App genutzt wird und sie zu verbessern. Es werden keine persönlichen Daten gesammelt.",
+    "usage_stats_yes": "Ja, DesQTA verbessern helfen",
+    "usage_stats_no": "Nein danke"
   },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
@@ -791,11 +896,18 @@
     "view_all": "Alle anzeigen",
     "no_notices_today": "Heute sind keine Mitteilungen verfügbar."
   },
+  "documents": {
+    "loading": "Dokumente werden geladen...",
+    "failed_to_load": "Fehler beim Laden der Dokumente",
+    "error_loading": "Fehler beim Laden der Dokumente",
+    "no_documents": "Keine Dokumente verfügbar"
+  },
   "reports": {
     "failed_to_load": "Fehler beim Laden der Berichte.",
     "error_loading": "Fehler beim Laden der Berichte.",
     "loading": "Berichte werden geladen...",
-    "download": "Herunterladen"
+    "download": "Herunterladen",
+    "open_failed": "Fehler beim Öffnen des Berichts"
   },
   "performance": {
     "title": "Leistungstestergebnisse - DesQTA",
@@ -858,7 +970,9 @@
     "avg_gpu": "Durchschnittliche GPU",
     "errors_count": "{count} Fehler",
     "warnings_count": "{count} Warnungen",
-    "no_issues": "Keine Probleme"
+    "no_issues": "Keine Probleme",
+    "mega_suite_overlay_title": "Benchmark-Suite wird ausgeführt",
+    "mega_suite_overlay_body": "Der Seiten-Crawl ist fertig. Synthetische Tests (Startup, UI, Daten, Backend) laufen—oft 30–90 Sekunden. Bitte warten; die Ergebnisse öffnen sich danach."
   },
   "plugins": {
     "installed_title": "Plugin Installiert",
@@ -876,6 +990,10 @@
     "quizzes": "Quiz",
     "select_assessment": "Bewertung auswählen",
     "custom_topic": "Eigenes Thema",
+    "topic_source": "1. Thema wählen",
+    "quiz_options": "2. Quiz-Optionen",
+    "change_options": "Optionen ändern",
+    "generate_section": "3. Generieren",
     "what_to_study": "Was möchtest du lernen?",
     "question_count": "Anzahl der Fragen",
     "generate_quiz": "Quiz erstellen",

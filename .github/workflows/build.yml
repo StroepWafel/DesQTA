@@ -11,30 +11,90 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-desktop-${{ hashFiles('src-tauri/Cargo.lock') }}
+          shared-key: 'tauri-desktop'
+          cache-directories: |
+            src-tauri/target
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/pnpm/store
+            ${{ github.workspace }}/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install Linux dependencies (Ubuntu only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev libgtk-3-dev build-essential libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli
 
       - name: Install dependencies
-        run: npm i
+        run: pnpm install
+
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
+      - name: Normalize macOS signing environment
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE_PASSWORD_SECRET: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ "$APPLE_CERTIFICATE_PASSWORD_SECRET" = "__EMPTY__" ]; then
+            echo "APPLE_CERTIFICATE_PASSWORD=" >> "$GITHUB_ENV"
+          else
+            echo "APPLE_CERTIFICATE_PASSWORD=$APPLE_CERTIFICATE_PASSWORD_SECRET" >> "$GITHUB_ENV"
+          fi
+
+      - name: Create App Store Connect API key file
+        if: runner.os == 'macOS'
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        run: |
+          key_path="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8"
+          printf '%b' "$APPLE_API_KEY_CONTENT" > "$key_path"
+          echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
 
       - name: Build desktop app
         env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ env.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npm run tauri build
+        run: pnpm tauri build
 
       - name: Upload desktop build artifacts
         uses: actions/upload-artifact@v4
@@ -42,16 +102,144 @@ jobs:
           name: desktop-builds-${{ matrix.os }}
           path: src-tauri/target/release/bundle/**
 
+  build-ios:
+    name: Build Signed iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-ios-${{ hashFiles('src-tauri/Cargo.lock') }}
+          shared-key: 'tauri-ios'
+          cache-directories: |
+            src-tauri/target
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/pnpm/store
+            ${{ github.workspace }}/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
+
+      - name: Strip alpha from iOS app icons
+        run: |
+          if ! command -v magick >/dev/null 2>&1 && ! command -v convert >/dev/null 2>&1; then
+            brew install imagemagick
+          fi
+
+          chmod +x scripts/strip-ios-icon-alpha.sh
+          scripts/strip-ios-icon-alpha.sh
+
+      - name: Normalize iOS signing environment
+        env:
+          IOS_CERTIFICATE_PASSWORD_SECRET: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ "$IOS_CERTIFICATE_PASSWORD_SECRET" = "__EMPTY__" ]; then
+            echo "IOS_CERTIFICATE_PASSWORD=" >> "$GITHUB_ENV"
+          else
+            echo "IOS_CERTIFICATE_PASSWORD=$IOS_CERTIFICATE_PASSWORD_SECRET" >> "$GITHUB_ENV"
+          fi
+
+      - name: Create App Store Connect API key file
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        run: |
+          key_dir="$RUNNER_TEMP/private_keys"
+          mkdir -p "$key_dir"
+          key_path="$key_dir/AuthKey_${APPLE_API_KEY}.p8"
+          printf '%b' "$APPLE_API_KEY_CONTENT" > "$key_path"
+          echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+          echo "API_PRIVATE_KEYS_DIR=$key_dir" >> "$GITHUB_ENV"
+
+      - name: Build iOS app (signed)
+        env:
+          APPLE_DEVELOPMENT_TEAM: 5949S6UQCX
+          TAURI_APPLE_DEVELOPMENT_TEAM: 5949S6UQCX
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+          API_PRIVATE_KEYS_DIR: ${{ env.API_PRIVATE_KEYS_DIR }}
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ env.IOS_CERTIFICATE_PASSWORD }}
+          IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
+        run: pnpm tauri ios build --export-method app-store-connect --target aarch64
+
+      - name: Upload iOS IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-outputs
+          path: src-tauri/gen/apple/build/**/*.ipa
+          retention-days: 7
+
+      - name: Upload IPA to TestFlight
+        if: github.event_name == 'push'
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          API_PRIVATE_KEYS_DIR: ${{ env.API_PRIVATE_KEYS_DIR }}
+        run: |
+          ipa_path=$(find src-tauri/gen/apple/build -name '*.ipa' -type f | head -1)
+
+          if [ -z "$ipa_path" ]; then
+            echo 'No IPA found to upload.'
+            exit 1
+          fi
+
+          xcrun altool \
+            --upload-app \
+            --type ios \
+            --file "$ipa_path" \
+            --apiKey "$APPLE_API_KEY" \
+            --apiIssuer "$APPLE_API_ISSUER"
+
   build-android:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -61,6 +249,44 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-android-${{ hashFiles('src-tauri/Cargo.lock') }}
+          shared-key: 'tauri-android'
+          cache-targets: false
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/pnpm/store
+            ${{ github.workspace }}/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Cache Android NDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.ANDROID_NDK_HOME }}
+            ${{ env.ANDROID_HOME }}/ndk
+          key: ${{ runner.os }}-android-ndk-${{ env.NDK_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-android-ndk-
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ${{ github.workspace }}/src-tauri/gen/android/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('src-tauri/gen/android/build.gradle*', 'src-tauri/gen/android/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Install Rust Android targets
         run: |
@@ -99,7 +325,10 @@ jobs:
         run: npm install -g @tauri-apps/cli
 
       - name: Install dependencies
-        run: npm i
+        run: pnpm install
+
+      - name: Generate app icons
+        run: pnpm tauri icon static/app-icon.svg
 
       - name: Accept Android licenses
         run: |
@@ -117,47 +346,30 @@ jobs:
       - name: Fix Gradle Java home
         run: |
           echo "Fixing Gradle Java home for Linux..."
-
-          # Check if gradle.properties exists and show current content
-          echo "Current gradle.properties content:"
-          cat src-tauri/gen/android/gradle.properties || echo "gradle.properties not found"
-
-          # Create gradle.properties with all necessary properties
           cat > src-tauri/gen/android/gradle.properties << EOF
           org.gradle.java.home=$JAVA_HOME
           android.useAndroidX=true
           android.enableJetifier=true
           org.gradle.jvmargs=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
           org.gradle.daemon=false
-          org.gradle.parallel=true
+          org.gradle.parallel=false
           org.gradle.configureondemand=true
+          android.suppressUnsupportedCompileSdk=36
           EOF
 
-          # Also check and fix gradle-wrapper.properties if needed
-          echo "Current gradle-wrapper.properties content:"
-          cat src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties || echo "gradle-wrapper.properties not found"
-
-          echo "Fixed gradle.properties:"
-          cat src-tauri/gen/android/gradle.properties
-
-          echo "JAVA_HOME value: $JAVA_HOME"
-
-      - name: Build Android APK
+      - name: Build Android APKs (all architectures)
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           echo "Building with JAVA_HOME: $JAVA_HOME"
-          echo "Building with GRADLE_OPTS: $GRADLE_OPTS"
-          JAVA_HOME=$JAVA_HOME GRADLE_OPTS="-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" npm run tauri android build
+          JAVA_HOME=$JAVA_HOME GRADLE_OPTS="-Dorg.gradle.java.home=$JAVA_HOME -Xmx4g -XX:+HeapDumpOnOutOfMemoryError" pnpm tauri android build
 
-      - name: Zip Android build outputs
-        run: |
-          cd src-tauri/gen/android/app/build
-          zip -r outputs.zip outputs || true
+      - name: List built APKs
+        run: find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -type f
 
       - name: Upload Android build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-build-outputs
-          path: src-tauri/gen/android/app/build/outputs.zip
+          path: src-tauri/gen/android/app/build/outputs/apk/*/release/*.apk

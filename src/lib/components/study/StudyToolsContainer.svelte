@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { fly, fade } from 'svelte/transition';
+  import { fly, fade, slide } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
   import { Button, Input } from '$lib/components/ui';
   import { Slider } from '$lib/components/ui/slider/index.js';
@@ -55,13 +55,19 @@
   let assessmentFilterUpcomingOnly = $state(true);
   let assessmentFilterYear = $state<number | 'all'>('all');
   let selectedDifficulty = $state<7 | 8 | 9 | 10 | 11 | 12 | null>(10);
+  let difficultyDropdownOpen = $state(false);
   let selectedQuestionTypes = $state<('multiple_choice' | 'true_false' | 'short_answer')[]>(['multiple_choice', 'true_false', 'short_answer']);
   let questionTypesDropdownOpen = $state(false);
-  let apiKeySetupModalOpen = $state(false);
   let hasApiKey = $state<boolean | null>(null);
   let apiKeyInput = $state('');
   let savingApiKey = $state(false);
   let apiKeyError = $state<string | null>(null);
+  let configExpanded = $state(true);
+
+  $effect(() => {
+    if (questions.length > 0) configExpanded = false;
+    else configExpanded = true;
+  });
 
   const SAMPLE_QUIZ: QuizQuestion[] = [
     {
@@ -87,12 +93,8 @@
       const gemini = (subset?.gemini_api_key ?? '').trim();
       const cerebras = (subset?.cerebras_api_key ?? '').trim();
       hasApiKey = gemini.length > 0 || cerebras.length > 0;
-      if (!hasApiKey) {
-        apiKeySetupModalOpen = true;
-      }
     } catch {
       hasApiKey = false;
-      apiKeySetupModalOpen = true;
     }
   }
 
@@ -113,7 +115,6 @@
         quiz_generator_enabled: true,
       });
       hasApiKey = true;
-      apiKeySetupModalOpen = false;
       apiKeyInput = '';
     } catch (e) {
       apiKeyError = e instanceof Error ? e.message : String(e);
@@ -165,7 +166,6 @@
   async function handleGenerate() {
     if (!canGenerate) return;
     if (hasApiKey === false) {
-      apiKeySetupModalOpen = true;
       return;
     }
     if (hasApiKey === null) {
@@ -287,51 +287,156 @@
       </h2>
     </div>
 
-    <!-- Config Panel -->
-    <div class="p-6 space-y-4">
-      <!-- Source selector -->
-      <div class="flex flex-wrap gap-4 items-end">
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {sourceMode ===
-            'assessment'
-              ? 'accent-bg text-white'
-              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
-            onclick={() => {
-              sourceMode = 'assessment';
-              customTopic = '';
-            }}>
-            <T key="study.select_assessment" fallback="Select assessment" />
-          </button>
-          <button
-            type="button"
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {sourceMode ===
-            'custom'
-              ? 'accent-bg text-white'
-              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
-            onclick={() => {
-              sourceMode = 'custom';
-              selectedAssessment = null;
-            }}>
-            <T key="study.custom_topic" fallback="Custom topic" />
-          </button>
+    <!-- API Key Setup (inline when not configured) -->
+    {#if hasApiKey === false}
+      <div class="flex-1 min-h-0 overflow-auto px-6 pb-6 space-y-6">
+        <h3 class="font-semibold text-zinc-900 dark:text-white">
+          {$_('study.ai_quiz_setup') ?? 'Enable AI Quizzes'}
+        </h3>
+
+        <!-- Quiz Preview -->
+        <div>
+          <h4 class="font-medium text-zinc-800 dark:text-zinc-200 mb-3 text-sm">
+            {$_('study.quiz_preview') ?? 'Here\'s what your AI quiz could look like:'}
+          </h4>
+          <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 p-4 space-y-4">
+            {#each SAMPLE_QUIZ as q, i}
+              <div class="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50">
+                <p class="font-medium text-zinc-900 dark:text-white mb-2 text-sm">
+                  {i + 1}. {q.question}
+                </p>
+                <div class="space-y-1">
+                  {#each q.options as opt}
+                    <div
+                      class="flex items-center gap-2 py-1.5 px-2 rounded text-sm text-zinc-600 dark:text-zinc-400">
+                      <span class="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600"></span>
+                      {opt}
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/each}
+          </div>
         </div>
 
-        {#if sourceMode === 'assessment'}
-          <div class="flex-1 min-w-[200px] max-w-md">
+        <!-- Instructions -->
+        <div>
+          <h4 class="font-medium text-zinc-800 dark:text-zinc-200 mb-2 text-sm">
+            {$_('study.get_free_api_key') ?? 'Get a free Cerebras API key (takes 1 minute):'}
+          </h4>
+          <ol class="list-decimal list-inside space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <li>
+              {$_('study.cerebras_step_1') ?? 'Go to'}
+              <a
+                href="https://cloud.cerebras.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-(--accent) underline font-medium hover:opacity-80">
+                cloud.cerebras.ai
+              </a>
+            </li>
+            <li>{$_('study.cerebras_step_2') ?? 'Sign up (free, no credit card required)'}</li>
+            <li>{$_('study.cerebras_step_3') ?? 'Click "Copy api key" on the dashboard that it opens to'}</li>
+            <li>{$_('study.cerebras_step_4') ?? 'Paste it below and click Save'}</li>
+          </ol>
+          <p class="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
+            {$_('study.cerebras_free_tier') ?? 'Free tier: 1 million tokens per day.'}
+          </p>
+        </div>
+
+        <!-- API Key Input -->
+        <div>
+          <Label.Root class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+            {$_('study.cerebras_api_key') ?? 'Cerebras API Key'}
+          </Label.Root>
+          <Input
+            bind:value={apiKeyInput}
+            type="password"
+            placeholder={$_('study.paste_api_key') ?? 'Paste your API key here'}
+            class="w-full font-mono text-sm" />
+          {#if apiKeyError}
+            <p class="mt-2 text-sm text-red-600 dark:text-red-400">{apiKeyError}</p>
+          {/if}
+        </div>
+
+        <Button
+          onclick={saveApiKeyAndEnable}
+          disabled={savingApiKey || !apiKeyInput.trim()}
+          loading={savingApiKey}
+          class="w-full transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
+          {$_('study.save_and_enable') ?? 'Save & Enable AI Quizzes'}
+        </Button>
+      </div>
+    {:else}
+    <!-- Config Panel -->
+    <div class="p-6 space-y-6">
+      {#if questions.length > 0}
+        <button
+          type="button"
+          class="flex items-center gap-2 w-full py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+          onclick={() => (configExpanded = !configExpanded)}>
+          <T key="study.change_options" fallback="Change options" />
+          <Icon src={configExpanded ? ChevronUp : ChevronDown} class="w-4 h-4 shrink-0" />
+        </button>
+      {/if}
+      {#if configExpanded || questions.length === 0}
+        <div transition:slide={{ duration: 200 }}>
+      <!-- Section 1: Topic source -->
+      <div class="space-y-3">
+        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <T key="study.topic_source" fallback="1. Choose topic" />
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="flex gap-2">
             <button
               type="button"
-              class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white text-sm flex items-center justify-between gap-2 transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 focus:outline-none focus:ring-2 accent-ring"
-              onclick={() => (assessmentModalOpen = true)}>
-              <span class="truncate">
-                {selectedAssessment?.title ?? ($_('study.select_assessment') || 'Select assessment')}
-              </span>
-              <Icon src={ChevronDown} class="w-4 h-4 shrink-0" />
+              class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {sourceMode ===
+              'assessment'
+                ? 'accent-bg text-white'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+              onclick={() => {
+                sourceMode = 'assessment';
+                customTopic = '';
+              }}>
+              <T key="study.select_assessment" fallback="From assessment" />
+            </button>
+            <button
+              type="button"
+              class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {sourceMode ===
+              'custom'
+                ? 'accent-bg text-white'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+              onclick={() => {
+                sourceMode = 'custom';
+                selectedAssessment = null;
+              }}>
+              <T key="study.custom_topic" fallback="Custom topic" />
             </button>
           </div>
+          {#if sourceMode === 'assessment'}
+            <div class="flex-1 min-w-0 max-w-md">
+              <button
+                type="button"
+                class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white text-sm flex items-center justify-between gap-2 transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 focus:outline-none focus:ring-2 accent-ring"
+                onclick={() => (assessmentModalOpen = true)}>
+                <span class="truncate">
+                  {selectedAssessment?.title ?? ($_('study.select_assessment') || 'Select assessment')}
+                </span>
+                <Icon src={ChevronDown} class="w-4 h-4 shrink-0" />
+              </button>
+            </div>
+          {:else}
+            <div class="flex-1 min-w-0 max-w-md">
+              <Input
+                bind:value={customTopic}
+                placeholder={$_('study.what_to_study') || 'What do you want to study?'}
+                class="w-full" />
+            </div>
+          {/if}
+        </div>
+      </div>
 
-          <Modal
+      <Modal
             bind:open={assessmentModalOpen}
             title={$_('study.select_assessment') || 'Select assessment'}
             maxWidth="max-w-2xl"
@@ -424,117 +529,148 @@
               </div>
             </div>
           </Modal>
-        {:else}
-          <div class="flex-1 min-w-[200px] max-w-md">
-            <Input
-              bind:value={customTopic}
-              placeholder={$_('study.what_to_study') || 'What do you want to study?'}
-              class="w-full" />
+
+      <!-- Section 2: Quiz options -->
+      <div class="space-y-3">
+        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <T key="study.quiz_options" fallback="2. Quiz options" />
+        </p>
+        <div class="flex flex-wrap gap-4 items-center">
+          <!-- Difficulty (custom dropdown to match question types) -->
+          <div class="flex items-center gap-2">
+            <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+              <T key="study.difficulty" fallback="Difficulty" />
+            </Label.Root>
+            <div class="relative" use:clickOutside={() => (difficultyDropdownOpen = false)}>
+              <button
+                type="button"
+                class="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm flex items-center gap-2 min-w-[100px] justify-between transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring"
+                onclick={() => (difficultyDropdownOpen = !difficultyDropdownOpen)}>
+                <span>
+                  {selectedDifficulty != null ? `Year ${selectedDifficulty}` : ($_('study.any_difficulty') || 'Any')}
+                </span>
+                <Icon src={ChevronDown} class="w-4 h-4 shrink-0 transition-transform duration-200 {difficultyDropdownOpen ? 'rotate-180' : ''}" />
+              </button>
+              {#if difficultyDropdownOpen}
+                <div
+                  class="absolute z-50 mt-1 min-w-[100px] py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg"
+                  transition:fly={{ y: -4, duration: 150 }}>
+                  <button
+                    type="button"
+                    class="w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors {selectedDifficulty === null ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium' : 'text-zinc-700 dark:text-zinc-300'}"
+                    onclick={() => {
+                      selectedDifficulty = null;
+                      difficultyDropdownOpen = false;
+                    }}>
+                    <T key="study.any_difficulty" fallback="Any" />
+                  </button>
+                  {#each [7, 8, 9, 10, 11, 12] as y}
+                    {@const year = y as 7 | 8 | 9 | 10 | 11 | 12}
+                    <button
+                      type="button"
+                      class="w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors {selectedDifficulty === year ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium' : 'text-zinc-700 dark:text-zinc-300'}"
+                      onclick={() => {
+                        selectedDifficulty = year;
+                        difficultyDropdownOpen = false;
+                      }}>
+                      Year {year}
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
           </div>
-        {/if}
 
-        <!-- Difficulty (year level for AI) -->
-        <div class="flex items-center gap-3">
-          <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-            <T key="study.difficulty" fallback="Difficulty" />
-          </Label.Root>
-          <select
-            class="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 accent-ring"
-            value={selectedDifficulty ?? ''}
-            onchange={(e) => {
-              const v = (e.target as HTMLSelectElement).value;
-              selectedDifficulty = v === '' ? null : (parseInt(v, 10) as 7 | 8 | 9 | 10 | 11 | 12);
-            }}>
-            <option value=""><T key="study.any_difficulty" fallback="Any" /></option>
-            {#each [7, 8, 9, 10, 11, 12] as y}
-              <option value={y}>Year {y}</option>
-            {/each}
-          </select>
-        </div>
-
-        <!-- Question types (dropdown) -->
-        <div class="flex items-center gap-3">
-          <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-            <T key="study.question_types" fallback="Question types" />
-          </Label.Root>
-          <div class="relative" use:clickOutside={() => (questionTypesDropdownOpen = false)}>
-            <button
-              type="button"
-              class="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm flex items-center gap-2 min-w-[180px] justify-between transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring"
-              onclick={() => (questionTypesDropdownOpen = !questionTypesDropdownOpen)}>
-              <span class="truncate">
-                {#if selectedQuestionTypes.length === 3}
-                  <T key="study.all_types" fallback="All types" />
-                {:else if selectedQuestionTypes.length === 0}
-                  <T key="study.select_types" fallback="Select types..." />
-                {:else}
-                  {selectedQuestionTypes
-                    .map((t) =>
-                      t === 'multiple_choice'
-                        ? ($_('study.type_multiple_choice') ?? 'Multiple choice')
-                        : t === 'true_false'
-                          ? ($_('study.type_true_false') ?? 'True/False')
-                          : ($_('study.type_short_answer') ?? 'Short answer'),
-                    )
-                    .join(', ')}
-                {/if}
-              </span>
-              <Icon src={ChevronDown} class="w-4 h-4 shrink-0 transition-transform duration-200 {questionTypesDropdownOpen ? 'rotate-180' : ''}" />
-            </button>
-            {#if questionTypesDropdownOpen}
-              <div
-                class="absolute z-50 mt-1 min-w-[180px] py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg"
-                transition:fly={{ y: -4, duration: 150 }}>
-                {#each ['multiple_choice', 'true_false', 'short_answer'] as t}
-                  {@const type = t as 'multiple_choice' | 'true_false' | 'short_answer'}
-                  <label
-                    class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors duration-200">
-                    <input
-                      type="checkbox"
-                      checked={selectedQuestionTypes.includes(type)}
-                      onchange={(e) => {
-                        const checked = (e.target as HTMLInputElement).checked;
-                        selectedQuestionTypes = checked
-                          ? [...selectedQuestionTypes, type]
-                          : selectedQuestionTypes.filter((x) => x !== type);
-                      }}
-                      class="rounded accent-ring" />
-                    <span class="text-sm text-zinc-700 dark:text-zinc-300">
-                      {#if type === 'multiple_choice'}
-                        <T key="study.type_multiple_choice" fallback="Multiple choice" />
-                      {:else if type === 'true_false'}
-                        <T key="study.type_true_false" fallback="True/False" />
-                      {:else}
-                        <T key="study.type_short_answer" fallback="Short answer" />
+          <!-- Question types (dropdown) -->
+          <div class="flex items-center gap-2">
+            <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+              <T key="study.question_types" fallback="Question types" />
+            </Label.Root>
+            <div class="relative" use:clickOutside={() => (questionTypesDropdownOpen = false)}>
+              <button
+                type="button"
+                class="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm flex items-center gap-2 min-w-[180px] justify-between transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring"
+                onclick={() => (questionTypesDropdownOpen = !questionTypesDropdownOpen)}>
+                <span class="truncate">
+                  {#if selectedQuestionTypes.length === 3}
+                    <T key="study.all_types" fallback="All types" />
+                  {:else if selectedQuestionTypes.length === 0}
+                    <T key="study.select_types" fallback="Select types..." />
+                  {:else}
+                    {selectedQuestionTypes
+                      .map((t) =>
+                        t === 'multiple_choice'
+                          ? ($_('study.type_multiple_choice') ?? 'Multiple choice')
+                          : t === 'true_false'
+                            ? ($_('study.type_true_false') ?? 'True/False')
+                            : ($_('study.type_short_answer') ?? 'Short answer'),
+                      )
+                      .join(', ')}
+                  {/if}
+                </span>
+                <Icon src={ChevronDown} class="w-4 h-4 shrink-0 transition-transform duration-200 {questionTypesDropdownOpen ? 'rotate-180' : ''}" />
+              </button>
+              {#if questionTypesDropdownOpen}
+                <div
+                  class="absolute z-50 mt-1 min-w-[180px] py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg"
+                  transition:fly={{ y: -4, duration: 150 }}>
+                  {#each ['multiple_choice', 'true_false', 'short_answer'] as t}
+                    {@const type = t as 'multiple_choice' | 'true_false' | 'short_answer'}
+                    <label
+                      class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors duration-200">
+                      <input
+                        type="checkbox"
+                        checked={selectedQuestionTypes.includes(type)}
+                        onchange={(e) => {
+                          const checked = (e.target as HTMLInputElement).checked;
+                          selectedQuestionTypes = checked
+                            ? [...selectedQuestionTypes, type]
+                            : selectedQuestionTypes.filter((x) => x !== type);
+                        }}
+                        class="rounded accent-ring" />
+                      <span class="text-sm text-zinc-700 dark:text-zinc-300">
+                        {#if type === 'multiple_choice'}
+                          <T key="study.type_multiple_choice" fallback="Multiple choice" />
+                        {:else if type === 'true_false'}
+                          <T key="study.type_true_false" fallback="True/False" />
+                        {:else}
+                          <T key="study.type_short_answer" fallback="Short answer" />
+                        {/if}
+                      </span>
+                      {#if selectedQuestionTypes.includes(type)}
+                        <Icon src={Check} class="w-4 h-4 text-(--accent) ml-auto" />
                       {/if}
-                    </span>
-                    {#if selectedQuestionTypes.includes(type)}
-                      <Icon src={Check} class="w-4 h-4 text-(--accent) ml-auto" />
-                    {/if}
-                  </label>
-                {/each}
-              </div>
-            {/if}
+                    </label>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          </div>
+
+          <!-- Question count -->
+          <div class="flex items-center gap-2">
+            <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+              <T key="study.question_count" fallback="Questions" />
+            </Label.Root>
+            <div class="flex items-center gap-2 w-36">
+              <Slider
+                type="single"
+                bind:value={questionCount}
+                min={5}
+                max={20}
+                step={1}
+                class="flex-1" />
+            </div>
+            <span class="text-sm text-zinc-500 dark:text-zinc-400 w-8">{questionCount}</span>
           </div>
         </div>
+      </div>
 
-        <!-- Question count -->
-        <div class="flex items-center gap-3">
-          <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-            <T key="study.question_count" fallback="Questions" />
-          </Label.Root>
-          <div class="flex items-center gap-2 w-36">
-            <Slider
-              type="single"
-              bind:value={questionCount}
-              min={5}
-              max={20}
-              step={1}
-              class="flex-1" />
-          </div>
-          <span class="text-sm text-zinc-500 dark:text-zinc-400 w-8">{questionCount}</span>
-        </div>
-
+      <!-- Section 3: Generate -->
+      <div class="space-y-3">
+        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <T key="study.generate_section" fallback="3. Generate" />
+        </p>
         <Button
           onclick={handleGenerate}
           disabled={!canGenerate || loading}
@@ -543,6 +679,9 @@
           <T key="study.generate_quiz" fallback="Generate Quiz" />
         </Button>
       </div>
+
+        </div>
+      {/if}
 
       {#if error}
         <div
@@ -698,87 +837,6 @@
         </p>
       </div>
     {/if}
+    {/if}
   </div>
-
-  <!-- API Key Setup Modal (shown when no Gemini or Cerebras key is set) - must be outside conditionals -->
-  <Modal
-    bind:open={apiKeySetupModalOpen}
-    title={$_('study.ai_quiz_setup') ?? 'Enable AI Quizzes'}
-    maxWidth="max-w-2xl"
-    onclose={() => (apiKeySetupModalOpen = false)}>
-    <div class="px-8 pb-8 max-h-[75vh] overflow-y-auto space-y-6">
-      <!-- Quiz Preview -->
-      <div>
-        <h3 class="font-semibold text-zinc-900 dark:text-white mb-3">
-          {$_('study.quiz_preview') ?? 'Here\'s what your AI quiz could look like:'}
-        </h3>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 p-4 space-y-4">
-          {#each SAMPLE_QUIZ as q, i}
-            <div class="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50">
-              <p class="font-medium text-zinc-900 dark:text-white mb-2 text-sm">
-                {i + 1}. {q.question}
-              </p>
-              <div class="space-y-1">
-                {#each q.options as opt}
-                  <div
-                    class="flex items-center gap-2 py-1.5 px-2 rounded text-sm text-zinc-600 dark:text-zinc-400">
-                    <span class="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600"></span>
-                    {opt}
-                  </div>
-                {/each}
-              </div>
-            </div>
-          {/each}
-        </div>
-      </div>
-
-      <!-- Instructions -->
-      <div>
-        <h3 class="font-semibold text-zinc-900 dark:text-white mb-2">
-          {$_('study.get_free_api_key') ?? 'Get a free Cerebras API key (takes 1 minute):'}
-        </h3>
-        <ol class="list-decimal list-inside space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-          <li>
-            {$_('study.cerebras_step_1') ?? 'Go to'}
-            <a
-              href="https://cloud.cerebras.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-(--accent) underline font-medium hover:opacity-80">
-              cloud.cerebras.ai
-            </a>
-          </li>
-          <li>{$_('study.cerebras_step_2') ?? 'Sign up (free, no credit card required)'}</li>
-          <li>{$_('study.cerebras_step_3') ?? 'Click "Copy api key" on the dashboard that it opens to'}</li>
-          <li>{$_('study.cerebras_step_4') ?? 'Paste it below and click Save'}</li>
-        </ol>
-        <p class="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
-          {$_('study.cerebras_free_tier') ?? 'Free tier: 1 million tokens per day.'}
-        </p>
-      </div>
-
-      <!-- API Key Input -->
-      <div>
-        <Label.Root class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-          {$_('study.cerebras_api_key') ?? 'Cerebras API Key'}
-        </Label.Root>
-        <Input
-          bind:value={apiKeyInput}
-          type="password"
-          placeholder={$_('study.paste_api_key') ?? 'Paste your API key here'}
-          class="w-full font-mono text-sm" />
-        {#if apiKeyError}
-          <p class="mt-2 text-sm text-red-600 dark:text-red-400">{apiKeyError}</p>
-        {/if}
-      </div>
-
-      <Button
-        onclick={saveApiKeyAndEnable}
-        disabled={savingApiKey || !apiKeyInput.trim()}
-        loading={savingApiKey}
-        class="w-full">
-        {$_('study.save_and_enable') ?? 'Save & Enable AI Quizzes'}
-      </Button>
-    </div>
-  </Modal>
 </div>

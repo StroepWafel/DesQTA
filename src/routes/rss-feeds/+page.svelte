@@ -1,41 +1,37 @@
 <script lang="ts">
-  // Svelte imports
   import { onMount } from 'svelte';
-  import { page } from '$app/stores';
+  import { fade } from 'svelte/transition';
 
-  // Tauri imports
   import { invoke } from '@tauri-apps/api/core';
-
-  // $lib/ imports
   import { useDataLoader } from '$lib/utils/useDataLoader';
   import Modal from '$lib/components/Modal.svelte';
+  import { EmptyState, Button } from '$lib/components/ui';
   import { get } from 'svelte/store';
   import T from '$lib/components/T.svelte';
   import { _ } from '$lib/i18n';
   import { Icon } from 'svelte-hero-icons';
-  import { Rss, Bars3, XMark, Cog6Tooth } from 'svelte-hero-icons';
+  import { Rss, Bars3, XMark, ExclamationTriangle } from 'svelte-hero-icons';
   import { goto } from '$app/navigation';
+  import { platformStore } from '$lib/stores/platform';
 
-  // Relative imports
   import { logger } from '../../utils/logger';
   import MessageList from '../direqt-messages/components/MessageList.svelte';
   import MessageDetail from '../direqt-messages/components/Message.svelte';
   import { getRSS } from '../../utils/netUtil';
 
-  // Types
-  import { type Message } from '../direqt-messages/types';
+  import type { Message } from '../direqt-messages/types';
 
   let messages = $state<Message[]>([]);
   let loading = $state(true);
+  let loadingFeeds = $state(true);
   let error = $state<string | null>(null);
 
   let selectedFeed = $state<string | null>(null);
   let selectedMessage = $state<Message | null>(null);
   let feeds = $state<Array<{ url: string; name: string }>>([]);
   let sidebarOpen = $state(false);
-  let isMobile = $state(false);
+  let isMobile = $derived($platformStore.isMobile);
 
-  // Derived state for mobile modal
   let showMobileModal = $derived(!!selectedMessage);
 
   async function loadFeeds() {
@@ -68,6 +64,8 @@
     } catch (e) {
       logger.error('rss-feeds', 'loadFeeds', 'Failed to load feeds', { error: e });
       error = get(_)('rss_feeds.error_loading');
+    } finally {
+      loadingFeeds = false;
     }
   }
 
@@ -84,7 +82,7 @@
       ttlMinutes: 10,
       context: 'rss-feeds',
       functionName: 'fetchMessages',
-      skipCache: true, // Skip caching for RSS feeds to always get fresh content
+      skipCache: true,
       fetcher: async () => {
         const msgs = await invoke<Message[]>('fetch_messages', {
           folder: folderLabel,
@@ -108,8 +106,7 @@
     selectedMessage = null;
     logger.debug('rss-feeds', 'openFeed', `Opening feed: ${feed.name}`);
     fetchMessages(feed.url, feed.name);
-    
-    // Close sidebar on mobile when feed is selected
+
     if (isMobile) {
       sidebarOpen = false;
     }
@@ -123,13 +120,11 @@
 
     const content = await useDataLoader<string>({
       cacheKey,
-      ttlMinutes: 1440, // 24 hours
+      ttlMinutes: 1440,
       context: 'rss-feeds',
       functionName: 'openMessage',
-      skipCache: true, // Skip caching for RSS feeds to always get fresh content
-      fetcher: async () => {
-        return msg.body; // RSS body is already loaded
-      },
+      skipCache: true,
+      fetcher: async () => msg.body,
       onDataLoaded: (content) => {
         msg.body = content;
       },
@@ -140,190 +135,184 @@
     }
   }
 
-  // Check if mobile
-  function checkMobile() {
-    const tauriPlatform = import.meta.env.TAURI_ENV_PLATFORM;
-    const isNativeMobile = tauriPlatform === 'ios' || tauriPlatform === 'android';
-    const mql = window.matchMedia('(max-width: 1024px)'); // xl breakpoint
-    const isSmallViewport = mql.matches;
-    isMobile = isNativeMobile || isSmallViewport;
-    
-    // Close sidebar on mobile by default
-    if (isMobile) {
-      sidebarOpen = false;
-    } else {
-      sidebarOpen = true;
-    }
-  }
+  $effect(() => {
+    sidebarOpen = !isMobile;
+  });
 
   onMount(() => {
     loadFeeds();
-    checkMobile();
-    
-    const mql = window.matchMedia('(max-width: 1024px)');
-    const onMqlChange = () => checkMobile();
-    
-    try {
-      mql.addEventListener('change', onMqlChange);
-    } catch {
-      // Safari fallback
-      // @ts-ignore
-      mql.addListener(onMqlChange);
-    }
-    
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      try {
-        mql.removeEventListener('change', onMqlChange);
-      } catch {
-        // @ts-ignore
-        mql.removeListener(onMqlChange);
-      }
-    };
   });
 </script>
 
-<div class="flex h-full">
-  <div class="flex w-full h-full max-xl:flex-col">
-    {#if error && feeds.length === 0}
-      <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center gap-4">
-        <div class="text-lg font-semibold text-red-500 dark:text-red-400">
-          <T key="rss_feeds.error_loading" fallback="Failed to load RSS feeds." />
+<div class="flex flex-col h-full">
+  <div class="container max-w-none w-full p-5 mx-auto flex flex-col flex-1 min-h-0 gap-6">
+    {#if loadingFeeds}
+      <div
+        class="flex justify-center items-center flex-1 min-h-[320px]"
+        in:fade={{ duration: 400 }}>
+        <div
+          class="w-12 h-12 rounded-full border-4 border-accent-600/30 border-t-accent-600 animate-spin">
         </div>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400">
-          <T
-            key="rss_feeds.add_feeds_in_settings"
-            fallback="Add RSS feeds in Settings to get started." />
-        </p>
-        <a
-          href="/settings"
-          class="flex gap-2 items-center px-4 py-2 rounded-lg transition-all duration-200 accent-bg hover:opacity-90 text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring transform hover:scale-105 active:scale-95"
-          onclick={(e) => { e.preventDefault(); goto('/settings'); }}>
-          <Icon src={Cog6Tooth} class="w-5 h-5" />
-          <span><T key="rss_feeds.manage_feeds_in_settings" fallback="Manage Feeds in Settings" /></span>
-        </a>
+      </div>
+    {:else if error && feeds.length === 0}
+      <div
+        class="flex flex-col justify-center items-center flex-1 min-h-[320px]"
+        in:fade={{ duration: 400 }}>
+        <EmptyState
+          title={$_('rss_feeds.error_loading') || 'Failed to load RSS feeds.'}
+          message={$_('rss_feeds.add_feeds_in_settings') ||
+            'Add RSS feeds in Settings to get started.'}
+          icon={ExclamationTriangle}
+          size="md" />
+        <Button
+          variant="primary"
+          class="mt-4 accent-bg accent-ring"
+          onclick={() => goto('/settings')}>
+          <T key="rss_feeds.manage_feeds_in_settings" fallback="Manage Feeds in Settings" />
+        </Button>
       </div>
     {:else if feeds.length === 0}
-      <div class="flex flex-col justify-center items-center p-8 w-full h-full text-center gap-4">
-        <Icon src={Rss} class="w-16 h-16 text-zinc-400 dark:text-zinc-600" />
-        <div class="text-lg font-semibold text-zinc-900 dark:text-white">
-          <T key="rss_feeds.no_feeds" fallback="No RSS Feeds" />
-        </div>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400">
-          <T key="rss_feeds.add_feeds_in_settings_empty" fallback="Add, edit, or remove RSS feeds in Settings." />
-        </p>
-        <a
-          href="/settings"
-          class="flex gap-2 items-center px-4 py-2 rounded-lg transition-all duration-200 accent-bg hover:opacity-90 text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring transform hover:scale-105 active:scale-95"
-          onclick={(e) => { e.preventDefault(); goto('/settings'); }}>
-          <Icon src={Cog6Tooth} class="w-5 h-5" />
-          <span><T key="rss_feeds.manage_feeds_in_settings" fallback="Manage Feeds in Settings" /></span>
-        </a>
+      <div
+        class="flex flex-col justify-center items-center flex-1 min-h-[320px]"
+        in:fade={{ duration: 400 }}>
+        <EmptyState
+          title={$_('rss_feeds.no_feeds') || 'No RSS Feeds'}
+          message={$_('rss_feeds.add_feeds_in_settings_empty') ||
+            'Add, edit, or remove RSS feeds in Settings.'}
+          icon={Rss}
+          size="md" />
+        <Button
+          variant="primary"
+          class="mt-4 accent-bg accent-ring"
+          onclick={() => goto('/settings')}>
+          <T key="rss_feeds.manage_feeds_in_settings" fallback="Manage Feeds in Settings" />
+        </Button>
       </div>
     {:else}
-      <!-- Mobile Sidebar Toggle Button -->
-      {#if isMobile}
-        <div class="sticky top-0 z-30 flex justify-between items-center p-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
-          <button
-            class="flex gap-2 items-center px-4 py-2 rounded-xl transition-all duration-200 ease-in-out transform bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 shadow-md"
-            onclick={() => (sidebarOpen = !sidebarOpen)}
-            aria-label={$_('navigation.toggle_sidebar') || 'Toggle sidebar'}>
-            <Icon src={sidebarOpen ? XMark : Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
-            <span class="font-medium text-zinc-900 dark:text-white">
-              {selectedFeed || $_('rss_feeds.select_feed') || 'Select Feed'}
-            </span>
-          </button>
-        </div>
-      {/if}
-
-      <!-- Mobile Sidebar Overlay -->
-      {#if isMobile && sidebarOpen}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="fixed inset-0 z-20 bg-black/50 xl:hidden"
-          onclick={() => (sidebarOpen = false)}
-          role="button"
-          tabindex="0"
-          aria-label={$_('navigation.close_sidebar') || 'Close sidebar overlay'}></div>
-      {/if}
-
-      <!-- Sidebar -->
-      <aside
-        class="flex flex-col m-2 bg-white rounded-xl border-r shadow-md backdrop-blur-xs overflow-y-scroll xl:w-64 border-zinc-300/50 dark:border-zinc-800/50 dark:bg-zinc-900 {isMobile
-          ? `fixed top-0 left-0 z-30 w-80 h-full ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
-          : ''} transition-transform duration-300">
-        <div class="flex justify-between items-center gap-2 p-4 border-b border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900">
-          <h2 class="text-lg font-semibold shrink-0 text-zinc-900 dark:text-white">
+      <!-- Page header: full width above content -->
+      <header class="shrink-0" in:fade={{ duration: 400 }}>
+        <div class="flex items-center gap-3 mb-2">
+          <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">
             <T key="rss_feeds.title" fallback="RSS Feeds" />
-          </h2>
-          <div class="flex gap-1 items-center shrink-0">
-            <a
-              href="/settings"
-              class="p-2 text-zinc-600 rounded-lg transition-all duration-200 dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-              title={$_('rss_feeds.manage_feeds') || 'Manage feeds'}
-              aria-label={$_('rss_feeds.manage_feeds') || 'Manage feeds'}
-              onclick={(e) => { e.preventDefault(); goto('/settings'); }}>
-              <Icon src={Cog6Tooth} class="w-5 h-5" />
-            </a>
-            {#if isMobile}
-              <button
-                onclick={() => (sidebarOpen = false)}
-                class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-                title={$_('navigation.close_sidebar') || 'Close sidebar'}
-                aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
-                <Icon src={XMark} class="w-5 h-5" />
-              </button>
-            {/if}
-          </div>
+          </h1>
         </div>
-        <nav class="flex flex-col flex-1 gap-1 px-2 py-4">
-          {#key feeds.length + feeds.map((f) => f.url).join(',')}
-            {#each feeds as feed, i}
-              <div class="rss-feed-item-animate" style="animation-delay: {i * 50}ms;">
+        <p class="text-zinc-600 dark:text-zinc-400">
+          <T
+            key="rss_feeds.description"
+            fallback="Read and browse your subscribed RSS feeds in one place." />
+        </p>
+      </header>
+
+      <!-- Main content: sidebar + list + detail -->
+      <div
+        class="rss-main flex flex-1 min-h-0 flex-col xl:flex-row overflow-hidden gap-4 rounded-xl bg-transparent"
+        in:fade={{ duration: 400, delay: 100 }}>
+        <!-- Mobile: feed selector bar -->
+        {#if isMobile}
+          <div class="shrink-0 flex justify-between items-center p-4 bg-transparent">
+            <button
+              class="flex gap-2 items-center px-4 py-2 rounded-lg transition-all duration-200 accent-bg hover:opacity-90 text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 accent-ring transform hover:scale-[1.02] active:scale-[0.98]"
+              onclick={() => (sidebarOpen = !sidebarOpen)}
+              aria-label={$_('navigation.toggle_sidebar') || 'Toggle sidebar'}>
+              <Icon src={sidebarOpen ? XMark : Bars3} class="w-5 h-5" />
+              <span>{selectedFeed || $_('rss_feeds.select_feed') || 'Select Feed'}</span>
+            </button>
+          </div>
+        {/if}
+
+        <!-- Mobile overlay -->
+        {#if isMobile && sidebarOpen}
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div
+            class="fixed inset-0 z-20 backdrop-blur-sm bg-black/50 xl:hidden transition-opacity duration-300"
+            onclick={() => (sidebarOpen = false)}
+            role="button"
+            tabindex="0"
+            aria-label={$_('navigation.close_sidebar') || 'Close sidebar overlay'}>
+          </div>
+        {/if}
+
+        <!-- Sidebar: feed list -->
+        <aside
+          class="rss-sidebar-animate flex flex-col shrink-0 w-64 xl:w-72 overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md {isMobile
+            ? `fixed top-0 left-0 z-30 w-80 h-full ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+            : ''} transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
+          <div class="flex justify-between items-center gap-2 p-4 shrink-0 bg-transparent">
+            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+              <T key="rss_feeds.your_feeds" fallback="Your Feeds" />
+            </h2>
+            <div class="flex gap-1 items-center">
+              {#if isMobile}
                 <button
-                  class="w-full flex items-center border gap-3 px-4 sm:px-6 py-2.5 text-left text-sm sm:text-base font-medium rounded-lg transition-all duration-200 relative group
-                    {selectedFeed === feed.name
-                    ? 'bg-accent/10 border-accent dark:text-white pl-5 shadow-md'
-                    : 'border-transparent text-zinc-700 dark:text-white hover:bg-accent-100/10 dark:hover:bg-accent/10 hover:scale-[1.02]'}
-                    focus:outline-hidden focus:ring-2 accent-ring"
-                  onclick={() => openFeed(feed)}>
-                  <Icon src={Rss} class="w-5 h-5" />
-                  <span>{feed.name}</span>
+                  onclick={() => (sidebarOpen = false)}
+                  class="p-2 text-zinc-600 dark:text-zinc-400 rounded-lg transition-all duration-200 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                  title={$_('navigation.close_sidebar') || 'Close sidebar'}
+                  aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
+                  <Icon src={XMark} class="w-5 h-5" />
                 </button>
-              </div>
-            {/each}
+              {/if}
+            </div>
+          </div>
+          <nav
+            class="flex flex-col flex-1 gap-1 px-2 py-4 overflow-y-auto [scrollbar-gutter:stable]">
+            {#key feeds.length + feeds.map((f) => f.url).join(',')}
+              {#each feeds as feed, i}
+                <div class="rss-feed-item-animate" style="animation-delay: {i * 50}ms;">
+                  <button
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-medium rounded-lg transition-all duration-200 relative
+                      {selectedFeed === feed.name
+                      ? 'bg-accent/10 text-zinc-900 dark:text-white'
+                      : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 hover:scale-[1.02]'}
+                      focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                    onclick={() => openFeed(feed)}>
+                    <Icon src={Rss} class="w-5 h-5 shrink-0" />
+                    <span class="truncate">{feed.name}</span>
+                  </button>
+                </div>
+              {/each}
+            {/key}
+          </nav>
+        </aside>
+
+        <!-- Message list -->
+        <div
+          class="flex flex-1 xl:flex-initial flex-col min-h-0 rss-list-animate min-w-0 xl:w-[28rem] xl:min-w-[28rem] shrink-0 rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md overflow-y-auto [scrollbar-gutter:stable]"
+          style="animation-delay: 100ms;">
+          <MessageList
+            selectedFolder={selectedFeed || ''}
+            {messages}
+            {loading}
+            {error}
+            {selectedMessage}
+            {openMessage}
+            embedded={true} />
+        </div>
+
+        <!-- Message detail: article content -->
+        <div
+          class="flex-1 min-w-0 min-h-0 hidden xl:flex flex-col rss-detail-animate overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md"
+          style="animation-delay: 200ms;">
+          {#key selectedMessage?.id ?? 'empty'}
+            <div
+              class="w-full h-full flex flex-col min-w-0 overflow-hidden"
+              in:fade={{ duration: 200 }}>
+              <MessageDetail
+                {selectedMessage}
+                selectedFolder={selectedFeed || ''}
+                embedded={true}
+                detailLoading={false}
+                detailError={null}
+                openCompose={async () => {}}
+                starMessage={async () => {}}
+                deleteMessage={async () => {}}
+                restoreMessage={async () => {}}
+                starring={false}
+                deleting={false}
+                restoring={false} />
+            </div>
           {/key}
-        </nav>
-      </aside>
-
-      <!-- Message List -->
-      <div class="flex-1 {isMobile ? 'w-full' : ''}">
-        <MessageList
-          selectedFolder={selectedFeed || ''}
-          {messages}
-          {loading}
-          {error}
-          {selectedMessage}
-          {openMessage} />
-      </div>
-
-      <!-- Message detail view - full screen on desktop -->
-      <div class="hidden flex-1 xl:block">
-        <MessageDetail
-          {selectedMessage}
-          selectedFolder={selectedFeed || ''}
-          detailLoading={false}
-          detailError={null}
-          openCompose={async () => {}}
-          starMessage={async () => {}}
-          deleteMessage={async () => {}}
-          restoreMessage={async () => {}}
-          starring={false}
-          deleting={false}
-          restoring={false} />
+        </div>
       </div>
     {/if}
   </div>
@@ -335,15 +324,14 @@
       onclose={() => (selectedMessage = null)}
       maxWidth="w-full"
       maxHeight="h-full"
-      className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xs rounded-none"
+      className="bg-transparent backdrop-blur-sm rounded-none"
       showCloseButton={false}
       closeOnBackdrop={false}
-      ariaLabel={$_( 'rss_feeds.feed_item_detail' )}>
+      ariaLabel={$_('rss_feeds.feed_item_detail')}>
       <div class="flex flex-col h-full">
-        <div
-          class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
+        <div class="flex justify-between items-center p-4 shrink-0">
           <button
-            class="flex gap-2 items-center transition-colors text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
+            class="flex gap-2 items-center transition-colors duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
             onclick={() => (selectedMessage = null)}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -365,10 +353,11 @@
           <div class="w-8"></div>
         </div>
 
-        <div class="overflow-y-auto flex-1">
+        <div class="overflow-y-auto flex-1 bg-transparent">
           <MessageDetail
             {selectedMessage}
             selectedFolder={selectedFeed || ''}
+            embedded={true}
             detailLoading={false}
             detailError={null}
             openCompose={async () => {}}
@@ -385,28 +374,6 @@
 </div>
 
 <style>
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slide-in {
-    from {
-      transform: translateX(20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
   @keyframes fadeInUp {
     from {
       opacity: 0;
@@ -419,7 +386,19 @@
   }
 
   .rss-feed-item-animate {
-    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     opacity: 0;
+  }
+
+  .rss-sidebar-animate,
+  .rss-list-animate,
+  .rss-detail-animate {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  /* Remove default grey borders from base layer */
+  .rss-main * {
+    border-width: 0;
   }
 </style>

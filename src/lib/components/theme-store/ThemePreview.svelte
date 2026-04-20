@@ -3,7 +3,11 @@
   import { cubicOut } from 'svelte/easing';
   import { Icon, XMark, ChevronLeft, ChevronRight, CheckCircle, Star } from 'svelte-hero-icons';
   import type { CloudTheme } from '$lib/services/themeStoreService';
-  import { resolveImageUrl, themeStoreService } from '$lib/services/themeStoreService';
+  import {
+    resolveImageUrl,
+    resolveImageUrlSync,
+    themeStoreService,
+  } from '$lib/services/themeStoreService';
   import type { ThemeManifest } from '$lib/services/themeService';
   import { cloudAuthService } from '$lib/services/cloudAuthService';
   import { logger } from '../../../utils/logger';
@@ -20,11 +24,21 @@
   let { theme, manifest, open, onClose, onApply, onThemeUpdate }: Props = $props();
 
   let currentScreenshot = $state(0);
-  let screenshots = $derived(
-    (theme.preview?.screenshots || manifest?.preview?.screenshots || []).map(
-      (url) => resolveImageUrl(url) || url,
-    ),
-  );
+  let screenshots = $state<string[]>([]);
+
+  $effect(() => {
+    const urls = theme.preview?.screenshots || manifest?.preview?.screenshots || [];
+    if (urls.length === 0) {
+      screenshots = [];
+      return;
+    }
+    (async () => {
+      const resolved = await Promise.all(
+        urls.map((url) => resolveImageUrl(url, theme.id, 'screenshot').then((r) => r || url)),
+      );
+      screenshots = resolved;
+    })();
+  });
 
   // Rating/Review state
   let showRatingForm = $state(false);
@@ -138,7 +152,7 @@
 {#if open}
   <!-- Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 mobile-modal-inset"
     role="dialog"
     aria-modal="true"
     aria-labelledby="theme-preview-title"
@@ -158,7 +172,7 @@
 
     <!-- Modal -->
     <div
-      class="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10"
+      class="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10 mobile-modal-max-h"
       role="document"
       transition:fly={{ y: 20, duration: 300, easing: cubicOut }}
       onclick={(e) => e.stopPropagation()}
@@ -241,7 +255,9 @@
           </div>
         {:else if theme.preview?.thumbnail || manifest?.preview?.thumbnail}
           <img
-            src={resolveImageUrl(theme.preview?.thumbnail || manifest?.preview?.thumbnail) || ''}
+            src={resolveImageUrlSync(
+              theme.preview?.thumbnail || manifest?.preview?.thumbnail,
+            ) || ''}
             alt={`${theme.name} preview`}
             class="w-full h-full object-contain" />
         {:else}

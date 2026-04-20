@@ -8,7 +8,10 @@
   import { invoke } from '@tauri-apps/api/core';
 
   // $lib/ imports
+  import { platformStore } from '$lib/stores/platform';
   import T from '$lib/components/T.svelte';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { _ } from '$lib/i18n';
   import { getUrlParam, updateUrlParam } from '$lib/utils/urlParams';
 
@@ -210,15 +213,20 @@
   });
 </script>
 
-<div class="container px-6 py-7 mx-auto">
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
-      <T key="navigation.news" fallback="News" />
-    </h1>
+<div class="container max-w-none w-full p-5 mx-auto space-y-6">
+  <div class="flex justify-between items-start">
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.news" fallback="News" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T key="news.description" fallback="Browse news from around the world" />
+      </p>
+    </div>
     <div class="relative">
       <button
         id="source-button"
-        class="px-4 py-2 bg-white rounded-lg border transition-colors text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:ring-2 focus:ring-blue-500"
+        class="min-h-[44px] px-4 py-2 bg-white rounded-lg border transition-all duration-200 text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:ring-2 focus:ring-blue-500 hover:scale-105 active:scale-95"
         onclick={() => (showSourceSelector = !showSourceSelector)}>
         {selectedSource.toUpperCase()}
       </button>
@@ -229,13 +237,13 @@
           transition:fade>
           {#each Object.keys(rssFeedsByCountry) as country}
             <button
-              class="px-4 py-2 w-full text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-700 first:rounded-t-lg last:rounded-b-lg"
+              class="min-h-[44px] px-4 py-2 w-full text-left transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 first:rounded-t-lg last:rounded-b-lg active:scale-[0.98]"
               onclick={() => handleSourceChange(country)}>
               {country.toUpperCase()}
             </button>
           {/each}
           <button
-            class="px-4 py-2 w-full text-left border-t transition-colors border-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 dark:border-zinc-700"
+            class="min-h-[44px] px-4 py-2 w-full text-left border-t transition-all duration-200 border-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 dark:border-zinc-700 active:scale-[0.98]"
             onclick={() => handleSourceChange('australia')}>
             AUSTRALIA
           </button>
@@ -252,7 +260,7 @@
     <div class="py-8 text-center">
       <p class="mb-4 text-red-400">{error}</p>
       <button
-        class="px-4 py-2 text-white bg-blue-600 rounded-lg transition-colors hover:bg-blue-700"
+        class="min-h-[44px] px-4 py-2 text-white bg-blue-600 rounded-lg transition-all duration-200 hover:bg-blue-700 hover:scale-105 active:scale-95"
         onclick={() => fetchNews(selectedSource)}>
         <T key="common.retry" fallback="Retry" />
       </button>

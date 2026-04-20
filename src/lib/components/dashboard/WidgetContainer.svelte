@@ -1,11 +1,8 @@
 <script lang="ts">
   import { Icon, Cog6Tooth, XMark, Bars3 } from 'svelte-hero-icons';
-  import { fade, scale } from 'svelte/transition';
-  import { cubicInOut } from 'svelte/easing';
   import type { WidgetConfig } from '../../types/widgets';
   import { widgetRegistry } from '../../services/widgetRegistry';
   import WidgetFactory from './WidgetFactory.svelte';
-  import { tick } from 'svelte';
 
   interface Props {
     widget: WidgetConfig;
@@ -17,36 +14,11 @@
 
   let { widget, isEditing = false, onUpdate, onRemove, onSettings }: Props = $props();
 
-  let containerElement: HTMLDivElement | null = $state(null);
-
-  // Update GridStack attributes when widget position changes (attributes are set in template for initial render)
-  $effect(() => {
-    if (containerElement && widget) {
-      // Update attributes synchronously when position changes (template sets initial values)
-      containerElement.setAttribute('data-gs-x', widget.position.x.toString());
-      containerElement.setAttribute('data-gs-y', widget.position.y.toString());
-      containerElement.setAttribute('data-gs-w', widget.position.w.toString());
-      containerElement.setAttribute('data-gs-h', widget.position.h.toString());
-
-      const definition = widgetRegistry.get(widget.type);
-      containerElement.setAttribute(
-        'data-gs-min-w',
-        (widget.position.minW || definition?.minSize.w || 1).toString(),
-      );
-      containerElement.setAttribute(
-        'data-gs-min-h',
-        (widget.position.minH || definition?.minSize.h || 1).toString(),
-      );
-      containerElement.setAttribute(
-        'data-gs-max-w',
-        (widget.position.maxW || definition?.maxSize.w || 12).toString(),
-      );
-      containerElement.setAttribute(
-        'data-gs-max-h',
-        (widget.position.maxH || definition?.maxSize.h || 12).toString(),
-      );
-    }
-  });
+  const definition = $derived(widgetRegistry.get(widget.type));
+  const minW = $derived(widget.position.minW ?? definition?.minSize.w ?? 1);
+  const minH = $derived(widget.position.minH ?? definition?.minSize.h ?? 1);
+  const maxW = $derived(widget.position.maxW ?? definition?.maxSize.w ?? 12);
+  const maxH = $derived(widget.position.maxH ?? definition?.maxSize.h ?? 12);
 
   function handleSettingsClick(e: MouseEvent) {
     e.stopPropagation();
@@ -62,33 +34,6 @@
     }
   }
 
-  function handleKeydown(e: KeyboardEvent) {
-    if (!isEditing) return;
-
-    // Arrow keys for moving widgets in edit mode
-    if (
-      e.key === 'ArrowUp' ||
-      e.key === 'ArrowDown' ||
-      e.key === 'ArrowLeft' ||
-      e.key === 'ArrowRight'
-    ) {
-      e.preventDefault();
-      // GridStack will handle the movement
-    }
-
-    // Delete key to remove widget
-    if (e.key === 'Delete' && onRemove) {
-      e.preventDefault();
-      onRemove();
-    }
-
-    // Enter key to open settings
-    if (e.key === 'Enter' && onSettings) {
-      e.preventDefault();
-      onSettings(widget);
-    }
-  }
-
   // Handle keyboard events on the drag handle when focused
   function handleDragHandleKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -99,27 +44,26 @@
 </script>
 
 <div
-  bind:this={containerElement}
   class="grid-stack-item widget-container"
   data-gs-id={widget.id}
   data-gs-x={widget.position.x}
   data-gs-y={widget.position.y}
   data-gs-w={widget.position.w}
   data-gs-h={widget.position.h}
-  data-gs-min-w={widget.position.minW ?? widgetRegistry.get(widget.type)?.minSize.w ?? 1}
-  data-gs-min-h={widget.position.minH ?? widgetRegistry.get(widget.type)?.minSize.h ?? 1}
-  data-gs-max-w={widget.position.maxW ?? widgetRegistry.get(widget.type)?.maxSize.w ?? 12}
-  data-gs-max-h={widget.position.maxH ?? widgetRegistry.get(widget.type)?.maxSize.h ?? 12}
+  data-gs-min-w={minW}
+  data-gs-min-h={minH}
+  data-gs-max-w={maxW}
+  data-gs-max-h={maxH}
   role="article"
   aria-label={widget.title || `Widget: ${widget.type}`}>
-  <!-- Inner wrapper for smooth hover scale -->
+  <!-- Inner wrapper for widget content -->
   <div
     class="group relative bg-white/95 dark:bg-zinc-900/90 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-md overflow-hidden h-full w-full widget-inner"
     style="transform-origin: center center;">
     <!-- Drag Handle -->
     {#if isEditing}
       <div
-        class="gs-resize-handle gs-resize-handle-top absolute top-0 left-0 right-0 h-8 bg-zinc-100/90 dark:bg-zinc-800/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between px-2 cursor-move z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] transform translate-y-[-4px] group-hover:translate-y-0"
+        class="gs-resize-handle gs-resize-handle-top absolute top-0 left-0 right-0 h-8 bg-zinc-100/90 dark:bg-zinc-800/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between px-2 cursor-move z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out transform translate-y-[-4px] group-hover:translate-y-0"
         data-gs-handle=".gs-resize-handle-top"
         role="button"
         aria-label="Drag handle for {widget.title || widget.type} widget"
@@ -152,11 +96,11 @@
       </div>
     {/if}
 
-    <!-- Widget Content -->
+    <!-- Widget Content - minimal padding; widgets control their own spacing -->
     <div
-      class="h-full w-full p-3 sm:p-4 md:p-6 flex flex-col {isEditing
+      class="h-full w-full flex flex-col overflow-hidden p-2 sm:p-3 {isEditing
         ? 'pt-10'
-        : ''} transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
+        : ''} transition-all duration-300 ease-in-out">
       <WidgetFactory {widget} />
     </div>
   </div>
@@ -218,23 +162,9 @@
     cursor: nesw-resize;
   }
 
-  /* Smooth widget inner hover animation - wrapper approach to avoid GridStack conflicts */
+  /* Widget inner - no hover scale since widgets are display-only (not interactable) */
   :global(.widget-inner) {
     transform-origin: center center;
-    transition:
-      transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-  }
-
-  /* Apply scale on hover to inner wrapper */
-  :global(
-    .widget-container:hover:not(.ui-draggable-dragging):not(.ui-resizable-resizing) .widget-inner
-  ) {
-    transform: scale(1.01);
-    box-shadow:
-      0 20px 25px -5px rgba(0, 0, 0, 0.1),
-      0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
   /* Ensure GridStack's position changes transition smoothly */

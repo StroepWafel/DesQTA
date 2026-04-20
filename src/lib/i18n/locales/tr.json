@@ -17,7 +17,15 @@
     "clear": "Temizle",
     "refresh": "Yenile",
     "settings": "Ayarlar",
-    "close_theme_builder": "Tema Oluşturucuyu Kapat"
+    "close_theme_builder": "Tema Oluşturucuyu Kapat",
+    "move_up": "Yukarı taşı",
+    "move_down": "Aşağı taşı",
+    "add_folder": "Klasör ekle",
+    "retry": "Yeniden dene",
+    "retrying": "Yeniden deneniyor...",
+    "try_again": "Tekrar dene",
+    "saving": "Kaydediliyor...",
+    "back": "Geri"
   },
   "focus_timer": {
     "title": "Odak Zamanlayıcı",
@@ -109,6 +117,7 @@
     "folios": "Portföyler",
     "close_sidebar": "Kenar çubuğu kaplamasını kapat",
     "menu": "Menü",
+    "more": "Daha fazla",
     "qr_signin": "QR ile Giriş",
     "welcome": "Hoş Geldiniz"
   },
@@ -122,7 +131,11 @@
     "minimize": "Küçült",
     "maximize": "Büyüt",
     "close": "Kapat",
-    "notifications": "Bildirimler"
+    "notifications": "Bildirimler",
+    "cloud_signed_in": "BetterSEQTA Plus'a giriş yapıldı",
+    "cloud_not_signed_in": "BetterSEQTA Plus'a giriş yapılmadı",
+    "cloud_signed_out_message": "BetterSEQTA Plus'tan çıkış yaptınız. Verilerinizi cihazlar arasında senkronize etmek için Ayarlar'dan giriş yapın.",
+    "cloud_go_to_settings": "Ayarlara git"
   },
   "login": {
     "welcome_to": "Hoş geldiniz",
@@ -165,7 +178,9 @@
     "feature_analytics_desc": "Performans verileri",
     "feature_settings_desc": "Uygulama tercihleri",
     "fill_all_fields": "Lütfen tüm alanları doldurun",
-    "failed_credentials": "Giriş başarısız. Lütfen kimlik bilgilerinizi kontrol edin."
+    "failed_credentials": "Giriş başarısız. Lütfen kimlik bilgilerinizi kontrol edin.",
+    "not_working_try_direct": "Çalışmıyor mu? ",
+    "try_direct_login_link": "Doğrudan giriş deneyin"
   },
   "features": {
     "lightning_fast": "Yıldırım hızında performans",
@@ -293,12 +308,31 @@
     "select_subject": "Select a subject from the sidebar to get started",
     "ai_lesson_summary": "AI Lesson Summary",
     "ai_summary_desc": "Generate an AI-powered summary and actionable steps for this lesson's content and resources.",
-    "generating": "Generating...",
-    "generate_summary": "Generate Summary",
-    "summary": "Summary",
+    "generating": "Oluşturuluyor...",
+    "generating_summary": "Özet oluşturuluyor...",
+    "generate_summary": "Özet Oluştur",
+    "summarize": "Özetle",
+    "expand_content": "İçeriği genişlet",
+    "view_original": "Orijinali görüntüle",
+    "view_ai_summary": "Yapay zeka özetini görüntüle",
+    "regenerate": "Yeniden oluştur",
+    "analyzing_content": "Ders içeriği analiz ediliyor",
+    "summary": "Özet",
     "steps": "Steps",
     "homework_notes": "Homework/Notes",
-    "lesson_resources": "Lesson Resources"
+    "lesson_resources": "Lesson Resources",
+    "resource_download_failed": "Kaynak indirilemedi. Lütfen tekrar deneyin.",
+    "document_parse_error": "Ders içeriği yüklenemedi. Belge bozuk olabilir.",
+    "course_files": "Ders Dosyaları",
+    "today": "Bugün",
+    "tomorrow": "Yarın",
+    "yesterday": "Dün",
+    "breadcrumb_separator": "›",
+    "breadcrumb_term_week": "Dönem {term} Hafta {week}",
+    "no_lesson_content": "Henüz ders içeriği yok",
+    "no_lesson_content_desc": "Bu dersin içeriği henüz yayınlanmamış olabilir. Güncellemeleri kontrol etmek için yenileyin.",
+    "refresh_from_api": "Sunucudan yenile",
+    "go_to_overview": "Ders Özetine Git"
   },
   "goals": {
     "no_cached_data": "Önbelleğe alınmış veri yok",
@@ -463,7 +497,10 @@
     "export_pdf": "Export as PDF",
     "pdf_description": "Portable document format",
     "export_ical": "Export as iCal",
-    "ical_description": "Calendar (.ics) format"
+    "ical_description": "Calendar (.ics) format",
+    "download_csv_success": "Timetable downloaded to Downloads",
+    "download_pdf_success": "Timetable downloaded to Downloads",
+    "download_ical_success": "Timetable downloaded to Downloads"
   },
   "study": {
     "page_description": "Plan, track, and focus on your upcoming work.",
@@ -514,6 +551,10 @@
     "quizzes": "Sınavlar",
     "select_assessment": "Değerlendirme seç",
     "custom_topic": "Özel konu",
+    "topic_source": "1. Konu seç",
+    "quiz_options": "2. Quiz seçenekleri",
+    "change_options": "Seçenekleri değiştir",
+    "generate_section": "3. Oluştur",
     "what_to_study": "Ne çalışmak istiyorsun?",
     "question_count": "Soru sayısı",
     "generate_quiz": "Sınav oluştur",
@@ -560,6 +601,7 @@
     "type_your_answer": "Cevabınızı yazın..."
   },
   "messages": {
+    "page_description": "SEQTA ve RSS mesajlarınızı görüntüleyin ve yönetin.",
     "failed_to_load": "Failed to load messages.",
     "failed_to_load_no_cache": "Mesajlar yüklenemedi ve önbelleğe alınmış veri yok",
     "failed_to_load_message": "Failed to load message.",
@@ -622,10 +664,16 @@
     "accept_cloud_eula": "Accept BetterSEQTA Cloud EULA",
     "cloud_eula_description": "You must read and accept the Cloud Sync EULA before using cloud features.",
     "read_accept": "Read & Accept",
+    "sync_cloud_pfp": "BetterSEQTA bulut profil fotoğrafını yerel fotoğraf olarak kullan",
+    "sync_cloud_pfp_description": "Bulut avatarınızı indirin ve uygulama başlığıyla senkronize tutun.",
     "personal_settings": "Personal Settings",
     "personal_settings_description": "Customize your personal profile and preferences",
     "custom_profile_picture": "Custom Profile Picture",
     "profile_picture_description": "Upload a custom profile picture that will appear in the app header",
+    "crop": "Kırp",
+    "crop_profile_picture": "Profil resmini kırp",
+    "save_crop": "Kaydet",
+    "saving": "Kaydediliyor...",
     "uploading": "Uploading...",
     "upload": "Upload",
     "language": "Language",
@@ -662,6 +710,12 @@
     "dark": "Dark",
     "system": "System",
     "theme_mode_description": "Choose between light mode, dark mode, or follow your system preference.",
+    "minimize_to_tray": "Kapatıldığında uygulamayı sistem tepsisinde çalışır tut",
+    "minimize_to_tray_description": "Etkinleştirildiğinde, pencereyi kapatmak DesQTA'yı sistem tepsisine küçültür. Devre dışı bırakıldığında, kapatmak uygulamayı tamamen sonlandırır.",
+    "security": "Güvenlik",
+    "security_description": "Uygulamayı biyometrik kimlik doğrulama ile koruyun",
+    "biometric_enabled": "Biyometri ile kilidi aç (Face ID, Touch ID, parmak izi, Windows Hello)",
+    "biometric_enabled_description": "Uygulama açılırken biyometrik kimlik doğrulama gerektir",
     "notifications": "Notifications",
     "notifications_description": "Manage your notification preferences",
     "enable_reminder_notifications": "Enable assessment reminder notifications",
@@ -782,6 +836,23 @@
     "no_content": "Bu portal için içerik mevcut değil.",
     "failed_to_load_content": "Portal içeriği yüklenemedi"
   },
+  "custom_pages": {
+    "title": "Özel Sayfalar",
+    "description": "Kenar çubuğu menünüzde görünen tam ekran web sitesi yerleştirmeleri ekleyin",
+    "add": "Özel sayfa ekle",
+    "edit": "Düzenle",
+    "delete": "Kaldır",
+    "open_external": "Yeni pencerede aç",
+    "embed_blocked": "Bu site gömülemez",
+    "embed_blocked_description": "Bu web sitesi bir iframe'de görüntülenmeyi engelliyor. Yeni bir pencerede açabilirsiniz.",
+    "loading": "Yükleniyor...",
+    "not_found": "Özel sayfa bulunamadı",
+    "not_found_description": "Bu özel sayfa kaldırılmış olabilir veya bağlantı geçersiz.",
+    "go_to_settings": "Ayarlara git",
+    "title_placeholder": "Sayfa başlığı",
+    "no_pages": "Yapılandırılmış özel sayfa yok",
+    "no_pages_hint": "Kenar çubuğu menünüze tam ekran sayfalar olarak gömülecek web siteleri ekleyin"
+  },
   "welcome_portal": {
     "title": "Welcome Portal",
     "open_full_screen": "Open Full Screen",
@@ -817,10 +888,23 @@
     "login_url_desc": "Okul URL'si girin",
     "login_direct": "Doğrudan Giriş",
     "login_direct_desc": "Kullanıcı adı ve şifre",
+    "biometric_title": "Biyometri ile kilidi aç",
+    "biometric_subtitle": "DesQTA'yı hızlıca açmak için Face ID, Touch ID, parmak izi veya Windows Hello kullanın.",
+    "biometric_enable": "Biyometrik kilidi açmayı etkinleştir",
+    "biometric_skip": "Şimdilik atla",
+    "biometric_unlock": "Kilidi aç",
+    "biometric_unavailable": "Bu cihazda biyometrik kimlik doğrulama kullanılamıyor.",
     "ready_title": "Hazırsınız!",
     "ready_subtitle": "Panonuzu, çalışma araçlarınızı ve daha fazlasını keşfetmek için giriş yapın.",
     "sign_in": "Giriş yap",
     "step_indicator": "Adım {current} / {total}"
+  },
+  "post_login_prompts": {
+    "aria_label": "Giriş sonrası kurulum",
+    "usage_stats_title": "DesQTA'yı geliştirmeye yardımcı olun",
+    "usage_stats_subtitle": "Anonim kullanım istatistikleri göndermek ister misiniz? Bu, uygulamanın nasıl kullanıldığını anlamamıza ve geliştirmemize yardımcı olur. Kişisel veri toplanmaz.",
+    "usage_stats_yes": "Evet, DesQTA'yı geliştirmeye yardımcı ol",
+    "usage_stats_no": "Hayır teşekkürler"
   },
   "onboarding": {
     "step_dashboard_title": "Your Dashboard",
@@ -881,11 +965,18 @@
     "view_all": "Tümünü görüntüle",
     "no_notices_today": "Bugün için duyuru bulunmuyor."
   },
+  "documents": {
+    "loading": "Belgeler yükleniyor...",
+    "failed_to_load": "Belgeler yüklenemedi",
+    "error_loading": "Belgeler yüklenirken hata",
+    "no_documents": "Belge mevcut değil"
+  },
   "reports": {
     "failed_to_load": "Raporlar yüklenemedi.",
     "error_loading": "Raporlar yüklenirken hata.",
     "loading": "Raporlar yükleniyor...",
-    "download": "İndir"
+    "download": "İndir",
+    "open_failed": "Rapor açılamadı"
   },
   "performance": {
     "title": "Performance Test Results - DesQTA",
@@ -948,7 +1039,9 @@
     "avg_gpu": "Avg GPU",
     "errors_count": "{count} errors",
     "warnings_count": "{count} warnings",
-    "no_issues": "No issues"
+    "no_issues": "No issues",
+    "mega_suite_overlay_title": "Kıyaslama paketi çalışıyor",
+    "mega_suite_overlay_body": "Sayfa taraması bitti. Sentetik kontroller (açılış, arayüz, veri, arka uç) çalışıyor—genelde 30–90 saniye sürer. Lütfen bekleyin; bittiğinde sonuçlar açılacak."
   },
   "plugins": {
     "installed_title": "Eklenti Yüklendi",

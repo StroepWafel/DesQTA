@@ -5,11 +5,12 @@
     message: Message;
     selectedMessage: Message | null;
     openMessage: (msg: Message) => void;
+    embedded?: boolean;
   }
 
   import { seqtaFetch } from '../../utils/netUtil';
 
-  let { message: msg, selectedMessage, openMessage }: Props = $props();
+  let { message: msg, selectedMessage, openMessage, embedded = false }: Props = $props();
 
   let avatarUrl: string | null = $state(null);
   let avatarFailed: boolean = $state(false);
@@ -87,11 +88,13 @@
 </script>
 
 <button
-  class="group w-full text-left p-3 sm:p-3.5 mb-2 transition-all duration-200 flex gap-3 rounded-xl relative border transform hover:scale-[1.01]
-    {selectedMessage?.id === msg.id
-    ? 'border-accent-500/70 bg-accent-500/5 shadow-sm focus:ring-2 accent-ring'
-    : 'border-zinc-300/40 dark:border-zinc-800/40 hover:border-accent-500/40 dark:hover:border-accent-700/40 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40'}
-    focus:outline-hidden"
+  class="group w-full min-w-0 text-left transition-all duration-200 flex gap-3 relative focus:outline-none overflow-hidden
+    {embedded
+    ? `p-3 py-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${selectedMessage?.id === msg.id ? 'bg-accent/10 border border-accent shadow-md' : 'border border-transparent bg-white/5 dark:bg-zinc-900/5 hover:bg-white/20 dark:hover:bg-zinc-900/20'}`
+    : 'p-3 sm:p-3.5 mb-2 rounded-xl border transform hover:scale-[1.01] focus:ring-2 accent-ring'}
+    {!embedded && selectedMessage?.id === msg.id
+    ? 'border-accent-500/70 bg-accent-500/5 shadow-sm'
+    : !embedded ? 'border-zinc-300/40 dark:border-zinc-800/40 hover:border-accent-500/40 dark:hover:border-accent-700/40 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40' : ''}"
   onclick={() => openMessage(msg)}>
   <!-- Avatar -->
   <div class="flex-shrink-0">
@@ -110,10 +113,10 @@
   </div>
 
   <!-- Content -->
-  <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+  <div class="flex-1 min-w-0 flex flex-col gap-1.5 overflow-hidden">
     <!-- Row 1: sender + unread + date -->
-    <div class="flex justify-between items-center w-full">
-      <div class="flex items-center gap-2 min-w-0">
+    <div class="flex justify-between items-center w-full min-w-0 overflow-hidden">
+      <div class="flex items-center gap-2 min-w-0 overflow-hidden">
         <span
           class="font-semibold text-[13px] sm:text-sm truncate {msg.unread
             ? 'text-accent-600'
@@ -123,14 +126,14 @@
         {/if}
       </div>
       <span
-        class="ml-2 shrink-0 text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-zinc-200/50 dark:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300"
+        class="ml-2 shrink-0 text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-white/20 dark:bg-zinc-900/30 text-zinc-600 dark:text-zinc-400"
         >{formatDate(msg.date)}</span>
     </div>
 
     <!-- Row 2: subject (+ attachment icon) -->
-    <div class="flex items-center gap-2 min-w-0">
+    <div class="flex items-center gap-2 min-w-0 overflow-hidden">
       <span
-        class="font-medium text-sm sm:text-[15px] leading-tight line-clamp-1 {msg.unread
+        class="font-medium text-sm sm:text-[15px] leading-tight line-clamp-1 min-w-0 {msg.unread
           ? 'text-accent-600'
           : 'text-zinc-800 dark:text-zinc-200'}">{msg.subject}</span>
       {#if hasAttachment()}
@@ -151,11 +154,13 @@
 
     <!-- Row 3: to (sm+) + preview -->
     <div
-      class="flex items-center gap-1.5 text-[12px] sm:text-xs text-zinc-600 dark:text-zinc-400 min-w-0">
-      <span class="hidden sm:inline whitespace-nowrap opacity-70"
-        >To: <span class="font-medium text-zinc-700 dark:text-zinc-300">{msg.to}</span></span>
-      <span class="hidden sm:inline mx-1">•</span>
-      <span class="opacity-80 line-clamp-1">
+      class="flex items-center gap-1.5 text-[12px] sm:text-xs text-zinc-600 dark:text-zinc-400 min-w-0 overflow-hidden">
+      {#if !embedded}
+        <span class="hidden sm:inline whitespace-nowrap opacity-70 shrink-0"
+          >To: <span class="font-medium text-zinc-700 dark:text-zinc-300">{msg.to}</span></span>
+        <span class="hidden sm:inline mx-1 shrink-0">•</span>
+      {/if}
+      <span class="opacity-80 line-clamp-1 min-w-0">
         {hasAttachment() ? msg.preview.replace(/\(Attachment\)/, '') : msg.preview}
       </span>
     </div>

@@ -3,7 +3,10 @@
   import { invoke } from '@tauri-apps/api/core';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
+  import { platformStore } from '$lib/stores/platform';
   import { Icon, Calendar, Clock, MagnifyingGlass } from 'svelte-hero-icons';
+
+  let isMobile = $derived($platformStore.isMobile);
   import { fly, fade, scale, slide } from 'svelte/transition';
   import { quintOut, cubicOut } from 'svelte/easing';
   import { studyTips } from './studytips';
@@ -89,27 +92,27 @@
   let error: string | null = null;
 
   // UI state
-  let filter: FilterKey = 'all';
-  let sortBy: SortKey = 'due';
-  let query = '';
-  let editMode: Record<string, boolean> = {};
+  let filter = $state<FilterKey>('all');
+  let sortBy = $state<SortKey>('due');
+  let query = $state('');
+  let editMode = $state<Record<string, boolean>>({});
 
   // Animation state
-  let deletingTasks: Set<string> = new Set();
-  let completingTasks: Set<string> = new Set();
+  let deletingTasks = $state<Set<string>>(new Set());
+  let completingTasks = $state<Set<string>>(new Set());
 
   // Tabs
   type TabKey = 'quizzes' | 'tasks' | 'notes';
-  let activeTab: TabKey = 'quizzes';
+  let activeTab = $state<TabKey>('quizzes');
 
   // Upcoming assessments state (real data)
-  let upcomingAssessments: AssessmentItem[] = [];
-  let loadingAssessments = true;
+  let upcomingAssessments = $state<AssessmentItem[]>([]);
+  let loadingAssessments = $state(true);
 
   // SEQTA data stores
-  let subjects: SubjectItem[] = [];
-  let subjectColours: Record<string, string> = {};
-  let assessmentsAll: FullAssessment[] = [];
+  let subjects = $state<SubjectItem[]>([]);
+  let subjectColours = $state<Record<string, string>>({});
+  let assessmentsAll = $state<FullAssessment[]>([]);
 
   // Per-task typeahead states
   let subjectQuery: Record<string, string> = {};
@@ -178,6 +181,34 @@
     cache.set('lesson_colours_map', subjectColours, 10 * 60 * 1000);
   }
 
+  /** Limits parallel SEQTA calls so Study does not open dozens of sockets at once. */
+  const PAST_ASSESSMENT_FETCH_CONCURRENCY = 5;
+
+  async function fetchPastTasksForSubjects(
+    subjectList: SubjectItem[],
+    studentId: number,
+  ): Promise<any[]> {
+    if (subjectList.length === 0) return [];
+    const buckets: any[][] = new Array(subjectList.length);
+    let next = 0;
+    async function worker() {
+      while (true) {
+        const i = next++;
+        if (i >= subjectList.length) break;
+        const s = subjectList[i];
+        const res = await seqtaFetch('/seqta/student/assessment/list/past?', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body: { programme: s.programme, metaclass: s.metaclass, student: studentId },
+        });
+        buckets[i] = JSON.parse(res).payload.tasks || [];
+      }
+    }
+    const pool = Math.min(PAST_ASSESSMENT_FETCH_CONCURRENCY, subjectList.length);
+    await Promise.all(Array.from({ length: pool }, () => worker()));
+    return buckets.flat();
+  }
+
   async function loadAllAssessments() {
     // Check cache
     const cached = cache.get<FullAssessment[]>('seqta_all_assessments_flat');
@@ -198,16 +229,7 @@
     // load subjects list if not loaded for past requests
     if (!subjects.length) await loadSubjectsAndColours();
 
-    // past per subject
-    const pastPromises = subjects.map((s) =>
-      seqtaFetch('/seqta/student/assessment/list/past?', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: { programme: s.programme, metaclass: s.metaclass, student: studentId },
-      }),
-    );
-    const pastResponses = await Promise.all(pastPromises);
-    const past = pastResponses.map((res) => JSON.parse(res).payload.tasks || []).flat();
+    const past = await fetchPastTasksForSubjects(subjects, studentId);
 
     // combine + dedupe by id, enrich with colours
     const allCombined = [...upcoming, ...past];
@@ -580,33 +602,35 @@
     });
   }
 
-  $: filteredSortedTodos = todos
-    .filter((t) => {
-      if (query) {
-        const q = query.toLowerCase();
-        const tagStr = (t.tags ?? []).join(',').toLowerCase();
-        if (!(t.title.toLowerCase().includes(q) || tagStr.includes(q))) return false;
-      }
-      if (filter === 'completed') return t.completed;
-      if (filter === 'today') return !t.completed && isToday(t.due_date ?? undefined);
-      if (filter === 'week') return !t.completed && isThisWeek(t.due_date ?? undefined);
-      // For 'all' filter, only show non-completed tasks
-      return !t.completed;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'due') {
-        const ad = a.due_date ? new Date(a.due_date).getTime() : Infinity;
-        const bd = b.due_date ? new Date(b.due_date).getTime() : Infinity;
-        return ad - bd;
-      }
-      if (sortBy === 'priority') return priorityOrder(a.priority) - priorityOrder(b.priority);
-      const au = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-      const bu = b.updated_at ? new Date(b.updated_at).getTime() : 0;
-      return bu - au;
-    });
+  const filteredSortedTodos = $derived(
+    todos
+      .filter((t) => {
+        if (query) {
+          const q = query.toLowerCase();
+          const tagStr = (t.tags ?? []).join(',').toLowerCase();
+          if (!(t.title.toLowerCase().includes(q) || tagStr.includes(q))) return false;
+        }
+        if (filter === 'completed') return t.completed;
+        if (filter === 'today') return !t.completed && isToday(t.due_date ?? undefined);
+        if (filter === 'week') return !t.completed && isThisWeek(t.due_date ?? undefined);
+        // For 'all' filter, only show non-completed tasks
+        return !t.completed;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'due') {
+          const ad = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+          const bd = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+          return ad - bd;
+        }
+        if (sortBy === 'priority') return priorityOrder(a.priority) - priorityOrder(b.priority);
+        const au = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const bu = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+        return bu - au;
+      }),
+  );
 
   // Random study tip selection
-  let currentStudyTip = '';
+  let currentStudyTip = $state('');
 
   const lastStudyIndexes: number[] = [];
 
@@ -630,53 +654,44 @@
   }
   onMount(async () => {
     currentStudyTip = getRandomStudyTip();
-    await Promise.all([
-      loadTodos(),
-      loadUpcomingAssessments(),
-      loadSubjectsAndColours().then(loadAllAssessments),
-    ]);
+    await Promise.all([loadTodos(), loadUpcomingAssessments(), loadSubjectsAndColours()]);
+    const runHeavyAssessments = () =>
+      loadAllAssessments().catch((e) => console.error('loadAllAssessments', e));
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(runHeavyAssessments, { timeout: 2500 });
+    } else {
+      setTimeout(runHeavyAssessments, 0);
+    }
   });
 </script>
 
-<div class="h-full flex flex-col" in:fade={{ duration: 400, easing: quintOut }}>
-  <!-- Header -->
-  <div
-    class="shrink-0 px-4 sm:px-6 py-4 sm:py-6"
-    in:fly={{ y: -30, duration: 500, easing: quintOut }}>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
-          <T key="navigation.study" fallback="Study" />
-        </h1>
-        <p class="mt-1 text-sm sm:text-base text-zinc-600 dark:text-zinc-300">
-          <T
-            key="study.page_description"
-            fallback="Plan, track, and focus on your upcoming work." />
-        </p>
-      </div>
-      <div class="flex items-center gap-3">
-        <button
-          class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-zinc-300 text-zinc-900 dark:text-white dark:border-zinc-700 bg-white dark:bg-zinc-800 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm sm:text-base"
-          on:click={() => {
-            /* timer */
-          }}
-          aria-label={$_('study.open_timer') || 'Open Study Timer'}>
-          <T key="study.open_timer" fallback="Open Timer" />
-        </button>
-      </div>
+<div
+  class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6"
+  in:fade={{ duration: 400, easing: quintOut }}>
+  <!-- Header: matches analytics/directory/assessments -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shrink-0" in:fly={{ y: -30, duration: 500, easing: quintOut }}>
+    <div>
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+        <T key="navigation.study" fallback="Study" />
+      </h1>
+      <p class="text-zinc-600 dark:text-zinc-400">
+        <T
+          key="study.page_description"
+          fallback="Plan, track, and focus on your upcoming work." />
+      </p>
     </div>
 
-    <!-- Tabs -->
+    <!-- Page switcher: pill-style tabs inline with header (like assessments view selector) -->
     <div
-      class="mt-4 flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-700"
+      class="flex flex-wrap items-center gap-2 shrink-0"
       role="tablist"
       aria-label={$_('study.tabs_label', { default: 'Study sections' })}>
       <button
-        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
+        class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'quizzes'
-          ? 'accent-bg text-white'
-          : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
-        on:click={() => (activeTab = 'quizzes')}
+          ? 'accent-bg text-white border-transparent'
+          : 'bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
+        onclick={() => (activeTab = 'quizzes')}
         role="tab"
         aria-selected={activeTab === 'quizzes'}
         aria-controls="quizzes-panel"
@@ -684,11 +699,11 @@
         <T key="study.quizzes" fallback="Quizzes" />
       </button>
       <button
-        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
+        class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'tasks'
-          ? 'accent-bg text-white'
-          : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
-        on:click={() => (activeTab = 'tasks')}
+          ? 'accent-bg text-white border-transparent'
+          : 'bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
+        onclick={() => (activeTab = 'tasks')}
         role="tab"
         aria-selected={activeTab === 'tasks'}
         aria-controls="tasks-panel"
@@ -696,11 +711,11 @@
         <T key="study.tasks" fallback="Tasks" />
       </button>
       <button
-        class="px-3 py-2 -mb-px rounded-t-lg transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
+        class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'notes'
-          ? 'accent-bg text-white'
-          : 'bg-transparent text-zinc-700 dark:text-zinc-300'}"
-        on:click={() => (activeTab = 'notes')}
+          ? 'accent-bg text-white border-transparent'
+          : 'bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
+        onclick={() => (activeTab = 'notes')}
         role="tab"
         aria-selected={activeTab === 'notes'}
         aria-controls="notes-panel"
@@ -711,7 +726,7 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="flex-1 min-h-0 px-4 sm:px-6 pb-4 sm:pb-6">
+  <div class="flex-1 min-h-0">
     {#if activeTab === 'quizzes'}
       <!-- Quizzes Tab -->
       <div
@@ -738,7 +753,7 @@
             out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
             <!-- Modern Header with inline controls -->
             <div
-              class="shrink-0 px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              class="shrink-0 px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <!-- Left side: Title and New Task -->
                 <div class="flex items-center gap-4">
@@ -747,7 +762,7 @@
                   </h2>
                   <button
                     class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium"
-                    on:click={addTodo}
+                    onclick={addTodo}
                     aria-label={$_('study.add_new_task') || 'Add new task'}>
                     + <T key="study.new_task" fallback="New Task" />
                   </button>
@@ -802,7 +817,7 @@
             </div>
 
             <!-- Tasks List -->
-            <div class="flex-1 min-h-0 p-6 overflow-y-auto">
+            <div class="flex-1 min-h-0 p-4 overflow-y-auto">
               <div class="space-y-3">
                 {#if filteredSortedTodos.length === 0}
                   <div class="text-center py-10 text-zinc-500 dark:text-zinc-400">
@@ -830,7 +845,7 @@
                         <input
                           type="checkbox"
                           checked={todo.completed}
-                          on:change={() => toggleTodo(todo.id)}
+                          onchange={() => toggleTodo(todo.id)}
                           class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring"
                           aria-label={$_('study.toggle_complete') || 'Toggle complete'} />
                         <div class="flex-1 min-w-0">
@@ -846,11 +861,11 @@
                                 )}">{todo.priority ?? 'medium'}</span>
                               <button
                                 class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
-                                on:click={() => (editMode[todo.id] = true)}
+                                onclick={() => (editMode[todo.id] = true)}
                                 ><T key="study.edit" fallback="Edit" /></button>
                               <button
                                 class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-red-500"
-                                on:click={() => removeTodo(todo.id)}
+                                onclick={() => removeTodo(todo.id)}
                                 ><T key="study.delete" fallback="Del" /></button>
                             </div>
                           </div>
@@ -931,7 +946,7 @@
                         <input
                           type="checkbox"
                           checked={todo.completed}
-                          on:change={() => toggleTodo(todo.id)}
+                          onchange={() => toggleTodo(todo.id)}
                           class="mt-1 w-4 h-4 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring"
                           aria-label={$_('study.toggle_complete', {
                             default: 'Toggle complete',
@@ -946,7 +961,7 @@
                               <select
                                 class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm"
                                 bind:value={todo.priority}
-                                on:change={() => updateField(todo.id, 'priority', todo.priority)}>
+                                onchange={() => updateField(todo.id, 'priority', todo.priority)}>
                                 <option value="low">{$_('study.priority_low') || 'Low'}</option>
                                 <option value="medium"
                                   >{$_('study.priority_medium') || 'Medium'}</option>
@@ -964,12 +979,12 @@
                                 class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
                                 placeholder={$_('study.related_subject') || 'Related subject'}
                                 bind:value={todo.related_subject}
-                                on:input={(e) => {
+                                oninput={(e) => {
                                   subjectQuery[todo.id] = (e.target as HTMLInputElement).value;
                                   showSubjectDropdown[todo.id] = true;
                                 }}
-                                on:focus={() => (showSubjectDropdown[todo.id] = true)}
-                                on:blur={() =>
+                                onfocus={() => (showSubjectDropdown[todo.id] = true)}
+                                onblur={() =>
                                   setTimeout(() => (showSubjectDropdown[todo.id] = false), 150)} />
                               {#if showSubjectDropdown[todo.id]}
                                 <div
@@ -982,7 +997,7 @@
                                               .includes(q)), ) as s}
                                     <button
                                       class="flex items-center w-full px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                                      on:mousedown={() => {
+                                      onmousedown={() => {
                                         todo.related_subject = `${s.code} — ${s.title}`;
                                         subjectQuery[todo.id] = s.code;
                                         showSubjectDropdown[todo.id] = false;
@@ -1003,12 +1018,12 @@
                                 class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
                                 placeholder={$_('study.related_assessment') || 'Related assessment'}
                                 bind:value={todo.related_assessment}
-                                on:input={(e) => {
+                                oninput={(e) => {
                                   assessmentQuery[todo.id] = (e.target as HTMLInputElement).value;
                                   showAssessmentDropdown[todo.id] = true;
                                 }}
-                                on:focus={() => (showAssessmentDropdown[todo.id] = true)}
-                                on:blur={() =>
+                                onfocus={() => (showAssessmentDropdown[todo.id] = true)}
+                                onblur={() =>
                                   setTimeout(
                                     () => (showAssessmentDropdown[todo.id] = false),
                                     150,
@@ -1031,7 +1046,7 @@
                                     .slice(0, 20) as a}
                                     <button
                                       class="flex items-center w-full px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                                      on:mousedown={() => {
+                                      onmousedown={() => {
                                         todo.related_assessment = a.title;
                                         if (!todo.related_subject) {
                                           const subj = subjects.find((s) => s.code === a.code);
@@ -1093,7 +1108,7 @@
                               placeholder={$_('study.tags_comma_separated') ||
                                 'Tags (comma separated)'}
                               value={(todo.tags ?? []).join(', ')}
-                              on:input={(e) => {
+                              oninput={(e) => {
                                 const val = (e.target as HTMLInputElement).value;
                                 updateField(
                                   todo.id,
@@ -1122,11 +1137,11 @@
                                   class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                                   <button
                                     class="px-3 py-1.5 text-xs sm:text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
-                                    on:click={() => addSubtask(todo.id)}
+                                    onclick={() => addSubtask(todo.id)}
                                     >+ <T key="study.add" fallback="Add" /></button>
                                   <button
                                     class="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
-                                    on:click={() => markAllSubtasksDone(todo.id)}
+                                    onclick={() => markAllSubtasksDone(todo.id)}
                                     >✓ <T key="study.all" fallback="All" /></button>
                                 </div>
                               </div>
@@ -1141,14 +1156,14 @@
                                       <input
                                         type="checkbox"
                                         checked={sub.completed}
-                                        on:change={() => toggleSubtask(todo.id, sub.id)}
+                                        onchange={() => toggleSubtask(todo.id, sub.id)}
                                         class="w-4 h-4 shrink-0 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-2 accent-ring"
                                         aria-label={$_('study.toggle_subtask') ||
                                           'Toggle subtask'} />
                                       <input
                                         class="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm"
                                         bind:value={sub.title}
-                                        on:blur={() => {
+                                        onblur={() => {
                                           const list = (todo.subtasks ?? []).map((s) =>
                                             s.id === sub.id ? { ...s, title: sub.title } : s,
                                           );
@@ -1166,7 +1181,7 @@
                           <div class="mt-4 flex items-center justify-center sm:justify-end gap-2">
                             <button
                               class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring w-full sm:w-auto"
-                              on:click={() => {
+                              onclick={() => {
                                 editMode[todo.id] = false;
                                 saveTodos();
                               }}><T key="study.save_task" fallback="Save Task" /></button>
@@ -1189,7 +1204,7 @@
             class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col">
             <!-- Header -->
             <div
-              class="px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+              class="px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
               <div class="flex items-center justify-between">
                 <h2 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
                   <T key="study.upcoming_assessments" fallback="Upcoming Assessments" />
@@ -1200,7 +1215,7 @@
             </div>
 
             <!-- Content -->
-            <div class="flex-1 min-h-0 p-6 overflow-y-auto">
+            <div class="flex-1 min-h-0 p-4 overflow-y-auto">
               {#if loadingAssessments}
                 <div class="flex items-center justify-center py-6">
                   <div
@@ -1270,21 +1285,21 @@
               in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
               <!-- Header -->
               <div
-                class="px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
+                class="px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
                     <T key="study.study_tip" fallback="Study Tip" />
                   </h2>
                   <button
                     class="px-3 py-1.5 text-xs rounded-lg bg-white/80 dark:bg-zinc-700/80 backdrop-blur-sm text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 transition-all duration-200 hover:scale-105 border border-zinc-200/50 dark:border-zinc-600/50"
-                    on:click={() => (currentStudyTip = getRandomStudyTip())}
+                    onclick={() => (currentStudyTip = getRandomStudyTip())}
                     aria-label={$_('study.get_new_tip') || 'Get new study tip'}>
                     <T key="study.new_tip" fallback="New Tip" />
                   </button>
                 </div>
               </div>
               <!-- Content -->
-              <div class="p-6">
+              <div class="p-4">
                 <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">
                   {currentStudyTip}
                 </p>
