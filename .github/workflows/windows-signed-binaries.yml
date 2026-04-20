@@ -3,76 +3,81 @@ name: Build Signed Windows Binaries
 on:
   workflow_dispatch:
     inputs:
-      source_ref:
-        description: "Git branch, tag, or commit to build"
-        required: false
-        default: "main"
-        type: string
-      review_window_confirmation:
+      acknowledge_review_window:
         description: "I understand this is usually reviewed between 08:00–23:00 CEST (17:30–08:30 ACDT)"
+        type: boolean
         required: true
         default: false
+      source_ref:
+        description: "Branch, tag, or commit to build"
+        required: true
+        default: "main"
+      release_name:
+        description: "Release title"
+        required: true
+      prerelease:
+        description: "Mark GitHub release as prerelease"
         type: boolean
+        required: false
+        default: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  build-signed-windows:
-    name: Build signed Windows artifacts
+  build-and-sign-windows:
     runs-on: windows-latest
-    environment: OSSign
+    env:
+      RUST_TARGET: x86_64-pc-windows-msvc
 
     steps:
-      - name: Verify review window confirmation
-        if: ${{ inputs.review_window_confirmation != true }}
+      - name: Validate OSSign review window acknowledgement
+        if: ${{ github.event.inputs.acknowledge_review_window != 'true' }}
         shell: pwsh
         run: |
-          Write-Error "Please check the confirmation box before starting this workflow."
-          exit 1
+          throw "You must acknowledge the OSSign review window (08:00-23:00 CEST / 17:30-08:30 ACDT) before running this workflow."
 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_ref }}
+          ref: ${{ github.event.inputs.source_ref }}
           fetch-depth: 1
 
       - name: Install OSSign CLI
         uses: ossign/ossign@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          config: ${{ secrets.OSSIGN_CONFIG }}
           installOnly: true
 
-      - name: Inject OSSign sign command into Tauri config
+      - name: Configure Tauri Windows signing with OSSign
         shell: pwsh
+        env:
+          TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
         run: |
-          $configPath = "src-tauri/tauri.conf.json"
-          $raw = Get-Content $configPath -Raw
-          $config = $raw | ConvertFrom-Json -Depth 100
-
-          if (-not $config.bundle.windows) {
-            $config.bundle | Add-Member -NotePropertyName windows -NotePropertyValue (@{})
-          }
-
-          $config.bundle.windows | Add-Member -NotePropertyName signCommand -NotePropertyValue "powershell -ExecutionPolicy Bypass -File sign.ps1 %1" -Force
-          ($config | ConvertTo-Json -Depth 100) | Set-Content $configPath
-
-      - name: Create signing script
-        shell: pwsh
-        run: |
+          $signScriptPath = "src-tauri/sign.ps1"
           @'
-          param(
-            [Parameter(Mandatory = $true)]
-            [string]$File
-          )
+          param([string]$FilePath)
+          if (-not $FilePath) {
+            throw "Missing file path argument."
+          }
+          $resolvedPath = (Resolve-Path $FilePath).Path
+          $tool = Get-ChildItem $env:RUNNER_TOOL_CACHE -Filter ossign.exe -Recurse | Select-Object -First 1
+          if (-not $tool) {
+            throw "Could not locate ossign.exe in RUNNER_TOOL_CACHE."
+          }
+          $type = if ($resolvedPath.ToLower().EndsWith(".msi")) { "msi" } else { "pecoff" }
+          & $tool.FullName -t $type -o $resolvedPath $resolvedPath
+          '@ | Set-Content -Path $signScriptPath -Encoding utf8
 
-          $ErrorActionPreference = "Stop"
-          $extension = [System.IO.Path]::GetExtension($File).ToLowerInvariant()
-          $signType = if ($extension -eq ".msi") { "msi" } else { "pecoff" }
-
-          Write-Host "Signing file '$File' as '$signType'"
-          ossign -t $signType -o "$File" "$File"
-          '@ | Set-Content src-tauri/sign.ps1
+          $configPath = "src-tauri/tauri.conf.json"
+          $json = Get-Content $configPath -Raw | ConvertFrom-Json
+          if (-not $json.bundle.windows) {
+            $json.bundle | Add-Member -NotePropertyName windows -NotePropertyValue ([PSCustomObject]@{}) -Force
+          }
+          $json.bundle.windows.signCommand = 'powershell -ExecutionPolicy Bypass -File sign.ps1 %1'
+          $json.plugins.updater.pubkey = $env:TAURI_SIGNING_PUBLIC_KEY
+          $json | ConvertTo-Json -Depth 100 | Set-Content -Path $configPath -Encoding utf8
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -88,7 +93,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ env.RUST_TARGET }}
 
       - name: Install dependencies
         run: pnpm install
@@ -97,16 +102,29 @@ jobs:
         run: pnpm tauri icon static/app-icon.svg
 
       - name: Build signed Windows binaries
+        shell: pwsh
         env:
           OSSIGN_CONFIG: ${{ secrets.OSSIGN_CONFIG }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: pnpm tauri build --target x86_64-pc-windows-msvc
+        run: pnpm tauri build --target $env:RUST_TARGET
 
-      - name: Upload signed Windows artifacts
+      - name: Upload signed build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: signed-windows-x86_64
+          name: windows-signed-x86_64
           path: |
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**
-            src-tauri/target/x86_64-pc-windows-msvc/release/*.sig
+            src-tauri/target/${{ env.RUST_TARGET }}/release/bundle/**
+            src-tauri/target/${{ env.RUST_TARGET }}/release/*.sig
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.event.inputs.release_name }}
+          tag_name: windows-signed-${{ github.run_id }}
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease }}
+          body: |
+            Windows binaries signed with OSSign.
+            OSSign integration reference: https://github.com/BetterSEQTA/BetterSEQTA-DesQTA-ossign
+          files: |
+            src-tauri/target/${{ env.RUST_TARGET }}/release/bundle/**
+            src-tauri/target/${{ env.RUST_TARGET }}/release/*.sig

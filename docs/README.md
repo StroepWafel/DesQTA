@@ -26,6 +26,7 @@ Welcome to the comprehensive documentation for DesQTA - a modern student managem
 ### 🔧 Development & Deployment
 
 - [Build Process & Deployment](./development/build-deployment.md) - Build system and deployment guide
+- [Windows OSSign Workflow Onboarding](./development/windows-ossign-workflow-onboarding.md) - Setup and run signed Windows binary builds
 - [Logging System](./development/logging-system.md) - Comprehensive logging and debugging
 - [Logging Quick Reference](./development/logging-quick-reference.md) - Quick reference for logging APIs
 - [Future Roadmap](./development/future-roadmap.md) - Comprehensive development plan and roadmap

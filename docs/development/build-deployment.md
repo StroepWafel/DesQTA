@@ -490,6 +490,14 @@ src-tauri/gen/apple/build/
 
 ## 🔄 Continuous Integration & Deployment
 
+### Signed Windows Binaries (OSSign)
+
+DesQTA includes a dedicated manual workflow at `.github/workflows/windows-signed-binaries.yml` to build and sign Windows artifacts via OSSign.
+
+- Trigger: `workflow_dispatch`
+- Outputs: signed Windows bundle artifacts and `.sig` files
+- Release: creates a GitHub release tagged `windows-signed-<run_id>`
+
 ### GitHub Actions Workflow (`.github/workflows/build.yml`)
 
 ```yaml
