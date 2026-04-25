@@ -165,3 +165,4 @@ src/lib/generated/themes.ts
 
 GEMINI.md
 .tauri/myapp.key
+~/.tauri/desqta.key
