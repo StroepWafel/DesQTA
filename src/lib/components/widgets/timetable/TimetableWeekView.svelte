@@ -25,22 +25,14 @@
     settings: TimetableWidgetSettings;
   }
 
-  let {
-    lessons,
-    weekStart,
-    selectedLesson,
-    onLessonClick,
-    settings,
-  }: Props = $props();
+  let { lessons, weekStart, selectedLesson, onLessonClick, settings }: Props = $props();
 
   let gridContainer: HTMLDivElement | null = $state(null);
   let gridHeight = $state(800);
   let currentTimePosition = $state<number | null>(null);
   let timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
 
-  const timeRange = $derived(
-    settings.timeRange || calculateTimeBounds(lessons),
-  );
+  const timeRange = $derived(settings.timeRange || calculateTimeBounds(lessons));
 
   const dayLabels = $derived([
     $_('timetable.monday') || 'Monday',
@@ -83,7 +75,7 @@
   }> {
     const dayLessons = getLessonsForDay(dayIdx);
     const grouped = groupLessonsByTime(dayLessons);
-    
+
     return Array.from(grouped.entries()).map(([timeKey, lessons]: [string, TimetableLesson[]]) => ({
       timeKey,
       lessons,
@@ -97,7 +89,7 @@
     const endMinutes = timeToMinutes(timeRange.end);
     const rangeMinutes = endMinutes - startMinutes;
     const timeMinutes = timeToMinutes(time);
-    
+
     return ((timeMinutes - startMinutes) / rangeMinutes) * gridHeight;
   }
 
@@ -105,25 +97,25 @@
     const slots: string[] = [];
     const start = timeToMinutes(timeRange.start);
     const end = timeToMinutes(timeRange.end);
-    
+
     for (let minutes = start; minutes <= end; minutes += 60) {
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
       slots.push(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`);
     }
-    
+
     return slots;
   }
 
   onMount(() => {
     updateGridHeight();
     updateCurrentTime();
-    
+
     const resizeObserver = new ResizeObserver(() => {
       updateGridHeight();
       updateCurrentTime();
     });
-    
+
     if (gridContainer) {
       resizeObserver.observe(gridContainer);
     }
@@ -154,8 +146,8 @@
     <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase"></div>
     {#each dayLabels as dayLabel, dayIdx}
       <div
-        class="text-center transition-all duration-200 {todayDayIndex === dayIdx 
-          ? 'accent-bg text-white rounded-lg px-2 py-1 shadow-md' 
+        class="text-center transition-all duration-200 {todayDayIndex === dayIdx
+          ? 'accent-bg text-white rounded-lg px-2 py-1 shadow-md'
           : 'text-zinc-700 dark:text-zinc-300'}">
         <div class="font-semibold">{dayLabel}</div>
       </div>
@@ -196,12 +188,12 @@
         {/if}
 
         <!-- Day Columns -->
-        <div
-          class="grid absolute top-0 right-0 left-[60px] grid-cols-5 gap-2 h-full px-2">
+        <div class="grid absolute top-0 right-0 left-[60px] grid-cols-5 gap-2 h-full px-2">
           {#each Array(5) as _, dayIdx}
             <div
-              class="relative h-full border-l border-zinc-200 dark:border-zinc-700 {todayDayIndex === dayIdx 
-                ? 'bg-[var(--accent)]/10 dark:bg-[var(--accent)]/10' 
+              class="relative h-full border-l border-zinc-200 dark:border-zinc-700 {todayDayIndex ===
+              dayIdx
+                ? 'bg-[var(--accent)]/10 dark:bg-[var(--accent)]/10'
                 : ''}"
               transition:fade={{ duration: 200, delay: dayIdx * 100 }}>
               {#each getLessonsGroupedByTimeForDay(dayIdx) as lessonGroup}
@@ -227,7 +219,7 @@
                       {#each lessonGroup.lessons as lesson}
                         <div class="flex-1 min-w-0">
                           <TimetableLessonBlock
-                            lesson={lesson}
+                            {lesson}
                             onClick={onLessonClick}
                             overlap={true}
                             showTeacher={settings.showTeacher ?? true}

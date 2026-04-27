@@ -27,23 +27,15 @@
     settings: TimetableWidgetSettings;
   }
 
-  let {
-    lessons,
-    selectedDate,
-    selectedLesson,
-    onLessonClick,
-    onDateChange,
-    settings,
-  }: Props = $props();
+  let { lessons, selectedDate, selectedLesson, onLessonClick, onDateChange, settings }: Props =
+    $props();
 
   let gridContainer: HTMLDivElement | null = $state(null);
   let gridHeight = $state(800);
   let currentTimePosition = $state<number | null>(null);
   let timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
 
-  const timeRange = $derived(
-    settings.timeRange || calculateTimeBounds(lessons),
-  );
+  const timeRange = $derived(settings.timeRange || calculateTimeBounds(lessons));
 
   const dayLabels = $derived([
     $_('timetable.monday') || 'Monday',
@@ -54,9 +46,7 @@
   ]);
 
   const today = $derived(new Date());
-  const isToday = $derived(
-    selectedDate.toDateString() === today.toDateString(),
-  );
+  const isToday = $derived(selectedDate.toDateString() === today.toDateString());
   const dayName = $derived(dayLabels[getDayIndex(selectedDate)] || '');
 
   const dayLessons = $derived(
@@ -81,7 +71,7 @@
     const endMinutes = timeToMinutes(timeRange.end);
     const rangeMinutes = endMinutes - startMinutes;
     const timeMinutes = timeToMinutes(time);
-    
+
     return ((timeMinutes - startMinutes) / rangeMinutes) * gridHeight;
   }
 
@@ -89,13 +79,13 @@
     const slots: string[] = [];
     const start = timeToMinutes(timeRange.start);
     const end = timeToMinutes(timeRange.end);
-    
+
     for (let minutes = start; minutes <= end; minutes += 60) {
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
       slots.push(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`);
     }
-    
+
     return slots;
   }
 
@@ -118,12 +108,12 @@
   onMount(() => {
     updateGridHeight();
     updateCurrentTime();
-    
+
     const resizeObserver = new ResizeObserver(() => {
       updateGridHeight();
       updateCurrentTime();
     });
-    
+
     if (gridContainer) {
       resizeObserver.observe(gridContainer);
     }
@@ -158,11 +148,11 @@
         onclick={prevDay}
         ariaLabel={$_('timetable.previous_day') || 'Previous day'}
         class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
-      
+
       <div class="text-center min-w-[200px]">
         <h2
-          class="text-xl font-bold text-zinc-900 dark:text-white {isToday 
-            ? 'text-blue-600 dark:text-blue-400' 
+          class="text-xl font-bold text-zinc-900 dark:text-white {isToday
+            ? 'text-blue-600 dark:text-blue-400'
             : ''}">
           {dayName}
         </h2>
@@ -175,7 +165,7 @@
           })}
         </p>
       </div>
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -183,7 +173,7 @@
         onclick={nextDay}
         ariaLabel={$_('timetable.next_day') || 'Next day'}
         class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
-      
+
       {#if !isToday}
         <Button
           variant="ghost"
@@ -232,7 +222,9 @@
         <!-- Lessons Column -->
         <div class="absolute top-0 right-0 left-[80px] h-full px-4">
           {#if dayLessons.length === 0}
-            <div class="flex flex-col justify-center items-center h-full py-16" transition:fade={{ duration: 200 }}>
+            <div
+              class="flex flex-col justify-center items-center h-full py-16"
+              transition:fade={{ duration: 200 }}>
               <EmptyState
                 title={$_('timetable.no_lessons_today') || 'No Lessons Today'}
                 message={$_('timetable.no_lessons_message') || 'Enjoy your free time!'}
@@ -247,7 +239,7 @@
                 style="top: {position.top}px; height: {position.height}px;"
                 transition:fade={{ duration: 200, delay: index * 50 }}>
                 <TimetableLessonBlock
-                  lesson={lesson}
+                  {lesson}
                   onClick={onLessonClick}
                   showTeacher={settings.showTeacher ?? true}
                   showRoom={settings.showRoom ?? true}

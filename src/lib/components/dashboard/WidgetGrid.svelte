@@ -230,7 +230,6 @@
     grid.on('resizestop', (_event, items: any[] = []) => {
       syncPositionsFromGrid(items, 'resizestop');
     });
-
   }
 
   async function reconcileGrid() {
@@ -284,7 +283,9 @@
         widgetCount: loadedLayout.widgets.length,
       });
     } catch (error) {
-      logger.error('WidgetGrid', 'loadPersistedLayout', `Failed to load layout: ${error}`, { error });
+      logger.error('WidgetGrid', 'loadPersistedLayout', `Failed to load layout: ${error}`, {
+        error,
+      });
       commitLayout(widgetService.getDefaultLayout());
     }
   }
@@ -338,7 +339,9 @@
     if (!gridElement) return;
 
     await tick();
-    const widgetElement = gridElement.querySelector(`[data-gs-id="${widgetId}"]`) as HTMLElement | null;
+    const widgetElement = gridElement.querySelector(
+      `[data-gs-id="${widgetId}"]`,
+    ) as HTMLElement | null;
     widgetElement?.scrollIntoView({
       behavior: 'smooth',
       block: 'center',
@@ -383,13 +386,21 @@
     }
 
     if (grid && gridElement) {
-      const gridItems = grid.save(false) as Array<{ id?: string; x?: number; y?: number; w?: number; h?: number }>;
+      const gridItems = grid.save(false) as Array<{
+        id?: string;
+        x?: number;
+        y?: number;
+        w?: number;
+        h?: number;
+      }>;
       syncPositionsFromGrid(
         gridItems
           .map((item) => {
             const widgetId = item.id;
             if (!widgetId) return null;
-            const el = gridElement?.querySelector(`[data-gs-id="${widgetId}"]`) as HTMLElement | null;
+            const el = gridElement?.querySelector(
+              `[data-gs-id="${widgetId}"]`,
+            ) as HTMLElement | null;
             if (!el) return null;
 
             return {
@@ -413,7 +424,6 @@
       grid.destroy(false);
       grid = null;
     }
-
   });
 </script>
 

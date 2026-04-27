@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { logger } from '../../utils/logger';
 import type { ThemeManifest } from './themeService';
 
+/** Host unchanged; Tauri `theme_store` appends `type=desqta` on `/api/themes` requests. */
 const DEFAULT_API_BASE_URL = 'https://betterseqta.org/api/themes';
 const FALLBACK_TIMEOUT = 5000; // 5 seconds
 

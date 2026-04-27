@@ -215,7 +215,12 @@
     "step6_desc": "Vuelve a DesQTA y usa el botón \"Subir código QR\" para seleccionar y subir tu imagen guardada. ¡DesQTA iniciará sesión automáticamente!",
     "help_title": "¿Necesitas más ayuda?",
     "help_desc": "Si no encuentras la opción \"Conectar app móvil\", puede tener otro nombre en tu escuela, como:",
-    "help_options": ["Registro de dispositivo móvil", "Configuración de app", "Configuración de código QR", "Conectar dispositivo"],
+    "help_options": [
+      "Registro de dispositivo móvil",
+      "Configuración de app",
+      "Configuración de código QR",
+      "Conectar dispositivo"
+    ],
     "help_contact": "Contacta con el soporte informático de tu escuela si sigues sin encontrar esta opción.",
     "got_it": "¡Entendido, gracias!"
   },

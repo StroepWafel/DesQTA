@@ -215,7 +215,12 @@
     "step6_desc": "Retournez à DesQTA et utilisez le bouton \"Télécharger le code QR\" pour sélectionner et télécharger votre image enregistrée. DesQTA vous connectera automatiquement !",
     "help_title": "Besoin de plus d'aide ?",
     "help_desc": "Si vous ne trouvez pas l'option \"Connecter l'app mobile\", elle peut avoir un nom différent dans votre école, comme :",
-    "help_options": ["Enregistrement d'appareil mobile", "Configuration de l'app", "Configuration du code QR", "Connecter l'appareil"],
+    "help_options": [
+      "Enregistrement d'appareil mobile",
+      "Configuration de l'app",
+      "Configuration du code QR",
+      "Connecter l'appareil"
+    ],
     "help_contact": "Contactez le support informatique de votre école si vous ne trouvez toujours pas cette option.",
     "got_it": "Compris, merci !"
   },

@@ -1,6 +1,15 @@
 <script lang="ts">
   import { Button } from '../../ui';
-  import { Icon, ChevronLeft, ChevronRight, ChevronDown, CalendarDays, ViewColumns, Calendar, ListBullet } from 'svelte-hero-icons';
+  import {
+    Icon,
+    ChevronLeft,
+    ChevronRight,
+    ChevronDown,
+    CalendarDays,
+    ViewColumns,
+    Calendar,
+    ListBullet,
+  } from 'svelte-hero-icons';
   import TimetableExport from './TimetableExport.svelte';
   import { onMount } from 'svelte';
   import { fly } from 'svelte/transition';
@@ -50,14 +59,16 @@
     { value: 'list' as const, label: $_('timetable.list') || 'List', icon: ListBullet },
   ];
 
-  const currentViewOption = $derived(viewModeOptions.find((o) => o.value === viewMode) ?? viewModeOptions[0]);
+  const currentViewOption = $derived(
+    viewModeOptions.find((o) => o.value === viewMode) ?? viewModeOptions[0],
+  );
 
   function weekRangeLabel(): string {
     const end = new Date(weekStart.valueOf() + 4 * 86400000);
     const startMonth = weekStart.toLocaleString('default', { month: 'short' });
     const endMonth = end.toLocaleString('default', { month: 'short' });
     const year = weekStart.getFullYear();
-    
+
     if (startMonth === endMonth) {
       return `${weekStart.getDate()} - ${end.getDate()} ${startMonth} ${year}`;
     } else {
@@ -79,7 +90,10 @@
   });
 </script>
 
-<div class="relative z-[100] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between {inline ? 'px-0 py-0' : 'px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30'}">
+<div
+  class="relative z-[100] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between {inline
+    ? 'px-0 py-0'
+    : 'px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30'}">
   <!-- Left: Week Navigation (hidden on mobile when in day view) -->
   {#if !(isMobile && viewMode === 'day')}
     <div class="flex gap-2 items-center">
@@ -129,9 +143,15 @@
         aria-label={$_('timetable.view') || 'View'}
         aria-expanded={showViewDropdown}
         aria-haspopup="listbox">
-        <Icon src={currentViewOption.icon} class="w-4 h-4 shrink-0 text-zinc-600 dark:text-zinc-400" />
+        <Icon
+          src={currentViewOption.icon}
+          class="w-4 h-4 shrink-0 text-zinc-600 dark:text-zinc-400" />
         <span class="font-medium text-sm">{currentViewOption.label}</span>
-        <Icon src={ChevronDown} class="w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform duration-200 {showViewDropdown ? 'rotate-180' : ''}" />
+        <Icon
+          src={ChevronDown}
+          class="w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform duration-200 {showViewDropdown
+            ? 'rotate-180'
+            : ''}" />
       </button>
       {#if showViewDropdown}
         <div
@@ -144,7 +164,8 @@
               role="option"
               data-onboarding-view={option.value}
               aria-selected={viewMode === option.value}
-              class="flex gap-2 items-center w-full px-3 py-2.5 text-left text-sm transition-colors {viewMode === option.value
+              class="flex gap-2 items-center w-full px-3 py-2.5 text-left text-sm transition-colors {viewMode ===
+              option.value
                 ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
                 : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
               onclick={() => {
@@ -158,10 +179,6 @@
         </div>
       {/if}
     </div>
-    <TimetableExport
-      bind:showExportMenu={showExportMenu}
-      onExportCsv={onExportCsv}
-      onExportPdf={onExportPdf}
-      onExportIcal={onExportIcal} />
+    <TimetableExport bind:showExportMenu {onExportCsv} {onExportPdf} {onExportIcal} />
   </div>
 </div>
