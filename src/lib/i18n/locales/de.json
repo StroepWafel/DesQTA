@@ -135,7 +135,8 @@
     "cloud_signed_in": "Bei BetterSEQTA Plus angemeldet",
     "cloud_not_signed_in": "Nicht bei BetterSEQTA Plus angemeldet",
     "cloud_signed_out_message": "Sie sind von BetterSEQTA Plus abgemeldet. Melden Sie sich in den Einstellungen an, um Ihre Daten geräteübergreifend zu synchronisieren.",
-    "cloud_go_to_settings": "Zu Einstellungen"
+    "cloud_go_to_settings": "Zu Einstellungen",
+    "notification_forum_subtitle": "Neue Nachrichten oder Kommentare"
   },
   "login": {
     "welcome_to": "Willkommen bei",

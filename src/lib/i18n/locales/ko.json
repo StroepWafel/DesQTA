@@ -135,7 +135,8 @@
     "cloud_signed_in": "BetterSEQTA Plus에 로그인됨",
     "cloud_not_signed_in": "BetterSEQTA Plus에 로그인되지 않음",
     "cloud_signed_out_message": "BetterSEQTA Plus에서 로그아웃되었습니다. 설정에서 로그인하여 기기 간 데이터를 동기화하세요.",
-    "cloud_go_to_settings": "설정으로 이동"
+    "cloud_go_to_settings": "설정으로 이동",
+    "notification_forum_subtitle": "새 메시지 또는 댓글"
   },
   "login": {
     "welcome_to": "환영합니다",
