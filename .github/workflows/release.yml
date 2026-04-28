@@ -565,6 +565,10 @@ jobs:
           echo "OSSign workflow ID: ${{ steps.dispatch.outputs.workflow_id }}"
           echo "Source ref sent to OSSign follows the branch/tag you selected above: ${GITHUB_REF}"
 
+      # gh workflow run needs a local git clone (or --repo); this job had none.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Start wait loop for signed artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -573,6 +577,7 @@ jobs:
           V="${{ github.event.inputs.version }}"
           case "$V" in v*) TAG="$V" ;; *) TAG="v$V" ;; esac
           gh workflow run windows-ossign-wait-signature.yml \
+            --repo "${{ github.repository }}" \
             --ref "${GITHUB_REF}" \
             -f workflow_id="${{ steps.dispatch.outputs.workflow_id }}" \
             -f release_name="DesQTA ${TAG}" \
