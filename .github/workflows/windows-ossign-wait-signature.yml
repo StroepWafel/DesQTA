@@ -94,6 +94,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Checkout repository
+        if: steps.check.outputs.signed_artifacts == ''
+        uses: actions/checkout@v4
+
       - name: Schedule another poll (signing not finished yet)
         if: steps.check.outputs.signed_artifacts == ''
         env:
@@ -102,6 +106,7 @@ jobs:
           NEXT=$(( ${{ github.event.inputs.attempt }} + 1 ))
           echo "Signing not complete yet (attempt ${{ github.event.inputs.attempt }}); scheduling attempt ${NEXT}"
           gh workflow run windows-ossign-wait-signature.yml \
+            --repo "${{ github.repository }}" \
             --ref "${GITHUB_REF}" \
             -f workflow_id="${{ github.event.inputs.workflow_id }}" \
             -f release_name="${{ github.event.inputs.release_name }}" \

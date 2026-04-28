@@ -45,11 +45,15 @@ jobs:
           echo "OSSign workflow ID: ${{ steps.dispatch.outputs.workflow_id }}"
           echo "Source ref sent to OSSign follows the branch/tag you selected above: ${GITHUB_REF}"
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Start wait loop for signed artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run windows-ossign-wait-signature.yml \
+            --repo "${{ github.repository }}" \
             --ref "${GITHUB_REF}" \
             -f workflow_id="${{ steps.dispatch.outputs.workflow_id }}" \
             -f release_name="${{ github.event.inputs.release_name }}" \
