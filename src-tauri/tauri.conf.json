@@ -26,7 +26,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' http://ipc.localhost http://tauri.localhost blob:http://tauri.localhost http://localhost:* https://localhost:* https://*.seqta.com https://*.seqta.com.au https://*.betterseqta.com https://*.betterseqta.org https://betterseqta.org https://api.github.com http://localhost:8787 https://github.com https://api.cerebras.ai https://raw.githubusercontent.com http://ip-api.com https://ip-api.com; media-src 'self' data: blob:;"
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' http://ipc.localhost http://tauri.localhost blob:http://tauri.localhost http://localhost:* https://localhost:* https://*.seqta.com https://*.seqta.com.au https://*.betterseqta.com https://*.betterseqta.org https://betterseqta.org https://api.github.com http://localhost:8787 https://github.com https://api.cerebras.ai https://generativelanguage.googleapis.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://raw.githubusercontent.com http://ip-api.com https://ip-api.com; media-src 'self' data: blob:;"
     },
     "macOSPrivateApi": true
   },

@@ -135,7 +135,8 @@
     "cloud_signed_in": "Connecté à BetterSEQTA Plus",
     "cloud_not_signed_in": "Non connecté à BetterSEQTA Plus",
     "cloud_signed_out_message": "Vous êtes déconnecté de BetterSEQTA Plus. Connectez-vous dans les Paramètres pour synchroniser vos données entre appareils.",
-    "cloud_go_to_settings": "Aller aux paramètres"
+    "cloud_go_to_settings": "Aller aux paramètres",
+    "notification_forum_subtitle": "Nouveaux messages ou commentaires"
   },
   "login": {
     "welcome_to": "Bienvenue sur",
@@ -214,7 +215,12 @@
     "step6_desc": "Retournez à DesQTA et utilisez le bouton \"Télécharger le code QR\" pour sélectionner et télécharger votre image enregistrée. DesQTA vous connectera automatiquement !",
     "help_title": "Besoin de plus d'aide ?",
     "help_desc": "Si vous ne trouvez pas l'option \"Connecter l'app mobile\", elle peut avoir un nom différent dans votre école, comme :",
-    "help_options": ["Enregistrement d'appareil mobile", "Configuration de l'app", "Configuration du code QR", "Connecter l'appareil"],
+    "help_options": [
+      "Enregistrement d'appareil mobile",
+      "Configuration de l'app",
+      "Configuration du code QR",
+      "Connecter l'appareil"
+    ],
     "help_contact": "Contactez le support informatique de votre école si vous ne trouvez toujours pas cette option.",
     "got_it": "Compris, merci !"
   },

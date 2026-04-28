@@ -26,11 +26,13 @@
   let blockElement: HTMLButtonElement | null = $state(null);
 
   const active = $derived(isLessonActive(lesson));
-  const densityClasses = $derived({
-    compact: 'p-1.5 text-xs',
-    normal: 'p-2 text-sm',
-    comfortable: 'p-3 text-base',
-  }[density]);
+  const densityClasses = $derived(
+    {
+      compact: 'p-1.5 text-xs',
+      normal: 'p-2 text-sm',
+      comfortable: 'p-3 text-base',
+    }[density],
+  );
 
   function handleClick() {
     if (onClick && blockElement) {
@@ -44,8 +46,8 @@
   type="button"
   class="lesson-block flex flex-col justify-start rounded-xl border-l-4 shadow-lg hover:shadow-xl transition-all duration-200 bg-white dark:bg-zinc-800 group cursor-pointer select-none h-full w-full text-left {densityClasses}"
   style="border-color: {lesson.colour}; min-height: 54px;"
-  class:active={active}
-  class:overlap={overlap}
+  class:active
+  class:overlap
   onclick={handleClick}
   aria-label="Lesson: {lesson.description} from {lesson.from} to {lesson.until}">
   <!-- Subject and Time Header -->
@@ -88,7 +90,8 @@
 
   <!-- Active indicator -->
   {#if active}
-    <div class="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full animate-pulse mt-1 mr-1"></div>
+    <div class="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full animate-pulse mt-1 mr-1">
+    </div>
   {/if}
 </button>
 

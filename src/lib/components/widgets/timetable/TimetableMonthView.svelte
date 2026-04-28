@@ -16,14 +16,8 @@
     settings: TimetableWidgetSettings;
   }
 
-  let {
-    lessons,
-    selectedDate,
-    selectedLesson,
-    onLessonClick,
-    onDateSelect,
-    settings,
-  }: Props = $props();
+  let { lessons, selectedDate, selectedLesson, onLessonClick, onDateSelect, settings }: Props =
+    $props();
 
   const currentMonth = $derived(selectedDate.getMonth());
   const currentYear = $derived(selectedDate.getFullYear());
@@ -37,16 +31,20 @@
     return getDayIndex(new Date(year, month, 1));
   }
 
-  function getCalendarDays(): Array<{ date: Date; isCurrentMonth: boolean; lessons: TimetableLesson[] }> {
+  function getCalendarDays(): Array<{
+    date: Date;
+    isCurrentMonth: boolean;
+    lessons: TimetableLesson[];
+  }> {
     const days: Array<{ date: Date; isCurrentMonth: boolean; lessons: TimetableLesson[] }> = [];
     const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
     const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-    
+
     // Previous month days
     const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
     const daysInPrevMonth = getDaysInMonth(prevYear, prevMonth);
-    
+
     for (let i = firstDay - 1; i >= 0; i--) {
       const date = new Date(prevYear, prevMonth, daysInPrevMonth - i);
       days.push({
@@ -55,7 +53,7 @@
         lessons: getLessonsForDate(date),
       });
     }
-    
+
     // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentYear, currentMonth, day);
@@ -65,7 +63,7 @@
         lessons: getLessonsForDate(date),
       });
     }
-    
+
     // Next month days to fill the grid
     const totalCells = days.length;
     const remainingCells = 42 - totalCells; // 6 rows * 7 days
@@ -79,7 +77,7 @@
         lessons: getLessonsForDate(date),
       });
     }
-    
+
     return days;
   }
 
@@ -136,11 +134,11 @@
         onclick={prevMonth}
         ariaLabel="Previous month"
         class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
-      
+
       <h2 class="text-xl font-bold text-zinc-900 dark:text-white min-w-[200px] text-center">
         {monthName}
       </h2>
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -148,7 +146,7 @@
         onclick={nextMonth}
         ariaLabel="Next month"
         class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -164,8 +162,7 @@
     <div class="grid grid-cols-7 gap-2">
       <!-- Week Day Headers -->
       {#each weekDays as dayName}
-        <div
-          class="text-center text-sm font-semibold text-zinc-600 dark:text-zinc-400 py-2">
+        <div class="text-center text-sm font-semibold text-zinc-600 dark:text-zinc-400 py-2">
           {dayName}
         </div>
       {/each}
@@ -176,19 +173,19 @@
         {@const isSelected = date.toDateString() === selectedDate.toDateString()}
         <button
           type="button"
-          class="min-h-[100px] p-2 rounded-xl border transition-all duration-200 text-left {isCurrentMonth 
-            ? 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600' 
-            : 'bg-zinc-50 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800 text-zinc-400 dark:text-zinc-600'} {isToday 
-            ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-            : ''} {isSelected 
-            ? 'ring-2 ring-accent-500' 
+          class="min-h-[100px] p-2 rounded-xl border transition-all duration-200 text-left {isCurrentMonth
+            ? 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
+            : 'bg-zinc-50 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800 text-zinc-400 dark:text-zinc-600'} {isToday
+            ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20'
+            : ''} {isSelected
+            ? 'ring-2 ring-accent-500'
             : ''} hover:scale-[1.02] active:scale-[0.98]"
           onclick={() => onDateSelect(date)}
           transition:fade={{ duration: 200, delay: index * 10 }}
           aria-label={date.toLocaleDateString()}>
           <div
-            class="text-sm font-semibold mb-1 {isToday 
-              ? 'text-blue-600 dark:text-blue-400' 
+            class="text-sm font-semibold mb-1 {isToday
+              ? 'text-blue-600 dark:text-blue-400'
               : 'text-zinc-900 dark:text-white'}">
             {date.getDate()}
           </div>

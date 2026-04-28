@@ -76,10 +76,18 @@
   let showLessonPopout = $state(false);
   let lessonAnchorElement = $state<HTMLElement | null>(null);
 
-  const isControlled = $derived(!!(controlledWeekStart !== undefined && controlledViewMode !== undefined));
-  const weekStart = $derived(isControlled && controlledWeekStart ? getMonday(controlledWeekStart) : internalWeekStart);
-  const selectedDate = $derived(isControlled && controlledSelectedDate ? controlledSelectedDate : internalSelectedDate);
-  const viewMode = $derived(isControlled && controlledViewMode !== undefined ? controlledViewMode : internalViewMode);
+  const isControlled = $derived(
+    !!(controlledWeekStart !== undefined && controlledViewMode !== undefined),
+  );
+  const weekStart = $derived(
+    isControlled && controlledWeekStart ? getMonday(controlledWeekStart) : internalWeekStart,
+  );
+  const selectedDate = $derived(
+    isControlled && controlledSelectedDate ? controlledSelectedDate : internalSelectedDate,
+  );
+  const viewMode = $derived(
+    isControlled && controlledViewMode !== undefined ? controlledViewMode : internalViewMode,
+  );
 
   const settings = $derived<TimetableWidgetSettings>({
     viewMode: widget.settings?.viewMode || 'week',
@@ -133,17 +141,17 @@
       body: { from, until, student: studentId },
     });
     const items = JSON.parse(res).payload.items;
-    
+
     const colours = await loadLessonColours();
-    
+
     return items.map((item: any): TimetableLesson => {
       const colourPrefName = `timetable.subject.colour.${item.code}`;
       const subjectColour = colours.find((c) => c.name === colourPrefName);
       const color = subjectColour ? subjectColour.value : 'var(--accent)';
-      
+
       const date = parseDate(item.date);
       const dayIdx = getDayIndex(date);
-      
+
       return {
         id: item.uid || `${item.date}-${item.from}-${item.code}`,
         code: item.code,
@@ -171,7 +179,7 @@
       // But if forceReload is true and we have a weekStart, load around that week
       let start: Date;
       let end: Date;
-      
+
       if (forceReload && isTemporary && weekStart) {
         // Load 4 weeks before and after the current week
         start = new Date(weekStart);
@@ -278,7 +286,9 @@
       return lessonDate >= weekStart && lessonDate <= new Date(weekStart.getTime() + 4 * 86400000);
     });
     if (exportToCSV(weekLessons, weekStart)) {
-      toastStore.success($_('timetable.download_csv_success') || 'Timetable downloaded to Downloads');
+      toastStore.success(
+        $_('timetable.download_csv_success') || 'Timetable downloaded to Downloads',
+      );
     }
   }
 
@@ -288,7 +298,9 @@
       return lessonDate >= weekStart && lessonDate <= new Date(weekStart.getTime() + 4 * 86400000);
     });
     if (exportToPDF(weekLessons, weekStart)) {
-      toastStore.success($_('timetable.download_pdf_success') || 'Timetable downloaded to Downloads');
+      toastStore.success(
+        $_('timetable.download_pdf_success') || 'Timetable downloaded to Downloads',
+      );
     }
   }
 
@@ -298,7 +310,9 @@
       return lessonDate >= weekStart && lessonDate <= new Date(weekStart.getTime() + 4 * 86400000);
     });
     if (exportToiCal(weekLessons, weekStart)) {
-      toastStore.success($_('timetable.download_ical_success') || 'Timetable downloaded to Downloads');
+      toastStore.success(
+        $_('timetable.download_ical_success') || 'Timetable downloaded to Downloads',
+      );
     }
   }
 
@@ -364,7 +378,9 @@
       <p class="text-red-500 dark:text-red-400 mb-4 text-center max-w-md">{error}</p>
       <button
         class="px-6 py-3 text-sm font-semibold bg-red-600 hover:bg-red-500 dark:bg-red-500 dark:hover:bg-red-400 text-white rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500/50 shadow-md"
-        onclick={() => { loadLessons(); }}>
+        onclick={() => {
+          loadLessons();
+        }}>
         Try Again
       </button>
     </div>
@@ -375,9 +391,7 @@
       <div
         class="w-20 h-20 rounded-full border-4 animate-spin border-blue-500/30 border-t-blue-500 mb-4">
       </div>
-      <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-        Loading Timetable
-      </h3>
+      <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Loading Timetable</h3>
       <p class="text-zinc-600 dark:text-zinc-400">Please wait while we fetch your schedule...</p>
     </div>
   {:else}
@@ -408,7 +422,7 @@
       {:else if viewMode === 'day'}
         <TimetableDayView
           {lessons}
-          selectedDate={selectedDate}
+          {selectedDate}
           {selectedLesson}
           onLessonClick={handleLessonClick}
           onDateChange={(date) => {
@@ -424,7 +438,7 @@
       {:else if viewMode === 'month'}
         <TimetableMonthView
           {lessons}
-          selectedDate={selectedDate}
+          {selectedDate}
           {selectedLesson}
           onLessonClick={handleLessonClick}
           onDateSelect={(date) => {

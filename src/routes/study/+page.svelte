@@ -15,6 +15,7 @@
   import { Button, Input, Badge } from '$lib/components/ui';
   import T from '$lib/components/T.svelte';
   import { _ } from '../../lib/i18n';
+  import { getSubjectsForCurrentAcademicYear } from '$lib/utils/subjectFolders';
 
   interface Subtask {
     id: string;
@@ -312,8 +313,7 @@
         const colours = JSON.parse(prefsRes).payload;
 
         const classesJson = JSON.parse(classesRes);
-        const activeClass = classesJson.payload.find((c: any) => c.active);
-        const activeSubjects = activeClass ? activeClass.subjects : [];
+        const activeSubjects = getSubjectsForCurrentAcademicYear(classesJson.payload);
         const activeCodes = activeSubjects.map((s: any) => s.code);
 
         const rawAssessments = JSON.parse(assessmentsRes).payload as any[];
