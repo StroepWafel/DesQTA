@@ -10,12 +10,12 @@ on:
   workflow_dispatch:
     inputs:
       acknowledge_review_window:
-        description: "I understand signing is usually reviewed between 08:00–23:00 CEST (17:30–08:30 ACDT)"
+        description: 'I understand signing is usually reviewed between 08:00–23:00 CEST (17:30–08:30 ACDT)'
         type: boolean
         required: true
         default: false
       release_name:
-        description: "Title for the GitHub release published here after OSSign finishes"
+        description: 'Title for the GitHub release published here after OSSign finishes'
         required: true
 
 permissions:
