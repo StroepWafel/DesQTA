@@ -492,11 +492,14 @@ src-tauri/gen/apple/build/
 
 ### Signed Windows Binaries (OSSign)
 
-DesQTA includes a dedicated manual workflow at `.github/workflows/windows-signed-binaries.yml` to build and sign Windows artifacts via OSSign.
+Signing follows the [OSSign trigger workflow](https://github.com/OSSign/template-repository/wiki/Your-OSSign-Workflow#the-trigger-workflow): [`.github/workflows/windows-signed-binaries.yml`](../../.github/workflows/windows-signed-binaries.yml) dispatches the build/sign pipeline on OSSign’s companion repo ([`OSSign/BetterSEQTA-DesQTA`](https://github.com/OSSign/BetterSEQTA-DesQTA)); [`.github/workflows/windows-ossign-wait-signature.yml`](../../.github/workflows/windows-ossign-wait-signature.yml) polls until signed artifacts exist, then publishes a prerelease here.
 
-- Trigger: `workflow_dispatch`
-- Outputs: signed Windows bundle artifacts and `.sig` files
-- Release: creates a GitHub release tagged `windows-signed-<run_id>`
+- **Trigger:** manual `workflow_dispatch` on `windows-signed-binaries.yml` (pick the branch/tag to build via **Use workflow from**; that ref is what OSSign receives)
+- **Secrets:** `OSSIGN_USER` and `OSSIGN_TOKEN` (not `OSSIGN_CONFIG` in this repo’s workflows)
+- **Environment:** create a GitHub Environment named `Signatures` with a wait timer (~20 minutes) for the wait workflow, per [OSSign/example-workflow](https://github.com/ossign/example-workflow)
+- **Release:** prerelease tagged `windows-signed-<run_id>` on this repository
+
+Step-by-step onboarding (secrets, `Signatures` environment, triggers): [Windows OSSign Workflow Onboarding](./windows-ossign-workflow-onboarding.md).
 
 ### GitHub Actions Workflow (`.github/workflows/build.yml`)
 

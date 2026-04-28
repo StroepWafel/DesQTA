@@ -1,0 +1,109 @@
+# Polls OSSign until signed assets are ready, then publishes a release on this repo.
+# Requires a GitHub Environment named "Signatures" with a wait timer (~20 minutes) so each poll is spaced out.
+# See https://github.com/ossign/example-workflow/blob/ossign/README.md
+
+name: OSSign wait and publish Windows release
+
+on:
+  workflow_dispatch:
+    inputs:
+      workflow_id:
+        description: "Workflow ID returned by the OSSign dispatch step"
+        required: true
+        type: string
+      release_name:
+        description: "Release title (same as the dispatch workflow)"
+        required: true
+        type: string
+      attempt:
+        description: "Polling attempt number"
+        required: false
+        type: number
+        default: 1
+      max_attempts:
+        description: "Maximum polling attempts"
+        required: false
+        type: number
+        default: 100
+
+concurrency:
+  group: ossign-wait-${{ github.event.inputs.workflow_id }}
+  cancel-in-progress: false
+
+jobs:
+  wait-and-publish:
+    runs-on: ubuntu-latest
+    environment: Signatures
+
+    permissions:
+      actions: write
+      contents: write
+
+    steps:
+      - name: Check polling attempt limit
+        env:
+          ATTEMPT: ${{ github.event.inputs.attempt }}
+          MAX: ${{ github.event.inputs.max_attempts }}
+        run: |
+          if [ "$ATTEMPT" -gt "$MAX" ]; then
+            echo "::error::Maximum OSSign polling attempts reached (${MAX})."
+            exit 1
+          fi
+
+      - name: Check signing status with OSSign
+        id: check
+        uses: ossign/actions/workflow/dispatch@main
+        with:
+          username: ${{ secrets.OSSIGN_USER }}
+          token: ${{ secrets.OSSIGN_TOKEN }}
+          single_check: ${{ github.event.inputs.workflow_id }}
+
+      - name: Download signed artifacts from OSSign release
+        id: download
+        if: steps.check.outputs.signed_artifacts != ''
+        env:
+          ASSETS_JSON: ${{ steps.check.outputs.signed_artifacts }}
+        run: |
+          mkdir -p signed-dist
+          echo "$ASSETS_JSON" | jq -e '. | length > 0' >/dev/null
+          echo "$ASSETS_JSON" | jq -c '.[]' | while read -r row; do
+            url=$(echo "$row" | jq -r '.browser_download_url')
+            name=$(echo "$row" | jq -r '.name')
+            echo "Downloading: $name"
+            curl -fL --retry 3 --retry-delay 10 -o "signed-dist/${name}" "$url"
+          done
+          test -n "$(ls -A signed-dist)"
+
+      - name: Create GitHub prerelease with signed Windows assets
+        if: steps.check.outputs.signed_artifacts != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Windows signed - ${{ github.event.inputs.release_name }}
+          tag_name: windows-signed-${{ github.run_id }}
+          draft: false
+          prerelease: true
+          make_latest: false
+          body: |
+            Windows installers signed via [OSSign](https://github.com/OSSign).
+
+            Signing pipeline: [OSSign/BetterSEQTA-DesQTA](https://github.com/OSSign/BetterSEQTA-DesQTA).
+
+            OSSign workflow ID: `${{ github.event.inputs.workflow_id }}`
+          files: |
+            signed-dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Schedule another poll (signing not finished yet)
+        if: steps.check.outputs.signed_artifacts == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEXT=$(( ${{ github.event.inputs.attempt }} + 1 ))
+          echo "Signing not complete yet (attempt ${{ github.event.inputs.attempt }}); scheduling attempt ${NEXT}"
+          gh workflow run windows-ossign-wait-signature.yml \
+            --ref "${GITHUB_REF}" \
+            -f workflow_id="${{ github.event.inputs.workflow_id }}" \
+            -f release_name="${{ github.event.inputs.release_name }}" \
+            -f attempt="${NEXT}" \
+            -f max_attempts="${{ github.event.inputs.max_attempts }}"

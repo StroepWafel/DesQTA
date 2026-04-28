@@ -1,126 +1,57 @@
-name: Build Signed Windows Binaries
+# Orchestrates OSSign remote signing per https://github.com/OSSign/template-repository/wiki/Your-OSSign-Workflow
+# Builds + signing run on the OSSign companion repo (BetterSEQTA-DesQTA); this workflow only dispatches and starts the wait loop.
+#
+# Repo secrets (repository-level): OSSIGN_USER, OSSIGN_TOKEN (from OSSign after approval).
+# Branch/tag built by OSSign matches the ref you select when starting this workflow ("Use workflow from").
+
+name: Windows signed binaries (OSSign dispatch)
 
 on:
   workflow_dispatch:
     inputs:
       acknowledge_review_window:
-        description: "I understand this is usually reviewed between 08:00–23:00 CEST (17:30–08:30 ACDT)"
+        description: "I understand signing is usually reviewed between 08:00–23:00 CEST (17:30–08:30 ACDT)"
         type: boolean
         required: true
         default: false
-      source_ref:
-        description: "Branch, tag, or commit to build"
-        required: true
-        default: "main"
       release_name:
-        description: "Release title"
+        description: "Title for the GitHub release published here after OSSign finishes"
         required: true
 
 permissions:
-  contents: write
+  contents: read
+  actions: write
 
 jobs:
-  build-and-sign-windows:
-    runs-on: windows-latest
-    env:
-      RUST_TARGET: x86_64-pc-windows-msvc
-
+  dispatch-to-ossign:
+    runs-on: ubuntu-latest
     steps:
       - name: Validate OSSign review window acknowledgement
         if: ${{ github.event.inputs.acknowledge_review_window != 'true' }}
-        shell: pwsh
         run: |
-          throw "You must acknowledge the OSSign review window (08:00-23:00 CEST / 17:30-08:30 ACDT) before running this workflow."
+          echo "::error::You must acknowledge the OSSign review window before running this workflow."
+          exit 1
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Dispatch signing workflow on OSSign
+        id: dispatch
+        uses: ossign/actions/workflow/dispatch@main
         with:
-          ref: ${{ github.event.inputs.source_ref }}
-          fetch-depth: 1
+          username: ${{ secrets.OSSIGN_USER }}
+          token: ${{ secrets.OSSIGN_TOKEN }}
+          dispatch_only: true
 
-      - name: Install OSSign CLI
-        uses: ossign/ossign@main
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          config: ${{ secrets.OSSIGN_CONFIG }}
-          installOnly: true
-
-      - name: Configure Tauri Windows signing with OSSign
-        shell: pwsh
-        env:
-          TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
+      - name: Log OSSign workflow ID
         run: |
-          $signScriptPath = "src-tauri/sign.ps1"
-          @'
-          param([string]$FilePath)
-          if (-not $FilePath) {
-            throw "Missing file path argument."
-          }
-          $resolvedPath = (Resolve-Path $FilePath).Path
-          $tool = Get-ChildItem $env:RUNNER_TOOL_CACHE -Filter ossign.exe -Recurse | Select-Object -First 1
-          if (-not $tool) {
-            throw "Could not locate ossign.exe in RUNNER_TOOL_CACHE."
-          }
-          $type = if ($resolvedPath.ToLower().EndsWith(".msi")) { "msi" } else { "pecoff" }
-          & $tool.FullName -t $type -o $resolvedPath $resolvedPath
-          '@ | Set-Content -Path $signScriptPath -Encoding utf8
+          echo "OSSign workflow ID: ${{ steps.dispatch.outputs.workflow_id }}"
+          echo "Source ref sent to OSSign follows the branch/tag you selected above: ${GITHUB_REF}"
 
-          $configPath = "src-tauri/tauri.conf.json"
-          $json = Get-Content $configPath -Raw | ConvertFrom-Json
-          if (-not $json.bundle.windows) {
-            $json.bundle | Add-Member -NotePropertyName windows -NotePropertyValue ([PSCustomObject]@{}) -Force
-          }
-          $json.bundle.windows.signCommand = 'powershell -ExecutionPolicy Bypass -File sign.ps1 %1'
-          $json.plugins.updater.pubkey = $env:TAURI_SIGNING_PUBLIC_KEY
-          $json | ConvertTo-Json -Depth 100 | Set-Content -Path $configPath -Encoding utf8
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "pnpm"
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ env.RUST_TARGET }}
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Generate app icons
-        run: pnpm tauri icon static/app-icon.svg
-
-      - name: Build signed Windows binaries
-        shell: pwsh
+      - name: Start wait loop for signed artifacts
         env:
-          OSSIGN_CONFIG: ${{ secrets.OSSIGN_CONFIG }}
-        run: pnpm tauri build --target $env:RUST_TARGET
-
-      - name: Upload signed build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-signed-x86_64
-          path: |
-            src-tauri/target/${{ env.RUST_TARGET }}/release/bundle/**
-            src-tauri/target/${{ env.RUST_TARGET }}/release/*.sig
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "Windows Signed Pre-release - ${{ github.event.inputs.release_name }}"
-          tag_name: prerelease-windows-signed-${{ github.run_id }}
-          draft: false
-          prerelease: true
-          make_latest: false
-          body: |
-            Windows binaries signed with OSSign.
-            OSSign integration reference: https://github.com/BetterSEQTA/BetterSEQTA-DesQTA-ossign
-          files: |
-            src-tauri/target/${{ env.RUST_TARGET }}/release/bundle/**
-            src-tauri/target/${{ env.RUST_TARGET }}/release/*.sig
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run windows-ossign-wait-signature.yml \
+            --ref "${GITHUB_REF}" \
+            -f workflow_id="${{ steps.dispatch.outputs.workflow_id }}" \
+            -f release_name="${{ github.event.inputs.release_name }}" \
+            -f attempt=1 \
+            -f max_attempts=100
