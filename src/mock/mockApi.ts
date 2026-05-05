@@ -138,6 +138,11 @@ export function mockApiResponse(url: string, body?: Record<string, unknown>): st
     return JSON.stringify({ payload: { items } });
   }
 
+  // Student calendar / study sessions (SEQTA merges some non-class items here on the web)
+  if (url.includes('/seqta/student/events/load')) {
+    return JSON.stringify({ payload: [], status: '200' });
+  }
+
   // COURSE CONTENT
   if (url.includes('/seqta/student/load/course/content')) {
     const classunit = qsParams['classunit'] || '101';

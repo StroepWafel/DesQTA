@@ -9,7 +9,18 @@
   import type { WidgetConfig } from '../../types/widgets';
   import type { TimetableLesson, TimetableWidgetSettings } from '../../types/timetable';
   import type { LessonColour } from '../../types';
-  import { getMonday, formatDate, parseDate, getDayIndex } from '../../utils/timetableUtils';
+  import {
+    getMonday,
+    formatDate,
+    parseDate,
+    getDayIndex,
+    collectSeqtaLoadTimetableRows,
+    normalizeTimeToHm,
+    mergeAdjacentTimetableLessons,
+    normalizeSeqtaEventsPayloadRows,
+    timetableLessonsFromSeqtaEventsRows,
+  } from '../../utils/timetableUtils';
+  import { authService } from '$lib/services/authService';
   import { exportToCSV, exportToPDF, exportToiCal } from '../../utils/timetableExport';
   import { updateUrlParam } from '../../utils/urlParams';
   import { toastStore } from '../../stores/toast';
@@ -62,7 +73,8 @@
     onPageHeaderStateReady,
   }: Props = $props();
 
-  const studentId = 69; // From existing code
+  /** Resolved from session profile; defaults until `onMount` runs. */
+  let effectiveStudentId = $state(69);
 
   let lessons = $state<TimetableLesson[]>([]);
   let lessonColours = $state<LessonColour[]>([]);
@@ -75,6 +87,14 @@
   let selectedLesson = $state<TimetableLesson | null>(null);
   let showLessonPopout = $state(false);
   let lessonAnchorElement = $state<HTMLElement | null>(null);
+  let lessonAnchorRect = $state<{
+    top: number;
+    left: number;
+    right: number;
+    bottom: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   const isControlled = $derived(
     !!(controlledWeekStart !== undefined && controlledViewMode !== undefined),
@@ -110,8 +130,9 @@
     }
   });
 
-  async function loadLessonColours(): Promise<LessonColour[]> {
-    const cachedColours = cache.get<LessonColour[]>('lesson_colours');
+  async function loadLessonColours(studentIdForPrefs: number): Promise<LessonColour[]> {
+    const colourCacheKey = `lesson_colours_${studentIdForPrefs}`;
+    const cachedColours = cache.get<LessonColour[]>(colourCacheKey);
     if (cachedColours) {
       lessonColours = cachedColours;
       return lessonColours;
@@ -121,10 +142,10 @@
       const res = await seqtaFetch('/seqta/student/load/prefs?', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: { request: 'userPrefs', asArray: true, user: studentId },
+        body: { request: 'userPrefs', asArray: true, user: studentIdForPrefs },
       });
       lessonColours = JSON.parse(res).payload;
-      cache.set('lesson_colours', lessonColours, 30);
+      cache.set(colourCacheKey, lessonColours, 30);
       return lessonColours;
     } catch (e) {
       logger.error('TimetableWidget', 'loadLessonColours', `Failed to load lesson colours: ${e}`, {
@@ -134,40 +155,133 @@
     }
   }
 
-  async function fetchLessons(from: string, until: string): Promise<TimetableLesson[]> {
-    const res = await seqtaFetch('/seqta/student/load/timetable?', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: { from, until, student: studentId },
-    });
-    const items = JSON.parse(res).payload.items;
+  async function fetchLessons(from: string, until: string, studentIdForApi: number): Promise<TimetableLesson[]> {
+    const colours = await loadLessonColours(studentIdForApi);
 
-    const colours = await loadLessonColours();
+    const [timetableMapped, eventsMapped] = await Promise.all([
+      (async (): Promise<TimetableLesson[]> => {
+        const res = await seqtaFetch('/seqta/student/load/timetable?', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: { from, until, student: studentIdForApi },
+        });
+        const parsed = JSON.parse(res) as { payload?: unknown };
+        const payload = parsed.payload;
+        if (payload && typeof payload === 'object' && import.meta.env.DEV) {
+          const keys = Object.keys(payload as object);
+          if (keys.some((k) => k !== 'items' && k !== 'cycles')) {
+            logger.debug('TimetableWidget', 'fetchLessons', 'Timetable payload keys', {
+              keys,
+            });
+          }
+        }
+        const rawRows = collectSeqtaLoadTimetableRows(payload);
 
-    return items.map((item: any): TimetableLesson => {
-      const colourPrefName = `timetable.subject.colour.${item.code}`;
-      const subjectColour = colours.find((c) => c.name === colourPrefName);
-      const color = subjectColour ? subjectColour.value : 'var(--accent)';
+        const mapped: TimetableLesson[] = [];
+        for (const row of rawRows) {
+          if (!row || typeof row !== 'object') continue;
+          const item = row as Record<string, unknown>;
+          if (
+            typeof item.date !== 'string' ||
+            typeof item.from !== 'string' ||
+            typeof item.until !== 'string'
+          ) {
+            continue;
+          }
+          const code =
+            typeof item.code === 'string' ? item.code : String(item.description ?? '').slice(0, 32) || '—';
+          const colourPrefName = `timetable.subject.colour.${code}`;
+          const subjectColour = colours.find((c) => c.name === colourPrefName);
+          const color = subjectColour ? subjectColour.value : 'var(--accent)';
 
-      const date = parseDate(item.date);
-      const dayIdx = getDayIndex(date);
+          const dateObj = parseDate(item.date);
+          const dayIdx = getDayIndex(dateObj);
+          const uid = typeof item.uid === 'string' ? item.uid : undefined;
+          const ci =
+            typeof item.ci === 'number'
+              ? item.ci
+              : typeof item.ci === 'string'
+                ? item.ci
+                : undefined;
+          const slotType = typeof item.type === 'string' ? item.type : undefined;
+          const metaID =
+            typeof item.metaID === 'number'
+              ? item.metaID
+              : typeof item.metaID === 'string'
+                ? item.metaID
+                : undefined;
+          const fromHm = normalizeTimeToHm(item.from);
+          const untilHm = normalizeTimeToHm(item.until);
+          const fallbackIdParts = [
+            item.date,
+            fromHm,
+            untilHm,
+            code,
+            slotType && slotType !== 'class' ? slotType : '',
+            ci !== undefined ? String(ci) : '',
+            metaID !== undefined ? String(metaID) : '',
+          ].filter(Boolean);
+          const lessonId =
+            uid && uid.length > 0 ? uid : fallbackIdParts.join('-') || `${item.date}-${fromHm}`;
 
-      return {
-        id: item.uid || `${item.date}-${item.from}-${item.code}`,
-        code: item.code,
-        description: item.description || item.code,
-        date: item.date,
-        from: item.from.substring(0, 5),
-        until: item.until.substring(0, 5),
-        staff: item.staff || '',
-        room: item.room || '',
-        colour: color,
-        attendanceTitle: item.attendance?.label,
-        programmeID: item.programmeID || 0,
-        dayIdx,
-        uid: item.uid,
-      };
-    });
+          mapped.push({
+            id: lessonId,
+            code,
+            description: (typeof item.description === 'string' ? item.description : null) || code,
+            date: item.date,
+            from: fromHm,
+            until: untilHm,
+            staff: typeof item.staff === 'string' ? item.staff : '',
+            room: typeof item.room === 'string' ? item.room : '',
+            colour: color,
+            attendanceTitle:
+              item.attendance && typeof item.attendance === 'object' && item.attendance !== null
+                ? (item.attendance as { label?: string }).label
+                : undefined,
+            programmeID: typeof item.programmeID === 'number' ? item.programmeID : 0,
+            dayIdx,
+            uid,
+            slotType,
+          });
+        }
+        return mapped;
+      })(),
+      (async (): Promise<TimetableLesson[]> => {
+        try {
+          const res = await seqtaFetch('/seqta/student/events/load?', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+            body: {
+              dateFrom: from,
+              dateTo: until,
+              person: studentIdForApi,
+              personType: 'student',
+            },
+          });
+          const raw = JSON.parse(res) as { payload?: unknown };
+          const rows = normalizeSeqtaEventsPayloadRows(raw.payload);
+          if (import.meta.env.DEV && rows.length > 0) {
+            const first = rows[0];
+            logger.debug('TimetableWidget', 'fetchLessons', 'Merged student/events/load', {
+              rowCount: rows.length,
+              firstKeys:
+                typeof first === 'object' && first !== null ? Object.keys(first as object) : [],
+            });
+          }
+          return timetableLessonsFromSeqtaEventsRows(rows, colours);
+        } catch (e) {
+          logger.debug(
+            'TimetableWidget',
+            'fetchLessons',
+            'student/events/load failed; continuing with timetable only',
+            { error: String(e) },
+          );
+          return [];
+        }
+      })(),
+    ]);
+
+    return [...timetableMapped, ...eventsMapped];
   }
 
   async function loadLessons(forceReload = false) {
@@ -195,7 +309,8 @@
 
       const fromStr = formatDate(start);
       const untilStr = formatDate(end);
-      const cacheKey = `timetable_${fromStr}_${untilStr}`;
+      const sid = effectiveStudentId;
+      const cacheKey = `timetable_${sid}_${fromStr}_${untilStr}`;
 
       const items = await useDataLoader<TimetableLesson[]>({
         cacheKey,
@@ -203,7 +318,8 @@
         context: 'timetable',
         functionName: 'loadLessons',
         fetcher: async () => {
-          return await fetchLessons(fromStr, untilStr);
+          const mapped = await fetchLessons(fromStr, untilStr, sid);
+          return mergeAdjacentTimetableLessons(mapped);
         },
         skipCache: forceReload, // Bypass cache when force reloading (back/forward navigation)
       });
@@ -274,9 +390,24 @@
     }
   }
 
-  function handleLessonClick(lesson: TimetableLesson, element: HTMLElement) {
+  function handleLessonClick(
+    lesson: TimetableLesson,
+    element: HTMLElement,
+    anchorRect?: {
+      top: number;
+      left: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    },
+  ) {
     selectedLesson = lesson;
     lessonAnchorElement = element;
+    lessonAnchorRect = anchorRect ?? (() => {
+      const r = element.getBoundingClientRect();
+      return { top: r.top, left: r.left, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+    })();
     showLessonPopout = true;
   }
 
@@ -353,17 +484,36 @@
     }
   });
 
-  onMount(() => {
+  onMount(async () => {
+    try {
+      const u = await authService.loadUserInfo();
+      if (u?.id != null && Number.isFinite(u.id)) {
+        effectiveStudentId = u.id;
+      } else {
+        logger.warn(
+          'TimetableWidget',
+          'onMount',
+          'UserInfo.id missing; timetable requests use fallback student id 69',
+        );
+      }
+    } catch (e) {
+      logger.warn('TimetableWidget', 'onMount', 'Could not load UserInfo for student id', {
+        error: e,
+      });
+    }
+
     if (!isControlled && initialWeekStart) {
       internalWeekStart = getMonday(initialWeekStart);
       internalSelectedDate = initialWeekStart;
     }
-    loadLessons();
+    await loadLessons();
   });
 </script>
 
 <div
-  class="flex flex-col h-full w-full overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50"
+  class="flex flex-col h-full w-full overflow-hidden {hideHeader && isTemporary
+    ? 'rounded-xl border border-zinc-200/70 dark:border-zinc-700/50 bg-white/70 dark:bg-zinc-900/35 shadow-sm backdrop-blur-xs'
+    : 'rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50'}"
   transition:fade={{ duration: 400 }}>
   {#if error}
     <div
@@ -462,15 +612,18 @@
       {/if}
     </div>
 
-    <!-- Lesson Popout -->
-    <TimetableLessonPopout
-      lesson={selectedLesson}
-      open={showLessonPopout}
-      anchorElement={lessonAnchorElement}
-      onClose={() => {
-        showLessonPopout = false;
-        selectedLesson = null;
-        lessonAnchorElement = null;
-      }} />
   {/if}
 </div>
+
+<!-- Keep popout outside the overflow-hidden widget shell -->
+<TimetableLessonPopout
+  lesson={selectedLesson}
+  open={showLessonPopout}
+  anchorElement={lessonAnchorElement}
+  anchorRect={lessonAnchorRect}
+  onClose={() => {
+    showLessonPopout = false;
+    selectedLesson = null;
+    lessonAnchorElement = null;
+    lessonAnchorRect = null;
+  }} />

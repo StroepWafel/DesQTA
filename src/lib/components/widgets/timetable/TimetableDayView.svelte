@@ -1,28 +1,46 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import TimetableLessonBlock from './TimetableLessonBlock.svelte';
   import { Button } from '../../ui';
   import EmptyState from '../../EmptyState.svelte';
-  import { Icon, ChevronLeft, ChevronRight, CalendarDays } from 'svelte-hero-icons';
+  import { ChevronLeft, ChevronRight, CalendarDays } from 'svelte-hero-icons';
   import type { TimetableLesson, TimetableWidgetSettings } from '$lib/types/timetable';
   import {
     calculateLessonPosition,
     getCurrentTimeIndicator,
     formatTime12Hour,
-    calculateTimeBounds,
+    getPaddedLessonTimeRange,
+    getClockHourMarkersInRange,
+    TIMETABLE_DEFAULT_TIME_RANGE,
+    normalizeTimeToHm,
     timeToMinutes,
     getDayIndex,
     formatDate,
-    parseDate,
+    layoutDayLessonColumns,
+    timetableLessonLayoutKey,
+    timetableLessonColumnStyles,
   } from '$lib/utils/timetableUtils';
   import { _ } from '$lib/i18n';
+
+  const TIME_GUTTER_PX = 56;
 
   interface Props {
     lessons: TimetableLesson[];
     selectedDate: Date;
     selectedLesson: TimetableLesson | null;
-    onLessonClick: (lesson: TimetableLesson, element: HTMLElement) => void;
+    onLessonClick: (
+      lesson: TimetableLesson,
+      element: HTMLElement,
+      anchorRect?: {
+        top: number;
+        left: number;
+        right: number;
+        bottom: number;
+        width: number;
+        height: number;
+      },
+    ) => void;
     onDateChange: (date: Date) => void;
     settings: TimetableWidgetSettings;
   }
@@ -34,8 +52,6 @@
   let gridHeight = $state(800);
   let currentTimePosition = $state<number | null>(null);
   let timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
-
-  const timeRange = $derived(settings.timeRange || calculateTimeBounds(lessons));
 
   const dayLabels = $derived([
     $_('timetable.monday') || 'Monday',
@@ -55,38 +71,46 @@
       .sort((a, b) => timeToMinutes(a.from) - timeToMinutes(b.from)),
   );
 
-  function updateGridHeight() {
-    if (gridContainer) {
-      gridHeight = gridContainer.clientHeight;
+  /** Match week view: scale from earliest start to latest end across the whole loaded week */
+  const timeRange = $derived(
+    lessons.length > 0
+      ? getPaddedLessonTimeRange(lessons, 0.05, settings.timeRange ?? TIMETABLE_DEFAULT_TIME_RANGE)
+      : (settings.timeRange ?? TIMETABLE_DEFAULT_TIME_RANGE),
+  );
+
+  const gridBodyHeight = $derived.by(() => {
+    const viewportOrMeasure = Math.max(gridHeight, 1);
+    if (dayLessons.length === 0) return viewportOrMeasure;
+    let H = viewportOrMeasure;
+    for (let i = 0; i < 5; i++) {
+      let maxBottom = 0;
+      for (const l of dayLessons) {
+        const { top, height } = calculateLessonPosition(l, timeRange, H);
+        maxBottom = Math.max(maxBottom, top + height);
+      }
+      const next = Math.max(viewportOrMeasure, Math.ceil(maxBottom) + 24);
+      if (Math.abs(next - H) <= 1) return next;
+      H = next;
     }
-  }
+    return H;
+  });
+
+  const paintHeight = $derived(Math.max(gridBodyHeight, gridHeight));
+
+  const timeAxisMarkers = $derived(getClockHourMarkersInRange(timeRange));
 
   function updateCurrentTime() {
-    const position = getCurrentTimeIndicator(timeRange, gridHeight);
+    const position = getCurrentTimeIndicator(timeRange, paintHeight);
     currentTimePosition = position;
   }
 
   function timeToY(time: string): number {
-    const startMinutes = timeToMinutes(timeRange.start);
-    const endMinutes = timeToMinutes(timeRange.end);
-    const rangeMinutes = endMinutes - startMinutes;
-    const timeMinutes = timeToMinutes(time);
+    const startMinutes = timeToMinutes(normalizeTimeToHm(timeRange.start));
+    const endMinutes = timeToMinutes(normalizeTimeToHm(timeRange.end));
+    const rangeMinutes = Math.max(1, endMinutes - startMinutes);
+    const timeMinutes = timeToMinutes(normalizeTimeToHm(time));
 
-    return ((timeMinutes - startMinutes) / rangeMinutes) * gridHeight;
-  }
-
-  function generateTimeSlots(): string[] {
-    const slots: string[] = [];
-    const start = timeToMinutes(timeRange.start);
-    const end = timeToMinutes(timeRange.end);
-
-    for (let minutes = start; minutes <= end; minutes += 60) {
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      slots.push(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`);
-    }
-
-    return slots;
+    return ((timeMinutes - startMinutes) / rangeMinutes) * paintHeight;
   }
 
   function prevDay() {
@@ -106,24 +130,11 @@
   }
 
   onMount(() => {
-    updateGridHeight();
-    updateCurrentTime();
-
-    const resizeObserver = new ResizeObserver(() => {
-      updateGridHeight();
-      updateCurrentTime();
-    });
-
-    if (gridContainer) {
-      resizeObserver.observe(gridContainer);
-    }
-
     timeUpdateInterval = setInterval(() => {
       updateCurrentTime();
     }, 60000);
 
     return () => {
-      resizeObserver.disconnect();
       if (timeUpdateInterval) {
         clearInterval(timeUpdateInterval);
       }
@@ -131,12 +142,38 @@
   });
 
   $effect(() => {
-    updateGridHeight();
-    updateCurrentTime();
+    const el = gridContainer;
+    if (!el) return;
+
+    const ro = new ResizeObserver(() => {
+      gridHeight = el.clientHeight;
+    });
+    ro.observe(el);
+    gridHeight = el.clientHeight;
+
+    return () => {
+      ro.disconnect();
+    };
   });
+
+  $effect(() => {
+    lessons;
+    selectedDate;
+    void tick().then(() =>
+      requestAnimationFrame(() => {
+        if (gridContainer) {
+          gridHeight = gridContainer.clientHeight;
+        }
+        updateCurrentTime();
+      }),
+    );
+  });
+
+  const timeGutterStyle = `${TIME_GUTTER_PX}px`;
+  const lessonsInset = `${TIME_GUTTER_PX}px`;
 </script>
 
-<div class="flex flex-col flex-1 w-full min-h-0 overflow-hidden">
+<div class="flex flex-col flex-1 w-full min-h-0 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/45">
   <!-- Day Header -->
   <div
     class="flex justify-between items-center px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50">
@@ -187,19 +224,24 @@
   </div>
 
   <!-- Grid Container -->
-  <div class="flex-1 overflow-y-auto relative" bind:this={gridContainer}>
-    {#if gridContainer}
-      <div class="relative w-full h-full" style="height: {gridHeight}px;">
+  <div
+    class="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden relative isolate bg-zinc-50/20 dark:bg-zinc-900/40"
+    bind:this={gridContainer}>
+    <div
+      class="relative w-full min-h-full bg-white/85 dark:bg-zinc-950/70"
+      style="height: {paintHeight}px; min-height: 100%;">
         <!-- Time Labels -->
-        <div class="absolute top-0 left-0 z-10 w-[80px] h-full pointer-events-none">
-          {#each generateTimeSlots() as timeSlot}
+        <div
+          class="absolute top-0 left-0 z-10 h-full pointer-events-none"
+          style="width: {timeGutterStyle};">
+          {#each timeAxisMarkers as timeSlot}
             {@const yPos = timeToY(timeSlot)}
             <div
               class="absolute left-0 w-full border-t border-zinc-200 dark:border-zinc-700"
               style="top: {yPos}px;">
               <div class="flex items-center justify-center h-5 -mt-2.5">
                 <span
-                  class="text-sm font-mono font-semibold text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 px-2 rounded-sm">
+                  class="text-[11px] font-mono font-semibold text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 px-0.5 rounded-sm">
                   {formatTime12Hour(timeSlot)}
                 </span>
               </div>
@@ -210,8 +252,8 @@
         <!-- Current Time Indicator -->
         {#if currentTimePosition !== null && isToday}
           <div
-            class="absolute left-[80px] right-0 z-20 pointer-events-none"
-            style="top: {currentTimePosition}px;">
+            class="absolute right-0 z-20 pointer-events-none"
+            style="top: {currentTimePosition}px; left: {lessonsInset};">
             <div class="flex items-center h-0.5">
               <div class="w-2 h-2 rounded-full bg-red-500 mr-1"></div>
               <div class="flex-1 h-0.5 bg-red-500"></div>
@@ -220,7 +262,9 @@
         {/if}
 
         <!-- Lessons Column -->
-        <div class="absolute top-0 right-0 left-[80px] h-full px-4">
+        <div
+          class="absolute top-0 right-0 h-full min-w-0 px-1.5 sm:px-2 bg-zinc-50/20 dark:bg-zinc-900/35"
+          style="left: {lessonsInset};">
           {#if dayLessons.length === 0}
             <div
               class="flex flex-col justify-center items-center h-full py-16"
@@ -232,24 +276,41 @@
                 size="lg" />
             </div>
           {:else}
+            {@const overlapLayout = layoutDayLessonColumns(dayLessons)}
             {#each dayLessons as lesson, index}
-              {@const position = calculateLessonPosition(lesson, timeRange, gridHeight)}
+              {@const position = calculateLessonPosition(lesson, timeRange, paintHeight)}
+              {@const ly = overlapLayout.get(timetableLessonLayoutKey(lesson)) ?? {
+                columnIndex: 0,
+                columnCount: 1,
+              }}
+              {@const hz = timetableLessonColumnStyles(ly)}
+              {@const colHasOverlap = ly.columnCount > 1}
+              {@const zIndex = (lesson.slotType && lesson.slotType !== 'class' ? 50 : 30) + (colHasOverlap ? 5 : 0)}
               <div
-                class="absolute right-0 left-0"
-                style="top: {position.top}px; height: {position.height}px;"
+                class="absolute min-h-0 overflow-hidden rounded-lg"
+                style="top: {position.top}px; height: {position.height}px; left: {hz.left}; width: {hz.width}; z-index: {zIndex};"
                 transition:fade={{ duration: 200, delay: index * 50 }}>
                 <TimetableLessonBlock
                   {lesson}
+                  overlap={colHasOverlap}
                   onClick={onLessonClick}
                   showTeacher={settings.showTeacher ?? true}
                   showRoom={settings.showRoom ?? true}
                   showAttendance={settings.showAttendance ?? true}
-                  density={settings.density === 'comfortable' ? 'comfortable' : 'normal'} />
+                  density={settings.density === 'comfortable'
+                    ? colHasOverlap
+                      ? 'normal'
+                      : 'comfortable'
+                    : colHasOverlap
+                      ? 'compact'
+                      : settings.density || 'normal'}
+                  variant="grid"
+                  slotHeightPx={position.height}
+                />
               </div>
             {/each}
           {/if}
         </div>
       </div>
-    {/if}
   </div>
 </div>

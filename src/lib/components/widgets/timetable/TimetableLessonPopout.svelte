@@ -11,10 +11,18 @@
     lesson: TimetableLesson | null;
     open: boolean;
     anchorElement: HTMLElement | null;
+    anchorRect?: {
+      top: number;
+      left: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    } | null;
     onClose: () => void;
   }
 
-  let { lesson, open = $bindable(false), anchorElement, onClose }: Props = $props();
+  let { lesson, open = $bindable(false), anchorElement, anchorRect = null, onClose }: Props = $props();
 
   let popoutElement: HTMLDivElement | null = $state(null);
   let position = $state({ top: 0, left: 0 });
@@ -40,10 +48,35 @@
 
   const HEADER_OFFSET = 72; // Min top to avoid app + timetable header
 
-  function updatePosition() {
-    if (!anchorElement || !popoutElement) return;
+  function resolveAnchorRect():
+    | {
+        top: number;
+        left: number;
+        right: number;
+        bottom: number;
+        width: number;
+        height: number;
+      }
+    | null {
+    if (anchorElement && anchorElement.isConnected) {
+      const r = anchorElement.getBoundingClientRect();
+      return {
+        top: r.top,
+        left: r.left,
+        right: r.right,
+        bottom: r.bottom,
+        width: r.width,
+        height: r.height,
+      };
+    }
+    return anchorRect ?? null;
+  }
 
-    const anchorRect = anchorElement.getBoundingClientRect();
+  function updatePosition() {
+    if (!popoutElement) return;
+
+    const anchor = resolveAnchorRect();
+    if (!anchor) return;
     const popoutRect = popoutElement.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -51,10 +84,10 @@
     const margin = 16;
 
     // Prefer below anchor; only go above if it fits and stays below header
-    let top = anchorRect.bottom + spacing;
+    let top = anchor.bottom + spacing;
     let direction: 'up' | 'down' = 'down';
     const fitsBelow = top + popoutRect.height <= viewportHeight - margin;
-    const aboveTop = anchorRect.top - popoutRect.height - spacing;
+    const aboveTop = anchor.top - popoutRect.height - spacing;
     const fitsAbove = aboveTop >= HEADER_OFFSET;
 
     if (!fitsBelow && fitsAbove) {
@@ -62,7 +95,7 @@
       direction = 'up';
     } else if (!fitsBelow && !fitsAbove) {
       // Neither fits well: keep below but clamp, or center in content area
-      top = Math.max(HEADER_OFFSET, Math.min(viewportHeight - popoutRect.height - margin, anchorRect.bottom + spacing));
+      top = Math.max(HEADER_OFFSET, Math.min(viewportHeight - popoutRect.height - margin, anchor.bottom + spacing));
       direction = 'down';
     }
 
@@ -72,9 +105,9 @@
     }
 
     // Horizontal: align with anchor, keep in viewport
-    let left = anchorRect.left;
+    let left = anchor.left + (anchor.width - popoutRect.width) / 2;
     if (left + popoutRect.width > viewportWidth - margin) {
-      left = anchorRect.right - popoutRect.width;
+      left = anchor.right - popoutRect.width;
     }
     if (left < margin) left = margin;
     if (left + popoutRect.width > viewportWidth - margin) {
@@ -146,11 +179,11 @@
 
 </script>
 
-{#if open && lesson && anchorElement}
+{#if open && lesson && (anchorElement || anchorRect)}
   {#key lesson.id}
     <div
       bind:this={popoutElement}
-      class="fixed z-[200] w-64 max-w-[calc(100vw-2rem)] rounded-xl border shadow-lg bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 max-h-[calc(100vh-6rem)] overflow-y-auto"
+      class="fixed z-[1200] w-64 max-w-[calc(100vw-2rem)] rounded-xl border shadow-lg bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 max-h-[calc(100vh-6rem)] overflow-y-auto"
       style="top: {position.top}px; left: {position.left}px; border-left: 3px solid {lesson.colour};"
       transition:fly={{
         y: transitionDirection === 'down' ? -6 : 6,
@@ -167,6 +200,11 @@
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
           {formatLessonDate(lesson.date)} · {lesson.from} – {lesson.until}
         </p>
+        {#if lesson.slotType && lesson.slotType !== 'class'}
+          <p class="text-[11px] font-medium text-zinc-600 dark:text-zinc-300 mt-1">
+            {lesson.slotType.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+          </p>
+        {/if}
         {#if lesson.staff || lesson.room}
           <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 truncate">
             {[lesson.staff, lesson.room].filter(Boolean).join(' · ')}

@@ -12,6 +12,8 @@ export interface TimetableLesson {
   programmeID?: number;
   dayIdx: number; // 0-4 for Mon-Fri
   uid?: string;
+  /** SEQTA timetable row `type` (e.g. class, support) when provided */
+  slotType?: string;
 }
 
 export interface TimetableWidgetSettings {
