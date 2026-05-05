@@ -164,7 +164,7 @@
   });
 </script>
 
-<div class="flex flex-col flex-1 w-full min-h-0 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/45">
+<div class="flex flex-col flex-1 w-full min-h-0 overflow-hidden">
   <!-- Day Headers -->
   <div
     class="grid gap-1.5 px-1.5 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50"
@@ -182,10 +182,10 @@
 
   <!-- Grid Container -->
   <div
-    class="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden relative isolate bg-zinc-50/20 dark:bg-zinc-900/40"
+    class="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden relative isolate"
     bind:this={gridContainer}>
     <div
-      class="relative w-full min-h-full bg-white/85 dark:bg-zinc-950/70"
+      class="relative w-full min-h-full"
       style="height: {paintHeight}px; min-height: 100%;">
         <!-- Time Labels -->
         <div
@@ -226,7 +226,7 @@
             {@const dayList = getLessonsForDay(dayIdx)}
             {@const overlapLayout = layoutDayLessonColumns(dayList)}
             <div
-              class="relative h-full border-l border-zinc-200 dark:border-zinc-700 min-w-0 bg-zinc-50/20 dark:bg-zinc-900/35 {todayDayIndex ===
+              class="relative h-full border-l border-zinc-200 dark:border-zinc-700 min-w-0 {todayDayIndex ===
               dayIdx
                 ? 'bg-[var(--accent)]/10 dark:bg-[var(--accent)]/10'
                 : ''}"

@@ -511,9 +511,7 @@
 </script>
 
 <div
-  class="flex flex-col h-full w-full overflow-hidden {hideHeader && isTemporary
-    ? 'rounded-xl border border-zinc-200/70 dark:border-zinc-700/50 bg-white/70 dark:bg-zinc-900/35 shadow-sm backdrop-blur-xs'
-    : 'rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50'}"
+  class="flex flex-col h-full w-full overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50"
   transition:fade={{ duration: 400 }}>
   {#if error}
     <div
