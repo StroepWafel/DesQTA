@@ -7,11 +7,22 @@ import { isOfflineMode } from '../utils/offlineMode';
 import { forumPhotoSyncService } from './forumPhotoSyncService';
 import { invokeGetProcessedAssessments } from './processedAssessmentsInvoke';
 import { getSubjectsForCurrentAcademicYear } from '$lib/utils/subjectFolders';
+import { authService } from './authService';
 
 // Centralized background warm-up of frequently used SEQTA endpoints.
 // This primes the in-memory cache so pages can render instantly.
 
-const STUDENT_ID = 69; // Matches existing page usage
+const FALLBACK_PREFETCH_STUDENT_ID = 69;
+
+async function getPrefetchStudentId(): Promise<number> {
+  try {
+    const u = await authService.loadUserInfo();
+    if (u?.id != null && Number.isFinite(u.id)) return u.id;
+  } catch {
+    // ignore — use fallback
+  }
+  return FALLBACK_PREFETCH_STUDENT_ID;
+}
 
 function getMonday(d: Date): Date {
   const copy = new Date(d);
@@ -30,18 +41,20 @@ function formatDate(date: Date): string {
 }
 
 async function prefetchLessonColours(): Promise<any[]> {
-  const cached = cache.get<any[]>('lesson_colours');
+  const sid = await getPrefetchStudentId();
+  const colourKey = `lesson_colours_${sid}`;
+  const cached = cache.get<any[]>(colourKey);
   if (cached) return cached;
   try {
     const res = await seqtaFetch('/seqta/student/load/prefs?', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: { request: 'userPrefs', asArray: true, user: STUDENT_ID },
+      body: { request: 'userPrefs', asArray: true, user: sid },
     });
     const colours = JSON.parse(res).payload;
     // Align with assessments page which uses 10 minutes for lesson_colours
-    cache.set('lesson_colours', colours, 10);
-    await setIdb('lesson_colours', colours);
+    cache.set(colourKey, colours, 10);
+    await setIdb(colourKey, colours);
     logger.info('warmup', 'prefetchLessonColours', 'Cached lesson_colours (mem+idb)', {
       ttlMin: 10,
       count: colours?.length,
@@ -54,17 +67,18 @@ async function prefetchLessonColours(): Promise<any[]> {
 
 async function prefetchTimetableWeek(): Promise<void> {
   try {
+    const sid = await getPrefetchStudentId();
     const weekStart = getMonday(new Date());
     const from = formatDate(weekStart);
     const until = formatDate(new Date(weekStart.getTime() + 4 * 86400000));
-    const cacheKey = `timetable_${from}_${until}`;
+    const cacheKey = `timetable_${sid}_${from}_${until}`;
     if (cache.get(cacheKey)) return;
 
     const colours = await prefetchLessonColours();
     const res = await seqtaFetch('/seqta/student/load/timetable?', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: { from, until, student: STUDENT_ID },
+      body: { from, until, student: sid },
     });
     const lessons = JSON.parse(res).payload.items.map((lesson: any) => {
       const colourPrefName = `timetable.subject.colour.${lesson.code}`;
@@ -92,11 +106,12 @@ async function prefetchUpcomingAssessments(): Promise<void> {
     // If already cached, skip
     if (cache.get('upcoming_assessments_data')) return;
 
+    const prefSid = await getPrefetchStudentId();
     const [assessmentsRes, classesRes] = await Promise.all([
       seqtaFetch('/seqta/student/assessment/list/upcoming?', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: { student: STUDENT_ID },
+        body: { student: prefSid },
       }),
       seqtaFetch('/seqta/student/load/subjects?', {
         method: 'POST',
@@ -142,16 +157,16 @@ async function prefetchUpcomingAssessments(): Promise<void> {
 /** Fetches timetable across days and updates the Android Next Lesson widget with the absolute next lesson. */
 export async function updateNextLessonWidget(): Promise<void> {
   try {
+    const widgetSid = await getPrefetchStudentId();
     const today = new Date();
     const from = formatDate(today);
     const untilDate = new Date(today.getTime() + 14 * 86400000);
     const until = formatDate(untilDate);
 
-    const colours = await prefetchLessonColours();
     const res = await seqtaFetch('/seqta/student/load/timetable?', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: { from, until, student: STUDENT_ID },
+      body: { from, until, student: widgetSid },
     });
 
     const items = JSON.parse(res).payload?.items ?? [];

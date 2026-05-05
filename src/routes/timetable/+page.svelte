@@ -101,6 +101,10 @@
           forceReload = isBackNavigation; // Only force reload on back navigation
           reloadKey++;
         }
+        // Only when the URL param actually changed (back/forward / updateUrl) — avoid clobbering selectedDate
+        if (dateParam !== previousDateParam) {
+          selectedDate = urlDate;
+        }
         previousDateParam = dateParam;
       }
     } else {
@@ -169,7 +173,9 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6" data-onboarding="timetable-color">
+<div
+  class="container max-w-none w-full px-2 sm:px-4 py-5 mx-auto flex flex-col gap-6 min-h-[calc(100dvh-10rem)] sm:min-h-[calc(100dvh-8rem)]"
+  data-onboarding="timetable-color">
   <!-- Header row: page title + timetable controls at same level -->
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shrink-0">
     <div>
@@ -215,10 +221,12 @@
           selectedDate={selectedDate}
           onWeekStartChange={(d) => {
             weekStart = getMonday(d);
-            selectedDate = d;
           }}
           onViewModeChange={(m) => (viewMode = m)}
-          onSelectedDateChange={(d) => (selectedDate = d)}
+          onSelectedDateChange={async (d) => {
+            selectedDate = d;
+            await updateUrl(d);
+          }}
           onPageHeaderStateReady={(s) => (headerState = s)}
         />
       </div>
