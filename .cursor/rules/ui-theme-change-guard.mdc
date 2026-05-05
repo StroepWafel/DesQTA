@@ -1,0 +1,19 @@
+---
+description: Prevent unsolicited theme and color changes
+alwaysApply: true
+---
+
+# UI Theme/Color Change Guard
+
+- Do not change themes, color palettes, accent colors, dark/light styling, or other visual color tokens unless the user explicitly requests it.
+- Do not introduce theme/color “improvements” proactively.
+- If a request is ambiguous, keep current theme/color behavior unchanged.
+- Allowed only when:
+  - the user directly asks for theme/color/styling changes, or
+  - the requested feature clearly requires a minimal inferred color tweak.
+
+## Examples
+
+- `Do`: implement logic/bugfix/features without altering colors.
+- `Do`: ask for clarification if a visual request could imply color changes but is not explicit.
+- `Don't`: restyle components, swap classes, or adjust theme variables as part of unrelated fixes.
