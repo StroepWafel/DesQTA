@@ -224,7 +224,8 @@
     "cloud_signed_in": "Signed in to BetterSEQTA Plus",
     "cloud_not_signed_in": "Not signed in to BetterSEQTA Plus",
     "cloud_signed_out_message": "You're signed out of BetterSEQTA Plus. Sign in via Settings to sync your data across devices.",
-    "cloud_go_to_settings": "Go to Settings"
+    "cloud_go_to_settings": "Go to Settings",
+    "notification_forum_subtitle": "New messages or comments"
   },
   "login": {
     "welcome_to": "Welcome to",

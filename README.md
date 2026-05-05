@@ -46,6 +46,8 @@ Weekly builds are available via GitHub Actions. You can download the latest buil
 Full Releases are available under the releases tab.  
 [Quick access link](https://github.com/BetterSEQTA/DesQTA/releases/latest)
 
+Proudly signed by [OSSIGN](https://github.com/OSSign/BetterSEQTA-DesQTA).
+
 
 ## Getting Started
 > [!IMPORTANT]  

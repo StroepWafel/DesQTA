@@ -23,6 +23,10 @@
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
   import { analyticsCrunching } from '../../lib/stores/analyticsOnboarding';
+  import {
+    resolveNumericGradeFromAssessmentPayload,
+    extractLetterGradeStringFromPayload,
+  } from '$lib/utils/letterGradeScale';
 
   let analyticsData: AnalyticsData | null = $state(null);
   let loading = $state(true);
@@ -58,29 +62,11 @@
     try {
       if (!data || typeof data !== 'object') return null;
 
-      // Extract finalGrade: check finalGrade field first, then results.percentage (matching Rust sync logic)
-      let finalGrade = undefined;
-      if (data.finalGrade !== undefined && data.finalGrade !== null) {
-        finalGrade = Number(data.finalGrade);
-      } else if (data.status === 'MARKS_RELEASED') {
-        // Fallback to results.percentage if finalGrade is not set but marks are released
-        if (data.criteria && data.criteria[0]?.results?.percentage !== undefined) {
-          finalGrade = Number(data.criteria[0].results.percentage);
-        } else if (data.results && data.results.percentage !== undefined) {
-          finalGrade = Number(data.results.percentage);
-        }
-      }
-
-      // Extract letterGrade from assessment data (if available)
-      let letterGrade = undefined;
-      if (data.letterGrade !== undefined && data.letterGrade !== null) {
-        letterGrade = String(data.letterGrade);
-      } else if (data.criteria && data.criteria[0]?.results?.grade) {
-        // Extract from criteria[0].results.grade (matching assessment detail page)
-        letterGrade = String(data.criteria[0].results.grade);
-      } else if (data.results && data.results.grade) {
-        // Fallback to results.grade
-        letterGrade = String(data.results.grade);
+      const letterGrade = extractLetterGradeStringFromPayload(data);
+      // Percentage first, then letter → approximate % (letter-only schools)
+      let finalGrade = resolveNumericGradeFromAssessmentPayload(data);
+      if (finalGrade !== undefined && (typeof finalGrade !== 'number' || isNaN(finalGrade))) {
+        finalGrade = undefined;
       }
 
       const assessment: Assessment = {

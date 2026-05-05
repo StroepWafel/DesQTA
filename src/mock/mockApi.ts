@@ -74,6 +74,12 @@ export function mockApiResponse(url: string, body?: Record<string, unknown>): st
         timestamp: new Date(now.getTime() - 7200000).toISOString(),
         report: { title: 'New notice' },
       },
+      {
+        notificationID: 4,
+        type: 'forum',
+        timestamp: new Date(now.getTime() - 5400000).toISOString(),
+        forum: { title: 'Mock forum', forumID: 1 },
+      },
     ];
     return JSON.stringify({
       ok: true,

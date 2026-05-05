@@ -11,6 +11,7 @@
     Square2Stack,
     XMark,
     ChatBubbleLeftRight,
+    ChatBubbleBottomCenterText,
     ClipboardDocumentList,
     DocumentText,
     CloudArrowUp,
@@ -99,6 +100,10 @@
       messageID: number;
       title: string;
       subtitle: string;
+    };
+    forum?: {
+      title: string;
+      forumID: number;
     };
   }
 
@@ -340,6 +345,8 @@
       return notification.report.title;
     } else if (notification.coneqtAssessments) {
       return notification.coneqtAssessments.title;
+    } else if (notification.forum) {
+      return notification.forum.title;
     } else if (notification.message) {
       return notification.message.title;
     }
@@ -349,6 +356,8 @@
   function getNotificationSubtitle(notification: Notification): string {
     if (notification.coneqtAssessments) {
       return `${notification.coneqtAssessments.subjectCode} - ${notification.coneqtAssessments.subtitle}`;
+    } else if (notification.forum) {
+      return $_('header.notification_forum_subtitle', { default: 'New messages or comments' });
     } else if (notification.message) {
       return notification.message.subtitle;
     }
@@ -359,6 +368,7 @@
     if (notification.type === 'message' || notification.message) return ChatBubbleLeftRight;
     if (notification.type === 'coneqtassessments' || notification.coneqtAssessments)
       return ClipboardDocumentList;
+    if (notification.type === 'forum' || notification.forum) return ChatBubbleBottomCenterText;
     if (notification.type === 'report' || notification.report) return DocumentText;
     return Bell;
   }
@@ -376,6 +386,13 @@
       showNotificationsModal = false;
       // Report notifications don't have UUID in the interface, so just go to reports page
       goto('/reports');
+    } else if (
+      (notification.type === 'forum' || notification.forum) &&
+      notification.forum
+    ) {
+      showNotifications = false;
+      showNotificationsModal = false;
+      goto(`/forums/${notification.forum.forumID}`);
     } else if (notification.type === 'message' && notification.message) {
       const id = notification.message.messageID;
 

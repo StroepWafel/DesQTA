@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { QuizQuestion, QuizFeedback } from '$lib/types/studyTools';
+import { resolveNumericGradeFromAssessmentPayload } from '$lib/utils/letterGradeScale';
 
 interface AssessmentData {
   id: number;
@@ -36,6 +37,8 @@ export interface LessonSummary {
 const GEMINI_API_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
+/** See https://inference-docs.cerebras.ai/models/overview — old ids (e.g. llama-3.3-70b) return 404. */
+const CEREBRAS_MODEL = 'gpt-oss-120b';
 
 type AIProvider = 'gemini' | 'cerebras';
 
@@ -83,10 +86,12 @@ export class GeminiService {
       const predictions: GradePrediction[] = [];
 
       for (const [subject, subjectAssessments] of assessmentsBySubject) {
-        // Filter for completed assessments with grades
-        const completedAssessments = subjectAssessments.filter(
-          (a) => a.status === 'MARKS_RELEASED' && a.finalGrade !== undefined,
-        );
+        // Released marks with a numeric equivalent (percentage or letter → approx %)
+        const completedAssessments = subjectAssessments.filter((a) => {
+          if (a.status !== 'MARKS_RELEASED') return false;
+          const n = resolveNumericGradeFromAssessmentPayload(a as any);
+          return n !== undefined && !isNaN(n);
+        });
 
         if (completedAssessments.length === 0) {
           // No completed assessments, skip prediction
@@ -96,8 +101,8 @@ export class GeminiService {
         // Prepare data for the AI
         const assessmentData = completedAssessments.map((a) => ({
           title: a.title,
-          grade: a.finalGrade,
-          dueDate: a.due,
+          grade: resolveNumericGradeFromAssessmentPayload(a as any),
+          due: a.due,
           status: a.status,
         }));
 
@@ -239,7 +244,7 @@ Be realistic and consider that the prediction should be based on demonstrated pe
           'User-Agent': 'DesQTA/1.0',
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b',
+          model: CEREBRAS_MODEL,
           messages: [
             {
               role: 'user',
@@ -338,7 +343,7 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
             'User-Agent': 'DesQTA/1.0',
           },
           body: JSON.stringify({
-            model: 'llama-3.3-70b',
+            model: CEREBRAS_MODEL,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.3,
             max_tokens: 1024,
@@ -415,7 +420,7 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
             'User-Agent': 'DesQTA/1.0',
           },
           body: JSON.stringify({
-            model: 'llama-3.3-70b',
+            model: CEREBRAS_MODEL,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.3,
             max_tokens: maxTokens,

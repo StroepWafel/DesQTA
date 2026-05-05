@@ -258,6 +258,58 @@ async fn fetch_past_assessments(programme: i32, metaclass: i32) -> Result<Vec<Va
     Ok(result)
 }
 
+/// Map letter / descriptor grades to an approximate 0–100 value when SEQTA sends no percentage.
+fn letter_grade_to_approximate_percent(letter: &str) -> Option<f32> {
+    let s = letter.trim().to_lowercase();
+    let token = s
+        .split(|c: char| c.is_whitespace() || c == '(' || c == '/')
+        .next()
+        .unwrap_or(&s)
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == '+' || *c == '-')
+        .collect::<String>();
+    match token.as_str() {
+        "a+" => Some(95.0),
+        "a" => Some(85.0),
+        "a-" => Some(80.0),
+        "b+" => Some(75.0),
+        "b" => Some(68.0),
+        "b-" => Some(62.0),
+        "c+" => Some(58.0),
+        "c" => Some(55.0),
+        "c-" => Some(50.0),
+        "d+" => Some(48.0),
+        "d" => Some(45.0),
+        "d-" => Some(42.0),
+        "e" => Some(38.0),
+        "f" => Some(32.0),
+        "hd" => Some(95.0),
+        "cr" => Some(60.0),
+        "p" | "ps" => Some(55.0),
+        "n" => Some(35.0),
+        "pass" => Some(55.0),
+        "fail" => Some(32.0),
+        _ if token.len() == 1 => match token.as_str() {
+            "a" => Some(85.0),
+            "b" => Some(68.0),
+            "c" => Some(55.0),
+            "d" => Some(45.0),
+            "e" => Some(38.0),
+            "f" => Some(32.0),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn json_grade_to_string(grade: &Value) -> Option<String> {
+    match grade {
+        Value::String(s) => Some(s.trim().to_string()),
+        Value::Number(n) => Some(n.to_string()),
+        _ => None,
+    }
+}
+
 /// Extract finalGrade from assessment data
 fn extract_final_grade(assessment: &Value) -> Option<f32> {
     // Check if status is MARKS_RELEASED
@@ -284,9 +336,14 @@ fn extract_final_grade(assessment: &Value) -> Option<f32> {
         }
     }
 
-    // Check if finalGrade is already set
+    // Check if finalGrade is already set (numeric)
     if let Some(final_grade) = assessment.get("finalGrade").and_then(|g| g.as_f64()) {
         return Some(final_grade as f32);
+    }
+
+    // Letter-only reporting: derive approximate % from letter grade
+    if let Some(letter) = extract_letter_grade(assessment) {
+        return letter_grade_to_approximate_percent(&letter);
     }
 
     None
@@ -304,8 +361,12 @@ fn extract_letter_grade(assessment: &Value) -> Option<String> {
     if let Some(criteria) = assessment.get("criteria").and_then(|c| c.as_array()) {
         if let Some(first_criterion) = criteria.get(0) {
             if let Some(results) = first_criterion.get("results") {
-                if let Some(grade) = results.get("grade").and_then(|g| g.as_str()) {
-                    return Some(grade.to_string());
+                if let Some(g) = results.get("grade") {
+                    if let Some(s) = json_grade_to_string(g) {
+                        if !s.is_empty() {
+                            return Some(s);
+                        }
+                    }
                 }
             }
         }
@@ -313,14 +374,22 @@ fn extract_letter_grade(assessment: &Value) -> Option<String> {
 
     // Fallback to results.grade
     if let Some(results) = assessment.get("results") {
-        if let Some(grade) = results.get("grade").and_then(|g| g.as_str()) {
-            return Some(grade.to_string());
+        if let Some(g) = results.get("grade") {
+            if let Some(s) = json_grade_to_string(g) {
+                if !s.is_empty() {
+                    return Some(s);
+                }
+            }
         }
     }
 
     // Check if letterGrade is already set
-    if let Some(letter_grade) = assessment.get("letterGrade").and_then(|g| g.as_str()) {
-        return Some(letter_grade.to_string());
+    if let Some(g) = assessment.get("letterGrade") {
+        if let Some(s) = json_grade_to_string(g) {
+            if !s.is_empty() {
+                return Some(s);
+            }
+        }
     }
 
     None

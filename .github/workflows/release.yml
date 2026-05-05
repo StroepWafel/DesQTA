@@ -21,12 +21,24 @@ on:
         required: true
         type: string
         default: 'Bug fixes and features'
+      use_ossign_windows:
+        description: 'Ship Windows installers from OSSign (skips CI Windows build). Triggers windows-ossign-wait-signature unchanged — signed installers still publish as the separate OSSign prerelease workflow.'
+        required: false
+        type: boolean
+        default: false
+      acknowledge_ossign_review_window:
+        description: 'Required when OSSign is enabled — signing is usually reviewed 08:00–23:00 CEST (17:30–08:30 ACDT)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build-windows:
+    if: ${{ github.event.inputs.use_ossign_windows != 'true' }}
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -520,3 +532,54 @@ jobs:
           git push origin releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # OSSign rebuilds/signs Windows on OSSign/BetterSEQTA-DesQTA for GITHUB_REF ("Use workflow from").
+  # Dispatch step matches windows-signed-binaries.yml (same action + OSSIGN_USER / OSSIGN_TOKEN).
+  # HTTP 401 from api.ossign.org means OSSign rejected those credentials — rotate them in your OSSign account, not YAML.
+  # Do not edit windows-ossign-wait-signature.yml — it publishes signed assets via its existing prerelease step.
+  ossign-kickoff-windows:
+    name: OSSign Windows (dispatch + wait loop)
+    if: ${{ github.event.inputs.use_ossign_windows == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Validate OSSign review window acknowledgement
+        if: ${{ github.event.inputs.acknowledge_ossign_review_window != 'true' }}
+        run: |
+          echo "::error::You must acknowledge the OSSign review window before running this workflow."
+          exit 1
+
+      - name: Dispatch signing workflow on OSSign
+        id: dispatch
+        uses: ossign/actions/workflow/dispatch@main
+        with:
+          username: ${{ secrets.OSSIGN_USER }}
+          token: ${{ secrets.OSSIGN_TOKEN }}
+          dispatch_only: true
+
+      - name: Log OSSign workflow ID
+        run: |
+          echo "OSSign workflow ID: ${{ steps.dispatch.outputs.workflow_id }}"
+          echo "Source ref sent to OSSign follows the branch/tag you selected above: ${GITHUB_REF}"
+
+      # gh workflow run needs a local git clone (or --repo); this job had none.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start wait loop for signed artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          V="${{ github.event.inputs.version }}"
+          case "$V" in v*) TAG="$V" ;; *) TAG="v$V" ;; esac
+          gh workflow run windows-ossign-wait-signature.yml \
+            --repo "${{ github.repository }}" \
+            --ref "${GITHUB_REF}" \
+            -f workflow_id="${{ steps.dispatch.outputs.workflow_id }}" \
+            -f release_name="DesQTA ${TAG}" \
+            -f attempt=1 \
+            -f max_attempts=100

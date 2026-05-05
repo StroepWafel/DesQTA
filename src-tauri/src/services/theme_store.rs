@@ -6,6 +6,22 @@ use std::time::Duration;
 const DEFAULT_API_BASE_URL: &str = "https://betterseqta.org/api/themes";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
+/// Internal DesQTA app calls identify as `type=desqta` per GET /api/themes (alongside betterseqta).
+fn append_theme_store_client_type(url: String) -> String {
+    const PARAM: &str = "type=desqta";
+    if !url.contains("/api/themes") {
+        return url;
+    }
+    if url.contains(PARAM) {
+        return url;
+    }
+    if url.contains('?') {
+        format!("{}&{}", url, PARAM)
+    } else {
+        format!("{}?{}", url, PARAM)
+    }
+}
+
 /// Get the API base URL, checking for dev override from settings
 fn get_api_base_url() -> String {
     // TODO: Could read from settings if we want to persist dev URL
@@ -37,6 +53,8 @@ async fn make_request(
     } else {
         format!("{}/api/themes{}", api_base.trim_end_matches('/'), endpoint)
     };
+
+    let url = append_theme_store_client_type(url);
 
     let client = netgrab::create_client();
     

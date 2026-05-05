@@ -6,6 +6,7 @@ import { setIdb } from './idbCache';
 import { isOfflineMode } from '../utils/offlineMode';
 import { forumPhotoSyncService } from './forumPhotoSyncService';
 import { invokeGetProcessedAssessments } from './processedAssessmentsInvoke';
+import { getSubjectsForCurrentAcademicYear } from '$lib/utils/subjectFolders';
 
 // Centralized background warm-up of frequently used SEQTA endpoints.
 // This primes the in-memory cache so pages can render instantly.
@@ -106,8 +107,7 @@ async function prefetchUpcomingAssessments(): Promise<void> {
 
     const colours = await prefetchLessonColours();
     const classesResJson = JSON.parse(classesRes);
-    const activeClass = classesResJson.payload.find((c: any) => c.active);
-    const activeSubjects = activeClass ? activeClass.subjects : [];
+    const activeSubjects = getSubjectsForCurrentAcademicYear(classesResJson.payload);
     const subjectFilters: Record<string, boolean> = {};
     activeSubjects.forEach((s: any) => (subjectFilters[s.code] = true));
     const activeCodes = activeSubjects.map((s: any) => s.code);

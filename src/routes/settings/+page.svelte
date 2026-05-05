@@ -147,25 +147,37 @@
         const status = await checkStatus();
         if (!status.isAvailable) {
           biometricToggleError =
-            status.error ?? $_('setup_assistant.biometric_unavailable', { default: 'Biometric authentication is not available on this device.' });
+            status.error ??
+            $_('setup_assistant.biometric_unavailable', {
+              default: 'Biometric authentication is not available on this device.',
+            });
           toastStore.error(biometricToggleError ?? 'Biometric unavailable');
           return;
         }
-        await authenticate($_('setup_assistant.biometric_title', { default: 'Unlock with biometrics' }), {
-          allowDeviceCredential: true,
-          cancelTitle: $_('common.cancel', { default: 'Cancel' }),
-          confirmationRequired: false,
-        });
+        await authenticate(
+          $_('setup_assistant.biometric_title', { default: 'Unlock with biometrics' }),
+          {
+            allowDeviceCredential: true,
+            cancelTitle: $_('common.cancel', { default: 'Cancel' }),
+            confirmationRequired: false,
+          },
+        );
         biometricEnabled = true;
         await saveSettingsWithQueue({ biometric_enabled: true });
         await flushSettingsQueue();
         if (initialSettings) initialSettings.biometricEnabled = true;
-        toastStore.success($_('settings.biometric_enabled_success', { default: 'Biometric unlock enabled' }));
+        toastStore.success(
+          $_('settings.biometric_enabled_success', { default: 'Biometric unlock enabled' }),
+        );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         if (!msg.includes('userCancel') && !msg.toLowerCase().includes('user cancel')) {
           biometricToggleError = msg;
-          toastStore.error($_('settings.biometric_enable_failed', { default: 'Could not enable biometric unlock' }));
+          toastStore.error(
+            $_('settings.biometric_enable_failed', {
+              default: 'Could not enable biometric unlock',
+            }),
+          );
         }
       } finally {
         biometricToggleLoading = false;
@@ -577,12 +589,12 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.minimizeToTray = minimizeToTray;
         initialSettings.devSensitiveInfoHider = devSensitiveInfoHider;
         initialSettings.devForceOfflineMode = devForceOfflineMode;
-      initialSettings.acceptedCloudEula = acceptedCloudEula;
-      initialSettings.syncCloudPfp = syncCloudPfp;
-      initialSettings.sendAnonymousUsageStatistics = sendAnonymousUsageStatistics;
-      initialSettings.separateRssFeed = separateRssFeed;
+        initialSettings.acceptedCloudEula = acceptedCloudEula;
+        initialSettings.syncCloudPfp = syncCloudPfp;
+        initialSettings.sendAnonymousUsageStatistics = sendAnonymousUsageStatistics;
+        initialSettings.separateRssFeed = separateRssFeed;
         initialSettings.zoomLevel = zoomLevel;
-      initialSettings.biometricEnabled = biometricEnabled;
+        initialSettings.biometricEnabled = biometricEnabled;
       }
 
       if (!options.skipReload) {
@@ -1912,7 +1924,9 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <label
                   for="minimize-to-tray"
                   class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
-                  <T key="settings.minimize_to_tray" fallback="Keep app running in system tray when closed" />
+                  <T
+                    key="settings.minimize_to_tray"
+                    fallback="Keep app running in system tray when closed" />
                 </label>
               </div>
               <p class="text-xs text-zinc-600 dark:text-zinc-400">
@@ -1978,7 +1992,9 @@ The Company reserves the right to terminate your access to the Service at any ti
                   aria-describedby="biometric-desc" />
                 <label
                   for="biometric-enabled"
-                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200 {biometricToggleLoading ? 'opacity-60 cursor-wait' : ''}"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200 {biometricToggleLoading
+                    ? 'opacity-60 cursor-wait'
+                    : ''}"
                   ><T
                     key="settings.biometric_enabled"
                     fallback="Unlock with biometrics (Face ID, Touch ID, fingerprint, Windows Hello)" /></label>
@@ -2445,7 +2461,9 @@ The Company reserves the right to terminate your access to the Service at any ti
               <T key="whats_new.title" fallback="What's New" />
             </h2>
             <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
-              <T key="settings.whats_new_description" fallback="View the changelog and latest features." />
+              <T
+                key="settings.whats_new_description"
+                fallback="View the changelog and latest features." />
             </p>
           </div>
           <button
