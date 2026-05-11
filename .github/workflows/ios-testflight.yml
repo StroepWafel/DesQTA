@@ -12,10 +12,22 @@ permissions:
 jobs:
   build-and-upload:
     name: Build and Upload to TestFlight
-    runs-on: macos-latest
+    # App Store Connect requires uploads built with the iOS 26+ SDK (Xcode 26+).
+    # macos-latest images still ship Xcode 16.x → validation error (409 SDK version issue).
+    runs-on: macos-26
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select Xcode 26 (iOS 26 SDK)
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Verify Xcode / iphoneos SDK version
+        run: |
+          xcodebuild -version
+          echo "iphoneos SDK: $(xcrun --sdk iphoneos --show-sdk-version)"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
