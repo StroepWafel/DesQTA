@@ -38,6 +38,7 @@ export const CLOUD_SYNC_SUBSET_KEYS = [
   'language',
   'zoom_level',
   'biometric_enabled',
+  'dashboard_today_schedule_fit_width',
 ] as const;
 
 // Queue partial settings patches when offline/errors, and flush on demand

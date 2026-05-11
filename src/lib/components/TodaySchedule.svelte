@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
+  import { invoke } from '@tauri-apps/api/core';
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import {
@@ -25,6 +26,8 @@
   let lessons = $state<any[]>([]);
   let lessonColours = $state<any[]>([]);
   let loadingLessons = $state<boolean>(true);
+  /** Rust setting `dashboard_today_schedule_fit_width` — equal-width cards, no horizontal scroll */
+  let scheduleFitWidthInWidget = $state(true);
 
   let lessonInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -155,6 +158,15 @@
   }
 
   onMount(async () => {
+    try {
+      const subset = await invoke<Record<string, unknown>>('get_settings_subset', {
+        keys: ['dashboard_today_schedule_fit_width'],
+      });
+      scheduleFitWidthInWidget =
+        (subset.dashboard_today_schedule_fit_width as boolean | undefined) ?? true;
+    } catch {
+      scheduleFitWidthInWidget = true;
+    }
     await loadLessons();
   });
 
@@ -236,18 +248,26 @@
       </div>
     </div>
   {:else}
-    <div class="flex flex-1 min-h-0 gap-0 overflow-x-auto overflow-y-hidden">
+    <div
+      class="flex flex-1 min-h-0 w-full min-w-0 overflow-y-hidden {scheduleFitWidthInWidget
+        ? 'gap-1.5 sm:gap-2 overflow-x-hidden'
+        : 'gap-0 overflow-x-auto'}">
       {#each lessons as lesson, i}
         <div
-          class="flex relative flex-col w-64 sm:w-72 shrink-0 rounded-lg overflow-hidden border border-t-4 border-zinc-200/50 dark:border-zinc-600/40 group"
+          class="flex relative flex-col rounded-lg overflow-hidden border border-t-4 border-zinc-200/50 dark:border-zinc-600/40 group min-h-0 {scheduleFitWidthInWidget
+            ? 'flex-1 min-w-0 basis-0'
+            : 'w-64 sm:w-72 shrink-0'}"
           style="border-top-color: {lesson.colour}; box-shadow: inset 0px 10px 10px -10px {lesson.colour};">
-          <div class="flex relative flex-col flex-1 gap-2 p-3 backdrop-blur-xs sm:p-4">
-            <div class="flex justify-between items-center">
-              <span class="text-base font-bold truncate text-zinc-900 sm:text-lg dark:text-white"
+          <div
+            class="flex relative flex-col flex-1 backdrop-blur-xs min-h-0 {scheduleFitWidthInWidget
+              ? 'gap-1.5 p-2 sm:p-3'
+              : 'gap-2 p-3 sm:p-4'}">
+            <div class="flex justify-between items-center gap-1 min-w-0">
+              <span class="text-base font-bold truncate text-zinc-900 sm:text-lg dark:text-white min-w-0"
                 >{lesson.description}</span>
               {#if lesson.active}
                 <span
-                  class="px-2.5 py-1 ml-2 text-xs font-medium text-white bg-linear-to-r from-green-500 to-emerald-600 rounded-full shadow-xs animate-gradient"
+                  class="px-2.5 py-1 ml-2 text-xs font-medium text-white shrink-0 bg-linear-to-r from-green-500 to-emerald-600 rounded-full shadow-xs animate-gradient"
                   >Now</span>
               {/if}
             </div>

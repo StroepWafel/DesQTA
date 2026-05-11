@@ -284,9 +284,16 @@ pub struct Settings {
     /// ISO 8601 UTC timestamp from server metadata (optional).
     #[serde(default)]
     pub cloud_settings_server_updated_at: Option<String>,
+    /// When true, dashboard Today's Schedule widget fits all lessons in the tile width (no horizontal scroll).
+    #[serde(default = "default_dashboard_today_schedule_fit_width")]
+    pub dashboard_today_schedule_fit_width: bool,
 }
 
 fn default_minimize_to_tray() -> bool {
+    true
+}
+
+fn default_dashboard_today_schedule_fit_width() -> bool {
     true
 }
 
@@ -340,6 +347,7 @@ impl Default for Settings {
             minimize_to_tray: true,
             cloud_settings_server_revision: 0,
             cloud_settings_server_updated_at: None,
+            dashboard_today_schedule_fit_width: true,
         }
     }
 }
@@ -658,6 +666,11 @@ impl Settings {
             &existing_json,
             "separate_rss_feed",
             default_settings.separate_rss_feed,
+        );
+        default_settings.dashboard_today_schedule_fit_width = get_bool(
+            &existing_json,
+            "dashboard_today_schedule_fit_width",
+            default_settings.dashboard_today_schedule_fit_width,
         );
         default_settings.minimize_to_tray = get_bool(
             &existing_json,

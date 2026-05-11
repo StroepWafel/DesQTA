@@ -110,6 +110,8 @@
   let devForceOfflineMode = $state(false);
   let showDevSettings = $state(false);
   let separateRssFeed = $state(false);
+  /** When true, Today's Schedule dashboard widget fits lessons in the tile (no horizontal scroll). */
+  let dashboardTodayScheduleFitWidth = $state(true);
   let zoomLevel = $state(1);
   let keyBuffer = '';
   let acceptedCloudEula = $state(false);
@@ -220,6 +222,7 @@
     syncCloudPfp: boolean;
     sendAnonymousUsageStatistics: boolean;
     separateRssFeed: boolean;
+    dashboardTodayScheduleFitWidth: boolean;
     zoomLevel: number;
     biometricEnabled: boolean;
   } | null = null;
@@ -356,6 +359,7 @@ The Company reserves the right to terminate your access to the Service at any ti
           'separate_rss_feed',
           'zoom_level',
           'biometric_enabled',
+          'dashboard_today_schedule_fit_width',
         ],
       });
       shortcuts = settings.shortcuts || [];
@@ -386,6 +390,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       syncCloudPfp = settings.sync_cloud_pfp ?? false;
       sendAnonymousUsageStatistics = settings.send_anonymous_usage_statistics ?? false;
       separateRssFeed = settings.separate_rss_feed ?? false;
+      dashboardTodayScheduleFitWidth = settings.dashboard_today_schedule_fit_width ?? true;
       zoomLevel = typeof settings.zoom_level === 'number' ? settings.zoom_level : 1;
       biometricEnabled = settings.biometric_enabled ?? false;
 
@@ -419,6 +424,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         syncCloudPfp,
         sendAnonymousUsageStatistics,
         separateRssFeed,
+        dashboardTodayScheduleFitWidth,
         zoomLevel,
         biometricEnabled,
       };
@@ -459,6 +465,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       devForceOfflineMode = false;
       acceptedCloudEula = false;
       separateRssFeed = false;
+      dashboardTodayScheduleFitWidth = true;
       zoomLevel = 1;
       biometricEnabled = false;
       showDevSettings = false;
@@ -536,6 +543,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         sync_cloud_pfp: syncCloudPfp,
         send_anonymous_usage_statistics: sendAnonymousUsageStatistics,
         separate_rss_feed: separateRssFeed,
+        dashboard_today_schedule_fit_width: dashboardTodayScheduleFitWidth,
         zoom_level: zoomLevel,
         biometric_enabled: biometricEnabled,
       };
@@ -593,6 +601,7 @@ The Company reserves the right to terminate your access to the Service at any ti
         initialSettings.syncCloudPfp = syncCloudPfp;
         initialSettings.sendAnonymousUsageStatistics = sendAnonymousUsageStatistics;
         initialSettings.separateRssFeed = separateRssFeed;
+        initialSettings.dashboardTodayScheduleFitWidth = dashboardTodayScheduleFitWidth;
         initialSettings.zoomLevel = zoomLevel;
         initialSettings.biometricEnabled = biometricEnabled;
       }
@@ -716,6 +725,8 @@ The Company reserves the right to terminate your access to the Service at any ti
     syncCloudPfp = cloudSettings.sync_cloud_pfp ?? false;
     sendAnonymousUsageStatistics = cloudSettings.send_anonymous_usage_statistics ?? false;
     separateRssFeed = cloudSettings.separate_rss_feed ?? false;
+    dashboardTodayScheduleFitWidth =
+      cloudSettings.dashboard_today_schedule_fit_width ?? true;
     zoomLevel = cloudSettings.zoom_level ?? 1;
     biometricEnabled = cloudSettings.biometric_enabled ?? false;
 
@@ -747,6 +758,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       initialSettings.devForceOfflineMode = devForceOfflineMode;
       initialSettings.acceptedCloudEula = acceptedCloudEula;
       initialSettings.separateRssFeed = separateRssFeed;
+      initialSettings.dashboardTodayScheduleFitWidth = dashboardTodayScheduleFitWidth;
       initialSettings.zoomLevel = zoomLevel;
     }
 
@@ -802,6 +814,7 @@ The Company reserves the right to terminate your access to the Service at any ti
       syncCloudPfp !== initialSettings.syncCloudPfp ||
       sendAnonymousUsageStatistics !== initialSettings.sendAnonymousUsageStatistics ||
       separateRssFeed !== initialSettings.separateRssFeed ||
+      dashboardTodayScheduleFitWidth !== initialSettings.dashboardTodayScheduleFitWidth ||
       zoomLevel !== initialSettings.zoomLevel ||
       biometricEnabled !== initialSettings.biometricEnabled
     );
@@ -1638,6 +1651,34 @@ The Company reserves the right to terminate your access to the Service at any ti
           </p>
         </div>
         <div class="p-4 space-y-6 sm:p-6">
+          <div class="space-y-3">
+            <h3 class="text-sm font-semibold sm:text-base">
+              <T
+                key="settings.dashboard_today_schedule_section"
+                fallback="Today's schedule widget" />
+            </h3>
+            <div class="flex gap-3 items-start">
+              <input
+                id="dashboard-today-schedule-fit-width"
+                type="checkbox"
+                class="w-4 h-4 mt-0.5 accent-blue-600 sm:w-5 sm:h-5 shrink-0"
+                bind:checked={dashboardTodayScheduleFitWidth} />
+              <div class="flex flex-col gap-1 min-w-0">
+                <label
+                  for="dashboard-today-schedule-fit-width"
+                  class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200">
+                  <T
+                    key="settings.dashboard_today_schedule_fit_width"
+                    fallback="Fit all lessons in the widget width" />
+                </label>
+                <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
+                  <T
+                    key="settings.dashboard_today_schedule_fit_width_description"
+                    fallback="When enabled, lesson cards share the row equally so you do not need to scroll sideways on the dashboard." />
+                </p>
+              </div>
+            </div>
+          </div>
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">
               <T key="settings.dashboard_quick_actions" fallback="Dashboard Quick Actions" />
