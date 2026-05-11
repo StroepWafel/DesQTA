@@ -123,6 +123,12 @@ jobs:
           echo "IPHONEOS_SDK_VERSION=$SDK_VER" >> "$GITHUB_ENV"
           echo "iphoneos SDK: $SDK_VER"
 
+      # Xcode 26 runners may set TOOLCHAINS with Metal first; that points TOOLCHAIN_DIR at a
+      # cryptex path without Swift compatibility libraries → undefined __swift_FORCE_LOAD_*.
+      # Default toolchain only: https://github.com/actions/runner-images/issues/13135
+      - name: Use default Swift toolchain for links
+        run: echo "TOOLCHAINS=com.apple.dt.toolchain.XcodeDefault" >> "$GITHUB_ENV"
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:

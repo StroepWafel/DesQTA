@@ -32,6 +32,9 @@ jobs:
           echo "IPHONEOS_SDK_VERSION=$SDK_VER" >> "$GITHUB_ENV"
           echo "iphoneos SDK: $SDK_VER"
 
+      - name: Use default Swift toolchain for links
+        run: echo "TOOLCHAINS=com.apple.dt.toolchain.XcodeDefault" >> "$GITHUB_ENV"
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
