@@ -118,7 +118,10 @@ jobs:
       - name: Verify Xcode / iphoneos SDK version
         run: |
           xcodebuild -version
-          echo "iphoneos SDK: $(xcrun --sdk iphoneos --show-sdk-version)"
+          echo "DEVELOPER_DIR=$(xcode-select -p)" >> "$GITHUB_ENV"
+          SDK_VER=$(xcrun --sdk iphoneos --show-sdk-version)
+          echo "IPHONEOS_SDK_VERSION=$SDK_VER" >> "$GITHUB_ENV"
+          echo "iphoneos SDK: $SDK_VER"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -136,13 +139,16 @@ jobs:
         with:
           targets: aarch64-apple-ios
 
+      # Include DEVELOPER_DIR + SDK in the cache fingerprint so restores never mix
+      # aarch64-apple-ios artifacts linked against a different Xcode (e.g. 16.4 vs 26).
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ runner.os }}-ios-${{ hashFiles('src-tauri/Cargo.lock') }}
-          shared-key: 'tauri-ios'
-          cache-directories: |
-            src-tauri/target
+          prefix-key: v2-ios-xcode-linked
+          env-vars: DEVELOPER_DIR IPHONEOS_SDK_VERSION
+          workspaces: |
+            src-tauri -> target
+          cache-targets: true
 
       - name: Cache pnpm store
         uses: actions/cache@v4
