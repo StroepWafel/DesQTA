@@ -67,6 +67,7 @@
   import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
   import Modal from '../../lib/components/Modal.svelte';
   import ProfilePictureCropModal from '../../lib/components/ProfilePictureCropModal.svelte';
+  import CustomBackgroundSettings from '../../lib/components/settings/CustomBackgroundSettings.svelte';
 
   interface Shortcut {
     name: string;
@@ -1857,6 +1858,8 @@ The Company reserves the right to terminate your access to the Service at any ti
                     key="settings.theme_mode_description"
                     fallback="Choose between light mode, dark mode, or follow your system preference." />
                 </p>
+                <CustomBackgroundSettings />
+
                 <div class="mt-4 flex flex-col items-center">
                   <button
                     type="button"

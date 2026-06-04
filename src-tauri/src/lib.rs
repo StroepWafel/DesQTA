@@ -26,6 +26,8 @@ mod performance_testing;
 mod system_monitor;
 #[path = "utils/profile_picture.rs"]
 mod profile_picture;
+#[path = "utils/background_image.rs"]
+mod background_image;
 #[path = "utils/sanitization.rs"]
 mod sanitization;
 #[path = "utils/html_parser.rs"]
@@ -547,6 +549,11 @@ pub fn run() {
             profile_picture::get_profile_picture_path_cmd,
             profile_picture::delete_profile_picture,
             profile_picture::has_custom_profile_picture,
+            background_image::save_background_image,
+            background_image::get_background_image_path_cmd,
+            background_image::delete_background_image,
+            background_image::has_custom_background_image,
+            background_image::get_background_image_data_url,
             profile_picture::get_profile_picture_data_url,
             forum_photos::save_forum_photo,
             forum_photos::get_forum_photo_path,

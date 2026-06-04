@@ -226,6 +226,30 @@ pub fn parse_html(html: &str) -> Result<ParsedHtml, String> {
     })
 }
 
+/// Ensures embed URLs are absolute (SEQTA often omits the protocol).
+pub fn normalize_embed_url(raw: &str) -> Option<String> {
+    let value = raw.trim();
+    if value.is_empty() {
+        return None;
+    }
+
+    let lower = value.to_ascii_lowercase();
+    if lower.starts_with("http://") || lower.starts_with("https://") {
+        return Some(value.to_string());
+    }
+
+    if value.starts_with("//") {
+        return Some(format!("https:{value}"));
+    }
+
+    // App-relative paths cannot be embedded from the DesQTA webview origin.
+    if value.starts_with('/') {
+        return None;
+    }
+
+    Some(format!("https://{}", value.trim_start_matches('/')))
+}
+
 /// Extract iframe src from HTML (used by WelcomePortal)
 pub fn extract_iframe_src(html: &str) -> Result<Option<String>, String> {
     if html.is_empty() {
@@ -237,7 +261,7 @@ pub fn extract_iframe_src(html: &str) -> Result<Option<String>, String> {
 
     for element in document.select(&iframe_selector) {
         if let Some(src) = element.value().attr("src") {
-            return Ok(Some(src.to_string()));
+            return Ok(normalize_embed_url(src));
         }
     }
 
@@ -304,6 +328,22 @@ mod tests {
         let html = r#"<div><iframe src="https://example.com"></iframe></div>"#;
         let src = extract_iframe_src(html).unwrap();
         assert_eq!(src, Some("https://example.com".to_string()));
+    }
+
+    #[test]
+    fn test_normalize_embed_url_bare_hostname() {
+        assert_eq!(
+            normalize_embed_url("www.mathletics.com"),
+            Some("https://www.mathletics.com".to_string())
+        );
+    }
+
+    #[test]
+    fn test_normalize_embed_url_protocol_relative() {
+        assert_eq!(
+            normalize_embed_url("//www.example.com/path"),
+            Some("https://www.example.com/path".to_string())
+        );
     }
 
     #[test]

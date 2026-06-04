@@ -76,11 +76,8 @@
         settings: { ...definition.defaultSettings },
       };
 
-      if (onAdd) {
-        onAdd(newWidget);
-      } else {
-        await widgetService.addWidget(newWidget);
-      }
+      await widgetService.addWidget(newWidget);
+      onAdd?.(newWidget);
 
       onClose();
       searchQuery = '';

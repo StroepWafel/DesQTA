@@ -287,6 +287,18 @@ pub struct Settings {
     /// When true, dashboard Today's Schedule widget fits all lessons in the tile width (no horizontal scroll).
     #[serde(default = "default_dashboard_today_schedule_fit_width")]
     pub dashboard_today_schedule_fit_width: bool,
+    /// Use a custom image background (file stored in app data dir via background_image commands).
+    #[serde(default)]
+    pub custom_background_enabled: bool,
+    /// Background image fit: cover, contain, or fill.
+    #[serde(default = "default_custom_background_fit")]
+    pub custom_background_fit: String,
+    /// Background image opacity from 0.2 to 1.0.
+    #[serde(default = "default_custom_background_opacity")]
+    pub custom_background_opacity: f64,
+    /// Dark overlay on top of the background (0.0–0.8) for readability.
+    #[serde(default)]
+    pub custom_background_dim: f64,
 }
 
 fn default_minimize_to_tray() -> bool {
@@ -295,6 +307,14 @@ fn default_minimize_to_tray() -> bool {
 
 fn default_dashboard_today_schedule_fit_width() -> bool {
     true
+}
+
+fn default_custom_background_fit() -> String {
+    "cover".to_string()
+}
+
+fn default_custom_background_opacity() -> f64 {
+    1.0
 }
 
 impl Default for Settings {
@@ -348,6 +368,10 @@ impl Default for Settings {
             cloud_settings_server_revision: 0,
             cloud_settings_server_updated_at: None,
             dashboard_today_schedule_fit_width: true,
+            custom_background_enabled: false,
+            custom_background_fit: default_custom_background_fit(),
+            custom_background_opacity: default_custom_background_opacity(),
+            custom_background_dim: 0.0,
         }
     }
 }
@@ -672,6 +696,24 @@ impl Settings {
             "dashboard_today_schedule_fit_width",
             default_settings.dashboard_today_schedule_fit_width,
         );
+        default_settings.custom_background_enabled = get_bool(
+            &existing_json,
+            "custom_background_enabled",
+            default_settings.custom_background_enabled,
+        );
+        default_settings.custom_background_fit = existing_json
+            .get("custom_background_fit")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .unwrap_or_else(default_custom_background_fit);
+        default_settings.custom_background_opacity = existing_json
+            .get("custom_background_opacity")
+            .and_then(|v| v.as_f64())
+            .unwrap_or_else(default_custom_background_opacity);
+        default_settings.custom_background_dim = existing_json
+            .get("custom_background_dim")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0);
         default_settings.minimize_to_tray = get_bool(
             &existing_json,
             "minimize_to_tray",

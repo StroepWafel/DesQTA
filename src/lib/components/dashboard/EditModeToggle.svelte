@@ -4,6 +4,7 @@
   import AddWidgetDialog from './AddWidgetDialog.svelte';
   import WidgetTemplates from './WidgetTemplates.svelte';
   import { logger } from '../../../utils/logger';
+  import { widgetService } from '../../services/widgetService';
 
   interface Props {
     isEditing: boolean;
@@ -41,7 +42,8 @@
     isResetting = true;
     try {
       logger.debug('EditModeToggle', 'handleReset', 'Layout reset requested');
-      onLayoutChange?.();
+      await widgetService.resetLayout();
+      await onLayoutChange?.();
     } catch (e) {
       logger.error('EditModeToggle', 'handleReset', `Failed to reset layout: ${e}`, { error: e });
       alert('Failed to reset layout. Please try again.');

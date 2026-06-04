@@ -56,16 +56,18 @@
     renderedWidgets = layout.widgets.filter((widget) => widget.enabled).map(cloneWidget);
   }
 
-  function commitLayout(nextLayout: WidgetLayout) {
+  function commitLayout(nextLayout: WidgetLayout, options?: { refreshGrid?: boolean }) {
     layout = cloneLayout(nextLayout);
-    updateRenderedWidgets();
+    if (options?.refreshGrid !== false) {
+      updateRenderedWidgets();
+    }
   }
 
-  function patchLayout(mutator: (draft: WidgetLayout) => void) {
+  function patchLayout(mutator: (draft: WidgetLayout) => void, options?: { refreshGrid?: boolean }) {
     const draft = cloneLayout(layout);
     mutator(draft);
     draft.lastModified = new Date();
-    commitLayout(draft);
+    commitLayout(draft, options);
   }
 
   function getWidgetIndex(widgetId: string, source: WidgetConfig[] = layout.widgets): number {
@@ -147,34 +149,105 @@
     }, 350);
   }
 
-  function syncPositionsFromGrid(items: any[], source: 'dragstop' | 'resizestop' | 'destroy') {
+  type GridSyncItem = {
+    el?: HTMLElement;
+    x?: number;
+    y?: number;
+    w?: number;
+    h?: number;
+  };
+
+  /** GridStack v12 drag/resize handlers pass a single element, not an array. */
+  function normalizeGridSyncItems(itemsOrEl: unknown): GridSyncItem[] {
+    if (!itemsOrEl) return [];
+    if (Array.isArray(itemsOrEl)) {
+      return itemsOrEl as GridSyncItem[];
+    }
+    if (itemsOrEl instanceof HTMLElement) {
+      const node = (itemsOrEl as HTMLElement & { gridstackNode?: GridSyncItem }).gridstackNode;
+      if (node) {
+        return [{ el: itemsOrEl, x: node.x, y: node.y, w: node.w, h: node.h }];
+      }
+      return [
+        {
+          el: itemsOrEl,
+          x: Number(itemsOrEl.getAttribute('data-gs-x')) || undefined,
+          y: Number(itemsOrEl.getAttribute('data-gs-y')) || undefined,
+          w: Number(itemsOrEl.getAttribute('data-gs-w')) || undefined,
+          h: Number(itemsOrEl.getAttribute('data-gs-h')) || undefined,
+        },
+      ];
+    }
+    return [];
+  }
+
+  async function flushPendingSave() {
+    if (!saveTimeout) return;
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+    try {
+      await widgetService.saveLayout(layout);
+      onLayoutChange?.(layout);
+    } catch (error) {
+      logger.error('WidgetGrid', 'flushPendingSave', `Failed to save layout: ${error}`, { error });
+    }
+  }
+
+  function syncPositionsFromGrid(
+    itemsOrEl: unknown,
+    source: 'dragstop' | 'resizestop' | 'destroy',
+  ) {
+    const items = normalizeGridSyncItems(itemsOrEl);
     if (!items.length) return;
 
-    patchLayout((draft) => {
-      for (const item of items) {
-        const widgetId = item.el?.getAttribute?.('data-gs-id');
-        if (!widgetId) continue;
+    // Do not re-render grid items — GridStack already owns the DOM positions.
+    patchLayout(
+      (draft) => {
+        for (const item of items) {
+          const widgetId = item.el?.getAttribute?.('data-gs-id');
+          if (!widgetId) continue;
 
-        const index = getWidgetIndex(widgetId, draft.widgets);
-        if (index === -1) continue;
+          const index = getWidgetIndex(widgetId, draft.widgets);
+          if (index === -1) continue;
 
-        const widget = draft.widgets[index];
-        const nextW = snapToPreset(item.w ?? widget.position.w, PRESET_WIDTHS);
-        const nextH = snapToPreset(item.h ?? widget.position.h, PRESET_HEIGHTS);
+          const widget = draft.widgets[index];
+          const nextW = snapToPreset(item.w ?? widget.position.w, PRESET_WIDTHS);
+          const nextH = snapToPreset(item.h ?? widget.position.h, PRESET_HEIGHTS);
 
-        widget.position = {
-          ...widget.position,
-          x: item.x ?? widget.position.x,
-          y: item.y ?? widget.position.y,
-          w: nextW,
-          h: nextH,
-        };
-      }
-    });
+          widget.position = {
+            ...widget.position,
+            x: item.x ?? widget.position.x,
+            y: item.y ?? widget.position.y,
+            w: nextW,
+            h: nextH,
+          };
+        }
+      },
+      { refreshGrid: false },
+    );
 
     if (source !== 'destroy') {
       schedulePersist();
     }
+  }
+
+  function scheduleSyncAfterGridInteraction(el: HTMLElement, source: 'dragstop' | 'resizestop') {
+    requestAnimationFrame(() => {
+      if (!grid || !el) return;
+
+      if (source === 'resizestop') {
+        const node = (el as HTMLElement & { gridstackNode?: GridSyncItem }).gridstackNode;
+        if (node?.w != null && node?.h != null) {
+          const snappedW = snapToPreset(node.w, PRESET_WIDTHS);
+          const snappedH = snapToPreset(node.h, PRESET_HEIGHTS);
+          if (snappedW !== node.w || snappedH !== node.h) {
+            grid.update(el, { w: snappedW, h: snappedH });
+          }
+        }
+      }
+
+      syncPositionsFromGrid(el, source);
+    });
   }
 
   function initializeGrid() {
@@ -209,26 +282,14 @@
       gridElement,
     );
 
-    grid.on('resize', (_event, items: any[] = []) => {
-      for (const item of items) {
-        if (!item.el || item.w == null || item.h == null) continue;
+    // Snap sizes on resizestop only — updating during 'resize' causes a stuck resize loop in v12.
 
-        const snappedW = snapToPreset(item.w, PRESET_WIDTHS);
-        const snappedH = snapToPreset(item.h, PRESET_HEIGHTS);
-        if (snappedW === item.w && snappedH === item.h) continue;
-
-        requestAnimationFrame(() => {
-          grid?.update(item.el, { w: snappedW, h: snappedH });
-        });
-      }
+    grid.on('dragstop', (_event, el: HTMLElement) => {
+      scheduleSyncAfterGridInteraction(el, 'dragstop');
     });
 
-    grid.on('dragstop', (_event, items: any[] = []) => {
-      syncPositionsFromGrid(items, 'dragstop');
-    });
-
-    grid.on('resizestop', (_event, items: any[] = []) => {
-      syncPositionsFromGrid(items, 'resizestop');
+    grid.on('resizestop', (_event, el: HTMLElement) => {
+      scheduleSyncAfterGridInteraction(el, 'resizestop');
     });
   }
 
@@ -321,6 +382,8 @@
     await applyPatchedLayout(nextLayout, { persist: false });
   }
 
+  let wasGridEditing = false;
+
   $effect(() => {
     if (!grid) return;
 
@@ -333,6 +396,11 @@
       handle: canEdit ? '.gs-resize-handle-top' : '.none',
     };
     grid.opts.animate = !canEdit;
+
+    if (wasGridEditing && !canEdit) {
+      void flushPendingSave();
+    }
+    wasGridEditing = canEdit;
   });
 
   async function scrollToWidget(widgetId: string) {

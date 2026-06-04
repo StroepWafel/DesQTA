@@ -7,6 +7,8 @@
   import ModuleList from './ModuleList.svelte';
   import type { ParsedDocument } from '../../routes/courses/types';
   import { invoke } from '@tauri-apps/api/core';
+  import { normalizeEmbedUrl } from '$lib/utils/urlUtil';
+  import { logger } from '../../utils/logger';
 
   let portalUrl = $state<string>('');
   let loadingPortal = $state<boolean>(true);
@@ -14,6 +16,15 @@
   let showPortalModal = $state(false);
   let showDefaultContent = $state<boolean>(false);
   let parsedPortalDocument = $state<ParsedDocument | null>(null);
+
+  function setPortalUrlFromRaw(raw: string | null | undefined): boolean {
+    const normalized = normalizeEmbedUrl(raw);
+    if (normalized) {
+      portalUrl = normalized;
+      return true;
+    }
+    return false;
+  }
 
   async function loadPortal() {
     try {
@@ -49,20 +60,25 @@
           }
         } else if (payload.url || payload.contents) {
           if (payload.url) {
-            portalUrl = payload.url;
+            if (!setPortalUrlFromRaw(payload.url)) {
+              logger.warn('WelcomePortal', 'loadPortal', 'Invalid portal URL', {
+                url: payload.url,
+              });
+              showDefaultContent = true;
+            }
           } else {
             // Use Rust-side HTML parsing to extract iframe src
             try {
               const iframeSrc = await invoke<string | null>('extract_iframe_src_command', {
                 html: payload.contents,
               });
-              if (iframeSrc) {
-                portalUrl = iframeSrc;
-              } else {
+              if (!setPortalUrlFromRaw(iframeSrc)) {
                 showDefaultContent = true;
               }
             } catch (e) {
-              console.error('Error extracting iframe src:', e);
+              logger.error('WelcomePortal', 'loadPortal', `Error extracting iframe src: ${e}`, {
+                error: e,
+              });
               showDefaultContent = true;
             }
           }

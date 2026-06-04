@@ -47,6 +47,11 @@
     loadTheme,
     loadCurrentTheme,
   } from '../lib/stores/theme';
+  import {
+    customBackground,
+    loadCustomBackground,
+    getBackgroundSizeCss,
+  } from '../lib/stores/customBackground';
   import { themeService } from '../lib/services/themeService';
   import { initI18n, locale, availableLocales, _ } from '../lib/i18n';
   import T from '../lib/components/T.svelte';
@@ -417,7 +422,13 @@
     window.addEventListener('redo-onboarding', handleRedoOnboarding);
 
     // Initialize theme and i18n first
-    await Promise.all([loadAccentColor(), loadTheme(), loadCurrentTheme(), initI18n()]);
+    await Promise.all([
+      loadAccentColor(),
+      loadTheme(),
+      loadCurrentTheme(),
+      loadCustomBackground(),
+      initI18n(),
+    ]);
 
     // Initialize theme sync in background (don't block startup)
     themeService.initializeThemeSync().catch((e) => {
@@ -878,10 +889,29 @@
   <LoadingScreen />
 {:else}
   <div
-    class="flex flex-col h-screen w-screen {isMobile || isFullscreen
+    class="relative flex flex-col h-screen w-screen {isMobile || isFullscreen
       ? ''
-      : 'rounded-2xl'} overflow-hidden theme-bg"
+      : 'rounded-2xl'} overflow-hidden {$customBackground.enabled && $customBackground.imageUrl
+      ? ''
+      : 'theme-bg'}"
     style="outline: none; border: none; margin: 0; padding: 0; padding-top: var(--safe-area-top); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+    {#if $customBackground.enabled && $customBackground.imageUrl}
+      <div
+        class="pointer-events-none absolute inset-0 z-0 bg-zinc-950"
+        aria-hidden="true"
+        style="background-image: url('{$customBackground.imageUrl}'); background-position: center; background-repeat: no-repeat; background-size: {getBackgroundSizeCss(
+          $customBackground.fit,
+        )}; opacity: {$customBackground.opacity};">
+      </div>
+      {#if $customBackground.dim > 0}
+        <div
+          class="pointer-events-none absolute inset-0 z-0 bg-black"
+          aria-hidden="true"
+          style="opacity: {$customBackground.dim};">
+        </div>
+      {/if}
+    {/if}
+    <div class="relative z-10 flex flex-col flex-1 min-h-0 h-full w-full">
     {#if !$needsSetup}
       <AppHeader
         {sidebarOpen}
@@ -1019,6 +1049,7 @@
           </ThemeBuilder>
         </aside>
       {/if}
+    </div>
     </div>
   </div>
 {/if}
