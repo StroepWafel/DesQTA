@@ -41,6 +41,33 @@ export const CLOUD_SYNC_SUBSET_KEYS = [
   'dashboard_today_schedule_fit_width',
 ] as const;
 
+/** Patch-tier keys also persisted and included in full cloud upload (see Rust `CLOUD_SYNC_STORAGE_KEYS`). */
+export const CLOUD_SYNC_PATCH_KEYS = [
+  'auto_dismiss_message_notifications',
+  'cerebras_api_key',
+  'ai_provider',
+  'minimize_to_tray',
+  'separate_rss_feed',
+  'menu_order',
+  'sidebar_folders',
+  'sidebar_favorites',
+  'disabled_sidebar_pages',
+  'downloaded_theme_ids',
+  'downloaded_theme_metadata',
+  'custom_background_enabled',
+  'custom_background_fit',
+  'custom_background_opacity',
+  'custom_background_dim',
+  'has_been_through_onboarding',
+  'has_completed_setup_assistant',
+  'has_completed_post_login_prompts',
+] as const;
+
+/** Full upload schema — canonical list lives in Rust (`get_cloud_sync_settings`). */
+async function getCloudSyncSettingsSnapshot(): Promise<Record<string, unknown>> {
+  return invoke<Record<string, unknown>>('get_cloud_sync_settings');
+}
+
 // Queue partial settings patches when offline/errors, and flush on demand
 
 /**
@@ -49,10 +76,7 @@ export const CLOUD_SYNC_SUBSET_KEYS = [
 export async function pushFullCloudSettingsSync(): Promise<void> {
   const cloudUser = await cloudAuthService.getUser();
   if (!cloudUser) return;
-  const keys = [...CLOUD_SYNC_SUBSET_KEYS];
-  const currentSettings = await invoke<Record<string, unknown>>('get_settings_subset', {
-    keys,
-  });
+  const currentSettings = await getCloudSyncSettingsSnapshot();
   await cloudSettingsService.syncSettings({ ...currentSettings });
 }
 
@@ -64,9 +88,7 @@ async function autoSyncToCloud(patch: Record<string, unknown>): Promise<void> {
   try {
     const cloudUser = await cloudAuthService.getUser();
     if (cloudUser) {
-      const currentSettings = await invoke<Record<string, unknown>>('get_settings_subset', {
-        keys: [...CLOUD_SYNC_SUBSET_KEYS],
-      });
+      const currentSettings = await getCloudSyncSettingsSnapshot();
 
       const settingsToSync = { ...currentSettings, ...patch };
       await cloudSettingsService.syncSettings(settingsToSync);

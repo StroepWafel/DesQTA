@@ -170,36 +170,7 @@
       }
 
       // Fallback if no onSave provided
-      const settings = await invoke<any>('get_settings_subset', {
-        keys: [
-          'shortcuts',
-          'feeds',
-          'weather_enabled',
-          'weather_city',
-          'weather_country',
-          'reminders_enabled',
-          'force_use_location',
-          'accent_color',
-          'theme',
-          'disable_school_picture',
-          'enhanced_animations',
-          'gemini_api_key',
-          'ai_integrations_enabled',
-          'grade_analyser_enabled',
-          'lesson_summary_analyser_enabled',
-          'quiz_generator_enabled',
-          'auto_collapse_sidebar',
-          'auto_expand_sidebar_hover',
-          'global_search_enabled',
-          'dev_sensitive_info_hider',
-          'dev_force_offline_mode',
-          'accepted_cloud_eula',
-          'language',
-          'separate_rss_feed',
-          'zoom_level',
-          'biometric_enabled',
-        ],
-      });
+      const settings = await invoke<Record<string, unknown>>('get_cloud_sync_settings');
 
       await cloudSettingsService.syncSettings(settings);
 
