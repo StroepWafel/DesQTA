@@ -462,8 +462,8 @@ impl Default for Settings {
             feeds: Vec::new(),
             weather_enabled: false,
             force_use_location: false,
-            weather_city: String::new(),
-            weather_country: String::new(),
+            weather_city: "Adelaide".to_string(),
+            weather_country: "AU".to_string(),
             reminders_enabled: false,
             auto_dismiss_message_notifications: false,
             accent_color: "#3b82f6".to_string(), // Default to blue-500
@@ -551,6 +551,8 @@ pub struct CloudUser {
     pub display_name: String,
     #[serde(rename = "pfpUrl")]
     pub pfp_url: Option<String>,
+    #[serde(rename = "pfpHash", default)]
+    pub pfp_hash: Option<String>,
     #[serde(rename = "createdAt", default)]
     pub created_at: Option<String>,
     #[serde(rename = "is_admin", default)]
