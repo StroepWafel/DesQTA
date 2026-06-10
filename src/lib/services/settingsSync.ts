@@ -68,6 +68,34 @@ async function getCloudSyncSettingsSnapshot(): Promise<Record<string, unknown>> 
   return invoke<Record<string, unknown>>('get_cloud_sync_settings');
 }
 
+/** Never uploaded to accounts API. */
+const CLOUD_UPLOAD_BLOCKLIST = new Set([
+  'cloud_settings_server_revision',
+  'cloud_settings_server_updated_at',
+  'last_synced_cloud_pfp_url',
+  'dashboard_widgets_layout',
+  'sidebar_recent_activity',
+  'ok',
+  'server',
+  'patch',
+]);
+
+const CLOUD_UPLOAD_ALLOWLIST = new Set<string>([
+  ...CLOUD_SYNC_SUBSET_KEYS,
+  ...CLOUD_SYNC_PATCH_KEYS,
+]);
+
+/** Strip local-only keys; auto-save POST sends only changed cloud-sync keys. */
+function prepareSparseCloudUpload(patch: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (CLOUD_UPLOAD_BLOCKLIST.has(k)) continue;
+    if (!CLOUD_UPLOAD_ALLOWLIST.has(k)) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
 // Queue partial settings patches when offline/errors, and flush on demand
 
 /**
@@ -87,13 +115,15 @@ export async function pushFullCloudSettingsSync(): Promise<void> {
 async function autoSyncToCloud(patch: Record<string, unknown>): Promise<void> {
   try {
     const cloudUser = await cloudAuthService.getUser();
-    if (cloudUser) {
-      const currentSettings = await getCloudSyncSettingsSnapshot();
+    if (!cloudUser) return;
 
-      const settingsToSync = { ...currentSettings, ...patch };
-      await cloudSettingsService.syncSettings(settingsToSync);
-      logger.debug('settingsSync', 'autoSyncToCloud', 'Auto-synced settings to cloud');
-    }
+    const settingsToSync = prepareSparseCloudUpload(patch);
+    if (Object.keys(settingsToSync).length === 0) return;
+
+    await cloudSettingsService.syncSettings(settingsToSync);
+    logger.debug('settingsSync', 'autoSyncToCloud', 'Auto-synced sparse patch to cloud', {
+      keys: Object.keys(settingsToSync),
+    });
   } catch (e) {
     const msg = e instanceof Error ? e.message : '';
     if (msg === 'Session expired') {
@@ -239,13 +269,36 @@ function reloadAfterCloudApply(): void {
   });
 }
 
-async function handleSyncInitResult(result: SettingsSyncInitResponse): Promise<void> {
+export interface SyncInitApplyOptions {
+  /** Manual download: treat no_remote_settings as empty cloud (no bootstrap upload). */
+  rejectNoRemoteSettings?: boolean;
+  /** Manual download: return client_ahead without uploading. */
+  manualDownloadMode?: boolean;
+}
+
+export interface SyncInitApplyResult {
+  reload: boolean;
+  language?: string;
+  mergedPayload?: Record<string, unknown> | null;
+  doneWithoutReload?: boolean;
+  alreadyInSync?: boolean;
+  clientAhead?: boolean;
+  noRemoteSettings?: boolean;
+}
+
+/**
+ * Apply sync-init response: persist metadata, sparse/full merge, bootstrap or recovery uploads.
+ */
+export async function applySyncInitResult(
+  result: SettingsSyncInitResponse,
+  options: SyncInitApplyOptions = {},
+): Promise<SyncInitApplyResult> {
   const rev = result.server?.settings_revision;
   const at = result.server?.settings_updated_at ?? null;
 
   if (typeof rev !== 'number' || !Number.isFinite(rev)) {
-    logger.warn('settingsSync', 'autoDownloadSettingsFromCloud', 'sync-init missing server revision');
-    return;
+    logger.warn('settingsSync', 'applySyncInitResult', 'sync-init missing server revision');
+    return { reload: false };
   }
 
   const revisionMarker = `rev:${rev}`;
@@ -254,42 +307,65 @@ async function handleSyncInitResult(result: SettingsSyncInitResponse): Promise<v
     case 'no_remote_settings': {
       await persistCloudSettingsServerMeta(rev, at);
       sessionStorage.setItem('settings_last_synced_hash', revisionMarker);
-      logger.debug('settingsSync', 'autoDownloadSettingsFromCloud', 'no_remote_settings');
-      return;
+      if (options.rejectNoRemoteSettings) {
+        return { reload: false, noRemoteSettings: true };
+      }
+      logger.info('settingsSync', 'applySyncInitResult', 'no_remote_settings — bootstrapping full upload');
+      await pushFullCloudSettingsSync();
+      return { reload: false };
     }
     case 'up_to_date': {
       await persistCloudSettingsServerMeta(rev, at);
       sessionStorage.setItem('settings_last_synced_hash', revisionMarker);
-      logger.debug('settingsSync', 'autoDownloadSettingsFromCloud', 'up_to_date');
-      return;
+      if (options.manualDownloadMode) {
+        return { reload: false, doneWithoutReload: true, alreadyInSync: true };
+      }
+      return { reload: false };
     }
     case 'client_ahead': {
-      logger.info('settingsSync', 'autoDownloadSettingsFromCloud', 'client_ahead — uploading local settings');
+      if (options.manualDownloadMode) {
+        return { reload: false, doneWithoutReload: true, clientAhead: true };
+      }
+      logger.info('settingsSync', 'applySyncInitResult', 'client_ahead — uploading local settings');
       await pushFullCloudSettingsSync();
-      return;
+      return { reload: false };
     }
     case 'server_has_newer': {
-      if (!result.settings || typeof result.settings !== 'object') {
-        logger.warn('settingsSync', 'autoDownloadSettingsFromCloud', 'server_has_newer but settings missing');
-        return;
+      const settings = result.settings;
+      const format = result.settings_format ?? 'full';
+      logger.debug('settingsSync', 'applySyncInitResult', 'server_has_newer', { format });
+
+      if (!settings || typeof settings !== 'object' || Object.keys(settings).length === 0) {
+        await persistCloudSettingsServerMeta(rev, at);
+        sessionStorage.setItem('settings_last_synced_hash', revisionMarker);
+        return { reload: false };
       }
+
       await invoke('save_settings_merge', {
         patch: {
-          ...result.settings,
+          ...settings,
           cloud_settings_server_revision: rev,
           cloud_settings_server_updated_at: at,
         },
       });
       sessionStorage.setItem('settings_last_synced_hash', revisionMarker);
-      logger.info('settingsSync', 'autoDownloadSettingsFromCloud', 'Applied newer cloud settings, reloading...');
-      reloadAfterCloudApply();
-      return;
+      const language = typeof settings.language === 'string' ? settings.language : undefined;
+      return { reload: true, language, mergedPayload: settings };
     }
     default: {
-      logger.warn('settingsSync', 'autoDownloadSettingsFromCloud', 'Unknown sync-init status', {
+      logger.warn('settingsSync', 'applySyncInitResult', 'Unknown sync-init status', {
         status: (result as { status?: string }).status,
       });
+      return { reload: false };
     }
+  }
+}
+
+async function handleSyncInitResult(result: SettingsSyncInitResponse): Promise<void> {
+  const applied = await applySyncInitResult(result);
+  if (applied.reload) {
+    logger.info('settingsSync', 'autoDownloadSettingsFromCloud', 'Applied newer cloud settings, reloading...');
+    reloadAfterCloudApply();
   }
 }
 

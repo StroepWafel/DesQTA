@@ -1110,7 +1110,7 @@ pub fn save_settings_merge(patch: serde_json::Value) -> Result<(), String> {
     if let (Some(obj_curr), Some(obj_patch)) = (current_val.as_object_mut(), patch.as_object()) {
         for (k, v) in obj_patch.iter() {
             // Never persist API envelope keys from POST /api/settings
-            if k == "ok" || k == "server" {
+            if k == "ok" || k == "server" || k == "patch" {
                 continue;
             }
             obj_curr.insert(k.clone(), v.clone());

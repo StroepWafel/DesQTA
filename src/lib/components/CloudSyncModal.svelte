@@ -18,6 +18,7 @@
     cloudSettingsService,
     persistCloudSettingsServerMeta,
   } from '../services/cloudSettingsService';
+  import { applySyncInitResult } from '../services/settingsSync';
   import { toastStore } from '../stores/toast';
 
   const dispatch = createEventDispatcher();
@@ -210,38 +211,27 @@
           throw new Error('fallback');
         }
 
-        if (r.status === 'no_remote_settings') {
+        const applied = await applySyncInitResult(r, {
+          rejectNoRemoteSettings: true,
+          manualDownloadMode: true,
+        });
+
+        if (applied.noRemoteSettings) {
           throw new Error('No settings found in cloud');
         }
 
-        if (r.status === 'up_to_date') {
-          const rev = r.server.settings_revision;
-          if (typeof rev === 'number' && Number.isFinite(rev)) {
-            await persistCloudSettingsServerMeta(rev, r.server.settings_updated_at ?? null);
-          }
+        if (applied.alreadyInSync) {
           success = 'Already in sync with the cloud';
           toastStore.success(success);
           doneWithoutReload = true;
-        } else if (r.status === 'client_ahead') {
+        } else if (applied.clientAhead) {
           error =
             'Your settings are newer than the cloud. Use Upload to sync your device to the cloud.';
           toastStore.warning(error);
           doneWithoutReload = true;
-        } else if (
-          r.status === 'server_has_newer' &&
-          r.settings &&
-          typeof r.settings === 'object' &&
-          typeof r.server?.settings_revision === 'number'
-        ) {
-          await invoke('save_settings_merge', {
-            patch: {
-              ...r.settings,
-              cloud_settings_server_revision: r.server.settings_revision,
-              cloud_settings_server_updated_at: r.server.settings_updated_at ?? null,
-            },
-          });
-          mergedPayload = r.settings as Record<string, unknown>;
-        } else {
+        } else if (applied.reload && applied.mergedPayload) {
+          mergedPayload = applied.mergedPayload;
+        } else if (!applied.reload && !applied.doneWithoutReload) {
           throw new Error('fallback');
         }
       } catch (e) {
