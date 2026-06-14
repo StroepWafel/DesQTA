@@ -179,7 +179,7 @@
   aria-label={widget.title || `Widget: ${widget.type}`}>
   <!-- GridStack applies cell gutters via `.grid-stack-item-content` + --gs-item-margin-*.
        Without this wrapper, widgets fill the entire cell and borders touch. -->
-  <div class="grid-stack-item-content relative h-full">
+  <div class="grid-stack-item-content">
     <div
       class="relative h-full w-full rounded-xl border border-border bg-card text-card-foreground shadow-[0_1px_2px_-1px_rgba(0,0,0,0.04),0_2px_8px_-4px_rgba(0,0,0,0.06)] widget-inner {isEditing
         ? 'widget-editing'
@@ -283,8 +283,18 @@
 
   /* Show a quiet dashed accent outline + slow pulse while editing.
      Defined in app.css; activate via class. */
-  /* GridStack margin vars already inset content; avoid extra padding that skews perceived gaps. */
+  /*
+   * GridStack floats each widget inside its cell via absolute positioning + margin vars.
+   * Never add h-full/relative here — height:100% ignores top/bottom inset and kills vertical gaps.
+   */
   :global(.grid-stack > .grid-stack-item > .grid-stack-item-content) {
+    position: absolute;
+    top: var(--gs-item-margin-top);
+    right: var(--gs-item-margin-right);
+    bottom: var(--gs-item-margin-bottom);
+    left: var(--gs-item-margin-left);
+    width: auto;
+    height: auto;
     padding: 0;
     box-sizing: border-box;
   }
