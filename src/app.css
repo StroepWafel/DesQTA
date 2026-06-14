@@ -5,105 +5,145 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Fix for portal-rendered dropdowns and popovers */
-[data-slot="select-content"],
-[data-slot="popover-content"] {
-  background-color: var(--color-popover, var(--color-card, white)) !important;
-  color: var(--color-popover-foreground, var(--color-card-foreground, black)) !important;
-  opacity: 1 !important;
-}
-
-.dark [data-slot="select-content"],
-.dark [data-slot="popover-content"] {
-  background-color: var(--color-popover, var(--color-card, oklch(0.21 0.006 285.885))) !important;
-  color: var(--color-popover-foreground, var(--color-card-foreground, white)) !important;
-}
+/* ===================================================================
+   Lo-fi inspired token surface
+   Clean hierarchy, generous whitespace, calm neutrals, one accent.
+   Cards are opaque. Translucency / backdrop-blur are reserved for
+   modal backdrops only.
+   =================================================================== */
 
 :root {
-  /* Safe area insets: plugin sets --safe-area-inset-top/bottom in Tauri; fallback 0px on desktop */
+  /* Safe area insets (Tauri plugin) */
   --safe-area-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   --safe-area-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
-  /* Mobile layout: header 4rem, bottom nav 56px (3.5rem) */
   --mobile-header-height: 4rem;
   --mobile-bottom-nav-height: 3.5rem;
 
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  /* Radius scale - calmer, rounder corners feel inviting without being playful */
+  --radius: 0.75rem;
+
+  /* Calm warm-neutral palette
+     Light: warmer paper-white surfaces, deep cool ink for text
+     The page sits at --background, cards lift to --card (same in light, contrast in dark) */
+  --background: oklch(0.985 0.002 75);        /* warm paper white */
+  --foreground: oklch(0.18 0.01 250);         /* deep cool ink (hue 250 = zinc, not violet) */
+  --card: oklch(1 0 0);                       /* pure white card surface */
+  --card-foreground: oklch(0.18 0.01 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.18 0.01 250);
+
+  --primary: oklch(0.21 0.01 250);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.96 0.003 75);
+  --secondary-foreground: oklch(0.21 0.01 250);
+  --muted: oklch(0.965 0.003 75);
+  --muted-foreground: oklch(0.5 0.012 250);
+  --accent: oklch(0.96 0.003 75);
+  --accent-foreground: oklch(0.21 0.01 250);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
+
+  --border: oklch(0.92 0.005 250);
+  --input: oklch(0.92 0.005 250);
+  --ring: oklch(0.705 0.015 250);
+
+  /* Semantic surface tokens - used directly by Lo-fi primitives */
+  --surface-1: oklch(0.985 0.002 75);  /* page */
+  --surface-2: oklch(1 0 0);           /* card */
+  --surface-3: oklch(0.99 0.002 75);   /* elevated card / popover */
+  --surface-muted: oklch(0.965 0.003 75); /* wells, inset panels */
+  --border-subtle: oklch(0.94 0.004 250);
+  --border-strong: oklch(0.85 0.008 250);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
 
-  --background-color: white;
+  --sidebar: oklch(0.985 0.002 75);
+  --sidebar-foreground: oklch(0.18 0.01 250);
+  --sidebar-primary: oklch(0.21 0.01 250);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.96 0.003 75);
+  --sidebar-accent-foreground: oklch(0.21 0.01 250);
+  --sidebar-border: oklch(0.92 0.005 250);
+  --sidebar-ring: oklch(0.705 0.015 250);
+
+  --background-color: oklch(0.985 0.002 75);
+
+  /* Typography tokens */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Uppercase tracked label spacing */
+  --tracking-label: 0.08em;
+
+  /* Motion - calm, standard easing by default */
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 280ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.16 0.008 250);        /* deep cool ink, not pure black, hue 250 (zinc) */
+  --foreground: oklch(0.97 0.003 75);
+  --card: oklch(0.21 0.009 250);              /* slightly lifted from page */
+  --card-foreground: oklch(0.97 0.003 75);
+  --popover: oklch(0.23 0.009 250);
+  --popover-foreground: oklch(0.97 0.003 75);
+
+  --primary: oklch(0.92 0.005 250);
+  --primary-foreground: oklch(0.21 0.009 250);
+  --secondary: oklch(0.27 0.008 250);
+  --secondary-foreground: oklch(0.97 0.003 75);
+  --muted: oklch(0.25 0.008 250);
+  --muted-foreground: oklch(0.7 0.012 250);
+  --accent: oklch(0.27 0.008 250);
+  --accent-foreground: oklch(0.97 0.003 75);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
+
+  --border: oklch(0.32 0.008 250);
+  --input: oklch(0.32 0.008 250);
+  --ring: oklch(0.55 0.015 250);
+
+  --surface-1: oklch(0.16 0.008 250);
+  --surface-2: oklch(0.21 0.009 250);
+  --surface-3: oklch(0.24 0.009 250);
+  --surface-muted: oklch(0.19 0.008 250);
+  --border-subtle: oklch(0.28 0.008 250);
+  --border-strong: oklch(0.4 0.01 250);
+
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.552 0.016 285.938);
 
-  --background-color: var(--color-zinc-950);
+  --sidebar: oklch(0.18 0.008 250);
+  --sidebar-foreground: oklch(0.97 0.003 75);
+  /* Match --primary for dark mode; the previous high-chroma 264 was a leftover shadcn violet. */
+  --sidebar-primary: oklch(0.92 0.005 250);
+  --sidebar-primary-foreground: oklch(0.21 0.009 250);
+  --sidebar-accent: oklch(0.27 0.008 250);
+  --sidebar-accent-foreground: oklch(0.97 0.003 75);
+  --sidebar-border: oklch(0.32 0.008 250);
+  --sidebar-ring: oklch(0.55 0.015 250);
+
+  --background-color: oklch(0.16 0.008 250);
 }
 
 @theme inline {
+  /* Radius - scaled around a calmer base of 0.75rem */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  /* Core semantic colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -116,17 +156,29 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
+  --color-accent-base: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Lo-fi surface tokens - usable as bg-surface-1 / bg-surface-2 / bg-surface-3 / bg-surface-muted */
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-muted: var(--surface-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  /* Charts */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  /* Sidebar */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -136,6 +188,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Dynamic accent palette - generated from --accent-color-value */
   --color-accent-50: color-mix(in srgb, var(--accent-color-value) 10%, white);
   --color-accent-100: color-mix(in srgb, var(--accent-color-value) 20%, white);
   --color-accent-200: color-mix(in srgb, var(--accent-color-value) 30%, white);
@@ -152,6 +205,14 @@
   --color-accent-bg: var(--accent-color-value);
   --color-accent-border: var(--accent-color-value);
   --color-accent-ring: var(--accent-color-value);
+
+  /* Typography */
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+
+  /* Tracking utility */
+  --tracking-label: var(--tracking-label);
 }
 
 @layer base {
@@ -161,76 +222,89 @@
   body {
     @apply text-foreground;
     background: transparent !important;
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+  /* Tabular numerics for grades, dates, counters */
+  .nums-tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+  /* Uppercase tracked label */
+  .label-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+    font-size: 0.6875rem; /* 11px */
+    line-height: 1.4;
+    font-weight: 600;
+    color: var(--muted-foreground);
   }
 }
 
 body {
-  @apply antialiased;
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
 }
 
-/* Custom Scrollbar Styles */
+/* ===================================================================
+   Custom Scrollbar Styles
+   =================================================================== */
+
 ::-webkit-scrollbar {
   background: transparent;
-  width: 8px;
-  border-radius: 8px;
+  width: 10px;
+  height: 10px;
 }
 
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar {
-    background: transparent;
-  }
-}
 ::-webkit-scrollbar-thumb {
-  background: var(--accent-color, #3b82f6); /* accent color */
+  background: var(--border-strong, oklch(0.85 0.008 250));
   border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb {
-    background: var(--accent-color, #3b82f6);
-  }
-}
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-color-hover, #2563eb); /* darker accent */
+  background: var(--accent-color, var(--accent-color-value, #3b82f6));
+  background-clip: padding-box;
+  border: 2px solid transparent;
 }
 
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-color-hover, #2563eb);
-  }
-}
 ::-webkit-scrollbar-corner {
   background: transparent;
-}
-
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-corner {
-    background: transparent;
-  }
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--accent-color, #3b82f6) transparent;
+  scrollbar-color: var(--border-strong, oklch(0.85 0.008 250)) transparent;
 }
 
-@media (prefers-color-scheme: dark) {
-  * {
-    scrollbar-color: var(--accent-color, #3b82f6) transparent;
-  }
-}
+/* ===================================================================
+   Animations - calm and restrained by default
+   =================================================================== */
 
-/* Premium fade and scale animation */
 @keyframes fadeInScale {
   0% {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.98);
   }
   100% {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+@keyframes lofiFadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lofiPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
 }
 
 /* Make calendar icon in date inputs appropriate for theme */
@@ -244,7 +318,10 @@ input[type='date']::-webkit-calendar-picker-indicator {
   }
 }
 
-/* Dynamic accent color classes */
+/* ===================================================================
+   Accent color utility classes
+   =================================================================== */
+
 .accent-bg {
   background-color: var(--accent-color);
 }
@@ -265,11 +342,8 @@ input[type='date']::-webkit-calendar-picker-indicator {
   --tw-ring-color: var(--accent-color);
 }
 
-.accent-shadow {
-  box-shadow: 0 0 15px var(--accent-color);
-}
+/* Removed .accent-shadow (no glow shadows) - if a theme needs it, opt in via theme CSS */
 
-/* Update accent color variables when the store changes */
 :root[data-accent-color] {
   --accent-color: var(--accent-color-value);
   --accent-color-hover: color-mix(in srgb, var(--accent-color-value) 90%, black);
@@ -277,30 +351,26 @@ input[type='date']::-webkit-calendar-picker-indicator {
   --accent-color-dark: color-mix(in srgb, var(--accent-color-value) 90%, black);
 }
 
-/* Theme-aware background utility class - applies theme background color */
-/* This works at a higher level and can be used throughout the app */
-/* Handles both solid colors and gradients - themes can override --background-color */
+/* ===================================================================
+   Theme background utility
+   Solid background by default; themes can opt into gradients by overriding --background-color.
+   =================================================================== */
 .theme-bg {
-  /* Use background property to support both solid colors and gradients */
-  /* Themes define --background-color which can be a color or gradient */
   background: var(--background-color, var(--background, white)) !important;
-  /* Fallback to background-color for solid colors if background doesn't work */
   background-color: var(--background-color, var(--background, white));
 }
 
-/* Theme-aware root background - uses CSS variable that themes can override */
-/* Vertical padding only - horizontal padding comes from page containers to avoid double padding */
+/* ===================================================================
+   Root / app frame
+   =================================================================== */
+
 #root {
-  padding: 1rem 0;
-  border-radius: 50px;
-  height: 100vh;
-  background-color: var(--background-color, var(--background));
-  border-radius: 5px;
-  width: 100%;
+  padding: 0;
   height: 100%;
+  width: 100%;
+  background-color: var(--background-color, var(--background));
 }
 
-/* prevent overscrolling on safari based browsers */
 html {
   scroll-behavior: smooth;
   background: transparent !important;
@@ -308,7 +378,6 @@ html {
   padding: 0 !important;
 }
 
-/* Ensure no wrapper adds horizontal padding - page containers control their own padding */
 html,
 body,
 #app,
@@ -326,53 +395,7 @@ body > div > div {
 
 body {
   height: 100%;
-  overflow: hidden; /* Prevents scrollbars on the main window for rounded corners */
-}
-
-/* Enhanced Animations */
-.enhanced-animations {
-  .playful {
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    &:hover {
-      transform: scale(1.03);
-    }
-
-    &:active {
-      transform: scale(0.98);
-    }
-  }
-
-  .playful-subtle {
-    &:hover {
-      transform: scale(1.02);
-    }
-
-    &:active {
-      transform: scale(0.98);
-    }
-  }
-
-  .playful-extra {
-    &:hover {
-      transform: scale(1.1);
-    }
-
-    &:active {
-      transform: scale(0.9);
-    }
-  }
-}
-
-/* Default theme mobile sidebar background fix */
-@media (max-width: 767px) {
-  aside.fixed.z-30.w-full {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-  }
-  html.dark aside.fixed.z-30.w-full {
-    background: rgba(30, 41, 59, 0.8); /* dark:bg-zinc-900/80 */
-  }
+  overflow: hidden; /* Window owns the frame; main content has its own scroll */
 }
 
 body > div {
@@ -383,12 +406,68 @@ button {
   cursor: pointer;
 }
 
-/* Enhanced Focus States for Keyboard Navigation */
+/* ===================================================================
+   Enhanced Animations (opt-in via .enhanced-animations on body)
+   Default is calm standard easing; .playful-* use a gentler overshoot
+   than before so things don't feel bouncy.
+   =================================================================== */
+
+.enhanced-animations {
+  .playful {
+    transition: transform var(--motion-base) var(--ease-standard);
+
+    &:hover {
+      transform: scale(1.01);
+    }
+
+    &:active {
+      transform: scale(0.99);
+    }
+  }
+
+  .playful-subtle {
+    transition: transform var(--motion-base) var(--ease-standard);
+    &:hover { transform: scale(1.005); }
+    &:active { transform: scale(0.995); }
+  }
+
+  .playful-extra {
+    transition: transform var(--motion-slow) var(--ease-standard);
+    &:hover { transform: scale(1.02); }
+    &:active { transform: scale(0.98); }
+  }
+}
+
+/* ===================================================================
+   Mobile defaults
+   =================================================================== */
+
+/* Mobile sidebar background (legacy fix for default theme) - solid, no blur */
+@media (max-width: 767px) {
+  aside.fixed.z-30.w-full {
+    background: var(--sidebar, white);
+  }
+  html.dark aside.fixed.z-30.w-full {
+    background: var(--sidebar, oklch(0.18 0.008 250));
+  }
+}
+
+/* Lo-fi `.surface` panels — neutral card fill, not theme-tinted --surfaceColor */
+.surface {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl, 0.75rem);
+}
+
+/* ===================================================================
+   Focus states - tight 2px ring, follows element radius
+   =================================================================== */
+
 *:focus-visible {
-  outline: 2px solid var(--accent-color, #3b82f6);
+  outline: 2px solid var(--accent-color, var(--accent-color-value, #3b82f6));
   outline-offset: 2px;
-  border-radius: 0.375rem;
-  transition: outline-offset 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: inherit;
+  transition: outline-offset var(--motion-fast) var(--ease-standard);
 }
 
 button:focus-visible,
@@ -396,16 +475,11 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--accent-color, #3b82f6);
+  outline: 2px solid var(--accent-color, var(--accent-color-value, #3b82f6));
   outline-offset: 2px;
 }
 
-/* Smooth scroll behavior for programmatic scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Faster tap response on touch devices (removes 300ms delay) */
+/* Faster tap response on touch devices */
 @media (hover: none) and (pointer: coarse) {
   button,
   a,
@@ -414,7 +488,10 @@ html {
   }
 }
 
-/* Mobile modal/popout bounds: account for header + bottom nav (avoid going behind UI) */
+/* ===================================================================
+   Mobile modal / popout bounds
+   =================================================================== */
+
 @media (max-width: 768px) {
   .mobile-modal-inset {
     top: calc(var(--mobile-header-height) + var(--safe-area-top)) !important;
@@ -430,30 +507,26 @@ html {
   }
 }
 
-/* Mobile: softer, more rounded UI (less square, native feel) */
+/* ===================================================================
+   Mobile soft / native rounding boost
+   =================================================================== */
+
 @media (max-width: 768px) {
   .mobile-bottom-nav {
     border-radius: 1.5rem 1.5rem 0 0;
-    border-top: none;
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+    border-top: 1px solid var(--border-subtle);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
   }
   .dark .mobile-bottom-nav {
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.18);
   }
-  /* Softer radius for cards and containers on mobile */
-  .mobile-soft .rounded-lg {
-    border-radius: 1rem;
-  }
-  .mobile-soft .rounded-xl {
-    border-radius: 1.25rem;
-  }
-  .mobile-soft .rounded-2xl {
-    border-radius: 1.5rem;
-  }
+  .mobile-soft .rounded-md { border-radius: 0.875rem; }
+  .mobile-soft .rounded-lg { border-radius: 1rem; }
+  .mobile-soft .rounded-xl { border-radius: 1.25rem; }
+  .mobile-soft .rounded-2xl { border-radius: 1.5rem; }
 }
 
-/* iOS only: safe area padding for notch and home indicator (Android handles differently).
-   Add buffer so content sits slightly down from top and up from bottom (halved for tighter layout). */
+/* iOS safe area */
 .platform-ios {
   --safe-area-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 6px);
   --safe-area-bottom: calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 6px);
@@ -464,27 +537,32 @@ html {
 .platform-ios .mobile-main {
   padding-bottom: calc(56px + var(--safe-area-bottom));
 }
-/* Sidebar scroll area: extra bottom padding on iOS so last items clear nav + home indicator */
 .platform-ios .sidebar-scroll {
   padding-bottom: calc(72px + var(--safe-area-bottom)) !important;
 }
 
-/* Hide scrollbar utility */
+/* ===================================================================
+   Scrollbar utilities
+   =================================================================== */
+
 .scrollbar-hide {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
 }
 
-/* Hide native scrollbar buttons (up/down arrows) globally */
 *::-webkit-scrollbar-button {
   display: none;
   width: 0;
   height: 0;
 }
+
+/* ===================================================================
+   Reduced motion
+   =================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -500,30 +578,106 @@ html {
   }
 }
 
+/* ===================================================================
+   bits-ui portal overrides
+   Keep these opaque so dropdowns / popovers don't look glassy.
+   =================================================================== */
+
 [data-bits-floating-content-wrapper] {
   background: transparent !important;
 }
 
-/* Fix for portal-rendered dropdowns and popovers - ensure opaque backgrounds and proper sizing */
-[data-slot="select-content"] {
-  background-color: white !important;
-  color: rgb(24 24 27) !important;
-  opacity: 1 !important;
-  min-width: 8rem !important;
-  max-width: 20rem !important;
-  height: 12rem !important;
-  width: min(var(--bits-select-anchor-width, 11rem), 20rem) !important;
-}
-
+[data-slot="select-content"],
 [data-slot="popover-content"] {
-  background-color: white !important;
-  color: rgb(24 24 27) !important;
+  background-color: var(--popover, white) !important;
+  color: var(--popover-foreground, var(--foreground, black)) !important;
+  border: 1px solid var(--border, oklch(0.92 0.005 250)) !important;
+  border-radius: var(--radius-lg, 0.75rem) !important;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.12), 0 2px 6px -2px rgba(0, 0, 0, 0.06) !important;
   opacity: 1 !important;
-  max-width: 24rem !important;
+  z-index: 70 !important;
 }
 
 .dark [data-slot="select-content"],
 .dark [data-slot="popover-content"] {
-  background-color: rgb(39 39 42) !important;
-  color: white !important;
+  background-color: var(--popover, oklch(0.23 0.009 250)) !important;
+  color: var(--popover-foreground, white) !important;
+  border-color: var(--border, oklch(0.32 0.008 250)) !important;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.45), 0 2px 6px -2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Use max-height (not fixed height) so short lists don't show empty space and long lists scroll.
+   Drop the forced width: let Bits UI size to the anchor. */
+[data-slot="select-content"] {
+  min-width: 8rem !important;
+  max-width: 28rem !important;
+  max-height: 15rem !important;
+  height: auto !important;
+  overflow: hidden !important;
+}
+
+[data-slot="select-content"] [data-slot="select-viewport"],
+[data-slot="select-content"] [data-bits-select-viewport] {
+  max-height: 15rem !important;
+  overflow-y: auto !important;
+}
+
+[data-slot="popover-content"] {
+  max-width: 28rem !important;
+  max-height: 32rem !important;
+  overflow-y: auto !important;
+}
+
+/* ===================================================================
+   Lo-fi widget edit mode - shared visual states for dashboard widgets
+   =================================================================== */
+
+.lofi-widget-editable {
+  border: 1.5px dashed var(--accent-color, var(--accent-color-value, #3b82f6));
+  animation: lofiPulse 2.4s var(--ease-standard) infinite;
+  cursor: grab;
+}
+
+.lofi-widget-editable:active {
+  cursor: grabbing;
+}
+
+/* ===================================================================
+   Global tooltip (tooltip.ts action)
+   =================================================================== */
+
+#desqta-tooltip-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 500;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  max-width: 240px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease-out, visibility 120ms ease-out;
+  background-color: oklch(0.18 0.01 250);
+  color: oklch(0.985 0.002 75);
+  border: 1px solid oklch(0.32 0.01 250);
+  box-shadow:
+    0 4px 16px -2px rgba(0, 0, 0, 0.28),
+    0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+html.dark #desqta-tooltip-root {
+  background-color: oklch(0.28 0.01 250);
+  color: oklch(0.97 0.003 75);
+  border-color: oklch(0.38 0.01 250);
+}
+
+#desqta-tooltip-root[data-visible='true'] {
+  opacity: 1;
+  visibility: visible;
 }

@@ -83,7 +83,7 @@
   {#if showTooltip && content}
     <div
       bind:this={tooltipElement}
-      class="absolute z-50 px-3 py-1.5 text-xs text-white bg-zinc-900/95 dark:bg-zinc-800/95 backdrop-blur-md rounded-lg shadow-2xl whitespace-nowrap pointer-events-none border border-white/10 {placementClasses[
+      class="absolute z-50 px-3 py-1.5 text-xs text-white bg-zinc-900/95 dark:bg-zinc-800/95 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none border border-white/10 {placementClasses[
         placement
       ]}"
       role="tooltip"

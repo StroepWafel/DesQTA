@@ -146,10 +146,10 @@
   });
 </script>
 
-<Card.Root class="justify-between">
+<Card.Root class="flex h-full flex-col">
   <Card.Header>
-    <div class="flex justify-between items-start">
-      <div>
+    <div class="flex justify-between items-start gap-4">
+      <div class="min-w-0">
         <Card.Title>
           <T key="analytics.grade_trends" fallback="Grade Trends" />
         </Card.Title>
@@ -158,7 +158,7 @@
         </Card.Description>
       </div>
       <Select.Root type="single" bind:value={timeRange}>
-        <Select.Trigger class="w-[160px]">
+        <Select.Trigger class="w-[160px] shrink-0 ml-auto">
           {selectedLabel}
         </Select.Trigger>
         <Select.Content>
@@ -169,9 +169,9 @@
       </Select.Root>
     </div>
   </Card.Header>
-  <Card.Content>
+  <Card.Content class="flex-1 min-h-0">
     {#if filteredData().length > 0}
-      <Chart.Container config={chartConfig} class="aspect-auto h-[250px] w-full">
+      <Chart.Container config={chartConfig} class="aspect-auto h-[280px] w-full min-h-[280px]">
         <AreaChart
           legend
           data={filteredData()}
@@ -236,7 +236,7 @@
       </Chart.Container>
     {:else}
       <div
-        class="flex flex-col items-center justify-center h-[250px] text-zinc-500 dark:text-zinc-400">
+        class="flex flex-col items-center justify-center h-[280px] min-h-[280px] text-muted-foreground">
         <p class="text-lg font-medium">
           <T key="analytics.no_grade_data" fallback="No grade data available" />
         </p>

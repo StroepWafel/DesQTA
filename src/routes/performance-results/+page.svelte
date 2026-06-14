@@ -178,14 +178,16 @@
   <title>{$_('performance.title', { default: 'Performance Test Results - DesQTA' })}</title>
 </svelte:head>
 
-<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-8">
-  <!-- Header -->
-  <div class="flex justify-between items-start">
-    <div>
-      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col h-full gap-8">
+  <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        Diagnostics
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
         <T key="performance.title_main" fallback="Performance Test Results" />
       </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground max-w-2xl">
         {#if results}
           {@const formattedDate = new Date(results.startTime).toLocaleString()}
           <T
@@ -202,12 +204,12 @@
     </div>
 
     <div class="flex items-center gap-3">
-      <Button variant="ghost" onclick={goBack} class="flex items-center gap-2">
+      <Button variant="ghost" size="sm" onclick={goBack}>
         <Icon src={ArrowLeft} class="w-4 h-4" />
         <T key="performance.back_to_settings" fallback="Back to Settings" />
       </Button>
     </div>
-  </div>
+  </header>
 
   {#if loading}
     <div class="flex justify-center items-center h-64">
@@ -216,9 +218,9 @@
   {:else if error}
     <div class="flex flex-col gap-6 justify-center items-center flex-1">
       <div
-        class="flex flex-col items-center p-8 w-full max-w-lg rounded-2xl border shadow-xl border-zinc-200 bg-white/90 dark:bg-zinc-900/90 dark:border-zinc-700 animate-fade-in-up">
+        class="flex flex-col items-center p-8 w-full max-w-lg surface-raised border-zinc-200 bg-card dark:border-zinc-700 animate-fade-in-up">
         <Icon src={ExclamationTriangle} class="mb-4 w-12 h-12 text-red-500" />
-        <h2 class="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">
+        <h2 class="mb-2 text-2xl font-bold text-foreground">
           <T key="performance.error_loading_title" fallback="Error Loading Results" />
         </h2>
         <p class="mb-4 text-center text-zinc-600 dark:text-zinc-300">{error}</p>
@@ -238,10 +240,10 @@
                 <Icon src={Clock} class="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                <p class="text-sm text-muted-foreground">
                   <T key="performance.total_duration" fallback="Total Duration" />
                 </p>
-                <p class="text-2xl font-bold text-zinc-900 dark:text-white">
+                <p class="text-2xl font-bold text-foreground">
                   {formatTime(results.totalDuration)}
                 </p>
               </div>
@@ -256,10 +258,10 @@
                 <Icon src={ChartBar} class="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                <p class="text-sm text-muted-foreground">
                   <T key="performance.pages_tested" fallback="Pages Tested" />
                 </p>
-                <p class="text-2xl font-bold text-zinc-900 dark:text-white">
+                <p class="text-2xl font-bold text-foreground">
                   {results.pages.length}
                 </p>
               </div>
@@ -274,10 +276,10 @@
                 <Icon src={Clock} class="w-6 h-6 text-yellow-600" />
               </div>
               <div>
-                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                <p class="text-sm text-muted-foreground">
                   <T key="performance.avg_load_time" fallback="Avg Load Time" />
                 </p>
-                <p class="text-2xl font-bold text-zinc-900 dark:text-white">
+                <p class="text-2xl font-bold text-foreground">
                   {formatTime(results.summary.averageLoadTime)}
                 </p>
               </div>
@@ -299,7 +301,7 @@
                     : 'text-green-600'}" />
               </div>
               <div>
-                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                <p class="text-sm text-muted-foreground">
                   <T key="performance.total_errors" fallback="Total Errors" />
                 </p>
                 <p
@@ -321,10 +323,10 @@
                   <Icon src={ComputerDesktop} class="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p class="text-sm text-muted-foreground">
                     <T key="performance.avg_cpu_usage" fallback="Avg CPU Usage" />
                   </p>
-                  <p class="text-2xl font-bold text-zinc-900 dark:text-white">
+                  <p class="text-2xl font-bold text-foreground">
                     {results.summary.averageCpuUsage.toFixed(1)}%
                   </p>
                 </div>
@@ -418,7 +420,7 @@
                 color="#3b82f6"
                 maxValue={100} />
             {:else}
-              <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">
+              <div class="text-center text-muted-foreground py-8">
                 <T key="performance.no_cpu_data" fallback="No CPU data available" />
               </div>
             {/if}
@@ -456,7 +458,7 @@
                 color="#8b5cf6"
                 maxValue={100} />
             {:else}
-              <div class="text-center text-zinc-500 dark:text-zinc-400 py-8">
+              <div class="text-center text-muted-foreground py-8">
                 <T key="performance.no_memory_data" fallback="No memory data available" />
               </div>
             {/if}
@@ -551,7 +553,7 @@
         <Card.Content>
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-zinc-600 dark:text-zinc-400">
+              <span class="text-muted-foreground">
                 <T key="performance.js_errors" fallback="JavaScript Errors" />
               </span>
               <span
@@ -562,7 +564,7 @@
               </span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-zinc-600 dark:text-zinc-400">
+              <span class="text-muted-foreground">
                 <T key="performance.warnings" fallback="Warnings" />
               </span>
               <span
@@ -573,7 +575,7 @@
               </span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-zinc-600 dark:text-zinc-400">
+              <span class="text-muted-foreground">
                 <T key="performance.overall_errors" fallback="Overall Errors" />
               </span>
               <span
@@ -613,18 +615,18 @@
                   <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div class="flex-1">
                       <div class="flex items-center gap-3 mb-2">
-                        <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400"
+                        <span class="text-sm font-medium text-muted-foreground"
                           >#{index + 1}</span>
-                        <h4 class="font-semibold text-zinc-900 dark:text-white">{page.pageName}</h4>
+                        <h4 class="font-semibold text-foreground">{page.pageName}</h4>
                         <span
-                          class="text-xs px-2 py-1 bg-zinc-200 dark:bg-zinc-700 rounded text-zinc-600 dark:text-zinc-400">
+                          class="text-xs px-2 py-1 bg-zinc-200 dark:bg-zinc-700 rounded text-muted-foreground">
                           {page.path}
                         </span>
                       </div>
 
                       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <span class="text-zinc-500 dark:text-zinc-400">
+                          <span class="text-muted-foreground">
                             <T key="performance.load_time" fallback="Load Time" />
                           </span>
                           <p class="font-semibold {getPerformanceColor(page.loadTime)}">
@@ -632,26 +634,26 @@
                           </p>
                         </div>
                         <div>
-                          <span class="text-zinc-500 dark:text-zinc-400">
+                          <span class="text-muted-foreground">
                             <T key="performance.dom_ready" fallback="DOM Ready" />
                           </span>
-                          <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                          <p class="font-semibold text-foreground">
                             {formatTime(page.domContentLoaded)}
                           </p>
                         </div>
                         <div>
-                          <span class="text-zinc-500 dark:text-zinc-400">
+                          <span class="text-muted-foreground">
                             <T key="performance.memory" fallback="Memory" />
                           </span>
-                          <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                          <p class="font-semibold text-foreground">
                             {formatMemory(page.memoryUsage)}
                           </p>
                         </div>
                         <div>
-                          <span class="text-zinc-500 dark:text-zinc-400">
+                          <span class="text-muted-foreground">
                             <T key="performance.requests" fallback="Requests" />
                           </span>
-                          <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                          <p class="font-semibold text-foreground">
                             {page.networkRequests}
                           </p>
                         </div>
@@ -661,22 +663,22 @@
                         <div class="mt-3 grid grid-cols-2 gap-4 text-sm">
                           {#if page.firstPaint}
                             <div>
-                              <span class="text-zinc-500 dark:text-zinc-400">
+                              <span class="text-muted-foreground">
                                 <T key="performance.first_paint" fallback="First Paint" />
                               </span>
-                              <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                              <p class="font-semibold text-foreground">
                                 {formatTime(page.firstPaint)}
                               </p>
                             </div>
                           {/if}
                           {#if page.firstContentfulPaint}
                             <div>
-                              <span class="text-zinc-500 dark:text-zinc-400">
+                              <span class="text-muted-foreground">
                                 <T
                                   key="performance.first_contentful_paint"
                                   fallback="First Contentful Paint" />
                               </span>
-                              <p class="font-semibold text-zinc-700 dark:text-zinc-300">
+                              <p class="font-semibold text-foreground">
                                 {formatTime(page.firstContentfulPaint)}
                               </p>
                             </div>
@@ -711,14 +713,14 @@
                             : NaN}
 
                         <div class="mt-4 pt-4 border-t border-zinc-300 dark:border-zinc-600">
-                          <h5 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
+                          <h5 class="text-sm font-semibold text-foreground mb-3">
                             <T
                               key="performance.system_resource_usage"
                               fallback="System Resource Usage" />
                           </h5>
                           <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                             <div>
-                              <span class="text-zinc-500 dark:text-zinc-400">
+                              <span class="text-muted-foreground">
                                 <T key="performance.avg_cpu" fallback="Avg CPU" />
                               </span>
                               <p
@@ -740,7 +742,7 @@
                               </p>
                             </div>
                             <div>
-                              <span class="text-zinc-500 dark:text-zinc-400">
+                              <span class="text-muted-foreground">
                                 <T key="performance.avg_memory" fallback="Avg Memory" />
                               </span>
                               <p
@@ -763,7 +765,7 @@
                             </div>
                             {#if !isNaN(avgGpu)}
                               <div>
-                                <span class="text-zinc-500 dark:text-zinc-400">
+                                <span class="text-muted-foreground">
                                   <T key="performance.avg_gpu" fallback="Avg GPU" />
                                 </span>
                                 <p

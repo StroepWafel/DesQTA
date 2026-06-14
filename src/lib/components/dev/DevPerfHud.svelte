@@ -42,7 +42,7 @@
   <div
     class="fixed bottom-3 right-3 z-[9999] flex flex-col items-end gap-2 font-sans text-xs pointer-events-none">
     <div
-      class="pointer-events-auto rounded-xl border border-zinc-300/80 dark:border-zinc-600/80 bg-white/95 dark:bg-zinc-900/95 shadow-lg backdrop-blur-sm text-zinc-800 dark:text-white max-w-[min(100vw-1.5rem,18rem)]">
+      class="pointer-events-auto rounded-xl border border-zinc-300/80 dark:border-zinc-600/80 bg-card shadow-lg text-zinc-800 dark:text-white max-w-[min(100vw-1.5rem,18rem)]">
       <button
         type="button"
         class="w-full flex items-center justify-between gap-2 px-3 py-2 text-left rounded-xl transition-all duration-200 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 focus:outline-none focus:ring-2 focus:ring-accent"
@@ -53,7 +53,7 @@
 
       {#if expanded}
         <div class="px-3 pb-3 pt-0 flex flex-col gap-2 border-t border-zinc-200/80 dark:border-zinc-700/50">
-          <p class="text-[11px] leading-snug text-zinc-600 dark:text-zinc-400 pt-2">
+          <p class="text-[11px] leading-snug text-muted-foreground pt-2">
             Tauri dev only. <code class="text-[10px] bg-zinc-200/60 dark:bg-zinc-800 px-1 rounded"
               >__DESQTA_DEV_PERF__</code
             > in console.

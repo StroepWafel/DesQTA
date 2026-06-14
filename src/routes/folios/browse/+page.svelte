@@ -105,7 +105,7 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
+<div class="container mx-auto w-full max-w-none p-5 space-y-6">
   {#if foliosEnabled === false}
     <div class="flex justify-center items-center h-64">
       <EmptyState
@@ -119,14 +119,14 @@
       <div class="flex items-center gap-4">
         <button
           onclick={() => goto('/folios')}
-          class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+          class="p-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
           <Icon src={ChevronLeft} class="w-5 h-5" />
         </button>
         <div>
-          <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+          <h1 class="text-2xl font-medium text-foreground sm:text-3xl mb-2">
             <T key="folios.browse_folios" fallback="Browse Folios" />
           </h1>
-          <p class="text-zinc-600 dark:text-zinc-400">
+          <p class="text-muted-foreground">
             <T key="folios.browse_description" fallback="Explore published folios" />
           </p>
         </div>
@@ -160,7 +160,7 @@
             <div class="folio-card-animate" style="animation-delay: {i * 50}ms;">
               <button
                 onclick={() => goto(`/folios/browse/${folio.id}`)}
-                class="w-full text-left p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+                class="w-full text-left p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-border hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
                 <div class="flex items-start gap-4 mb-4">
                   <div class="flex-shrink-0">
                     <div
@@ -169,16 +169,16 @@
                     </div>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-1 truncate">
+                    <h3 class="text-lg font-semibold text-foreground mb-1 truncate">
                       {folio.title}
                     </h3>
-                    <div class="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
                       <Icon src={User} class="w-4 h-4" />
                       <span class="truncate">{folio.student}</span>
                     </div>
                   </div>
                 </div>
-                <div class="text-sm text-zinc-600 dark:text-zinc-400">
+                <div class="text-sm text-muted-foreground">
                   <T key="folios.published" fallback="Published" />: {formatDate(folio.published)}
                 </div>
               </button>

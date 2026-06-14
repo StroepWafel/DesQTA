@@ -40,7 +40,7 @@
         <div class="mr-3 text-accent-600 dark:text-accent-400 animate-bounce">
           <Icon src={getEmbedIcon(embedType)} class="w-6 h-6" />
         </div>
-        <h4 class="font-semibold text-zinc-900 dark:text-white">
+        <h4 class="font-semibold text-foreground">
           {getDomainName(url)}
         </h4>
       </div>
@@ -117,14 +117,14 @@
       <div class="p-4">
         {#if preview.description}
           <p
-            class="mb-3 text-sm transition-colors duration-300 text-zinc-700 dark:text-zinc-300 line-clamp-3 group-hover:text-zinc-900 dark:group-hover:text-white">
+            class="mb-3 text-sm transition-colors duration-300 text-foreground line-clamp-3 group-hover:text-zinc-900 dark:group-hover:text-white">
             {preview.description}
           </p>
         {/if}
 
         <div class="flex justify-between items-center">
           <span
-            class="text-xs transition-colors duration-300 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300"
+            class="text-xs transition-colors duration-300 text-muted-foreground group-hover:text-zinc-700 dark:group-hover:text-zinc-300"
             >{getDomainName(url)}</span>
           <span
             class="inline-flex items-center text-sm font-medium transition-all duration-300 accent-text group-hover:accent-bg-hover group-hover:translate-x-1">
@@ -143,12 +143,12 @@
       rel="noopener noreferrer"
       class="block p-4 mb-4 bg-white rounded-xl border transition-all duration-300 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 hover:border-indigo-500 group animate-slide-in hover:shadow-lg">
       <h4
-        class="mt-0 mb-2 text-lg font-semibold transition-colors duration-300 text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300">
+        class="mt-0 mb-2 text-lg font-semibold transition-colors duration-300 text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-300">
         {preview.title}
       </h4>
       {#if preview.description}
         <p
-          class="mb-3 text-sm transition-colors duration-300 text-zinc-700 dark:text-zinc-300 line-clamp-3 group-hover:text-zinc-900 dark:group-hover:text-white">
+          class="mb-3 text-sm transition-colors duration-300 text-foreground line-clamp-3 group-hover:text-zinc-900 dark:group-hover:text-white">
           {preview.description}
         </p>
       {/if}
@@ -161,7 +161,7 @@
               class="my-0 mr-4 rounded-lg transition-transform duration-300 size-6 group-hover:scale-110" />
           {/if}
           <span
-            class="text-xs transition-colors duration-300 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300"
+            class="text-xs transition-colors duration-300 text-muted-foreground group-hover:text-zinc-700 dark:group-hover:text-zinc-300"
             >{getDomainName(url)}</span>
         </div>
         <span

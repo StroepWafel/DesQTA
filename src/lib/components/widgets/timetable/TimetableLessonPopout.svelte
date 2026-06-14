@@ -183,7 +183,7 @@
   {#key lesson.id}
     <div
       bind:this={popoutElement}
-      class="fixed z-[1200] w-64 max-w-[calc(100vw-2rem)] rounded-xl border shadow-lg bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 max-h-[calc(100vh-6rem)] overflow-y-auto"
+      class="fixed z-[1200] w-64 max-w-[calc(100vw-2rem)] rounded-xl border shadow-lg bg-white dark:bg-zinc-900 border-border max-h-[calc(100vh-6rem)] overflow-y-auto"
       style="top: {position.top}px; left: {position.left}px; border-left: 3px solid {lesson.colour};"
       transition:fly={{
         y: transitionDirection === 'down' ? -6 : 6,
@@ -194,10 +194,10 @@
       aria-modal="true"
       aria-labelledby="lesson-popout-title">
       <div class="p-3">
-        <h2 id="lesson-popout-title" class="text-sm font-semibold text-zinc-900 dark:text-white truncate">
+        <h2 id="lesson-popout-title" class="text-sm font-semibold text-foreground truncate">
           {lesson.description}
         </h2>
-        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+        <p class="text-xs text-muted-foreground mt-0.5">
           {formatLessonDate(lesson.date)} · {lesson.from} – {lesson.until}
         </p>
         {#if lesson.slotType && lesson.slotType !== 'class'}
@@ -206,7 +206,7 @@
           </p>
         {/if}
         {#if lesson.staff || lesson.room}
-          <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 truncate">
+          <p class="text-xs text-muted-foreground mt-1.5 truncate">
             {[lesson.staff, lesson.room].filter(Boolean).join(' · ')}
           </p>
         {/if}
@@ -214,17 +214,17 @@
           <p class="text-xs text-amber-600 dark:text-amber-400 mt-1 truncate">{lesson.attendanceTitle}</p>
         {/if}
         {#if lesson.programmeID !== 0}
-          <div class="flex gap-2 mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+          <div class="flex gap-2 mt-3 pt-2 border-t border-border">
             <button
               type="button"
-              class="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:accent-bg hover:text-white transition-colors"
+              class="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground hover:accent-bg hover:text-white transition-colors"
               onclick={handleViewCourse}>
               <Icon src={BookOpen} class="w-3.5 h-3.5" />
               <span>Course</span>
             </button>
             <button
               type="button"
-              class="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:accent-bg hover:text-white transition-colors"
+              class="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground hover:accent-bg hover:text-white transition-colors"
               onclick={handleViewAssessments}>
               <Icon src={DocumentText} class="w-3.5 h-3.5" />
               <span>Assessments</span>

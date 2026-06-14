@@ -278,22 +278,24 @@
   }
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6">
-  <!-- Page header -->
-  <div class="shrink-0">
-    <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
+<div class="container mx-auto flex h-full w-full max-w-none flex-col gap-6 p-5 sm:p-8">
+  <header class="shrink-0 flex flex-col gap-1.5">
+    <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+      Inbox
+    </p>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
       <T key="messages.seqta_messages" fallback="SEQTA Messages" />
     </h1>
-    <p class="text-zinc-600 dark:text-zinc-400">
+    <p class="text-sm text-muted-foreground max-w-2xl">
       <T key="messages.page_description" fallback="View and manage your SEQTA and RSS messages." />
     </p>
-  </div>
+  </header>
 
   <!-- Main content area -->
   <div class="flex flex-1 min-h-0 w-full max-xl:flex-col overflow-hidden gap-4">
     {#if seqtaLoadFailed}
       <div
-        class="flex flex-col justify-center items-center p-8 w-full h-full text-center rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg">
+        class="flex flex-col justify-center items-center p-8 w-full h-full text-center surface">
         <div class="mb-4 text-lg font-semibold text-red-500 dark:text-red-400">
           <T key="messages.seqta_failed_to_load" fallback="SEQTA messaging failed to load." />
         </div>
@@ -305,7 +307,7 @@
       <MobileFolderTabs {selectedFolder} {openFolder} {openCompose} />
       <!-- Message list: card-style panel -->
       <div
-        class="flex flex-1 xl:flex-initial flex-col min-h-0 min-w-0 xl:w-md xl:min-w-md shrink-0 overflow-hidden rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg [scrollbar-gutter:stable]">
+        class="flex flex-1 xl:flex-initial flex-col min-h-0 min-w-0 xl:w-md xl:min-w-md shrink-0 overflow-hidden surface [scrollbar-gutter:stable]">
         <MessageList
           {selectedFolder}
           {messages}
@@ -341,7 +343,7 @@
         onclose={() => (selectedMessage = null)}
         maxWidth="w-full"
         maxHeight="h-full"
-        className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-none transition-all duration-300"
+        className="bg-card rounded-none transition-all duration-300"
         showCloseButton={false}
         closeOnBackdrop={false}
         ariaLabel={$_('messages.message_detail')}>
@@ -349,7 +351,7 @@
           <div
             class="flex justify-between items-center p-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
             <button
-              class="flex gap-2 items-center transition-colors text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
+              class="flex gap-2 items-center transition-colors text-foreground hover:text-zinc-900 dark:hover:text-white"
               onclick={() => (selectedMessage = null)}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -365,7 +367,7 @@
                 <T key="common.back" fallback="Back" />
               </span>
             </button>
-            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span class="text-sm font-medium text-foreground">
               <T key="messages.message" fallback="Message" />
             </span>
             <div class="w-8"></div>

@@ -38,8 +38,11 @@
   // Update timestamp display every minute
   let timestampInterval: ReturnType<typeof setInterval> | null = null;
 
-  // Reactive formatted timestamp that updates every minute
-  const formattedTimestamp = $derived(() => {
+  // Reactive formatted timestamp that updates every minute.
+  // Use $derived.by so this is a value, not a function reference — otherwise
+  // call-sites get a fresh function each render and downstream reactivity
+  // (filters, chart re-keying) doesn't track the real change.
+  const formattedTimestamp = $derived.by(() => {
     if (!lastUpdated) return '';
     timestampRefresh; // Reference to trigger reactivity
     return formatLastUpdated(lastUpdated);
@@ -52,6 +55,9 @@
   let filterSearch = $state('');
   let gradeRange = $state([0, 100]);
   let showSubjectsDropdown = $state(false);
+  // Persisted date range, top-level filter applied across all charts and tables.
+  let dateFrom = $state<string>('');
+  let dateTo = $state<string>('');
 
   function isValidDate(dateStr: string): boolean {
     const date = new Date(dateStr);
@@ -155,11 +161,52 @@
     });
   }
 
+  async function persistAnalyticsFilters() {
+    try {
+      const { saveSettingsWithQueue } = await import('$lib/services/settingsSync');
+      await saveSettingsWithQueue({
+        analytics_filter_subjects: filterSubjects,
+        analytics_grade_range: gradeRange,
+        analytics_filter_search: filterSearch,
+        analytics_date_from: dateFrom || null,
+        analytics_date_to: dateTo || null,
+      });
+    } catch {
+      // best-effort
+    }
+  }
+
   onMount(async () => {
     // Set up interval to refresh timestamp display every minute
     timestampInterval = setInterval(() => {
       timestampRefresh = Date.now();
     }, 60000); // Update every minute
+
+    // Restore persisted filter state before data loads so the first render is
+    // already filtered the way the user left it.
+    try {
+      const subset = await invoke<any>('get_settings_subset', {
+        keys: [
+          'analytics_filter_subjects',
+          'analytics_grade_range',
+          'analytics_filter_search',
+          'analytics_date_from',
+          'analytics_date_to',
+        ],
+      });
+      if (Array.isArray(subset?.analytics_filter_subjects)) {
+        filterSubjects = subset.analytics_filter_subjects.filter((s: unknown) => typeof s === 'string');
+      }
+      if (Array.isArray(subset?.analytics_grade_range) && subset.analytics_grade_range.length === 2) {
+        gradeRange = subset.analytics_grade_range.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n));
+        if (gradeRange.length !== 2) gradeRange = [0, 100];
+      }
+      if (typeof subset?.analytics_filter_search === 'string') filterSearch = subset.analytics_filter_search;
+      if (typeof subset?.analytics_date_from === 'string') dateFrom = subset.analytics_date_from;
+      if (typeof subset?.analytics_date_to === 'string') dateTo = subset.analytics_date_to;
+    } catch {
+      // best-effort
+    }
 
     // Load existing data immediately (if available)
     try {
@@ -209,8 +256,9 @@
     analyticsCrunching.set(false);
   });
 
-  // Derived unique values for filter options
-  const uniqueSubjects = $derived(() => {
+  // Derived unique values for filter options. Use $derived.by so this is the
+  // sorted array itself rather than a function returning the array.
+  const uniqueSubjects = $derived.by(() => {
     if (!analyticsData) return [];
     return [...new Set(analyticsData.map((a) => a.subject))].sort();
   });
@@ -229,13 +277,35 @@
     filterMaxGrade = gradeRange[1] === 100 ? null : gradeRange[1];
   });
 
-  // Derived filtered data
-  const filteredData = $derived(() => {
+  // Persist filter state whenever it changes (debounced by settingsSync queue).
+  $effect(() => {
+    // Touch each tracked field so Svelte tracks them.
+    filterSubjects;
+    gradeRange;
+    filterSearch;
+    dateFrom;
+    dateTo;
+    // Skip until initial load completes (analyticsData populated).
+    if (!analyticsData) return;
+    persistAnalyticsFilters();
+  });
+
+  // Derived filtered data. Use $derived.by so the array is reactively tracked.
+  const filteredData = $derived.by(() => {
     if (!analyticsData) return [];
+    const fromMs = dateFrom ? new Date(dateFrom).getTime() : -Infinity;
+    const toMs = dateTo ? new Date(dateTo).getTime() : Infinity;
     return analyticsData.filter((a) => {
       if (filterSubjects.length && !filterSubjects.includes(a.subject)) return false;
       if (filterMinGrade !== null && (a.finalGrade ?? -1) < filterMinGrade) return false;
       if (filterMaxGrade !== null && (a.finalGrade ?? 101) > filterMaxGrade) return false;
+      if (a.due) {
+        const ms = new Date(a.due).getTime();
+        if (Number.isFinite(ms)) {
+          if (ms < fromMs) return false;
+          if (ms > toMs) return false;
+        }
+      }
       if (
         filterSearch &&
         !(
@@ -309,34 +379,32 @@
   }
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-8">
-  <div class="flex justify-between items-start">
-    <div class="flex-1">
-      <div class="flex items-center gap-3 mb-2">
-        <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">
-          <T key="navigation.analytics" fallback="Analytics" />
-        </h1>
-        {#if syncing}
-          <Badge variant="primary" size="sm" class="animate-pulse">
-            <div
-              class="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin mr-1">
-            </div>
-            <T key="analytics.syncing" fallback="Syncing..." />
-          </Badge>
-        {/if}
-      </div>
-      <p class="text-zinc-600 dark:text-zinc-400">
-        <T
-          key="analytics.description"
-          fallback="Track your academic performance and progress over time" />
-      </p>
-      {#if lastUpdated && analyticsData && analyticsData.length > 0}
-        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          <T key="analytics.last_updated" fallback="Last updated" />: {formattedTimestamp()}
-        </p>
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col h-full gap-8" in:fade={{ duration: 250 }}>
+  <header class="flex flex-col gap-1.5 shrink-0">
+    <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+      Insights
+    </p>
+    <div class="flex items-center gap-3">
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+        <T key="navigation.analytics" fallback="Analytics" />
+      </h1>
+      {#if syncing}
+        <Badge variant="primary" size="sm">
+          <T key="analytics.syncing" fallback="Syncing..." />
+        </Badge>
       {/if}
     </div>
-  </div>
+    <p class="text-sm text-muted-foreground max-w-2xl">
+      <T
+        key="analytics.description"
+        fallback="Track your academic performance and progress over time" />
+    </p>
+    {#if lastUpdated && analyticsData && analyticsData.length > 0}
+      <p class="text-xs text-muted-foreground nums-tabular">
+        <T key="analytics.last_updated" fallback="Last updated" />: {formattedTimestamp}
+      </p>
+    {/if}
+  </header>
 
   {#if loading}
     <div class="flex justify-center items-center h-64">
@@ -345,122 +413,155 @@
       </div>
     </div>
   {:else if analyticsData && analyticsData.length > 0}
-    <!-- Compact filters near heading -->
-    <div class="flex flex-wrap items-center gap-4 -mb-4" in:fade={{ duration: 400 }}>
-      <div class="relative" use:clickOutside={() => (showSubjectsDropdown = false)}>
-        <button
-          type="button"
-          class="flex gap-2 items-center min-h-[44px] w-44 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring transition-all duration-200"
-          onclick={() => (showSubjectsDropdown = !showSubjectsDropdown)}
-          aria-expanded={showSubjectsDropdown}
-          aria-haspopup="listbox">
-          <span class="truncate flex-1 text-left text-sm">
-            {#if filterSubjects.length === 0}
-              <T key="analytics.all_subjects" fallback="All Subjects" />
-            {:else if filterSubjects.length === 1}
-              {filterSubjects[0]}
-            {:else}
-              <T
-                key="analytics.subjects_selected"
-                fallback="subjects selected"
-                values={{ count: filterSubjects.length }} />
-            {/if}
-          </span>
-          <Icon src={ChevronDown} class="w-4 h-4 shrink-0 text-zinc-500 transition-transform duration-200 {showSubjectsDropdown ? 'rotate-180' : ''}" />
-        </button>
-        {#if showSubjectsDropdown}
-          <div
-            class="absolute left-0 z-50 mt-2 w-56 max-h-48 overflow-y-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1"
-            role="listbox"
-            transition:fly={{ y: -6, duration: 150, easing: cubicOut }}>
-            <button
-              type="button"
-              role="option"
-              aria-selected={filterSubjects.length === 0}
-              class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {filterSubjects.length === 0
-                ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
-                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
-              onclick={() => {
-                filterSubjects = [];
-                showSubjectsDropdown = false;
-              }}>
-              <span class="w-4 shrink-0 flex justify-center">{filterSubjects.length === 0 ? '✓' : ''}</span>
-              <T key="analytics.all_subjects" fallback="All Subjects" />
-            </button>
-            {#each uniqueSubjects() as subject}
-              {@const isSelected = filterSubjects.includes(subject)}
-              <button
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {isSelected
-                  ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
-                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
-                onclick={() => {
-                  filterSubjects = isSelected
-                    ? filterSubjects.filter((s) => s !== subject)
-                    : [...filterSubjects, subject];
-                }}>
-                <span class="w-4 shrink-0 flex justify-center">{isSelected ? '✓' : ''}</span>
-                <span class="truncate">{subject}</span>
-              </button>
-            {/each}
-          </div>
+    <!-- Filters -->
+    <div class="flex flex-col gap-4 p-4 rounded-xl border border-border bg-card" in:fade={{ duration: 400 }}>
+      <div class="flex flex-wrap items-end gap-3">
+        <label class="flex flex-col gap-1 text-xs uppercase tracking-[0.06em] font-semibold text-muted-foreground">
+          <T key="analytics.date_from" fallback="From" />
+          <input
+            type="date"
+            bind:value={dateFrom}
+            onchange={() => persistAnalyticsFilters()}
+            class="h-10 px-3 bg-card rounded-lg border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500 hover:border-border-strong transition-colors duration-150 nums-tabular" />
+        </label>
+        <label class="flex flex-col gap-1 text-xs uppercase tracking-[0.06em] font-semibold text-muted-foreground">
+          <T key="analytics.date_to" fallback="To" />
+          <input
+            type="date"
+            bind:value={dateTo}
+            onchange={() => persistAnalyticsFilters()}
+            class="h-10 px-3 bg-card rounded-lg border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500 hover:border-border-strong transition-colors duration-150 nums-tabular" />
+        </label>
+        {#if dateFrom || dateTo}
+          <button
+            type="button"
+            onclick={() => {
+              dateFrom = '';
+              dateTo = '';
+              persistAnalyticsFilters();
+            }}
+            class="h-10 px-3 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:text-foreground transition-colors duration-150">
+            <T key="analytics.clear_dates" fallback="Clear dates" />
+          </button>
         {/if}
       </div>
 
-      <div class="flex items-center gap-2">
-        <Label.Root class="text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-          <T key="analytics.grade_range" fallback="Grade Range" />
-        </Label.Root>
-        <div class="flex items-center gap-2 w-48">
-          <Slider
-            type="multiple"
-            bind:value={gradeRange}
-            min={0}
-            max={100}
-            step={1}
-            class="flex-1" />
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="relative" use:clickOutside={() => (showSubjectsDropdown = false)}>
+          <button
+            type="button"
+            class="flex gap-2 items-center min-h-[44px] w-44 px-3 py-2 rounded-lg border border-border bg-card text-foreground hover:bg-surface-muted focus:outline-none focus:ring-2 focus-visible:ring-accent-500/40 transition-colors duration-150"
+            onclick={() => (showSubjectsDropdown = !showSubjectsDropdown)}
+            aria-expanded={showSubjectsDropdown}
+            aria-haspopup="listbox">
+            <span class="truncate flex-1 text-left text-sm">
+              {#if filterSubjects.length === 0}
+                <T key="analytics.all_subjects" fallback="All Subjects" />
+              {:else if filterSubjects.length === 1}
+                {filterSubjects[0]}
+              {:else}
+                <T
+                  key="analytics.subjects_selected"
+                  fallback="subjects selected"
+                  values={{ count: filterSubjects.length }} />
+              {/if}
+            </span>
+            <Icon src={ChevronDown} class="w-4 h-4 shrink-0 text-muted-foreground transition-transform duration-200 {showSubjectsDropdown ? 'rotate-180' : ''}" />
+          </button>
+          {#if showSubjectsDropdown}
+            <div
+              class="absolute left-0 z-50 mt-2 w-56 max-h-48 overflow-y-auto rounded-lg border border-border bg-card shadow-md py-1"
+              role="listbox"
+              transition:fly={{ y: -6, duration: 150, easing: cubicOut }}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={filterSubjects.length === 0}
+                class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {filterSubjects.length === 0
+                  ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
+                  : 'text-foreground hover:bg-surface-muted'}"
+                onclick={() => {
+                  filterSubjects = [];
+                  showSubjectsDropdown = false;
+                }}>
+                <span class="w-4 shrink-0 flex justify-center">{filterSubjects.length === 0 ? '✓' : ''}</span>
+                <T key="analytics.all_subjects" fallback="All Subjects" />
+              </button>
+              {#each uniqueSubjects as subject}
+                {@const isSelected = filterSubjects.includes(subject)}
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {isSelected
+                    ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
+                    : 'text-foreground hover:bg-surface-muted'}"
+                  onclick={() => {
+                    filterSubjects = isSelected
+                      ? filterSubjects.filter((s) => s !== subject)
+                      : [...filterSubjects, subject];
+                  }}>
+                  <span class="w-4 shrink-0 flex justify-center">{isSelected ? '✓' : ''}</span>
+                  <span class="truncate">{subject}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
         </div>
-        <div class="text-xs text-zinc-500 dark:text-zinc-400 min-w-fit">
-          {gradeRange[0]}%-{gradeRange[1]}%
-        </div>
-      </div>
 
-      <div class="ml-auto">
-        <SearchInput
-          bind:value={filterSearch}
-          placeholder={$_('analytics.search_placeholder') || 'Search assessments...'}
-          size="sm"
-          class="w-56" />
+        <div class="flex items-center gap-2 flex-1 min-w-[12rem]">
+          <Label.Root class="text-xs text-muted-foreground whitespace-nowrap">
+            <T key="analytics.grade_range" fallback="Grade Range" />
+          </Label.Root>
+          <div class="flex items-center gap-2 flex-1 max-w-xs">
+            <Slider
+              type="multiple"
+              bind:value={gradeRange}
+              min={0}
+              max={100}
+              step={1}
+              class="flex-1" />
+          </div>
+          <div class="text-xs text-muted-foreground min-w-fit nums-tabular">
+            {gradeRange[0]}%-{gradeRange[1]}%
+          </div>
+        </div>
+
+        <div class="ml-auto w-full sm:w-auto">
+          <SearchInput
+            bind:value={filterSearch}
+            placeholder={$_('analytics.search_placeholder') || 'Search assessments...'}
+            size="sm"
+            class="w-full sm:w-56" />
+        </div>
       </div>
     </div>
 
     <!-- Main Analytics Charts -->
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" data-onboarding="analytics-chart">
-      {#key filteredData().length + filteredData()
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:items-stretch" data-onboarding="analytics-chart">
+      {#key filteredData.length + filteredData
           .map((d) => d.id)
           .join(',')}
-        <div class="analytics-chart-animate" style="animation-delay: 0ms;">
-          <AnalyticsAreaChart data={filteredData()} />
+        <div class="analytics-chart-animate h-full min-h-0" style="animation-delay: 0ms;">
+          <AnalyticsAreaChart data={filteredData} />
         </div>
-        <div class="analytics-chart-animate" style="animation-delay: 100ms;">
-          <AnalyticsBarChart data={filteredData()} />
+        <div class="analytics-chart-animate h-full min-h-0" style="animation-delay: 100ms;">
+          <AnalyticsBarChart data={filteredData} />
         </div>
       {/key}
     </div>
 
     <!-- Assessment Data Table -->
     <div class="analytics-table-animate" style="animation-delay: 200ms;">
-      <RawDataTable data={filteredData()} />
+      <RawDataTable data={filteredData} />
     </div>
 
     <div class="flex items-center gap-3 ml-auto pb-4">
-      <div class="text-sm text-zinc-600 dark:text-zinc-400">
+      <div class="text-sm text-muted-foreground">
         <T
           key="analytics.assessments_count"
           fallback="assessments shown"
-          values={{ filtered: filteredData().length, total: analyticsData.length }} />
+          values={{ filtered: filteredData.length, total: analyticsData.length }} />
       </div>
       {#if hasActiveFilters()}
         <Button variant="ghost" size="sm" onclick={clearFilters}>

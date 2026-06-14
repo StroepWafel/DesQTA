@@ -145,7 +145,7 @@
 </script>
 
 <div class="flex flex-col h-full">
-  <div class="container max-w-none w-full p-5 mx-auto flex flex-col flex-1 min-h-0 gap-6">
+  <div class="container mx-auto w-full max-w-none p-5 flex flex-col flex-1 min-h-0 gap-6">
     {#if loadingFeeds}
       <div
         class="flex justify-center items-center flex-1 min-h-[320px]"
@@ -189,14 +189,14 @@
         </Button>
       </div>
     {:else}
-      <!-- Page header: full width above content -->
-      <header class="shrink-0" in:fade={{ duration: 400 }}>
-        <div class="flex items-center gap-3 mb-2">
-          <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">
-            <T key="rss_feeds.title" fallback="RSS Feeds" />
-          </h1>
-        </div>
-        <p class="text-zinc-600 dark:text-zinc-400">
+      <header class="shrink-0 flex flex-col gap-1.5" in:fade={{ duration: 250 }}>
+        <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+          Reading
+        </p>
+        <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+          <T key="rss_feeds.title" fallback="RSS Feeds" />
+        </h1>
+        <p class="text-sm text-muted-foreground max-w-2xl">
           <T
             key="rss_feeds.description"
             fallback="Read and browse your subscribed RSS feeds in one place." />
@@ -225,7 +225,7 @@
           <!-- svelte-ignore a11y_click_events_have_key_events -->
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
-            class="fixed inset-0 z-20 backdrop-blur-sm bg-black/50 xl:hidden transition-opacity duration-300"
+            class="fixed inset-0 z-20 bg-black/50 xl:hidden transition-opacity duration-300"
             onclick={() => (sidebarOpen = false)}
             role="button"
             tabindex="0"
@@ -235,18 +235,18 @@
 
         <!-- Sidebar: feed list -->
         <aside
-          class="rss-sidebar-animate flex flex-col shrink-0 w-64 xl:w-72 overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md {isMobile
+          class="rss-sidebar-animate flex flex-col shrink-0 w-64 xl:w-72 overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 {isMobile
             ? `fixed top-0 left-0 z-30 w-80 h-full ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
             : ''} transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
           <div class="flex justify-between items-center gap-2 p-4 shrink-0 bg-transparent">
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+            <h2 class="text-lg font-semibold text-foreground">
               <T key="rss_feeds.your_feeds" fallback="Your Feeds" />
             </h2>
             <div class="flex gap-1 items-center">
               {#if isMobile}
                 <button
                   onclick={() => (sidebarOpen = false)}
-                  class="p-2 text-zinc-600 dark:text-zinc-400 rounded-lg transition-all duration-200 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                  class="p-2 text-muted-foreground rounded-lg transition-all duration-200 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   title={$_('navigation.close_sidebar') || 'Close sidebar'}
                   aria-label={$_('navigation.close_sidebar') || 'Close sidebar'}>
                   <Icon src={XMark} class="w-5 h-5" />
@@ -262,8 +262,8 @@
                   <button
                     class="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-medium rounded-lg transition-all duration-200 relative
                       {selectedFeed === feed.name
-                      ? 'bg-accent/10 text-zinc-900 dark:text-white'
-                      : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 hover:scale-[1.02]'}
+                      ? 'bg-accent/10 text-foreground'
+                      : 'text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 hover:scale-[1.02]'}
                       focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                     onclick={() => openFeed(feed)}>
                     <Icon src={Rss} class="w-5 h-5 shrink-0" />
@@ -277,7 +277,7 @@
 
         <!-- Message list -->
         <div
-          class="flex flex-1 xl:flex-initial flex-col min-h-0 rss-list-animate min-w-0 xl:w-[28rem] xl:min-w-[28rem] shrink-0 rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md overflow-y-auto [scrollbar-gutter:stable]"
+          class="flex flex-1 xl:flex-initial flex-col min-h-0 rss-list-animate min-w-0 xl:w-[28rem] xl:min-w-[28rem] shrink-0 rounded-xl bg-white/20 dark:bg-zinc-900/20 overflow-y-auto [scrollbar-gutter:stable]"
           style="animation-delay: 100ms;">
           <MessageList
             selectedFolder={selectedFeed || ''}
@@ -291,7 +291,7 @@
 
         <!-- Message detail: article content -->
         <div
-          class="flex-1 min-w-0 min-h-0 hidden xl:flex flex-col rss-detail-animate overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md"
+          class="flex-1 min-w-0 min-h-0 hidden xl:flex flex-col rss-detail-animate overflow-hidden rounded-xl bg-white/20 dark:bg-zinc-900/20 "
           style="animation-delay: 200ms;">
           {#key selectedMessage?.id ?? 'empty'}
             <div
@@ -324,14 +324,14 @@
       onclose={() => (selectedMessage = null)}
       maxWidth="w-full"
       maxHeight="h-full"
-      className="bg-transparent backdrop-blur-sm rounded-none"
+      className="bg-transparent rounded-none"
       showCloseButton={false}
       closeOnBackdrop={false}
       ariaLabel={$_('rss_feeds.feed_item_detail')}>
       <div class="flex flex-col h-full">
         <div class="flex justify-between items-center p-4 shrink-0">
           <button
-            class="flex gap-2 items-center transition-colors duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+            class="flex gap-2 items-center transition-colors duration-200 text-muted-foreground hover:text-zinc-900 dark:hover:text-white"
             onclick={() => (selectedMessage = null)}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -347,7 +347,7 @@
               <T key="common.back" fallback="Back" />
             </span>
           </button>
-          <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <span class="text-sm font-medium text-foreground">
             <T key="rss_feeds.feed_item" fallback="Feed Item" />
           </span>
           <div class="w-8"></div>

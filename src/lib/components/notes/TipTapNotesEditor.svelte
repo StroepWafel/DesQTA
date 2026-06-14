@@ -410,11 +410,11 @@
 </script>
 
 <div
-  class="tiptap-notes-editor h-full flex flex-col bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-md transition-all duration-200 {isFocused
+  class="tiptap-notes-editor h-full flex flex-col bg-card border border-border rounded-lg shadow-md transition-all duration-200 {isFocused
     ? 'ring-2 ring-blue-500 dark:ring-blue-400'
     : ''}">
   <!-- Toolbar -->
-  <div class="shrink-0 border-b border-zinc-200 dark:border-zinc-700">
+  <div class="shrink-0 border-b border-border">
     <TipTapToolbar bind:editor {readonly} on:save={handleSave} />
   </div>
 
@@ -429,7 +429,7 @@
   </div>
 
   <!-- Status Bar -->
-  <div class="shrink-0 border-t border-zinc-200 dark:border-zinc-700">
+  <div class="shrink-0 border-t border-border">
     <TipTapStatusBar {wordCount} {characterCount} {isFocused} />
   </div>
 </div>

@@ -50,7 +50,7 @@
             class="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300">
             <T key="whats_new.title" fallback="What's New" />
           </h2>
-          <p class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
+          <p class="text-sm sm:text-base text-muted-foreground">
             <T key="whats_new.subtitle" fallback="DesQTA has been updated" />
             {#if previousVersion}
               <span class="font-medium">v{previousVersion}</span>
@@ -67,7 +67,7 @@
       {#if changelogHtml}
         {@html changelogHtml}
       {:else if changelogMarkdown === ''}
-        <p class="text-zinc-600 dark:text-zinc-400">
+        <p class="text-muted-foreground">
           <T key="whats_new.loading" fallback="Loading changelog..." />
         </p>
       {/if}

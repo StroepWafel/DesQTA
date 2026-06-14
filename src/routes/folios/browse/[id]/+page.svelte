@@ -292,14 +292,14 @@
   {:else}
     <!-- Header -->
     <div
-      class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+      class="flex items-center justify-between px-6 py-4 border-b border-border">
       <div class="flex items-center gap-4">
         <button
           onclick={() => goto('/folios/browse')}
-          class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+          class="p-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
           <Icon src={ChevronLeft} class="w-5 h-5" />
         </button>
-        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
+        <h1 class="text-2xl font-bold text-foreground">
           {folioData?.title || $_('folios.loading') || 'Loading...'}
         </h1>
       </div>
@@ -323,7 +323,7 @@
         <div class="w-full mx-auto p-6 space-y-6">
           <!-- Folio Info -->
           <div
-            class="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            class="p-4 bg-card rounded-lg border border-border">
             <div class="flex items-center gap-4 mb-4">
               <div class="flex-shrink-0">
                 <div
@@ -333,11 +333,11 @@
               </div>
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
-                  <Icon src={User} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-                  <span class="font-semibold text-zinc-900 dark:text-white"
+                  <Icon src={User} class="w-4 h-4 text-muted-foreground" />
+                  <span class="font-semibold text-foreground"
                     >{folioData.author.name}</span>
                 </div>
-                <div class="flex items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
+                <div class="flex items-center gap-4 text-sm text-muted-foreground">
                   <div class="flex items-center gap-2">
                     <Icon src={Clock} class="w-4 h-4" />
                     <span>
@@ -361,7 +361,7 @@
 
           <!-- Folio Content -->
           <div
-            class="p-6 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            class="p-6 bg-card rounded-lg border border-border">
             <div class="prose prose-zinc dark:prose-invert max-w-none">
               {@html folioData.contents}
             </div>
@@ -370,7 +370,7 @@
           <!-- Comments Section -->
           {#if folioData.allow_comments && folioData.forum}
             <div class="space-y-4">
-              <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+              <h2 class="text-xl font-semibold text-foreground">
                 <T key="folios.comments" fallback="Comments" />
               </h2>
 
@@ -384,7 +384,7 @@
                 <div class="space-y-4">
                   {#each allComments() as comment}
                     <div
-                      class="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 {comment.isComment
+                      class="p-4 bg-card rounded-lg border border-border {comment.isComment
                         ? 'ml-8 border-l-4 border-l-accent'
                         : ''}">
                       <div class="flex gap-4">
@@ -396,15 +396,15 @@
                         </div>
                         <div class="flex-1 min-w-0">
                           <div class="flex items-center justify-between mb-2">
-                            <span class="font-semibold text-zinc-900 dark:text-white">
+                            <span class="font-semibold text-foreground">
                               {comment.name}
                             </span>
-                            <span class="text-sm text-zinc-600 dark:text-zinc-400">
+                            <span class="text-sm text-muted-foreground">
                               {formatDate(comment.sent)}
                             </span>
                           </div>
                           <div
-                            class="prose prose-zinc dark:prose-invert max-w-none text-zinc-700 dark:text-zinc-300">
+                            class="prose prose-zinc dark:prose-invert max-w-none text-foreground">
                             {@html comment.contents}
                           </div>
                         </div>
@@ -413,7 +413,7 @@
                   {/each}
                 </div>
               {:else if forumData && allComments().length === 0}
-                <div class="text-center py-8 text-zinc-500 dark:text-zinc-400">
+                <div class="text-center py-8 text-muted-foreground">
                   <T
                     key="folios.no_comments"
                     fallback="No comments yet. Be the first to comment!" />
@@ -423,9 +423,9 @@
               <!-- Reply Section -->
               {#if folioData.allow_comments}
                 <div
-                  class="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
+                  class="p-4 bg-card rounded-lg border border-border"
                   bind:this={replySection}>
-                  <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
+                  <h3 class="text-lg font-semibold text-foreground mb-4">
                     <T key="folios.add_comment" fallback="Add Comment" />
                   </h3>
 
@@ -439,7 +439,7 @@
                     {/if}
 
                     <div
-                      class="min-h-[200px] border border-zinc-200 dark:border-zinc-700 rounded-lg">
+                      class="min-h-[200px] border border-border rounded-lg">
                       <Editor bind:content={replyContent} bind:editorInstance />
                     </div>
                   </div>

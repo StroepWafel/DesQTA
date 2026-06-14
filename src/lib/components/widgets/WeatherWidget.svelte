@@ -1,11 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fade, scale } from 'svelte/transition';
-  import { cubicInOut } from 'svelte/easing';
-  import { Icon, Cloud } from 'svelte-hero-icons';
+  import { Cloud } from 'svelte-hero-icons';
   import { weatherService } from '../../services/weatherService';
-  import type { WeatherData, ForecastDay } from '../../services/weatherService';
+  import type { WeatherData } from '../../services/weatherService';
   import { logger } from '../../../utils/logger';
+  import WidgetCard from '../dashboard/WidgetCard.svelte';
 
   interface Props {
     widget?: any;
@@ -21,24 +20,25 @@
   const location = $derived(settings.location || '');
   const units = $derived(settings.units || 'celsius');
   const showForecast = $derived(settings.showForecast !== false);
+  const gridH = $derived(widget?.position?.h ?? 3);
+  const isCompact = $derived(gridH <= 3);
+  const isTall = $derived(gridH >= 5);
 
   function getWeatherIcon(code: number): string {
-    if (code === 0) return '☀️'; // Clear
-    if (code === 1 || code === 2) return '⛅'; // Partly cloudy
-    if (code === 3) return '☁️'; // Overcast
-    if (code >= 45 && code <= 48) return '🌫️'; // Fog
-    if (code >= 51 && code <= 67) return '🌧️'; // Rain
-    if (code >= 71 && code <= 77) return '🌨️'; // Snow
-    if (code >= 80 && code <= 82) return '⛈️'; // Rain showers
-    if (code >= 85 && code <= 86) return '🌨️'; // Snow showers
-    if (code >= 95 && code <= 99) return '⛈️'; // Thunderstorm
+    if (code === 0) return '☀️';
+    if (code === 1 || code === 2) return '⛅';
+    if (code === 3) return '☁️';
+    if (code >= 45 && code <= 48) return '🌫️';
+    if (code >= 51 && code <= 67) return '🌧️';
+    if (code >= 71 && code <= 77) return '🌨️';
+    if (code >= 80 && code <= 82) return '⛈️';
+    if (code >= 85 && code <= 86) return '🌨️';
+    if (code >= 95 && code <= 99) return '⛈️';
     return '☁️';
   }
 
   function convertTemperature(temp: number): number {
-    if (units === 'fahrenheit') {
-      return Math.round((temp * 9) / 5 + 32);
-    }
+    if (units === 'fahrenheit') return Math.round((temp * 9) / 5 + 32);
     return Math.round(temp);
   }
 
@@ -63,10 +63,7 @@
       } else {
         weatherData = await weatherService.fetchWeatherWithIP();
       }
-
-      if (!weatherData) {
-        error = 'Unable to load weather data';
-      }
+      if (!weatherData) error = 'Unable to load weather data';
     } catch (e) {
       logger.error('WeatherWidget', 'loadWeather', `Failed to load weather: ${e}`, { error: e });
       error = 'Failed to load weather';
@@ -79,115 +76,105 @@
     loadWeather();
   });
 
-  // Reload when settings change
   $effect(() => {
-    if (location || !location) {
-      loadWeather();
-    }
+    if (location || !location) loadWeather();
   });
 </script>
 
-<div class="flex flex-col h-full min-h-0 w-full">
-  <div
-    class="flex items-center gap-2 mb-2 sm:mb-3 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-    in:fade={{ duration: 200, delay: 0 }}
-    style="transform-origin: left center;">
-    <div
-      class="transition-all duration-300"
-      in:scale={{ duration: 300, delay: 100, easing: cubicInOut, start: 0.8 }}>
-      <Icon
-        src={Cloud}
-        class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300" />
-    </div>
-    <h3
-      class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300"
-      in:fade={{ duration: 300, delay: 150 }}>
-      Weather
-    </h3>
-  </div>
-
-  {#if loading}
-    <div
-      class="flex flex-col items-center justify-center flex-1 py-6 sm:py-8 min-h-0"
-      in:fade={{ duration: 300, easing: cubicInOut }}>
-      <div
-        class="w-6 h-6 sm:w-8 sm:h-8 border-4 border-accent-600 border-t-transparent rounded-full animate-spin mb-2 transition-all duration-300"
-        in:scale={{ duration: 400, easing: cubicInOut, start: 0.5 }}>
-      </div>
-      <p
-        class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 transition-all duration-300"
-        in:fade={{ duration: 300, delay: 100 }}>
-        Loading weather...
-      </p>
-    </div>
-  {:else if error}
-    <div
-      class="flex flex-col items-center justify-center flex-1 py-6 sm:py-8 min-h-0"
-      in:fade={{ duration: 300, easing: cubicInOut }}>
-      <p class="text-xs sm:text-sm text-red-600 dark:text-red-400">{error}</p>
+<WidgetCard
+  icon={Cloud}
+  title="Weather"
+  {loading}
+  empty={!loading && !error && !weatherData}
+  emptyTitle="No weather data"
+  emptyIcon={Cloud}
+  class={isCompact ? 'weather-compact' : ''}>
+  {#if error}
+    <div class="flex flex-col items-center justify-center h-full min-h-0">
+      <p class="text-sm text-destructive">{error}</p>
       <button
         onclick={loadWeather}
-        class="mt-2 px-3 py-1.5 text-xs rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-105 active:scale-95"
-        in:fade={{ duration: 200, delay: 150 }}>
+        class="mt-2 inline-flex items-center justify-center h-7 px-3 text-xs font-medium rounded-md bg-surface-muted text-foreground hover:bg-surface-3 transition-colors duration-150">
         Retry
       </button>
     </div>
   {:else if weatherData}
-    <div
-      class="flex flex-col gap-3 sm:gap-4 flex-1 min-h-0 w-full transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
-      in:fade={{ duration: 400, delay: 100 }}
-      style="transform-origin: center center;">
-      <!-- Current Weather -->
-      <div
-        class="flex items-center gap-3 sm:gap-4 transition-all duration-300"
-        in:fade={{ duration: 300, delay: 150 }}>
-        <div
-          class="text-3xl sm:text-4xl transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
-          in:scale={{ duration: 500, delay: 200, easing: cubicInOut, start: 0.5 }}>
+    <div class="flex flex-col h-full min-h-0 {isTall ? 'gap-4' : 'gap-2'}">
+      <div class="flex items-center gap-2.5 shrink-0 {isTall ? 'sm:gap-4' : ''}">
+        <div class="{isCompact ? 'text-2xl' : isTall ? 'text-4xl' : 'text-3xl'} leading-none shrink-0">
           {getWeatherIcon(weatherData.weathercode)}
         </div>
-        <div class="flex-1">
+        <div class="flex-1 min-w-0">
           <div
-            class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white transition-all duration-300">
+            class="font-semibold tracking-tight text-foreground nums-tabular leading-none {isCompact
+              ? 'text-xl'
+              : isTall
+                ? 'text-3xl'
+                : 'text-2xl'}">
             {convertTemperature(weatherData.temperature)}{getTemperatureUnit()}
           </div>
-          <div
-            class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 transition-all duration-300">
+          <div class="text-[11px] text-muted-foreground truncate mt-0.5">
             {weatherData.location}, {weatherData.country}
           </div>
         </div>
+        {#if isTall && weatherData.forecast?.[0]}
+          <div class="hidden sm:block text-right shrink-0 pl-2">
+            <p class="text-[10px] uppercase tracking-[0.06em] font-semibold text-muted-foreground">
+              Today
+            </p>
+            <p class="text-sm font-semibold text-foreground nums-tabular">
+              {convertTemperature(weatherData.forecast[0].tempMax)}° /
+              {convertTemperature(weatherData.forecast[0].tempMin)}°
+            </p>
+          </div>
+        {/if}
       </div>
 
       {#if showForecast && weatherData.forecast?.length}
         <div
-          class="pt-3 sm:pt-4 border-t border-zinc-200 dark:border-zinc-800 flex-1 min-h-0 transition-all duration-300"
-          in:fade={{ duration: 300, delay: 200 }}>
-          <p class="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2 shrink-0">7-day forecast</p>
-          <div class="grid grid-cols-7 gap-1 sm:gap-2 flex-1 min-w-0">
+          class="border-t border-border-subtle flex-1 min-h-0 flex flex-col {isCompact
+            ? 'pt-1.5'
+            : 'pt-2'}">
+          <p
+            class="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground shrink-0 {isCompact
+              ? 'mb-1'
+              : 'mb-1.5'}">
+            7-day forecast
+          </p>
+          <div
+            class="grid grid-cols-7 gap-0.5 flex-1 min-h-0 min-w-0 {isTall ? 'gap-1' : ''}"
+            style="grid-template-rows: 1fr;">
             {#each weatherData.forecast.slice(0, 7) as day}
               <div
-                class="flex flex-col items-center justify-center min-w-0 w-full px-1 sm:px-2 py-1.5 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 transition-all duration-200">
-                <span class="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 truncate w-full text-center">
+                class="flex flex-col items-center justify-center min-w-0 min-h-0 w-full rounded-md bg-surface-muted {isCompact
+                  ? 'px-0.5 py-1'
+                  : 'px-1 py-1.5'}">
+                <span class="text-[9px] sm:text-[10px] text-muted-foreground truncate w-full text-center leading-tight">
                   {formatForecastDate(day.date)}
                 </span>
-                <span class="text-base sm:text-lg mt-0.5 shrink-0">{getWeatherIcon(day.weathercode)}</span>
-                <span class="text-[10px] sm:text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate w-full text-center">
+                <span class="{isCompact ? 'text-xs' : 'text-sm'} leading-none {isCompact ? 'my-0.5' : 'mt-0.5'}">
+                  {getWeatherIcon(day.weathercode)}
+                </span>
+                <span class="text-[10px] font-semibold text-foreground nums-tabular leading-tight">
                   {convertTemperature(day.tempMax)}°
                 </span>
-                <span class="text-[10px] text-zinc-500 dark:text-zinc-500 truncate w-full text-center">
-                  {convertTemperature(day.tempMin)}°
-                </span>
+                {#if !isCompact}
+                  <span class="text-[9px] text-muted-foreground nums-tabular leading-tight">
+                    {convertTemperature(day.tempMin)}°
+                  </span>
+                {/if}
               </div>
             {/each}
           </div>
         </div>
       {/if}
     </div>
-  {:else}
-    <div
-      class="flex flex-col items-center justify-center flex-1 py-6 sm:py-8 min-h-0"
-      in:fade={{ duration: 300, easing: cubicInOut }}>
-      <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">No weather data available</p>
-    </div>
   {/if}
-</div>
+</WidgetCard>
+
+<style>
+  :global(.weather-compact .flex-1.min-h-0.overflow-hidden) {
+    padding-top: 0.5rem;
+    padding-bottom: 0.625rem;
+  }
+</style>

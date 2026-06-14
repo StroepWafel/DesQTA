@@ -70,10 +70,10 @@
       class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-[var(--accent)]/20 flex items-center justify-center">
       <Icon src={LockClosed} class="w-10 h-10 text-[var(--accent)]" />
     </div>
-    <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+    <h2 class="text-xl font-bold text-foreground mb-2">
       <T key="setup_assistant.biometric_title" fallback="Unlock with biometrics" />
     </h2>
-    <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+    <p class="text-sm text-muted-foreground mb-6">
       <T
         key="setup_assistant.biometric_subtitle"
         fallback="Use Face ID, Touch ID, fingerprint, or Windows Hello to unlock DesQTA." />

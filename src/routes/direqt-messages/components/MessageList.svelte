@@ -32,7 +32,7 @@
   class="w-full min-w-0 flex flex-col min-h-0 [scrollbar-gutter:stable]
     {embedded
     ? 'flex-1 min-h-0 overflow-hidden bg-transparent pt-4'
-    : 'flex-1 overflow-hidden rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg'}">
+    : 'flex-1 overflow-hidden surface'}">
   <div
     class="flex items-center p-4 text-base font-semibold text-zinc-900 sm:text-lg dark:text-white {!embedded
       ? 'border-b border-zinc-300/50 dark:border-zinc-800/50'

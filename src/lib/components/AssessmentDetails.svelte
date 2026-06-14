@@ -117,7 +117,7 @@
   {#if assessmentData.marked && firstCriterion && firstCriterion.results}
     <div
       class="p-4 rounded-xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10">
-      <div class="mb-1.5 text-lg font-bold text-zinc-900 dark:text-white">Grade</div>
+      <div class="mb-1.5 text-lg font-bold text-foreground">Grade</div>
       <div
         class="overflow-hidden relative w-full h-12 rounded-lg border transition-all duration-300 dark:bg-zinc-800 bg-zinc-200 dark:border-zinc-700 border-zinc-200 hover:shadow-lg hover:shadow-accent-500/10">
         <div
@@ -140,10 +140,10 @@
   {:else if assessmentData.marked && firstCriterion}
     <div
       class="p-4 rounded-xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10">
-      <div class="mb-1.5 text-lg font-bold text-zinc-900 dark:text-white">Grade</div>
+      <div class="mb-1.5 text-lg font-bold text-foreground">Grade</div>
       <div
         class="p-3 rounded-lg border dark:bg-zinc-800 bg-zinc-200 dark:border-zinc-700 border-zinc-200">
-        <div class="text-center text-zinc-600 dark:text-zinc-400">
+        <div class="text-center text-muted-foreground">
           <T key="assessments.grade_not_yet_available" fallback="Grade not yet available" />
         </div>
       </div>
@@ -153,13 +153,13 @@
   <!-- Rubric: show whenever SEQTA sends rubric lines (marked or not; scores optional) -->
   {#each criteriaWithRubrics as criterion}
     <div
-      class="p-4 rounded-xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10 border border-zinc-200/50 dark:border-zinc-700/50">
+      class="p-4 rounded-xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10 border border-border">
       <div class="flex flex-col gap-0.5 mb-3 sm:flex-row sm:items-baseline sm:justify-between">
-        <h2 class="text-lg font-bold text-zinc-900 dark:text-white">
+        <h2 class="text-lg font-bold text-foreground">
           <T key="assessments.rubric_title" fallback="Rubric" />
         </h2>
         {#if criterion.label}
-          <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">{criterion.label}</span>
+          <span class="text-xs font-medium text-muted-foreground">{criterion.label}</span>
         {/if}
       </div>
 
@@ -168,7 +168,7 @@
           {@const lineScore = getScoreForLine(criterion.rubricScore, line.id)}
           <div class="space-y-1.5">
             {#if line.title}
-              <h3 class="text-sm font-semibold text-zinc-900 dark:text-white">
+              <h3 class="text-sm font-semibold text-foreground">
                 {line.title}
               </h3>
             {/if}
@@ -176,7 +176,7 @@
               {#each line.descriptors ?? [] as d, di}
                 {@const selected = isDescriptorSelected(criterion.rubricScore, line.id, d.id)}
                 <div
-                  class="rounded-lg border p-2 transition-all duration-200 dark:bg-zinc-800/80 bg-white/80 border-zinc-200 dark:border-zinc-700 {selected
+                  class="rounded-lg border p-2 transition-all duration-200 dark:bg-zinc-800/80 bg-white/80 border-border {selected
                     ? 'ring-1 ring-accent-500 ring-offset-1 ring-offset-zinc-100 dark:ring-offset-zinc-900 shadow-sm'
                     : 'hover:border-zinc-300 dark:hover:border-zinc-600'}">
                   <div class="flex items-center justify-between gap-1.5 mb-1">
@@ -208,7 +208,7 @@
   <div
     class="p-4 rounded-xl transition-all duration-300 dark:bg-zinc-900 bg-zinc-100 hover:shadow-lg hover:shadow-accent-500/10">
     <div class="flex flex-col gap-2 mb-4 md:flex-row md:items-center md:justify-between">
-      <h1 class="text-lg font-bold text-zinc-900 dark:text-white">
+      <h1 class="text-lg font-bold text-foreground">
         <T key="assessments.teacher_marking_feedback" fallback="Teacher marking and feedback" />
       </h1>
     </div>
@@ -218,7 +218,7 @@
     {#if assessmentData.engagement?.feedbackComment}
       <div
         class="p-4 mb-4 rounded-xl transition-all duration-300 dark:bg-zinc-800 bg-zinc-200 hover:shadow-lg hover:shadow-accent-500/5">
-        <div class="mb-1 font-semibold text-zinc-900 dark:text-white">Teacher feedback</div>
+        <div class="mb-1 font-semibold text-foreground">Teacher feedback</div>
         <div class="dark:text-zinc-300 text-zinc-700">
           {@html sanitizeHtml(decodeHtmlEntities(assessmentData.engagement.feedbackComment ?? ''))}
         </div>
@@ -229,10 +229,10 @@
           class="w-16 h-16 mb-4 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
           <Icon src={DocumentText} class="w-8 h-8 text-zinc-400" />
         </div>
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+        <h3 class="text-lg font-semibold text-foreground mb-2">
           <T key="assessments.no_feedback_title" fallback="No Feedback Available" />
         </h3>
-        <p class="text-zinc-600 dark:text-zinc-400">
+        <p class="text-muted-foreground">
           <T
             key="assessments.no_feedback_body"
             fallback="This assessment has been marked but no detailed feedback is available yet." />
@@ -244,17 +244,17 @@
           class="w-16 h-16 mb-4 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
           <Icon src={DocumentText} class="w-8 h-8 text-zinc-400" />
         </div>
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+        <h3 class="text-lg font-semibold text-foreground mb-2">
           <T key="assessments.not_marked_title" fallback="Assessment Not Yet Marked" />
         </h3>
-        <p class="text-zinc-600 dark:text-zinc-400">
+        <p class="text-muted-foreground">
           <T
             key="assessments.not_marked_body"
             fallback="This assessment hasn't been marked yet. Check back later for grades and feedback." />
         </p>
       </div>
     {:else}
-      <p class="text-sm text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground">
         <T
           key="assessments.not_marked_feedback_pending"
           fallback="Teacher feedback will appear here once available." />

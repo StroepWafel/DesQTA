@@ -295,17 +295,18 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
-  <div class="flex justify-between items-start">
-    <div>
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
-        <T key="navigation.forums" fallback="Forums" />
-      </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
-        <T key="forums.description" fallback="Discuss and collaborate with your community" />
-      </p>
-    </div>
-  </div>
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6">
+  <header class="flex flex-col gap-1.5">
+    <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+      Community
+    </p>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+      <T key="navigation.forums" fallback="Forums" />
+    </h1>
+    <p class="text-sm text-muted-foreground max-w-2xl">
+      <T key="forums.description" fallback="Discuss and collaborate with your community" />
+    </p>
+  </header>
 
   {#if forumsEnabled === false}
     <div class="flex justify-center items-center h-64">
@@ -340,12 +341,12 @@
     <div class="space-y-6">
       <!-- Filters and Sort -->
       <div
-        class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+        class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-4 bg-card rounded-lg border border-border">
         <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
           <!-- Search -->
           <div class="relative flex-1 sm:flex-none sm:w-64">
             <input
-              class="w-full pl-9 pr-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+              class="w-full pl-9 pr-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-border text-foreground placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
               placeholder={$_('forums.search_placeholder') || 'Search forums...'}
               bind:value={searchQuery} />
             <Icon
@@ -359,7 +360,7 @@
               type="checkbox"
               bind:checked={filterUnread}
               class="w-4 h-4 text-accent bg-white border-zinc-300 rounded focus:ring-accent dark:bg-zinc-700 dark:border-zinc-600" />
-            <span class="text-sm text-zinc-700 dark:text-zinc-300">
+            <span class="text-sm text-foreground">
               <T key="forums.show_unread_only" fallback="Unread only" />
             </span>
           </label>
@@ -369,7 +370,7 @@
           <!-- Sort By -->
           <select
             bind:value={sortBy}
-            class="px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm">
+            class="px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm">
             <option value="opened">{$_('forums.sort_opened') || 'Date Opened'}</option>
             <option value="title">{$_('forums.sort_title') || 'Title'}</option>
             <option value="owner">{$_('forums.sort_owner') || 'Owner'}</option>
@@ -380,7 +381,7 @@
           <!-- Sort Order -->
           <button
             onclick={() => (sortOrder = sortOrder === 'asc' ? 'desc' : 'asc')}
-            class="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+            class="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-border text-muted-foreground hover:text-zinc-900 dark:hover:text-white transition-colors"
             title={sortOrder === 'asc'
               ? $_('forums.sort_desc') || 'Sort descending'
               : $_('forums.sort_asc') || 'Sort ascending'}>
@@ -392,7 +393,7 @@
       <!-- Open Forums -->
       {#if openForums.length > 0}
         <div>
-          <h2 class="text-xl font-semibold text-zinc-900 dark:text-white mb-4">
+          <h2 class="text-xl font-semibold text-foreground mb-4">
             <T key="forums.open_forums" fallback="Open Forums" />
           </h2>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -412,7 +413,7 @@
         <div>
           <button
             onclick={() => (closedForumsExpanded = !closedForumsExpanded)}
-            class="flex items-center gap-2 mb-4 text-xl font-semibold text-zinc-900 dark:text-white hover:text-accent transition-colors">
+            class="flex items-center gap-2 mb-4 text-xl font-semibold text-foreground hover:text-accent transition-colors">
             <Icon src={closedForumsExpanded ? ChevronUp : ChevronDown} class="w-5 h-5" />
             <Icon src={Folder} class="w-5 h-5" />
             <span>
@@ -439,9 +440,9 @@
 {#snippet forumCard(forum: Forum)}
   <button
     onclick={() => goto(`/forums/${forum.id}`)}
-    class="w-full text-left p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+    class="w-full text-left p-6 bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-border hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
     <div class="flex items-start justify-between mb-3">
-      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white flex-1 pr-2">
+      <h3 class="text-lg font-semibold text-foreground flex-1 pr-2">
         {forum.title}
       </h3>
       {#if forum.unread > 0 || forum.unread_comments > 0}
@@ -452,7 +453,7 @@
       {/if}
     </div>
 
-    <div class="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+    <div class="space-y-2 text-sm text-muted-foreground">
       <div class="flex items-center gap-2">
         <Icon src={Users} class="w-4 h-4" />
         <span>{forum.owner}</span>
@@ -482,7 +483,7 @@
         </div>
       {/if}
 
-      <div class="pt-2 mt-2 border-t border-zinc-200 dark:border-zinc-700">
+      <div class="pt-2 mt-2 border-t border-border">
         <div class="flex items-center justify-between">
           <span>
             {forum.read_comments}

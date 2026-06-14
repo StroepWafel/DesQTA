@@ -47,7 +47,7 @@
 
 <div class="flex flex-col gap-6" in:fade={{ duration: 400, delay: 50 }}>
   <Card.Root
-    class="justify-between overflow-hidden rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg">
+    class="justify-between overflow-hidden surface">
     <Card.Header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div class="flex items-start gap-3">
         <div
@@ -55,12 +55,12 @@
           <Icon src={Beaker} class="w-6 h-6" />
         </div>
         <div>
-          <Card.Title class="text-zinc-900 dark:text-white">
+          <Card.Title class="text-foreground">
             <T
               key="performance.mega_title"
               fallback="Dev instrumentation and synthetic benchmarks" />
           </Card.Title>
-          <Card.Description class="text-zinc-600 dark:text-zinc-400">
+          <Card.Description class="text-muted-foreground">
             <T
               key="performance.mega_description"
               fallback="Session metrics captured during the navigation crawl (plus benchmark suite when run in Tauri dev)." />
@@ -85,26 +85,26 @@
     <Card.Content class="flex flex-col gap-6 p-6 pt-0">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div
-          class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 bg-zinc-50/80 dark:bg-zinc-800/50">
-          <p class="text-xs text-zinc-500 dark:text-zinc-400">
+          class="rounded-lg border border-border p-4 bg-zinc-50/80 dark:bg-zinc-800/50">
+          <p class="text-xs text-muted-foreground">
             <T key="performance.mega_crawl_metrics" fallback="Crawl metrics (rows)" />
           </p>
-          <p class="text-xl font-semibold text-zinc-900 dark:text-white tabular-nums">
+          <p class="text-xl font-semibold text-foreground tabular-nums">
             {mega.crawlSessionMetricCount}
           </p>
         </div>
         <div
-          class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 bg-zinc-50/80 dark:bg-zinc-800/50">
-          <p class="text-xs text-zinc-500 dark:text-zinc-400">
+          class="rounded-lg border border-border p-4 bg-zinc-50/80 dark:bg-zinc-800/50">
+          <p class="text-xs text-muted-foreground">
             <T key="performance.mega_benchmark_runs" fallback="Benchmark runs" />
           </p>
-          <p class="text-xl font-semibold text-zinc-900 dark:text-white tabular-nums">
+          <p class="text-xl font-semibold text-foreground tabular-nums">
             {mega.benchmarkRuns.length}
           </p>
         </div>
         <div
-          class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 bg-zinc-50/80 dark:bg-zinc-800/50">
-          <p class="text-xs text-zinc-500 dark:text-zinc-400">
+          class="rounded-lg border border-border p-4 bg-zinc-50/80 dark:bg-zinc-800/50">
+          <p class="text-xs text-muted-foreground">
             <T key="performance.mega_synthetic" fallback="Synthetic suite" />
           </p>
           <p
@@ -125,18 +125,18 @@
           </p>
         </div>
         <div
-          class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 bg-zinc-50/80 dark:bg-zinc-800/50">
-          <p class="text-xs text-zinc-500 dark:text-zinc-400">
+          class="rounded-lg border border-border p-4 bg-zinc-50/80 dark:bg-zinc-800/50">
+          <p class="text-xs text-muted-foreground">
             <T key="performance.mega_captured" fallback="Captured" />
           </p>
-          <p class="text-sm font-medium text-zinc-900 dark:text-white">
+          <p class="text-sm font-medium text-foreground">
             {new Date(mega.capturedAt).toLocaleString()}
           </p>
         </div>
       </div>
 
       {#if categoryChartData.length > 0}
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 p-4 bg-white/50 dark:bg-zinc-900/40">
+        <div class="rounded-xl border border-border p-4 bg-white/50 dark:bg-zinc-900/40">
           <PerformanceLineChart
             data={categoryChartData}
             title={$_('performance.mega_by_category', { default: 'Crawl metrics by category' })}
@@ -156,7 +156,7 @@
             <T key="performance.mega_suite_report" fallback="Suite report" />
           </h3>
           <pre
-            class="text-xs leading-relaxed p-4 rounded-lg bg-zinc-100 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 overflow-x-auto max-h-64 overflow-y-auto font-mono border border-zinc-200 dark:border-zinc-700">{mega.syntheticSuite.report}</pre>
+            class="text-xs leading-relaxed p-4 rounded-lg bg-zinc-100 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 overflow-x-auto max-h-64 overflow-y-auto font-mono border border-border">{mega.syntheticSuite.report}</pre>
         </div>
       {/if}
 
@@ -165,7 +165,7 @@
           <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
             <T key="performance.mega_bench_table" fallback="Benchmark runs" />
           </h3>
-          <div class="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
+          <div class="overflow-x-auto rounded-lg border border-border">
             <table class="w-full text-sm text-left">
               <thead class="bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
                 <tr>
@@ -189,11 +189,11 @@
                   <tr class="bg-white dark:bg-zinc-900/60 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors duration-200">
                     <td class="px-3 py-2 font-mono text-xs text-zinc-800 dark:text-zinc-200 max-w-[12rem] truncate"
                       >{run.benchmarkId}</td>
-                    <td class="px-3 py-2 tabular-nums text-zinc-900 dark:text-white"
+                    <td class="px-3 py-2 tabular-nums text-foreground"
                       >{run.overallScore}</td>
-                    <td class="px-3 py-2 tabular-nums text-zinc-700 dark:text-zinc-300"
+                    <td class="px-3 py-2 tabular-nums text-foreground"
                       >{run.metricCount}</td>
-                    <td class="px-3 py-2 tabular-nums text-zinc-700 dark:text-zinc-300">
+                    <td class="px-3 py-2 tabular-nums text-foreground">
                       {run.warningCount} / {run.criticalCount}
                     </td>
                     <td class="px-3 py-2">
@@ -217,9 +217,9 @@
           <div class="space-y-2">
             {#each mega.benchmarkDetail as block}
               <details
-                class="group rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white/60 dark:bg-zinc-900/50">
+                class="group rounded-lg border border-border bg-white/60 dark:bg-zinc-900/50">
                 <summary
-                  class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
+                  class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
                   <span class="font-mono text-xs truncate">{block.benchmarkId}</span>
                   <Icon
                     src={ChevronDown}
@@ -228,7 +228,7 @@
                 <div class="px-4 pb-4 overflow-x-auto max-h-64 overflow-y-auto">
                   <table class="w-full text-xs">
                     <thead>
-                      <tr class="text-left text-zinc-500 dark:text-zinc-400">
+                      <tr class="text-left text-muted-foreground">
                         <th class="py-1 pr-2">Name</th>
                         <th class="py-1 pr-2">Value</th>
                         <th class="py-1">Status</th>
@@ -238,7 +238,7 @@
                       {#each block.metrics as m}
                         <tr class="border-t border-zinc-100 dark:border-zinc-800">
                           <td class="py-1 pr-2 font-mono text-zinc-800 dark:text-zinc-200">{m.name}</td>
-                          <td class="py-1 pr-2 tabular-nums text-zinc-700 dark:text-zinc-300">
+                          <td class="py-1 pr-2 tabular-nums text-foreground">
                             {m.value}{m.unit === 'ms' ? ' ms' : m.unit === 'percent' ? '%' : ''}
                           </td>
                           <td class="py-1 {statusClass(m.status)}">{m.status}</td>
@@ -258,7 +258,7 @@
           <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
             <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
               <T key="performance.mega_crawl_table" fallback="Crawl session metrics" />
-              <span class="text-zinc-500 dark:text-zinc-400 font-normal">
+              <span class="text-muted-foreground font-normal">
                 ({mega.crawlMetrics.length})</span>
             </h3>
             {#if mega.crawlMetrics.length > CRAWL_PREVIEW}
@@ -274,7 +274,7 @@
             {/if}
           </div>
           <div
-            class="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700 max-h-80 overflow-y-auto">
+            class="overflow-x-auto rounded-lg border border-border max-h-80 overflow-y-auto">
             <table class="w-full text-xs text-left">
               <thead class="sticky top-0 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 z-10">
                 <tr>
@@ -289,8 +289,8 @@
                   <tr class="bg-white dark:bg-zinc-900/40 hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
                     <td class="px-3 py-1.5 font-mono text-zinc-800 dark:text-zinc-200 max-w-[14rem] truncate"
                       >{row.name}</td>
-                    <td class="px-3 py-1.5 text-zinc-600 dark:text-zinc-400">{row.category}</td>
-                    <td class="px-3 py-1.5 tabular-nums text-zinc-700 dark:text-zinc-300">
+                    <td class="px-3 py-1.5 text-muted-foreground">{row.category}</td>
+                    <td class="px-3 py-1.5 tabular-nums text-foreground">
                       {row.value}{row.unit === 'ms' ? ' ms' : row.unit === 'percent' ? '%' : ''}
                     </td>
                     <td class="px-3 py-1.5 {statusClass(row.status)}">{row.status}</td>

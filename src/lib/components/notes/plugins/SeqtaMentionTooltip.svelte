@@ -108,13 +108,13 @@
     style="left: {tooltipX}px; top: {tooltipY}px;"
     transition:fade={{ duration: 150 }}>
     <div
-      class="min-w-[240px] max-w-[320px] p-3 rounded-xl shadow-xl border backdrop-blur-xl bg-white/95 dark:bg-zinc-800/95 border-zinc-200/60 dark:border-zinc-700/60"
+      class="min-w-[240px] max-w-[320px] p-3 rounded-xl shadow-xl border bg-white/95 dark:bg-zinc-800/95 border-zinc-200/60 dark:border-zinc-700/60"
       style="box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);">
       <!-- Header -->
       <div class="flex items-start justify-between gap-2 mb-2">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
-            <h3 class="text-sm font-semibold text-zinc-900 dark:text-white truncate">
+            <h3 class="text-sm font-semibold text-foreground truncate">
               {title}
             </h3>
             {#if mentionData?.data}
@@ -127,7 +127,7 @@
               {/if}
             {/if}
           </div>
-          <p class="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2">
+          <p class="text-xs text-muted-foreground line-clamp-2">
             {subtitle}
           </p>
         </div>
@@ -135,37 +135,37 @@
 
       <!-- Details -->
       {#if mentionData?.data}
-        <div class="space-y-1.5 pt-2 border-t border-zinc-200/50 dark:border-zinc-700/50">
+        <div class="space-y-1.5 pt-2 border-t border-border">
           {#if mentionData.data.dueDate || mentionData.data.due}
-            <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <div class="flex items-center gap-2 text-xs text-muted-foreground">
               <Icon src={Clock} class="w-3.5 h-3.5 flex-shrink-0" />
               <span>Due: {formatDate(mentionData.data.dueDate || mentionData.data.due)}</span>
             </div>
           {/if}
 
           {#if mentionData.data.teacher}
-            <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <div class="flex items-center gap-2 text-xs text-muted-foreground">
               <Icon src={User} class="w-3.5 h-3.5 flex-shrink-0" />
               <span>{mentionData.data.teacher}</span>
             </div>
           {/if}
 
           {#if mentionData.data.room}
-            <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <div class="flex items-center gap-2 text-xs text-muted-foreground">
               <Icon src={MapPin} class="w-3.5 h-3.5 flex-shrink-0" />
               <span>Room {mentionData.data.room}</span>
             </div>
           {/if}
 
           {#if mentionData.data.date}
-            <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <div class="flex items-center gap-2 text-xs text-muted-foreground">
               <Icon src={Calendar} class="w-3.5 h-3.5 flex-shrink-0" />
               <span>{formatDate(mentionData.data.date)}</span>
             </div>
           {/if}
 
           {#if mentionData.data.subject}
-            <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <div class="flex items-center gap-2 text-xs text-muted-foreground">
               <span class="font-medium">{mentionData.data.subject}</span>
             </div>
           {/if}
@@ -173,9 +173,9 @@
       {/if}
 
       <!-- Quick Actions -->
-      <div class="flex items-center gap-2 pt-2 mt-2 border-t border-zinc-200/50 dark:border-zinc-700/50">
+      <div class="flex items-center gap-2 pt-2 mt-2 border-t border-border">
         <button
-          class="text-xs px-2 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 transition-colors pointer-events-auto"
+          class="text-xs px-2 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-foreground transition-colors pointer-events-auto"
           onclick={(e) => {
             e.stopPropagation();
             // Dispatch event to open detail modal

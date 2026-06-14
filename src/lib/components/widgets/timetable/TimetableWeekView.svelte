@@ -167,14 +167,14 @@
 <div class="flex flex-col flex-1 w-full min-h-0 overflow-hidden">
   <!-- Day Headers -->
   <div
-    class="grid gap-1.5 px-1.5 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50"
+    class="grid gap-1.5 px-1.5 py-3 border-b border-border bg-zinc-50/50 dark:bg-zinc-900/50"
     style="grid-template-columns: {timeGutterStyle} repeat(5, minmax(0, 1fr));">
-    <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase"></div>
+    <div class="text-xs font-semibold text-muted-foreground uppercase"></div>
     {#each dayLabels as dayLabel, dayIdx}
       <div
         class="text-center transition-all duration-200 {todayDayIndex === dayIdx
           ? 'accent-bg text-white rounded-lg px-2 py-1 shadow-md'
-          : 'text-zinc-700 dark:text-zinc-300'}">
+          : 'text-foreground'}">
         <div class="font-semibold">{dayLabel}</div>
       </div>
     {/each}
@@ -194,11 +194,11 @@
           {#each timeAxisMarkers as timeSlot}
             {@const yPos = timeToY(timeSlot)}
             <div
-              class="absolute left-0 w-full border-t border-zinc-200 dark:border-zinc-700"
+              class="absolute left-0 w-full border-t border-border"
               style="top: {yPos}px;">
               <div class="flex items-center justify-center h-5 -mt-2.5">
                 <span
-                  class="text-[11px] font-mono font-semibold text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 px-0.5 rounded-sm">
+                  class="text-[11px] font-mono font-semibold text-muted-foreground bg-white dark:bg-zinc-900 px-0.5 rounded-sm">
                   {formatTime12Hour(timeSlot)}
                 </span>
               </div>
@@ -226,7 +226,7 @@
             {@const dayList = getLessonsForDay(dayIdx)}
             {@const overlapLayout = layoutDayLessonColumns(dayList)}
             <div
-              class="relative h-full border-l border-zinc-200 dark:border-zinc-700 min-w-0 {todayDayIndex ===
+              class="relative h-full border-l border-border min-w-0 {todayDayIndex ===
               dayIdx
                 ? 'bg-[var(--accent)]/10 dark:bg-[var(--accent)]/10'
                 : ''}"

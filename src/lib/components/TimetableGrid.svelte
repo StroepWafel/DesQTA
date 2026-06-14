@@ -159,7 +159,7 @@
       <div class="timetable-time-label bg-zinc-100 dark:bg-zinc-800 border-r border-zinc-300 dark:border-zinc-700"></div>
       {#each dayLabels as day, index}
         <div
-          class="timetable-day-label text-center bg-zinc-100 dark:bg-zinc-800 border-l border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white/90 {new Date().getDay() === index + (1 % 7) ? 'bg-blue-500 text-white font-bold shadow-lg' : ''} hidden sm:block">
+          class="timetable-day-label text-center bg-zinc-100 dark:bg-zinc-800 border-l border-zinc-300 dark:border-zinc-700 text-foreground/90 {new Date().getDay() === index + (1 % 7) ? 'bg-blue-500 text-white font-bold shadow-lg' : ''} hidden sm:block">
           <div>{day}</div>
           {#if new Date().getDay() === index + (1 % 7)}
             <div class="timetable-today-label">
@@ -178,11 +178,11 @@
         onclick={prevDay}
         disabled={loadingLessons}
         aria-label={$_('timetable.previous_day') || 'Previous day'}>
-        <Icon src={ChevronLeft} class="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+        <Icon src={ChevronLeft} class="w-4 h-4 text-foreground" />
       </button>
       <div class="text-center">
-        <h2 class="text-base font-bold text-zinc-900 dark:text-white">{dayLabels[selectedDayState - 1]}</h2>
-        <p class="text-xs text-zinc-600 dark:text-zinc-400">
+        <h2 class="text-base font-bold text-foreground">{dayLabels[selectedDayState - 1]}</h2>
+        <p class="text-xs text-muted-foreground">
           {selectedDayState === Math.min(5, Math.max(1, new Date().getDay() === 0 ? 1 : new Date().getDay())) ? ($_('timetable.today') || 'Today') : ''}
         </p>
       </div>
@@ -191,7 +191,7 @@
         onclick={nextDay}
         disabled={loadingLessons}
         aria-label={$_('timetable.next_day') || 'Next day'}>
-        <Icon src={ChevronRight} class="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+        <Icon src={ChevronRight} class="w-4 h-4 text-foreground" />
       </button>
     </div>
 
@@ -212,10 +212,10 @@
     {:else if loadingLessons}
       <div class="flex flex-col justify-center items-center py-16">
         <div class="w-20 h-20 rounded-full border-4 animate-spin border-blue-500/30 border-t-blue-500 mb-4"></div>
-        <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+        <h3 class="text-lg font-semibold text-foreground mb-2">
           <T key="timetable.loading_title" fallback="Loading Timetable" />
         </h3>
-        <p class="text-zinc-600 dark:text-zinc-400">
+        <p class="text-muted-foreground">
           <T key="timetable.loading_message" fallback="Please wait while we fetch your schedule..." />
         </p>
       </div>
@@ -233,7 +233,7 @@
                   timeBounds.max,
                 )}px;">
                 <div class="flex items-center justify-center h-5">
-                  <span class="text-xs font-mono font-semibold text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 px-1 rounded-sm">
+                  <span class="text-xs font-mono font-semibold text-muted-foreground bg-card px-1 rounded-sm">
                     {formatTime(time as string)}
                   </span>
                 </div>

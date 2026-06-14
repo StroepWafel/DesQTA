@@ -15,6 +15,10 @@ export const themeManifest = writable<ThemeManifest | null>(null);
 export const customCSS = writable('');
 // Previewing theme name (not yet applied)
 export const previewingTheme = writable<string | null>(null);
+// Human-readable name for the preview bar (Sunset, Ocean, …). The legacy
+// previewingTheme store still holds the slug for compatibility with the rest
+// of the theme service.
+export const previewingThemeDisplayName = writable<string | null>(null);
 
 // Derived store for theme properties
 export const themeProperties = derived(
@@ -217,6 +221,12 @@ export async function startThemePreview(themeName: string) {
     }
     await themeService.startPreview(themeName);
     previewingTheme.set(themeName);
+    // Derive a display name: strip our internal `.temp/` prefix, prefer the
+    // manifest's displayName/name, fall back to a title-cased slug.
+    const slug = themeName.replace(/^\.temp\//, '');
+    const display = manifest?.displayName || manifest?.name ||
+      slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    previewingThemeDisplayName.set(display);
   } catch (error) {
     console.error('Failed to start theme preview:', error);
   }
@@ -238,6 +248,7 @@ export async function cancelThemePreview() {
     console.error('Failed to cancel theme preview:', error);
   } finally {
     previewingTheme.set(null);
+    previewingThemeDisplayName.set(null);
     _previewPreviousMode = null;
     _previewPreviousAccent = null;
   }
@@ -277,6 +288,7 @@ export async function applyPreviewTheme() {
     console.error('Failed to apply preview theme:', error);
   } finally {
     previewingTheme.set(null);
+    previewingThemeDisplayName.set(null);
     _previewPreviousMode = null;
   }
 }
@@ -355,5 +367,17 @@ export async function resetToDefault() {
 if (typeof window !== 'undefined') {
   theme.subscribe((themeValue) => {
     applyTheme(themeValue);
+  });
+
+  // Re-apply theme when the window becomes visible / refocused.
+  // Catches DevTools reopen, OS theme flip while window is hidden,
+  // and Tauri rehydration cases where the dark class on <html> can desync.
+  const reapply = () => {
+    const current = get(theme);
+    applyTheme(current);
+  };
+  window.addEventListener('focus', reapply);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') reapply();
   });
 }

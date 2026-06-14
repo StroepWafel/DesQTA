@@ -326,19 +326,19 @@ export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
             tooltipContent.innerHTML = `
               <div class="flex items-start justify-between gap-2 mb-2">
                 <div class="flex-1 min-w-0">
-                  <h3 class="text-sm font-semibold text-zinc-900 dark:text-white truncate">${title}</h3>
-                  <p class="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1">${subtitle}</p>
+                  <h3 class="text-sm font-semibold text-foreground truncate">${title}</h3>
+                  <p class="text-xs text-muted-foreground line-clamp-2 mt-1">${subtitle}</p>
                 </div>
               </div>
               ${
                 mentionData?.data
                   ? `
-                <div class="space-y-1.5 pt-2 border-t border-zinc-200/50 dark:border-zinc-700/50">
+                <div class="space-y-1.5 pt-2 border-t border-border">
                   ${
                     mentionData.data.dueDate || mentionData.data.due
                       ? `
-                    <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-                      <div class="shrink-0">${createIconSVG('clock', 14, 'w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400').outerHTML}</div>
+                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div class="shrink-0">${createIconSVG('clock', 14, 'w-3.5 h-3.5 text-muted-foreground').outerHTML}</div>
                       <span>Due: ${formatTooltipDate(mentionData.data.dueDate || mentionData.data.due)}</span>
                     </div>
                   `
@@ -347,8 +347,8 @@ export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
                   ${
                     mentionData.data.teacher
                       ? `
-                    <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-                      <div class="shrink-0">${createIconSVG('user', 14, 'w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400').outerHTML}</div>
+                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div class="shrink-0">${createIconSVG('user', 14, 'w-3.5 h-3.5 text-muted-foreground').outerHTML}</div>
                       <span>${mentionData.data.teacher}</span>
                     </div>
                   `
@@ -357,8 +357,8 @@ export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
                   ${
                     mentionData.data.room
                       ? `
-                    <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-                      <div class="shrink-0">${createIconSVG('mapPin', 14, 'w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400').outerHTML}</div>
+                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div class="shrink-0">${createIconSVG('mapPin', 14, 'w-3.5 h-3.5 text-muted-foreground').outerHTML}</div>
                       <span>Room ${mentionData.data.room}</span>
                     </div>
                   `
@@ -368,8 +368,8 @@ export const SeqtaMentions = Node.create<SeqtaMentionOptions>({
               `
                   : ''
               }
-              <div class="flex items-center gap-2 pt-2 mt-2 border-t border-zinc-200/50 dark:border-zinc-700/50">
-                <button class="text-xs px-2 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 transition-colors pointer-events-auto">
+              <div class="flex items-center gap-2 pt-2 mt-2 border-t border-border">
+                <button class="text-xs px-2 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-foreground transition-colors pointer-events-auto">
                   View Details
                 </button>
               </div>
@@ -939,7 +939,7 @@ class MentionList {
 
     if (items.length === 0) {
       const emptyState = document.createElement('div');
-      emptyState.className = 'p-3 text-sm text-zinc-500 dark:text-zinc-400';
+      emptyState.className = 'p-3 text-sm text-muted-foreground';
       emptyState.textContent = 'No SEQTA items found';
       this.container.appendChild(emptyState);
       return;
@@ -997,7 +997,7 @@ class MentionList {
       // Category header (clickable to toggle)
       const categoryHeader = document.createElement('button');
       categoryHeader.className =
-        'w-full px-3 py-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide backdrop-blur-sm bg-zinc-50/80 dark:bg-zinc-800/80 border-b border-zinc-200 dark:border-zinc-700 sticky top-0 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 cursor-pointer';
+        'w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide backdrop-blur-sm bg-zinc-50/80 dark:bg-zinc-800/80 border-b border-border sticky top-0 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 cursor-pointer';
       categoryHeader.style.transition = 'background-color 200ms cubic-bezier(0.4, 0, 0.2, 1)';
       const typeInfo = typeLabels[type] || { label: type, icon: 'link' };
 
@@ -1056,7 +1056,7 @@ class MentionList {
       // Items in this category
       typeItems.forEach((item: SeqtaMentionItem) => {
         const itemWrapper = document.createElement('div');
-        itemWrapper.className = 'border-b border-zinc-200 dark:border-zinc-700 last:border-b-0';
+        itemWrapper.className = 'border-b border-border last:border-b-0';
 
         const itemEl = document.createElement('button');
         itemEl.className = `w-full p-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-3 transition-all duration-200 hover:scale-[1.01] ${globalIndex === this.selectedIndex ? 'bg-zinc-100 dark:bg-zinc-700' : ''}`;
@@ -1088,8 +1088,8 @@ class MentionList {
         const content = document.createElement('div');
         content.className = 'flex-1 min-w-0';
         content.innerHTML = `
-          <div class="text-sm font-medium text-zinc-900 dark:text-white truncate">${item.title}</div>
-          <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate">${item.subtitle}</div>
+          <div class="text-sm font-medium text-foreground truncate">${item.title}</div>
+          <div class="text-xs text-muted-foreground truncate">${item.subtitle}</div>
         `;
 
         itemEl.appendChild(indicator);

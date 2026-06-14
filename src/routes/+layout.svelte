@@ -16,6 +16,7 @@
   import { Toaster } from 'svelte-sonner';
   import Onboarding from '../lib/components/Onboarding.svelte';
   import UploadProgressBar from '../lib/components/UploadProgressBar.svelte';
+  import ThemePreviewBar from '$lib/components/ThemePreviewBar.svelte';
   import OfflineBanner from '../lib/components/OfflineBanner.svelte';
   import {
     checkSession as checkSessionAuth,
@@ -350,7 +351,11 @@
   };
 
   $effect(() => {
-    document.documentElement.setAttribute('data-accent-color', '');
+    // Set both the attribute *and* the value so the [data-accent-color] CSS
+    // selector matches *and* derived color-mix variables resolve correctly.
+    // Previously we set the attribute to the empty string, which selected the
+    // rule but left derived --accent-color-* mixes referencing an empty value.
+    document.documentElement.setAttribute('data-accent-color', $accentColor);
     document.documentElement.style.setProperty('--accent-color-value', $accentColor);
     logger.debug('layout', '$effect', 'Applied accent color to root as CSS var', {
       accent: $accentColor,
@@ -840,39 +845,46 @@
       const settings = await loadSettings(['menu_order', 'disabled_sidebar_pages']);
       const menuOrder = settings.menu_order as string[] | undefined;
       const disabledPages = (settings.disabled_sidebar_pages as string[] | undefined) || [];
+      const disabledSet = new Set(disabledPages);
 
-      // Use current menu state instead of DEFAULT_MENU to preserve filters
+      // Use current menu state instead of DEFAULT_MENU to preserve SEQTA filters
       const currentMenu = [...menu];
       const currentMenuMap = new Map(currentMenu.map((item) => [item.path, item]));
+      const defaultMenuMap = new Map(DEFAULT_MENU.map((item) => [item.path, item]));
+
+      const resolveMenuItem = (path: string) => {
+        if (disabledSet.has(path)) return undefined;
+        // Fall back to DEFAULT_MENU so user-enabled pages (e.g. Goals) can appear
+        // even when filtered out by SEQTA config before applyMenuOrder runs.
+        return currentMenuMap.get(path) ?? defaultMenuMap.get(path);
+      };
 
       let orderedMenu: typeof DEFAULT_MENU;
 
       if (menuOrder && Array.isArray(menuOrder) && menuOrder.length > 0) {
-        // Reorder menu based on saved order, keeping any new items at the end
         orderedMenu = [];
         const addedPaths = new Set<string>();
 
-        // Add items in saved order (only if they exist in current menu)
         for (const path of menuOrder) {
-          const item = currentMenuMap.get(path);
+          if (typeof path !== 'string' || path.startsWith('folder:')) continue;
+          const item = resolveMenuItem(path);
           if (item) {
             orderedMenu.push(item);
             addedPaths.add(path);
           }
         }
 
-        // Add any items not in saved order (new items that exist in current menu)
         for (const item of currentMenu) {
-          if (!addedPaths.has(item.path)) {
+          if (!addedPaths.has(item.path) && !disabledSet.has(item.path)) {
             orderedMenu.push(item);
           }
         }
       } else {
-        orderedMenu = [...currentMenu];
+        orderedMenu = currentMenu.filter(
+          (item) => !disabledSet.has(item.path) || item.path === '/settings',
+        );
       }
 
-      // Filter out disabled pages (Settings cannot be disabled)
-      const disabledSet = new Set(disabledPages);
       menu = orderedMenu.filter((item) => !disabledSet.has(item.path) || item.path === '/settings');
     } catch (e) {
       logger.error('layout', 'applyMenuOrder', 'Failed to apply menu order', { error: e });
@@ -889,12 +901,8 @@
   <LoadingScreen />
 {:else}
   <div
-    class="relative flex flex-col h-screen w-screen {isMobile || isFullscreen
-      ? ''
-      : 'rounded-2xl'} overflow-hidden {$customBackground.enabled && $customBackground.imageUrl
-      ? ''
-      : 'theme-bg'}"
-    style="outline: none; border: none; margin: 0; padding: 0; padding-top: var(--safe-area-top); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+    class="relative flex flex-col h-screen w-screen overflow-hidden theme-bg"
+    style="outline: none; border: none; margin: 0; padding: 0; padding-top: var(--safe-area-top);">
     {#if $customBackground.enabled && $customBackground.imageUrl}
       <div
         class="pointer-events-none absolute inset-0 z-0 bg-zinc-950"
@@ -905,7 +913,7 @@
       </div>
       {#if $customBackground.dim > 0}
         <div
-          class="pointer-events-none absolute inset-0 z-0 bg-black"
+          class="pointer-events-none absolute inset-0 z-0 bg-foreground"
           aria-hidden="true"
           style="opacity: {$customBackground.dim};">
         </div>
@@ -944,19 +952,17 @@
 
       <main
         onmouseenter={handleMainContentEnter}
-        class="flex-1 min-h-0 flex flex-col border-t
+        class="flex-1 min-w-0 min-h-0 flex flex-col
           {sidebarOpen && !isMobile && !$needsSetup
-          ? 'border-l border-zinc-200 dark:border-zinc-700/50'
+          ? 'border-l border-border-subtle'
           : ''}
-          {isMobile
-          ? 'rounded-t-2xl overflow-hidden'
-          : sidebarOpen
-            ? 'rounded-tl-2xl overflow-hidden'
-            : 'rounded-none'}
-          isolate transition-[border-radius,border-color] duration-300 bg-transparent"
+          {isMobile ? 'rounded-t-2xl overflow-hidden' : ''}
+          isolate transition-[border-color] duration-200 bg-transparent"
         style="margin-left: 0; margin-right: {$themeBuilderSidebarOpen ? '384px' : '0'};">
+        <!-- min-w-0 + overflow-x-hidden so a wide child (assessments board, wide
+             tables, etc.) cannot push siblings off-screen and softlock the user. -->
         <div
-          class="flex-1 min-h-0 overflow-y-auto
+          class="flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden
             {!$needsSetup ? '[scrollbar-gutter:stable]' : ''}
             {isMobile && !$needsSetup ? 'pb-[56px] mobile-main mobile-soft' : ''}">
           {#if !$needsSetup}
@@ -1054,6 +1060,7 @@
   </div>
 {/if}
 <UploadProgressBar />
+<ThemePreviewBar />
 <Toaster
   position={isMobile ? 'top-center' : 'bottom-right'}
   theme={$theme === 'dark' ? 'dark' : 'light'}
@@ -1066,22 +1073,22 @@
     unstyled: true,
     classes: {
       toast:
-        'bg-white/95 dark:bg-zinc-800/95 backdrop-blur-md text-zinc-900 dark:text-zinc-100 shadow-2xl border rounded-xl px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] border-white/20 dark:border-zinc-700/40',
+        'bg-card text-card-foreground border border-border shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] rounded-xl px-4 py-3 min-w-[300px] max-w-[500px] flex items-center gap-3 transition-colors duration-200',
       title: 'text-sm font-semibold flex-1',
-      description: 'text-sm text-zinc-600 dark:text-zinc-400 mt-1',
+      description: 'text-sm text-muted-foreground mt-1',
       success:
-        'border-green-200/60 dark:border-green-800/60 bg-green-50/95 dark:bg-green-900/40 backdrop-blur-md text-green-700 dark:text-green-300',
+        'border-emerald-500/30 bg-card text-emerald-700 dark:text-emerald-300',
       error:
-        'border-red-200/60 dark:border-red-800/60 bg-red-50/95 dark:bg-red-900/40 backdrop-blur-md text-red-700 dark:text-red-300',
-      info: 'border-blue-200/60 dark:border-blue-800/60 bg-blue-50/95 dark:bg-blue-900/40 backdrop-blur-md text-blue-700 dark:text-blue-300',
+        'border-destructive/30 bg-card text-destructive',
+      info: 'border-sky-500/30 bg-card text-sky-700 dark:text-sky-300',
       warning:
-        'border-yellow-200/60 dark:border-yellow-800/60 bg-yellow-50/95 dark:bg-yellow-900/40 backdrop-blur-md text-yellow-700 dark:text-yellow-300',
+        'border-amber-500/30 bg-card text-amber-700 dark:text-amber-300',
       closeButton:
-        'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-all duration-200 ease-in-out rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0 transform hover:scale-110 active:scale-95',
+        'text-muted-foreground hover:text-foreground rounded-md p-1 hover:bg-surface-muted flex-shrink-0 transition-colors duration-150',
       actionButton:
-        'bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95',
+        'bg-accent-500 text-white hover:bg-accent-600 rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150',
       cancelButton:
-        'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95',
+        'bg-surface-muted text-foreground hover:bg-surface-3 rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150',
     },
   }} />
 <AboutModal open={showAboutModal} onclose={() => (showAboutModal = false)} />

@@ -186,7 +186,7 @@ export const ImageExtension = Node.create<ImageOptions>({
       
       // Resize handle
       const resizeBtn = document.createElement('button');
-      resizeBtn.className = 'bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded p-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors';
+      resizeBtn.className = 'bg-card border border-border rounded p-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors';
       resizeBtn.innerHTML = '⤢';
       resizeBtn.title = 'Resize image';
       resizeBtn.onclick = (e) => {

@@ -56,7 +56,7 @@
 
 <!-- Mobile-only sticky tabs + compose -->
 <div
-  class="xl:hidden p-3 flex sticky top-0 z-20 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-zinc-900/60">
+  class="xl:hidden p-3 flex sticky top-0 z-20 surface backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-zinc-900/60">
   <div class="flex flex-1 items-center gap-2 overflow-x-auto scrollbar-thin">
     {#if loading}
       <div class="px-3 py-1.5 text-xs rounded-full bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-300">
@@ -68,7 +68,7 @@
           class="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border transition-all duration-150 whitespace-nowrap
             {selectedFolder === folder.name
               ? 'bg-accent-500 text-white border-transparent shadow-sm'
-              : 'bg-white/70 dark:bg-zinc-800/70 border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-700/80'}"
+              : 'bg-white/70 dark:bg-zinc-800/70 border-zinc-300/60 dark:border-zinc-700/60 text-foreground hover:bg-white/90 dark:hover:bg-zinc-700/80'}"
           onclick={() => openFolder(folder)}
           aria-pressed={selectedFolder === folder.name}>
           <Icon src={folder.icon} class="w-4 h-4" />

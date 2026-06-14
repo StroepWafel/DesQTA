@@ -131,10 +131,10 @@
 
 {#if showModal}
   <div
-    class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs mobile-modal-inset"
+    class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 mobile-modal-inset"
     transition:fade={{ duration: 200, easing: cubicInOut }}>
     <div
-      class="global-search-modal relative w-full max-w-2xl mx-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 shadow-2xl border border-white/20 dark:border-zinc-700/40 backdrop-blur-xl flex flex-col overflow-hidden touch-none"
+      class="global-search-modal relative w-full max-w-2xl mx-4 rounded-2xl bg-card shadow-2xl border border-white/20 dark:border-zinc-700/40 flex flex-col overflow-hidden touch-none"
       style="backdrop-filter: blur(24px); max-height: 80vh;"
       transition:scale={{ duration: 300, start: 0.95, easing: cubicInOut }}
       role="dialog"
@@ -175,7 +175,7 @@
         <input
           bind:this={modalInput}
           type="text"
-          class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-zinc-800/60 text-zinc-900 dark:text-white border border-accent/40 focus:outline-hidden focus:ring-2 focus:ring-accent transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-lg text-base sm:text-lg"
+          class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-zinc-800/60 text-foreground border border-accent/40 focus:outline-hidden focus:ring-2 focus:ring-accent transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-lg text-base sm:text-lg"
           placeholder={placeholderText}
           bind:value={searchQuery}
           onkeydown={onKeydown}
@@ -232,7 +232,7 @@
                   class="flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white/50 dark:hover:bg-zinc-800/50 text-left group {selectedIndex ===
                   i
                     ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected'
-                    : 'text-zinc-900 dark:text-white'}"
+                    : 'text-foreground'}"
                   style="animation-delay: {i * 50}ms"
                   transition:fly={{
                     y: 10,
@@ -299,7 +299,7 @@
                   class="flex items-center gap-4 w-full p-4 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white/50 dark:hover:bg-zinc-800/50 text-left group {selectedIndex ===
                   i
                     ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected'
-                    : 'text-zinc-900 dark:text-white'}"
+                    : 'text-foreground'}"
                   style="animation-delay: {i * 50}ms"
                   transition:fly={{
                     y: 10,
@@ -334,7 +334,7 @@
             id="search-results-container">
             {#if filteredItems.length > 0}
               <div
-                class="mb-2 px-2 text-xs text-zinc-500 dark:text-zinc-400 flex items-center justify-between">
+                class="mb-2 px-2 text-xs text-muted-foreground flex items-center justify-between">
                 <span
                   >{filteredItems.length} {filteredItems.length === 1 ? 'result' : 'results'}</span>
                 {#if loadingDynamic}
@@ -359,7 +359,7 @@
                 {#if assessments.length > 0}
                   <div class="mb-2 px-2 mt-2">
                     <div
-                      class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                      class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       Assessments
                     </div>
                   </div>
@@ -371,7 +371,7 @@
                       class="flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white/50 dark:hover:bg-zinc-800/50 text-left group {selectedIndex ===
                       globalIndex
                         ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected'
-                        : 'text-zinc-900 dark:text-white'}"
+                        : 'text-foreground'}"
                       style="animation-delay: {globalIndex * 50}ms"
                       transition:fly={{
                         y: 10,
@@ -423,7 +423,7 @@
                 {#if courses.length > 0}
                   <div class="mb-2 px-2 mt-2">
                     <div
-                      class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                      class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       Courses
                     </div>
                   </div>
@@ -434,7 +434,7 @@
                       class="flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white/50 dark:hover:bg-zinc-800/50 text-left group {selectedIndex ===
                       globalIndex
                         ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected'
-                        : 'text-zinc-900 dark:text-white'}"
+                        : 'text-foreground'}"
                       style="animation-delay: {globalIndex * 50}ms"
                       transition:fly={{
                         y: 10,
@@ -487,7 +487,7 @@
                   {#if assessments.length > 0 || courses.length > 0}
                     <div class="mb-2 px-2 mt-2">
                       <div
-                        class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                        class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         Pages & Actions
                       </div>
                     </div>
@@ -500,7 +500,7 @@
                       class="flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white/50 dark:hover:bg-zinc-800/50 text-left group {selectedIndex ===
                       globalIndex
                         ? 'bg-accent text-white shadow-lg scale-[1.02] search-result-selected'
-                        : 'text-zinc-900 dark:text-white'}"
+                        : 'text-foreground'}"
                       style="animation-delay: {globalIndex * 50}ms"
                       transition:fly={{
                         y: 10,
@@ -563,7 +563,7 @@
         {:else if searchQuery.trim()}
           <!-- No Results -->
           <div
-            class="flex flex-col items-center justify-center py-12 text-zinc-500 dark:text-zinc-400"
+            class="flex flex-col items-center justify-center py-12 text-muted-foreground"
             transition:fade={{ duration: 300, easing: cubicInOut }}>
             <Icon
               src={MagnifyingGlass}
@@ -578,10 +578,10 @@
               <Icon
                 src={Sparkles}
                 class="w-12 h-12 mx-auto mb-4 text-accent transition-transform duration-300 hover:scale-110" />
-              <h3 class="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
+              <h3 class="text-xl font-semibold text-foreground mb-2">
                 Enhanced Global Search
               </h3>
-              <p class="text-zinc-600 dark:text-zinc-400">
+              <p class="text-muted-foreground">
                 Search pages, run commands, or browse categories
               </p>
             </div>
@@ -591,7 +591,7 @@
 
       <!-- Footer -->
       <div
-        class="flex items-center justify-between px-6 py-3 border-t border-white/10 dark:border-zinc-700/20 text-xs text-zinc-500 dark:text-zinc-400">
+        class="flex items-center justify-between px-6 py-3 border-t border-white/10 dark:border-zinc-700/20 text-xs text-muted-foreground">
         <div class="flex items-center gap-4">
           <span class="flex items-center gap-1">
             <kbd

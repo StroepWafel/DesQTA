@@ -80,7 +80,7 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6">
   {#if loading}
     <div class="flex justify-center items-center h-64">
       <LoadingSpinner size="md" message={$_('folios.loading') || 'Loading...'} />
@@ -94,32 +94,33 @@
         size="md" />
     </div>
   {:else}
-    <div class="flex justify-between items-start">
-      <div>
-        <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
-          <T key="navigation.folios" fallback="Folios" />
-        </h1>
-        <p class="text-zinc-600 dark:text-zinc-400">
-          <T key="folios.description" fallback="Create and browse folios" />
-        </p>
-      </div>
-    </div>
+    <header class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        Work
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+        <T key="navigation.folios" fallback="Folios" />
+      </h1>
+      <p class="text-sm text-muted-foreground max-w-2xl">
+        <T key="folios.description" fallback="Create and browse folios" />
+      </p>
+    </header>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Edit My Folios -->
       <div class="folio-action-card-animate" style="animation-delay: 0ms;">
         <button
           onclick={() => goto('/folios/edit')}
-          class="group p-8 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+          class="group p-8 bg-card rounded-lg border border-border hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
           <div class="flex flex-col items-center text-center space-y-4">
             <div
               class="w-16 h-16 rounded-full bg-accent-500/10 flex items-center justify-center group-hover:bg-accent-500/20 transition-colors">
               <Icon src={PencilSquare} class="w-8 h-8 text-accent" />
             </div>
-            <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+            <h2 class="text-xl font-semibold text-foreground">
               <T key="folios.edit_my_folios" fallback="Edit My Folios" />
             </h2>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+            <p class="text-sm text-muted-foreground">
               <T
                 key="folios.edit_my_folios_description"
                 fallback="Create and manage your personal folios" />
@@ -132,16 +133,16 @@
       <div class="folio-action-card-animate" style="animation-delay: 100ms;">
         <button
           onclick={() => goto('/folios/browse')}
-          class="group p-8 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+          class="group p-8 bg-card rounded-lg border border-border hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
           <div class="flex flex-col items-center text-center space-y-4">
             <div
               class="w-16 h-16 rounded-full bg-accent-500/10 flex items-center justify-center group-hover:bg-accent-500/20 transition-colors">
               <Icon src={FolderOpen} class="w-8 h-8 text-accent" />
             </div>
-            <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+            <h2 class="text-xl font-semibold text-foreground">
               <T key="folios.browse_folios" fallback="Browse Folios" />
             </h2>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+            <p class="text-sm text-muted-foreground">
               <T
                 key="folios.browse_folios_description"
                 fallback="Explore and view available folios" />

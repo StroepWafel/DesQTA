@@ -103,8 +103,8 @@
         <div class="w-16 h-16 mb-4 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
           <Icon src={DocumentText} class="w-8 h-8 text-zinc-400" />
         </div>
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">No Submissions Yet</h3>
-        <p class="text-zinc-600 dark:text-zinc-400 mb-6 max-w-md">
+        <h3 class="text-lg font-semibold text-foreground mb-2">No Submissions Yet</h3>
+        <p class="text-muted-foreground mb-6 max-w-md">
           You haven't submitted any files for this assessment yet. Use the upload button above to add your work.
         </p>
       </div>
@@ -135,8 +135,8 @@
   ariaLabel="Delete submission confirmation">
   <div class="px-8 pb-8 pt-2">
     {#if fileToDelete}
-      <p class="text-zinc-600 dark:text-zinc-400 mb-6">
-        Are you sure you want to remove <strong class="text-zinc-900 dark:text-white">"{fileToDelete.filename}"</strong>? This cannot be undone.
+      <p class="text-muted-foreground mb-6">
+        Are you sure you want to remove <strong class="text-foreground">"{fileToDelete.filename}"</strong>? This cannot be undone.
       </p>
     {/if}
     <div class="flex gap-3 justify-end">

@@ -16,18 +16,18 @@
     on:click={() => (showExportMenu = !showExportMenu)}
     aria-label={$_('timetable.export_options') || 'Export options'}
     aria-expanded={showExportMenu}>
-    <Icon src={ArrowDownTray} class="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
-    <span class="font-semibold text-zinc-900 dark:text-white">
+    <Icon src={ArrowDownTray} class="w-4 h-4 text-foreground" />
+    <span class="font-semibold text-foreground">
       <T key="timetable.export" fallback="Export" />
     </span>
   </button>
   
   {#if showExportMenu}
     <div
-      class="absolute right-0 z-50 mt-3 w-64 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/95 dark:border-zinc-700/40"
+      class="absolute right-0 z-50 mt-3 w-64 rounded-2xl border shadow-2xl bg-white/95 border-zinc-200/60 dark:bg-zinc-900/95 dark:border-zinc-700/40"
       transition:fly={{ y: -8, duration: 200, opacity: 0 }}>
       <div class="p-3">
-        <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2 px-2">
+        <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-2">
           <T key="timetable.export_format" fallback="Export Format" />
         </div>
         
@@ -42,10 +42,10 @@
             <Icon src={TableCells} class="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
           <div class="flex-1">
-            <div class="font-semibold text-zinc-900 dark:text-white">
+            <div class="font-semibold text-foreground">
               <T key="timetable.export_csv" fallback="Export as CSV" />
             </div>
-            <div class="text-sm text-zinc-500 dark:text-zinc-400">
+            <div class="text-sm text-muted-foreground">
               <T key="timetable.csv_description" fallback="Spreadsheet format for Excel" />
             </div>
           </div>
@@ -62,10 +62,10 @@
             <Icon src={DocumentText} class="w-5 h-5 text-red-600 dark:text-red-400" />
           </div>
           <div class="flex-1">
-            <div class="font-semibold text-zinc-900 dark:text-white">
+            <div class="font-semibold text-foreground">
               <T key="timetable.export_pdf" fallback="Export as PDF" />
             </div>
-            <div class="text-sm text-zinc-500 dark:text-zinc-400">
+            <div class="text-sm text-muted-foreground">
               <T key="timetable.pdf_description" fallback="Portable document format" />
             </div>
           </div>
@@ -82,10 +82,10 @@
             <Icon src={CalendarDays} class="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div class="flex-1">
-            <div class="font-semibold text-zinc-900 dark:text-white">
+            <div class="font-semibold text-foreground">
               <T key="timetable.export_ical" fallback="Export as iCal" />
             </div>
-            <div class="text-sm text-zinc-500 dark:text-zinc-400">
+            <div class="text-sm text-muted-foreground">
               <T key="timetable.ical_description" fallback="Calendar (.ics) format" />
             </div>
           </div>

@@ -60,9 +60,9 @@
 
 {#if editor}
   <div
-    class="bubble-menu-content flex items-center bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg p-1">
+    class="bubble-menu-content flex items-center bg-card border border-border rounded-lg shadow-lg p-1">
     <button
-      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-muted-foreground {isActive(
         'bold',
       )
         ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
@@ -73,7 +73,7 @@
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-muted-foreground {isActive(
         'italic',
       )
         ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
@@ -84,7 +84,7 @@
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-muted-foreground {isActive(
         'strike',
       )
         ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
@@ -95,7 +95,7 @@
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-muted-foreground {isActive(
         'code',
       )
         ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
@@ -108,7 +108,7 @@
     <div class="w-px h-6 bg-zinc-300 dark:bg-zinc-600 mx-1"></div>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {isActive(
+      class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-muted-foreground {isActive(
         'link',
       )
         ? 'bg-zinc-100 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'

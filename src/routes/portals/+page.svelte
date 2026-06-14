@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { openUrl } from '@tauri-apps/plugin-opener';
   import { platformStore } from '$lib/stores/platform';
   import { Icon } from 'svelte-hero-icons';
 
   let isMobile = $derived($platformStore.isMobile);
-  import { GlobeAlt, ExclamationTriangle } from 'svelte-hero-icons';
+  import { GlobeAlt, ExclamationTriangle, ArrowTopRightOnSquare } from 'svelte-hero-icons';
   import { seqtaFetch } from '../../utils/netUtil';
   import { fade, fly } from 'svelte/transition';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
@@ -126,13 +127,22 @@
   }
 
   async function handlePortalClick(portal: Portal) {
-    console.log('Portal clicked:', portal);
+    // If the portal is a plain external URL, open it in the OS default browser
+    // (the original modal preview never showed cross-origin content properly).
+    if (portal.url && /^https?:\/\//i.test(portal.url)) {
+      try {
+        await openUrl(portal.url);
+        return;
+      } catch (e) {
+        // Fall through to the modal preview path on opener failure.
+        console.error('openUrl failed for portal', portal.url, e);
+      }
+    }
     selectedPortal = portal;
     loadingContent = true;
     showPortalModal = true;
     portalContent = null;
     parsedPortalDocument = null;
-    console.log('Modal should be showing:', showPortalModal);
 
     try {
       console.log('Fetching portal content for ID:', portal.uuid);
@@ -183,7 +193,7 @@
                 } else {
                   portalContent = {
                     contents:
-                      '<div class="text-center py-8"><p class="text-zinc-600 dark:text-zinc-400">No content available for this portal.</p></div>',
+                      '<div class="text-center py-8"><p class="text-muted-foreground">No content available for this portal.</p></div>',
                     is_power_portal: portal.is_power_portal,
                     inherit_styles: portal.inherit_styles,
                   };
@@ -192,7 +202,7 @@
                 console.error('Error parsing power portal content:', e);
                 portalContent = {
                   contents:
-                    '<div class="text-center py-8"><p class="text-zinc-600 dark:text-zinc-400">Error parsing portal content.</p></div>',
+                    '<div class="text-center py-8"><p class="text-muted-foreground">Error parsing portal content.</p></div>',
                   is_power_portal: portal.is_power_portal,
                   inherit_styles: portal.inherit_styles,
                 };
@@ -252,17 +262,18 @@
   }
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
-  <div class="flex justify-between items-start">
-    <div>
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
-        <T key="navigation.portals" fallback="Portals" />
-      </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
-        <T key="portals.description" fallback="Access external portals and resources" />
-      </p>
-    </div>
-  </div>
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6">
+  <header class="flex flex-col gap-1.5">
+    <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+      Resources
+    </p>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+      <T key="navigation.portals" fallback="Portals" />
+    </h1>
+    <p class="text-sm text-muted-foreground max-w-2xl">
+      <T key="portals.description" fallback="Access external portals and resources" />
+    </p>
+  </header>
 
   {#if loading}
     <div class="flex justify-center items-center py-12 animate-fade-in">
@@ -270,7 +281,7 @@
         <div
           class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-indigo-500/30 border-t-indigo-500">
         </div>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
+        <p class="text-sm text-muted-foreground sm:text-base">
           <T key="portals.loading" fallback="Loading portals..." />
         </p>
       </div>
@@ -278,7 +289,7 @@
   {:else if error}
     <div class="space-y-6">
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-red-50/80 dark:bg-red-900/20 sm:rounded-2xl border-red-200/50 dark:border-red-800/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl transition-all duration-300 bg-red-50/80 dark:bg-red-900/20 sm:rounded-2xl border-red-200/50 dark:border-red-800/50 animate-fade-in-up">
         <div class="p-4">
           <div class="flex flex-col items-center justify-center py-12 text-center">
             <Icon src={ExclamationTriangle} class="w-16 h-16 text-red-500 mb-4" />
@@ -300,14 +311,14 @@
   {:else if portals.length === 0}
     <div class="space-y-6">
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 animate-fade-in-up">
         <div class="p-4">
           <div class="flex flex-col items-center justify-center py-12 text-center">
             <Icon src={GlobeAlt} class="w-16 h-16 text-zinc-400 dark:text-zinc-500 mb-4" />
-            <h3 class="text-lg font-medium text-zinc-900 dark:text-white mb-2">
+            <h3 class="text-lg font-medium text-foreground mb-2">
               <T key="portals.no_portals_title" fallback="No Portals Available" />
             </h3>
-            <p class="text-zinc-600 dark:text-zinc-400 max-w-md">
+            <p class="text-muted-foreground max-w-md">
               <T
                 key="portals.no_portals_description"
                 fallback="There are currently no portals configured for your account." />
@@ -320,13 +331,13 @@
     <div class="space-y-6">
       <!-- Portals Grid -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 animate-fade-in-up">
+        class="overflow-hidden rounded-xl border shadow-xl transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 animate-fade-in-up">
         <div class="px-4 py-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
-          <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+          <h2 class="text-lg font-semibold text-foreground">
             <T key="portals.available_portals" fallback="Available Portals" />
           </h2>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400">
-            <T key="portals.click_to_open" fallback="Click on any portal to open it in a new tab" />
+          <p class="text-sm text-muted-foreground">
+            <T key="portals.click_to_open" fallback="Click a portal to open it in your default browser." />
           </p>
         </div>
         <div class="p-4">
@@ -334,9 +345,16 @@
             {#key portals.length + portals.map((p) => p.uuid).join(',')}
               {#each portals as portal, i (portal.uuid)}
                 <button
-                  class="group relative p-4 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/30 backdrop-blur-xs transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 cursor-pointer portal-card-animate"
+                  class="group relative p-4 rounded-xl border border-border bg-white/50 dark:bg-zinc-800/30 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 cursor-pointer portal-card-animate"
                   style="animation-delay: {i * 50}ms;"
                   onclick={() => handlePortalClick(portal)}>
+                  <!-- External-link affordance — sits top-right so users see at a
+                       glance that clicking opens the URL externally. -->
+                  {#if portal.url && /^https?:\/\//i.test(portal.url)}
+                    <Icon
+                      src={ArrowTopRightOnSquare}
+                      class="absolute top-2 right-2 w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  {/if}
                   <!-- Portal Icon -->
                   <div class="flex justify-center mb-4">
                     <div
@@ -349,7 +367,7 @@
                   <!-- Portal Info -->
                   <div class="text-center">
                     <h3
-                      class="font-semibold text-zinc-900 dark:text-white mb-1 group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors">
+                      class="font-semibold text-foreground mb-1 group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors">
                       {portal.label}
                     </h3>
 
@@ -388,26 +406,26 @@
   {#if loadingContent}
     <div class="flex items-center justify-center py-12">
       <LoadingSpinner />
-      <span class="ml-3 text-zinc-600 dark:text-zinc-400">
+      <span class="ml-3 text-muted-foreground">
         <T key="portals.loading_content" fallback="Loading portal content..." />
       </span>
     </div>
   {:else if parsedPortalDocument?.document?.modules}
     <div
-      class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
+      class="bg-card rounded-lg border border-border overflow-hidden max-h-[75vh] overflow-y-auto">
       <div class="p-6">
         <ModuleList modules={parsedPortalDocument.document.modules} filterByParentModule={true} />
       </div>
     </div>
   {:else if portalContent}
     <div
-      class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-[75vh] overflow-y-auto">
+      class="bg-card rounded-lg border border-border overflow-hidden max-h-[75vh] overflow-y-auto">
       <div class="p-4">
         {#if portalContent.contents}
           {@html sanitizeHtml(portalContent.contents)}
         {:else}
           <div class="text-center py-8">
-            <p class="text-zinc-600 dark:text-zinc-400">
+            <p class="text-muted-foreground">
               <T key="portals.no_content" fallback="No content available for this portal." />
             </p>
           </div>
@@ -417,7 +435,7 @@
   {:else}
     <div class="text-center py-12">
       <div class="w-12 h-12 text-zinc-400 mx-auto mb-4">⚠️</div>
-      <p class="text-zinc-600 dark:text-zinc-400">
+      <p class="text-muted-foreground">
         <T key="portals.failed_to_load_content" fallback="Failed to load portal content" />
       </p>
     </div>

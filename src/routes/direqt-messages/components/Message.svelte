@@ -217,7 +217,7 @@
       <div
         class={embedded
           ? ''
-          : 'overflow-hidden rounded-xl border shadow-lg backdrop-blur-xs border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/40'}>
+          : 'overflow-hidden rounded-xl border shadow-lg border-zinc-300/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/40'}>
         <div
           class={embedded
             ? 'px-6 sm:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8'
@@ -226,11 +226,11 @@
             <!-- Article-style header for RSS -->
             <header class="space-y-5">
               <h1
-                class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white leading-tight tracking-tight">
+                class="text-2xl sm:text-2xl font-medium text-foreground sm:text-3xl leading-tight tracking-tight">
                 {selectedMessage.subject}
               </h1>
               <div
-                class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                 <span class="font-medium text-zinc-600 dark:text-zinc-300"
                   >{selectedMessage.sender}</span>
                 <span class="text-zinc-400 dark:text-zinc-500" aria-hidden="true">·</span>
@@ -242,7 +242,7 @@
             </header>
           {:else}
             <div
-              class="mb-3 text-xl font-bold text-zinc-900 dark:text-white sm:text-2xl leading-tight">
+              class="mb-3 text-xl font-bold text-foreground sm:text-2xl leading-tight">
               {selectedMessage.subject}
             </div>
 
@@ -264,12 +264,12 @@
                   {/if}
                 </div>
                 <div class="space-y-1">
-                  <div class="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
+                  <div class="text-sm sm:text-base text-muted-foreground">
                     <span class="font-medium text-zinc-700 dark:text-zinc-200"
                       >{selectedMessage.sender}</span>
                   </div>
-                  <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-                    To: <span class="font-medium text-zinc-700 dark:text-zinc-300"
+                  <div class="text-xs sm:text-sm text-muted-foreground">
+                    To: <span class="font-medium text-foreground"
                       >{selectedMessage.to}</span>
                   </div>
                 </div>
@@ -376,8 +376,8 @@
             {#if selectedMessage.files && selectedMessage.files.length > 0}
               <div class="mb-4 pb-4 border-b border-zinc-300/50 dark:border-zinc-800/50">
                 <div class="flex items-center gap-2 mb-3">
-                  <Icon src={PaperClip} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-                  <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <Icon src={PaperClip} class="w-5 h-5 text-muted-foreground" />
+                  <span class="text-sm font-semibold text-foreground">
                     Attachments ({selectedMessage.files.length})
                   </span>
                 </div>
@@ -395,7 +395,7 @@
                         <div class="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
                           {file.filename}
                         </div>
-                        <div class="text-xs text-zinc-600 dark:text-zinc-400">
+                        <div class="text-xs text-muted-foreground">
                           {formatFileSize(file.size)} • {file.mimetype}
                         </div>
                       </div>
@@ -415,7 +415,7 @@
     </div>
   {:else}
     <div
-      class="flex flex-col justify-center items-center h-full text-center text-zinc-600 dark:text-zinc-400">
+      class="flex flex-col justify-center items-center h-full text-center text-muted-foreground">
       <div
         class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-accent/10 text-accent-600 dark:text-accent-400 text-2xl sm:text-3xl">
         <svg

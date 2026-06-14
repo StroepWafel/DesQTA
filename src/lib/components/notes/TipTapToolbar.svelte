@@ -315,19 +315,19 @@
     <!-- Block Type Dropdown -->
     <div class="relative dropdown-container">
       <button
-        class="flex items-center space-x-1 px-3 py-1.5 text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors {showBlockTypeDropdown
+        class="flex items-center space-x-1 px-3 py-1.5 text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-card hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors {showBlockTypeDropdown
           ? 'bg-zinc-100 dark:bg-zinc-700'
           : ''}"
         on:click={() => (showBlockTypeDropdown = !showBlockTypeDropdown)}
         disabled={readonly}
         title="Change block type">
-        <span class="text-zinc-700 dark:text-zinc-300">{currentBlockType}</span>
+        <span class="text-foreground">{currentBlockType}</span>
         <Icon src={ChevronDown} class="w-4 h-4 text-zinc-500" />
       </button>
 
       {#if showBlockTypeDropdown}
         <div
-          class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-10">
+          class="absolute top-full left-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-lg z-10">
           {#each blockTypes as blockType}
             {#if blockType.id === 'separator'}
               <div class="h-px bg-zinc-200 dark:bg-zinc-700 my-1"></div>
@@ -343,7 +343,7 @@
                 {:else}
                   <Icon src={blockType.icon} class="w-5 h-5 text-zinc-500" />
                 {/if}
-                <span class="flex-1 text-zinc-700 dark:text-zinc-300">{blockType.label}</span>
+                <span class="flex-1 text-foreground">{blockType.label}</span>
                 {#if blockType.shortcut}
                   <span class="text-xs text-zinc-500">{blockType.shortcut}</span>
                 {/if}
@@ -361,7 +361,7 @@
     <button
       class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isBoldActive
         ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
-        : 'text-zinc-600 dark:text-zinc-400'}"
+        : 'text-muted-foreground'}"
       on:click={toggleBold}
       disabled={readonly}
       title="Bold (Ctrl+B)">
@@ -371,7 +371,7 @@
     <button
       class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isItalicActive
         ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
-        : 'text-zinc-600 dark:text-zinc-400'}"
+        : 'text-muted-foreground'}"
       on:click={toggleItalic}
       disabled={readonly}
       title="Italic (Ctrl+I)">
@@ -381,7 +381,7 @@
     <button
       class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isUnderlineActive
         ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
-        : 'text-zinc-600 dark:text-zinc-400'}"
+        : 'text-muted-foreground'}"
       on:click={toggleUnderline}
       disabled={readonly}
       title="Underline (Ctrl+U)">
@@ -391,7 +391,7 @@
     <button
       class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isStrikeActive
         ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
-        : 'text-zinc-600 dark:text-zinc-400'}"
+        : 'text-muted-foreground'}"
       on:click={toggleStrikethrough}
       disabled={readonly}
       title="Strikethrough">
@@ -401,7 +401,7 @@
     <button
       class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors {isCodeActive
         ? 'bg-zinc-200 dark:bg-zinc-700 text-blue-600 dark:text-blue-400'
-        : 'text-zinc-600 dark:text-zinc-400'}"
+        : 'text-muted-foreground'}"
       on:click={toggleCode}
       disabled={readonly}
       title="Inline Code">
@@ -414,7 +414,7 @@
     <!-- SEQTA Mentions Dropdown -->
     <div class="relative dropdown-container">
       <button
-        class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {showMentionsDropdown
+        class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-muted-foreground {showMentionsDropdown
           ? 'bg-zinc-200 dark:bg-zinc-700'
           : ''}"
         on:click={() => (showMentionsDropdown = !showMentionsDropdown)}
@@ -425,12 +425,12 @@
 
       {#if showMentionsDropdown}
         <div
-          class="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
+          class="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
           <button
-            class="w-full flex items-center space-x-2 px-3 py-2 text-sm text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700"
+            class="w-full flex items-center space-x-2 px-3 py-2 text-sm text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors border-b border-border"
             on:click={() => insertMention()}>
             <Icon src={AtSymbol} class="w-5 h-5 text-zinc-500" />
-            <span class="flex-1 text-zinc-700 dark:text-zinc-300">Search All...</span>
+            <span class="flex-1 text-foreground">Search All...</span>
           </button>
           <div class="h-px bg-zinc-200 dark:bg-zinc-700 my-1"></div>
           {#each mentionTypes as mentionType}
@@ -438,7 +438,7 @@
               class="w-full flex items-center space-x-2 px-3 py-2 text-sm text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
               on:click={() => insertMention(mentionType.id)}>
               <Icon src={mentionType.icon} class="w-5 h-5 text-zinc-500" />
-              <span class="flex-1 text-zinc-700 dark:text-zinc-300">{mentionType.label}</span>
+              <span class="flex-1 text-foreground">{mentionType.label}</span>
             </button>
           {/each}
         </div>
@@ -447,7 +447,7 @@
 
     <!-- Insert Tools -->
     <button
-      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400"
+      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-muted-foreground"
       on:click={insertLink}
       disabled={readonly}
       title="Insert Link">
@@ -455,7 +455,7 @@
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400"
+      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-muted-foreground"
       on:click={insertImage}
       disabled={readonly}
       title="Insert Image">
@@ -463,7 +463,7 @@
     </button>
 
     <button
-      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400"
+      class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-muted-foreground"
       on:click={insertTable}
       disabled={readonly}
       title="Insert Table">
@@ -473,7 +473,7 @@
     <!-- More Tools Dropdown -->
     <div class="relative dropdown-container">
       <button
-        class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 {showMoreDropdown
+        class="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-muted-foreground {showMoreDropdown
           ? 'bg-zinc-200 dark:bg-zinc-700'
           : ''}"
         on:click={() => (showMoreDropdown = !showMoreDropdown)}
@@ -484,14 +484,14 @@
 
       {#if showMoreDropdown}
         <div
-          class="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-10">
+          class="absolute top-full right-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-lg z-10">
           <button
             class="w-full flex items-center space-x-2 px-3 py-2 text-sm text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
             on:click={() => {
               editor?.commands.undo();
               showMoreDropdown = false;
             }}>
-            <span class="text-zinc-700 dark:text-zinc-300">Undo</span>
+            <span class="text-foreground">Undo</span>
             <span class="ml-auto text-xs text-zinc-500">Ctrl+Z</span>
           </button>
           <button
@@ -500,7 +500,7 @@
               editor?.commands.redo();
               showMoreDropdown = false;
             }}>
-            <span class="text-zinc-700 dark:text-zinc-300">Redo</span>
+            <span class="text-foreground">Redo</span>
             <span class="ml-auto text-xs text-zinc-500">Ctrl+Y</span>
           </button>
           <div class="h-px bg-zinc-200 dark:bg-zinc-700 my-1"></div>
@@ -510,7 +510,7 @@
               editor?.commands.selectAll();
               showMoreDropdown = false;
             }}>
-            <span class="text-zinc-700 dark:text-zinc-300">Select All</span>
+            <span class="text-foreground">Select All</span>
             <span class="ml-auto text-xs text-zinc-500">Ctrl+A</span>
           </button>
         </div>
@@ -520,7 +520,7 @@
 
   <!-- Right side: Save button -->
   <div class="flex items-center space-x-2">
-    <span class="text-xs text-zinc-500 dark:text-zinc-400">
+    <span class="text-xs text-muted-foreground">
       Type <kbd class="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded text-xs">@</kbd> for SEQTA mentions
     </span>
 

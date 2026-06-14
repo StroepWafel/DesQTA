@@ -193,12 +193,12 @@
   <div
     bind:this={menuElement}
     use:portalAction
-    class="fixed z-50 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-2 min-w-48"
+    class="fixed z-50 bg-card border border-border rounded-lg shadow-lg py-2 min-w-48"
     style="left: {adjustedX}px; top: {adjustedY}px; pointer-events: auto;">
     {#if !isInTable}
       <!-- Text Formatting Options -->
       <div
-        class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide border-b border-zinc-100 dark:border-zinc-700 mb-1">
+        class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-zinc-100 dark:border-zinc-700 mb-1">
         Format Text
       </div>
 
@@ -291,7 +291,7 @@
 
       <!-- Insert Options -->
       <div
-        class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+        class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         Insert
       </div>
 
@@ -304,7 +304,7 @@
     {:else}
       <!-- Table-specific options -->
       <div
-        class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide border-b border-zinc-100 dark:border-zinc-700 mb-1">
+        class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-zinc-100 dark:border-zinc-700 mb-1">
         Table Options
       </div>
 
@@ -398,7 +398,7 @@
 
       <!-- Text Formatting (available in table too) -->
       <div
-        class="px-2 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+        class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         Format Text
       </div>
 

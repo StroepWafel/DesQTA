@@ -101,11 +101,11 @@
 {#if aiIntegrationsEnabled && gradeAnalyserEnabled && currentView === showInView}
   {#if aiIntegrationsEnabled && gradeAnalyserEnabled}
     <div
-      class="flex flex-col gap-4 p-4 rounded-xl border backdrop-blur-xs bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200/50 dark:border-purple-700/50">
+      class="flex flex-col gap-4 p-4 rounded-xl border bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200/50 dark:border-purple-700/50">
       <div class="flex justify-between items-center">
         <div>
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">AI Grade Predictions</h3>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400">
+          <h3 class="text-lg font-semibold text-foreground">AI Grade Predictions</h3>
+          <p class="text-sm text-muted-foreground">
             Generate AI-powered grade predictions for {selectedYear} based on your assessment performance
           </p>
         </div>
@@ -147,19 +147,19 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {#each Array.from(gradePredictions.entries()) as [subject, prediction]}
             <div
-              class="p-3 rounded-lg bg-white/80 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 relative group transition-all duration-200 hover:scale-[1.02] cursor-pointer">
+              class="p-3 rounded-lg bg-white/80 dark:bg-zinc-800/50 border border-border relative group transition-all duration-200 hover:scale-[1.02] cursor-pointer">
               <div class="flex justify-between items-center">
-                <span class="text-sm font-medium text-zinc-900 dark:text-white truncate"
+                <span class="text-sm font-medium text-foreground truncate"
                   >{subject}</span>
                 <div class="text-right">
                   <div class="text-lg font-bold {getPredictedGradeDisplay(subject)?.colorClass}">
                     {getPredictedGradeDisplay(subject)?.grade}%
                   </div>
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400">Predicted</div>
+                  <div class="text-xs text-muted-foreground">Predicted</div>
                 </div>
               </div>
               <div class="flex justify-between items-center mt-1">
-                <span class="text-xs text-zinc-500 dark:text-zinc-400">
+                <span class="text-xs text-muted-foreground">
                   Confidence: {getPredictedGradeDisplay(subject)?.confidence}%
                 </span>
               </div>

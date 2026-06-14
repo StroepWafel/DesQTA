@@ -233,14 +233,14 @@
   {#if currentView === 'browser'}
     <!-- Browser View Header -->
     <div
-      class="shrink-0 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden mb-6"
+      class="shrink-0 bg-card rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden mb-6"
       in:fly={{ y: -20, duration: 300, easing: quintOut }}>
       <div
         class="px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <!-- Left side: Title and Create Buttons -->
           <div class="flex items-center gap-4">
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">Notes</h2>
+            <h2 class="text-lg font-semibold text-foreground">Notes</h2>
             <button
               class="px-4 py-2 rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium"
               on:click={async () => {
@@ -263,7 +263,7 @@
             <!-- Search -->
             <div class="relative">
               <input
-                class="w-64 pl-9 pr-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90"
+                class="w-64 pl-9 pr-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 border border-border text-foreground placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90"
                 placeholder="Search notes..."
                 bind:value={searchQuery} />
               <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400">
@@ -277,7 +277,7 @@
   {:else}
     <!-- Editor View Header -->
     <div
-      class="shrink-0 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden mb-6"
+      class="shrink-0 bg-card rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden mb-6"
       in:fly={{ y: -20, duration: 300, easing: quintOut }}>
       <div class="px-6 py-4 bg-white/50 dark:bg-zinc-900/30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -288,13 +288,13 @@
               on:click={goBackToBrowser}>
               <Icon src={ChevronLeft} class="w-4 h-4" />
             </button>
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+            <h2 class="text-lg font-semibold text-foreground">
               {selectedNote?.title || 'Untitled Note'}
             </h2>
           </div>
 
           <!-- Right side: Note metadata and status -->
-          <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <div class="flex items-center gap-4 text-sm text-muted-foreground">
             {#if selectedNote}
               <span>{selectedNote.metadata.word_count} words</span>
               <span>•</span>
@@ -310,7 +310,7 @@
             {/if}
 
             {#if isSaving}
-              <span class="text-zinc-500 dark:text-zinc-400">Saving...</span>
+              <span class="text-muted-foreground">Saving...</span>
             {/if}
           </div>
         </div>
@@ -323,7 +323,7 @@
     {#if currentView === 'browser'}
       <!-- Browser View: Fullscreen File Explorer -->
       <div
-        class="h-full backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden">
+        class="h-full bg-card rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden">
         <NotesFileExplorer
           bind:this={notesFileExplorer}
           selectedNoteId={selectedNote?.id}
@@ -338,7 +338,7 @@
     {:else}
       <!-- Editor View: Fullscreen Editor -->
       <div
-        class="h-full backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col"
+        class="h-full bg-card rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col"
         in:fly={{ x: 50, duration: 400, easing: quintOut }}>
         {#if loading}
           <div class="flex-1 flex items-center justify-center">
@@ -367,10 +367,10 @@
               <Icon
                 src={FolderOpen}
                 class="w-16 h-16 mx-auto mb-4 text-zinc-300 dark:text-zinc-600" />
-              <h3 class="text-lg font-medium text-zinc-900 dark:text-white mb-2">
+              <h3 class="text-lg font-medium text-foreground mb-2">
                 No note selected
               </h3>
-              <p class="text-zinc-500 dark:text-zinc-400 mb-4">
+              <p class="text-muted-foreground mb-4">
                 Go back to the browser to select a note
               </p>
               <button

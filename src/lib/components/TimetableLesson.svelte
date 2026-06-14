@@ -28,19 +28,19 @@
 
 <button
   type="button"
-  class="lesson-block flex flex-col justify-start p-2 bg-white/95 backdrop-blur-xs rounded-xl border-l-4 shadow-lg hover:shadow-xl transition-all duration-200 dark:bg-zinc-800/95 group cursor-pointer select-none h-full w-full text-left"
-  style="border-color: {lesson.colour}; min-height: 54px;"
+  class="lesson-block flex flex-col justify-start p-2 bg-card text-card-foreground rounded-lg border border-border-subtle border-l-[3px] hover:border-border-strong transition-colors duration-150 group cursor-pointer select-none h-full w-full text-left"
+  style="border-left-color: {lesson.colour}; min-height: 54px;"
   class:expanded
   onclick={handleClick}
   aria-label="Lesson: {lesson.description} from {lesson.from} to {lesson.until}">
   <!-- Subject and Time Header -->
   <div class="flex justify-between items-center mb-0.5">
     <h3
-      class="text-sm font-bold text-zinc-900 dark:text-white break-words whitespace-normal flex-1 mr-2">
+      class="text-sm font-bold text-foreground break-words whitespace-normal flex-1 mr-2">
       {lesson.description}
     </h3>
     {#if !overlap}
-      <span class="text-xs font-mono font-semibold text-zinc-700 dark:text-zinc-300">
+      <span class="text-xs font-mono font-semibold text-foreground nums-tabular">
         {lesson.from} - {lesson.until}
       </span>
     {/if}
@@ -49,12 +49,12 @@
   <!-- Teacher and Room: always visible -->
   <div class="flex flex-col gap-0.5 mb-0.5">
     {#if lesson.staff}
-      <span class="text-xs text-zinc-600 dark:text-zinc-400 break-words whitespace-normal">
+      <span class="text-xs text-muted-foreground break-words whitespace-normal">
         {lesson.staff}
       </span>
     {/if}
     {#if lesson.room}
-      <span class="text-xs text-zinc-600 dark:text-zinc-400 break-words whitespace-normal">
+      <span class="text-xs text-muted-foreground break-words whitespace-normal">
         Room {lesson.room}
       </span>
     {/if}
@@ -62,7 +62,7 @@
 
   <!-- Attendance: hidden by default, shown on hover/click -->
   {#if lesson.attendanceTitle && lesson.attendanceTitle.trim()}
-    <div class="attendance-details mt-1 border-t border-zinc-200 dark:border-zinc-700 pt-1">
+    <div class="attendance-details mt-1 border-t border-border pt-1">
       <span class="text-xs italic text-amber-600 dark:text-amber-400 truncate">
         {lesson.attendanceTitle}
       </span>

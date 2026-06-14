@@ -323,44 +323,14 @@ fn init_schema(conn: &Connection) -> SqlResult<()> {
         [],
     )?;
 
-    // Widget layouts table: stores dashboard widget configurations
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS widget_layouts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            widget_id TEXT NOT NULL,
-            widget_type TEXT NOT NULL,
-            position_x INTEGER NOT NULL,
-            position_y INTEGER NOT NULL,
-            position_w INTEGER NOT NULL,
-            position_h INTEGER NOT NULL,
-            position_min_w INTEGER,
-            position_min_h INTEGER,
-            position_max_w INTEGER,
-            position_max_h INTEGER,
-            enabled INTEGER NOT NULL DEFAULT 1,
-            settings TEXT,
-            title TEXT,
-            layout_version INTEGER NOT NULL DEFAULT 1,
-            last_modified INTEGER NOT NULL,
-            UNIQUE(widget_id, layout_version)
-        )",
-        [],
-    )?;
-
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_widget_layouts_widget_id ON widget_layouts(widget_id)",
-        [],
-    )?;
-
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_widget_layouts_type ON widget_layouts(widget_type)",
-        [],
-    )?;
-
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_widget_layouts_version ON widget_layouts(layout_version)",
-        [],
-    )?;
+    // Drop the legacy widget_layouts table: dashboard widget layouts are persisted
+    // as a JSON blob in settings.dashboard_widgets_layout. The fully-typed
+    // widget_layouts table was created but never read or written; dropping it
+    // (and its indexes) keeps the schema honest. Safe to run repeatedly.
+    conn.execute("DROP INDEX IF EXISTS idx_widget_layouts_widget_id", [])?;
+    conn.execute("DROP INDEX IF EXISTS idx_widget_layouts_type", [])?;
+    conn.execute("DROP INDEX IF EXISTS idx_widget_layouts_version", [])?;
+    conn.execute("DROP TABLE IF EXISTS widget_layouts", [])?;
 
     // Clean up expired cache entries
     cleanup_expired_cache(conn)?;

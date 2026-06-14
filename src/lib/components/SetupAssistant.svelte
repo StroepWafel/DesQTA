@@ -93,7 +93,7 @@
     <button
       type="button"
       onclick={skipSetup}
-      class="min-h-[44px] px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-all duration-200 rounded-lg hover:bg-white/50 dark:hover:bg-zinc-800/50">
+      class="min-h-[44px] px-4 py-2 text-sm font-medium text-muted-foreground hover:text-zinc-900 dark:hover:text-zinc-200 transition-all duration-200 rounded-lg hover:bg-white/50 dark:hover:bg-zinc-800/50">
       <T key="setup_assistant.skip" fallback="Skip" />
     </button>
   </div>
@@ -131,7 +131,7 @@
               alt=""
               class="w-20 h-20 mx-auto invert dark:invert-0 opacity-90" />
           </div>
-          <h1 class="text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-white mb-4">
+          <h1 class="text-4xl sm:text-5xl font-bold text-foreground mb-4">
             <T key="setup_assistant.welcome_title" fallback="Welcome to DesQTA" />
           </h1>
           <p class="text-lg sm:text-xl text-zinc-600 dark:text-zinc-300 leading-relaxed mb-10">
@@ -158,14 +158,14 @@
           out:fade={{ duration: 200, easing: cubicInOut }}>
           <div class="flex justify-center mb-6">
             <div
-              class="p-4 rounded-2xl bg-white/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50">
+              class="p-4 rounded-2xl bg-white/50 dark:bg-zinc-800/50 border border-border">
               <Icon src={GlobeAlt} class="w-12 h-12 text-[var(--accent)]" />
             </div>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white text-center mb-3">
+          <h2 class="text-2xl sm:text-2xl font-medium text-foreground sm:text-3xl text-center mb-3">
             <T key="setup_assistant.language_title" fallback="Choose your language" />
           </h2>
-          <p class="text-zinc-600 dark:text-zinc-400 text-center mb-8">
+          <p class="text-muted-foreground text-center mb-8">
             <T
               key="setup_assistant.language_subtitle"
               fallback="Select your preferred language for the app." />
@@ -177,7 +177,7 @@
             <button
               type="button"
               onclick={prevStep}
-              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200">
+              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-muted-foreground hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200">
               <T key="common.back" fallback="Back" />
             </button>
             <button
@@ -200,14 +200,14 @@
           out:fade={{ duration: 200, easing: cubicInOut }}>
           <div class="flex justify-center mb-6">
             <div
-              class="p-4 rounded-2xl bg-white/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50">
+              class="p-4 rounded-2xl bg-white/50 dark:bg-zinc-800/50 border border-border">
               <Icon src={QrCode} class="w-12 h-12 text-[var(--accent)]" />
             </div>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white text-center mb-3">
+          <h2 class="text-2xl sm:text-2xl font-medium text-foreground sm:text-3xl text-center mb-3">
             <T key="setup_assistant.login_title" fallback="How to sign in" />
           </h2>
-          <p class="text-zinc-600 dark:text-zinc-400 text-center mb-8">
+          <p class="text-muted-foreground text-center mb-8">
             {#if isMobile}
               <T
                 key="setup_assistant.login_mobile"
@@ -220,39 +220,39 @@
           </p>
           <div class="grid sm:grid-cols-3 gap-4 mb-10">
             <div
-              class="p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border border-zinc-200/50 dark:border-zinc-700/50 text-center">
+              class="p-4 rounded-xl bg-card border border-border text-center">
               <div class="flex justify-center mb-2">
                 <Icon src={QrCode} class="w-8 h-8 text-[var(--accent)]" />
               </div>
-              <p class="font-medium text-zinc-900 dark:text-white text-sm">
+              <p class="font-medium text-foreground text-sm">
                 <T key="setup_assistant.login_qr" fallback="QR Code" />
               </p>
-              <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              <p class="text-xs text-muted-foreground mt-1">
                 <T key="setup_assistant.login_qr_desc" fallback="Scan from SEQTA Learn" />
               </p>
             </div>
             {#if !isMobile}
               <div
-                class="p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border border-zinc-200/50 dark:border-zinc-700/50 text-center">
+                class="p-4 rounded-xl bg-card border border-border text-center">
                 <div class="flex justify-center mb-2">
                   <Icon src={GlobeAlt} class="w-8 h-8 text-[var(--accent)]" />
                 </div>
-                <p class="font-medium text-zinc-900 dark:text-white text-sm">
+                <p class="font-medium text-foreground text-sm">
                   <T key="setup_assistant.login_url" fallback="Manual URL" />
                 </p>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                <p class="text-xs text-muted-foreground mt-1">
                   <T key="setup_assistant.login_url_desc" fallback="Enter school URL" />
                 </p>
               </div>
               <div
-                class="p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border border-zinc-200/50 dark:border-zinc-700/50 text-center">
+                class="p-4 rounded-xl bg-card border border-border text-center">
                 <div class="flex justify-center mb-2">
                   <Icon src={ArrowRightOnRectangle} class="w-8 h-8 text-[var(--accent)]" />
                 </div>
-                <p class="font-medium text-zinc-900 dark:text-white text-sm">
+                <p class="font-medium text-foreground text-sm">
                   <T key="setup_assistant.login_direct" fallback="Direct Login" />
                 </p>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                <p class="text-xs text-muted-foreground mt-1">
                   <T key="setup_assistant.login_direct_desc" fallback="Username & password" />
                 </p>
               </div>
@@ -262,7 +262,7 @@
             <button
               type="button"
               onclick={prevStep}
-              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200">
+              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-muted-foreground hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200">
               <T key="common.back" fallback="Back" />
             </button>
             <button
@@ -289,10 +289,10 @@
               <Icon src={ArrowRightOnRectangle} class="w-10 h-10 text-[var(--accent)]" />
             </div>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+          <h2 class="text-2xl sm:text-2xl font-medium text-foreground sm:text-3xl mb-4">
             <T key="setup_assistant.ready_title" fallback="You're all set!" />
           </h2>
-          <p class="text-lg text-zinc-600 dark:text-zinc-400 mb-10">
+          <p class="text-lg text-muted-foreground mb-10">
             <T
               key="setup_assistant.ready_subtitle"
               fallback="Sign in to get started and explore your dashboard, study tools, and more." />

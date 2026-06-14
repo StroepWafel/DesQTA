@@ -421,34 +421,41 @@
           }
         }
 
-        // Fall back to finding by date if term/week/lesson didn't work
+        // Fall back to finding by date if term/week/lesson didn't work.
+        // Prefer the latest lesson on-or-before the target date; only fall back
+        // to the next future lesson if no past one exists.
         if (!targetLesson && date) {
-          let closest: {
+          const targetMs = new Date(date).getTime();
+          let latestPast: {
             termSchedule: TermSchedule | null;
             lesson: Lesson | null;
             lessonIndex: number;
-            diff: number;
-          } = {
-            termSchedule: null,
-            lesson: null,
-            lessonIndex: -1,
-            diff: Infinity,
-          };
-          const targetDate = new Date(date);
+            ms: number;
+          } = { termSchedule: null, lesson: null, lessonIndex: -1, ms: -Infinity };
+          let soonestFuture: {
+            termSchedule: TermSchedule | null;
+            lesson: Lesson | null;
+            lessonIndex: number;
+            ms: number;
+          } = { termSchedule: null, lesson: null, lessonIndex: -1, ms: Infinity };
           loadedPayload.d.forEach((termSchedule) => {
             termSchedule.l.forEach((lesson, lessonIndex) => {
-              const lessonDate = new Date(lesson.d);
-              const diff = Math.abs(lessonDate.getTime() - targetDate.getTime());
-              if (diff < closest.diff) {
-                closest = { termSchedule, lesson, lessonIndex, diff };
+              const ms = new Date(lesson.d).getTime();
+              if (ms <= targetMs) {
+                if (ms > latestPast.ms) {
+                  latestPast = { termSchedule, lesson, lessonIndex, ms };
+                }
+              } else if (ms < soonestFuture.ms) {
+                soonestFuture = { termSchedule, lesson, lessonIndex, ms };
               }
             });
           });
-          if (closest.lesson && closest.termSchedule) {
+          const chosen = latestPast.lesson ? latestPast : soonestFuture;
+          if (chosen.lesson && chosen.termSchedule) {
             targetLesson = {
-              termSchedule: closest.termSchedule,
-              lesson: closest.lesson,
-              lessonIndex: closest.lessonIndex,
+              termSchedule: chosen.termSchedule,
+              lesson: chosen.lesson,
+              lessonIndex: chosen.lessonIndex,
             };
           }
         }
@@ -537,37 +544,34 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6" in:fade={{ duration: 400 }}>
-  <!-- Page Header: dynamic title/description based on context, with back button -->
-  <div class="flex justify-between items-start shrink-0 gap-4">
+<div class="container mx-auto flex h-full w-full max-w-none flex-col gap-6 p-5 sm:p-8" in:fade={{ duration: 250 }}>
+  <header class="flex justify-between items-start shrink-0 gap-4">
     <div class="flex items-start gap-3 min-w-0 flex-1">
       {#if selectedSubject}
         <button
           onclick={() => {
-            if (showingOverview) {
-              selectedSubject = null;
-              selectedLesson = null;
-              selectedTermSchedule = null;
-              selectedLessonIndex = null;
-              selectedLessonContent = null;
-              selectedStandaloneContent = null;
-              showingOverview = true;
-            } else {
-              selectOverview();
-            }
+            // Always one-step back to the subjects list. Previously this had a
+            // two-step "lesson -> course overview -> subjects" flow which made
+            // users click twice to get out of a course.
+            selectedSubject = null;
+            selectedLesson = null;
+            selectedTermSchedule = null;
+            selectedLessonIndex = null;
+            selectedLessonContent = null;
+            selectedStandaloneContent = null;
+            showingOverview = true;
           }}
-          class="flex shrink-0 justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform theme-bg hover:accent-bg focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95"
-          title={showingOverview
-            ? $_('courses.back_to_subjects') || 'Back to subjects'
-            : $_('courses.back_to_overview') || 'Back to overview'}
-          aria-label={showingOverview
-            ? $_('courses.back_to_subjects') || 'Back to subjects'
-            : $_('courses.back_to_overview') || 'Back to overview'}>
-          <Icon src={ChevronLeft} class="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+          class="inline-flex shrink-0 justify-center items-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
+          title={$_('courses.back_to_subjects') || 'Back to subjects'}
+          aria-label={$_('courses.back_to_subjects') || 'Back to subjects'}>
+          <Icon src={ChevronLeft} class="w-5 h-5" />
         </button>
       {/if}
-      <div class="min-w-0">
-        <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white truncate">
+      <div class="min-w-0 flex flex-col gap-1.5">
+        <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+          {selectedSubject ? 'Course' : 'Learning'}
+        </p>
+        <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground truncate">
           {#if selectedSubject}
             {selectedSubject.title}
           {:else}
@@ -575,13 +579,13 @@
           {/if}
         </h1>
         {#if !selectedSubject}
-          <p class="text-zinc-600 dark:text-zinc-400">
+          <p class="text-sm text-muted-foreground max-w-2xl">
             <T key="courses.page_description" fallback="Browse courses and access lesson content" />
           </p>
         {/if}
       </div>
     </div>
-  </div>
+  </header>
 
   <!-- Main content: sidebar + content area -->
   <div class="flex overflow-hidden flex-1 min-h-0 gap-4 relative">
@@ -591,7 +595,7 @@
       class="fixed top-20 left-4 z-40 flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform theme-bg hover:accent-bg focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 shadow-lg"
       onclick={() => (sidebarOpen = !sidebarOpen)}
       aria-label={$_('navigation.toggle_sidebar') || 'Toggle sidebar'}>
-      <Icon src={sidebarOpen ? XMark : Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+      <Icon src={sidebarOpen ? XMark : Bars3} class="w-5 h-5 text-foreground" />
     </button>
   {/if}
 
@@ -610,9 +614,9 @@
   <!-- Unified Navigation Sidebar: card-style like study/directory; solid bg on mobile for visibility over transparent window -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
-    class="flex flex-col w-80 h-full rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 shadow-lg overflow-hidden transition-all duration-300 {isMobile
+    class="flex flex-col w-80 h-full rounded-xl border border-border shadow-lg overflow-hidden transition-all duration-300 {isMobile
       ? `fixed top-0 left-0 z-40 bg-white dark:bg-zinc-900 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
-      : 'bg-white/80 dark:bg-zinc-900/60'}"
+      : 'bg-card'}"
     role="region"
     aria-label="Course navigation"
     tabindex="-1"
@@ -620,7 +624,7 @@
     <!-- Navigation Header: only when subject list on mobile (for close button); when in course, no header -->
     {#if !selectedSubject && isMobile}
       <div
-        class="flex justify-end items-center p-4 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
+        class="flex justify-end items-center p-4 border-b border-border theme-bg">
         <button
           onclick={() => (sidebarOpen = false)}
           class="p-2 shrink-0 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-accent dark:hover:text-accent hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
@@ -640,7 +644,7 @@
           : 'opacity-0 -translate-x-full pointer-events-none'}">
         <div class="flex flex-col h-full">
           <!-- Search Bar -->
-          <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+          <div class="px-4 py-3 border-b border-border">
             <SearchInput
               bind:value={search}
               placeholder={$_('courses.search_subjects') || 'Search subjects...'}
@@ -702,7 +706,7 @@
 
               <!-- Other Folders -->
               {#if otherFolders.length > 0}
-                <div class="px-4 py-3 border-t border-zinc-200 dark:border-zinc-700">
+                <div class="px-4 py-3 border-t border-border">
                   <h3
                     class="px-2 py-1 text-sm font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                     <T key="courses.other_years" fallback="Other Years" />
@@ -711,7 +715,7 @@
                     {#each otherFolders.filter(folderMatches) as folder}
                       <div>
                         <button
-                          class="flex justify-between items-center px-4 py-3 w-full font-medium text-left text-zinc-700 rounded-lg border-l-4 border-transparent transition-all duration-200 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-accent/50"
+                          class="flex justify-between items-center px-4 py-3 w-full font-medium text-left text-zinc-700 rounded-lg border-l-4 border-transparent transition-all duration-200 dark:text-zinc-300 hover:surface-muted hover:border-accent/50"
                           onclick={() =>
                             (expandedFolders[folder.code] = !expandedFolders[folder.code])}>
                           <span>{folder.code}</span>
@@ -728,12 +732,12 @@
                                   class="subject-item-animate"
                                   style="animation-delay: {i * 50}ms;">
                                   <button
-                                    class="px-4 py-3 w-full text-sm text-left bg-zinc-50 rounded-lg border-l-4 border-transparent transition-all duration-200 transform dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-accent/50 hover:scale-[1.01]"
+                                    class="px-4 py-3 w-full text-sm text-left bg-zinc-50 rounded-lg border-l-4 border-transparent transition-all duration-200 transform dark:bg-zinc-800/50 hover:surface-muted hover:border-accent/50 hover:scale-[1.01]"
                                     onclick={() => selectSubject(subject)}>
                                     <div class="font-medium text-zinc-800 dark:text-zinc-200">
                                       {subject.title}
                                     </div>
-                                    <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                    <div class="mt-1 text-xs text-muted-foreground">
                                       {subject.code}
                                     </div>
                                   </button>
@@ -775,7 +779,7 @@
           {:else if coursePayload}
             <!-- Back to Courses Button (Mobile) -->
             {#if isMobile}
-              <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 theme-bg">
+              <div class="px-4 py-3 border-b border-border theme-bg">
                 <button
                   onclick={() => {
                     selectedSubject = null;
@@ -787,16 +791,16 @@
                     showingOverview = true;
                     sidebarOpen = false;
                   }}
-                  class="flex gap-2 items-center w-full px-4 py-2 text-left rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]">
-                  <Icon src={ChevronLeft} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-                  <span class="font-medium text-zinc-900 dark:text-white">
+                  class="flex gap-2 items-center w-full px-4 py-2 text-left rounded-lg border border-border bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]">
+                  <Icon src={ChevronLeft} class="w-5 h-5 text-muted-foreground" />
+                  <span class="font-medium text-foreground">
                     <T key="courses.back_to_subjects" fallback="Back to subjects" />
                   </span>
                 </button>
               </div>
             {/if}
             <!-- Quick Actions -->
-            <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+            <div class="px-4 py-3 border-b border-border">
               <div class="space-y-2">
                 <button
                   class="w-full px-4 py-3 text-left rounded-lg border transition-all duration-200 transform hover:scale-[1.01] {showingOverview
@@ -814,32 +818,45 @@
                   </div>
                 </button>
 
-                <!-- Jump to Today/Latest -->
+                <!-- Jump to Today / closest-past lesson / soonest future fallback -->
                 {#if coursePayload?.d && coursePayload.d.length > 0}
                   {@const jumpTarget = (() => {
                     const today = new Date();
                     const todayStr = today.toISOString().split('T')[0];
+                    const todayMs = new Date(todayStr).getTime();
 
+                    // First pass: exact today match
                     for (const termSchedule of coursePayload.d) {
                       for (let i = 0; i < termSchedule.l.length; i++) {
                         const lesson = termSchedule.l[i];
                         if (lesson.d === todayStr) {
-                          return { termSchedule, lesson, lessonIndex: i, type: 'today' };
+                          return { termSchedule, lesson, lessonIndex: i, type: 'today' as const };
                         }
                       }
                     }
 
-                    // Find latest lesson
-                    let latest = null;
+                    // Collect all and pick: latest past OR (fallback) soonest future.
+                    let latestPast: { termSchedule: any; lesson: any; lessonIndex: number } | null = null;
+                    let soonestFuture: { termSchedule: any; lesson: any; lessonIndex: number } | null = null;
                     for (const termSchedule of coursePayload.d) {
                       for (let i = 0; i < termSchedule.l.length; i++) {
                         const lesson = termSchedule.l[i];
-                        if (!latest || new Date(lesson.d) > new Date(latest.lesson.d)) {
-                          latest = { termSchedule, lesson, lessonIndex: i, type: 'latest' };
+                        const ms = new Date(lesson.d).getTime();
+                        if (ms <= todayMs) {
+                          if (!latestPast || ms > new Date(latestPast.lesson.d).getTime()) {
+                            latestPast = { termSchedule, lesson, lessonIndex: i };
+                          }
+                        } else {
+                          if (!soonestFuture || ms < new Date(soonestFuture.lesson.d).getTime()) {
+                            soonestFuture = { termSchedule, lesson, lessonIndex: i };
+                          }
                         }
                       }
                     }
-                    return latest;
+
+                    if (latestPast) return { ...latestPast, type: 'latest' as const };
+                    if (soonestFuture) return { ...soonestFuture, type: 'next' as const };
+                    return null;
                   })()}
 
                   {#if jumpTarget}
@@ -856,7 +873,9 @@
                         <Icon src={Clock} class="w-5 h-5" />
                         {jumpTarget.type === 'today'
                           ? $_('courses.todays_lesson') || "Today's Lesson"
-                          : $_('courses.latest_lesson') || 'Latest Lesson'}
+                          : jumpTarget.type === 'next'
+                            ? $_('courses.next_lesson') || 'Next Lesson'
+                            : $_('courses.latest_lesson') || 'Latest Lesson'}
                       </div>
                       <div class="mt-1 text-sm text-green-600 dark:text-green-400">
                         {jumpTarget.lesson.p}
@@ -873,8 +892,14 @@
               bind:this={lessonListScrollContainer}
               role="list">
               {#if coursePayload.d && Array.isArray(coursePayload.d) && coursePayload.d.length > 0}
-                <!-- Regular lessons -->
+                <!-- Regular lessons. Lessons within a term are sorted newest-first
+                     so May 21 appears above May 20. We preserve the original index
+                     because `coursePayload.w[termSchedule.n][lessonIndex]` is keyed
+                     by the original position. -->
                 {#each coursePayload.d as termSchedule}
+                  {@const sortedLessons = termSchedule.l
+                    .map((lesson, originalIndex) => ({ lesson, originalIndex }))
+                    .sort((a, b) => new Date(b.lesson.d).getTime() - new Date(a.lesson.d).getTime())}
                   <div>
                     <div
                       class="sticky top-0 px-4 py-3 text-sm font-semibold text-white border-b border-zinc-200 accent-bg dark:border-zinc-700">
@@ -883,25 +908,25 @@
                         fallback={`Term ${termSchedule.t} - Week ${termSchedule.w}`}
                         values={{ term: termSchedule.t, week: termSchedule.w }} />
                     </div>
-                    {#each termSchedule.l as lesson, lessonIndex}
+                    {#each sortedLessons as { lesson, originalIndex: lessonIndex }}
                       {@const isSelected = selectedLesson === lesson && !showingOverview}
                       {@const lessonContent = coursePayload?.w?.[termSchedule.n]?.[lessonIndex]}
                       {@const lessonTopic = lessonContent?.t}
                       <button
                         data-lesson-id="lesson-{termSchedule.n}-{lessonIndex}"
-                        class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
+                        class="w-full px-4 py-3 text-left hover:surface-muted border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
                           ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
                           : 'border-transparent hover:border-accent/50'}"
                         onclick={() => selectLesson(termSchedule, lesson, lessonIndex)}>
-                        <div class="font-semibold text-zinc-900 dark:text-white">
+                        <div class="font-semibold text-foreground">
                           {lesson.p}
                         </div>
                         {#if lessonTopic}
-                          <div class="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          <div class="mt-1 text-sm font-medium text-foreground">
                             {lessonTopic}
                           </div>
                         {/if}
-                        <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                        <div class="mt-1 text-sm text-muted-foreground">
                           {formatLessonDate(lesson.d, {
                             today: $_('courses.today') || 'Today',
                             tomorrow: $_('courses.tomorrow') || 'Tomorrow',
@@ -927,11 +952,11 @@
                       selectedStandaloneContent === contentItem && !showingOverview}
                     <button
                       data-lesson-id="lesson-standalone-{contentItem.i}"
-                      class="w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
+                      class="w-full px-4 py-3 text-left hover:surface-muted border-l-4 transition-all duration-200 transform hover:scale-[1.01] {isSelected
                         ? 'bg-zinc-100 dark:bg-zinc-800 border-accent'
                         : 'border-transparent hover:border-accent/50'}"
                       onclick={() => selectStandaloneContent(contentItem)}>
-                      <div class="font-semibold text-zinc-900 dark:text-white">
+                      <div class="font-semibold text-foreground">
                         {contentItem.t || 'Untitled'}
                       </div>
                       {#if contentItem.document}
@@ -952,7 +977,7 @@
 
   <!-- Main Content Area: card-style like study -->
   <div
-    class="overflow-y-auto flex-1 min-h-0 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg {isMobile ? 'w-full' : ''}"
+    class="overflow-y-auto flex-1 min-h-0 surface {isMobile ? 'w-full' : ''}"
     bind:this={contentScrollContainer}>
     {#if loadingCourse}
       <div class="flex justify-center items-center h-full">
@@ -1018,34 +1043,31 @@
 
   /* Headings styled with accent background and white text in dark mode */
   :global(.course-content h1) {
-    font-size: 1.875rem;
-    line-height: 2.25rem;
+    font-size: 1.5rem;
+    line-height: 2rem;
     font-weight: 700;
     color: var(--text-color);
-    padding: 1.5rem 1rem 0.75rem 1rem;
-    margin: 0 1rem 0.25rem 1rem;
+    padding: 0.75rem 0 0.25rem 0;
+    margin: 0;
     transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
     transition-duration: 200ms;
   }
 
   :global(.course-content h2) {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     line-height: 1.75rem;
     font-weight: 600;
     color: var(--text-color);
-    padding: 0.75rem 1rem;
-    margin: 0.5rem 1rem 0.5rem 1rem;
+    padding: 0.5rem 0;
+    margin: 0.25rem 0;
     transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
     transition-duration: 200ms;
   }
 
   :global(.course-content p) {
     color: var(--text-color);
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    line-height: 1.625;
+    padding: 0.25rem 0;
+    line-height: 1.5;
     transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
     transition-duration: 200ms;
   }
@@ -1053,7 +1075,7 @@
   /* dark mode inherits text-color via theming */
 
   :global(.course-content .section) {
-    margin: 1rem;
+    margin: 0.5rem 0;
     background-color: transparent;
     border-radius: 0.75rem;
     overflow: hidden;
@@ -1107,9 +1129,8 @@
   :global(.course-content .file-grid) {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
-    gap: 1rem;
-    padding: 1rem;
-    padding: 1rem;
+    gap: 0.5rem;
+    padding: 0.5rem;
   }
 
   @media (min-width: 768px) {

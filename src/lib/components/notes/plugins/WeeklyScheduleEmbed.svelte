@@ -78,26 +78,26 @@
     <div class="w-6 h-6 rounded-full border-2 border-zinc-300 border-t-blue-600 animate-spin"></div>
   </div>
 {:else if error}
-  <div class="text-sm text-zinc-500 dark:text-zinc-400">{error}</div>
+  <div class="text-sm text-muted-foreground">{error}</div>
 {:else if schedule.length === 0}
-  <div class="text-sm text-zinc-500 dark:text-zinc-400">No schedule available</div>
+  <div class="text-sm text-muted-foreground">No schedule available</div>
 {:else}
-  <div class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+  <div class="border border-border rounded-lg overflow-hidden">
     <!-- Header -->
     <button
-      class="w-full flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+      class="w-full flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 hover:surface-muted transition-colors"
       onclick={() => (expanded = !expanded)}
       type="button">
       <div class="flex items-center gap-2">
-        <span class="text-sm font-medium text-zinc-900 dark:text-white">Weekly Schedule</span>
-        <span class="text-xs text-zinc-500 dark:text-zinc-400">
+        <span class="text-sm font-medium text-foreground">Weekly Schedule</span>
+        <span class="text-xs text-muted-foreground">
           ({schedule.length}
           {schedule.length === 1 ? 'lesson' : 'lessons'})
         </span>
       </div>
       <Icon
         src={expanded ? ChevronUp : ChevronDown}
-        class="w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform duration-300 ease-in-out {expanded
+        class="w-4 h-4 text-muted-foreground transition-transform duration-300 ease-in-out {expanded
           ? 'rotate-180'
           : ''}" />
     </button>
@@ -110,7 +110,7 @@
         <div class="grid grid-cols-5 gap-2">
           {#each dayOrder as day}
             <div class="min-w-0">
-              <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2 text-center">
+              <div class="text-xs font-semibold text-foreground mb-2 text-center">
                 {day}
               </div>
               <div class="space-y-1">

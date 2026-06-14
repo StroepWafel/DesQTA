@@ -41,7 +41,7 @@
     error = null,
     sortBy = '',
     sortOrder = 'asc',
-    striped = true,
+    striped = false,
     hoverable = true,
     compact = false,
     selectable = false,
@@ -76,106 +76,105 @@
   }
 
   let tableClasses = $derived([
-    'min-w-full divide-y divide-zinc-200 dark:divide-zinc-700',
+    'min-w-full divide-y divide-border-subtle',
     className
   ].filter(Boolean).join(' '));
 
-  let headerClasses = $derived([
-    'bg-zinc-50 dark:bg-zinc-800'
-  ].join(' '));
-
-  let bodyClasses = $derived([
-    'bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-700'
-  ].join(' '));
+  // Lo-fi table: clean header row, hairline dividers, no zebra by default.
+  let headerClasses = 'bg-surface-muted/60';
+  let bodyClasses = 'bg-card divide-y divide-border-subtle';
 </script>
 
-<div class="overflow-x-auto">
-  <AsyncWrapper 
-    {loading} 
-    {error} 
-    {data}
-    empty={data.length === 0}
-    {emptyTitle}
-    {emptyMessage}
-    componentName="DataTable"
-  >
-    {#snippet children(tableData)}
-      <table class={tableClasses}>
-        <thead class={headerClasses}>
-          <tr>
-            {#if selectable}
-              <th class="px-6 py-3 text-left">
-                <input
-                  type="checkbox"
-                  class="rounded-sm border-zinc-300 dark:border-zinc-600 text-accent-600 focus:ring-accent-500"
-                  checked={tableData.every((row: any) => isRowSelected(row))}
-                  onchange={(e) => {
-                    const checked = e.currentTarget.checked;
-                    tableData.forEach((row: any) => handleRowSelect(row, checked));
-                  }}
-                />
-              </th>
-            {/if}
-            
-            {#each columns as column}
-              <th 
-                class="px-6 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider {column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}"
-                style={column.width ? `width: ${column.width}` : ''}
-              >
-                {#if column.sortable}
-                  <button
-                    onclick={() => handleSort(column)}
-                    class="group inline-flex items-center space-x-1 hover:text-zinc-700 dark:hover:text-zinc-300"
-                  >
-                    <span>{column.title}</span>
-                    {#if getSortIcon(column)}
-                      <Icon 
-                        src={getSortIcon(column)} 
-                        size="16" 
-                        class="group-hover:text-zinc-500" 
-                      />
-                    {/if}
-                  </button>
-                {:else}
-                  {column.title}
-                {/if}
-              </th>
-            {/each}
-          </tr>
-        </thead>
-        
-        <tbody class={bodyClasses}>
-          {#each tableData as row, index}
-            <tr 
-              class="{striped && index % 2 === 0 ? 'bg-zinc-50 dark:bg-zinc-800/50' : ''} {hoverable ? 'hover:bg-zinc-100 dark:hover:bg-zinc-700/50' : ''} {onRowClick ? 'cursor-pointer' : ''} transition-colors duration-150"
-              onclick={() => onRowClick?.(row)}
-            >
+<!-- min-w-0 + max-w-full so a wide table inside a flex/grid cell scrolls
+     locally instead of pushing siblings off-screen. -->
+<div class="overflow-hidden rounded-xl border border-border bg-card min-w-0 max-w-full">
+  <div class="overflow-x-auto min-w-0 max-w-full">
+    <AsyncWrapper
+      {loading}
+      {error}
+      {data}
+      empty={data.length === 0}
+      {emptyTitle}
+      {emptyMessage}
+      componentName="DataTable"
+    >
+      {#snippet children(tableData)}
+        <table class={tableClasses}>
+          <thead class={headerClasses}>
+            <tr>
               {#if selectable}
-                <td class="px-6 py-4 whitespace-nowrap">
+                <th class="px-4 py-3 text-left w-10">
                   <input
                     type="checkbox"
-                    class="rounded-sm border-zinc-300 dark:border-zinc-600 text-accent-600 focus:ring-accent-500"
-                    checked={isRowSelected(row)}
-                    onchange={(e) => handleRowSelect(row, e.currentTarget.checked)}
+                    class="rounded-sm border-border text-accent-600 focus:ring-accent-500"
+                    checked={tableData.every((row: any) => isRowSelected(row))}
+                    onchange={(e) => {
+                      const checked = e.currentTarget.checked;
+                      tableData.forEach((row: any) => handleRowSelect(row, checked));
+                    }}
                   />
-                </td>
+                </th>
               {/if}
-              
+
               {#each columns as column}
-                <td 
-                  class="px-6 {compact ? 'py-2' : 'py-4'} whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100 {column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}"
+                <th
+                  class="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-[0.06em] {column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}"
+                  style={column.width ? `width: ${column.width}` : ''}
                 >
-                  {#if column.cell}
-                    {@render column.cell(row[column.key], row)}
+                  {#if column.sortable}
+                    <button
+                      onclick={() => handleSort(column)}
+                      class="group inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      <span>{column.title}</span>
+                      {#if getSortIcon(column)}
+                        <Icon
+                          src={getSortIcon(column)}
+                          size="14"
+                        />
+                      {/if}
+                    </button>
                   {:else}
-                    {row[column.key] || '-'}
+                    {column.title}
                   {/if}
-                </td>
+                </th>
               {/each}
             </tr>
-          {/each}
-        </tbody>
-      </table>
-    {/snippet}
-  </AsyncWrapper>
+          </thead>
+
+          <tbody class={bodyClasses}>
+            {#each tableData as row, index}
+              <tr
+                class="{striped && index % 2 === 1 ? 'bg-surface-muted/40' : ''} {hoverable ? 'hover:bg-surface-muted/60' : ''} {onRowClick ? 'cursor-pointer' : ''} transition-colors duration-100"
+                onclick={() => onRowClick?.(row)}
+              >
+                {#if selectable}
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      class="rounded-sm border-border text-accent-600 focus:ring-accent-500"
+                      checked={isRowSelected(row)}
+                      onchange={(e) => handleRowSelect(row, e.currentTarget.checked)}
+                    />
+                  </td>
+                {/if}
+
+                {#each columns as column}
+                  <td
+                    class="px-4 {compact ? 'py-2' : 'py-3.5'} whitespace-nowrap text-sm text-foreground nums-tabular {column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}"
+                  >
+                    {#if column.cell}
+                      {@render column.cell(row[column.key], row)}
+                    {:else}
+                      {row[column.key] || '-'}
+                    {/if}
+                  </td>
+                {/each}
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {/snippet}
+    </AsyncWrapper>
+  </div>
 </div>

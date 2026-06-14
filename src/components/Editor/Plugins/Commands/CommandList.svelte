@@ -141,7 +141,7 @@
   
   <div
     transition:fly={{ y: 10, duration: 300 }}
-    class="overflow-auto absolute pb-2 w-80 max-w-full max-h-80 rounded-xl border shadow-xl backdrop-blur-lg dark:bg-zinc-900/70 bg-zinc-100/70 dark:border-zinc-700/20 border-zinc-200"
+    class="overflow-auto absolute pb-2 w-80 max-w-full max-h-80 rounded-xl border shadow-xl dark:bg-zinc-900/70 bg-zinc-100/70 dark:border-zinc-700/20 border-zinc-200"
     style="left: {$slashLocation.x}px; top: {$slashLocation.y + $slashLocation.height + 320 > height
       ? $slashLocation.y - $slashLocation.height - 320
       : $slashLocation.y + $slashLocation.height}px;">

@@ -235,14 +235,14 @@
 <div class="flex flex-col h-full">
   <!-- Header -->
   <div
-    class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+    class="flex items-center justify-between px-6 py-4 border-b border-border">
     <div class="flex items-center gap-4">
       <button
         onclick={() => goto('/goals')}
-        class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+        class="p-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
         <Icon src={ChevronLeft} class="w-5 h-5" />
       </button>
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
+      <h1 class="text-2xl font-bold text-foreground">
         {year}
         <T key="navigation.goals" fallback="Goals" />
       </h1>
@@ -276,15 +276,15 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
         <!-- Left Column: My Notes -->
         <div
-          class="flex flex-col bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
-          <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+          class="flex flex-col bg-card rounded-lg border border-border">
+          <div class="px-4 py-3 border-b border-border">
+            <h2 class="text-lg font-semibold text-foreground">
               <T key="goals.my_notes" fallback="My notes" />
             </h2>
           </div>
           <!-- Toolbar -->
           {#if editorInstance}
-            <div class="border-b border-zinc-200 dark:border-zinc-700">
+            <div class="border-b border-border">
               <GoalsToolbar editor={editorInstance} readonly={false} {saving} onSave={saveNotes} />
             </div>
           {/if}
@@ -296,9 +296,9 @@
 
         <!-- Right Column: Overview -->
         <div
-          class="flex flex-col bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
-          <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+          class="flex flex-col bg-card rounded-lg border border-border">
+          <div class="px-4 py-3 border-b border-border">
+            <h2 class="text-lg font-semibold text-foreground">
               <T key="goals.overview" fallback="Overview" />
             </h2>
           </div>
@@ -311,16 +311,16 @@
       <!-- Goals Table -->
       <div class="px-6 pb-6">
         <div
-          class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+          class="bg-card rounded-lg border border-border">
           <div
-            class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+            class="px-4 py-3 border-b border-border flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-foreground">
               <T key="goals.goals" fallback="Goals" />
             </h2>
             <div class="flex items-center gap-2">
               <button
                 onclick={addGoalItem}
-                class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+                class="p-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
                 <Icon src={Plus} class="w-5 h-5" />
               </button>
               <Button
@@ -335,25 +335,25 @@
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead>
-                <tr class="border-b border-zinc-200 dark:border-zinc-700">
+                <tr class="border-b border-border">
                   <th
-                    class="px-4 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-white">
+                    class="px-4 py-3 text-left text-sm font-semibold text-foreground">
                     <T key="goals.goal" fallback="Goal" />
                   </th>
                   <th
-                    class="px-4 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-white">
+                    class="px-4 py-3 text-left text-sm font-semibold text-foreground">
                     <T key="goals.support" fallback="Support" />
                   </th>
                   <th
-                    class="px-4 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-white">
+                    class="px-4 py-3 text-left text-sm font-semibold text-foreground">
                     <T key="goals.action" fallback="Action" />
                   </th>
                   <th
-                    class="px-4 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-white">
+                    class="px-4 py-3 text-left text-sm font-semibold text-foreground">
                     <T key="goals.my_notes" fallback="My notes" />
                   </th>
                   <th
-                    class="px-4 py-3 text-center text-sm font-semibold text-zinc-900 dark:text-white">
+                    class="px-4 py-3 text-center text-sm font-semibold text-foreground">
                     <T key="goals.done" fallback="Done" />
                   </th>
                 </tr>
@@ -364,7 +364,7 @@
                     {#each goalItems as item, index}
                       <tr
                         data-goal-index={index}
-                        class="border-b border-zinc-200 dark:border-zinc-700 goal-row-animate"
+                        class="border-b border-border goal-row-animate"
                         style="animation-delay: {index * 50}ms;">
                         <td class="px-4 py-3">
                           <input
@@ -372,7 +372,7 @@
                             value={item.goals || ''}
                             oninput={(e) => updateGoalItem(index, 'goals', e.currentTarget.value)}
                             placeholder={$_('goals.goal') || 'Goal'}
-                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
                         </td>
                         <td class="px-4 py-3">
                           <input
@@ -380,7 +380,7 @@
                             value={item.support || ''}
                             oninput={(e) => updateGoalItem(index, 'support', e.currentTarget.value)}
                             placeholder={$_('goals.support') || 'Support'}
-                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
                         </td>
                         <td class="px-4 py-3">
                           <input
@@ -388,7 +388,7 @@
                             value={item.action || ''}
                             oninput={(e) => updateGoalItem(index, 'action', e.currentTarget.value)}
                             placeholder={$_('goals.action') || 'Action'}
-                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
                         </td>
                         <td class="px-4 py-3">
                           <input
@@ -396,7 +396,7 @@
                             value={item.notes || ''}
                             oninput={(e) => updateGoalItem(index, 'notes', e.currentTarget.value)}
                             placeholder={$_('goals.my_notes') || 'My notes'}
-                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
+                            class="w-full px-2 py-1 rounded bg-transparent border border-zinc-300 dark:border-zinc-600 text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm" />
                         </td>
                         <td class="px-4 py-3 text-center">
                           <input
@@ -410,7 +410,7 @@
                   {/key}
                 {:else}
                   <tr>
-                    <td colspan="5" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">
+                    <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
                       <T
                         key="goals.no_goals"
                         fallback="No goals yet. Click the + button to add one." />

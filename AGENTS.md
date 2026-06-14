@@ -201,17 +201,64 @@ This document serves as a comprehensive guide to the DesQTA codebase, practices,
 
 ### DesQTA-Specific Patterns
 
-- **Page Layout Consistency:**
-  - Root: `container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6`
-  - Add `in:fade={{ duration: 400 }}` for page-level fade-in.
-  - Header: `h1` + description paragraph; use `shrink-0` for header wrapper.
-  - Card-style panels: `rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/60 shadow-lg overflow-hidden`
-  - Reference pages: courses, directory, analytics, direqt-messages.
+The current visual language is **Lo-fi UI inspired**: clear hierarchy, generous whitespace, opaque surfaces, calm neutrals, one accent. Cards are NOT translucent and do NOT use `backdrop-blur`.
+
+- **Design tokens (`src/app.css`):**
+  - Surfaces: `bg-card`, `bg-surface-1` (page), `bg-surface-2` (card), `bg-surface-3` (elevated), `bg-surface-muted` (wells).
+  - Borders: `border-border` (default), `border-border-subtle` (hairlines, dividers), `border-border-strong` (hover).
+  - Text: `text-foreground`, `text-muted-foreground`, `text-card-foreground`. Never use `text-zinc-900 dark:text-white` patterns.
+  - Accent (theme-driven): `bg-accent-500`, `text-accent-500`, `border-accent-500/...` (50, 100, 500, 600, ... still work).
+  - Typography utilities: `.nums-tabular` for grades/dates/numbers, `.label-eyebrow` for uppercase metadata labels.
+
+- **Page Layout Consistency (Lo-fi convention):**
+
+  ```svelte
+  <div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6" in:fade={{ duration: 250 }}>
+    <header class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        Section
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+        Page title
+      </h1>
+      <p class="text-sm text-muted-foreground max-w-2xl">Short description.</p>
+    </header>
+    <!-- page content -->
+  </div>
+  ```
+
+  Reading-style pages narrow the container to `max-w-3xl xl:max-w-4xl`. Reference pages: courses, directory, analytics, notices, news.
+
+- **Card pattern (canonical):**
+  - `bg-card border border-border rounded-xl` — opaque, no `/50` translucency, no `shadow-lg` by default.
+  - Elevated variant adds a single subtle shadow: `shadow-[0_1px_2px_-1px_rgba(0,0,0,0.04),0_2px_8px_-4px_rgba(0,0,0,0.06)]`.
+  - Use `ui/Card.svelte` rather than rolling your own.
+
+- **Typography:**
+  - Headings use `font-semibold tracking-tight`.
+  - Eyebrow labels: `text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground`.
+  - Numbers (grades, dates, counters): apply `.nums-tabular` so columns align.
+
+- **Motion:**
+  - Page fade-in: `in:fade={{ duration: 250 }}` (was 400). Calmer.
+  - Default easing: `cubic-bezier(0.4, 0, 0.2, 1)`. No bouncy overshoot unless explicitly playful.
+  - Drop `hover:scale-105`/`active:scale-95` everywhere except dashboard playful widgets.
 
 - **Dropdowns:**
-  - Prefer the analytics-style custom dropdown over Select components.
-  - Use `clickOutside`, `fly` transition, ChevronDown icon.
+  - Prefer `ui/Dropdown.svelte` (the analytics pattern) over Select components.
+  - Uses `clickOutside`, `fly` transition (`y: -4, duration: 150`), ChevronDown icon.
   - Reference: `src/routes/analytics/+page.svelte`, `src/routes/notices/+page.svelte`.
+
+- **Modals:**
+  - Use `Modal.svelte` — opaque `bg-card`, `rounded-2xl`, plain `bg-foreground/40` backdrop (no `backdrop-blur`).
+  - Replace `confirm()` / `alert()` with `toast.success(...)` / `toast.error(...)` from `svelte-sonner`, and use a confirmation Modal for destructive actions.
+
+- **Dashboard widgets:**
+  - Every widget wraps its body in `dashboard/WidgetCard.svelte`, which owns the header (icon + title + optional eyebrow), loading skeleton, and empty state.
+  - Per-widget settings live in the registry's `settingsSchema`; the gear icon shows up automatically only when the schema has keys.
+  - Edit mode: whole widget is draggable (`.widget-drag-handle`), persistent action chip in the top-right, accent dashed outline + pulse animation.
+  - Mobile uses the registry's `mobileSize` + `mobileOrder` for a vertical stack — no drag/resize on mobile.
+  - Adding a widget: add type to `src/lib/types/widgets.ts`, register in `src/lib/services/widgetRegistry.ts` with `category`, `mobileSize`, `mobileOrder`, `resizable`.
 
 - **Flex Scroll Fix:**
   - When `overflow-y-auto` doesn't scroll inside flex: parent needs `flex-1 min-h-0 overflow-hidden`, child needs `flex-1 min-h-0 overflow-y-auto`.

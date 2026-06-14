@@ -205,14 +205,16 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
-  <!-- Header -->
-  <div class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
-    <div>
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6">
+  <header class="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-end">
+    <div class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        Academic
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
         <T key="navigation.assessments" fallback="Assessments" />
       </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground max-w-2xl">
         <T key="assessments.description" fallback="View and manage your upcoming assessments" />
       </p>
     </div>
@@ -221,13 +223,13 @@
         <!-- Year Filter Dropdown -->
         {#if availableYears && availableYears.length > 0}
           <div class="flex items-center gap-2">
-            <label for="year-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            <label for="year-select" class="text-sm font-medium text-muted-foreground">
               <T key="assessments.year" fallback="Year:" />
             </label>
             <div class="relative">
               <select
                 id="year-select"
-                class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+                class="appearance-none px-3 py-2 pr-8 bg-card text-foreground border border-border rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
                 bind:value={selectedYear}
                 onchange={(e) => {
                   const target = e.target as HTMLSelectElement;
@@ -263,13 +265,13 @@
 
         <!-- View Selector Dropdown -->
         <div class="flex items-center gap-2">
-          <label for="view-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <label for="view-select" class="text-sm font-medium text-muted-foreground">
             <T key="assessments.view" fallback="View:" />
           </label>
           <div class="relative">
             <select
               id="view-select"
-              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+              class="appearance-none px-3 py-2 pr-8 bg-card text-foreground border border-border rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
               bind:value={selectedTab}
               onchange={(e) => {
                 const target = e.target as HTMLSelectElement;
@@ -304,10 +306,10 @@
           </div>
         </div>
       </div>
-  </div>
+  </header>
 
   <!-- Content Area -->
-  <div class="space-y-6">
+  <div class="flex flex-col gap-6">
     <!-- Main Assessment Content -->
     {#if loadingAssessments}
       <div class="flex justify-center items-center py-12">
@@ -324,14 +326,14 @@
       <!-- Board View Options -->
       {#if selectedTab === 'board'}
         <div
-          class="flex items-center gap-4 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
-          <label for="group-by-select" class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          class="flex items-center gap-4 p-4 rounded-xl border bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+          <label for="group-by-select" class="text-sm font-medium text-muted-foreground">
             <T key="assessments.group_by" fallback="Group by:" />
           </label>
           <div class="relative">
             <select
               id="group-by-select"
-              class="appearance-none px-3 py-2 pr-8 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
+              class="appearance-none px-3 py-2 pr-8 bg-card text-foreground border border-border rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 hover:border-accent cursor-pointer"
               bind:value={groupBy}
               onchange={(e) => {
                 const target = e.target as HTMLSelectElement;
@@ -371,7 +373,7 @@
           {groupBy}
           onGroupByChange={handleGroupByChange} />
       {:else if selectedTab === 'calendar'}
-        <AssessmentCalendarView assessments={filteredAssessments as any} />
+        <AssessmentCalendarView assessments={filteredAssessments as any} {selectedYear} />
       {:else if selectedTab === 'gantt'}
         <AssessmentGanttView
           assessments={filteredAssessments as any}

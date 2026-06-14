@@ -304,35 +304,30 @@
   });
 </script>
 
-<div class="container max-w-none w-full min-h-screen p-5 mx-auto space-y-6">
-  <!-- Header Section -->
-  <div class="mb-8 animate-fade-in-up">
-    <Card variant="elevated" padding="lg" class="bg-white/80 dark:bg-zinc-900/60 backdrop-blur-sm">
-      <div class="flex flex-col gap-4 items-center text-center sm:flex-row sm:text-left">
-        <div
-          class="flex justify-center items-center w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 sm:w-20 sm:h-20">
-          <Icon src={BookOpen} class="w-8 h-8 sm:w-10 sm:h-10" />
-        </div>
-        <div class="flex-1">
-          <h1 class="mb-2 text-2xl font-bold text-zinc-900 dark:text-white sm:text-3xl">
-            <T key="documentation.title" fallback="User Documentation" />
-          </h1>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
-            <T
-              key="documentation.subtitle"
-              fallback="Everything you need to know about using DesQTA" />
-          </p>
-        </div>
-        <Button
-          variant="secondary"
-          icon={Home}
-          onclick={() => goto('/')}
-          ariaLabel="Go to dashboard">
-          <T key="documentation.back_to_dashboard" fallback="Back to Dashboard" />
-        </Button>
-      </div>
-    </Card>
-  </div>
+<div class="container max-w-3xl xl:max-w-4xl w-full min-h-screen p-5 sm:p-8 mx-auto flex flex-col gap-8">
+  <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        Help
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+        <T key="documentation.title" fallback="User Documentation" />
+      </h1>
+      <p class="text-sm text-muted-foreground max-w-2xl">
+        <T
+          key="documentation.subtitle"
+          fallback="Everything you need to know about using DesQTA" />
+      </p>
+    </div>
+    <Button
+      variant="secondary"
+      size="sm"
+      icon={Home}
+      onclick={() => goto('/')}
+      ariaLabel="Go to dashboard">
+      <T key="documentation.back_to_dashboard" fallback="Back" />
+    </Button>
+  </header>
 
   <!-- Search -->
   <div class="mb-6 animate-fade-in-up" style="animation-delay: 0.1s">
@@ -357,7 +352,7 @@
             class="min-h-[44px] px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200 border {selectedCategory ===
             category
               ? 'accent-bg text-white border-transparent shadow-sm'
-              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-800 dark:hover:text-zinc-300'} active:scale-[0.98]">
+              : 'bg-zinc-100 dark:bg-zinc-800 text-muted-foreground border-border hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-800 dark:hover:text-zinc-300'} active:scale-[0.98]">
             {category}
           </button>
         {/each}
@@ -371,7 +366,7 @@
       <Card variant="default" padding="lg" class="text-center animate-fade-in-up">
         <div class="py-8">
           <Icon src={BookOpen} class="mx-auto mb-4 w-16 h-16 text-zinc-400" />
-          <p class="text-lg font-medium text-zinc-600 dark:text-zinc-400">
+          <p class="text-lg font-medium text-muted-foreground">
             <T key="documentation.no_results" fallback="No results found" />
           </p>
           <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
@@ -401,14 +396,14 @@
                   </div>
                   <div class="flex-1 min-w-0">
                     <span
-                      class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                      class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-zinc-100 dark:bg-zinc-800 text-muted-foreground">
                       {item.category}
                     </span>
                   </div>
                 </div>
 
                 <!-- Question -->
-                <h3 class="mb-3 text-base font-semibold text-zinc-900 dark:text-white line-clamp-2">
+                <h3 class="mb-3 text-base font-semibold text-foreground line-clamp-2">
                   {item.question}
                 </h3>
 
@@ -430,7 +425,7 @@
   <!-- Footer -->
   <div class="mt-12 mb-8 text-center animate-fade-in-up" style="animation-delay: 0.2s">
     <Card variant="ghost" padding="md">
-      <p class="text-sm text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground">
         <T key="documentation.need_more_help" fallback="Need more help?" />
         <a
           href="https://github.com/BetterSEQTA/DesQTA"
@@ -464,7 +459,7 @@
                 <Icon src={categoryIcon} class="w-5 h-5 text-accent-600 dark:text-accent-400" />
               </div>
               <span
-                class="px-3 py-1 text-sm font-medium rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                class="px-3 py-1 text-sm font-medium rounded-full bg-zinc-100 dark:bg-zinc-800 text-muted-foreground">
                 {selectedFAQ.category}
               </span>
             </div>
@@ -475,7 +470,7 @@
             class="prose prose-zinc dark:prose-invert max-w-none"
             in:fade={{ duration: 300, delay: 150 }}>
             <p
-              class="text-base text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
+              class="text-base text-foreground leading-relaxed whitespace-pre-line">
               {selectedFAQ.answer}
             </p>
           </div>

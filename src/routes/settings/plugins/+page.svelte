@@ -82,7 +82,7 @@
   onMount(loadPlugins);
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto">
+<div class="container mx-auto w-full max-w-none p-5">
   <!-- Notice Banner -->
   <div
     class="p-4 mb-8 text-yellow-200 bg-yellow-900 rounded-lg border border-yellow-700 animate-fade-in">
@@ -105,7 +105,7 @@
     <div class="flex items-center gap-4">
       <a
         href="/settings"
-        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2">
+        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"
           ></path>
@@ -120,7 +120,7 @@
 
   {#if loading}
     <div class="flex justify-center items-center py-12 animate-fade-in">
-      <p class="text-zinc-600 dark:text-zinc-400">
+      <p class="text-muted-foreground">
         <T key="settings.loading_plugins" fallback="Loading plugins..." />
       </p>
     </div>
@@ -130,7 +130,7 @@
         {#each plugins as plugin, i}
           <button
             type="button"
-            class="overflow-hidden bg-white rounded-2xl border shadow-xl transition-all duration-300 cursor-pointer dark:bg-zinc-900 border-zinc-300 dark:border-zinc-800 hover:shadow-2xl hover:border-blue-700 plugin-card-animate w-full text-left focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            class="overflow-hidden bg-white surface-raised transition-all duration-300 cursor-pointer dark:bg-zinc-900 border-zinc-300 dark:border-zinc-800 hover:shadow-2xl hover:border-blue-700 plugin-card-animate w-full text-left focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
             style="animation-delay: {i * 50}ms;"
             on:click={() => openPluginDetails(plugin)}>
             <div class="overflow-hidden relative h-32">
@@ -144,10 +144,10 @@
               <div class="flex gap-4 items-start">
                 <div class="text-4xl">{plugin.icon}</div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <h3 class="text-lg font-semibold text-foreground">
                     {plugin.name}
                   </h3>
-                  <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  <p class="mt-1 text-sm text-muted-foreground">
                     {plugin.description}
                   </p>
                   <div
@@ -177,7 +177,7 @@
 </div>
 
 {#if selectedPlugin}
-  <div class="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-xs animate-fade-in">
+  <div class="fixed inset-0 z-50 bg-black bg-opacity-50 animate-fade-in">
     <div class="overflow-y-auto fixed inset-0">
       <div class="flex justify-center items-center p-4 min-h-screen">
         <div

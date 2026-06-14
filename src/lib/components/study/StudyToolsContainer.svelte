@@ -18,6 +18,8 @@
   import { Icon, Sparkles, CheckCircle, XCircle, ChevronDown, ChevronUp, MagnifyingGlass, Check } from 'svelte-hero-icons';
   import Modal from '$lib/components/Modal.svelte';
   import { clickOutside } from '$lib/actions/clickOutside.js';
+  import { AIService } from '$lib/services/ai/AIService';
+  import type { AIModel, AIProviderAdapter, AIProviderId } from '$lib/services/ai/types';
 
   interface FullAssessment {
     id: string | number;
@@ -64,6 +66,13 @@
   let apiKeyError = $state<string | null>(null);
   let configExpanded = $state(true);
 
+  // Generic AI provider tab strip state.
+  const providers = AIService.listProviders();
+  let activeProvider = $state<AIProviderId>('gemini');
+  let providerModels = $state<AIModel[]>([]);
+  let selectedModel = $state<string>('');
+  let loadingModels = $state(false);
+
   $effect(() => {
     if (questions.length > 0) configExpanded = false;
     else configExpanded = true;
@@ -83,18 +92,51 @@
   ];
 
   async function checkApiKey() {
+    // Check the key for the active provider (not just any provider as before).
     try {
-      const subset = await invoke<{
-        gemini_api_key?: string;
-        cerebras_api_key?: string;
-      }>('get_settings_subset', {
-        keys: ['gemini_api_key', 'cerebras_api_key'],
-      });
-      const gemini = (subset?.gemini_api_key ?? '').trim();
-      const cerebras = (subset?.cerebras_api_key ?? '').trim();
-      hasApiKey = gemini.length > 0 || cerebras.length > 0;
+      const provider = await AIService.getActiveProvider();
+      activeProvider = provider;
+      const key = await AIService.getApiKey(provider);
+      hasApiKey = !!key;
     } catch {
       hasApiKey = false;
+    }
+  }
+
+  async function loadModelsForActive() {
+    loadingModels = true;
+    try {
+      const key = await AIService.getApiKey(activeProvider);
+      providerModels = await AIService.listModels(activeProvider, key ?? undefined);
+      selectedModel = await AIService.getModel(activeProvider);
+    } catch (e) {
+      providerModels = AIService.getProvider(activeProvider).defaultModels;
+      selectedModel =
+        providerModels.find((m) => m.recommended)?.id ?? providerModels[0]?.id ?? '';
+    } finally {
+      loadingModels = false;
+    }
+  }
+
+  async function switchProvider(id: AIProviderId) {
+    if (id === activeProvider) return;
+    activeProvider = id;
+    try {
+      await saveSettingsWithQueue({ ai_provider: id });
+    } catch {
+      // best-effort
+    }
+    await checkApiKey();
+    await loadModelsForActive();
+  }
+
+  async function setModel(modelId: string) {
+    selectedModel = modelId;
+    const key = activeProvider === 'cerebras' ? 'cerebras_model' : 'gemini_model';
+    try {
+      await saveSettingsWithQueue({ [key]: modelId });
+    } catch {
+      // best-effort
     }
   }
 
@@ -107,15 +149,17 @@
     savingApiKey = true;
     apiKeyError = null;
     try {
+      const apiKeyField = activeProvider === 'cerebras' ? 'cerebras_api_key' : 'gemini_api_key';
       await saveSettingsWithQueue({
-        cerebras_api_key: key,
-        ai_provider: 'cerebras',
+        [apiKeyField]: key,
+        ai_provider: activeProvider,
         ai_integrations_enabled: true,
         lesson_summary_analyser_enabled: true,
         quiz_generator_enabled: true,
       });
       hasApiKey = true;
       apiKeyInput = '';
+      await loadModelsForActive();
     } catch (e) {
       apiKeyError = e instanceof Error ? e.message : String(e);
     } finally {
@@ -128,8 +172,9 @@
   );
   const assessmentYears = $derived(availableYears.length > 0 ? availableYears : yearsFromAssessments);
 
-  onMount(() => {
-    checkApiKey();
+  onMount(async () => {
+    await checkApiKey();
+    await loadModelsForActive();
   });
 
   const topic = $derived(
@@ -276,21 +321,53 @@
 
 <div class="h-full flex flex-col min-h-0" in:fade={{ duration: 300 }} data-onboarding="study-tools">
   <div
-    class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col"
+    class="flex-1 bg-card rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col"
     in:fly={{ y: 20, duration: 300, delay: 100, easing: quintOut }}>
-    <!-- Header -->
-    <div
-      class="shrink-0 px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
-      <h2 class="text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
-        <Icon src={Sparkles} class="w-5 h-5 text-(--accent)" />
-        <T key="study.quizzes" fallback="Quizzes" />
-      </h2>
+    <!-- Header: title left, model + provider selector on the right -->
+    <div class="shrink-0 px-6 py-4 border-b border-border bg-card">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-lg font-semibold text-foreground flex items-center gap-2 shrink-0">
+          <Icon src={Sparkles} class="w-5 h-5 text-(--accent)" />
+          <T key="study.quizzes" fallback="Quizzes" />
+        </h2>
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:ml-auto sm:justify-end">
+          {#if providerModels.length > 0}
+            <label class="flex items-center gap-2 text-xs text-muted-foreground order-1 sm:order-none">
+              <span class="uppercase tracking-[0.06em] font-semibold whitespace-nowrap">{$_('study.model') || 'Model'}</span>
+              <select
+                value={selectedModel}
+                onchange={(e) => setModel((e.currentTarget as HTMLSelectElement).value)}
+                class="h-8 min-w-[12rem] max-w-[20rem] px-2 text-xs rounded-md border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500">
+                {#each providerModels as m (m.id)}
+                  <option value={m.id}>{m.label}{m.recommended ? ' ⭐' : ''}</option>
+                {/each}
+              </select>
+            </label>
+          {/if}
+          <div
+            class="inline-flex items-center gap-1 p-1 rounded-lg border border-border bg-surface-muted order-2 sm:order-none sm:ml-1"
+            role="tablist">
+            {#each providers as p (p.id)}
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeProvider === p.id}
+                onclick={() => switchProvider(p.id)}
+                class="h-8 px-3 text-xs font-semibold uppercase tracking-[0.06em] rounded-md transition-colors duration-150 {activeProvider === p.id
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'}">
+                {p.displayName}
+              </button>
+            {/each}
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- API Key Setup (inline when not configured) -->
     {#if hasApiKey === false}
       <div class="flex-1 min-h-0 overflow-auto px-6 pb-6 space-y-6">
-        <h3 class="font-semibold text-zinc-900 dark:text-white">
+        <h3 class="font-semibold text-foreground">
           {$_('study.ai_quiz_setup') ?? 'Enable AI Quizzes'}
         </h3>
 
@@ -299,16 +376,16 @@
           <h4 class="font-medium text-zinc-800 dark:text-zinc-200 mb-3 text-sm">
             {$_('study.quiz_preview') ?? 'Here\'s what your AI quiz could look like:'}
           </h4>
-          <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 p-4 space-y-4">
+          <div class="rounded-xl border border-border bg-zinc-50/50 dark:bg-zinc-800/30 p-4 space-y-4">
             {#each SAMPLE_QUIZ as q, i}
-              <div class="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50">
-                <p class="font-medium text-zinc-900 dark:text-white mb-2 text-sm">
+              <div class="p-3 rounded-lg border border-border bg-card/50">
+                <p class="font-medium text-foreground mb-2 text-sm">
                   {i + 1}. {q.question}
                 </p>
                 <div class="space-y-1">
                   {#each q.options as opt}
                     <div
-                      class="flex items-center gap-2 py-1.5 px-2 rounded text-sm text-zinc-600 dark:text-zinc-400">
+                      class="flex items-center gap-2 py-1.5 px-2 rounded text-sm text-muted-foreground">
                       <span class="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600"></span>
                       {opt}
                     </div>
@@ -319,36 +396,35 @@
           </div>
         </div>
 
-        <!-- Instructions -->
-        <div>
-          <h4 class="font-medium text-zinc-800 dark:text-zinc-200 mb-2 text-sm">
-            {$_('study.get_free_api_key') ?? 'Get a free Cerebras API key (takes 1 minute):'}
-          </h4>
-          <ol class="list-decimal list-inside space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-            <li>
-              {$_('study.cerebras_step_1') ?? 'Go to'}
-              <a
-                href="https://cloud.cerebras.ai"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-(--accent) underline font-medium hover:opacity-80">
-                cloud.cerebras.ai
-              </a>
-            </li>
-            <li>{$_('study.cerebras_step_2') ?? 'Sign up (free, no credit card required)'}</li>
-            <li>{$_('study.cerebras_step_3') ?? 'Click "Copy api key" on the dashboard that it opens to'}</li>
-            <li>{$_('study.cerebras_step_4') ?? 'Paste it below and click Save'}</li>
-          </ol>
-          <p class="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
-            {$_('study.cerebras_free_tier') ?? 'Free tier: 1 million tokens per day.'}
-          </p>
-        </div>
+        <!-- Provider-specific setup instructions (driven by the adapter). -->
+        {#if true}
+          {@const adapter = AIService.getProvider(activeProvider)}
+          <div>
+            <h4 class="font-medium text-zinc-800 dark:text-zinc-200 mb-2 text-sm">
+              {`Get a ${adapter.displayName} API key (takes a minute):`}
+            </h4>
+            <ol class="list-decimal list-inside space-y-2 text-sm text-foreground">
+              <li>
+                {$_('study.go_to') || 'Go to'}
+                <a
+                  href={adapter.apiKeyUrl ?? '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-(--accent) underline font-medium hover:opacity-80">
+                  {adapter.apiKeyUrl?.replace(/^https?:\/\//, '') ?? adapter.displayName}
+                </a>
+              </li>
+              <li>{$_('study.sign_up') || 'Sign up / sign in'}</li>
+              <li>{$_('study.copy_api_key') || 'Copy your API key from the dashboard'}</li>
+              <li>{$_('study.paste_and_save') || 'Paste it below and click Save'}</li>
+            </ol>
+          </div>
 
-        <!-- API Key Input -->
-        <div>
-          <Label.Root class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-            {$_('study.cerebras_api_key') ?? 'Cerebras API Key'}
-          </Label.Root>
+          <!-- API Key Input -->
+          <div>
+            <Label.Root class="block text-sm font-medium text-foreground mb-2">
+              {`${adapter.displayName} API Key`}
+            </Label.Root>
           <Input
             bind:value={apiKeyInput}
             type="password"
@@ -359,13 +435,14 @@
           {/if}
         </div>
 
-        <Button
-          onclick={saveApiKeyAndEnable}
-          disabled={savingApiKey || !apiKeyInput.trim()}
-          loading={savingApiKey}
-          class="w-full transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
-          {$_('study.save_and_enable') ?? 'Save & Enable AI Quizzes'}
-        </Button>
+          <Button
+            onclick={saveApiKeyAndEnable}
+            disabled={savingApiKey || !apiKeyInput.trim()}
+            loading={savingApiKey}
+            class="w-full transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
+            {$_('study.save_and_enable') ?? 'Save & Enable AI Quizzes'}
+          </Button>
+        {/if}
       </div>
     {:else}
     <!-- Config Panel -->
@@ -373,7 +450,7 @@
       {#if questions.length > 0}
         <button
           type="button"
-          class="flex items-center gap-2 w-full py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+          class="flex items-center gap-2 w-full py-2 text-sm font-medium text-muted-foreground hover:text-zinc-900 dark:hover:text-white transition-colors"
           onclick={() => (configExpanded = !configExpanded)}>
           <T key="study.change_options" fallback="Change options" />
           <Icon src={configExpanded ? ChevronUp : ChevronDown} class="w-4 h-4 shrink-0" />
@@ -383,7 +460,7 @@
         <div transition:slide={{ duration: 200 }}>
       <!-- Section 1: Topic source -->
       <div class="space-y-3">
-        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        <p class="text-sm font-medium text-muted-foreground">
           <T key="study.topic_source" fallback="1. Choose topic" />
         </p>
         <div class="flex flex-col sm:flex-row gap-3">
@@ -393,7 +470,7 @@
               class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {sourceMode ===
               'assessment'
                 ? 'accent-bg text-white'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+                : 'bg-zinc-100 dark:bg-zinc-800 text-muted-foreground hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
               onclick={() => {
                 sourceMode = 'assessment';
                 customTopic = '';
@@ -405,7 +482,7 @@
               class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {sourceMode ===
               'custom'
                 ? 'accent-bg text-white'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+                : 'bg-zinc-100 dark:bg-zinc-800 text-muted-foreground hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
               onclick={() => {
                 sourceMode = 'custom';
                 selectedAssessment = null;
@@ -417,7 +494,7 @@
             <div class="flex-1 min-w-0 max-w-md">
               <button
                 type="button"
-                class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white text-sm flex items-center justify-between gap-2 transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 focus:outline-none focus:ring-2 accent-ring"
+                class="w-full px-3 py-2 rounded-lg bg-card border border-border text-foreground text-sm flex items-center justify-between gap-2 transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 focus:outline-none focus:ring-2 accent-ring"
                 onclick={() => (assessmentModalOpen = true)}>
                 <span class="truncate">
                   {selectedAssessment?.title ?? ($_('study.select_assessment') || 'Select assessment')}
@@ -451,7 +528,7 @@
                   type="text"
                   bind:value={assessmentSearchQuery}
                   placeholder={$_('study.search_assessments') || 'Search assessments...'}
-                  class="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 accent-ring" />
+                  class="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-card text-foreground placeholder-zinc-400 focus:outline-none focus:ring-2 accent-ring" />
               </div>
               <!-- Filters: Upcoming/All + Year -->
               <div class="flex flex-wrap gap-3 shrink-0">
@@ -460,7 +537,7 @@
                     type="button"
                     class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {assessmentFilterUpcomingOnly
                       ? 'accent-bg text-white'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-muted-foreground hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
                     onclick={() => (assessmentFilterUpcomingOnly = true)}>
                     <T key="study.upcoming_only" fallback="Upcoming only" />
                   </button>
@@ -468,14 +545,14 @@
                     type="button"
                     class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {!assessmentFilterUpcomingOnly
                       ? 'accent-bg text-white'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-muted-foreground hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
                     onclick={() => (assessmentFilterUpcomingOnly = false)}>
                     <T key="study.all_assessments" fallback="All" />
                   </button>
                 </div>
                 {#if assessmentYears.length > 0}
                   <select
-                    class="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 accent-ring"
+                    class="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 accent-ring"
                     value={assessmentFilterYear === 'all' ? 'all' : String(assessmentFilterYear)}
                     onchange={(e) => {
                       const v = (e.target as HTMLSelectElement).value;
@@ -490,7 +567,7 @@
               </div>
               <div class="flex-1 min-h-0 overflow-y-auto">
               {#if filteredAssessments.length === 0}
-                <p class="text-zinc-500 dark:text-zinc-400 py-8 text-center">
+                <p class="text-muted-foreground py-8 text-center">
                   <T key="study.no_assessments_match" fallback="No assessments match your filters." />
                 </p>
               {:else}
@@ -498,23 +575,23 @@
                   {#each filteredAssessments as a}
                     <button
                       type="button"
-                      class="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-left transition-all duration-200 hover:scale-[1.02] hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md focus:outline-none focus:ring-2 accent-ring {selectedAssessment?.id ===
+                      class="w-full px-4 py-3 rounded-xl border border-border bg-card/50 text-left transition-all duration-200 hover:scale-[1.02] hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md focus:outline-none focus:ring-2 accent-ring {selectedAssessment?.id ===
                       a.id && selectedAssessment?.metaclass === a.metaclass
                         ? 'ring-2 accent-ring border-(--accent)'
                         : ''}"
                       onclick={() => selectAssessment(a)}>
                       <div class="flex items-center justify-between gap-4">
                         <div class="min-w-0 flex-1">
-                          <p class="font-medium text-zinc-900 dark:text-white truncate">
+                          <p class="font-medium text-foreground truncate">
                             {a.title}
                           </p>
                           {#if a.subject}
-                            <p class="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+                            <p class="text-sm text-muted-foreground truncate">
                               {a.subject}
                             </p>
                           {/if}
                         </div>
-                        <div class="shrink-0 text-sm text-zinc-500 dark:text-zinc-400">
+                        <div class="shrink-0 text-sm text-muted-foreground">
                           {new Date(a.due).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
@@ -532,19 +609,19 @@
 
       <!-- Section 2: Quiz options -->
       <div class="space-y-3">
-        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        <p class="text-sm font-medium text-muted-foreground">
           <T key="study.quiz_options" fallback="2. Quiz options" />
         </p>
         <div class="flex flex-wrap gap-4 items-center">
           <!-- Difficulty (custom dropdown to match question types) -->
           <div class="flex items-center gap-2">
-            <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+            <Label.Root class="text-sm text-muted-foreground whitespace-nowrap">
               <T key="study.difficulty" fallback="Difficulty" />
             </Label.Root>
             <div class="relative" use:clickOutside={() => (difficultyDropdownOpen = false)}>
               <button
                 type="button"
-                class="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm flex items-center gap-2 min-w-[100px] justify-between transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring"
+                class="px-3 py-2 rounded-lg border border-border bg-card text-foreground text-sm flex items-center gap-2 min-w-[100px] justify-between transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring"
                 onclick={() => (difficultyDropdownOpen = !difficultyDropdownOpen)}>
                 <span>
                   {selectedDifficulty != null ? `Year ${selectedDifficulty}` : ($_('study.any_difficulty') || 'Any')}
@@ -553,11 +630,11 @@
               </button>
               {#if difficultyDropdownOpen}
                 <div
-                  class="absolute z-50 mt-1 min-w-[100px] py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg"
+                  class="absolute z-50 mt-1 min-w-[100px] py-1 bg-card border border-border rounded-lg shadow-lg"
                   transition:fly={{ y: -4, duration: 150 }}>
                   <button
                     type="button"
-                    class="w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors {selectedDifficulty === null ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium' : 'text-zinc-700 dark:text-zinc-300'}"
+                    class="w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors {selectedDifficulty === null ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium' : 'text-foreground'}"
                     onclick={() => {
                       selectedDifficulty = null;
                       difficultyDropdownOpen = false;
@@ -568,7 +645,7 @@
                     {@const year = y as 7 | 8 | 9 | 10 | 11 | 12}
                     <button
                       type="button"
-                      class="w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors {selectedDifficulty === year ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium' : 'text-zinc-700 dark:text-zinc-300'}"
+                      class="w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors {selectedDifficulty === year ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium' : 'text-foreground'}"
                       onclick={() => {
                         selectedDifficulty = year;
                         difficultyDropdownOpen = false;
@@ -583,13 +660,13 @@
 
           <!-- Question types (dropdown) -->
           <div class="flex items-center gap-2">
-            <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+            <Label.Root class="text-sm text-muted-foreground whitespace-nowrap">
               <T key="study.question_types" fallback="Question types" />
             </Label.Root>
             <div class="relative" use:clickOutside={() => (questionTypesDropdownOpen = false)}>
               <button
                 type="button"
-                class="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm flex items-center gap-2 min-w-[180px] justify-between transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring"
+                class="px-3 py-2 rounded-lg border border-border bg-card text-foreground text-sm flex items-center gap-2 min-w-[180px] justify-between transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring"
                 onclick={() => (questionTypesDropdownOpen = !questionTypesDropdownOpen)}>
                 <span class="truncate">
                   {#if selectedQuestionTypes.length === 3}
@@ -612,7 +689,7 @@
               </button>
               {#if questionTypesDropdownOpen}
                 <div
-                  class="absolute z-50 mt-1 min-w-[180px] py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg"
+                  class="absolute z-50 mt-1 min-w-[180px] py-1 bg-card border border-border rounded-lg shadow-lg"
                   transition:fly={{ y: -4, duration: 150 }}>
                   {#each ['multiple_choice', 'true_false', 'short_answer'] as t}
                     {@const type = t as 'multiple_choice' | 'true_false' | 'short_answer'}
@@ -628,7 +705,7 @@
                             : selectedQuestionTypes.filter((x) => x !== type);
                         }}
                         class="rounded accent-ring" />
-                      <span class="text-sm text-zinc-700 dark:text-zinc-300">
+                      <span class="text-sm text-foreground">
                         {#if type === 'multiple_choice'}
                           <T key="study.type_multiple_choice" fallback="Multiple choice" />
                         {:else if type === 'true_false'}
@@ -649,7 +726,7 @@
 
           <!-- Question count -->
           <div class="flex items-center gap-2">
-            <Label.Root class="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+            <Label.Root class="text-sm text-muted-foreground whitespace-nowrap">
               <T key="study.question_count" fallback="Questions" />
             </Label.Root>
             <div class="flex items-center gap-2 w-36">
@@ -661,14 +738,14 @@
                 step={1}
                 class="flex-1" />
             </div>
-            <span class="text-sm text-zinc-500 dark:text-zinc-400 w-8">{questionCount}</span>
+            <span class="text-sm text-muted-foreground w-8">{questionCount}</span>
           </div>
         </div>
       </div>
 
       <!-- Section 3: Generate -->
       <div class="space-y-3">
-        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        <p class="text-sm font-medium text-muted-foreground">
           <T key="study.generate_section" fallback="3. Generate" />
         </p>
         <Button
@@ -704,8 +781,8 @@
             {#each questions as q, i}
               {@const qType = q.type || 'multiple_choice'}
               <div
-                class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white/50 dark:bg-zinc-800/50">
-                <p class="font-medium text-zinc-900 dark:text-white mb-3">
+                class="p-4 rounded-xl border border-border bg-white/50 dark:bg-zinc-800/50">
+                <p class="font-medium text-foreground mb-3">
                   {i + 1}. {q.question}
                 </p>
                 <div class="space-y-2">
@@ -715,7 +792,7 @@
                       value={typeof userAnswers[i] === 'string' ? userAnswers[i] : ''}
                       oninput={(e) => setAnswer(i, (e.target as HTMLInputElement).value)}
                       placeholder={$_('study.type_your_answer') || 'Type your answer...'}
-                      class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 accent-ring" />
+                      class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground placeholder-zinc-400 focus:outline-none focus:ring-2 accent-ring" />
                   {:else}
                     {#each (qType === 'true_false' && (!q.options || q.options.length === 0) ? ['True', 'False'] : (q.options || [])) as opt, j}
                       <label
@@ -727,7 +804,7 @@
                           checked={userAnswers[i] === j}
                           onchange={() => setAnswer(i, j)}
                           class="accent-ring" />
-                        <span class="text-zinc-700 dark:text-zinc-300">{opt}</span>
+                        <span class="text-foreground">{opt}</span>
                       </label>
                     {/each}
                   {/if}
@@ -742,10 +819,10 @@
           <!-- Results -->
           <div class="space-y-6">
             <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+              <h3 class="text-lg font-semibold text-foreground">
                 <T key="study.raw_feedback" fallback="Results" />
               </h3>
-              <div class="text-sm text-zinc-600 dark:text-zinc-400">
+              <div class="text-sm text-muted-foreground">
                 {totalScore}/{questions.length} ({scorePercent}%)
               </div>
             </div>
@@ -759,7 +836,7 @@
                   : score >= 0.5
                     ? 'border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10'
                     : 'border-red-200 dark:border-red-800/50 bg-red-50/50 dark:bg-red-900/10'}">
-                <p class="font-medium text-zinc-900 dark:text-white mb-2">
+                <p class="font-medium text-foreground mb-2">
                   {i + 1}. {q.question}
                 </p>
                 <div class="flex items-center gap-2 text-sm">
@@ -784,12 +861,12 @@
             {/each}
 
             <!-- AI Feedback -->
-            <div class="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+            <div class="border border-border rounded-xl overflow-hidden">
               <button
                 type="button"
-                class="w-full px-4 py-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200"
+                class="w-full px-4 py-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 hover:surface-muted transition-colors duration-200"
                 onclick={() => (showAiFeedback = !showAiFeedback)}>
-                <span class="font-medium text-zinc-900 dark:text-white flex items-center gap-2">
+                <span class="font-medium text-foreground flex items-center gap-2">
                   <Icon src={Sparkles} class="w-5 h-5 text-(--accent)" />
                   <T key="study.ai_feedback" fallback="AI Feedback" />
                 </span>
@@ -800,23 +877,23 @@
                 {/if}
               </button>
               {#if showAiFeedback}
-                <div class="p-4 border-t border-zinc-200 dark:border-zinc-700">
+                <div class="p-4 border-t border-border">
                   {#if loadingFeedback}
-                    <p class="text-zinc-500 dark:text-zinc-400 text-sm">
+                    <p class="text-muted-foreground text-sm">
                       {$_('study.generating_feedback') ?? 'Generating feedback...'}
                     </p>
                   {:else if aiFeedback}
-                    <p class="text-zinc-700 dark:text-zinc-300 mb-4">{aiFeedback.summary}</p>
+                    <p class="text-foreground mb-4">{aiFeedback.summary}</p>
                     {#if aiFeedback.suggestions?.length}
-                      <ul class="list-disc list-inside text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                      <ul class="list-disc list-inside text-sm text-muted-foreground mb-4">
                         {#each aiFeedback.suggestions as s}
                           <li>{s}</li>
                         {/each}
                       </ul>
                     {/if}
-                    <p class="text-zinc-700 dark:text-zinc-300 italic">{aiFeedback.encouragement}</p>
+                    <p class="text-foreground italic">{aiFeedback.encouragement}</p>
                   {:else}
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                    <p class="text-sm text-muted-foreground">
                       {$_('study.ai_feedback_unavailable') ?? 'AI feedback could not be generated.'}
                     </p>
                   {/if}
@@ -832,7 +909,7 @@
       </div>
     {:else}
       <div class="flex-1 flex items-center justify-center p-8">
-        <p class="text-zinc-500 dark:text-zinc-400 text-center">
+        <p class="text-muted-foreground text-center">
           <T key="study.configure_and_generate" fallback="Configure your topic and click Generate Quiz to get started." />
         </p>
       </div>

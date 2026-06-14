@@ -103,7 +103,7 @@
 {#if open}
   <!-- Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50 transition-opacity mobile-modal-inset"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity mobile-modal-inset"
     transition:fly={{ duration: 200, y: 0 }}
     onclick={(e) => {
       if (e.target === e.currentTarget) onClose();
@@ -117,13 +117,13 @@
     tabindex="0">
     <!-- Dialog -->
     <div
-      class="relative bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col mobile-modal-max-h"
+      class="relative bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col mobile-modal-max-h"
       transition:fly={{ duration: 200, y: 20 }}>
       <!-- Header -->
-      <div class="flex justify-between items-center p-6 border-b border-zinc-200 dark:border-zinc-700">
+      <div class="flex justify-between items-center p-6 border-b border-border">
         <h2
           id="menu-order-dialog-title"
-          class="text-xl font-semibold text-zinc-900 dark:text-white">
+          class="text-xl font-semibold text-foreground">
           <T key="settings.reorder_pages" fallback="Reorder Pages" />
         </h2>
         <button
@@ -136,7 +136,7 @@
 
       <!-- Content -->
       <div class="overflow-y-auto flex-1 p-6">
-        <p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+        <p class="mb-4 text-sm text-muted-foreground">
           <T
             key="settings.reorder_pages_description"
             fallback="Drag and drop items to reorder them, or use the arrow buttons. Changes will be saved when you click Save." />
@@ -159,7 +159,7 @@
                 ? 'opacity-50 bg-zinc-100 dark:bg-zinc-700'
                 : isDragOver
                   ? 'border-accent bg-accent/10 dark:bg-accent/20'
-                  : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/50'}">
+                  : 'border-border bg-card hover:bg-zinc-50 dark:hover:bg-zinc-700/50'}">
               <!-- Drag Handle -->
               <div class="flex-shrink-0 cursor-move text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400">
                 <Icon src={Bars3} class="w-5 h-5" />
@@ -167,7 +167,7 @@
 
               <!-- Icon -->
               <div class="flex-shrink-0">
-                <Icon src={item.icon} class="w-6 h-6 text-zinc-600 dark:text-zinc-400" />
+                <Icon src={item.icon} class="w-6 h-6 text-muted-foreground" />
               </div>
 
               <!-- Label -->
@@ -180,14 +180,14 @@
                 <button
                   onclick={() => moveUp(index)}
                   disabled={index === 0}
-                  class="p-2 rounded-lg transition-all duration-200 transform disabled:opacity-50 disabled:cursor-not-allowed text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                  class="p-2 rounded-lg transition-all duration-200 transform disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   aria-label={$_('common.move_up') || 'Move up'}>
                   <Icon src={ChevronUp} class="w-4 h-4" />
                 </button>
                 <button
                   onclick={() => moveDown(index)}
                   disabled={index === orderedMenu.length - 1}
-                  class="p-2 rounded-lg transition-all duration-200 transform disabled:opacity-50 disabled:cursor-not-allowed text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                  class="p-2 rounded-lg transition-all duration-200 transform disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   aria-label={$_('common.move_down') || 'Move down'}>
                   <Icon src={ChevronDown} class="w-4 h-4" />
                 </button>
@@ -198,7 +198,7 @@
       </div>
 
       <!-- Footer -->
-      <div class="flex justify-between items-center p-6 border-t border-zinc-200 dark:border-zinc-700 gap-3">
+      <div class="flex justify-between items-center p-6 border-t border-border gap-3">
         <Button
           onclick={handleReset}
           variant="secondary"

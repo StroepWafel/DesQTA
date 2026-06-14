@@ -56,8 +56,14 @@
     await updateUrlParam('date', formatDate(today));
   }
 
-  function handleViewModeChange(mode: 'week' | 'day' | 'month' | 'list') {
+  async function handleViewModeChange(mode: 'week' | 'day' | 'month' | 'list') {
     viewMode = mode;
+    try {
+      const { saveSettingsWithQueue } = await import('$lib/services/settingsSync');
+      await saveSettingsWithQueue({ timetable_view_mode: mode });
+    } catch {
+      // best-effort persistence
+    }
   }
 
   // Parse date from URL
@@ -121,8 +127,22 @@
   });
 
   let configLoadAttempted = $state(false);
+  let persistedViewMode = $state<'today' | 'week' | 'day' | 'month' | 'list' | null>(null);
 
   onMount(async () => {
+    // Load the persisted view mode before we initialise widgetConfig so the
+    // initial render reflects the user's choice instead of the platform default.
+    try {
+      const subset = await invoke<any>('get_settings_subset', {
+        keys: ['timetable_view_mode'],
+      });
+      const raw = subset?.timetable_view_mode as string | undefined;
+      if (raw === 'today' || raw === 'week' || raw === 'day' || raw === 'month' || raw === 'list') {
+        persistedViewMode = raw;
+      }
+    } catch {
+      // best-effort
+    }
     try {
       const config = await invoke<{ payload?: Record<string, { value?: string }> }>('load_seqta_config');
       seqtaConfig = config;
@@ -140,7 +160,11 @@
     const initialDate = parseDateFromUrl();
     weekStart = getMonday(initialDate);
     selectedDate = initialDate;
-    viewMode = initialViewMode;
+    // Prefer persisted view mode, fall back to platform default. 'today'
+    // collapses to 'day' for the standalone page since 'today' is a pseudo-view
+    // implemented inside TimetableWidget (resolves to day + today date).
+    const effective = persistedViewMode === 'today' ? 'day' : (persistedViewMode ?? initialViewMode);
+    viewMode = effective;
     // Initialize previousDateParam with current URL param
     const currentDateParam = $page.url.searchParams.get('date');
     previousDateParam = currentDateParam;
@@ -160,49 +184,55 @@
         h: 12,
       },
       settings: {
-        viewMode: initialViewMode,
+        viewMode: effective,
         timeRange,
         showTeacher: true,
         showRoom: true,
         showAttendance: true,
         showEmptyPeriods: false,
         density: 'normal',
-        defaultView: initialViewMode,
+        defaultView: effective,
       },
     };
   });
 </script>
 
 <div
-  class="container max-w-none w-full px-2 sm:px-4 py-5 mx-auto flex flex-col gap-6 min-h-[calc(100dvh-10rem)] sm:min-h-[calc(100dvh-8rem)]"
-  data-onboarding="timetable-color">
-  <!-- Header row: page title + timetable controls at same level -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shrink-0">
-    <div>
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+  class="container max-w-none w-full p-5 sm:p-8 mx-auto flex flex-col gap-6 min-h-[calc(100dvh-10rem)] sm:min-h-[calc(100dvh-8rem)]"
+  data-onboarding="timetable-color"
+  in:fade={{ duration: 250 }}>
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between shrink-0">
+    <div class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        Schedule
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
         <T key="navigation.timetable" fallback="Timetable" />
       </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground max-w-2xl">
         <T key="timetable.description" fallback="View your weekly schedule and lessons" />
       </p>
     </div>
 
-    <!-- Timetable controls: week nav, view switcher, export (same level as header) -->
-    {#if widgetConfig && headerState}
+    <!-- Timetable controls render as soon as widgetConfig exists. Export/loading
+         callbacks come from the TimetableWidget via onPageHeaderStateReady; we
+         no longer hide the entire header while waiting for that bridge to fire
+         (which caused the page to look empty when the bridge didn't run yet). -->
+    {#if widgetConfig}
       <TimetableHeader
         weekStart={weekStart}
-        loadingLessons={headerState.loadingLessons}
+        loadingLessons={headerState?.loadingLessons ?? true}
         {viewMode}
         inline={true}
         onPrevWeek={handlePrevWeek}
         onNextWeek={handleNextWeek}
         onToday={handleToday}
         onViewModeChange={handleViewModeChange}
-        onExportCsv={headerState.onExportCsv}
-        onExportPdf={headerState.onExportPdf}
-        onExportIcal={headerState.onExportIcal} />
+        onExportCsv={headerState?.onExportCsv ?? (() => {})}
+        onExportPdf={headerState?.onExportPdf ?? (() => {})}
+        onExportIcal={headerState?.onExportIcal ?? (() => {})} />
     {/if}
-  </div>
+  </header>
 
   <!-- Timetable widget (content only, no header) -->
   <div class="flex-1 min-h-0 flex flex-col">

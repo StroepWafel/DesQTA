@@ -8,6 +8,7 @@
   import { toastStore } from '../../lib/stores/toast';
   import { uploadProgressStore } from '../../lib/stores/uploadProgress';
   import { assessmentSubmissionsRefreshStore } from '../../lib/stores/assessmentSubmissionsRefresh';
+  import { ariaTooltip } from '$lib/actions/tooltip';
 
   interface Props {
     assessmentId: number;
@@ -158,7 +159,8 @@
           type="button"
           class="shrink-0 p-1 rounded-md text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors duration-200"
           onclick={clearError}
-          aria-label="Dismiss error">
+          aria-label="Dismiss error"
+          use:ariaTooltip>
           <Icon src={XMark} class="w-4 h-4" />
         </button>
       </div>
@@ -192,7 +194,8 @@
           type="button"
           class="shrink-0 p-1 rounded-md text-green-400 hover:text-green-600 dark:hover:text-green-300 transition-colors duration-200"
           onclick={clearSuccess}
-          aria-label="Dismiss success message">
+          aria-label="Dismiss success message"
+          use:ariaTooltip>
           <Icon src={XMark} class="w-4 h-4" />
         </button>
       </div>

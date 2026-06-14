@@ -172,9 +172,9 @@
     onmouseleave={handleMouseLeave}>
     <!-- Featured Badge -->
     <div
-      class="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-lg">
+      class="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-card shadow-lg">
       <Icon src={Sparkles} class="w-4 h-4 accent-text" />
-      <span class="text-sm font-semibold text-zinc-900 dark:text-white">Featured</span>
+      <span class="text-sm font-semibold text-foreground">Featured</span>
     </div>
 
     <!-- Slides Container -->
@@ -280,7 +280,7 @@
                               await onQuickPreview(theme.id);
                             }
                           }}
-                          class="px-6 py-3 bg-white/10 backdrop-blur-md text-white font-semibold rounded-xl hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-105 active:scale-95">
+                          class="px-6 py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-105 active:scale-95">
                           Preview
                         </button>
                       {/if}
@@ -288,7 +288,7 @@
                         type="button"
                         onclick={() => handleFavorite(theme, !isFavorited)}
                         disabled={favoriting}
-                        class="p-3 bg-white/10 backdrop-blur-md text-white rounded-xl hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:opacity-50">
+                        class="p-3 bg-white/10 text-white rounded-xl hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:opacity-50">
                         <Icon
                           src={Heart}
                           class="w-5 h-5 {isFavorited ? 'fill-current text-red-500' : ''}" />
@@ -321,14 +321,14 @@
       <button
         type="button"
         onclick={prevSlide}
-        class="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-110 active:scale-95"
+        class="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-110 active:scale-95"
         aria-label="Previous theme">
         <Icon src={ChevronLeft} class="w-6 h-6" />
       </button>
       <button
         type="button"
         onclick={nextSlide}
-        class="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-110 active:scale-95"
+        class="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-110 active:scale-95"
         aria-label="Next theme">
         <Icon src={ChevronRight} class="w-6 h-6" />
       </button>
@@ -337,7 +337,7 @@
     <!-- Navigation Dots -->
     {#if themes.length > 1}
       <div
-        class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20">
+        class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20">
         {#each themes as _, i}
           <button
             type="button"

@@ -3,9 +3,9 @@
   import { seqtaFetch } from '../../utils/netUtil';
   import { cache } from '../../utils/cache';
   import { getWithIdbFallback, setIdb } from '../services/idbCache';
-  import { fade } from 'svelte/transition';
   import { Icon, ArrowTopRightOnSquare, Bell } from 'svelte-hero-icons';
   import { _ } from '$lib/i18n';
+  import WidgetCard from './dashboard/WidgetCard.svelte';
 
   interface Notice {
     id: number;
@@ -154,68 +154,48 @@
   });
 </script>
 
-<div class="flex flex-col h-full min-h-0 w-full">
-  <div
-    class="flex items-center justify-between gap-2 mb-2 sm:mb-3 shrink-0 transition-all duration-300"
-    in:fade={{ duration: 200 }}>
-    <div class="flex items-center gap-2">
-      <Icon
-        src={Bell}
-        class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300" />
-      <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300">
-        {$_('navigation.notices')}
-      </h3>
-    </div>
+<WidgetCard
+  icon={Bell}
+  title={$_('navigation.notices')}
+  {loading}
+  empty={!loading && notices.length === 0}
+  emptyTitle={$_('notices.no_notices_today')}
+  emptyIcon={Bell}>
+  {#snippet headerAction()}
     <a
       href="/notices"
-      class="px-3 py-1.5 text-sm rounded-lg transition-all duration-200 text-nowrap accent-text hover:accent-bg-hover hover:text-white text-(--accent)! dark:text-(--accent)! flex items-center gap-1">
+      class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors uppercase tracking-[0.06em] font-semibold">
       {$_('notices.view_all')}
-      <Icon src={ArrowTopRightOnSquare} class="w-4 h-4" />
+      <Icon src={ArrowTopRightOnSquare} class="w-3.5 h-3.5" />
     </a>
-  </div>
+  {/snippet}
 
-  <div
-    class="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-accent-500/30 scrollbar-track-transparent pr-1">
-    {#if loading}
-      <div class="flex flex-col justify-center items-center py-8">
-        <div
-          class="w-8 h-8 rounded-full border-4 animate-spin border-accent-500/30 border-t-accent-500">
+  <div class="h-full overflow-y-auto -mx-1 px-1 space-y-2">
+    {#each notices as notice}
+      {@const noticeDate = new Date().toISOString().split('T')[0]}
+      <a
+        href="/notices?item={notice.id}&category={notice.labelId}&date={noticeDate}"
+        class="block rounded-lg border border-border-subtle border-l-[3px] p-3 transition-colors duration-150 hover:bg-surface-muted text-foreground"
+        style="border-left-color: {getLabelColor(notice.labelId)};">
+        <div class="flex items-center gap-2 mb-1.5">
+          <span
+            class="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] rounded text-white shrink-0"
+            style="background-color: {getLabelColor(notice.labelId)};"
+            class:text-black={!isColorDark(getLabelColor(notice.labelId))}>
+            {getLabelTitle(notice.labelId)}
+          </span>
+          <span class="text-[10px] text-muted-foreground uppercase tracking-[0.06em] truncate">
+            {notice.author}
+          </span>
         </div>
-        <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">{$_('notices.loading')}</p>
-      </div>
-    {:else if notices.length === 0}
-      <div class="py-8 text-center">
-        <p class="text-sm text-zinc-600 dark:text-zinc-400">{$_('notices.no_notices_today')}</p>
-      </div>
-    {:else}
-      <div class="space-y-3">
-        {#each notices as notice}
-          {@const noticeDate = new Date().toISOString().split('T')[0]}
-          <a
-            href="/notices?item={notice.id}&category={notice.labelId}&date={noticeDate}"
-            class="block rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 border-l-4 p-3 transition-all duration-200 hover:border-accent-500/40 hover:shadow-md text-zinc-900 dark:text-zinc-200"
-            style="border-left-color: {getLabelColor(notice.labelId)};">
-            <div class="flex items-start gap-2 mb-2">
-              <span
-                class="px-2 py-1 text-xs font-medium rounded-full text-white shrink-0"
-                style="background-color: {getLabelColor(notice.labelId)};"
-                class:text-black={!isColorDark(getLabelColor(notice.labelId))}>
-                {getLabelTitle(notice.labelId)}
-              </span>
-              <span class="text-xs text-zinc-600 dark:text-zinc-400 uppercase tracking-wide shrink-0">
-                {notice.author}
-              </span>
-            </div>
-            <h4 class="font-semibold text-sm mb-1 line-clamp-1 text-zinc-900 dark:text-white">{notice.title}</h4>
-            <div class="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2">
-              {@html notice.content}
-            </div>
-          </a>
-        {/each}
-      </div>
-    {/if}
+        <h4 class="font-semibold text-sm mb-1 line-clamp-1 text-foreground">{notice.title}</h4>
+        <div class="text-xs text-muted-foreground line-clamp-2">
+          {@html notice.content}
+        </div>
+      </a>
+    {/each}
   </div>
-</div>
+</WidgetCard>
 
 <style>
   .line-clamp-1 {

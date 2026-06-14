@@ -2,13 +2,15 @@
   import { Icon } from 'svelte-hero-icons';
   import { XMark } from 'svelte-hero-icons';
   import type { Snippet } from 'svelte';
+  import { ariaTooltip } from '$lib/actions/tooltip';
 
   interface Props {
-    variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info';
+    variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'outline';
     size?: 'xs' | 'sm' | 'md' | 'lg';
     icon?: any;
     dot?: boolean;
     removable?: boolean;
+    uppercase?: boolean;
     class?: string;
     onremove?: () => void;
     children?: Snippet;
@@ -20,26 +22,29 @@
     icon,
     dot = false,
     removable = false,
+    uppercase = false,
     class: className = '',
     onremove,
     children
   }: Props = $props();
 
+  // Lo-fi badge: flat neutral pills, optional accent variant. Less saturation than before.
   const variants = {
-    default: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300',
-    primary: 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300',
-    secondary: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-    success: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-    warning: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-    danger: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-    info: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+    default: 'bg-surface-muted text-foreground border-border-subtle',
+    primary: 'bg-accent-500/12 text-accent-600 border-accent-500/20',
+    secondary: 'bg-surface-3 text-foreground border-border',
+    success: 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
+    warning: 'bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-500/20',
+    danger: 'bg-destructive/12 text-destructive border-destructive/20',
+    info: 'bg-sky-500/12 text-sky-700 dark:text-sky-300 border-sky-500/20',
+    outline: 'bg-transparent text-foreground border-border',
   };
 
   const sizes = {
-    xs: 'px-1.5 py-0.5 text-xs',
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-0.5 text-sm',
-    lg: 'px-3 py-1 text-sm'
+    xs: 'h-5 px-1.5 text-[10px] gap-1',
+    sm: 'h-6 px-2 text-xs gap-1',
+    md: 'h-6 px-2.5 text-xs gap-1.5',
+    lg: 'h-7 px-3 text-sm gap-1.5'
   };
 
   const iconSizes = {
@@ -50,17 +55,19 @@
   };
 
   const dotColors = {
-    default: 'bg-zinc-400',
+    default: 'bg-muted-foreground',
     primary: 'bg-accent-500',
-    secondary: 'bg-purple-500',
-    success: 'bg-green-500',
-    warning: 'bg-yellow-500',
-    danger: 'bg-red-500',
-    info: 'bg-blue-500'
+    secondary: 'bg-foreground/60',
+    success: 'bg-emerald-500',
+    warning: 'bg-amber-500',
+    danger: 'bg-destructive',
+    info: 'bg-sky-500',
+    outline: 'bg-foreground/60',
   };
 
   let baseClasses = $derived([
-    'inline-flex items-center gap-1 font-medium rounded-full transition-all duration-200',
+    'inline-flex items-center font-medium rounded-full border transition-colors duration-150 whitespace-nowrap',
+    uppercase ? 'uppercase tracking-[0.06em] font-semibold' : '',
     variants[variant],
     sizes[size],
     className
@@ -69,24 +76,23 @@
 
 <span class={baseClasses}>
   {#if dot}
-    <span class="w-2 h-2 rounded-full {dotColors[variant]}"></span>
+    <span class="w-1.5 h-1.5 rounded-full {dotColors[variant]}"></span>
   {:else if icon}
     <Icon src={icon} size={iconSizes[size]} />
   {/if}
-  
+
   {#if children}
     {@render children()}
   {/if}
-  
+
   {#if removable}
     <button
       onclick={onremove}
-      class="ml-1 rounded-full hover:bg-current hover:bg-opacity-20 p-0.5 transition-colors"
+      class="ml-0.5 rounded-full hover:bg-foreground/10 p-0.5 transition-colors"
       aria-label="Remove badge"
+      use:ariaTooltip
     >
       <Icon src={XMark} size="12" />
     </button>
   {/if}
 </span>
-
-

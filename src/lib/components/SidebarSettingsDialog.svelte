@@ -22,6 +22,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { saveSettingsWithQueue, flushSettingsQueue } from '../services/settingsSync';
   import { logger } from '../../utils/logger';
+  import { tooltip } from '$lib/actions/tooltip';
 
   interface Props {
     open: boolean;
@@ -35,6 +36,7 @@
   let folders = $state<SidebarFolder[]>([]);
   let favorites = $state<string[]>([]);
   let disabledPages = $state<string[]>([]);
+  let density = $state<'compact' | 'comfortable' | 'spacious'>('comfortable');
   let editingFolder: SidebarFolder | null = $state(null);
   let newFolderName = $state('');
   let newFolderIcon = $state('');
@@ -105,17 +107,33 @@
 
   let orderedList = $state<ListItem[]>([]);
 
+  async function setDensity(next: 'compact' | 'comfortable' | 'spacious') {
+    if (density === next) return;
+    density = next;
+    try {
+      await saveSettingsWithQueue({ sidebar_density: next });
+      await flushSettingsQueue();
+      window.dispatchEvent(new CustomEvent('desqta:sidebar-density', { detail: next }));
+    } catch (e) {
+      logger.error('SidebarSettingsDialog', 'setDensity', 'Failed to save density', { error: e });
+    }
+  }
+
   // Load sidebar configuration
   const loadConfig = async () => {
     try {
       const settings = await invoke<any>('get_settings_subset', {
-        keys: ['sidebar_folders', 'sidebar_favorites', 'menu_order', 'disabled_sidebar_pages'],
+        keys: ['sidebar_folders', 'sidebar_favorites', 'menu_order', 'disabled_sidebar_pages', 'sidebar_density'],
       });
       folders = (settings.sidebar_folders || []).sort(
         (a: SidebarFolder, b: SidebarFolder) => a.order - b.order,
       );
       favorites = settings.sidebar_favorites || [];
       disabledPages = settings.disabled_sidebar_pages || [];
+      const rawDensity = settings.sidebar_density as string | undefined;
+      if (rawDensity === 'compact' || rawDensity === 'comfortable' || rawDensity === 'spacious') {
+        density = rawDensity;
+      }
 
       // Parse combined order from menu_order (supports "folder:ID" format)
       const menuOrder = settings.menu_order as string[] | undefined;
@@ -440,7 +458,7 @@
 {#if open}
   <!-- Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50 transition-opacity mobile-modal-inset"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity mobile-modal-inset"
     transition:fade={{ duration: 300, easing: cubicInOut }}
     onclick={(e) => {
       if (e.target === e.currentTarget) onClose();
@@ -454,30 +472,58 @@
     aria-labelledby="sidebar-settings-dialog-title">
     <!-- Dialog -->
     <div
-      class="relative bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col mobile-modal-max-h"
+      class="relative bg-card rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col mobile-modal-max-h"
       transition:fly={{ duration: 300, y: 20, easing: cubicInOut }}>
       <!-- Header -->
       <div
-        class="flex justify-between items-center p-6 border-b border-zinc-200 dark:border-zinc-700">
+        class="flex justify-between items-center p-6 border-b border-border">
         <h2
           id="sidebar-settings-dialog-title"
-          class="text-xl font-semibold text-zinc-900 dark:text-white">
+          class="text-xl font-semibold text-foreground">
           <T key="settings.sidebar_settings" fallback="Sidebar Settings" />
         </h2>
         <button
           onclick={onClose}
           class="p-2 text-zinc-600 rounded-lg transition-all duration-200 transform dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-          aria-label={$_('common.close') || 'Close'}>
+          aria-label={$_('common.close') || 'Close'}
+          use:tooltip={$_('common.close') || 'Close'}>
           <Icon src={XMark} class="w-5 h-5" />
         </button>
       </div>
 
       <!-- Content -->
       <div class="overflow-y-auto flex-1 p-6 space-y-6">
+        <!-- Density Section -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-lg font-semibold text-foreground">
+              <T key="settings.sidebar_density" fallback="Density" />
+            </h3>
+          </div>
+          <p class="mb-3 text-sm text-muted-foreground">
+            <T key="settings.sidebar_density_desc" fallback="Make sidebar items smaller or larger." />
+          </p>
+          <div class="inline-flex items-center gap-1 p-1 rounded-lg bg-surface-muted border border-border" role="radiogroup" aria-label="Sidebar density">
+            {#each ['compact', 'comfortable', 'spacious'] as opt (opt)}
+              {@const isSelected = density === opt}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onclick={() => setDensity(opt as 'compact' | 'comfortable' | 'spacious')}
+                class="h-8 px-3 text-xs font-semibold uppercase tracking-[0.06em] rounded-md transition-colors duration-150 {isSelected
+                  ? 'bg-card text-foreground border border-border'
+                  : 'text-muted-foreground hover:text-foreground'}">
+                {opt}
+              </button>
+            {/each}
+          </div>
+        </div>
+
         <!-- Menu Order Section -->
         <div>
           <div class="flex justify-between items-center mb-3">
-            <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+            <h3 class="text-lg font-semibold text-foreground">
               <T key="settings.menu_order" fallback="Menu Order" />
             </h3>
             <div class="flex gap-2">
@@ -498,7 +544,7 @@
               </Button>
             </div>
           </div>
-          <p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <p class="mb-4 text-sm text-muted-foreground">
             <T
               key="settings.reorder_pages_description"
               fallback="Use the arrow buttons to reorder items. Click the star to favorite items. Use the folder button to organize items into folders." />
@@ -512,14 +558,14 @@
                 {@const currentFolder = folders.find((f) => f.items.includes(item.path))}
                 <div
                   data-id={item.path}
-                  class="flex items-center gap-3 p-4 rounded-lg border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 hover:shadow-md {!isPageVisible(item.path)
+                  class="flex items-center gap-3 p-4 rounded-lg border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border-border bg-card hover:bg-zinc-50 dark:hover:bg-zinc-700/50 hover:shadow-md {!isPageVisible(item.path)
                     ? 'opacity-60 border-amber-200/50 dark:border-amber-800/30'
                     : ''}"
                   style="animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1);"
                   style:animation-delay="{listIndex * 20}ms">
                   <!-- Icon -->
                   <div class="shrink-0">
-                    <Icon src={item.icon} class="w-6 h-6 text-zinc-600 dark:text-zinc-400" />
+                    <Icon src={item.icon} class="w-6 h-6 text-muted-foreground" />
                   </div>
 
                   <!-- Label -->
@@ -542,7 +588,7 @@
                         aria-label={isPageVisible(item.path)
                           ? $_('settings.hide_from_sidebar') || 'Hide from sidebar'
                           : $_('settings.show_in_sidebar') || 'Show in sidebar'}
-                        title={isPageVisible(item.path)
+                        use:tooltip={isPageVisible(item.path)
                           ? $_('settings.hide_from_sidebar') || 'Hide from sidebar'
                           : $_('settings.show_in_sidebar') || 'Show in sidebar'}>
                         <Icon
@@ -560,7 +606,7 @@
                         ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
                         : 'text-zinc-400 hover:text-yellow-500 hover:bg-zinc-100 dark:hover:bg-zinc-700'}"
                       aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                      title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
+                      use:tooltip={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
                       <Icon src={Star} class="w-5 h-5" />
                     </button>
 
@@ -571,8 +617,8 @@
                         buttonIcon={Folder}
                         buttonText={currentFolder ? currentFolder.name : 'Move to Folder'}
                         placement="bottom-end"
-                        class="!p-2.5 !rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                        menuClass="backdrop-blur-md shadow-2xl bg-white/95 dark:bg-zinc-900/90" />
+                        class="!p-2.5 !rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                        menuClass="shadow-2xl bg-white/95 dark:bg-zinc-900/90" />
                     {/if}
 
                     <!-- Move Up Button -->
@@ -582,9 +628,9 @@
                         moveUpInList(listIndex);
                       }}
                       disabled={listIndex === 0}
-                      class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                      class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
                       aria-label={$_('common.move_up') || 'Move up'}
-                      title={$_('common.move_up') || 'Move up'}>
+                      use:tooltip={$_('common.move_up') || 'Move up'}>
                       <Icon src={ChevronUp} class="w-5 h-5" />
                     </button>
 
@@ -595,9 +641,9 @@
                         moveDownInList(listIndex);
                       }}
                       disabled={listIndex === orderedList.length - 1}
-                      class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                      class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
                       aria-label={$_('common.move_down') || 'Move down'}
-                      title={$_('common.move_down') || 'Move down'}>
+                      use:tooltip={$_('common.move_down') || 'Move down'}>
                       <Icon src={ChevronDown} class="w-5 h-5" />
                     </button>
                   </div>
@@ -606,7 +652,7 @@
                 {@const folder = listItem.folder}
                 {@const folderItems = getFolderItems(folder)}
                 <div
-                  class="rounded-lg border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 hover:shadow-md overflow-hidden"
+                  class="rounded-lg border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border-border bg-card hover:bg-zinc-50 dark:hover:bg-zinc-700/50 hover:shadow-md overflow-hidden"
                   style="animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1);"
                   style:animation-delay="{listIndex * 20}ms">
                   {#if editingFolder?.id === folder.id}
@@ -637,20 +683,20 @@
                             : 'rotate-90'}">
                           <Icon
                             src={ChevronRight}
-                            class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+                            class="w-5 h-5 text-muted-foreground" />
                         </div>
 
                         <!-- Folder Icon -->
                         <div class="shrink-0">
-                          <Icon src={Folder} class="w-6 h-6 text-zinc-600 dark:text-zinc-400" />
+                          <Icon src={Folder} class="w-6 h-6 text-muted-foreground" />
                         </div>
 
                         <!-- Folder Name -->
                         <div class="flex-1 min-w-0 text-left">
-                          <span class="font-medium text-zinc-900 dark:text-white"
+                          <span class="font-medium text-foreground"
                             >{folder.name}</span>
                           {#if folderItems.length > 0}
-                            <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
+                            <span class="ml-2 text-sm text-muted-foreground">
                               ({folderItems.length})
                             </span>
                           {/if}
@@ -662,31 +708,31 @@
                         <button
                           onclick={() => moveUpInList(listIndex)}
                           disabled={listIndex === 0}
-                          class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                          class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
                           aria-label="Move folder up"
-                          title="Move folder up">
+                          use:tooltip={'Move folder up'}>
                           <Icon src={ChevronUp} class="w-5 h-5" />
                         </button>
                         <button
                           onclick={() => moveDownInList(listIndex)}
                           disabled={listIndex === orderedList.length - 1}
-                          class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                          class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
                           aria-label="Move folder down"
-                          title="Move folder down">
+                          use:tooltip={'Move folder down'}>
                           <Icon src={ChevronDown} class="w-5 h-5" />
                         </button>
                         <button
                           onclick={() => startEditFolder(folder)}
-                          class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                          class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700"
                           aria-label="Edit folder"
-                          title="Edit folder">
+                          use:tooltip={'Edit folder'}>
                           <Icon src={PencilSquare} class="w-5 h-5" />
                         </button>
                         <button
                           onclick={() => deleteFolder(folder.id)}
                           class="p-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                           aria-label="Delete folder"
-                          title="Delete folder">
+                          use:tooltip={'Delete folder'}>
                           <Icon src={Trash} class="w-5 h-5" />
                         </button>
                       </div>
@@ -696,31 +742,31 @@
                     {#if !folder.collapsed}
                       <div
                         transition:slide={{ duration: 300, easing: cubicInOut }}
-                        class="border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/30">
+                        class="border-t border-border bg-zinc-50 dark:bg-zinc-900/30">
                         {#if folderItems.length === 0}
-                          <p class="text-sm text-zinc-500 dark:text-zinc-400 text-center py-4 px-4">
+                          <p class="text-sm text-muted-foreground text-center py-4 px-4">
                             <T key="settings.drag_items_here" fallback="No items in this folder" />
                           </p>
                         {:else}
                           <div class="p-3 space-y-2">
                             {#each folderItems as item, itemIndex}
                               <div
-                                class="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:shadow-sm"
+                                class="flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:shadow-sm"
                                 in:fade={{ duration: 200, delay: itemIndex * 30 }}
                                 style="animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1);"
                                 style:animation-delay="{itemIndex * 30}ms">
                                 <Icon
                                   src={item.icon}
-                                  class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+                                  class="w-5 h-5 text-muted-foreground" />
                                 <span
-                                  class="flex-1 text-sm font-medium text-zinc-900 dark:text-white">
+                                  class="flex-1 text-sm font-medium text-foreground">
                                   <T key={item.labelKey} fallback={item.labelKey} />
                                 </span>
                                 <button
                                   onclick={() => removeItemFromFolder(folder.id, item.path)}
                                   class="p-1.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                                   aria-label="Remove from folder"
-                                  title="Remove from folder">
+                                  use:tooltip={'Remove from folder'}>
                                   <Icon src={XMark} class="w-4 h-4" />
                                 </button>
                               </div>
@@ -739,7 +785,7 @@
 
       <!-- Footer -->
       <div
-        class="flex justify-between items-center p-6 border-t border-zinc-200 dark:border-zinc-700 gap-3">
+        class="flex justify-between items-center p-6 border-t border-border gap-3">
         <Button
           onclick={resetToDefault}
           variant="secondary"

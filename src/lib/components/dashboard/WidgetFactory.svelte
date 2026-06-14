@@ -35,11 +35,11 @@
   <WidgetComponent widget={safeWidget} {settings} />
 {:else}
   <div
-    class="flex flex-col items-center justify-center h-full p-4 text-center bg-white/80 dark:bg-zinc-900/60 rounded-xl border border-zinc-200 dark:border-zinc-800">
-    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+    class="flex flex-col items-center justify-center h-full p-4 text-center bg-card text-card-foreground rounded-xl border border-border-subtle">
+    <p class="text-sm font-medium text-foreground">
       Widget type "{safeWidget.type}" not found
     </p>
-    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+    <p class="mt-1 text-xs text-muted-foreground">
       This widget may not be available yet
     </p>
   </div>

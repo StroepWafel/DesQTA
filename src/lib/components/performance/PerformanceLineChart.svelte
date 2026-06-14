@@ -100,7 +100,7 @@
 </script>
 
 <div class="w-full">
-  <h3 class="text-sm font-semibold text-zinc-900 dark:text-white mb-3">{title}</h3>
+  <h3 class="text-sm font-semibold text-foreground mb-3">{title}</h3>
   <div class="relative">
     <svg
       bind:this={svgElement}

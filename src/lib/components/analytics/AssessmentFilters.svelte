@@ -72,7 +72,7 @@
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5">
     <!-- Subject Filter -->
     <div>
-      <label for="subject-filter" class="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">Subject</label>
+      <label for="subject-filter" class="block mb-1 text-sm font-medium text-foreground">Subject</label>
       <Select.Root type="multiple" bind:value={filterSubjects} onValueChange={applyFilters}>
         <Select.Trigger id="subject-filter" class="w-full">
           {#if filterSubjects.length === 0}
@@ -93,7 +93,7 @@
 
     <!-- Status Filter -->
     <div>
-      <label for="status-filter" class="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">Status</label>
+      <label for="status-filter" class="block mb-1 text-sm font-medium text-foreground">Status</label>
       <Select.Root type="single" bind:value={filterStatus} onValueChange={applyFilters}>
         <Select.Trigger id="status-filter" class="w-full">
           {filterStatus || "All Statuses"}

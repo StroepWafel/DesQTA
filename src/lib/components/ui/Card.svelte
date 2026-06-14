@@ -2,7 +2,7 @@
   import type { Snippet } from 'svelte';
 
   interface Props {
-    variant?: 'default' | 'elevated' | 'outlined' | 'ghost';
+    variant?: 'default' | 'elevated' | 'outlined' | 'ghost' | 'muted';
     padding?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
     interactive?: boolean;
     class?: string;
@@ -25,11 +25,14 @@
     footer,
   }: Props = $props();
 
+  // Lo-fi card: opaque card surface, single 1px border, optional subtle shadow on elevated.
+  // No backdrop-blur, no translucency, no hover scale.
   const variants = {
-    default: 'bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700',
-    elevated: 'bg-white dark:bg-zinc-800 shadow-md border border-zinc-200 dark:border-zinc-700',
-    outlined: 'bg-transparent border-2 border-zinc-200 dark:border-zinc-700',
-    ghost: 'bg-zinc-50/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50',
+    default: 'bg-card text-card-foreground border border-border',
+    elevated: 'bg-card text-card-foreground border border-border shadow-[0_1px_2px_-1px_rgba(0,0,0,0.04),0_2px_8px_-4px_rgba(0,0,0,0.06)]',
+    outlined: 'bg-transparent text-foreground border border-border',
+    ghost: 'bg-transparent text-foreground border border-transparent',
+    muted: 'bg-surface-muted text-foreground border border-border-subtle',
   };
 
   const paddings = {
@@ -43,10 +46,10 @@
 
   let baseClasses = $derived(
     [
-      'rounded-lg transition-all duration-200 ease-in-out',
+      'rounded-xl transition-colors duration-200 ease-out',
       variants[variant],
       interactive
-        ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] transform active:scale-[0.98]'
+        ? 'cursor-pointer hover:border-border-strong hover:bg-surface-2/70'
         : '',
       className,
     ]
@@ -66,7 +69,7 @@
   role={interactive ? 'button' : undefined}
   tabindex={interactive ? 0 : undefined}>
   {#if header}
-    <div class="border-b border-zinc-200 dark:border-zinc-700 px-4 py-3">
+    <div class="border-b border-border-subtle px-4 py-3">
       {@render header()}
     </div>
   {/if}
@@ -78,7 +81,7 @@
   {/if}
 
   {#if footer}
-    <div class="border-t border-zinc-200 dark:border-zinc-700 px-4 py-3">
+    <div class="border-t border-border-subtle px-4 py-3">
       {@render footer()}
     </div>
   {/if}

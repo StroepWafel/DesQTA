@@ -1,0 +1,37 @@
+{
+  "id": "bundled_focus_day",
+  "name": "Focus day",
+  "description": "Schedule, deadlines, and weather — a calm minimal day view.",
+  "isDefault": false,
+  "layout": {
+    "widgets": [
+      {
+        "id": "timetable",
+        "type": "timetable",
+        "enabled": true,
+        "position": { "x": 0, "y": 0, "w": 8, "h": 6 }
+      },
+      {
+        "id": "deadlines",
+        "type": "deadlines",
+        "enabled": true,
+        "position": { "x": 8, "y": 0, "w": 4, "h": 6 }
+      },
+      {
+        "id": "shortcuts",
+        "type": "shortcuts",
+        "enabled": true,
+        "position": { "x": 0, "y": 6, "w": 8, "h": 3 }
+      },
+      {
+        "id": "weather",
+        "type": "weather",
+        "enabled": true,
+        "position": { "x": 8, "y": 6, "w": 4, "h": 4 }
+      }
+    ],
+    "version": 1,
+    "layoutVersion": 3,
+    "lastModified": "2026-01-01T00:00:00.000Z"
+  }
+}

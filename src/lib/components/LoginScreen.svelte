@@ -488,7 +488,7 @@
     : 'overflow-hidden'} bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-800">
   <!-- Window Controls Bar -->
   <div
-    class="relative flex justify-between items-center px-6 py-3 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-b border-white/20 dark:border-zinc-700/30 z-10 {isMobile
+    class="relative flex justify-between items-center px-6 py-3 bg-card border-b border-white/20 dark:border-zinc-700/30 z-10 {isMobile
       ? 'shrink-0'
       : ''}"
     data-tauri-drag-region>
@@ -529,16 +529,16 @@
       {:else}
         <div class="flex items-center ml-4 space-x-2">
           <button
-            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:surface-muted hover:scale-105 active:scale-95 playful"
             onclick={() => appWindow.minimize()}
             aria-label="Minimize">
-            <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <Icon src={Minus} class="w-4 h-4 text-muted-foreground" />
           </button>
           <button
-            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
+            class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:surface-muted hover:scale-105 active:scale-95 playful"
             onclick={() => appWindow.toggleMaximize()}
             aria-label="Maximize">
-            <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <Icon src={Square2Stack} class="w-4 h-4 text-muted-foreground" />
           </button>
           <button
             class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform group hover:bg-red-500 hover:scale-105 active:scale-95 playful"
@@ -546,7 +546,7 @@
             aria-label="Close">
             <Icon
               src={XMark}
-              class="w-4 h-4 transition duration-200 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
+              class="w-4 h-4 transition duration-200 text-muted-foreground group-hover:text-white" />
           </button>
         </div>
       {/if}
@@ -572,24 +572,24 @@
       <!-- Main Login Card -->
       <div
         class="relative overflow-hidden {isMobile
-          ? 'rounded-2xl'
-          : 'rounded-3xl'} bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/40 dark:border-zinc-700/40 shadow-2xl login-card-animate"
+          ? 'rounded-[var(--radius-lofi)]'
+          : 'rounded-3xl'} bg-card border border-white/40 dark:border-zinc-700/40 shadow-2xl login-card-animate"
         transition:scale={{ duration: 400, start: 0.95, easing: cubicInOut }}>
         <!-- Static Background -->
         <div
           class="absolute inset-0 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-800 {isMobile
-            ? 'rounded-2xl'
+            ? 'rounded-[var(--radius-lofi)]'
             : 'rounded-3xl'}">
         </div>
 
         <!-- Subtle accent overlay -->
         <div
           class="absolute inset-0 opacity-5 dark:opacity-10 {isMobile
-            ? 'rounded-2xl'
+            ? 'rounded-[var(--radius-lofi)]'
             : 'rounded-3xl'}">
           <div
             class="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 {isMobile
-              ? 'rounded-2xl'
+              ? 'rounded-[var(--radius-lofi)]'
               : 'rounded-3xl'}">
           </div>
         </div>
@@ -597,7 +597,7 @@
         <!-- Subtle border highlight -->
         <div
           class="absolute inset-0 border-2 border-indigo-200/30 dark:border-indigo-800/30 {isMobile
-            ? 'rounded-2xl'
+            ? 'rounded-[var(--radius-lofi)]'
             : 'rounded-3xl'} pointer-events-none">
         </div>
 
@@ -609,7 +609,7 @@
               <div class="space-y-6">
                 <div class="space-y-3">
                   <h1
-                    class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-white leading-tight">
+                    class="text-4xl lg:text-5xl font-bold text-foreground leading-tight">
                     <T key="login.welcome_to" fallback="Welcome to" /><br /><span
                       class="text-indigo-600 dark:text-indigo-400"
                       ><T key="login.app_name" fallback="DesQTA" /></span>
@@ -644,7 +644,7 @@
               {#if isMobile}
                 <!-- Mobile Title -->
                 <div class="text-center space-y-4 mb-8">
-                  <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">
+                  <h1 class="text-2xl font-medium text-foreground sm:text-3xl">
                     <T key="login.welcome_to" fallback="Welcome to" />
                     <span class="text-indigo-600 dark:text-indigo-400"
                       ><T key="login.app_name" fallback="DesQTA" /></span>
@@ -661,10 +661,10 @@
               {#if isMobile && profiles.length > 0}
                 <div class="space-y-4 mb-6">
                   <div class="text-center space-y-1">
-                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                    <h3 class="text-lg font-semibold text-foreground">
                       <T key="login.available_profiles" fallback="Available Profiles" />
                     </h3>
-                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p class="text-sm text-muted-foreground">
                       <T
                         key="login.select_profile_to_login"
                         fallback="Select a profile to continue" />
@@ -675,7 +675,7 @@
                       {#each profiles as profile, i (profile.id)}
                         <button
                           type="button"
-                          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 ease-in-out transform bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 hover:bg-white/20 dark:hover:bg-zinc-800/20 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 hover:scale-[1.01] active:scale-[0.99] group"
+                          class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-[var(--radius-lofi)] transition-all duration-200 ease-in-out transform surface-inset border-border hover:surface-muted hover:border-border hover:scale-[1.01] active:scale-[0.99] group"
                           class:profile-card-animate={profilesReadyToAnimate}
                           style="animation-delay: {profilesReadyToAnimate ? i * 50 : 0}ms;"
                           onclick={() => selectProfile(profile)}>
@@ -686,10 +686,10 @@
                               class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                           </div>
                           <div class="flex-1 min-w-0">
-                            <div class="font-medium text-zinc-900 dark:text-white truncate">
+                            <div class="font-medium text-foreground truncate">
                               {formatProfileName(profile)}
                             </div>
-                            <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                            <div class="text-xs text-muted-foreground truncate">
                               {profile.base_url}
                             </div>
                           </div>
@@ -704,7 +704,7 @@
                     <div
                       class="flex-1 h-px bg-linear-to-r from-transparent via-zinc-300 dark:via-zinc-600 to-transparent">
                     </div>
-                    <span class="px-2 text-sm text-zinc-500 dark:text-zinc-400 font-medium"
+                    <span class="px-2 text-sm text-muted-foreground font-medium"
                       ><T key="login.or" fallback="or" /></span>
                     <div
                       class="flex-1 h-px bg-linear-to-r from-transparent via-zinc-300 dark:via-zinc-600 to-transparent">
@@ -718,19 +718,19 @@
                 {#if !isMobile}
                   <div class="flex items-center justify-center">
                     <div
-                      class="flex p-1 bg-white/15 dark:bg-zinc-800/20 backdrop-blur-xl rounded-2xl relative overflow-hidden border border-white/20 dark:border-zinc-700/20">
+                      class="flex p-1 surface-muted rounded-[var(--radius-lofi)] relative overflow-hidden border border-border">
                       <!-- Animated background slider -->
                       <div
-                        class="absolute top-1 bottom-1 bg-white/30 dark:bg-zinc-700/40 backdrop-blur-xl rounded-xl shadow-xs transition-all duration-300 ease-in-out border border-white/40 dark:border-zinc-600/40"
+                        class="absolute top-1 bottom-1 surface-muted rounded-[var(--radius-lofi)] shadow-xs transition-all duration-300 ease-in-out border border-border"
                         style="left: {loginMethod === 'qr'
                           ? '4px'
                           : 'calc(50%)'}; width: calc(50% - 4px); transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
                       </div>
                       <button
-                        class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
+                        class="px-4 py-3 rounded-[var(--radius-lofi)] font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
                         'qr'
                           ? 'text-indigo-600 dark:text-indigo-400'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
+                          : 'text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400'}"
                         onclick={() => (loginMethod = 'qr')}>
                         <Icon
                           src={QrCode}
@@ -741,10 +741,10 @@
                         <T key="login.qr_code" fallback="QR Code" />
                       </button>
                       <button
-                        class="px-4 py-3 rounded-xl font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
+                        class="px-4 py-3 rounded-[var(--radius-lofi)] font-medium transition-all duration-200 ease-in-out relative z-10 transform hover:scale-105 active:scale-95 {loginMethod ===
                         'url'
                           ? 'text-indigo-600 dark:text-indigo-400'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400'}"
+                          : 'text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400'}"
                         onclick={() => (loginMethod = 'url')}>
                         <T key="login.manual_url" fallback="Manual URL" />
                       </button>
@@ -757,7 +757,7 @@
                       <button
                         type="button"
                         onclick={() => (showMobileSsoInput = true)}
-                        class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm transition-all duration-200">
+                        class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent-500 rounded-sm transition-all duration-200">
                         <T key="login.enter_sso_url_manually" fallback="Enter SSO URL manually" />
                       </button>
                     </div>
@@ -778,10 +778,10 @@
                   {#if isMobile && showMobileSsoInput}
                     <div class="space-y-6">
                       <div class="text-center space-y-2">
-                        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">
+                        <h2 class="text-2xl font-bold text-foreground">
                           <T key="login.manual_sso_login" fallback="Manual SSO Login" />
                         </h2>
-                        <p class="text-zinc-600 dark:text-zinc-400">
+                        <p class="text-muted-foreground">
                           <T
                             key="login.enter_sso_deeplink"
                             fallback="Enter your SSO deeplink URL" />
@@ -808,7 +808,7 @@
                             placeholder={$_('login.sso_url_placeholder', {
                               default: 'seqtalearn://sso/... or desqta://connect/...',
                             })}
-                            inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                            inputClass="w-full py-4 px-6 text-base surface-inset border-border rounded-[var(--radius-lofi)] text-foreground placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-300 hover:border-border focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
                         <div class="text-center">
                           <button
@@ -817,7 +817,7 @@
                               showMobileSsoInput = false;
                               mobileSsoUrl = '';
                             }}
-                            class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm transition-all duration-200">
+                            class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent-500 rounded-sm transition-all duration-200">
                             <T key="login.use_qr_code" fallback="Use QR code instead" />
                           </button>
                         </div>
@@ -826,10 +826,10 @@
                   {:else if loginMethod === 'qr'}
                     <div class="space-y-2 px-2">
                       <div class="text-center space-y-1 -mt-2">
-                        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">
+                        <h2 class="text-2xl font-bold text-foreground">
                           <T key="login.quick_login" fallback="Quick Login" />
                         </h2>
-                        <p class="text-zinc-600 dark:text-zinc-400">
+                        <p class="text-muted-foreground">
                           <T
                             key="login.qr_description"
                             fallback="Scan SEQTA or BetterSEQTA+ QR code to sign in instantly" />
@@ -846,10 +846,10 @@
                           onchange={handleQrFileInput} />
                         <label
                           for="qr-upload"
-                          class="flex flex-col items-center justify-center w-full h-[10.6rem] border-2 border-dashed border-indigo-300/60 dark:border-indigo-600/60 rounded-2xl cursor-pointer bg-white/5 dark:bg-zinc-800/5 backdrop-blur-xl hover:bg-white/15 dark:hover:bg-zinc-800/15 transition-all duration-200 ease-in-out transform group hover:border-indigo-400/80 dark:hover:border-indigo-500/80 hover:scale-[1.02] active:scale-[0.98]">
+                          class="flex flex-col items-center justify-center w-full h-[10.6rem] border-2 border-dashed border-border rounded-[var(--radius-lofi)] cursor-pointer surface-inset hover:surface-muted transition-all duration-200 ease-in-out transform group hover:border-indigo-400/80 dark:hover:border-indigo-500/80 hover:scale-[1.02] active:scale-[0.98]">
                           <div class="flex flex-col items-center space-y-4">
                             <div
-                              class="p-4 bg-white/15 dark:bg-zinc-800/20 backdrop-blur-xl rounded-full group-hover:scale-110 transition-transform duration-200 ease-in-out border border-white/20 dark:border-zinc-700/20">
+                              class="p-4 surface-muted rounded-full group-hover:scale-110 transition-transform duration-200 ease-in-out border border-border">
                               <Icon
                                 src={ArrowUpTray}
                                 class="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
@@ -878,7 +878,7 @@
                         <div
                           class="flex-1 h-px bg-linear-to-r from-transparent via-zinc-300 dark:via-zinc-600 to-transparent">
                         </div>
-                        <span class="px-2 text-sm text-zinc-500 dark:text-zinc-400 font-medium"
+                        <span class="px-2 text-sm text-muted-foreground font-medium"
                           ><T key="login.or" fallback="or" /></span>
                         <div
                           class="flex-1 h-px bg-linear-to-r from-transparent via-zinc-300 dark:via-zinc-600 to-transparent">
@@ -892,7 +892,7 @@
                         fullWidth={true}
                         icon={Camera}
                         onclick={startLiveScan}
-                        class="py-3 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-zinc-700 dark:text-zinc-800 font-semibold rounded-2xl shadow-lg hover:shadow-xl">
+                        class="py-3 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 text-zinc-700 dark:text-zinc-800 font-semibold rounded-[var(--radius-lofi)] shadow-lg hover:shadow-xl">
                         <T key="login.scan_camera" fallback="Scan with Camera" />
                       </Button>
 
@@ -901,15 +901,15 @@
                         <button
                           type="button"
                           onclick={openQrInstructionsModal}
-                          class="mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                          class="mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent-500 rounded-sm">
                           <T key="login.how_get_qr" fallback="How do I get a QR code?" />
                         </button>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                        <p class="text-xs text-muted-foreground">
                           <T key="login.not_working_try_direct" fallback="Not working?" />
                           <button
                             type="button"
                             onclick={() => (loginMethod = 'direct')}
-                            class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                            class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent-500 rounded-sm">
                             <T
                               key="login.try_direct_login_link"
                               fallback="Try direct login instead" />
@@ -923,10 +923,10 @@
                   {#if loginMethod === 'url'}
                     <div class="space-y-6">
                       <div class="text-center space-y-2">
-                        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">
+                        <h2 class="text-2xl font-bold text-foreground">
                           <T key="login.manual_login" fallback="Manual Login" />
                         </h2>
-                        <p class="text-zinc-600 dark:text-zinc-400">
+                        <p class="text-muted-foreground">
                           <T key="login.enter_url" fallback="Enter your school's SEQTA URL" />
                         </p>
                       </div>
@@ -953,23 +953,23 @@
                             placeholder={$_('login.url_placeholder', {
                               default: 'school.seqta.com.au',
                             })}
-                            inputClass="w-full py-4 px-6 text-base bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-2xl text-zinc-900 dark:text-white placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                            inputClass="w-full py-4 px-6 text-base surface-inset border-border rounded-[var(--radius-lofi)] text-foreground placeholder:text-base placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-300 hover:border-border focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
                         <div class="text-center space-y-2">
                           {#if isMobile}
                             <button
                               type="button"
                               onclick={() => (loginMethod = 'qr')}
-                              class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm transition-all duration-200">
+                              class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent-500 rounded-sm transition-all duration-200">
                               <T key="login.use_qr_code" fallback="Use QR code instead" />
                             </button>
                           {/if}
-                          <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                          <p class="text-xs text-muted-foreground">
                             <T key="login.not_working_try_direct" fallback="Not working?" />
                             <button
                               type="button"
                               onclick={() => (loginMethod = 'direct')}
-                              class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                              class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent-500 rounded-sm">
                               <T
                                 key="login.try_direct_login_link"
                                 fallback="Try direct login instead" />
@@ -984,10 +984,10 @@
                   {#if loginMethod === 'direct'}
                     <div class="space-y-3 px-2">
                       <div class="text-center space-y-1">
-                        <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
+                        <h2 class="text-xl font-bold text-foreground">
                           <T key="login.direct_login_title" fallback="Direct Login" />
                         </h2>
-                        <p class="text-xs text-zinc-600 dark:text-zinc-400">
+                        <p class="text-xs text-muted-foreground">
                           <T
                             key="login.direct_login_description"
                             fallback="Enter your credentials directly (last resort method)" />
@@ -1024,7 +1024,7 @@
                             placeholder={$_('login.url_placeholder', {
                               default: 'school.seqta.com.au',
                             })}
-                            inputClass="w-full py-2.5 px-4 text-sm bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-lg text-zinc-900 dark:text-white placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                            inputClass="w-full py-2.5 px-4 text-sm surface-inset border-border rounded-lg text-foreground placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-300 hover:border-border focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
                         <div class="relative">
                           <Input
@@ -1033,7 +1033,7 @@
                             placeholder={$_('login.username_placeholder', {
                               default: 'Username',
                             })}
-                            inputClass="w-full py-2.5 px-4 text-sm bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-lg text-zinc-900 dark:text-white placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                            inputClass="w-full py-2.5 px-4 text-sm surface-inset border-border rounded-lg text-foreground placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-300 hover:border-border focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
                         <div class="relative">
                           <Input
@@ -1052,21 +1052,21 @@
                             placeholder={$_('login.password_placeholder', {
                               default: 'Password',
                             })}
-                            inputClass="w-full py-2.5 px-4 text-sm bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 rounded-lg text-zinc-900 dark:text-white placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all duration-300 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 focus:bg-white/20 dark:focus:bg-zinc-800/20" />
+                            inputClass="w-full py-2.5 px-4 text-sm surface-inset border-border rounded-lg text-foreground placeholder:text-sm placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-300 hover:border-border focus:bg-white/20 dark:focus:bg-zinc-800/20" />
                         </div>
                       </div>
                       <div class="text-center pt-1">
                         <button
                           type="button"
                           onclick={() => (loginMethod = 'qr')}
-                          class="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                          class="text-xs font-medium text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent-500 rounded-sm">
                           <T key="login.use_qr_code" fallback="Use QR code instead" />
                         </button>
                         <span class="text-zinc-400 dark:text-zinc-500 mx-1">·</span>
                         <button
                           type="button"
                           onclick={() => (loginMethod = 'url')}
-                          class="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 rounded-sm">
+                          class="text-xs font-medium text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent-500 rounded-sm">
                           <T key="login.manual_url" fallback="Manual URL" />
                         </button>
                       </div>
@@ -1077,7 +1077,7 @@
                 <!-- Status Messages -->
                 {#if qrProcessing}
                   <div
-                    class="flex items-center justify-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800 status-message-animate"
+                    class="flex items-center justify-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-[var(--radius-lofi)] border border-blue-200 dark:border-blue-800 status-message-animate"
                     transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div
                       class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
@@ -1090,7 +1090,7 @@
 
                 {#if qrSuccess}
                   <div
-                    class="p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-200 dark:border-green-800 status-message-animate"
+                    class="p-4 bg-green-50 dark:bg-green-900/20 rounded-[var(--radius-lofi)] border border-green-200 dark:border-green-800 status-message-animate"
                     transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div class="flex items-center space-x-3">
                       <div
@@ -1112,7 +1112,7 @@
 
                 {#if qrError}
                   <div
-                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800 status-message-animate"
+                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-[var(--radius-lofi)] border border-red-200 dark:border-red-800 status-message-animate"
                     transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div class="flex items-center space-x-3">
                       <div class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
@@ -1130,7 +1130,7 @@
 
                 {#if loginError}
                   <div
-                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800 status-message-animate"
+                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-[var(--radius-lofi)] border border-red-200 dark:border-red-800 status-message-animate"
                     transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div class="flex items-center space-x-3">
                       <div
@@ -1150,7 +1150,7 @@
 
                 {#if showDevToggle}
                   <div
-                    class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-200 dark:border-purple-800">
+                    class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-[var(--radius-lofi)] border border-purple-200 dark:border-purple-800">
                     <div class="flex items-center justify-between">
                       <div class="text-sm text-purple-800 dark:text-purple-200 font-medium">
                         Mock API backend
@@ -1188,7 +1188,7 @@
 
                 {#if jwtExpiredError}
                   <div
-                    class="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800">
+                    class="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-[var(--radius-lofi)] border border-amber-200 dark:border-amber-800">
                     <div class="flex items-start space-x-4">
                       <div
                         class="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shrink-0 mt-0.5">
@@ -1214,7 +1214,7 @@
 
                 {#if directLoginError}
                   <div
-                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800 status-message-animate"
+                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-[var(--radius-lofi)] border border-red-200 dark:border-red-800 status-message-animate"
                     transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div class="flex items-center space-x-3">
                       <div class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
@@ -1233,7 +1233,7 @@
 
                 {#if directLoginLoading}
                   <div
-                    class="flex items-center justify-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800 status-message-animate"
+                    class="flex items-center justify-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-[var(--radius-lofi)] border border-blue-200 dark:border-blue-800 status-message-animate"
                     transition:scale={{ duration: 200, start: 0.95, easing: cubicInOut }}>
                     <div
                       class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
@@ -1255,7 +1255,7 @@
                       !directSeqtaUrl.trim() ||
                       !directUsername.trim() ||
                       !directPassword.trim()}
-                    class="py-3 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-xl shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200 transform hover:scale-105 active:scale-95">
+                    class="py-3 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-[var(--radius-lofi)] shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200 transform hover:scale-105 active:scale-95">
                     <T key="login.sign_in" fallback="Sign In to DesQTA" />
                   </Button>
                 {:else}
@@ -1318,14 +1318,14 @@
                           showMobileSsoInput &&
                           mobileSsoUrl.trim().startsWith('seqtalearn://')
                         ))}
-                    class="py-4 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-2xl shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200 transform hover:scale-105 active:scale-95">
+                    class="py-4 px-6 bg-linear-to-r from-orange-200 to-pink-200 hover:from-orange-300 hover:to-pink-300 disabled:from-zinc-300 disabled:to-zinc-400 text-zinc-700 dark:text-zinc-800 disabled:text-zinc-500 font-semibold rounded-[var(--radius-lofi)] shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200 transform hover:scale-105 active:scale-95">
                     <T key="login.sign_in" fallback="Sign In to DesQTA" />
                   </Button>
                 {/if}
 
                 <!-- Help Link -->
                 <div class="text-center">
-                  <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p class="text-sm text-muted-foreground">
                     <T key="login.need_help" fallback="Need help?" />
                     <a
                       href="https://github.com/betterseqta/desqta"
@@ -1343,10 +1343,10 @@
             {#if !isMobile && profiles.length > 0}
               <div class="w-64 flex flex-col border-l border-white/20 dark:border-zinc-700/20 pl-6">
                 <div class="space-y-3 mb-4">
-                  <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <h3 class="text-lg font-semibold text-foreground">
                     <T key="login.available_profiles" fallback="Available Profiles" />
                   </h3>
-                  <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p class="text-sm text-muted-foreground">
                     <T
                       key="login.select_profile_to_login"
                       fallback="Select a profile to continue" />
@@ -1357,7 +1357,7 @@
                     {#each profiles as profile, i (profile.id)}
                       <button
                         type="button"
-                        class="flex gap-3 items-center px-4 py-3 text-left rounded-xl transition-all duration-200 ease-in-out transform bg-white/10 dark:bg-zinc-800/10 backdrop-blur-xl border border-white/20 dark:border-zinc-700/20 hover:bg-white/20 dark:hover:bg-zinc-800/20 hover:border-indigo-300/60 dark:hover:border-indigo-600/60 hover:scale-[1.01] active:scale-[0.99] group"
+                        class="flex gap-3 items-center px-4 py-3 text-left rounded-[var(--radius-lofi)] transition-all duration-200 ease-in-out transform surface-inset border-border hover:surface-muted hover:border-border hover:scale-[1.01] active:scale-[0.99] group"
                         class:profile-card-animate={profilesReadyToAnimate}
                         style="animation-delay: {profilesReadyToAnimate ? i * 50 : 0}ms;"
                         onclick={() => selectProfile(profile)}>
@@ -1368,10 +1368,10 @@
                             class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                         </div>
                         <div class="flex-1 min-w-0">
-                          <div class="font-medium text-zinc-900 dark:text-white truncate text-sm">
+                          <div class="font-medium text-foreground truncate text-sm">
                             {formatProfileName(profile)}
                           </div>
-                          <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate mt-0.5">
+                          <div class="text-xs text-muted-foreground truncate mt-0.5">
                             {profile.base_url}
                           </div>
                         </div>
@@ -1392,39 +1392,39 @@
 
   <!-- Live Scan Modal -->
   {#if showLiveScan}
-    <div class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xl bg-black/60">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div
-        class="bg-white/10 dark:bg-zinc-900/10 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 w-full max-w-md mx-4 border border-white/30 dark:border-zinc-700/20">
+        class="surface surface-raised p-8 w-full max-w-md mx-4 border border-white/30 dark:border-zinc-700/20">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">
+          <h2 class="text-2xl font-bold text-foreground">
             <T key="login.live_scanner" fallback="Live QR Scanner" />
           </h2>
           <button
-            class="p-2 rounded-full bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xs hover:bg-white/30 dark:hover:bg-zinc-800/40 transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 border border-white/30 dark:border-zinc-700/30"
+            class="p-2 rounded-full surface-muted hover:surface-muted transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 border border-border"
             onclick={stopLiveScan}
             aria-label="Close live scan modal">
-            <Icon src={XMark} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <Icon src={XMark} class="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
         <div class="relative">
           <div
             id="qr-reader-live"
-            class="w-full h-80 rounded-2xl overflow-hidden bg-black border-4 border-indigo-200 dark:border-indigo-800">
+            class="w-full h-80 rounded-[var(--radius-lofi)] overflow-hidden bg-black border-4 border-indigo-200 dark:border-indigo-800">
           </div>
           <div
-            class="absolute inset-0 border-2 border-indigo-500 rounded-2xl pointer-events-none animate-pulse">
+            class="absolute inset-0 border-2 border-indigo-500 rounded-[var(--radius-lofi)] pointer-events-none animate-pulse">
           </div>
         </div>
 
         {#if liveScanError}
           <div
-            class="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800">
+            class="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-[var(--radius-lofi)] border border-red-200 dark:border-red-800">
             <p class="text-red-700 dark:text-red-300 font-medium">{liveScanError}</p>
           </div>
         {/if}
 
-        <p class="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
+        <p class="mt-4 text-center text-sm text-muted-foreground">
           <T key="login.position_qr" fallback="Position the QR code within the frame to scan" />
         </p>
       </div>
@@ -1434,7 +1434,7 @@
   <!-- Preview Modal -->
   {#if showPreviewModal && selectedPreview}
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xl bg-black/70"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
       transition:fade={{ duration: 300, easing: cubicInOut }}>
       <div
         class="relative w-full max-w-4xl mx-8"
@@ -1442,7 +1442,7 @@
         style="transform-origin: center;">
         <!-- Close Button -->
         <button
-          class="absolute -top-12 right-0 p-3 rounded-full bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl hover:bg-white/30 dark:hover:bg-zinc-800/40 transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-white/50 focus:ring-offset-2 border border-white/30 dark:border-zinc-700/30 z-10"
+          class="absolute -top-12 right-0 p-3 rounded-full surface-muted hover:surface-muted transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-white/50 focus:ring-offset-2 border border-border z-10"
           onclick={closePreviewModal}
           aria-label="Close preview modal">
           <Icon src={XMark} class="w-6 h-6 text-white" />
@@ -1450,14 +1450,14 @@
 
         <!-- Modal Content -->
         <div
-          class="bg-white/10 dark:bg-zinc-900/20 backdrop-blur-2xl rounded-3xl border border-white/20 dark:border-zinc-700/20 shadow-2xl p-8">
+          class="surface rounded-3xl border border-border shadow-2xl p-8">
           {#if selectedPreview === 'header'}
             <div class="space-y-6">
-              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+              <h2 class="text-2xl font-medium text-foreground sm:text-3xl mb-4">
                 Application Header
               </h2>
               <div
-                class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+                class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
                 <div class="flex items-center justify-between h-16 px-6">
                   <div class="flex items-center space-x-4">
                     <div class="relative">
@@ -1482,11 +1482,11 @@
             </div>
           {:else if selectedPreview === 'sidebar'}
             <div class="space-y-6">
-              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+              <h2 class="text-2xl font-medium text-foreground sm:text-3xl mb-4">
                 Navigation Sidebar
               </h2>
               <div
-                class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+                class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
                 <div class="space-y-4">
                   {#each [{ icon: 'indigo-400', label: $_('navigation.dashboard'), desc: $_( 'login.feature_dashboard_desc', { default: 'Main overview' }, ) }, { icon: 'purple-400', label: $_('navigation.assessments'), desc: $_( 'login.feature_assessments_desc', { default: 'View assignments' }, ) }, { icon: 'pink-400', label: $_('navigation.timetable'), desc: $_( 'login.feature_timetable_desc', { default: 'Class schedule' }, ) }, { icon: 'blue-400', label: $_('navigation.analytics'), desc: $_( 'login.feature_analytics_desc', { default: 'Performance data' }, ) }, { icon: 'green-400', label: $_('navigation.settings'), desc: $_( 'login.feature_settings_desc', { default: 'App preferences' }, ) }] as item}
                     <div class="flex items-center space-x-4">
@@ -1507,9 +1507,9 @@
             </div>
           {:else if selectedPreview === 'assessment'}
             <div class="space-y-6">
-              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">Assessment Card</h2>
+              <h2 class="text-2xl font-medium text-foreground sm:text-3xl mb-4">Assessment Card</h2>
               <div
-                class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30 border-l-8 border-l-green-400">
+                class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border border-l-8 border-l-green-400">
                 <div class="space-y-4">
                   <div class="flex items-center justify-between">
                     <div class="w-32 h-4 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm"></div>
@@ -1527,26 +1527,26 @@
             </div>
           {:else if selectedPreview === 'timetable'}
             <div class="space-y-6">
-              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+              <h2 class="text-2xl font-medium text-foreground sm:text-3xl mb-4">
                 Weekly Timetable
               </h2>
               <div
-                class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+                class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
                 <div class="space-y-4">
                   <div class="grid grid-cols-6 gap-2 mb-4">
-                    <div class="text-center text-xs text-zinc-600 dark:text-zinc-400">Time</div>
-                    <div class="text-center text-xs text-zinc-600 dark:text-zinc-400">Mon</div>
-                    <div class="text-center text-xs text-zinc-600 dark:text-zinc-400">Tue</div>
+                    <div class="text-center text-xs text-muted-foreground">Time</div>
+                    <div class="text-center text-xs text-muted-foreground">Mon</div>
+                    <div class="text-center text-xs text-muted-foreground">Tue</div>
                     <div
-                      class="text-center text-xs text-zinc-600 dark:text-zinc-400 bg-indigo-400/20 rounded-sm px-2 py-1">
+                      class="text-center text-xs text-muted-foreground bg-indigo-400/20 rounded-sm px-2 py-1">
                       Wed (Today)
                     </div>
-                    <div class="text-center text-xs text-zinc-600 dark:text-zinc-400">Thu</div>
-                    <div class="text-center text-xs text-zinc-600 dark:text-zinc-400">Fri</div>
+                    <div class="text-center text-xs text-muted-foreground">Thu</div>
+                    <div class="text-center text-xs text-muted-foreground">Fri</div>
                   </div>
                   <div class="grid grid-cols-6 gap-2 h-32">
                     <div
-                      class="flex flex-col justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                      class="flex flex-col justify-between text-xs text-muted-foreground">
                       <span>9:00</span>
                       <span>10:00</span>
                       <span>11:00</span>
@@ -1597,11 +1597,11 @@
             </div>
           {:else if selectedPreview === 'dashboard'}
             <div class="space-y-6">
-              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+              <h2 class="text-2xl font-medium text-foreground sm:text-3xl mb-4">
                 Dashboard Widget
               </h2>
               <div
-                class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+                class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
                 <div class="space-y-4">
                   <div class="flex items-center space-x-4 mb-6">
                     <div
@@ -1625,11 +1625,11 @@
             </div>
           {:else if selectedPreview === 'analytics'}
             <div class="space-y-6">
-              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+              <h2 class="text-2xl font-medium text-foreground sm:text-3xl mb-4">
                 Analytics Dashboard
               </h2>
               <div
-                class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+                class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
                 <div class="space-y-4">
                   <div class="w-32 h-6 bg-zinc-300/50 dark:bg-zinc-600/50 rounded-sm mb-6"></div>
                   <div class="flex items-end justify-between h-32 space-x-2">
@@ -1654,7 +1654,7 @@
   <!-- Manual Auth Instructions Overlay -->
   {#if showManualAuthInstructions}
     <div
-      class="fixed inset-0 z-9999 flex items-center justify-end backdrop-blur-sm bg-black/80 pr-8"
+      class="fixed inset-0 z-9999 flex items-center justify-end bg-black/80 pr-8"
       transition:fade={{ duration: 200, easing: cubicInOut }}
       role="button"
       tabindex="0"
@@ -1670,21 +1670,21 @@
         }
       }}>
       <div
-        class="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-zinc-700/40 p-8 max-w-2xl"
+        class="relative bg-card surface-raised border border-white/40 dark:border-zinc-700/40 p-8 max-w-2xl"
         transition:scale={{ duration: 200, easing: cubicInOut }}>
         <!-- Close Button -->
         <button
           class="absolute top-6 right-6 p-2 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
           onclick={() => (showManualAuthInstructions = false)}
           aria-label="Close instructions">
-          <Icon src={XMark} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+          <Icon src={XMark} class="w-5 h-5 text-muted-foreground" />
         </button>
         <div class="space-y-6">
           <div class="text-center space-y-2 pr-10">
-            <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">
+            <h2 class="text-2xl font-bold text-foreground">
               <T key="login.manual_auth_title" fallback="Manual Authentication" />
             </h2>
-            <p class="text-zinc-600 dark:text-zinc-400">
+            <p class="text-muted-foreground">
               <T
                 key="login.manual_auth_description"
                 fallback="A login window has been opened. Please follow the instructions below." />
@@ -1692,14 +1692,14 @@
           </div>
 
           <div
-            class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-6">
+            class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-[var(--radius-lofi)] p-6">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 1
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                   <T key="login.login_as_normal" fallback="Login as per normal" />
                 </h3>
                 <p class="text-zinc-600 dark:text-zinc-300">
@@ -1712,14 +1712,14 @@
           </div>
 
           <div
-            class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-6">
+            class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-[var(--radius-lofi)] p-6">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 2
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                   <T
                     key="login.wait_for_close"
                     fallback="Wait for the window to close automatically" />
@@ -1734,7 +1734,7 @@
           </div>
 
           <div
-            class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4">
+            class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-[var(--radius-lofi)] p-4">
             <div class="flex items-start space-x-3">
               <Icon
                 src={QuestionMarkCircle}
@@ -1748,7 +1748,7 @@
           </div>
 
           <div
-            class="bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-300 dark:border-indigo-700 rounded-2xl p-5">
+            class="bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-300 dark:border-indigo-700 rounded-[var(--radius-lofi)] p-5">
             <div class="flex items-start space-x-3">
               <Icon
                 src={QuestionMarkCircle}
@@ -1787,7 +1787,7 @@
     <div class="p-8 max-h-[80vh] overflow-y-auto">
       <div class="space-y-6">
         <div class="text-center space-y-2">
-          <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+          <h2 class="text-2xl font-medium text-foreground sm:text-3xl mb-4">
             How to Get Your QR Code
           </h2>
           <p class="text-zinc-600 dark:text-zinc-300">
@@ -1797,14 +1797,14 @@
 
         <div class="space-y-6">
           <div
-            class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+            class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 1
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                   Open SEQTA in Your Browser
                 </h3>
                 <p class="text-zinc-600 dark:text-zinc-300">
@@ -1818,14 +1818,14 @@
           </div>
 
           <div
-            class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+            class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 2
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                   Navigate to Settings
                 </h3>
                 <p class="text-zinc-600 dark:text-zinc-300">
@@ -1837,14 +1837,14 @@
           </div>
 
           <div
-            class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+            class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 3
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                   Click "Connect Mobile App"
                 </h3>
                 <p class="text-zinc-600 dark:text-zinc-300">
@@ -1857,14 +1857,14 @@
           </div>
 
           <div
-            class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+            class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 4
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                   Check Your Email
                 </h3>
                 <p class="text-zinc-600 dark:text-zinc-300 mb-3">
@@ -1883,14 +1883,14 @@
           </div>
 
           <div
-            class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+            class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 5
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                   Screenshot or Save the QR Code
                 </h3>
                 <p class="text-zinc-600 dark:text-zinc-300 mb-3">
@@ -1898,10 +1898,10 @@
                   your device.
                 </p>
                 <div class="space-y-2">
-                  <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p class="text-sm text-muted-foreground">
                     <strong>Desktop:</strong> Right-click the QR code → "Save image as..."
                   </p>
-                  <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p class="text-sm text-muted-foreground">
                     <strong>Mobile:</strong> Long press the QR code → "Save to Photos" or take a screenshot
                   </p>
                 </div>
@@ -1910,14 +1910,14 @@
           </div>
 
           <div
-            class="bg-white/20 dark:bg-zinc-800/30 backdrop-blur-xl rounded-2xl p-6 border border-white/30 dark:border-zinc-700/30">
+            class="surface-muted rounded-[var(--radius-lofi)] p-6 border border-border">
             <div class="flex items-start space-x-4">
               <div
                 class="shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 6
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+                <h3 class="text-lg font-semibold text-foreground mb-2">
                   Upload to DesQTA
                 </h3>
                 <p class="text-zinc-600 dark:text-zinc-300">
@@ -1930,7 +1930,7 @@
         </div>
 
         <div
-          class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-6">
+          class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-[var(--radius-lofi)] p-6">
           <h3 class="text-lg font-semibold text-indigo-800 dark:text-indigo-200 mb-2">
             Using BetterSEQTA+?
           </h3>
@@ -1942,7 +1942,7 @@
         </div>
 
         <div
-          class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
+          class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-[var(--radius-lofi)] p-6">
           <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
             Need More Help?
           </h3>
@@ -1962,7 +1962,7 @@
         </div>
 
         <div
-          class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">
+          class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-[var(--radius-lofi)] p-6">
           <p class="text-sm text-amber-700 dark:text-amber-300">
             <T key="login.not_working_try_direct" fallback="Not working?" />
             <button
@@ -1982,7 +1982,7 @@
             variant="primary"
             size="lg"
             onclick={closeQrInstructionsModal}
-            class="py-3 px-8 bg-linear-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200">
+            class="py-3 px-8 bg-linear-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold rounded-[var(--radius-lofi)] shadow-lg hover:shadow-xl transition-all duration-200">
             Got it, thanks!
           </Button>
         </div>

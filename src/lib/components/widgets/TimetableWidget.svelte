@@ -121,12 +121,23 @@
   });
 
   // Initialize view mode: use initialViewMode if provided, otherwise use settings (only if not temporary)
+  // The 'today' pseudo-view is just a 'day' view pinned to today.
   $effect(() => {
     if (isControlled) return;
+    const resolveTodayPseudoView = (m: string | undefined) => {
+      if (m === 'today') {
+        internalSelectedDate = new Date();
+        internalWeekStart = getMonday(internalSelectedDate);
+        return 'day' as const;
+      }
+      return m as 'week' | 'day' | 'month' | 'list' | undefined;
+    };
     if (initialViewMode) {
-      internalViewMode = initialViewMode;
+      const resolved = resolveTodayPseudoView(initialViewMode as any);
+      if (resolved) internalViewMode = resolved;
     } else if (!isTemporary && settings.viewMode) {
-      internalViewMode = settings.viewMode;
+      const resolved = resolveTodayPseudoView(settings.viewMode);
+      if (resolved) internalViewMode = resolved;
     }
   });
 
@@ -506,41 +517,47 @@
       internalWeekStart = getMonday(initialWeekStart);
       internalSelectedDate = initialWeekStart;
     }
-    await loadLessons();
+    // Watchdog: if loadLessons silently stalls (e.g. SEQTA proxy hangs), force
+    // an error state after 15s instead of leaving a spinner forever.
+    const watchdog = setTimeout(() => {
+      if (loadingLessons) {
+        logger.error(
+          'TimetableWidget',
+          'onMount.watchdog',
+          'loadLessons did not resolve within 15s; clearing loading flag',
+        );
+        loadingLessons = false;
+        if (!error) {
+          error = 'Timetable load timed out. Please reload the page.';
+        }
+      }
+    }, 15000);
+    try {
+      await loadLessons();
+    } finally {
+      clearTimeout(watchdog);
+    }
   });
 </script>
 
 <div
-  class="flex flex-col h-full w-full overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xs bg-white/80 dark:bg-zinc-800/30 border-zinc-300/50 dark:border-zinc-700/50"
-  transition:fade={{ duration: 400 }}>
+  class="flex flex-col h-full w-full overflow-hidden bg-card text-card-foreground"
+  transition:fade={{ duration: 200 }}>
   {#if error}
-    <div
-      class="flex flex-col justify-center items-center py-16 px-4"
-      transition:fade={{ duration: 200 }}>
-      <div
-        class="w-20 h-20 rounded-full border-4 animate-spin border-red-500/30 border-t-red-500 mb-4">
-      </div>
-      <h3 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
-        Failed to Load Timetable
-      </h3>
-      <p class="text-red-500 dark:text-red-400 mb-4 text-center max-w-md">{error}</p>
+    <div class="flex flex-col justify-center items-center py-12 px-4 text-center">
+      <p class="text-sm font-medium text-destructive mb-2">Failed to load timetable</p>
+      <p class="text-xs text-muted-foreground mb-4 max-w-md">{error}</p>
       <button
-        class="px-6 py-3 text-sm font-semibold bg-red-600 hover:bg-red-500 dark:bg-red-500 dark:hover:bg-red-400 text-white rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-red-500/50 shadow-md"
-        onclick={() => {
-          loadLessons();
-        }}>
-        Try Again
+        class="inline-flex items-center justify-center h-9 px-4 text-sm font-medium rounded-md bg-surface-muted text-foreground hover:bg-surface-3 transition-colors duration-150"
+        onclick={() => { loadLessons(); }}>
+        Try again
       </button>
     </div>
   {:else if loadingLessons && !isLoadingFromNavigation}
-    <div
-      class="flex flex-col justify-center items-center py-16 px-4"
-      transition:fade={{ duration: 200 }}>
-      <div
-        class="w-20 h-20 rounded-full border-4 animate-spin border-blue-500/30 border-t-blue-500 mb-4">
-      </div>
-      <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Loading Timetable</h3>
-      <p class="text-zinc-600 dark:text-zinc-400">Please wait while we fetch your schedule...</p>
+    <div class="flex flex-col gap-2 px-4 py-4">
+      <div class="h-3 w-2/3 rounded bg-surface-muted animate-pulse"></div>
+      <div class="h-3 w-1/2 rounded bg-surface-muted animate-pulse"></div>
+      <div class="h-3 w-3/4 rounded bg-surface-muted animate-pulse"></div>
     </div>
   {:else}
     {#if !hideHeader}

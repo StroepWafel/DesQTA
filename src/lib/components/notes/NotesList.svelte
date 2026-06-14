@@ -307,11 +307,11 @@
 </script>
 
 <div
-  class="notes-list h-full flex flex-col bg-white dark:bg-zinc-800 border-r border-zinc-200 dark:border-zinc-700 min-h-0">
+  class="notes-list h-full flex flex-col bg-card border-r border-border min-h-0">
   <!-- Header -->
-  <div class="shrink-0 p-4 border-b border-zinc-200 dark:border-zinc-700">
+  <div class="shrink-0 p-4 border-b border-border">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">Notes</h2>
+      <h2 class="text-lg font-semibold text-foreground">Notes</h2>
       <div class="flex items-center space-x-2">
         <button
           class="p-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring hover:shadow-xs"
@@ -335,7 +335,7 @@
       <input
         type="text"
         placeholder="Search notes..."
-        class="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring transition-all duration-300 ease-out focus:scale-[1.01] focus:shadow-xs"
+        class="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-border text-foreground placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring transition-all duration-300 ease-out focus:scale-[1.01] focus:shadow-xs"
         bind:value={searchQuery} />
       <Icon
         src={MagnifyingGlass}
@@ -345,7 +345,7 @@
     <!-- Folders Section -->
     <div class="mt-4">
       <div class="flex items-center justify-between mb-2">
-        <h3 class="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+        <h3 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Folders
         </h3>
         <button
@@ -363,7 +363,7 @@
             <input
               type="text"
               placeholder="Folder name"
-              class="flex-1 px-2 py-1 text-xs rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
+              class="flex-1 px-2 py-1 text-xs rounded-sm border border-border bg-card text-foreground focus:outline-hidden focus:ring-1 accent-ring"
               bind:value={newFolderName}
               bind:this={createFolderInput}
               on:keydown={(e) => {
@@ -390,7 +390,7 @@
           class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.01] {selectedFolder ===
           'all'
             ? 'bg-accent-100 dark:bg-accent-900 text-accent-800 dark:text-accent-200 border border-accent-200 dark:border-accent-800 shadow-xs'
-            : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-transparent'}"
+            : 'text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-transparent'}"
           on:click={() => (selectedFolder = 'all')}>
           <Icon src={FolderOpen} class="w-4 h-4 mr-2 opacity-60" />
           <span class="flex-1 text-left">All Notes</span>
@@ -407,7 +407,7 @@
               <input
                 type="text"
                 value={folder.name}
-                class="w-full px-2 py-1 text-sm rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-1 accent-ring"
+                class="w-full px-2 py-1 text-sm rounded-sm border border-border bg-card text-foreground focus:outline-hidden focus:ring-1 accent-ring"
                 on:keydown={(e) => {
                   if (e.key === 'Enter') renameFolder(folder, e.currentTarget.value);
                   if (e.key === 'Escape') editingFolder = null;
@@ -421,7 +421,7 @@
                   class="w-full flex items-center px-2 py-1.5 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.01] {selectedFolder ===
                   folder.id
                     ? 'bg-accent-100 dark:bg-accent-900 text-accent-800 dark:text-accent-200 border border-accent-200 dark:border-accent-800 shadow-xs'
-                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-transparent'}"
+                    : 'text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-transparent'}"
                   on:click={() => (selectedFolder = folder.id)}>
                   <span class="text-lg mr-2">{folder.icon || '📁'}</span>
                   <span class="flex-1 text-left truncate">{folder.name}</span>
@@ -453,10 +453,10 @@
             <!-- Folder Menu Dropdown -->
             {#if folderMenuOpen === folder.id && folder.id !== 'default'}
               <div
-                class="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-10"
+                class="absolute right-0 top-full mt-1 w-32 bg-card border border-border rounded-lg shadow-lg z-10"
                 transition:scale={{ duration: 150, start: 0.95 }}>
                 <button
-                  class="w-full flex items-center px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                  class="w-full flex items-center px-3 py-2 text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                   on:click={() => {
                     startEditFolder(folder);
                     folderMenuOpen = null;
@@ -485,13 +485,13 @@
         <div
           class="w-6 h-6 rounded-full border-2 border-zinc-300 dark:border-zinc-700 border-t-transparent animate-spin">
         </div>
-        <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400">Loading...</span>
+        <span class="ml-2 text-sm text-muted-foreground">Loading...</span>
       </div>
     {:else if error}
       <div class="p-4 text-center">
         <p class="text-sm text-red-500 dark:text-red-400">{error}</p>
         <button
-          class="mt-2 px-3 py-1 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
+          class="mt-2 px-3 py-1 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 text-foreground transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
           on:click={loadNotes}>
           Retry
         </button>
@@ -499,7 +499,7 @@
     {:else if filteredNotes.length === 0}
       <div class="p-4 text-center">
         {#if searchQuery || selectedFolder !== 'all'}
-          <p class="text-sm text-zinc-500 dark:text-zinc-400">No notes match your filters.</p>
+          <p class="text-sm text-muted-foreground">No notes match your filters.</p>
           <button
             class="mt-2 text-sm text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
             on:click={() => {
@@ -509,7 +509,7 @@
             Clear filters
           </button>
         {:else}
-          <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-3">No notes yet.</p>
+          <p class="text-sm text-muted-foreground mb-3">No notes yet.</p>
           <button
             class="px-4 py-2 text-sm rounded-lg accent-bg text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring"
             on:click={createNewNote}>
@@ -525,7 +525,7 @@
               class="note-item p-3 rounded-lg cursor-pointer transition-all duration-300 ease-out hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.01] hover:shadow-xs group {selectedNoteId ===
               note.id
                 ? 'bg-accent-100 dark:bg-accent-900 border border-accent-200 dark:border-accent-800 shadow-xs'
-                : 'text-zinc-900 dark:text-white border border-transparent'}"
+                : 'text-foreground border border-transparent'}"
               on:click={() => selectNote(note)}
               on:keydown={(e) => e.key === 'Enter' && selectNote(note)}
               role="button"
@@ -536,7 +536,7 @@
                 <h3
                   class="font-medium text-sm line-clamp-1 flex-1 pr-2 {selectedNoteId === note.id
                     ? 'text-accent-800 dark:text-accent-200'
-                    : 'text-zinc-900 dark:text-white'}">
+                    : 'text-foreground'}">
                   {note.title || 'Untitled Note'}
                 </h3>
                 <div
@@ -557,7 +557,7 @@
               <p
                 class="text-xs {selectedNoteId === note.id
                   ? 'text-accent-700 dark:text-accent-300'
-                  : 'text-zinc-500 dark:text-zinc-400'} line-clamp-2 mb-2">
+                  : 'text-muted-foreground'} line-clamp-2 mb-2">
                 {getPreviewText(note)}
               </p>
 
@@ -593,10 +593,10 @@
             <!-- Note Menu Dropdown -->
             {#if noteMenuOpen === note.id}
               <div
-                class="absolute right-0 top-0 mt-8 w-40 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-10"
+                class="absolute right-0 top-0 mt-8 w-40 bg-card border border-border rounded-lg shadow-lg z-10"
                 transition:scale={{ duration: 150, start: 0.95 }}>
                 <button
-                  class="w-full flex items-center px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                  class="w-full flex items-center px-3 py-2 text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                   on:click={() => {
                     showMoveNoteModal = note;
                     noteMenuOpen = null;
@@ -623,8 +623,8 @@
 
   <!-- Footer Stats -->
   <div
-    class="shrink-0 p-3 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
-    <div class="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+    class="shrink-0 p-3 border-t border-border bg-zinc-50 dark:bg-zinc-900">
+    <div class="text-xs text-muted-foreground text-center">
       {filteredNotes.length} of {notes.length} notes
       {#if notes.length > 0}
         • {notes.reduce((sum, note) => sum + note.metadata.word_count, 0)} total words
@@ -636,15 +636,15 @@
 <!-- Move Note Modal -->
 {#if showMoveNoteModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs mobile-modal-inset"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 mobile-modal-inset"
     transition:fly={{ y: 50, duration: 200 }}>
     <div
-      class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-md"
+      class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-border w-full max-w-md"
       transition:scale={{ duration: 200, start: 0.95 }}>
       <!-- Modal Header -->
       <div
-        class="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Move Note</h3>
+        class="flex items-center justify-between p-6 border-b border-border">
+        <h3 class="text-lg font-semibold text-foreground">Move Note</h3>
         <button
           class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-200 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
           on:click={() => (showMoveNoteModal = null)}>
@@ -654,14 +654,14 @@
 
       <!-- Modal Body -->
       <div class="p-6">
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+        <p class="text-sm text-muted-foreground mb-4">
           Move "{showMoveNoteModal.title || 'Untitled Note'}" to:
         </p>
 
         <div class="space-y-2">
           {#each folders as folder (folder.id)}
             <button
-              class="w-full flex items-center px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all duration-200 {showMoveNoteModal.folder_path.includes(
+              class="w-full flex items-center px-3 py-2 text-sm rounded-lg border border-border text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all duration-200 {showMoveNoteModal.folder_path.includes(
                 folder.id,
               )
                 ? 'accent-bg text-white border-transparent'
@@ -679,7 +679,7 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="flex justify-end p-6 border-t border-zinc-200 dark:border-zinc-700">
+      <div class="flex justify-end p-6 border-t border-border">
         <Button variant="ghost" size="sm" onclick={() => (showMoveNoteModal = null)}>Cancel</Button>
       </div>
     </div>

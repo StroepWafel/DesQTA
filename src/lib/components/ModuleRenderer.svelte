@@ -46,7 +46,7 @@
 {#if renderedModule.type === 'title'}
   <h2
     class="{compact
-      ? 'text-xl font-bold text-zinc-900 dark:text-white mt-6 mb-2 first:mt-0'
+      ? 'text-xl font-bold text-foreground mt-6 mb-2 first:mt-0'
       : 'px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg'}"
     transition:fade={{ duration: 200, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
@@ -56,7 +56,7 @@
   <div
     class="{compact
       ? 'mb-4 last:mb-0 [&_h1]:mt-4 [&_h1]:first:mt-0 [&_h2]:mt-4 [&_h2]:first:mt-0 [&_h3]:mt-3 [&_h3]:first:mt-0'
-      : 'p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300'}"
+      : 'p-4 mb-6 rounded-xl border bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300'}"
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     {@html sanitizeHtml(renderedModule.content)}
@@ -65,7 +65,7 @@
   <div
     class="{compact
       ? 'mb-4 overflow-x-auto'
-      : 'p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 overflow-x-auto'}"
+      : 'p-4 mb-6 rounded-xl border bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 overflow-x-auto'}"
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     <div
@@ -172,7 +172,7 @@
                   </h2>
                 {:else if rendered.type === 'text'}
                   <div
-                    class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
+                    class="p-4 mb-6 rounded-xl border bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
                     transition:fade={{ duration: 300, delay: nestedDelay }}
                     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {nestedDelay}ms both;">
                     {@html sanitizeHtml(rendered.content)}
@@ -220,7 +220,7 @@
                   </h2>
                 {:else if rendered.type === 'text'}
                   <div
-                    class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
+                    class="p-4 mb-6 rounded-xl border bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
                     transition:fade={{ duration: 300, delay: nestedDelay }}
                     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {nestedDelay}ms both;">
                     {@html sanitizeHtml(rendered.content)}
@@ -268,7 +268,7 @@
                   </h2>
                 {:else if rendered.type === 'text'}
                   <div
-                    class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
+                    class="p-4 mb-6 rounded-xl border bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50 hover:shadow-lg hover:scale-[1.01] active:scale-95 transition-all duration-300"
                     transition:fade={{ duration: 300, delay: nestedDelay }}
                     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {nestedDelay}ms both;">
                     {@html sanitizeHtml(rendered.content)}
@@ -304,18 +304,18 @@
   {@const formulaContent = renderedModule.content?.formula || ''}
   {@const formulaScale = renderedModule.content?.scale}
   <div
-    class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
+    class="p-4 mb-6 rounded-xl border bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     <div class="flex items-center gap-4">
       <div class="flex-1">
-        <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Formula</div>
-        <div class="text-lg font-mono text-zinc-900 dark:text-white">
+        <div class="text-sm text-muted-foreground mb-1">Formula</div>
+        <div class="text-lg font-mono text-foreground">
           {formulaContent}
         </div>
       </div>
       {#if formulaScale && formulaScale !== '1'}
-        <div class="text-sm text-zinc-600 dark:text-zinc-400">
+        <div class="text-sm text-muted-foreground">
           Scale: {formulaScale}x
         </div>
       {/if}
@@ -326,7 +326,7 @@
     ? renderedModule.content.options
     : []}
   <div
-    class="p-4 mb-6 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
+    class="p-4 mb-6 rounded-xl border bg-white/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
     transition:fade={{ duration: 300, delay: animationDelay }}
     style="transform-origin: left center; animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) {animationDelay}ms both;">
     <h3 class="text-lg font-semibold mb-3 text-white">
@@ -337,7 +337,7 @@
         <div
           class="p-3 rounded-lg border border-zinc-300/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400"
+            <span class="text-sm font-medium text-muted-foreground"
               >{String.fromCharCode(65 + optionIndex)}.</span>
             <span class="text-white">{option}</span>
           </div>

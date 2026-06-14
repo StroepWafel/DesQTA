@@ -219,7 +219,7 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
+<div class="container mx-auto w-full max-w-none p-5 space-y-6">
   {#if foliosEnabled === false}
     <div class="flex justify-center items-center h-64">
       <EmptyState
@@ -233,14 +233,14 @@
       <div class="flex items-center gap-4">
         <button
           onclick={() => goto('/folios')}
-          class="p-2 rounded-lg transition-all duration-200 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+          class="p-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-zinc-900 dark:hover:text-white hover:surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
           <Icon src={ChevronLeft} class="w-5 h-5" />
         </button>
         <div>
-          <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+          <h1 class="text-2xl font-medium text-foreground sm:text-3xl mb-2">
             <T key="folios.edit_my_folios" fallback="Edit My Folios" />
           </h1>
-          <p class="text-zinc-600 dark:text-zinc-400">
+          <p class="text-muted-foreground">
             <T key="folios.edit_description" fallback="Create and manage your personal folios" />
           </p>
         </div>
@@ -280,7 +280,7 @@
         {#if publishedFolios.length > 0}
           <div>
             <h2
-              class="text-xl font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+              class="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
               <Icon src={CheckCircle} class="w-5 h-5 text-green-600 dark:text-green-400" />
               <T key="folios.published_folios" fallback="Published Folios" /> ({publishedFolios.length})
             </h2>
@@ -293,10 +293,10 @@
                     <button
                       onclick={() => goto(`/folios/edit/${folio.id}`)}
                       class="w-full text-left p-6 bg-white rounded-lg border border-green-200 dark:border-green-800 transition-all duration-200 transform dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-green-300 dark:hover:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2 pr-8">
+                      <h3 class="text-lg font-semibold text-foreground mb-2 pr-8">
                         {folio.title}
                       </h3>
-                      <div class="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+                      <div class="space-y-1 text-sm text-muted-foreground">
                         <div>
                           <T key="folios.created" fallback="Created" />: {formatDate(folio.created)}
                         </div>
@@ -327,8 +327,8 @@
         {#if unpublishedFolios.length > 0}
           <div>
             <h2
-              class="text-xl font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-              <Icon src={XCircle} class="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+              class="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Icon src={XCircle} class="w-5 h-5 text-muted-foreground" />
               <T key="folios.unpublished_folios" fallback="Unpublished Folios" /> ({unpublishedFolios.length})
             </h2>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -339,11 +339,11 @@
                     style="animation-delay: {i * 50}ms;">
                     <button
                       onclick={() => goto(`/folios/edit/${folio.id}`)}
-                      class="w-full text-left p-6 bg-white rounded-lg border border-zinc-200 dark:border-zinc-700 transition-all duration-200 transform dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-                      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2 pr-8">
+                      class="w-full text-left p-6 bg-white rounded-lg border border-border transition-all duration-200 transform dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+                      <h3 class="text-lg font-semibold text-foreground mb-2 pr-8">
                         {folio.title}
                       </h3>
-                      <div class="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+                      <div class="space-y-1 text-sm text-muted-foreground">
                         <div>
                           <T key="folios.created" fallback="Created" />: {formatDate(folio.created)}
                         </div>
@@ -352,7 +352,7 @@
                         </div>
                         <div class="pt-2">
                           <span
-                            class="px-2 py-1 text-xs font-semibold rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
+                            class="px-2 py-1 text-xs font-semibold rounded bg-zinc-200 dark:bg-zinc-700 text-foreground">
                             <T key="folios.unpublished" fallback="Unpublished" />
                           </span>
                         </div>
@@ -384,7 +384,7 @@
   closeOnBackdrop={true}
   closeOnEscape={true}>
   <div class="px-8 pb-8">
-    <p class="text-zinc-700 dark:text-zinc-300 mb-6">
+    <p class="text-foreground mb-6">
       {$_('folios.delete_confirmation') || 'Are you sure you want to delete'} "{folioToDelete
         ? folioToDelete.title
         : ''}"? {$_('folios.delete_warning') || 'This action cannot be undone.'}
@@ -393,7 +393,7 @@
       <button
         onclick={closeDeleteModal}
         disabled={deleting}
-        class="px-4 py-2 rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-all duration-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2">
+        class="px-4 py-2 rounded-lg bg-zinc-200 dark:bg-zinc-700 text-foreground transition-all duration-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2">
         <T key="common.cancel" fallback="Cancel" />
       </button>
       <button

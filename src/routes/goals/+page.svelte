@@ -148,17 +148,18 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
-  <div class="flex justify-between items-start">
-    <div>
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
-        <T key="navigation.goals" fallback="Goals" />
-      </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
-        <T key="goals.description" fallback="Set and track your academic goals" />
-      </p>
-    </div>
-  </div>
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6">
+  <header class="flex flex-col gap-1.5">
+    <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+      Planning
+    </p>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+      <T key="navigation.goals" fallback="Goals" />
+    </h1>
+    <p class="text-sm text-muted-foreground max-w-2xl">
+      <T key="goals.description" fallback="Set and track your academic goals" />
+    </p>
+  </header>
 
   {#if goalsEnabled === false}
     <div class="flex justify-center items-center h-64">
@@ -196,10 +197,10 @@
           <div class="goal-year-card-animate" style="animation-delay: {i * 50}ms;">
             <button
               onclick={() => goto(`/goals/${year}`)}
-              class="px-6 py-4 text-left bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+              class="px-6 py-4 text-left bg-white rounded-lg border transition-all duration-200 transform dark:bg-zinc-800 border-border hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-[1.02] hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
               <div class="flex items-center gap-3">
                 <Icon src={Flag} class="w-6 h-6 text-accent" />
-                <span class="text-lg font-semibold text-zinc-900 dark:text-white">{year}</span>
+                <span class="text-lg font-semibold text-foreground">{year}</span>
               </div>
             </button>
           </div>

@@ -100,7 +100,7 @@
           
           <button
             onclick={toggleDetails}
-            class="px-3 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 hover:bg-zinc-200 dark:hover:bg-zinc-600"
+            class="px-3 py-1 bg-zinc-100 dark:bg-zinc-700 text-foreground rounded-sm text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 hover:bg-zinc-200 dark:hover:bg-zinc-600"
           >
             <Icon src={InformationCircle} size="14" class="inline mr-1" />
             {showDetails ? 'Hide' : 'Show'} Details
@@ -118,19 +118,19 @@
         </div>
         
         {#if showDetails && errorDetails}
-          <div class="mt-3 p-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm text-xs">
+          <div class="mt-3 p-3 bg-card border border-border rounded-sm text-xs">
             <div class="mb-2">
-              <strong class="text-zinc-700 dark:text-zinc-300">Time:</strong>
-              <span class="text-zinc-600 dark:text-zinc-400">{new Date(errorDetails.timestamp).toLocaleString()}</span>
+              <strong class="text-foreground">Time:</strong>
+              <span class="text-muted-foreground">{new Date(errorDetails.timestamp).toLocaleString()}</span>
             </div>
             <div class="mb-2">
-              <strong class="text-zinc-700 dark:text-zinc-300">Component:</strong>
-              <span class="text-zinc-600 dark:text-zinc-400">{componentName}</span>
+              <strong class="text-foreground">Component:</strong>
+              <span class="text-muted-foreground">{componentName}</span>
             </div>
             {#if errorDetails.stack}
               <div>
-                <strong class="text-zinc-700 dark:text-zinc-300">Stack Trace:</strong>
-                <pre class="mt-1 p-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-600 rounded-sm text-xs text-zinc-600 dark:text-zinc-400 overflow-auto max-h-32">{errorDetails.stack}</pre>
+                <strong class="text-foreground">Stack Trace:</strong>
+                <pre class="mt-1 p-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-600 rounded-sm text-xs text-muted-foreground overflow-auto max-h-32">{errorDetails.stack}</pre>
               </div>
             {/if}
           </div>

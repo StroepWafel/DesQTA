@@ -2,6 +2,7 @@ import type { WidgetLayout, WidgetConfig } from '../types/widgets';
 import { widgetService } from './widgetService';
 import { widgetRegistry } from './widgetRegistry';
 import { logger } from '../../utils/logger';
+import { getBundledDashboardTemplates } from '../dashboards/index';
 
 export interface WidgetTemplate {
   id: string;
@@ -54,38 +55,42 @@ function normalizeTemplateWidgets(widgets: WidgetConfig[]): WidgetConfig[] {
   });
 }
 
-// Default templates - normalized with proper positions
+// Default templates - normalized with proper positions.
+// Built around the consolidated Lo-fi widget set:
+// timetable, deadlines, grade_trends, messages_preview, notices, news,
+// shortcuts, quick_notes, study_timer, weather, welcome_portal.
 function createDefaultTemplates(): WidgetTemplate[] {
   const studentFocus: WidgetTemplate = {
     id: 'student_focus',
-    name: 'Student Focus',
-    description: 'Assessments, Schedule, and Todo list',
+    name: 'Student focus',
+    description: "Today's schedule, deadlines, and notes.",
     isDefault: false,
     layout: {
       widgets: normalizeTemplateWidgets([
         {
-          id: 'upcoming_assessments',
-          type: 'upcoming_assessments',
+          id: 'timetable',
+          type: 'timetable',
           enabled: true,
-          position: { x: 0, y: 0, w: 6, h: 5 },
+          position: { x: 0, y: 0, w: 8, h: 6 },
+          settings: { viewMode: 'today', defaultView: 'today' },
         },
         {
-          id: 'today_schedule',
-          type: 'today_schedule',
+          id: 'deadlines',
+          type: 'deadlines',
           enabled: true,
-          position: { x: 6, y: 0, w: 6, h: 6 },
+          position: { x: 8, y: 0, w: 4, h: 6 },
         },
         {
-          id: 'todo_list',
-          type: 'todo_list',
+          id: 'quick_notes',
+          type: 'quick_notes',
           enabled: true,
-          position: { x: 0, y: 5, w: 4, h: 5 },
+          position: { x: 0, y: 6, w: 6, h: 5 },
         },
         {
           id: 'messages_preview',
           type: 'messages_preview',
           enabled: true,
-          position: { x: 4, y: 5, w: 8, h: 5 },
+          position: { x: 6, y: 6, w: 6, h: 5 },
         },
       ]),
       version: 1,
@@ -93,10 +98,10 @@ function createDefaultTemplates(): WidgetTemplate[] {
     },
   };
 
-  const analytics: WidgetTemplate = {
-    id: 'analytics',
-    name: 'Analytics Dashboard',
-    description: 'Grade trends, Study time, and Performance',
+  const academic: WidgetTemplate = {
+    id: 'academic',
+    name: 'Academic overview',
+    description: 'Trends and deadlines side-by-side, with the timetable.',
     isDefault: false,
     layout: {
       widgets: normalizeTemplateWidgets([
@@ -107,22 +112,16 @@ function createDefaultTemplates(): WidgetTemplate[] {
           position: { x: 0, y: 0, w: 8, h: 6 },
         },
         {
-          id: 'study_time_tracker',
-          type: 'study_time_tracker',
+          id: 'deadlines',
+          type: 'deadlines',
           enabled: true,
           position: { x: 8, y: 0, w: 4, h: 6 },
         },
         {
-          id: 'deadlines_calendar',
-          type: 'deadlines_calendar',
+          id: 'timetable',
+          type: 'timetable',
           enabled: true,
-          position: { x: 0, y: 6, w: 6, h: 6 },
-        },
-        {
-          id: 'upcoming_assessments',
-          type: 'upcoming_assessments',
-          enabled: true,
-          position: { x: 6, y: 6, w: 6, h: 6 },
+          position: { x: 0, y: 6, w: 12, h: 6 },
         },
       ]),
       version: 1,
@@ -130,110 +129,30 @@ function createDefaultTemplates(): WidgetTemplate[] {
     },
   };
 
-  const quickAccess: WidgetTemplate = {
-    id: 'quick_access',
-    name: 'Quick Access',
-    description: 'Shortcuts, Notes, and Weather',
+  const reading: WidgetTemplate = {
+    id: 'reading',
+    name: 'Reading',
+    description: 'News, notices, and messages — for catching up.',
     isDefault: false,
     layout: {
       widgets: normalizeTemplateWidgets([
         {
-          id: 'shortcuts',
-          type: 'shortcuts',
+          id: 'notices',
+          type: 'notices',
           enabled: true,
           position: { x: 0, y: 0, w: 8, h: 4 },
-        },
-        {
-          id: 'weather',
-          type: 'weather',
-          enabled: true,
-          position: { x: 8, y: 0, w: 4, h: 5 },
-        },
-        {
-          id: 'quick_notes',
-          type: 'quick_notes',
-          enabled: true,
-          position: { x: 0, y: 4, w: 6, h: 6 },
         },
         {
           id: 'messages_preview',
           type: 'messages_preview',
           enabled: true,
-          position: { x: 6, y: 4, w: 6, h: 6 },
-        },
-      ]),
-      version: 1,
-      lastModified: new Date(),
-    },
-  };
-
-  const productivityHub: WidgetTemplate = {
-    id: 'productivity_hub',
-    name: 'Productivity Hub',
-    description: 'Focus Timer, Todo List, Quick Notes, and Study Tracker',
-    isDefault: false,
-    layout: {
-      widgets: normalizeTemplateWidgets([
-        {
-          id: 'focus_timer',
-          type: 'focus_timer',
-          enabled: true,
-          position: { x: 0, y: 0, w: 4, h: 5 },
+          position: { x: 8, y: 0, w: 4, h: 4 },
         },
         {
-          id: 'todo_list',
-          type: 'todo_list',
+          id: 'news',
+          type: 'news',
           enabled: true,
-          position: { x: 4, y: 0, w: 4, h: 5 },
-        },
-        {
-          id: 'study_time_tracker',
-          type: 'study_time_tracker',
-          enabled: true,
-          position: { x: 8, y: 0, w: 4, h: 5 },
-        },
-        {
-          id: 'quick_notes',
-          type: 'quick_notes',
-          enabled: true,
-          position: { x: 0, y: 5, w: 12, h: 6 },
-        },
-      ]),
-      version: 1,
-      lastModified: new Date(),
-    },
-  };
-
-  const academicOverview: WidgetTemplate = {
-    id: 'academic_overview',
-    name: 'Academic Overview',
-    description: 'Grade Trends, Assessments, Deadlines, and Schedule',
-    isDefault: false,
-    layout: {
-      widgets: normalizeTemplateWidgets([
-        {
-          id: 'grade_trends',
-          type: 'grade_trends',
-          enabled: true,
-          position: { x: 0, y: 0, w: 6, h: 6 },
-        },
-        {
-          id: 'upcoming_assessments',
-          type: 'upcoming_assessments',
-          enabled: true,
-          position: { x: 6, y: 0, w: 6, h: 6 },
-        },
-        {
-          id: 'deadlines_calendar',
-          type: 'deadlines_calendar',
-          enabled: true,
-          position: { x: 0, y: 6, w: 6, h: 6 },
-        },
-        {
-          id: 'today_schedule',
-          type: 'today_schedule',
-          enabled: true,
-          position: { x: 6, y: 6, w: 6, h: 6 },
+          position: { x: 0, y: 4, w: 12, h: 5 },
         },
       ]),
       version: 1,
@@ -244,13 +163,13 @@ function createDefaultTemplates(): WidgetTemplate[] {
   const minimalist: WidgetTemplate = {
     id: 'minimalist',
     name: 'Minimalist',
-    description: 'Clean, simple layout with Schedule, Shortcuts, and Notes',
+    description: 'Just the timetable, shortcuts, and notes.',
     isDefault: false,
     layout: {
       widgets: normalizeTemplateWidgets([
         {
-          id: 'today_schedule',
-          type: 'today_schedule',
+          id: 'timetable',
+          type: 'timetable',
           enabled: true,
           position: { x: 0, y: 0, w: 12, h: 6 },
         },
@@ -258,13 +177,13 @@ function createDefaultTemplates(): WidgetTemplate[] {
           id: 'shortcuts',
           type: 'shortcuts',
           enabled: true,
-          position: { x: 0, y: 6, w: 6, h: 4 },
+          position: { x: 0, y: 6, w: 6, h: 3 },
         },
         {
           id: 'quick_notes',
           type: 'quick_notes',
           enabled: true,
-          position: { x: 6, y: 6, w: 6, h: 6 },
+          position: { x: 6, y: 6, w: 6, h: 5 },
         },
       ]),
       version: 1,
@@ -274,24 +193,19 @@ function createDefaultTemplates(): WidgetTemplate[] {
 
   const complete: WidgetTemplate = {
     id: 'complete',
-    name: 'Complete',
-    description: 'All widgets enabled',
-    isDefault: true, // Only this one is default
+    name: 'Default',
+    description: 'The recommended starting layout.',
+    isDefault: true,
     layout: widgetService.getDefaultLayout(),
   };
 
-  return [
-    studentFocus,
-    analytics,
-    quickAccess,
-    productivityHub,
-    academicOverview,
-    minimalist,
-    complete,
-  ];
+  return [studentFocus, academic, reading, minimalist, complete];
 }
 
-export const defaultTemplates: WidgetTemplate[] = createDefaultTemplates();
+export const defaultTemplates: WidgetTemplate[] = [
+  ...createDefaultTemplates(),
+  ...getBundledDashboardTemplates(),
+];
 
 export const widgetTemplatesService = {
   async loadTemplates(): Promise<WidgetTemplate[]> {

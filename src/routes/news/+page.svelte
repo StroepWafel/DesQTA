@@ -213,44 +213,47 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
-  <div class="flex justify-between items-start">
-    <div>
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6">
+  <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        Reading
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
         <T key="navigation.news" fallback="News" />
       </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground max-w-2xl">
         <T key="news.description" fallback="Browse news from around the world" />
       </p>
     </div>
     <div class="relative">
       <button
         id="source-button"
-        class="min-h-[44px] px-4 py-2 bg-white rounded-lg border transition-all duration-200 text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:ring-2 focus:ring-blue-500 hover:scale-105 active:scale-95"
+        class="h-10 px-3.5 bg-card text-foreground rounded-lg border border-border hover:border-border-strong hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1 transition-colors duration-150 text-sm font-medium uppercase tracking-[0.06em]"
         onclick={() => (showSourceSelector = !showSourceSelector)}>
         {selectedSource.toUpperCase()}
       </button>
       {#if showSourceSelector}
         <div
           id="source-dropdown"
-          class="absolute right-0 z-10 mt-2 w-48 bg-white rounded-lg border shadow-xl text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700"
+          class="absolute right-0 z-10 mt-2 w-48 bg-popover text-popover-foreground rounded-xl border border-border shadow-[0_8px_24px_-8px_rgba(0,0,0,0.12),0_2px_6px_-2px_rgba(0,0,0,0.06)] overflow-hidden"
           transition:fade>
           {#each Object.keys(rssFeedsByCountry) as country}
             <button
-              class="min-h-[44px] px-4 py-2 w-full text-left transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 first:rounded-t-lg last:rounded-b-lg active:scale-[0.98]"
+              class="h-10 px-3.5 w-full text-left text-sm hover:bg-surface-muted transition-colors duration-100"
               onclick={() => handleSourceChange(country)}>
               {country.toUpperCase()}
             </button>
           {/each}
           <button
-            class="min-h-[44px] px-4 py-2 w-full text-left border-t transition-all duration-200 border-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 dark:border-zinc-700 active:scale-[0.98]"
+            class="h-10 px-3.5 w-full text-left text-sm border-t border-border-subtle hover:bg-surface-muted transition-colors duration-100"
             onclick={() => handleSourceChange('australia')}>
             AUSTRALIA
           </button>
         </div>
       {/if}
     </div>
-  </div>
+  </header>
 
   {#if loading}
     <div class="flex justify-center items-center h-64">

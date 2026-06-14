@@ -31,7 +31,7 @@ export type IconName =
 export function createIconSVG(
   iconName: IconName | string,
   size: number = 16,
-  className: string = 'text-zinc-500 dark:text-zinc-400',
+  className: string = 'text-muted-foreground',
 ): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('width', size.toString());

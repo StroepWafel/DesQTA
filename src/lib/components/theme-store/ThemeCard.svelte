@@ -123,7 +123,7 @@
   onmouseenter={() => (hovered = true)}
   onmouseleave={() => (hovered = false)}>
   <div
-    class="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden h-full flex flex-col">
+    class="bg-card rounded-2xl border border-border shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden h-full flex flex-col">
     <!-- Theme Preview -->
     <div class="relative h-48 overflow-hidden" style={getPreviewStyle()}>
       {#if previewImageUrl}
@@ -141,20 +141,20 @@
       <div class="absolute top-3 left-3 flex gap-2 flex-wrap">
         {#if isActive}
           <span
-            class="px-2 py-1 text-xs font-medium bg-green-500 text-white rounded-full flex items-center gap-1 backdrop-blur-sm">
+            class="px-2 py-1 text-xs font-medium bg-green-500 text-white rounded-full flex items-center gap-1 ">
             <Icon src={CheckCircle} class="w-3 h-3" />
             Active
           </span>
         {/if}
         {#if hasUpdate}
           <span
-            class="px-2 py-1 text-xs font-medium bg-blue-500 text-white rounded-full flex items-center gap-1 backdrop-blur-sm animate-pulse">
+            class="px-2 py-1 text-xs font-medium bg-blue-500 text-white rounded-full flex items-center gap-1 animate-pulse">
             Update Available
           </span>
         {/if}
         {#if theme.featured}
           <span
-            class="px-2 py-1 text-xs font-medium bg-yellow-500 text-white rounded-full backdrop-blur-sm">
+            class="px-2 py-1 text-xs font-medium bg-yellow-500 text-white rounded-full ">
             Featured
           </span>
         {/if}
@@ -163,7 +163,7 @@
       <!-- Favorite Button - Higher z-index to stay above overlay -->
       <button
         type="button"
-        class="absolute top-3 right-3 z-20 p-2 rounded-full backdrop-blur-sm bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 transition-all duration-200 transform hover:scale-110 active:scale-95 {isFavorited
+        class="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 transition-all duration-200 transform hover:scale-110 active:scale-95 {isFavorited
           ? 'text-red-500'
           : 'text-white'}"
         onclick={handleFavorite}
@@ -177,11 +177,11 @@
       <!-- Overlay on hover -->
       {#if hovered && onQuickPreview}
         <div
-          class="absolute inset-0 z-10 bg-black/40 backdrop-blur-xs flex items-center justify-center transition-all duration-200"
+          class="absolute inset-0 z-10 bg-black/40 flex items-center justify-center transition-all duration-200"
           transition:fade={{ duration: 200 }}>
           <button
             type="button"
-            class="px-4 py-2 rounded-xl bg-white/90 dark:bg-zinc-900/90 text-zinc-900 dark:text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+            class="px-4 py-2 rounded-xl bg-card text-foreground font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
             onclick={async () => {
               if (onQuickPreview) {
                 await onQuickPreview(theme.id);
@@ -198,19 +198,19 @@
     <div class="p-6 flex-1 flex flex-col">
       <div class="flex items-start justify-between mb-3">
         <div class="flex-1">
-          <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-1 line-clamp-1">
+          <h3 class="text-lg font-bold text-foreground mb-1 line-clamp-1">
             {theme.name}
           </h3>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400">by {theme.author}</p>
+          <p class="text-sm text-muted-foreground">by {theme.author}</p>
         </div>
       </div>
 
-      <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2 flex-1">
+      <p class="text-sm text-muted-foreground mb-4 line-clamp-2 flex-1">
         {theme.description}
       </p>
 
       <!-- Stats -->
-      <div class="flex items-center gap-4 mb-4 text-xs text-zinc-500 dark:text-zinc-400">
+      <div class="flex items-center gap-4 mb-4 text-xs text-muted-foreground">
         {#if theme.rating_count > 0}
           <div class="flex items-center gap-1">
             <Icon src={Star} class="w-3 h-3 text-yellow-500 fill-current" />

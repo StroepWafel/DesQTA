@@ -54,7 +54,7 @@
     </button>
   {/each}
   {#if rating > 0}
-    <span class="ml-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+    <span class="ml-2 text-sm font-medium text-muted-foreground">
       {rating} {rating === 1 ? 'star' : 'stars'}
     </span>
   {/if}

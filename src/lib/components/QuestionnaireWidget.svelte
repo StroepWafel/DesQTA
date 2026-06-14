@@ -7,6 +7,7 @@
   import { logger } from '../../utils/logger';
   import { onMount } from 'svelte';
   import { Icon, ChartBar } from 'svelte-hero-icons';
+  import { tooltip } from '$lib/actions/tooltip';
 
   interface Props {
     onOpenModal: (question: QuestionnaireQuestion | null) => void;
@@ -143,13 +144,14 @@
 
 {#if !loading && currentQuestion}
   <button
-    class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 backdrop-blur-sm border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-none focus:ring-2 accent-ring hover:scale-[1.02]
+    class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-none focus:ring-2 accent-ring hover:scale-[1.02]
     max-lg:px-2 max-lg:py-2 max-lg:w-10 max-lg:h-10 max-lg:justify-center max-lg:gap-0"
     onclick={handleClick}
-    aria-label="Open questionnaire">
-    <Icon src={ChartBar} class="w-5 h-5 text-zinc-600 dark:text-zinc-400 shrink-0" />
+    aria-label="Open questionnaire"
+    use:tooltip={{ text: 'Community poll — vote on today\'s question', placement: 'bottom', delay: 350 }}>
+    <Icon src={ChartBar} class="w-5 h-5 text-muted-foreground shrink-0" />
     <div class="flex flex-col items-start min-w-0 flex-1 max-lg:hidden">
-      <span class="text-xs font-medium text-zinc-600 dark:text-zinc-400 truncate w-full">
+      <span class="text-xs font-medium text-muted-foreground truncate w-full">
         {truncateText(currentQuestion.question, 40)}
       </span>
       {#if totalVotes > 0}

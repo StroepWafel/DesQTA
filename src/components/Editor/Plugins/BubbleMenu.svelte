@@ -95,7 +95,7 @@
 
 <!-- Main Bubble Menu -->
 <M.div 
-  class="flex gap-1 items-center p-1 rounded-lg border shadow-xl backdrop-blur-lg menu dark:bg-zinc-900/90 bg-white/90 dark:border-zinc-700/30 border-zinc-200/50"
+  class="flex gap-1 items-center p-1 rounded-lg border shadow-xl menu dark:bg-zinc-900/90 bg-white/90 dark:border-zinc-700/30 border-zinc-200/50"
   layout
   transition={{ duration: 0.3, ease: "easeInOut" }}
 >
@@ -111,7 +111,7 @@
       <div class="relative turn-into-dropdown">
         <M.button
           onclick={() => showTurnInto = !showTurnInto}
-          class="flex gap-1 items-center px-3 py-2 text-sm rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          class="flex gap-1 items-center px-3 py-2 text-sm rounded-md transition-colors hover:surface-muted"
           title="Turn into"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -154,7 +154,7 @@
       
       <M.button
         onclick={() => editor.chain().focus().toggleBold().run()}
-        class="p-2 rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 {editor.isActive('bold') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
+        class="p-2 rounded-md transition-colors hover:surface-muted {editor.isActive('bold') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
         title="Bold"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -164,7 +164,7 @@
       
       <M.button
         onclick={() => editor.chain().focus().toggleItalic().run()}
-        class="p-2 rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 {editor.isActive('italic') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
+        class="p-2 rounded-md transition-colors hover:surface-muted {editor.isActive('italic') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
         title="Italic"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -174,7 +174,7 @@
       
       <M.button
         onclick={() => editor.chain().focus().toggleStrike().run()}
-        class="p-2 rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 {editor.isActive('strike') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
+        class="p-2 rounded-md transition-colors hover:surface-muted {editor.isActive('strike') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
         title="Strikethrough"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -184,7 +184,7 @@
       
       <M.button
         onclick={() => editor.chain().focus().toggleCode().run()}
-        class="p-2 rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 {editor.isActive('code') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
+        class="p-2 rounded-md transition-colors hover:surface-muted {editor.isActive('code') ? 'bg-zinc-200 dark:bg-zinc-700' : '' }"
         title="Code"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}

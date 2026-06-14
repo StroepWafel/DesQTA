@@ -114,22 +114,22 @@
     <div class="w-6 h-6 rounded-full border-2 border-zinc-300 border-t-blue-600 animate-spin"></div>
   </div>
 {:else if error}
-  <div class="text-sm text-zinc-500 dark:text-zinc-400">{error}</div>
+  <div class="text-sm text-muted-foreground">{error}</div>
 {:else if lessonContent}
-  <div class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+  <div class="border border-border rounded-lg overflow-hidden">
     <!-- Header -->
     <button
-      class="w-full flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+      class="w-full flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 hover:surface-muted transition-colors"
       onclick={() => (expanded = !expanded)}
       type="button">
       <div class="flex items-center gap-2 flex-1 min-w-0">
-        <Icon src={DocumentText} class="w-5 h-5 text-zinc-500 dark:text-zinc-400 shrink-0" />
+        <Icon src={DocumentText} class="w-5 h-5 text-muted-foreground shrink-0" />
         <div class="flex-1 min-w-0 text-left">
-          <div class="text-sm font-medium text-zinc-900 dark:text-white truncate">
+          <div class="text-sm font-medium text-foreground truncate">
             {lessonContent.t || title || 'Lesson Content'}
           </div>
           {#if contentPreview}
-            <div class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">
+            <div class="text-xs text-muted-foreground line-clamp-1 mt-0.5">
               {contentPreview}
             </div>
           {/if}
@@ -137,7 +137,7 @@
       </div>
       <Icon
         src={expanded ? ChevronUp : ChevronDown}
-        class="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0 transition-transform duration-300 ease-in-out {expanded
+        class="w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-300 ease-in-out {expanded
           ? 'rotate-180'
           : ''}" />
     </button>
@@ -145,15 +145,15 @@
     <!-- Expanded Content -->
     {#if expanded}
       <div
-        class="p-4 bg-white dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-700 transition-all duration-300 ease-in-out"
+        class="p-4 bg-white dark:bg-zinc-900/50 border-t border-border transition-all duration-300 ease-in-out"
         transition:fly={{ y: -10, duration: 300, easing: (t) => t * (2 - t) }}>
         <!-- Homework/Notes -->
         {#if lessonContent.h}
           <div class="mb-4">
-            <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+            <div class="text-xs font-semibold text-foreground mb-2">
               Homework/Notes
             </div>
-            <div class="text-sm text-zinc-900 dark:text-white whitespace-pre-wrap">
+            <div class="text-sm text-foreground whitespace-pre-wrap">
               {lessonContent.h}
             </div>
           </div>
@@ -163,7 +163,7 @@
         {#if lessonContent.r && lessonContent.r.length > 0}
           <div class="mb-4">
             <div
-              class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2 flex items-center gap-1">
+              class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1">
               <Icon src={PaperClip} class="w-3 h-3" />
               Attachments ({lessonContent.r.length})
             </div>
@@ -171,7 +171,7 @@
               {#each lessonContent.r as attachment}
                 <div
                   class="flex items-center gap-2 p-2 rounded-md bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
-                  <div class="text-sm text-zinc-900 dark:text-white flex-1 min-w-0 truncate">
+                  <div class="text-sm text-foreground flex-1 min-w-0 truncate">
                     {attachment.t || 'Attachment'}
                   </div>
                 </div>
@@ -183,15 +183,15 @@
         <!-- Content Preview -->
         {#if contentPreview && contentPreview.length > 0}
           <div class="mb-4">
-            <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Content</div>
-            <div class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3">
+            <div class="text-xs font-semibold text-foreground mb-2">Content</div>
+            <div class="text-sm text-muted-foreground line-clamp-3">
               {contentPreview}
             </div>
           </div>
         {/if}
 
         <!-- Actions -->
-        <div class="flex items-center gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+        <div class="flex items-center gap-2 pt-2 border-t border-border">
           <button
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium transition-colors"
             onclick={openInApp}

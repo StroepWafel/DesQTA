@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Icon } from 'svelte-hero-icons';
-  import { ArrowPath, ArrowTopRightOnSquare } from 'svelte-hero-icons';
+  import { ArrowPath, ArrowTopRightOnSquare, Newspaper } from 'svelte-hero-icons';
   import { ChevronLeft, ChevronRight } from 'svelte-hero-icons';
+  import WidgetCard from './dashboard/WidgetCard.svelte';
   import dayjs from 'dayjs';
   import relativeTime from 'dayjs/plugin/relativeTime';
   import { logger } from '../../utils/logger';
@@ -143,77 +144,65 @@
   }
 </script>
 
-<div class="flex flex-col gap-3 text-zinc-900 dark:text-white">
-  <div class="flex items-center justify-between">
-    <h3 class="text-base sm:text-lg font-semibold">
-      <T key="dashboard.recent_news" fallback="Recent News" />
-    </h3>
+<WidgetCard
+  icon={Newspaper}
+  title={$_('dashboard.recent_news') || 'Recent News'}
+  {loading}
+  empty={!loading && !error && items.length === 0}
+  emptyTitle={$_('dashboard.no_news') || 'No news available'}
+  emptyIcon={Newspaper}>
+  {#snippet headerAction()}
     <button
-      class="px-3 py-1.5 rounded-lg bg-zinc-800/80 text-white hover:bg-zinc-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+      class="inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
       onclick={fetchNews}
       aria-label={$_('dashboard.refresh_news') || 'Refresh news'}
-      title={$_('common.refresh') || 'Refresh'}
-    >
+      title={$_('common.refresh') || 'Refresh'}>
       <Icon src={ArrowPath} class="w-4 h-4" />
     </button>
-  </div>
+  {/snippet}
 
-  {#if loading}
-    <div class="text-sm opacity-80">
-      <T key="dashboard.loading_news" fallback="Loading news…" />
-    </div>
-  {:else if error}
-    <div class="text-sm text-red-500">{error}</div>
-  {:else if items.length === 0}
-    <div class="text-sm opacity-80">
-      <T key="dashboard.no_news" fallback="No news available." />
+  {#if error}
+    <div class="h-full flex items-center justify-center text-sm text-destructive">
+      {error}
     </div>
   {:else}
-    <div class="relative">
-      <!-- Scroll controls -->
+    <div class="relative h-full">
       <button
-        class="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-zinc-900/70 text-white hover:bg-zinc-800/80 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+        class="hidden sm:flex absolute left-1 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-md bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150"
         onclick={scrollLeft}
-        aria-label={$_('dashboard.scroll_left') || 'Scroll left'}
-      >
-        <Icon src={ChevronLeft} class="w-6 h-6 sm:w-7 sm:h-7" />
+        aria-label={$_('dashboard.scroll_left') || 'Scroll left'}>
+        <Icon src={ChevronLeft} class="w-4 h-4" />
       </button>
       <button
-        class="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-zinc-900/70 text-white hover:bg-zinc-800/80 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+        class="hidden sm:flex absolute right-1 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-md bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150"
         onclick={scrollRight}
-        aria-label={$_('dashboard.scroll_right') || 'Scroll right'}
-      >
-        <Icon src={ChevronRight} class="w-6 h-6 sm:w-7 sm:h-7" />
+        aria-label={$_('dashboard.scroll_right') || 'Scroll right'}>
+        <Icon src={ChevronRight} class="w-4 h-4" />
       </button>
 
       <div
         bind:this={scroller}
-        class="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth pr-1"
-      >
+        class="flex gap-3 h-full overflow-x-auto no-scrollbar scroll-smooth py-1">
         {#each items as n}
           <a
             href={n.link}
             target="_blank"
             rel="noopener noreferrer"
             title={n.title}
-            onclick={async (e) => {
-              // Update URL before opening external link
+            onclick={async () => {
               const encodedUrl = encodeURIComponent(n.link);
               await goto(`/news?item=${encodedUrl}&source=${selectedSource}`, { keepFocus: true, replaceState: true });
             }}
-            class="group relative min-w-[260px] max-w-[320px] h-40 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-800 hover:scale-[1.02] transition-all duration-200"
-          >
+            class="group relative shrink-0 w-[260px] sm:w-[300px] h-full rounded-lg overflow-hidden border border-border bg-surface-muted hover:border-border-strong transition-colors duration-150">
             {#if n.image}
               <img src={n.image} alt={n.title} class="absolute inset-0 w-full h-full object-cover" />
             {/if}
-            <!-- Overlay -->
-            <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"></div>
-            <!-- Text -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent"></div>
             <div class="absolute inset-x-0 bottom-0 p-3 text-white">
-              <div class="font-semibold line-clamp-2">{n.title}</div>
-              <div class="text-xs opacity-85 mt-1 flex items-center gap-2">
+              <div class="font-semibold text-sm line-clamp-2">{n.title}</div>
+              <div class="text-[11px] opacity-85 mt-1 flex items-center gap-2">
                 {#if n.published_at}<span>{timeAgo(n.published_at)}</span>{/if}
-                <Icon src={ArrowTopRightOnSquare} class="w-4 h-4 opacity-80 group-hover:opacity-100" />
+                <Icon src={ArrowTopRightOnSquare} class="w-3.5 h-3.5 opacity-80 group-hover:opacity-100" />
               </div>
             </div>
           </a>
@@ -221,7 +210,7 @@
       </div>
     </div>
   {/if}
-</div>
+</WidgetCard>
 
 <style>
   .no-scrollbar::-webkit-scrollbar { display: none; }

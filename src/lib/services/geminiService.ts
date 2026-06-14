@@ -1,6 +1,15 @@
-import { invoke } from '@tauri-apps/api/core';
+/**
+ * GeminiService — thin backwards-compat wrapper around the generic AIService.
+ *
+ * Historically this file talked to Gemini/Cerebras directly via inline fetch.
+ * The provider-specific HTTP now lives in src/lib/services/ai/providers/* and
+ * the dispatch happens through AIService. Callers' public method signatures
+ * are preserved so no other code needs to change.
+ */
 import type { QuizQuestion, QuizFeedback } from '$lib/types/studyTools';
 import { resolveNumericGradeFromAssessmentPayload } from '$lib/utils/letterGradeScale';
+import { AIService } from '$lib/services/ai/AIService';
+import type { AIProviderId } from '$lib/services/ai/types';
 
 interface AssessmentData {
   id: number;
@@ -34,48 +43,37 @@ export interface LessonSummary {
   steps: string[];
 }
 
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
-const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
-/** See https://inference-docs.cerebras.ai/models/overview — old ids (e.g. llama-3.3-70b) return 404. */
-const CEREBRAS_MODEL = 'gpt-oss-120b';
-
-type AIProvider = 'gemini' | 'cerebras';
+async function resolveProviderAndKey(): Promise<{
+  provider: AIProviderId;
+  apiKey: string;
+  model: string;
+}> {
+  const provider = await AIService.getActiveProvider();
+  const apiKey = await AIService.getApiKey(provider);
+  if (!apiKey) {
+    const adapter = AIService.getProvider(provider);
+    throw new Error(`No ${adapter.displayName} API key set. Please add your API key in Settings.`);
+  }
+  const model = await AIService.getModel(provider);
+  return { provider, apiKey, model };
+}
 
 export class GeminiService {
-  static async getProvider(): Promise<AIProvider> {
-    try {
-      const subset = await invoke<any>('get_settings_subset', { keys: ['ai_provider'] });
-      return (subset?.ai_provider || 'gemini') as AIProvider;
-    } catch {
-      return 'gemini';
-    }
+  /** @deprecated Use AIService.getActiveProvider() instead. */
+  static async getProvider(): Promise<AIProviderId> {
+    return AIService.getActiveProvider();
   }
 
-  static async getApiKey(provider?: AIProvider): Promise<string | null> {
-    try {
-      const currentProvider = provider || (await this.getProvider());
-      const keys = currentProvider === 'cerebras' ? ['cerebras_api_key'] : ['gemini_api_key'];
-      const subset = await invoke<any>('get_settings_subset', { keys });
-      return currentProvider === 'cerebras'
-        ? subset?.cerebras_api_key || null
-        : subset?.gemini_api_key || null;
-    } catch {
-      return null;
-    }
+  /** @deprecated Use AIService.getApiKey(provider) instead. */
+  static async getApiKey(provider?: AIProviderId): Promise<string | null> {
+    const p = provider ?? (await AIService.getActiveProvider());
+    return AIService.getApiKey(p);
   }
 
   static async predictGrades(assessments: AssessmentData[]): Promise<GradePrediction[]> {
-    const provider = await this.getProvider();
-    const apiKey = await this.getApiKey(provider);
-    if (!apiKey) {
-      const providerName = provider === 'cerebras' ? 'Cerebras' : 'Gemini';
-      throw new Error(`No ${providerName} API key set. Please add your API key in Settings.`);
-    }
+    const { provider, apiKey, model } = await resolveProviderAndKey();
     try {
-      // Group assessments by subject
       const assessmentsBySubject = new Map<string, AssessmentData[]>();
-
       assessments.forEach((assessment) => {
         if (!assessmentsBySubject.has(assessment.subject)) {
           assessmentsBySubject.set(assessment.subject, []);
@@ -84,36 +82,43 @@ export class GeminiService {
       });
 
       const predictions: GradePrediction[] = [];
-
       for (const [subject, subjectAssessments] of assessmentsBySubject) {
-        // Released marks with a numeric equivalent (percentage or letter → approx %)
         const completedAssessments = subjectAssessments.filter((a) => {
           if (a.status !== 'MARKS_RELEASED') return false;
           const n = resolveNumericGradeFromAssessmentPayload(a as any);
           return n !== undefined && !isNaN(n);
         });
+        if (completedAssessments.length === 0) continue;
 
-        if (completedAssessments.length === 0) {
-          // No completed assessments, skip prediction
-          continue;
-        }
-
-        // Prepare data for the AI
         const assessmentData = completedAssessments.map((a) => ({
           title: a.title,
           grade: resolveNumericGradeFromAssessmentPayload(a as any),
           due: a.due,
           status: a.status,
         }));
-
         const prompt = this.buildPredictionPrompt(subject, assessmentData);
-
-        const prediction = await this.callAIAPI(prompt, apiKey, provider);
-        if (prediction) {
-          predictions.push(prediction);
+        try {
+          const prediction = await AIService.completeJSON<GradePrediction>({
+            provider,
+            apiKey,
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.3,
+            maxTokens: 1024,
+            topP: 0.95,
+          });
+          if (
+            prediction &&
+            typeof prediction.predictedGrade === 'number' &&
+            typeof prediction.confidence === 'number' &&
+            prediction.reasoning
+          ) {
+            predictions.push(prediction);
+          }
+        } catch (e) {
+          console.error('Error in predictGrades for subject', subject, e);
         }
       }
-
       return predictions;
     } catch (error) {
       console.error('Error predicting grades:', error);
@@ -125,10 +130,8 @@ export class GeminiService {
     const assessmentList = assessments
       .map((a) => `- ${a.title}: ${a.grade}% (due: ${new Date(a.due).toLocaleDateString()})`)
       .join('\n');
-
     const averageGrade = assessments.reduce((sum, a) => sum + a.grade, 0) / assessments.length;
-
-    return `You are an AI educational assistant analyzing student performance data. 
+    return `You are an AI educational assistant analyzing student performance data.
 
 Given the following assessment results for ${subject}:
 
@@ -153,159 +156,12 @@ Respond with ONLY a JSON object in this exact format:
 Be realistic and consider that the prediction should be based on demonstrated performance patterns.`;
   }
 
-  private static async callAIAPI(
-    prompt: string,
-    apiKey: string,
-    provider: AIProvider,
-  ): Promise<GradePrediction | null> {
-    if (provider === 'cerebras') {
-      return this.callCerebrasAPI(prompt, apiKey);
-    } else {
-      return this.callGeminiAPI(prompt, apiKey);
-    }
-  }
-
-  private static async callGeminiAPI(
-    prompt: string,
-    apiKey: string,
-  ): Promise<GradePrediction | null> {
-    try {
-      const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.3,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-        throw new Error('Invalid response from Gemini API');
-      }
-
-      const responseText = data.candidates[0].content.parts[0].text;
-
-      // Try to extract JSON from the response
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-
-      const prediction = JSON.parse(jsonMatch[0]);
-
-      // Validate the prediction format
-      if (
-        !prediction.subject ||
-        typeof prediction.predictedGrade !== 'number' ||
-        typeof prediction.confidence !== 'number' ||
-        !prediction.reasoning
-      ) {
-        throw new Error('Invalid prediction format');
-      }
-
-      return prediction as GradePrediction;
-    } catch (error) {
-      console.error('Error calling Gemini API:', error);
-      return null;
-    }
-  }
-
-  private static async callCerebrasAPI(
-    prompt: string,
-    apiKey: string,
-  ): Promise<GradePrediction | null> {
-    try {
-      const response = await fetch(CEREBRAS_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-          'User-Agent': 'DesQTA/1.0',
-        },
-        body: JSON.stringify({
-          model: CEREBRAS_MODEL,
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.3,
-          max_tokens: 1024,
-          top_p: 0.95,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Cerebras API error: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('Invalid response from Cerebras API');
-      }
-
-      const responseText = data.choices[0].message.content;
-
-      // Try to extract JSON from the response
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-
-      const prediction = JSON.parse(jsonMatch[0]);
-
-      // Validate the prediction format
-      if (
-        !prediction.subject ||
-        typeof prediction.predictedGrade !== 'number' ||
-        typeof prediction.confidence !== 'number' ||
-        !prediction.reasoning
-      ) {
-        throw new Error('Invalid prediction format');
-      }
-
-      return prediction as GradePrediction;
-    } catch (error) {
-      console.error('Error calling Cerebras API:', error);
-      return null;
-    }
-  }
-
   static async summarizeLessonContent(lesson: {
     title: string;
     content: string;
     attachments: { name: string }[];
   }): Promise<LessonSummary | null> {
-    const provider = await this.getProvider();
-    const apiKey = await this.getApiKey(provider);
-    if (!apiKey) {
-      const providerName = provider === 'cerebras' ? 'Cerebras' : 'Gemini';
-      throw new Error(`No ${providerName} API key set. Please add your API key in Settings.`);
-    }
+    const { provider, apiKey, model } = await resolveProviderAndKey();
     const attachmentList =
       lesson.attachments.length > 0
         ? lesson.attachments.map((a) => `- ${a.name}`).join('\n')
@@ -321,7 +177,7 @@ ${lesson.content || 'No content provided'}
 Attachments:
 ${attachmentList}
 
-IMPORTANT: 
+IMPORTANT:
 - Base your summary on the ACTUAL content provided above
 - Use specific details, topics, and concepts mentioned in the lesson
 - Do NOT use generic placeholders or template text
@@ -334,64 +190,21 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
   "steps": ["Specific step 1 based on the content", "Specific step 2 based on the content", ...]
 }`;
     try {
-      if (provider === 'cerebras') {
-        const response = await fetch(CEREBRAS_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-            'User-Agent': 'DesQTA/1.0',
-          },
-          body: JSON.stringify({
-            model: CEREBRAS_MODEL,
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.3,
-            max_tokens: 1024,
-            top_p: 0.95,
-          }),
-        });
-        if (!response.ok) throw new Error(`Cerebras API error: ${response.status}`);
-        const data = await response.json();
-        if (!data.choices || !data.choices[0] || !data.choices[0].message)
-          throw new Error('Invalid response from Cerebras API');
-        const responseText = data.choices[0].message.content;
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON found in response');
-        const summaryObj = JSON.parse(jsonMatch[0]);
-        if (!summaryObj.summary || !Array.isArray(summaryObj.steps))
-          throw new Error('Invalid summary format');
-        return summaryObj as LessonSummary;
-      } else {
-        const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.3,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 1024,
-            },
-          }),
-        });
-        if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-        const data = await response.json();
-        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content)
-          throw new Error('Invalid response from Gemini API');
-        const responseText = data.candidates[0].content.parts[0].text;
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON found in response');
-        const summaryObj = JSON.parse(jsonMatch[0]);
-        if (!summaryObj.summary || !Array.isArray(summaryObj.steps))
-          throw new Error('Invalid summary format');
-        return summaryObj as LessonSummary;
+      const summaryObj = await AIService.completeJSON<LessonSummary>({
+        provider,
+        apiKey,
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        maxTokens: 1024,
+        topP: 0.95,
+      });
+      if (!summaryObj?.summary || !Array.isArray(summaryObj?.steps)) {
+        return null;
       }
+      return summaryObj;
     } catch (error) {
-      console.error(
-        `Error calling ${provider === 'cerebras' ? 'Cerebras' : 'Gemini'} API for lesson summary:`,
-        error,
-      );
+      console.error('Error calling AI for lesson summary:', error);
       return null;
     }
   }
@@ -403,65 +216,16 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
     prompt: string,
     options?: { maxTokens?: number },
   ): Promise<T | null> {
-    const provider = await this.getProvider();
-    const apiKey = await this.getApiKey(provider);
-    if (!apiKey) {
-      const providerName = provider === 'cerebras' ? 'Cerebras' : 'Gemini';
-      throw new Error(`No ${providerName} API key set. Please add your API key in Settings.`);
-    }
-    const maxTokens = options?.maxTokens ?? 2048;
-    try {
-      if (provider === 'cerebras') {
-        const response = await fetch(CEREBRAS_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-            'User-Agent': 'DesQTA/1.0',
-          },
-          body: JSON.stringify({
-            model: CEREBRAS_MODEL,
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.3,
-            max_tokens: maxTokens,
-            top_p: 0.95,
-          }),
-        });
-        if (!response.ok) throw new Error(`Cerebras API error: ${response.status}`);
-        const data = await response.json();
-        if (!data.choices?.[0]?.message?.content)
-          throw new Error('Invalid response from Cerebras API');
-        const text = data.choices[0].message.content;
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON found in response');
-        return JSON.parse(jsonMatch[0]) as T;
-      } else {
-        const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.3,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: maxTokens,
-            },
-          }),
-        });
-        if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-        const data = await response.json();
-        if (!data.candidates?.[0]?.content?.parts?.[0]?.text)
-          throw new Error('Invalid response from Gemini API');
-        const text = data.candidates[0].content.parts[0].text;
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON found in response');
-        return JSON.parse(jsonMatch[0]) as T;
-      }
-    } catch (error) {
-      console.error('Error in callAIForJSON:', error);
-      throw error;
-    }
+    const { provider, apiKey, model } = await resolveProviderAndKey();
+    return AIService.completeJSON<T>({
+      provider,
+      apiKey,
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      maxTokens: options?.maxTokens ?? 2048,
+      topP: 0.95,
+    });
   }
 
   static async generateQuizContent(params: {
@@ -475,8 +239,12 @@ Respond ONLY in this JSON format (no markdown, no code blocks):
     const contextBlock = assessmentContext
       ? `\nAdditional context from the assessment:\n${assessmentContext}\n`
       : '';
-    const yearBlock = yearLevel ? `\nTarget year level: ${yearLevel}. Adjust difficulty and vocabulary accordingly.\n` : '';
-    const types = questionTypes?.length ? questionTypes : ['multiple_choice', 'true_false', 'short_answer'];
+    const yearBlock = yearLevel
+      ? `\nTarget year level: ${yearLevel}. Adjust difficulty and vocabulary accordingly.\n`
+      : '';
+    const types = questionTypes?.length
+      ? questionTypes
+      : ['multiple_choice', 'true_false', 'short_answer'];
     const typesDesc = types.join(', ');
 
     const prompt = `You are an AI educational assistant creating a quiz for a student.
@@ -497,104 +265,47 @@ Respond ONLY with a JSON object (no markdown, no code blocks):
   "questions": [
     {
       "question": "The question text",
-      "type": "multiple_choice",
-      "options": ["A", "B", "C", "D"],
-      "correctIndex": 0
-    },
-    {
-      "question": "Statement that is true or false?",
-      "type": "true_false",
-      "options": ["True", "False"],
-      "correctIndex": 0
-    },
-    {
-      "question": "What is X?",
-      "type": "short_answer",
-      "options": [],
-      "correctIndex": 0,
-      "correctAnswer": "Expected answer"
+      "type": "multiple_choice" | "true_false" | "short_answer",
+      "options": [...],
+      "correctIndex": <number>,
+      "correctAnswer": "<only for short_answer>"
     }
   ]
-}
+}`;
 
-Rules:
-- Vary question types across the quiz
-- For multiple_choice: exactly 4 options, correctIndex 0-3
-- For true_false: exactly 2 options ["True","False"], correctIndex 0 or 1
-- For short_answer: options=[], correctIndex=0, correctAnswer=string (provide the main acceptable answer)
-- Questions should test understanding
-- Vary difficulty appropriately`;
-
-    const result = await this.callAIForJSON<{ questions: QuizQuestion[] }>(prompt, {
-      maxTokens: 4096,
-    });
-    if (!result?.questions || !Array.isArray(result.questions)) return null;
-    // Validate and normalize each question
-    const valid = result.questions.every((q) => {
-      if (typeof q.question !== 'string' || !q.question.trim()) return false;
-      const t = (q.type || 'multiple_choice') as string;
-      if (t === 'short_answer') {
-        return typeof q.correctAnswer === 'string' && q.correctAnswer.trim().length > 0;
-      }
-      if (t === 'true_false') {
-        return Array.isArray(q.options) && q.options.length === 2 && typeof q.correctIndex === 'number' && (q.correctIndex === 0 || q.correctIndex === 1);
-      }
-      return Array.isArray(q.options) && q.options.length === 4 && typeof q.correctIndex === 'number' && q.correctIndex >= 0 && q.correctIndex < 4;
-    });
-    return valid ? result : null;
+    try {
+      return await this.callAIForJSON<{ questions: QuizQuestion[] }>(prompt, { maxTokens: 3000 });
+    } catch (e) {
+      console.error('generateQuizContent failed', e);
+      return null;
+    }
   }
 
   static async generateQuizFeedback(params: {
-    questions: QuizQuestion[];
-    userAnswers: (number | string)[];
     topic: string;
+    questions: QuizQuestion[];
+    /** Same shape as the original studyToolsService.GenerateFeedbackParams. */
+    userAnswers: (number | string)[];
   }): Promise<QuizFeedback | null> {
-    const { questions, userAnswers, topic } = params;
-    const results = questions.map((q, i) => {
-      const ans = userAnswers[i];
-      const t = (q.type || 'multiple_choice') as string;
-      let correctAnswer: string;
-      let userAnswer: string;
-      if (t === 'short_answer') {
-        correctAnswer = q.correctAnswer ?? '';
-        userAnswer = typeof ans === 'string' ? ans : '';
-      } else {
-        correctAnswer = q.options[q.correctIndex] ?? '';
-        userAnswer = typeof ans === 'number' && q.options[ans] != null ? q.options[ans] : 'No answer';
-      }
-      return { question: q.question, type: t, correctAnswer, userAnswer };
+    const { topic, questions, userAnswers: answers } = params;
+    const lines = questions.map((q, i) => {
+      const ans = answers[i];
+      const correctStr =
+        q.type === 'short_answer'
+          ? q.correctAnswer ?? ''
+          : (q.options?.[q.correctIndex ?? 0] ?? '');
+      const userStr =
+        q.type === 'short_answer'
+          ? (typeof ans === 'string' ? ans : '')
+          : (q.options?.[typeof ans === 'number' ? ans : -1] ?? 'No answer');
+      return `Q${i + 1}: ${q.question}\nUser: ${userStr}\nCorrect: ${correctStr}`;
     });
-
-    const prompt = `You are an AI educational assistant evaluating a student's quiz answers and providing feedback.
-
-Topic: ${topic}
-
-For each question below, you must:
-1. EVALUATE the student's answer (especially for short_answer - do NOT require exact match; accept equivalent or close answers)
-2. Assign a score: 1 = full marks (correct or close enough), 0.5 = half marks (partially correct, shows some understanding), 0 = no marks (wrong or irrelevant)
-
-For multiple_choice and true_false: 1 if correct, 0 if wrong.
-For short_answer: Use your judgment. Accept synonyms, rephrasing, and minor variations. Give 0.5 for answers that are partially right.
-
-Question-by-question (evaluate each):
-${results.map((r, i) => `${i + 1}. [${r.type}] ${r.question}\n   Model answer: ${r.correctAnswer}\n   Student wrote: ${r.userAnswer}`).join('\n\n')}
-
-Respond ONLY with a JSON object in this exact format (no markdown, no code blocks):
-{
-  "questionScores": [1, 0.5, 0, ...],
-  "summary": "A 2-3 sentence overall summary of their performance, mentioning partial credit where applicable",
-  "suggestions": ["Specific suggestion 1", "Specific suggestion 2", "..."],
-  "encouragement": "A brief encouraging closing message"
-}
-
-CRITICAL: questionScores must be an array of exactly ${questions.length} numbers (1, 0.5, or 0), one per question in the same order as above.`;
-
-    const feedback = await this.callAIForJSON<QuizFeedback>(prompt);
-    if (!feedback) return null;
-    // Validate questionScores length
-    if (feedback.questionScores && feedback.questionScores.length !== questions.length) {
-      feedback.questionScores = undefined;
+    const prompt = `You are an AI tutor giving feedback on a quiz the student just took.\nTopic: ${topic}\n\n${lines.join('\n\n')}\n\nRespond ONLY in this JSON:\n{\n  "summary": "Short overall feedback",\n  "perQuestion": ["Per-question feedback Q1", "...", "...Qn"],\n  "improvements": ["Actionable improvement 1", "Actionable improvement 2"]\n}`;
+    try {
+      return await this.callAIForJSON<QuizFeedback>(prompt, { maxTokens: 2000 });
+    } catch (e) {
+      console.error('generateQuizFeedback failed', e);
+      return null;
     }
-    return feedback;
   }
 }

@@ -11,7 +11,7 @@
 </script>
 
 <div
-  class="tiptap-status-bar flex items-center justify-between px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/30">
+  class="tiptap-status-bar flex items-center justify-between px-4 py-2 text-xs text-muted-foreground bg-zinc-50 dark:bg-zinc-900/30">
   <!-- Left side: Document stats -->
   <div class="flex items-center space-x-4">
     <span class="flex items-center space-x-1">

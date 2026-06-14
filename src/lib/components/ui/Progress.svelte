@@ -26,46 +26,45 @@
   let percentage = $derived(Math.max(0, Math.min(100, (value / max) * 100)));
   let displayLabel = $derived(label || `${Math.round(percentage)}%`);
 
+  // Lo-fi progress: thin flat bar, accent fill, no shimmer by default.
   const sizes = {
-    xs: 'h-1',
-    sm: 'h-2',
-    md: 'h-3',
-    lg: 'h-4'
+    xs: 'h-0.5',
+    sm: 'h-1',
+    md: 'h-1.5',
+    lg: 'h-2'
   };
 
   const variants = {
     default: 'bg-accent-500',
-    success: 'bg-green-500',
-    warning: 'bg-yellow-500',
-    danger: 'bg-red-500',
-    info: 'bg-blue-500'
+    success: 'bg-emerald-500',
+    warning: 'bg-amber-500',
+    danger: 'bg-destructive',
+    info: 'bg-sky-500'
   };
 
   let containerClasses = $derived([
-    'w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden',
+    'w-full bg-surface-muted rounded-full overflow-hidden border border-border-subtle',
     sizes[size],
     className
   ].filter(Boolean).join(' '));
 
   let barClasses = $derived([
-    'h-full transition-all duration-300 ease-out rounded-full',
+    'h-full rounded-full',
     variants[variant],
-    striped ? 'bg-linear-to-r from-transparent via-white/20 to-transparent bg-size-[1rem_1rem]' : '',
-    animated && striped ? 'animate-pulse' : '',
-    animated ? 'transition-all duration-500' : ''
+    animated ? 'transition-[width] duration-300 ease-out' : '',
   ].filter(Boolean).join(' '));
 </script>
 
-<div class="space-y-1">
+<div class="space-y-1.5">
   {#if showLabel}
-    <div class="flex justify-between items-center text-sm text-zinc-600 dark:text-zinc-400">
+    <div class="flex justify-between items-center text-xs text-muted-foreground uppercase tracking-[0.06em] font-semibold">
       <span>{displayLabel}</span>
-      <span>{value} / {max}</span>
+      <span class="nums-tabular">{value} / {max}</span>
     </div>
   {/if}
-  
+
   <div class={containerClasses} role="progressbar" aria-valuenow={value} aria-valuemin="0" aria-valuemax={max}>
-    <div 
+    <div
       class={barClasses}
       style="width: {percentage}%"
     ></div>

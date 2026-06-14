@@ -2,6 +2,7 @@
   import Modal from './Modal.svelte';
   import { Icon, ArrowDownTray, XMark } from 'svelte-hero-icons';
   import { saveAs } from 'file-saver';
+  import { ariaTooltip } from '$lib/actions/tooltip';
 
   const {
     showPdfViewer,
@@ -45,13 +46,15 @@
           saveAs(pdfUrl, 'timetable.pdf');
         }
       }}
-      aria-label="Download PDF">
-      <Icon src={ArrowDownTray} class="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+      aria-label="Download PDF"
+      use:ariaTooltip>
+      <Icon src={ArrowDownTray} class="w-5 h-5 text-foreground" />
     </button>
     <button
       class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 pointer-events-auto bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 shadow-md hover:shadow-lg"
       onclick={onClose}
-      aria-label="Close PDF viewer">
+      aria-label="Close PDF viewer"
+      use:ariaTooltip>
       <Icon src={XMark} class="w-5 h-5 text-red-600 dark:text-red-300" />
     </button>
   </div>
@@ -64,7 +67,7 @@
         </div>
       </div>
     {:else if pdfUrl}
-      <iframe src={pdfUrl} class="w-full min-h-[70vh] rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-xs" title="Timetable PDF"></iframe>
+      <iframe src={pdfUrl} class="w-full min-h-[70vh] rounded-lg border border-border shadow-xs" title="Timetable PDF"></iframe>
     {/if}
   </div>
 </Modal> 

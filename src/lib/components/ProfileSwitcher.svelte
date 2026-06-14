@@ -192,11 +192,11 @@
       class="flex justify-center items-center w-8 h-8 rounded-lg transition-colors bg-zinc-100 group-hover:bg-white/20 dark:bg-zinc-700/50">
       <Icon
         src={UserCircle}
-        class="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
+        class="w-4 h-4 text-muted-foreground group-hover:text-white" />
     </div>
     <div class="flex-1">
       <div class="font-medium">Switch Profile</div>
-      <div class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-white/80">
+      <div class="text-xs text-muted-foreground group-hover:text-white/80">
         {#if loading}
           Loading...
         {:else if profiles.length <= 1}
@@ -214,7 +214,7 @@
     <div
       role="menu"
       tabindex="-1"
-      class="absolute left-0 z-50 mt-2 w-full rounded-2xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/40 max-h-64 overflow-y-auto"
+      class="absolute left-0 z-50 mt-2 w-full rounded-2xl border shadow-2xl bg-white/95 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/40 max-h-64 overflow-y-auto"
       transition:fly={{ y: -8, duration: 200, opacity: 0 }}
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => {
@@ -242,7 +242,7 @@
                 <div class="flex-1 min-w-0">
                   <div class="font-medium truncate">{formatProfileName(profile)}</div>
                   <div
-                    class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80 truncate">
+                    class="text-xs text-muted-foreground group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80 truncate">
                     {profile.base_url}
                   </div>
                 </div>
@@ -273,7 +273,7 @@
           {/each}
         {/if}
 
-        <div class="my-2 border-t border-zinc-200 dark:border-zinc-700/40"></div>
+        <div class="my-2 border-t border-border/40"></div>
 
         <button
           class="flex gap-3 items-center px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-zinc-700 hover:bg-accent-500/10 hover:text-accent-600 dark:text-zinc-200 dark:hover:text-accent-400 group"
@@ -286,7 +286,7 @@
           <div class="flex-1">
             <div class="font-medium">Add Account</div>
             <div
-              class="text-xs text-zinc-500 dark:text-zinc-400 group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80">
+              class="text-xs text-muted-foreground group-hover:text-accent-600/80 dark:group-hover:text-accent-400/80">
               Sign in with another account
             </div>
           </div>
@@ -301,7 +301,7 @@
       aria-modal="true"
       aria-labelledby="add-account-title"
       tabindex="-1"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm mobile-modal-inset"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 mobile-modal-inset"
       transition:fade={{ duration: 200 }}
       onclick={(e) => {
         if (e.target === e.currentTarget) closeAddAccountModal();
@@ -311,16 +311,16 @@
       }}>
       <div
         role="presentation"
-        class="w-full max-w-sm rounded-xl border shadow-2xl backdrop-blur-md bg-white/95 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/40"
+        class="w-full max-w-sm rounded-xl border shadow-2xl bg-white/95 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/40"
         transition:fly={{ y: -8, duration: 200, opacity: 0 }}
         onclick={(e) => e.stopPropagation()}>
         <div class="p-4">
           <h2
             id="add-account-title"
-            class="text-lg font-semibold text-zinc-900 dark:text-white mb-1.5">
+            class="text-lg font-semibold text-foreground mb-1.5">
             Add Account
           </h2>
-          <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
+          <p class="text-xs text-muted-foreground mb-3 leading-relaxed">
             Enter your SEQTA URL to sign in with another account. Your current session will remain
             active.
           </p>
@@ -328,7 +328,7 @@
           <div class="mb-3">
             <label
               for="seqta-url-input"
-              class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+              class="block text-xs font-medium text-foreground mb-1.5">
               SEQTA URL
             </label>
             <input
@@ -336,7 +336,7 @@
               type="text"
               bind:value={seqtaUrl}
               placeholder="e.g., https://yourschool.seqta.com.au"
-              class="w-full px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200"
+              class="w-full px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-card text-foreground placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200"
               onkeydown={(e) => {
                 if (e.key === 'Enter' && !addingAccount) {
                   addAccount();
@@ -347,7 +347,7 @@
 
           <div class="flex gap-2 justify-end">
             <button
-              class="px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+              class="px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-card text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
               onclick={closeAddAccountModal}
               disabled={addingAccount}>
               Cancel

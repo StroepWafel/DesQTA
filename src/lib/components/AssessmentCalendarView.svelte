@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { ariaTooltip } from '$lib/actions/tooltip';
 
   interface Assessment {
     id: number;
@@ -13,13 +14,23 @@
 
   interface Props {
     assessments: Assessment[];
+    selectedYear: number;
   }
 
-  let { assessments }: Props = $props();
+  let { assessments, selectedYear }: Props = $props();
 
   let currentDate = $state(new Date());
   let currentMonth = $derived(currentDate.getMonth());
-  let currentYear = $derived(currentDate.getFullYear());
+
+  const canGoPrev = $derived(currentMonth > 0);
+  const canGoNext = $derived(currentMonth < 11);
+
+  $effect(() => {
+    if (currentDate.getFullYear() !== selectedYear) {
+      const month = Math.min(currentDate.getMonth(), 11);
+      currentDate = new Date(selectedYear, month, 1);
+    }
+  });
 
   function getDaysInMonth(year: number, month: number) {
     return new Date(year, month + 1, 0).getDate();
@@ -55,11 +66,13 @@
   });
 
   function prevMonth() {
-    currentDate = new Date(currentYear, currentMonth - 1, 1);
+    if (!canGoPrev) return;
+    currentDate = new Date(selectedYear, currentMonth - 1, 1);
   }
 
   function nextMonth() {
-    currentDate = new Date(currentYear, currentMonth + 1, 1);
+    if (!canGoNext) return;
+    currentDate = new Date(selectedYear, currentMonth + 1, 1);
   }
 
   // Utility: Convert hex color to RGB
@@ -89,19 +102,27 @@
 </script>
 
 <div
-  class="p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 sm:p-6 border-zinc-300/50 dark:border-zinc-700/50">
+  class="p-4 rounded-xl border bg-zinc-100/80 dark:bg-zinc-800/50 sm:p-6 border-zinc-300/50 dark:border-zinc-700/50">
   <div class="flex justify-between items-center mb-6">
     <button
-      class="p-2 rounded-lg transition-all duration-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
-      onclick={prevMonth}>
+      type="button"
+      class="p-2 rounded-lg transition-all duration-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-foreground hover:text-zinc-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
+      onclick={prevMonth}
+      disabled={!canGoPrev}
+      aria-label="Previous month"
+      use:ariaTooltip>
       ←
     </button>
-    <h2 class="text-lg font-bold sm:text-xl text-zinc-900 dark:text-white">
+    <h2 class="text-lg font-bold sm:text-xl text-foreground">
       {getMonthName(currentDate)}
     </h2>
     <button
-      class="p-2 rounded-lg transition-all duration-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
-      onclick={nextMonth}>
+      type="button"
+      class="p-2 rounded-lg transition-all duration-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-foreground hover:text-zinc-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
+      onclick={nextMonth}
+      disabled={!canGoNext}
+      aria-label="Next month"
+      use:ariaTooltip>
       →
     </button>
   </div>
@@ -109,7 +130,7 @@
   <div class="grid grid-cols-7 gap-2">
     {#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day}
       <div
-        class="py-2 text-xs font-semibold text-center sm:text-sm text-zinc-600 dark:text-zinc-400">
+        class="py-2 text-xs font-semibold text-center sm:text-sm text-muted-foreground">
         {day}
       </div>
     {/each}
@@ -145,7 +166,7 @@
           <div
             class="text-sm sm:text-base mb-1 {isToday
               ? 'font-bold text-indigo-400 scale-110'
-              : 'text-zinc-700 dark:text-zinc-300'}">
+              : 'text-foreground'}">
             {i + 1}
           </div>
           {#if assessments.length > 0}
@@ -163,7 +184,7 @@
                 </div>
               {/each}
               {#if assessments.length > 2}
-                <div class="text-xs text-center text-zinc-600 dark:text-zinc-400">
+                <div class="text-xs text-center text-muted-foreground">
                   +{assessments.length - 2} more
                 </div>
               {/if}

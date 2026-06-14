@@ -148,7 +148,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
       const { node, getPos, editor } = props;
       const container = document.createElement('div');
       container.className =
-        'seqta-content-block-card relative group p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-800/50 dark:to-zinc-900/50 shadow-md hover:shadow-lg transition-all duration-200 my-4';
+        'seqta-content-block-card relative group p-4 rounded-xl border border-border bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-800/50 dark:to-zinc-900/50 shadow-md hover:shadow-lg transition-all duration-200 my-4';
       container.style.position = 'relative';
       container.style.minWidth = '200px';
       container.style.minHeight = '120px';
@@ -168,7 +168,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
       // Drag handle
       const dragHandle = document.createElement('div');
       dragHandle.className =
-        'absolute top-2 left-2 w-6 h-6 flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-100 dark:bg-zinc-700 rounded text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600';
+        'absolute top-2 left-2 w-6 h-6 flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-100 dark:bg-zinc-700 rounded text-muted-foreground hover:bg-zinc-200 dark:hover:bg-zinc-600';
       // Create drag handle icon (three horizontal lines)
       const dragIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       dragIcon.setAttribute('width', '16');
@@ -271,7 +271,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
       // Icon based on type
       const icon = document.createElement('div');
       icon.className =
-        'w-5 h-5 flex items-center justify-center flex-shrink-0 text-zinc-600 dark:text-zinc-400';
+        'w-5 h-5 flex items-center justify-center flex-shrink-0 text-muted-foreground';
       const typeIcons: Record<string, string> = {
         assessment: 'chartBar',
         assignment: 'documentText',
@@ -287,18 +287,18 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
       const iconSVG = createIconSVG(
         typeIcons[blockType] || 'link',
         20,
-        'w-5 h-5 text-zinc-600 dark:text-zinc-400',
+        'w-5 h-5 text-muted-foreground',
       );
       icon.appendChild(iconSVG);
 
       const titleWrapper = document.createElement('div');
       titleWrapper.className = 'flex-1 min-w-0';
       const title = document.createElement('div');
-      title.className = 'text-sm font-semibold text-zinc-900 dark:text-white truncate';
+      title.className = 'text-sm font-semibold text-foreground truncate';
       title.textContent = blockData.title || blockData.name || 'Content Block';
 
       const subtitle = document.createElement('div');
-      subtitle.className = 'text-xs text-zinc-500 dark:text-zinc-400 truncate';
+      subtitle.className = 'text-xs text-muted-foreground truncate';
       if (blockData.subtitle) {
         subtitle.textContent = blockData.subtitle;
       }
@@ -317,7 +317,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
       // Refresh button
       const refreshBtn = document.createElement('button');
       refreshBtn.className =
-        'p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed';
+        'p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 text-muted-foreground transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed';
       refreshBtn.appendChild(createIconSVG('arrowPath', 16, 'w-4 h-4'));
       refreshBtn.title = 'Refresh';
       let isRefreshing = false;
@@ -380,7 +380,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
       // External link button
       const linkBtn = document.createElement('button');
       linkBtn.className =
-        'p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 transition-colors flex items-center justify-center';
+        'p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 text-muted-foreground transition-colors flex items-center justify-center';
       linkBtn.appendChild(createIconSVG('arrowTopRightOnSquare', 16, 'w-4 h-4'));
       linkBtn.title = 'Open in app';
       linkBtn.onclick = (e) => {
@@ -504,12 +504,12 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
         // Helper function to create info row
         const createInfoRow = (iconName: string, label: string, value: string) => {
           const row = document.createElement('div');
-          row.className = 'flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300';
+          row.className = 'flex items-center gap-2 text-sm text-foreground';
 
           const iconWrapper = document.createElement('div');
           iconWrapper.className = 'flex-shrink-0';
           iconWrapper.appendChild(
-            createIconSVG(iconName, 16, 'w-4 h-4 text-zinc-500 dark:text-zinc-400'),
+            createIconSVG(iconName, 16, 'w-4 h-4 text-muted-foreground'),
           );
 
           const labelSpan = document.createElement('span');
@@ -575,7 +575,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
             };
             const statusDiv = document.createElement('div');
             statusDiv.className = `inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-              statusColors[blockData.status] || 'text-zinc-600 dark:text-zinc-400'
+              statusColors[blockData.status] || 'text-muted-foreground'
             }`;
             statusDiv.textContent =
               blockData.status.charAt(0).toUpperCase() + blockData.status.slice(1);
@@ -584,7 +584,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
             const iconWrapper = document.createElement('div');
             iconWrapper.className = 'flex-shrink-0';
             iconWrapper.appendChild(
-              createIconSVG('link', 16, 'w-4 h-4 text-zinc-500 dark:text-zinc-400'),
+              createIconSVG('link', 16, 'w-4 h-4 text-muted-foreground'),
             );
             const labelText = document.createTextNode('Status: ');
             row.appendChild(iconWrapper);
@@ -666,7 +666,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
             sortedLessons.forEach((lesson: any) => {
               const lessonCard = document.createElement('div');
               lessonCard.className =
-                'p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700';
+                'p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-border';
 
               const lessonHeader = document.createElement('div');
               lessonHeader.className = 'flex items-start justify-between gap-2 mb-1';
@@ -676,12 +676,12 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
 
               const lessonTitle = document.createElement('div');
               lessonTitle.className =
-                'text-sm font-semibold text-zinc-900 dark:text-white truncate';
+                'text-sm font-semibold text-foreground truncate';
               lessonTitle.textContent =
                 lesson.subjectName || lesson.code || lesson.title || 'Lesson';
 
               const lessonTime = document.createElement('div');
-              lessonTime.className = 'text-xs text-zinc-500 dark:text-zinc-400';
+              lessonTime.className = 'text-xs text-muted-foreground';
               const timeStr = lesson.from12
                 ? `${lesson.from12} - ${lesson.until12 || lesson.until || ''}`
                 : lesson.from
@@ -698,7 +698,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
               if (lesson.room) {
                 const roomBadge = document.createElement('div');
                 roomBadge.className =
-                  'text-xs px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300';
+                  'text-xs px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-foreground';
                 roomBadge.textContent = lesson.room;
                 lessonRight.appendChild(roomBadge);
               }
@@ -708,7 +708,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
 
               const lessonMeta = document.createElement('div');
               lessonMeta.className =
-                'flex items-center gap-3 mt-1.5 text-xs text-zinc-500 dark:text-zinc-400';
+                'flex items-center gap-3 mt-1.5 text-xs text-muted-foreground';
 
               if (lesson.teacher) {
                 const teacherSpan = document.createElement('span');
@@ -732,7 +732,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
             // No lessons message
             const noLessons = document.createElement('div');
             noLessons.className =
-              'mt-2 text-sm text-zinc-500 dark:text-zinc-400 italic text-center py-2';
+              'mt-2 text-sm text-muted-foreground italic text-center py-2';
             noLessons.textContent = 'No classes scheduled for this day';
             content.appendChild(noLessons);
           }
@@ -770,7 +770,7 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
           if (blockData.content) {
             const contentDiv = document.createElement('div');
             contentDiv.className =
-              'pt-2 border-t border-zinc-200 dark:border-zinc-700 text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3';
+              'pt-2 border-t border-border text-sm text-muted-foreground line-clamp-3';
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = blockData.content;
             contentDiv.textContent = tempDiv.textContent || '';
@@ -810,9 +810,9 @@ export const SeqtaContentBlock = Node.create<SeqtaContentBlockOptions>({
         // Description (fallback for any type)
         if (blockData.description && !['notice', 'lesson_content'].includes(blockType)) {
           const descDiv = document.createElement('div');
-          descDiv.className = 'pt-2 border-t border-zinc-200 dark:border-zinc-700';
+          descDiv.className = 'pt-2 border-t border-border';
           const descText = document.createElement('div');
-          descText.className = 'text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3';
+          descText.className = 'text-sm text-muted-foreground line-clamp-3';
           descText.textContent = blockData.description;
           descDiv.appendChild(descText);
           content.appendChild(descDiv);

@@ -37,15 +37,11 @@
   function handleInput(e: Event) {
     const target = e.target as HTMLInputElement;
     value = target.value;
-    
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    
+
+    if (timeoutId) clearTimeout(timeoutId);
+
     if (onSearch) {
-      timeoutId = setTimeout(() => {
-        onSearch(value);
-      }, debounceMs);
+      timeoutId = setTimeout(() => onSearch(value), debounceMs);
     }
   }
 
@@ -75,10 +71,10 @@
     {#if showClearButton}
       <button
         onclick={handleClear}
-        class="p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+        class="p-1 rounded-md hover:bg-surface-muted text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Clear search"
       >
-        <Icon src={XMark} size="16" class="text-zinc-400 dark:text-zinc-500" />
+        <Icon src={XMark} size="16" />
       </button>
     {:else if rightAction}
       {@render rightAction()}

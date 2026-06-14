@@ -1,10 +1,11 @@
 <script lang="ts">
   import type { Assessment } from '$lib/types';
+  import { goto } from '$app/navigation';
   import { Badge } from '$lib/components/ui';
   import * as Table from "$lib/components/ui/table/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Select from "$lib/components/ui/select/index.js";
-  import { Icon, ChevronUp, ChevronDown } from 'svelte-hero-icons';
+  import { Icon, ChevronUp, ChevronDown, ArrowTopRightOnSquare } from 'svelte-hero-icons';
   import T from './T.svelte';
   import { _ } from '../i18n';
   import { hasGradeToShow, primaryGradeDisplay } from '$lib/utils/gradeDisplay';
@@ -106,6 +107,25 @@
     if (sortColumn !== column) return null;
     return sortDirection === 'asc' ? ChevronUp : ChevronDown;
   }
+
+  function getAssessmentHref(assessment: Assessment): string {
+    const isMarked = assessment.status === 'MARKS_RELEASED';
+    const tab = isMarked ? 'details' : 'overview';
+    const year = new Date(assessment.due).getFullYear();
+    const metaclass = assessment.metaclassID ?? 0;
+    return `/assessments/${assessment.id}/${metaclass}?tab=${tab}&year=${year}#top`;
+  }
+
+  function openAssessment(assessment: Assessment) {
+    goto(getAssessmentHref(assessment));
+  }
+
+  function handleRowKeydown(e: KeyboardEvent, assessment: Assessment) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openAssessment(assessment);
+    }
+  }
 </script>
 
 <div class="w-full">
@@ -145,23 +165,32 @@
               {/if}
             </div>
           </Table.Head>
-          <Table.Head class="text-right cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4" onclick={() => handleSort('finalGrade')}>
-            <div class="flex items-center justify-end gap-2">
+          <Table.Head class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 p-4 w-[5.5rem]" onclick={() => handleSort('finalGrade')}>
+            <div class="flex items-center gap-2">
               <T key="analytics.grade" fallback="Grade" />
               {#if getSortIcon('finalGrade')}
                 <Icon size="16" src={getSortIcon('finalGrade')} class="text-zinc-400" />
               {/if}
             </div>
           </Table.Head>
+          <Table.Head class="w-12 p-4">
+            <span class="sr-only"><T key="analytics.view_assessment" fallback="View assessment" /></span>
+          </Table.Head>
         </Table.Row>
       </Table.Header>
       <Table.Body>
         {#each paginatedData() as assessment (assessment.id)}
-          <Table.Row class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+          <Table.Row
+            class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 group"
+            onclick={() => openAssessment(assessment)}
+            onkeydown={(e) => handleRowKeydown(e, assessment)}
+            tabindex={0}
+            role="link"
+            aria-label="{assessment.title} — {$_('analytics.view_assessment') || 'View assessment'}">
             <Table.Cell>
               <div>
                 <div class="font-medium text-zinc-900 dark:text-zinc-100">{assessment.title}</div>
-                <div class="text-sm text-zinc-500 dark:text-zinc-400">{assessment.code}</div>
+                <div class="text-sm text-muted-foreground">{assessment.code}</div>
               </div>
             </Table.Cell>
             <Table.Cell>
@@ -177,19 +206,28 @@
                 {formatStatus(assessment.status)}
               </Badge>
             </Table.Cell>
-            <Table.Cell class="text-right pr-4">
+            <Table.Cell class="w-[5.5rem]">
               {#if hasGradeToShow(assessment)}
-                <div class="font-medium text-zinc-900 dark:text-zinc-100">
+                <div class="font-medium text-zinc-900 dark:text-zinc-100 nums-tabular">
                   {primaryGradeDisplay(assessment)}
                 </div>
               {:else}
-                <span class="text-zinc-500 dark:text-zinc-400">—</span>
+                <span class="text-muted-foreground">—</span>
               {/if}
+            </Table.Cell>
+            <Table.Cell class="w-12 pr-4">
+              <a
+                href={getAssessmentHref(assessment)}
+                onclick={(e) => e.stopPropagation()}
+                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 opacity-70 group-hover:opacity-100"
+                aria-label={$_('analytics.view_assessment') || 'View assessment'}>
+                <Icon src={ArrowTopRightOnSquare} class="w-4 h-4" />
+              </a>
             </Table.Cell>
           </Table.Row>
         {:else}
           <Table.Row>
-            <Table.Cell colspan={5} class="h-24 text-center">
+            <Table.Cell colspan={6} class="h-24 text-center">
               <T key="analytics.no_assessments_found" fallback="No assessments found." />
             </Table.Cell>
           </Table.Row>
@@ -200,12 +238,12 @@
   
   <!-- Pagination -->
   <div class="flex items-center justify-between space-x-2 pt-4">
-    <div class="text-sm text-zinc-600 dark:text-zinc-400">
+    <div class="text-sm text-muted-foreground">
       <T key="analytics.showing_assessments" fallback="Showing assessments" values={{ start: currentPage * itemsPerPage + 1, end: Math.min((currentPage + 1) * itemsPerPage, data.length), total: data.length }} />
     </div>
     <div class="space-x-2 flex place-items-center">
       <div class="flex items-center gap-2">
-        <span class="text-sm text-zinc-600 dark:text-zinc-400">
+        <span class="text-sm text-muted-foreground">
           <T key="analytics.rows_per_page" fallback="Rows per page:" />
         </span>
         <Select.Root type="single" bind:value={itemsPerPageValue} onValueChange={handleItemsPerPageChange}>

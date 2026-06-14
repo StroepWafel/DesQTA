@@ -118,14 +118,14 @@
           out:fade={{ duration: 200, easing: cubicInOut }}>
           <div class="flex justify-center mb-8">
             <div
-              class="p-6 rounded-2xl bg-white/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50">
+              class="p-6 rounded-2xl bg-white/50 dark:bg-zinc-800/50 border border-border">
               <Icon src={LockClosed} class="w-16 h-16 text-[var(--accent)]" />
             </div>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+          <h2 class="text-2xl sm:text-2xl font-medium text-foreground sm:text-3xl mb-4">
             <T key="setup_assistant.biometric_title" fallback="Unlock with biometrics" />
           </h2>
-          <p class="text-zinc-600 dark:text-zinc-400 mb-10">
+          <p class="text-muted-foreground mb-10">
             <T
               key="setup_assistant.biometric_subtitle"
               fallback="Use Face ID, Touch ID, fingerprint, or Windows Hello to quickly unlock DesQTA when you open the app." />
@@ -151,7 +151,7 @@
               type="button"
               disabled={biometricLoading}
               onclick={skipBiometric}
-              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200 disabled:opacity-60">
+              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-muted-foreground hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200 disabled:opacity-60">
               <T key="setup_assistant.biometric_skip" fallback="Skip for now" />
             </button>
           </div>
@@ -166,14 +166,14 @@
           out:fade={{ duration: 200, easing: cubicInOut }}>
           <div class="flex justify-center mb-8">
             <div
-              class="p-6 rounded-2xl bg-white/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50">
+              class="p-6 rounded-2xl bg-white/50 dark:bg-zinc-800/50 border border-border">
               <Icon src={ChartBar} class="w-16 h-16 text-[var(--accent)]" />
             </div>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+          <h2 class="text-2xl sm:text-2xl font-medium text-foreground sm:text-3xl mb-4">
             <T key="post_login_prompts.usage_stats_title" fallback="Help improve DesQTA" />
           </h2>
-          <p class="text-zinc-600 dark:text-zinc-400 mb-10">
+          <p class="text-muted-foreground mb-10">
             <T
               key="post_login_prompts.usage_stats_subtitle"
               fallback="Would you like to send anonymous usage statistics? This helps us understand how the app is used and improve it. No personal data is collected." />
@@ -190,7 +190,7 @@
             <button
               type="button"
               onclick={declineUsageStats}
-              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-zinc-600 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200">
+              class="min-h-[44px] px-6 py-3 rounded-xl font-medium text-muted-foreground hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all duration-200">
               <T key="post_login_prompts.usage_stats_no" fallback="No thanks" />
             </button>
           </div>

@@ -88,13 +88,14 @@
 </script>
 
 <button
-  class="group w-full min-w-0 text-left transition-all duration-200 flex gap-3 relative focus:outline-none overflow-hidden
+  class="group w-full min-w-0 text-left transition-colors duration-150 flex gap-3 relative focus:outline-none overflow-hidden
     {embedded
-    ? `p-3 py-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${selectedMessage?.id === msg.id ? 'bg-accent/10 border border-accent shadow-md' : 'border border-transparent bg-white/5 dark:bg-zinc-900/5 hover:bg-white/20 dark:hover:bg-zinc-900/20'}`
-    : 'p-3 sm:p-3.5 mb-2 rounded-xl border transform hover:scale-[1.01] focus:ring-2 accent-ring'}
+    ? `p-3 py-2.5 rounded-lg ${selectedMessage?.id === msg.id ? 'bg-sidebar-accent border border-border-strong' : 'border border-transparent hover:bg-sidebar-accent'}`
+    : 'p-3 sm:p-3.5 mb-2 rounded-xl border'}
     {!embedded && selectedMessage?.id === msg.id
-    ? 'border-accent-500/70 bg-accent-500/5 shadow-sm'
-    : !embedded ? 'border-zinc-300/40 dark:border-zinc-800/40 hover:border-accent-500/40 dark:hover:border-accent-700/40 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40' : ''}"
+    ? 'border-border-strong bg-sidebar-accent shadow-sm'
+    : !embedded ? 'border-border-subtle hover:border-border-strong hover:bg-sidebar-accent' : ''}
+    focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1"
   onclick={() => openMessage(msg)}>
   <!-- Avatar -->
   <div class="flex-shrink-0">
@@ -126,7 +127,7 @@
         {/if}
       </div>
       <span
-        class="ml-2 shrink-0 text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-white/20 dark:bg-zinc-900/30 text-zinc-600 dark:text-zinc-400"
+        class="ml-2 shrink-0 text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-white/20 dark:bg-zinc-900/30 text-muted-foreground"
         >{formatDate(msg.date)}</span>
     </div>
 
@@ -139,7 +140,7 @@
       {#if hasAttachment()}
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0"
+          class="w-4 h-4 text-muted-foreground shrink-0"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor">
@@ -154,10 +155,10 @@
 
     <!-- Row 3: to (sm+) + preview -->
     <div
-      class="flex items-center gap-1.5 text-[12px] sm:text-xs text-zinc-600 dark:text-zinc-400 min-w-0 overflow-hidden">
+      class="flex items-center gap-1.5 text-[12px] sm:text-xs text-muted-foreground min-w-0 overflow-hidden">
       {#if !embedded}
         <span class="hidden sm:inline whitespace-nowrap opacity-70 shrink-0"
-          >To: <span class="font-medium text-zinc-700 dark:text-zinc-300">{msg.to}</span></span>
+          >To: <span class="font-medium text-foreground">{msg.to}</span></span>
         <span class="hidden sm:inline mx-1 shrink-0">•</span>
       {/if}
       <span class="opacity-80 line-clamp-1 min-w-0">

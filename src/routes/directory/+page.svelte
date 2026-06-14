@@ -226,27 +226,49 @@
     loadingPhotos.add(student.id);
 
     try {
-      let uuid: string | null = null;
+      // Primary strategy: fetch the photo directly by student id. SEQTA exposes
+      // /seqta/student/photo/get?id=<id> which always works as long as we have
+      // the numeric id (which the directory payload always provides). The old
+      // UUID-via-forums-cache strategy only worked after the Forums page had
+      // been visited, leaving most students with initials.
+      try {
+        const base64 = await seqtaFetch(`/seqta/student/photo/get`, {
+          params: { id: String(student.id), format: 'low' },
+          is_image: true,
+        });
+        if (base64 && typeof base64 === 'string' && base64.length > 0) {
+          const dataUrl = `data:image/png;base64,${base64}`;
+          studentPhotos = new Map(studentPhotos);
+          studentPhotos.set(student.id, dataUrl);
+          studentsWithPhotos = new Set(studentsWithPhotos);
+          studentsWithPhotos.add(student.id);
+          return;
+        }
+      } catch (e) {
+        // Fall through to UUID strategy.
+        logger.debug(
+          'directory',
+          'loadStudentPhoto',
+          `photo/get?id failed for student ${student.id}, falling back to UUID path`,
+          { error: e, studentId: student.id },
+        );
+      }
 
-      // If student has personUUID, use it directly
+      // Fallback: UUID-based path (covers cases where SEQTA rejects id queries).
+      let uuid: string | null = null;
       if (student.personUUID) {
         uuid = student.personUUID.trim();
       } else {
-        // Try multiple name matching strategies
         const nameVariants = [
-          student.xx_display, // Display name (e.g., "Alice Smith")
-          `${student.firstname} ${student.surname}`, // First + Last (e.g., "Alice Smith")
+          student.xx_display,
+          `${student.firstname} ${student.surname}`,
         ];
-
-        // Try exact matches first
         for (const name of nameVariants) {
           if (name) {
             uuid = await forumPhotoService.getUUIDByName(name);
             if (uuid) break;
           }
         }
-
-        // If no exact match, try normalized matching (case-insensitive, without titles)
         if (!uuid) {
           for (const name of nameVariants) {
             if (name) {
@@ -435,33 +457,35 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6" in:fade={{ duration: 400 }}>
-  <!-- Header -->
-  <div class="flex justify-between items-start">
-    <div>
-      <h1 class="mb-2 text-3xl font-bold text-zinc-900 dark:text-white">
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6" in:fade={{ duration: 250 }}>
+  <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        People
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
         <T key="navigation.directory" fallback="Directory" />
       </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground max-w-2xl">
         <T key="directory.description" fallback="Browse and search through all students" />
       </p>
     </div>
 
     <div class="flex items-center gap-2">
       <button
-        class="flex items-center gap-2 min-h-[44px] px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="inline-flex items-center gap-2 h-10 px-3.5 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:border-border-strong hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
         onclick={() => (showFiltersModal = true)}>
         <Icon src={Funnel} class="w-4 h-4" />
         <T key="directory.filters" fallback="Filters" />
       </button>
 
       <button
-        class="min-h-[44px] px-4 py-2 text-sm font-medium text-white accent-bg rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        class="inline-flex items-center gap-2 h-10 px-3.5 text-sm font-medium text-white bg-accent-500 hover:bg-accent-600 rounded-lg transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
         onclick={clearFilters}>
         <T key="directory.clear_all" fallback="Clear All" />
       </button>
     </div>
-  </div>
+  </header>
 
   <!-- Search and Filters -->
   <div class="space-y-4">
@@ -484,7 +508,7 @@
   <div class="space-y-4">
     <!-- Results Summary -->
     <div class="flex items-center justify-between">
-      <p class="text-sm text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground">
         <T
           key="directory.showing_students"
           fallback="Showing students"
@@ -512,7 +536,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {#each getPaginatedStudents() as student, i (student.id)}
               <div
-                class="bg-white dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-700/50 rounded-lg p-4 transition-all duration-200 transform hover:scale-[1.02] {animatedStudentIds.has(student.id) ? '' : 'directory-card-animate'}"
+                class="bg-card/30 border border-border/50 rounded-lg p-4 transition-all duration-200 transform hover:scale-[1.02] {animatedStudentIds.has(student.id) ? '' : 'directory-card-animate'}"
                 style={animatedStudentIds.has(student.id) ? '' : `animation-delay: ${i * 50}ms`}>
                 <!-- Student Avatar -->
                 <div class="flex items-center gap-3 mb-3">
@@ -563,10 +587,10 @@
                     </div>
                   {/if}
                   <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-medium text-zinc-900 dark:text-white truncate">
+                    <h3 class="text-sm font-medium text-foreground truncate">
                       {student.xx_display}
                     </h3>
-                    <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                    <p class="text-xs text-muted-foreground truncate">
                       {student.firstname}
                       {student.surname}
                     </p>
@@ -577,7 +601,7 @@
                 <div class="space-y-2">
                   <div class="flex items-center gap-2 text-xs">
                     <Icon src={AcademicCap} class="w-3 h-3 text-zinc-400" />
-                    <span class="text-zinc-600 dark:text-zinc-400">
+                    <span class="text-muted-foreground">
                       <T
                         key="directory.year_number"
                         fallback="Year"
@@ -588,7 +612,7 @@
                   {#if student.sub_school && student.sub_school.trim() !== ''}
                     <div class="flex items-center gap-2 text-xs">
                       <Icon src={MapPin} class="w-3 h-3 text-zinc-400" />
-                      <span class="text-zinc-600 dark:text-zinc-400">{student.sub_school}</span>
+                      <span class="text-muted-foreground">{student.sub_school}</span>
                     </div>
                   {/if}
 
@@ -597,10 +621,10 @@
                       class="w-3 h-3 rounded-full"
                       style="background-color: {student.house_colour}">
                     </div>
-                    <span class="text-zinc-600 dark:text-zinc-400">{student.house}</span>
+                    <span class="text-muted-foreground">{student.house}</span>
                   </div>
 
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                  <div class="text-xs text-muted-foreground">
                     {student.rollgroup}
                   </div>
                 </div>
@@ -655,7 +679,7 @@
   ariaLabel={$_('directory.student_photo') || 'Student Photo'}>
   {#if selectedImageUrl}
     <div class="flex flex-col items-center justify-center p-8">
-      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
+      <h2 class="text-2xl font-bold text-foreground mb-6">
         {selectedStudentName}
       </h2>
       <div class="relative w-full max-w-2xl">
@@ -678,7 +702,7 @@
     <div class="grid grid-cols-1 gap-4">
       <!-- Year Filter -->
       <div class="space-y-2">
-        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label class="text-sm font-medium text-foreground">
           <T key="directory.year_level" fallback="Year Level" />
         </label>
         <Select.Root type="single" bind:value={selectedYear}>
@@ -703,7 +727,7 @@
 
       <!-- Sub School Filter -->
       <div class="space-y-2">
-        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label class="text-sm font-medium text-foreground">
           <T key="directory.sub_school" fallback="Sub School" />
         </label>
         <Select.Root type="single" bind:value={selectedSubSchool}>
@@ -726,7 +750,7 @@
 
       <!-- House Filter -->
       <div class="space-y-2">
-        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label class="text-sm font-medium text-foreground">
           <T key="directory.house" fallback="House" />
         </label>
         <Select.Root type="single" bind:value={selectedHouse}>
@@ -749,7 +773,7 @@
 
       <!-- Campus Filter -->
       <div class="space-y-2">
-        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label class="text-sm font-medium text-foreground">
           <T key="directory.campus" fallback="Campus" />
         </label>
         <Select.Root type="single" bind:value={selectedCampus}>
@@ -774,7 +798,7 @@
 
       <!-- Has Photo Filter -->
       <div class="space-y-2">
-        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label class="text-sm font-medium text-foreground">
           <T key="directory.has_photo" fallback="Has Photo" />
         </label>
         <label class="flex items-center gap-2 cursor-pointer">
@@ -782,7 +806,7 @@
             type="checkbox"
             bind:checked={filterHasPhoto}
             class="w-4 h-4 text-accent-600 bg-zinc-100 border-zinc-300 rounded focus:ring-accent-500 focus:ring-2 dark:bg-zinc-700 dark:border-zinc-600" />
-          <span class="text-sm text-zinc-600 dark:text-zinc-400">
+          <span class="text-sm text-muted-foreground">
             <T key="directory.show_only_with_photos" fallback="Show only students with photos" />
           </span>
         </label>

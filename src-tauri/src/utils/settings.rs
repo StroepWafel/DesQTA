@@ -268,6 +268,33 @@ pub struct Settings {
     pub disabled_sidebar_pages: Option<Vec<String>>,
     #[serde(default)]
     pub sidebar_recent_activity: Option<Vec<RecentActivity>>,
+    /// Sidebar density: "compact" | "comfortable" | "spacious". Defaults to "comfortable".
+    #[serde(default)]
+    pub sidebar_density: Option<String>,
+    /// Persisted timetable view mode: "today" | "day" | "week" | "month" | "list".
+    #[serde(default)]
+    pub timetable_view_mode: Option<String>,
+    /// Persisted analytics page filters.
+    #[serde(default)]
+    pub analytics_filter_subjects: Option<Vec<String>>,
+    #[serde(default)]
+    pub analytics_grade_range: Option<Vec<u32>>,
+    #[serde(default)]
+    pub analytics_filter_search: Option<String>,
+    #[serde(default)]
+    pub analytics_date_from: Option<String>,
+    #[serde(default)]
+    pub analytics_date_to: Option<String>,
+    /// Persisted documents page UI state.
+    #[serde(default)]
+    pub documents_sort: Option<String>,
+    #[serde(default)]
+    pub documents_filter_types: Option<Vec<String>>,
+    /// Per-provider AI model selections.
+    #[serde(default)]
+    pub gemini_model: Option<String>,
+    #[serde(default)]
+    pub cerebras_model: Option<String>,
     #[serde(default)]
     pub downloaded_theme_ids: Option<Vec<String>>, // Array of theme UUIDs from cloud store
     #[serde(default)]
@@ -299,6 +326,12 @@ pub struct Settings {
     /// Dark overlay on top of the background (0.0–0.8) for readability.
     #[serde(default)]
     pub custom_background_dim: f64,
+    /// Gantt chart: show marked/completed assessments when true.
+    #[serde(default)]
+    pub gantt_show_completed: Option<bool>,
+    /// Gantt chart: per-assessment lead days (key: "{id}-{metaclass}").
+    #[serde(default)]
+    pub gantt_lead_days: Option<serde_json::Value>,
 }
 
 fn default_minimize_to_tray() -> bool {
@@ -361,6 +394,17 @@ impl Default for Settings {
             sidebar_favorites: None,
             disabled_sidebar_pages: None,
             sidebar_recent_activity: None,
+            sidebar_density: Some("comfortable".to_string()),
+            timetable_view_mode: Some("week".to_string()),
+            analytics_filter_subjects: None,
+            analytics_grade_range: Some(vec![0, 100]),
+            analytics_filter_search: None,
+            analytics_date_from: None,
+            analytics_date_to: None,
+            documents_sort: Some("date_desc".to_string()),
+            documents_filter_types: None,
+            gemini_model: Some("gemini-2.5-flash-lite".to_string()),
+            cerebras_model: Some("gpt-oss-120b".to_string()),
             downloaded_theme_ids: None,
             downloaded_theme_metadata: None,
             zoom_level: None,
@@ -372,6 +416,8 @@ impl Default for Settings {
             custom_background_fit: default_custom_background_fit(),
             custom_background_opacity: default_custom_background_opacity(),
             custom_background_dim: 0.0,
+            gantt_show_completed: Some(false),
+            gantt_lead_days: None,
         }
     }
 }
@@ -792,6 +838,58 @@ impl Settings {
                 }
             }
             default_settings.sidebar_recent_activity = Some(activities);
+        }
+
+        // Merge sidebar density
+        if let Some(density) = get_opt_string(&existing_json, "sidebar_density") {
+            default_settings.sidebar_density = Some(density);
+        }
+
+        default_settings.gantt_show_completed = Some(get_bool(
+            &existing_json,
+            "gantt_show_completed",
+            default_settings.gantt_show_completed.unwrap_or(false),
+        ));
+        if let Some(v) = existing_json.get("gantt_lead_days") {
+            default_settings.gantt_lead_days = Some(v.clone());
+        }
+
+        // Merge persisted timetable / analytics / documents / AI model state.
+        if let Some(v) = get_opt_string(&existing_json, "timetable_view_mode") {
+            default_settings.timetable_view_mode = Some(v);
+        }
+        if let Some(v) = get_opt_string_array(&existing_json, "analytics_filter_subjects") {
+            default_settings.analytics_filter_subjects = Some(v);
+        }
+        if let Some(arr) = existing_json.get("analytics_grade_range").and_then(|v| v.as_array()) {
+            let nums: Vec<u32> = arr
+                .iter()
+                .filter_map(|v| v.as_u64().map(|n| n as u32))
+                .collect();
+            if !nums.is_empty() {
+                default_settings.analytics_grade_range = Some(nums);
+            }
+        }
+        if let Some(v) = get_opt_string(&existing_json, "analytics_filter_search") {
+            default_settings.analytics_filter_search = Some(v);
+        }
+        if let Some(v) = get_opt_string(&existing_json, "analytics_date_from") {
+            default_settings.analytics_date_from = Some(v);
+        }
+        if let Some(v) = get_opt_string(&existing_json, "analytics_date_to") {
+            default_settings.analytics_date_to = Some(v);
+        }
+        if let Some(v) = get_opt_string(&existing_json, "documents_sort") {
+            default_settings.documents_sort = Some(v);
+        }
+        if let Some(v) = get_opt_string_array(&existing_json, "documents_filter_types") {
+            default_settings.documents_filter_types = Some(v);
+        }
+        if let Some(v) = get_opt_string(&existing_json, "gemini_model") {
+            default_settings.gemini_model = Some(v);
+        }
+        if let Some(v) = get_opt_string(&existing_json, "cerebras_model") {
+            default_settings.cerebras_model = Some(v);
         }
 
         // Merge downloaded theme IDs

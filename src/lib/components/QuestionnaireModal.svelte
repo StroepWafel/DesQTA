@@ -114,9 +114,9 @@
             <button
               type="button"
               disabled={voting}
-              class="flex items-center justify-between w-full p-4 text-left rounded-lg border transition-all duration-200 bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:accent-bg hover:scale-[1.02] focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex items-center justify-between w-full p-4 text-left rounded-lg border transition-all duration-200 bg-card border-border hover:accent-bg hover:scale-[1.02] focus:outline-none focus:ring-2 accent-ring disabled:opacity-50 disabled:cursor-not-allowed"
               onclick={() => handleVote(index + 1)}>
-              <span class="text-sm font-medium text-zinc-900 dark:text-white">{option}</span>
+              <span class="text-sm font-medium text-foreground">{option}</span>
               {#if voting && selectedOption === index + 1}
                 <div class="w-5 h-5 rounded-full border-2 animate-spin border-accent/30 border-t-accent"></div>
               {/if}
@@ -131,8 +131,8 @@
           </div>
           {#each question.options as option}
             <div
-              class="flex items-center justify-between w-full p-4 rounded-lg border bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-700 opacity-60">
-              <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{option}</span>
+              class="flex items-center justify-between w-full p-4 rounded-lg border bg-zinc-50 dark:bg-zinc-900/50 border-border opacity-60">
+              <span class="text-sm font-medium text-muted-foreground">{option}</span>
             </div>
           {/each}
         {:else if hasVoted && results}
@@ -148,10 +148,10 @@
             {#each results.options as optionResult}
               <div class="space-y-2">
                 <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-zinc-900 dark:text-white">
+                  <span class="text-sm font-medium text-foreground">
                     {optionResult.text}
                   </span>
-                  <span class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <span class="text-sm text-muted-foreground">
                     {optionResult.count} ({optionResult.percentage}%)
                   </span>
                 </div>
@@ -181,7 +181,7 @@
       </div>
     </div>
   {:else}
-    <div class="p-6 text-center text-zinc-500 dark:text-zinc-400">
+    <div class="p-6 text-center text-muted-foreground">
       <p>No active question available.</p>
     </div>
   {/if}

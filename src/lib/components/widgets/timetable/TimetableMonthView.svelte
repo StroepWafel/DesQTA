@@ -125,7 +125,7 @@
 <div class="flex flex-col flex-1 w-full min-h-0 overflow-hidden">
   <!-- Month Header -->
   <div
-    class="flex justify-between items-center px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50">
+    class="flex justify-between items-center px-4 py-3 border-b border-border bg-zinc-50/50 dark:bg-zinc-900/50">
     <div class="flex gap-2 items-center">
       <Button
         variant="ghost"
@@ -135,7 +135,7 @@
         ariaLabel="Previous month"
         class="min-h-[44px] min-w-[44px] w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95" />
 
-      <h2 class="text-xl font-bold text-zinc-900 dark:text-white min-w-[200px] text-center">
+      <h2 class="text-xl font-bold text-foreground min-w-[200px] text-center">
         {monthName}
       </h2>
 
@@ -162,7 +162,7 @@
     <div class="grid grid-cols-7 gap-2">
       <!-- Week Day Headers -->
       {#each weekDays as dayName}
-        <div class="text-center text-sm font-semibold text-zinc-600 dark:text-zinc-400 py-2">
+        <div class="text-center text-sm font-semibold text-muted-foreground py-2">
           {dayName}
         </div>
       {/each}
@@ -174,7 +174,7 @@
         <button
           type="button"
           class="min-h-[100px] p-2 rounded-xl border transition-all duration-200 text-left {isCurrentMonth
-            ? 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
+            ? 'bg-card border-border hover:border-zinc-300 dark:hover:border-zinc-600'
             : 'bg-zinc-50 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800 text-zinc-400 dark:text-zinc-600'} {isToday
             ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20'
             : ''} {isSelected
@@ -186,7 +186,7 @@
           <div
             class="text-sm font-semibold mb-1 {isToday
               ? 'text-blue-600 dark:text-blue-400'
-              : 'text-zinc-900 dark:text-white'}">
+              : 'text-foreground'}">
             {date.getDate()}
           </div>
           <div class="space-y-1">
@@ -194,16 +194,16 @@
               <div
                 class="text-xs p-1 rounded truncate"
                 style="background-color: {lesson.colour}33; border-left: 2px solid {lesson.colour};">
-                <div class="font-medium text-zinc-900 dark:text-white truncate">
+                <div class="font-medium text-foreground truncate">
                   {lesson.description}
                 </div>
-                <div class="text-zinc-600 dark:text-zinc-400 text-[10px]">
+                <div class="text-muted-foreground text-[10px]">
                   {lesson.from}
                 </div>
               </div>
             {/each}
             {#if dayLessons.length > 3}
-              <div class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+              <div class="text-xs text-muted-foreground font-medium">
                 +{dayLessons.length - 3} more
               </div>
             {/if}

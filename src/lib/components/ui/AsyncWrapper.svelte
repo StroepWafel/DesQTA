@@ -82,10 +82,10 @@
         <div
           class="text-center"
           transition:fly={{ y: 10, duration: 300, delay: 100, easing: (t) => t * (2 - t) }}>
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+          <h3 class="text-lg font-semibold text-foreground mb-2">
             Something went wrong
           </h3>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400 max-w-sm">
+          <p class="text-sm text-muted-foreground max-w-sm">
             {errorMessage}
           </p>
         </div>

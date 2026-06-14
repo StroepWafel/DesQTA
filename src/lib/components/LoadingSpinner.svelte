@@ -29,7 +29,7 @@
     style="animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
   </div>
   <p
-    class="mt-4 transition-opacity duration-200 {textSizes[size]} text-zinc-600 dark:text-zinc-400">
+    class="mt-4 transition-opacity duration-200 {textSizes[size]} text-muted-foreground">
     {message ?? $_('common.loading')}
   </p>
 </div>

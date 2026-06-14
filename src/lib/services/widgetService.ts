@@ -1,27 +1,44 @@
 import { invoke } from '@tauri-apps/api/core';
 import { logger } from '../../utils/logger';
-import type { WidgetLayout, WidgetConfig, WidgetPosition } from '../types/widgets';
+import {
+  WIDGET_LAYOUT_VERSION,
+  type WidgetConfig,
+  type WidgetLayout,
+  type WidgetPosition,
+} from '../types/widgets';
+import { releaseStackMembers } from '../utils/widgetLayoutOps';
 
-function cloneWidgetPosition(position: WidgetPosition): WidgetPosition {
+/**
+ * Single source of truth for cloning a WidgetConfig and its position/settings.
+ * Used by the grid engine, migration utilities, and the service itself.
+ */
+export function cloneWidgetPosition(position: WidgetPosition): WidgetPosition {
   return { ...position };
 }
 
-function cloneWidgetConfig(widget: WidgetConfig): WidgetConfig {
+export function cloneWidgetConfig(widget: WidgetConfig): WidgetConfig {
   return {
     ...widget,
     position: cloneWidgetPosition(widget.position),
     settings: widget.settings ? { ...widget.settings } : undefined,
+    stack: widget.stack
+      ? { memberIds: [...widget.stack.memberIds], activeIndex: widget.stack.activeIndex }
+      : undefined,
+    stackedIn: widget.stackedIn,
   };
 }
 
-function cloneWidgetLayout(layout: WidgetLayout): WidgetLayout {
+export function cloneWidgetLayout(layout: WidgetLayout): WidgetLayout {
   const widgets = Array.isArray(layout.widgets) ? layout.widgets.map(cloneWidgetConfig) : [];
 
   return {
     ...layout,
     widgets,
+    layoutVersion: layout.layoutVersion ?? WIDGET_LAYOUT_VERSION,
     lastModified:
-      typeof layout.lastModified === 'string' ? new Date(layout.lastModified) : new Date(layout.lastModified),
+      typeof layout.lastModified === 'string'
+        ? new Date(layout.lastModified)
+        : new Date(layout.lastModified),
   };
 }
 
@@ -38,13 +55,12 @@ export const widgetService = {
       const layout = await invoke<WidgetLayout | null>('db_widget_layout_load');
 
       if (layout) {
-        // Ensure widgets is always an array (defensive check for production builds)
         const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
 
-        // Convert lastModified string to Date
         const layoutWithDate: WidgetLayout = {
           ...layout,
           widgets,
+          layoutVersion: layout.layoutVersion ?? WIDGET_LAYOUT_VERSION,
           lastModified:
             typeof layout.lastModified === 'string' ? new Date(layout.lastModified) : new Date(),
         };
@@ -52,12 +68,12 @@ export const widgetService = {
         logger.debug('widgetService', 'loadLayout', 'Layout loaded from database', {
           widgetCount: widgets.length,
           version: layout.version,
+          layoutVersion: layoutWithDate.layoutVersion,
         });
 
         return cloneWidgetLayout(layoutWithDate);
       }
 
-      // No layout found in database, return default
       logger.debug(
         'widgetService',
         'loadLayout',
@@ -66,30 +82,18 @@ export const widgetService = {
       return cloneWidgetLayout(this.getDefaultLayout());
     } catch (e) {
       logger.error('widgetService', 'loadLayout', `Failed to load layout: ${e}`, { error: e });
-      // On error, return default layout
       return cloneWidgetLayout(this.getDefaultLayout());
     }
   },
 
   async saveLayout(layout: WidgetLayout): Promise<void> {
     try {
-      // Ensure widgets is always an array (defensive check)
       const widgets = Array.isArray(layout.widgets) ? layout.widgets : [];
 
-      // Don't save if layout contains only temporary timetable page widget
-      if (widgets.length === 1 && widgets[0]?.id === 'timetable-page-widget') {
-        logger.debug(
-          'widgetService',
-          'saveLayout',
-          'Skipping save for temporary timetable page layout',
-        );
-        return;
-      }
-
-      // Convert Date to ISO string for Rust
       const layoutToSave: WidgetLayout = {
         ...layout,
         widgets,
+        layoutVersion: layout.layoutVersion ?? WIDGET_LAYOUT_VERSION,
         lastModified:
           typeof layout.lastModified === 'string'
             ? layout.lastModified
@@ -101,7 +105,7 @@ export const widgetService = {
       logger.debug('widgetService', 'saveLayout', 'Layout saved successfully', {
         widgetCount: widgets.length,
         version: layoutToSave.version,
-        widgetIds: widgets.map((w) => w.id),
+        layoutVersion: layoutToSave.layoutVersion,
       });
     } catch (e) {
       logger.error('widgetService', 'saveLayout', `Failed to save layout: ${e}`, { error: e });
@@ -110,73 +114,57 @@ export const widgetService = {
   },
 
   getDefaultLayout(): WidgetLayout {
-    // Return default widget positions matching current dashboard
+    // Default layout uses the consolidated widget set. Widgets are arranged
+    // by importance for a typical student day.
     const defaultWidgets: WidgetConfig[] = [
       {
-        id: 'upcoming_assessments',
-        type: 'upcoming_assessments',
+        id: 'timetable',
+        type: 'timetable',
         enabled: true,
-        position: { x: 0, y: 0, w: 6, h: 4 },
+        position: { x: 0, y: 0, w: 8, h: 6 },
+      },
+      {
+        id: 'deadlines',
+        type: 'deadlines',
+        enabled: true,
+        position: { x: 8, y: 0, w: 4, h: 6 },
       },
       {
         id: 'messages_preview',
         type: 'messages_preview',
         enabled: true,
-        position: { x: 6, y: 0, w: 6, h: 4 },
-      },
-      {
-        id: 'today_schedule',
-        type: 'today_schedule',
-        enabled: true,
-        position: { x: 0, y: 4, w: 12, h: 4 },
+        position: { x: 0, y: 6, w: 4, h: 4 },
       },
       {
         id: 'notices',
         type: 'notices',
         enabled: true,
-        position: { x: 0, y: 9, w: 12, h: 4 }, // Full width
+        position: { x: 4, y: 6, w: 8, h: 4 },
       },
       {
         id: 'shortcuts',
         type: 'shortcuts',
         enabled: true,
-        position: { x: 0, y: 13, w: 12, h: 3 }, // Full width
+        position: { x: 0, y: 10, w: 8, h: 3 },
+      },
+      {
+        id: 'weather',
+        type: 'weather',
+        enabled: true,
+        position: { x: 8, y: 10, w: 4, h: 3 },
       },
       {
         id: 'news',
         type: 'news',
         enabled: true,
-        position: { x: 0, y: 16, w: 12, h: 4 },
-      },
-      {
-        id: 'welcome_portal',
-        type: 'welcome_portal',
-        enabled: true,
-        position: { x: 0, y: 20, w: 12, h: 4 },
-      },
-      {
-        id: 'homework',
-        type: 'homework',
-        enabled: true,
-        position: { x: 0, y: 24, w: 4, h: 4 },
-      },
-      {
-        id: 'todo_list',
-        type: 'todo_list',
-        enabled: true,
-        position: { x: 4, y: 24, w: 4, h: 4 },
-      },
-      {
-        id: 'focus_timer',
-        type: 'focus_timer',
-        enabled: true,
-        position: { x: 8, y: 24, w: 4, h: 4 },
+        position: { x: 0, y: 13, w: 12, h: 4 },
       },
     ];
 
     return {
       widgets: defaultWidgets,
       version: 1,
+      layoutVersion: WIDGET_LAYOUT_VERSION,
       lastModified: new Date(),
     };
   },
@@ -184,12 +172,10 @@ export const widgetService = {
   updateWidgetInLayout(
     layout: WidgetLayout,
     widgetId: string,
-    updates: Omit<Partial<WidgetConfig>, 'position'> & { position?: Partial<WidgetConfig['position']> },
+    updates: Omit<Partial<WidgetConfig>, 'position'> & {
+      position?: Partial<WidgetConfig['position']>;
+    },
   ): WidgetLayout {
-    if (widgetId === 'timetable-page-widget') {
-      return cloneWidgetLayout(layout);
-    }
-
     const nextLayout = cloneWidgetLayout(layout);
     const widget = nextLayout.widgets.find((entry) => entry.id === widgetId);
     if (!widget) {
@@ -214,6 +200,21 @@ export const widgetService = {
 
   removeWidgetFromLayout(layout: WidgetLayout, widgetId: string): WidgetLayout {
     const nextLayout = cloneWidgetLayout(layout);
+    const widget = nextLayout.widgets.find((entry) => entry.id === widgetId);
+    if (widget) {
+      const placed = nextLayout.widgets.filter(
+        (w) => w.enabled && !w.stackedIn && w.id !== widgetId,
+      );
+      if (widget.stack?.memberIds.length) {
+        releaseStackMembers(nextLayout.widgets, widgetId, placed);
+      }
+      if (widget.stackedIn) {
+        const host = nextLayout.widgets.find((w) => w.id === widget.stackedIn);
+        if (host?.stack) {
+          host.stack.memberIds = host.stack.memberIds.filter((id) => id !== widgetId);
+        }
+      }
+    }
     nextLayout.widgets = nextLayout.widgets.filter((widget) => widget.id !== widgetId);
     return updateLayoutTimestamp(nextLayout);
   },
@@ -245,13 +246,14 @@ export const widgetService = {
     widgetId: string,
     position: Partial<WidgetConfig['position']>,
   ): Promise<void> {
-    const nextLayout = this.updateWidgetPositionInLayout(await this.loadLayout(), widgetId, position);
+    const nextLayout = this.updateWidgetPositionInLayout(
+      await this.loadLayout(),
+      widgetId,
+      position,
+    );
     await this.saveLayout(nextLayout);
   },
 
-  /**
-   * Reset layout to default and save it
-   */
   async resetLayout(): Promise<void> {
     try {
       const defaultLayout = this.getDefaultLayout();

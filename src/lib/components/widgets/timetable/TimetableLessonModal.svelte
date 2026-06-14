@@ -65,7 +65,7 @@
 {#if open && lesson}
   <!-- Backdrop -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm mobile-modal-inset"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 mobile-modal-inset"
     transition:fade={{ duration: 200 }}
     onclick={handleBackdropClick}
     onkeydown={(e) => {
@@ -79,22 +79,22 @@
     tabindex="-1">
     <!-- Modal -->
     <div
-      class="relative w-full max-w-md rounded-2xl border shadow-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200 dark:border-zinc-700 max-h-[90vh] overflow-y-auto mobile-modal-max-h"
+      class="relative w-full max-w-md rounded-2xl border shadow-2xl bg-card border-border max-h-[90vh] overflow-y-auto mobile-modal-max-h"
       transition:scale={{ duration: 300, easing: cubicInOut }}
       style="border-left-color: {lesson.colour}; border-left-width: 4px;">
       <!-- Header -->
-      <div class="sticky top-0 flex items-start justify-between p-6 border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md z-10">
+      <div class="sticky top-0 flex items-start justify-between p-6 border-b border-border bg-card z-10">
         <div class="flex-1 min-w-0">
           <h2
             id="lesson-modal-title"
-            class="text-2xl font-bold text-zinc-900 dark:text-white mb-1 truncate">
+            class="text-2xl font-bold text-foreground mb-1 truncate">
             {lesson.description}
           </h2>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400">{lesson.code}</p>
+          <p class="text-sm text-muted-foreground">{lesson.code}</p>
         </div>
         <button
           type="button"
-          class="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95"
+          class="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:surface-muted hover:scale-105 active:scale-95"
           onclick={onClose}
           aria-label="Close modal">
           <Icon src={XMark} class="w-5 h-5" />
@@ -110,9 +110,9 @@
             <Icon src={Clock} class="w-5 h-5" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Date & Time</p>
-            <p class="text-base text-zinc-900 dark:text-white">{formatLessonDate(lesson.date)}</p>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+            <p class="text-sm font-medium text-muted-foreground">Date & Time</p>
+            <p class="text-base text-foreground">{formatLessonDate(lesson.date)}</p>
+            <p class="text-sm text-muted-foreground">
               {lesson.from} - {lesson.until}
             </p>
           </div>
@@ -126,8 +126,8 @@
               <Icon src={AcademicCap} class="w-5 h-5" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Teacher</p>
-              <p class="text-base text-zinc-900 dark:text-white truncate">{lesson.staff}</p>
+              <p class="text-sm font-medium text-muted-foreground">Teacher</p>
+              <p class="text-base text-foreground truncate">{lesson.staff}</p>
             </div>
           </div>
         {/if}
@@ -140,8 +140,8 @@
               <Icon src={BuildingOffice} class="w-5 h-5" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Room</p>
-              <p class="text-base text-zinc-900 dark:text-white">Room {lesson.room}</p>
+              <p class="text-sm font-medium text-muted-foreground">Room</p>
+              <p class="text-base text-foreground">Room {lesson.room}</p>
             </div>
           </div>
         {/if}
@@ -158,7 +158,7 @@
       </div>
 
       <!-- Actions -->
-      <div class="sticky bottom-0 p-6 border-t border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md space-y-2">
+      <div class="sticky bottom-0 p-6 border-t border-border bg-card space-y-2">
         {#if lesson.programmeID !== 0}
           <Button
             variant="primary"

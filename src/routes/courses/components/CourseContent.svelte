@@ -367,19 +367,19 @@
     {@const activeContent = selectedLessonContent || selectedStandaloneContent}
     {#if activeContent}
       {@const content = activeContent}
-      <div class="p-6">
-        <h1 class="px-6 py-4 mb-6 text-2xl font-bold text-white rounded-lg accent-bg">
+      <div class="p-3 sm:p-4">
+        <h1 class="px-3 py-2 mb-3 text-2xl font-bold text-white rounded-lg accent-bg">
           {content.t}
         </h1>
 
         {#if content.h}
           <div
-            class="p-4 mb-4 rounded-xl border backdrop-blur-xs bg-white/80 dark:bg-zinc-900/50 border-zinc-300/50 dark:border-zinc-800/50 animate-slide-in animate-delay-1">
-            <h3 class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">
+            class="p-3 mb-3 rounded-xl border bg-card border-border animate-slide-in animate-delay-1">
+            <h3 class="mb-2 text-lg font-semibold text-foreground">
               <T key="courses.homework_notes" fallback="Homework/Notes" />
             </h3>
             <div class="max-w-none prose prose-zinc dark:prose-invert prose-indigo">
-              <p class="text-zinc-700 dark:text-zinc-300">
+              <p class="text-foreground">
                 {content.h}
               </p>
             </div>
@@ -387,19 +387,19 @@
         {/if}
 
         {#if content.r && content.r.length > 0}
-          <div class="mb-6 animate-slide-in animate-delay-2">
-            <h2 class="px-6 py-4 mb-4 text-xl font-bold text-white rounded-lg accent-bg">
+          <div class="mb-4 animate-slide-in animate-delay-2">
+            <h2 class="px-4 py-3 mb-3 text-xl font-bold text-white rounded-lg accent-bg">
               <T key="courses.lesson_resources" fallback="Lesson Resources" />
             </h2>
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               {#each content.r as resource}
                 <button
                   type="button"
-                  class="flex items-center p-4 bg-white dark:bg-zinc-800 border rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left {failedResourceIds.has(
+                  class="flex items-center p-4 bg-card border rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left {failedResourceIds.has(
                     resource.uuid,
                   )
                     ? 'border-red-500 dark:border-red-600'
-                    : 'border-zinc-200 dark:border-zinc-700'}"
+                    : 'border-border'}"
                   onclick={async () => {
                     failedResourceIds.delete(resource.uuid);
                     failedResourceIds = failedResourceIds;
@@ -423,10 +423,10 @@
                   <div class="flex items-center w-full">
                     <span class="mr-3 text-2xl">{getFileIcon(resource.mimetype)}</span>
                     <div class="flex-1 min-w-0">
-                      <div class="font-semibold truncate text-zinc-900 dark:text-white">
+                      <div class="font-semibold truncate text-foreground">
                         {resource.t}
                       </div>
-                      <div class="text-sm text-zinc-600 dark:text-zinc-400">
+                      <div class="text-sm text-muted-foreground">
                         {formatFileSize(resource.size)}
                       </div>
                     </div>
@@ -445,7 +445,7 @@
             <div
               class="relative mb-6 overflow-hidden rounded-2xl border-2 {hasAIFeature
                 ? 'border-accent-500/70 dark:border-accent-400/70'
-                : 'border-zinc-200 dark:border-zinc-700'} bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm {aiSummaryLoading
+                : 'border-border'} bg-card {aiSummaryLoading
                 ? 'ai-summarising-glow'
                 : ''}"
               style="max-height: {containerMaxHeight}px; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1);">
@@ -490,7 +490,7 @@
 
               <!-- Lesson Content -->
               <div
-                class="p-6 transition-all duration-400 ease-out {contentCollapsed
+                class="p-4 transition-all duration-400 ease-out {contentCollapsed
                   ? 'opacity-20 blur-[2px] scale-[0.98]'
                   : 'opacity-100 blur-0 scale-100'}"
                 style="transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
@@ -506,7 +506,7 @@
               <!-- AI Summary Overlay -->
               {#if contentCollapsed && (aiSummaryLoading || aiSummary || aiSummaryError)}
                 <div
-                  class="absolute inset-0 flex flex-col justify-start items-stretch bg-white/98 dark:bg-zinc-900/98 backdrop-blur-xl"
+                  class="absolute inset-0 flex flex-col justify-start items-stretch bg-white/98 dark:bg-zinc-900/98 "
                   transition:fly={{ y: 8, duration: 350, easing: cubicOut }}
                   style="transform-origin: top center;">
                   <div class="flex-1 min-h-0 p-6 overflow-y-auto">
@@ -525,10 +525,10 @@
                             </div>
                           </div>
                           <div class="flex flex-col items-center gap-2">
-                            <p class="text-lg font-medium text-zinc-900 dark:text-white">
+                            <p class="text-lg font-medium text-foreground">
                               {$_('courses.generating_summary') || 'Generating summary...'}
                             </p>
-                            <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                            <p class="text-sm text-muted-foreground">
                               <T
                                 key="courses.analyzing_content"
                                 fallback="Analyzing lesson content" />
@@ -563,7 +563,7 @@
                             </button>
                             <button
                               type="button"
-                              class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                              class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 text-foreground border border-zinc-300 dark:border-zinc-600 hover:surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                               onclick={expandContent}>
                               <Icon src={DocumentText} class="w-4 h-4" />
                               <T key="courses.view_original" fallback="View Original" />
@@ -575,7 +575,7 @@
                       <div class="space-y-6" bind:this={summaryContainerEl}>
                         <!-- Summary Card -->
                         <div
-                          class="p-6 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 bg-white/95 dark:bg-zinc-800/95 shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50 backdrop-blur-sm"
+                          class="p-6 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 bg-white/95 dark:bg-zinc-800/95 shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50 "
                           transition:fly={{ y: 16, duration: 400, delay: 50, easing: cubicOut }}
                           style="transform-origin: top center;">
                           <div class="flex items-center justify-between gap-4 mb-4">
@@ -584,13 +584,13 @@
                                 class="flex items-center justify-center w-10 h-10 rounded-xl accent-bg shadow-md">
                                 <Icon src={DocumentText} class="w-5 h-5 text-white" />
                               </div>
-                              <h3 class="text-xl font-bold text-zinc-900 dark:text-white">
+                              <h3 class="text-xl font-bold text-foreground">
                                 <T key="courses.summary" fallback="Summary" />
                               </h3>
                             </div>
                             <button
                               type="button"
-                              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-accent hover:bg-accent/10 transition-all duration-200"
+                              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-accent hover:bg-accent/10 transition-all duration-200"
                               onclick={generateLessonSummary}
                               title={$_('courses.regenerate') || 'Generate again'}>
                               <Icon src={ArrowPath} class="w-4 h-4" />
@@ -606,7 +606,7 @@
 
                         <!-- Steps Card -->
                         <div
-                          class="p-6 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 bg-white/95 dark:bg-zinc-800/95 shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50 backdrop-blur-sm"
+                          class="p-6 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 bg-white/95 dark:bg-zinc-800/95 shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50 "
                           transition:fly={{ y: 16, duration: 400, delay: 150, easing: cubicOut }}
                           style="transform-origin: top center;">
                           <div class="flex items-center gap-3 mb-5">
@@ -614,7 +614,7 @@
                               class="flex items-center justify-center w-10 h-10 rounded-xl accent-bg shadow-md">
                               <Icon src={ClipboardDocumentCheck} class="w-5 h-5 text-white" />
                             </div>
-                            <h3 class="text-xl font-bold text-zinc-900 dark:text-white">
+                            <h3 class="text-xl font-bold text-foreground">
                               <T key="courses.steps" fallback="Action Steps" />
                             </h3>
                           </div>
@@ -654,16 +654,16 @@
   {:else if lessonWithoutContent}
     <div class="flex flex-col items-center justify-center min-h-[400px] p-8">
       <div
-        class="max-w-md p-8 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm text-center">
+        class="max-w-md p-8 rounded-2xl border border-border bg-white/80 dark:bg-zinc-800/80 text-center">
         <div
           class="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full accent-bg/20">
           <Icon src={DocumentText} class="w-8 h-8 text-accent" />
         </div>
-        <h2 class="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+        <h2 class="mb-2 text-xl font-bold text-foreground">
           <T key="courses.no_lesson_content" fallback="No lesson content available yet" />
         </h2>
         {#if selectedLesson}
-          <p class="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <p class="mb-2 text-sm text-muted-foreground">
             {selectedLesson.p} · {formatLessonDate(selectedLesson.d, {
               today: $_('courses.today') || 'Today',
               tomorrow: $_('courses.tomorrow') || 'Tomorrow',
@@ -671,7 +671,7 @@
             })}
           </p>
         {/if}
-        <p class="mb-6 text-zinc-600 dark:text-zinc-400">
+        <p class="mb-6 text-muted-foreground">
           {$_('courses.no_lesson_content_desc') ||
             'Content for this lesson may not have been published yet. Try refreshing to check for updates.'}
         </p>
@@ -692,15 +692,15 @@
       </div>
     </div>
   {:else}
-    <div class="p-6">
-      <h1 class="px-6 py-4 mb-6 text-2xl font-bold text-white rounded-lg accent-bg">
+    <div class="p-4">
+      <h1 class="px-4 py-3 mb-4 text-2xl font-bold text-white rounded-lg accent-bg">
         {coursePayload.t}
       </h1>
 
       {#if documentParseError}
         <div
           class="p-6 rounded-xl border border-red-500/50 dark:border-red-500/50 bg-red-500/10 dark:bg-red-500/10">
-          <p class="text-zinc-900 dark:text-white mb-4">
+          <p class="text-foreground mb-4">
             {$_('courses.document_parse_error') ||
               'Unable to load course content. The document may be corrupted.'}
           </p>
@@ -730,18 +730,18 @@
             {#each coursePayload.cf as file}
               <button
                 type="button"
-                class="flex items-center p-4 bg-white dark:bg-zinc-800 border rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left {failedResourceIds.has(
+                class="flex items-center p-4 bg-card border rounded-lg hover:border-accent hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 text-left {failedResourceIds.has(
                   file.uuid,
                 )
                   ? 'border-red-500 dark:border-red-600'
-                  : 'border-zinc-200 dark:border-zinc-700'}"
+                  : 'border-border'}"
                 onclick={() => handleCourseFileClick(file)}>
                 <span class="mr-3 text-2xl">{getFileIcon(file.mimetype)}</span>
                 <div class="flex-1 min-w-0">
-                  <div class="font-semibold truncate text-zinc-900 dark:text-white">
+                  <div class="font-semibold truncate text-foreground">
                     {file.filename}
                   </div>
-                  <div class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <div class="text-sm text-muted-foreground">
                     {formatFileSize(file.size)}
                   </div>
                   {#if failedResourceIds.has(file.uuid)}

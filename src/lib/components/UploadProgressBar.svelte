@@ -12,7 +12,7 @@
 
 {#if progress.active}
   <div
-    class="fixed right-6 z-[100] w-80 max-w-[calc(100vw-3rem)] rounded-xl border shadow-2xl backdrop-blur-md bg-white/95 dark:bg-zinc-800/95 border-zinc-200/60 dark:border-zinc-700/40 p-4 transition-all duration-300 {isMobile
+    class="fixed right-6 z-[100] w-80 max-w-[calc(100vw-3rem)] rounded-xl border shadow-2xl bg-white/95 dark:bg-zinc-800/95 border-zinc-200/60 dark:border-zinc-700/40 p-4 transition-all duration-300 {isMobile
       ? 'bottom-24'
       : 'bottom-6'}"
     transition:slide={{ axis: 'y', duration: 200 }}
@@ -25,16 +25,16 @@
         aria-hidden="true">
       </div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-medium text-zinc-900 dark:text-white truncate">
+        <p class="text-sm font-medium text-foreground truncate">
           {progress.label || $_('assessments.uploading_files', { default: 'Uploading files' })}
         </p>
         {#if progress.currentFileName}
-          <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+          <p class="text-xs text-muted-foreground truncate mt-0.5">
             {progress.currentFileName}
           </p>
         {/if}
       </div>
-      <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 shrink-0">
+      <span class="text-sm font-semibold text-foreground shrink-0">
         {progress.current}/{progress.total}
       </span>
     </div>

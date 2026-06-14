@@ -75,19 +75,19 @@
     <div
       class="absolute rounded-md border-2 {getWidgetColor(
         index,
-      )} transition-all duration-200 hover:scale-105 hover:shadow-md backdrop-blur-sm"
+      )} transition-all duration-200 hover:scale-105 hover:shadow-md "
       style="left: {item.left}%; top: {item.top}%; width: {item.width}%; height: {item.height}%; animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) {index *
         50}ms both;">
       {#if showLabels && item.definition}
         <div
-          class="absolute inset-0 flex flex-col items-center justify-center p-1 text-[8px] font-medium text-zinc-700 dark:text-zinc-300 opacity-0 hover:opacity-100 transition-opacity duration-200">
+          class="absolute inset-0 flex flex-col items-center justify-center p-1 text-[8px] font-medium text-foreground opacity-0 hover:opacity-100 transition-opacity duration-200">
           <Icon src={item.definition.icon} class="w-3 h-3 mb-0.5" />
           <span class="text-center leading-tight line-clamp-2">{item.definition.name}</span>
         </div>
       {:else if item.definition}
         <div
           class="absolute inset-0 flex items-center justify-center opacity-30 hover:opacity-60 transition-opacity duration-200">
-          <Icon src={item.definition.icon} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          <Icon src={item.definition.icon} class="w-4 h-4 text-muted-foreground" />
         </div>
       {/if}
     </div>
@@ -95,7 +95,7 @@
 
   <!-- Widget count badge -->
   <div
-    class="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-white/90 dark:bg-zinc-800/90 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 text-[10px] font-medium text-zinc-600 dark:text-zinc-400 shadow-sm"
+    class="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-white/90 dark:bg-zinc-800/90 border border-border text-[10px] font-medium text-muted-foreground shadow-sm"
     style="animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) {widgetItems.length * 50}ms both;">
     {layout.widgets.filter((w) => w.enabled).length} widgets
   </div>

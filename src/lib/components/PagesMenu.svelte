@@ -75,30 +75,28 @@ onMount(() => {
 });
 </script>
 
-<div class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs mobile-modal-inset">
-  <div class="pages-modal relative w-full max-w-xl mx-auto rounded-2xl bg-white/70 dark:bg-zinc-900/80 shadow-2xl border border-white/20 dark:border-zinc-700/40 backdrop-blur-xl p-0 flex flex-col animate-in"
-    style="backdrop-filter: blur(24px);"
+<div class="fixed inset-0 z-9999999 flex items-center justify-center bg-foreground/40 mobile-modal-inset">
+  <div class="pages-modal relative w-full max-w-xl mx-auto rounded-2xl bg-card text-card-foreground shadow-[0_24px_56px_-16px_rgba(0,0,0,0.22),0_4px_12px_-4px_rgba(0,0,0,0.08)] border border-border p-0 flex flex-col"
     in:scale={{ duration: 180, start: 0.98, opacity: 0 }}
     out:scale={{ duration: 120, start: 1, opacity: 0 }}
     tabindex="-1"
   >
-    <div class="flex items-center gap-3 px-6 pt-6 pb-2">
-      <span class="text-accent-500"><Icon src={Squares2x2} class="w-6 h-6" /></span>
+    <div class="flex items-center gap-3 px-5 pt-5 pb-3">
+      <span class="text-muted-foreground"><Icon src={Squares2x2} class="w-5 h-5" /></span>
       <input
         id="pages-search-input"
         bind:this={searchInput}
         type="text"
-        class="flex-1 px-4 py-3 rounded-xl bg-white/40 dark:bg-zinc-800/60 text-zinc-900 dark:text-white border border-accent-500/40 focus:outline-hidden focus:ring-2 accent-ring transition-all duration-200 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-lg shadow-md"
+        class="flex-1 h-11 px-3 rounded-lg bg-surface-2 text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500 transition-colors duration-150 placeholder:text-muted-foreground/70 text-base"
         placeholder={$_( 'pages_menu.search_placeholder' )}
         bind:value={$searchStore}
         onkeydown={handleKeydown}
         autocomplete="off"
-        style="backdrop-filter: blur(8px);"
       />
     </div>
     {#if $showDropdownStore && $filteredPages.length > 0}
       <ul
-        class="w-full mt-2 mb-4 px-2 space-y-1 max-h-96 overflow-y-auto"
+        class="w-full mb-2 px-2 space-y-0.5 max-h-96 overflow-y-auto"
         role="listbox"
       >
         {#each $filteredPages as page, i (page.path)}
@@ -106,22 +104,24 @@ onMount(() => {
             type="button"
             role="option"
             aria-selected={selectedIndex === i}
-            class={`flex items-center gap-3 w-full text-left px-5 py-3 cursor-pointer transition-all duration-200 rounded-xl hover:scale-[1.02] hover:bg-accent-100 dark:hover:bg-accent-700 text-base font-medium ${selectedIndex === i ? 'bg-accent-500 text-white' : 'text-zinc-900 dark:text-white'}`}
+            class={`flex items-center gap-3 w-full text-left px-3 py-2.5 cursor-pointer transition-colors duration-150 rounded-md text-sm font-medium ${selectedIndex === i ? 'bg-surface-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-surface-muted/60'}`}
             onmousedown={() => handleSelect(page)}
             tabindex="-1"
           >
-            <span class="w-5 h-5 shrink-0 rounded-lg bg-accent-500/20 flex items-center justify-center">
-              <!-- Optionally add an icon here in the future -->
-            </span>
+            {#if selectedIndex === i}
+              <span class="w-[2px] h-4 rounded bg-accent-500" aria-hidden="true"></span>
+            {:else}
+              <span class="w-[2px] h-4" aria-hidden="true"></span>
+            {/if}
             {$_( page.labelKey )}
           </button>
         {/each}
       </ul>
     {/if}
-    <div class="flex items-center gap-4 px-6 pb-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↑</kbd><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">↓</kbd> {$_( 'pages_menu.navigate' )}</span>
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">⏎</kbd> {$_( 'pages_menu.select' )}</span>
-      <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded-sm bg-zinc-200 dark:bg-zinc-700">Esc</kbd> {$_( 'common.close' )}</span>
+    <div class="flex items-center gap-4 px-5 pb-4 pt-2 text-[11px] text-muted-foreground border-t border-border-subtle">
+      <span class="flex items-center gap-1 pt-3"><kbd class="px-1.5 py-0.5 rounded bg-surface-muted border border-border-subtle nums-tabular">↑</kbd><kbd class="px-1.5 py-0.5 rounded bg-surface-muted border border-border-subtle nums-tabular">↓</kbd> {$_( 'pages_menu.navigate' )}</span>
+      <span class="flex items-center gap-1 pt-3"><kbd class="px-1.5 py-0.5 rounded bg-surface-muted border border-border-subtle">⏎</kbd> {$_( 'pages_menu.select' )}</span>
+      <span class="flex items-center gap-1 pt-3"><kbd class="px-1.5 py-0.5 rounded bg-surface-muted border border-border-subtle">Esc</kbd> {$_( 'common.close' )}</span>
     </div>
   </div>
-</div> 
+</div>

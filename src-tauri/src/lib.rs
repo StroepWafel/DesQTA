@@ -54,6 +54,8 @@ mod todolist;
 mod pdf_extract;
 #[path = "utils/forum_photos.rs"]
 mod forum_photos;
+#[path = "utils/dashboard_export.rs"]
+mod dashboard_export;
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use serde_json;
@@ -500,6 +502,9 @@ pub fn run() {
             theme_manager::import_theme_from_file,
             theme_manager::get_themes_directory_path,
             theme_manager::export_theme_to_file,
+            dashboard_export::export_dashboard_dqdash,
+            dashboard_export::import_dashboard_dqdash,
+            dashboard_export::extract_dqdash_to_json,
             theme_manager::read_theme_css,
             theme_manager::download_and_install_theme,
             theme_manager::download_theme_to_temp,
@@ -833,7 +838,7 @@ pub fn run() {
                 if let Some(window) = app.webview_windows().get("main") {
                     let _ = window.set_title("DesQTA");
                     let _ = window.set_min_size(Some(tauri::Size::Logical(tauri::LogicalSize::new(900.0, 700.0))));
-                    let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(900.0, 700.0)));
+                    let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(1600.0, 1000.0)));
                     let _ = window.set_decorations(false);
                     let _ = window.center();
                     

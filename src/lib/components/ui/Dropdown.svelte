@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Icon } from 'svelte-hero-icons';
-  import { ChevronDown, Check } from 'svelte-hero-icons';
+  import { ChevronDown } from 'svelte-hero-icons';
   import { clickOutside } from '$lib/actions/clickOutside.js';
   import { fly } from 'svelte/transition';
   import type { Snippet } from 'svelte';
@@ -55,35 +55,29 @@
 
   function handleItemClick(item: DropdownItem) {
     if (item.disabled) return;
-
-    if (item.onClick) {
-      item.onClick();
-    }
-
-    if (closeOnClick) {
-      closeDropdown();
-    }
+    if (item.onClick) item.onClick();
+    if (closeOnClick) closeDropdown();
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      closeDropdown();
-    }
+    if (event.key === 'Escape') closeDropdown();
   }
 
-  let placementClasses = {
-    'bottom-start': 'top-full left-0 mt-1',
-    'bottom-end': 'top-full right-0 mt-1',
-    'top-start': 'bottom-full left-0 mb-1',
-    'top-end': 'bottom-full right-0 mb-1',
+  const placementClasses = {
+    'bottom-start': 'top-full left-0 mt-2',
+    'bottom-end': 'top-full right-0 mt-2',
+    'top-start': 'bottom-full left-0 mb-2',
+    'top-end': 'bottom-full right-0 mb-2',
   };
 
+  // Lo-fi trigger: analytics-pattern - quiet 1px border, no shadow, accent on focus
   let buttonClasses = $derived(
     [
-      'inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300',
-      'bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg',
-      'hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-1',
-      'transition-all duration-200',
+      'inline-flex items-center gap-2 h-10 px-3.5 text-sm font-medium text-foreground',
+      'bg-card border border-border rounded-lg',
+      'hover:border-border-strong hover:bg-surface-muted',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1',
+      'transition-colors duration-150',
       disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
       className,
     ]
@@ -91,10 +85,11 @@
       .join(' '),
   );
 
+  // Lo-fi panel: opaque popover surface, 1px border, single soft shadow
   let menuClasses = $derived(
     [
-      'absolute z-50 min-w-48 py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700',
-      'rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 divide-y divide-zinc-100 dark:divide-zinc-700',
+      'absolute z-50 min-w-48 py-1 bg-popover text-popover-foreground border border-border',
+      'rounded-xl shadow-[0_8px_24px_-8px_rgba(0,0,0,0.12),0_2px_6px_-2px_rgba(0,0,0,0.06)]',
       placementClasses[placement],
       menuClass,
     ]
@@ -124,7 +119,7 @@
         <Icon
           src={ChevronDown}
           size="16"
-          class="transition-transform duration-200 {open ? 'rotate-180' : ''}" />
+          class="transition-transform duration-150 {open ? 'rotate-180' : ''} text-muted-foreground" />
       {/if}
     {/if}
   </button>
@@ -135,17 +130,17 @@
       use:clickOutside={() => closeDropdown()}
       role="menu"
       aria-orientation="vertical"
-      transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
+      transition:fly={{ y: -4, duration: 150, opacity: 0, easing: (t) => t * (2 - t) }}>
       {#each items as item}
         {#if item.separator}
-          <div class="border-t border-zinc-200 dark:border-zinc-700 my-1"></div>
+          <div class="border-t border-border-subtle my-1"></div>
         {:else}
           <button
-            class="group flex items-center w-full px-4 py-2 text-sm transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] {item.disabled
-              ? 'opacity-50 cursor-not-allowed text-zinc-400 dark:text-zinc-500'
+            class="group flex items-center w-full px-3.5 py-2 text-sm transition-colors duration-100 {item.disabled
+              ? 'opacity-50 cursor-not-allowed text-muted-foreground'
               : item.danger
-                ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'}"
+                ? 'text-destructive hover:bg-destructive/10'
+                : 'text-foreground hover:bg-surface-muted'}"
             onclick={() => handleItemClick(item)}
             disabled={item.disabled}
             role="menuitem">
@@ -153,7 +148,7 @@
               <Icon
                 src={item.icon}
                 size="16"
-                class="mr-3 transition-transform duration-200 group-hover:scale-110" />
+                class="mr-3 text-muted-foreground group-hover:text-foreground" />
             {/if}
 
             <span class="flex-1 text-left">{item.label}</span>

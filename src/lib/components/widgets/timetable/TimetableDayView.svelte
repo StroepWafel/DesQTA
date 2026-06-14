@@ -176,7 +176,7 @@
 <div class="flex flex-col flex-1 w-full min-h-0 overflow-hidden">
   <!-- Day Header -->
   <div
-    class="flex justify-between items-center px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50">
+    class="flex justify-between items-center px-4 py-3 border-b border-border bg-zinc-50/50 dark:bg-zinc-900/50">
     <div class="flex gap-2 items-center">
       <Button
         variant="ghost"
@@ -188,12 +188,12 @@
 
       <div class="text-center min-w-[200px]">
         <h2
-          class="text-xl font-bold text-zinc-900 dark:text-white {isToday
+          class="text-xl font-bold text-foreground {isToday
             ? 'text-blue-600 dark:text-blue-400'
             : ''}">
           {dayName}
         </h2>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400">
+        <p class="text-sm text-muted-foreground">
           {selectedDate.toLocaleDateString('en-AU', {
             weekday: 'long',
             year: 'numeric',
@@ -237,11 +237,11 @@
           {#each timeAxisMarkers as timeSlot}
             {@const yPos = timeToY(timeSlot)}
             <div
-              class="absolute left-0 w-full border-t border-zinc-200 dark:border-zinc-700"
+              class="absolute left-0 w-full border-t border-border"
               style="top: {yPos}px;">
               <div class="flex items-center justify-center h-5 -mt-2.5">
                 <span
-                  class="text-[11px] font-mono font-semibold text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 px-0.5 rounded-sm">
+                  class="text-[11px] font-mono font-semibold text-muted-foreground bg-white dark:bg-zinc-900 px-0.5 rounded-sm">
                   {formatTime12Hour(timeSlot)}
                 </span>
               </div>

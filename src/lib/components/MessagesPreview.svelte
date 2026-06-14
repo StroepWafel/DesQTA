@@ -1,7 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fade, scale } from 'svelte/transition';
-  import { cubicInOut } from 'svelte/easing';
   import { goto } from '$app/navigation';
   import { Icon } from 'svelte-hero-icons';
   import { ArrowPath, PencilSquare, User, ChatBubbleLeftRight } from 'svelte-hero-icons';
@@ -10,6 +8,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import T from './T.svelte';
   import { _ } from '../../lib/i18n';
+  import WidgetCard from './dashboard/WidgetCard.svelte';
 
   interface MessagePreview {
     id: string;
@@ -148,145 +147,83 @@
   onMount(fetchMessages);
 </script>
 
-<div
-  class="flex flex-col gap-2 sm:gap-3 h-full min-h-0 text-zinc-900 dark:text-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
-  <div
-    class="flex items-center justify-between shrink-0 transition-all duration-300"
-    in:fade={{ duration: 200, delay: 0 }}
-    style="transform-origin: left center;">
-    <div class="flex items-center gap-2">
-      <Icon
-        src={ChatBubbleLeftRight}
-        class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300 shrink-0" />
-      <h3
-        class="text-base sm:text-lg font-semibold transition-all duration-300"
-        in:fade={{ duration: 300, delay: 150 }}>
-        <T key="navigation.messages" fallback="Messages" />
-      </h3>
-    </div>
-    <div class="flex gap-2">
+<WidgetCard
+  icon={ChatBubbleLeftRight}
+  title={$_('navigation.messages') || 'Messages'}
+  {loading}
+  empty={!loading && !error && items.length === 0}
+  emptyTitle={$_('dashboard.no_messages') || 'No recent messages'}
+  emptyIcon={ChatBubbleLeftRight}>
+  {#snippet headerAction()}
+    <div class="flex items-center gap-1">
       <button
-        class="px-3 py-1.5 rounded-lg bg-zinc-800/80 text-white hover:bg-zinc-700/80 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+        class="inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
         onclick={fetchMessages}
         aria-label={$_('dashboard.refresh_messages') || 'Refresh messages'}
         title={$_('common.refresh') || 'Refresh'}>
         <Icon src={ArrowPath} class="w-4 h-4" />
       </button>
       <button
-        class="px-3 py-1.5 rounded-lg accent-bg text-white hover:opacity-90 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2"
+        class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-accent-500 text-white hover:bg-accent-600 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
         onclick={composeMessage}
         aria-label={$_('dashboard.compose_message') || 'Compose message'}
         title={$_('dashboard.compose') || 'Compose'}>
         <Icon src={PencilSquare} class="w-4 h-4" />
       </button>
     </div>
-  </div>
+  {/snippet}
 
-  {#if loading}
-    <div
-      class="flex items-center justify-center flex-1 min-h-0 py-8 text-xs sm:text-sm opacity-80 transition-all duration-300"
-      in:fade={{ duration: 300, easing: cubicInOut }}>
-      <div
-        class="w-6 h-6 sm:w-8 sm:h-8 border-4 border-accent-600 border-t-transparent rounded-full animate-spin mb-2 transition-all duration-300"
-        in:scale={{ duration: 400, easing: cubicInOut, start: 0.5 }}>
-      </div>
-      <T key="dashboard.loading_messages" fallback="Loading messages…" />
-    </div>
-  {:else if error}
-    <div
-      class="flex items-center justify-center flex-1 min-h-0 py-8 text-xs sm:text-sm text-red-500 transition-all duration-300"
-      in:fade={{ duration: 300, easing: cubicInOut }}>
+  {#if error}
+    <div class="flex items-center justify-center h-full text-sm text-destructive">
       {error}
     </div>
-  {:else if items.length === 0}
-    <div
-      class="flex items-center justify-center flex-1 min-h-0 py-8 text-xs sm:text-sm opacity-80 transition-all duration-300"
-      in:fade={{ duration: 300, easing: cubicInOut }}>
-      <T key="dashboard.no_messages" fallback="No recent messages." />
-    </div>
   {:else}
-    <div
-      class="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1 scrollbar-thin scrollbar-thumb-zinc-400/30 scrollbar-track-transparent transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
-      in:fade={{ duration: 400, delay: 100 }}>
-      {#each items as m, i}
+    <div class="h-full overflow-y-auto -mx-1 px-1 divide-y divide-border-subtle">
+      {#each items as m}
         <button
-          class="w-full text-left group p-2 sm:p-3 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:shadow-md border border-transparent hover:border-zinc-200/60 dark:hover:border-zinc-700/60 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 backdrop-blur-sm {m.unread
-            ? 'bg-accent-500/10 border-accent-500/30 shadow-sm'
-            : 'bg-white/50 dark:bg-zinc-900/30'} hover:scale-[1.01] transform"
+          class="w-full text-left group py-1.5 px-2 rounded-none transition-colors duration-150 border-0 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-500 {m.unread ? 'bg-accent-500/8' : ''}"
           onclick={() => openMessage(m.id)}
-          title={m.subject}
-          in:fade={{ duration: 300, delay: 200 + i * 50 }}
-          style="transform-origin: left center;">
-          <div class="flex items-start gap-3">
-            <!-- Avatar -->
-            <div class="shrink-0 mt-0.5">
+          title={m.subject}>
+          <div class="flex items-center gap-2.5">
+            <div class="shrink-0">
               {#if avatars[m.id] && avatars[m.id] !== null}
                 <img
                   src={avatars[m.id]}
                   alt={`Avatar of ${m.from || 'Unknown'}`}
-                  class="w-10 h-10 rounded-full object-cover bg-zinc-200 dark:bg-zinc-800 border-2 border-zinc-300/50 dark:border-zinc-700/50"
-                  onerror={() => {
-                    avatars[m.id] = null;
-                  }} />
+                  class="w-8 h-8 rounded-full object-cover bg-surface-muted"
+                  onerror={() => { avatars[m.id] = null; }} />
               {:else}
-                <div
-                  class="w-10 h-10 rounded-full flex items-center justify-center bg-accent-500/15 text-accent-700 dark:text-accent-300 border-2 border-zinc-300/50 dark:border-zinc-700/50">
-                  <Icon src={User} class="w-5 h-5" />
+                <div class="w-8 h-8 rounded-full flex items-center justify-center bg-surface-muted text-muted-foreground">
+                  <Icon src={User} class="w-3.5 h-3.5" />
                 </div>
               {/if}
             </div>
 
-            <!-- Content -->
             <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-2 mb-1">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span
-                    class="font-semibold text-sm text-zinc-900 dark:text-white truncate {m.unread
-                      ? 'text-accent-600 dark:text-accent-400'
-                      : ''}">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <span class="font-medium text-sm text-foreground truncate leading-tight">
                     {m.from || 'Unknown Sender'}
                   </span>
                   {#if m.unread}
-                    <span class="w-2 h-2 rounded-full bg-accent-500 shrink-0"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-accent-500 shrink-0"></span>
                   {/if}
                 </div>
-                <span class="text-xs text-zinc-500 dark:text-zinc-400 shrink-0 whitespace-nowrap">
+                <span class="text-[11px] text-muted-foreground shrink-0 whitespace-nowrap nums-tabular leading-tight">
                   {formatDate(m.timestamp || '')}
                 </span>
               </div>
 
-              <div class="flex items-center gap-2 mb-1">
-                <span
-                  class="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate {m.unread
-                    ? 'text-accent-600 dark:text-accent-400'
-                    : ''}">
-                  {m.subject}
-                </span>
+              <div class="text-xs text-muted-foreground truncate leading-tight">
+                {m.subject}
                 {#if m.attachments}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                  </svg>
+                  <span class="ml-1 inline-block align-middle text-muted-foreground/80">@</span>
                 {/if}
               </div>
-
-              {#if m.snippet && m.snippet !== m.subject}
-                <p class="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-1">
-                  {m.snippet.replace(/\(Attachment\)/, '')}
-                </p>
-              {/if}
             </div>
           </div>
         </button>
       {/each}
     </div>
   {/if}
-</div>
+</WidgetCard>

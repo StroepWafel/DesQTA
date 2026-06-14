@@ -1,10 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fade, scale } from 'svelte/transition';
-  import { cubicInOut } from 'svelte/easing';
-  import { Icon, PencilSquare } from 'svelte-hero-icons';
+  import { PencilSquare } from 'svelte-hero-icons';
   import { invoke } from '@tauri-apps/api/core';
   import { logger } from '../../../utils/logger';
+  import WidgetCard from '../dashboard/WidgetCard.svelte';
 
   interface Props {
     widget?: any;
@@ -72,54 +71,20 @@
   });
 </script>
 
-<div class="flex flex-col h-full min-h-0">
-  <div
-    class="flex items-center gap-2 mb-2 sm:mb-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-    in:fade={{ duration: 200, delay: 0 }}
-    style="transform-origin: left center;">
-    <div
-      class="transition-all duration-300"
-      in:scale={{ duration: 300, delay: 100, easing: cubicInOut, start: 0.8 }}>
-      <Icon
-        src={PencilSquare}
-        class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300" />
-    </div>
-    <h3
-      class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300"
-      in:fade={{ duration: 300, delay: 150 }}>
-      Quick Notes
-    </h3>
+<WidgetCard icon={PencilSquare} title="Quick Notes" {loading}>
+  {#snippet headerAction()}
     {#if saving}
-      <span
-        class="ml-auto text-xs text-zinc-500 dark:text-zinc-500 transition-all duration-300"
-        in:fade={{ duration: 200 }}>
-        Saving...
+      <span class="text-[10px] text-muted-foreground uppercase tracking-[0.06em] font-semibold">
+        Saving…
       </span>
     {/if}
-  </div>
+  {/snippet}
 
-  {#if loading}
-    <div
-      class="flex flex-col items-center justify-center flex-1 py-6 sm:py-8 min-h-0"
-      in:fade={{ duration: 300, easing: cubicInOut }}>
-      <div
-        class="w-6 h-6 sm:w-8 sm:h-8 border-4 border-accent-600 border-t-transparent rounded-full animate-spin mb-2 transition-all duration-300"
-        in:scale={{ duration: 400, easing: cubicInOut, start: 0.5 }}>
-      </div>
-      <p
-        class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 transition-all duration-300"
-        in:fade={{ duration: 300, delay: 100 }}>
-        Loading...
-      </p>
-    </div>
-  {:else}
-    <textarea
-      bind:value={noteContent}
-      oninput={handleInput}
-      placeholder="Write your quick notes here..."
-      class="flex-1 w-full p-2 sm:p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm text-zinc-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-sm focus:shadow-md"
-      style="font-size: {fontSize}px;"
-      aria-label="Quick notes text area"
-      in:fade={{ duration: 400, delay: 100 }}></textarea>
-  {/if}
-</div>
+  <textarea
+    bind:value={noteContent}
+    oninput={handleInput}
+    placeholder="Write your quick notes here..."
+    class="w-full h-full p-3 rounded-lg border border-border bg-surface-2 text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500 transition-colors duration-150 placeholder:text-muted-foreground/70"
+    style="font-size: {fontSize}px;"
+    aria-label="Quick notes text area"></textarea>
+</WidgetCard>

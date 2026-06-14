@@ -76,7 +76,7 @@
 </script>
 
 <div class="flex-1 min-w-[350px] max-w-[600px] flex flex-col">
-  <h2 class="flex gap-2 items-center mb-6 text-2xl font-bold text-zinc-900 dark:text-white">
+  <h2 class="flex gap-2 items-center mb-6 text-2xl font-bold text-foreground">
     <span
       class="inline-block flex justify-center items-center w-6 h-6 text-white bg-linear-to-tr from-indigo-500 to-blue-400 rounded-full shadow-xs">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"

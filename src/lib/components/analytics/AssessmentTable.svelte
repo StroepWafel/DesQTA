@@ -44,14 +44,14 @@
   });
 </script>
 
-<div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-  <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
-    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Assessment Details</h3>
+<div class="bg-card rounded-lg border border-border overflow-hidden">
+  <div class="px-6 py-4 border-b border-border">
+    <h3 class="text-lg font-semibold text-foreground">Assessment Details</h3>
   </div>
 
   <div class="max-h-96 overflow-y-auto">
     {#each Object.entries(groupedAssessments) as [subject, assessments]}
-      <div class="border-b border-zinc-200 dark:border-zinc-700 last:border-b-0">
+      <div class="border-b border-border last:border-b-0">
         <!-- Subject Header -->
         <button
           onclick={() => toggleSubject(subject)}
@@ -60,10 +60,10 @@
           <div class="flex items-center gap-3">
             <Icon 
               src={expandedSubjects[subject] ? ChevronDown : ChevronRight} 
-              class="w-5 h-5 text-zinc-600 dark:text-zinc-400" 
+              class="w-5 h-5 text-muted-foreground" 
             />
-            <span class="font-semibold text-zinc-900 dark:text-white">{subject}</span>
-            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+            <span class="font-semibold text-foreground">{subject}</span>
+            <span class="text-sm text-muted-foreground">
               ({assessments.length} assessment{assessments.length !== 1 ? 's' : ''})
             </span>
           </div>
@@ -76,14 +76,14 @@
               <div class="px-6 py-3 border-t border-zinc-200 dark:border-zinc-600 flex items-center justify-between">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-3 mb-1">
-                    <h4 class="font-medium text-zinc-900 dark:text-white truncate">
+                    <h4 class="font-medium text-foreground truncate">
                       {assessment.title}
                     </h4>
                     <span class="px-2 py-1 text-xs font-medium rounded-full {getStatusColor(assessment.status)}">
                       {assessment.status}
                     </span>
                   </div>
-                  <div class="flex items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
+                  <div class="flex items-center gap-4 text-sm text-muted-foreground">
                     <span>Due: {formatDate(assessment.due)}</span>
                     {#if assessment.code}
                       <span>Code: {assessment.code}</span>
@@ -93,12 +93,12 @@
                 
                 {#if hasGradeToShow(assessment)}
                   <div class="text-right">
-                    <div class="text-lg font-bold text-zinc-900 dark:text-white">
+                    <div class="text-lg font-bold text-foreground">
                       {primaryGradeDisplay(assessment)}
                     </div>
                   </div>
                 {:else}
-                  <div class="text-sm text-zinc-500 dark:text-zinc-400">
+                  <div class="text-sm text-muted-foreground">
                     No grade
                   </div>
                 {/if}
@@ -112,7 +112,7 @@
 
   {#if Object.keys(groupedAssessments).length === 0}
     <div class="px-6 py-12 text-center">
-      <p class="text-zinc-500 dark:text-zinc-400">No assessments match the current filters.</p>
+      <p class="text-muted-foreground">No assessments match the current filters.</p>
     </div>
   {/if}
 </div>

@@ -17,6 +17,7 @@
     cancelThemePreview,
     applyPreviewTheme,
     previewingTheme,
+    previewingThemeDisplayName,
   } from '$lib/stores/theme';
   import { get } from 'svelte/store';
   import { themeBuilderSidebarOpen } from '$lib/stores/themeBuilderSidebar';
@@ -113,14 +114,12 @@
   let totalPages = $state(1);
   const themesPerPage = 20;
 
-  onDestroy(async () => {
-    // Always cleanup temp theme when leaving the page
-    if (tempPreviewThemeSlug) {
-      await themeService.cleanupTempTheme(tempPreviewThemeSlug);
-      tempPreviewThemeSlug = null;
-    }
-    // Cancel preview to restore previous theme
-    await cancelThemePreview();
+  onDestroy(() => {
+    // Previously this cancelled the preview on navigation away, which made it
+    // impossible to actually USE the app while previewing. Now the global
+    // ThemePreviewBar (mounted in +layout.svelte) handles cancel/apply, so we
+    // let the preview persist across routes and only clean up on explicit
+    // user action.
   });
 
   async function loadBuiltInThemes() {
@@ -651,7 +650,7 @@
 
 <!-- Minimal Store Header -->
 <div
-  class="sticky top-0 z-30 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700 shadow-sm"
+  class="sticky top-0 z-30 bg-card border-b border-border shadow-sm"
   data-onboarding="theme-store"
   transition:fade={{ duration: 200 }}>
   <div class="w-full mx-auto p-4">
@@ -660,7 +659,7 @@
       <div class="flex items-center gap-4 min-w-0 flex-1">
         <a
           href="/settings"
-          class="flex items-center justify-center w-9 h-9 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all duration-200 transform hover:scale-110 active:scale-95 flex-shrink-0"
+          class="flex items-center justify-center w-9 h-9 rounded-lg text-muted-foreground hover:surface-muted hover:text-zinc-900 dark:hover:text-zinc-100 transition-all duration-200 transform hover:scale-110 active:scale-95 flex-shrink-0"
           title="Back to Settings">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -672,7 +671,7 @@
         </a>
         <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-700 flex-shrink-0"></div>
         <h1
-          class="text-xl font-semibold text-zinc-900 dark:text-white truncate"
+          class="text-xl font-semibold text-foreground truncate"
           transition:fade={{ duration: 200 }}>
           <T key="settings.theme_store" fallback="Theme Store" />
         </h1>
@@ -681,14 +680,14 @@
       <!-- Right: Actions -->
       <div class="flex items-center gap-2 flex-shrink-0">
         <button
-          class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all duration-200"
+          class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-zinc-900 dark:hover:text-zinc-100 hover:surface-muted rounded-lg transition-all duration-200"
           title={capitalizeName(currentThemeName)}>
           <Icon src={Sparkles} class="w-4 h-4" />
           <span class="truncate max-w-[100px]">{capitalizeName(currentThemeName)}</span>
         </button>
         {#if currentThemeName !== 'default'}
           <button
-            class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+            class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-zinc-900 dark:hover:text-zinc-100 hover:surface-muted rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
             onclick={handleUnapplyTheme}
             title="Reset to default theme">
             <Icon src={ArrowPath} class="w-4 h-4" />
@@ -724,7 +723,7 @@
 
 <!-- Integrated Search & Filters -->
 <div
-  class="sticky top-[73px] z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-700"
+  class="sticky top-[73px] z-20 bg-card border-b border-border"
   transition:fade={{ duration: 200 }}>
   <div class="w-full mx-auto p-4">
     <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
@@ -738,7 +737,7 @@
             searchQuery = e.currentTarget.value;
             loadCloudThemes();
           }}
-          class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 accent-ring focus:border-transparent transition-all duration-200" />
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-card text-foreground placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 accent-ring focus:border-transparent transition-all duration-200" />
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Icon src={MagnifyingGlass} class="w-5 h-5 text-zinc-400" />
         </div>
@@ -746,18 +745,17 @@
 
       <!-- Category Filters -->
       <div class="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 flex-1 lg:justify-end">
-        {#each themeCategories as category, i}
+        {#each themeCategories as category (category.id)}
           <button
             type="button"
-            class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 transform hover:scale-105 active:scale-95 {selectedCategory ===
+            class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-150 {selectedCategory ===
             category.id
               ? 'accent-bg text-white shadow-md'
-              : 'text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+              : 'text-muted-foreground bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
             onclick={() => {
               selectedCategory = category.id;
               loadCloudThemes();
-            }}
-            transition:fade={{ duration: 200, delay: i * 30 }}>
+            }}>
             {category.name}
           </button>
         {/each}
@@ -776,7 +774,7 @@
               | 'name';
             loadCloudThemes();
           }}
-          class="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 accent-ring transition-all duration-200 appearance-none cursor-pointer pr-10">
+          class="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-card text-foreground text-sm focus:outline-none focus:ring-2 accent-ring transition-all duration-200 appearance-none cursor-pointer pr-10">
           <option value="popular">Most Popular</option>
           <option value="newest">Newest</option>
           <option value="rating">Highest Rated</option>
@@ -795,14 +793,14 @@
 </div>
 
 <!-- Main Content -->
-<div class="container max-w-none w-full p-5 mx-auto">
+<div class="container mx-auto w-full max-w-none p-5">
   {#if loading}
     <div class="flex justify-center items-center py-16">
       <div class="flex flex-col gap-4 items-center">
         <div
-          class="w-12 h-12 rounded-full border-4 animate-spin border-zinc-200 dark:border-zinc-700 border-t-accent">
+          class="w-12 h-12 rounded-full border-4 animate-spin border-border border-t-accent">
         </div>
-        <p class="text-lg text-zinc-600 dark:text-zinc-400">
+        <p class="text-lg text-muted-foreground">
           <T key="settings.loading_amazing_themes" fallback="Loading amazing themes..." />
         </p>
       </div>
@@ -842,7 +840,7 @@
     <!-- Collections Section -->
     {#if collections && collections.length > 0 && !searchQuery.trim()}
       <div class="mb-16">
-        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Collections</h2>
+        <h2 class="text-2xl font-bold text-foreground mb-6">Collections</h2>
         <div class="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
           <div class="flex gap-4 min-w-max">
             {#each collections as collection, i}
@@ -892,7 +890,7 @@
     <!-- All Themes Grid -->
     {#if getFilteredThemes().length > 0}
       <div>
-        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
+        <h2 class="text-2xl font-bold text-foreground mb-6">
           {searchQuery || selectedCategory !== 'all' ? 'Search Results' : 'All Themes'}
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -916,7 +914,7 @@
               <!-- Built-in theme card with preview image -->
               <div transition:fly={{ y: 20, duration: 300, delay: i * 30, easing: cubicOut }}>
                 <div
-                  class="relative group bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden h-full flex flex-col">
+                  class="relative group bg-card rounded-2xl border border-border shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden h-full flex flex-col">
                   <!-- Theme Preview -->
                   <div class="relative h-48 overflow-hidden" style={getBuiltInPreviewStyle(theme)}>
                     {#if getBuiltInPreviewImage(theme)}
@@ -935,7 +933,7 @@
                     {#if getThemeSlug(theme) === currentThemeName}
                       <div class="absolute top-3 left-3">
                         <span
-                          class="px-2 py-1 text-xs font-medium bg-green-500 text-white rounded-full flex items-center gap-1 backdrop-blur-sm">
+                          class="px-2 py-1 text-xs font-medium bg-green-500 text-white rounded-full flex items-center gap-1 ">
                           <Icon src={CheckCircle} class="w-3 h-3" />
                           Active
                         </span>
@@ -945,10 +943,10 @@
 
                   <!-- Theme Info -->
                   <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-1 line-clamp-1">
+                    <h3 class="text-lg font-bold text-foreground mb-1 line-clamp-1">
                       {theme.name}
                     </h3>
-                    <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2 flex-1">
+                    <p class="text-sm text-muted-foreground mb-4 line-clamp-2 flex-1">
                       {theme.description}
                     </p>
                     <button
@@ -967,7 +965,7 @@
         {#if totalPages > 1}
           <div class="flex items-center justify-center gap-2 mt-8">
             <button
-              class="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-2 rounded-lg bg-card border border-border hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={currentPage === 1}
               onclick={() => {
                 currentPage--;
@@ -975,11 +973,11 @@
               }}>
               Previous
             </button>
-            <span class="text-zinc-600 dark:text-zinc-400">
+            <span class="text-muted-foreground">
               Page {currentPage} of {totalPages}
             </span>
             <button
-              class="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-2 rounded-lg bg-card border border-border hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={currentPage === totalPages}
               onclick={() => {
                 currentPage++;
@@ -996,10 +994,10 @@
           class="w-24 h-24 mx-auto mb-6 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center">
           <Icon src={ShoppingCart} class="w-12 h-12 text-zinc-400" />
         </div>
-        <h3 class="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
+        <h3 class="text-xl font-semibold text-foreground mb-2">
           <T key="settings.no_themes_found" fallback="No themes found" />
         </h3>
-        <p class="text-zinc-600 dark:text-zinc-400 mb-6">
+        <p class="text-muted-foreground mb-6">
           <T
             key="settings.try_adjusting_filters"
             fallback="Try adjusting your search or filter criteria." />
@@ -1022,9 +1020,9 @@
 {#if $previewingTheme}
   <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
     <div
-      class="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-300">
-      <span class="text-sm text-zinc-700 dark:text-zinc-300"
-        >Previewing <span class="font-semibold">{$previewingTheme}</span></span>
+      class="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border border-border bg-card transition-all duration-300">
+      <span class="text-sm text-foreground"
+        >Previewing <span class="font-semibold">{$previewingThemeDisplayName || ($previewingTheme?.replace(/^\.temp\//, '') || '')}</span></span>
       <div class="h-5 w-px bg-zinc-300 dark:bg-zinc-700"></div>
       <button
         class="px-3 py-1.5 rounded-lg accent-bg hover:accent-bg-hover text-white text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95"
@@ -1093,13 +1091,13 @@
     <!-- Backdrop -->
     <button
       type="button"
-      class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+      class="absolute inset-0 bg-black/50 "
       onclick={() => (collectionModalOpen = false)}
       aria-label="Close modal"></button>
 
     <!-- Modal Content -->
     <div
-      class="relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden flex flex-col mobile-modal-max-h"
+      class="relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-border overflow-hidden flex flex-col mobile-modal-max-h"
       role="document"
       transition:fly={{ y: 20, duration: 300, easing: cubicOut }}>
       <!-- Header -->
@@ -1133,7 +1131,7 @@
           </div>
           <button
             type="button"
-            class="p-2 rounded-lg bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-110 active:scale-95"
+            class="p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 border border-white/20 transition-all duration-200 transform hover:scale-110 active:scale-95"
             onclick={() => (collectionModalOpen = false)}
             aria-label="Close modal">
             <Icon src={XMark} class="w-6 h-6" />
@@ -1163,7 +1161,7 @@
             {/each}
           </div>
         {:else}
-          <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+          <div class="text-center py-12 text-muted-foreground">
             No themes in this collection yet.
           </div>
         {/if}

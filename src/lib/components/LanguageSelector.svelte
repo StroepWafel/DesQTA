@@ -48,7 +48,7 @@
         : 'px-4 py-3 text-base min-w-[140px] pr-12'
       }
       bg-white/80 dark:bg-zinc-800/80
-      backdrop-blur-xl
+      
       border-2 border-zinc-200/60 dark:border-zinc-600/60
       rounded-xl
       text-zinc-900 dark:text-zinc-100
@@ -70,7 +70,7 @@
     {#each availableLocales as localeOption}
       <option 
         value={localeOption.code}
-        class="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 py-2"
+        class="bg-card text-zinc-900 dark:text-zinc-100 py-2"
       >
         {#if showFlags && !compact}
           {localeOption.flag} {localeOption.name}

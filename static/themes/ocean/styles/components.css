@@ -21,3 +21,29 @@
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
 }
 
+/* Lofi UI universal surface hooks */
+.surface,
+.surface-raised {
+  background: var(--surfaceColor, var(--card, inherit));
+  border-color: var(--borderColor, var(--border, inherit));
+}
+
+.surface-inset {
+  background: var(--backgroundColor, var(--background, inherit));
+  border-color: var(--borderColor, var(--border, inherit));
+}
+
+.surface-muted,
+.surface-btn-secondary {
+  background: var(--surfaceColor, var(--muted, inherit));
+}
+
+.surface-btn-primary {
+  background: var(--primaryColor, var(--accent-color-value, #3b82f6));
+}
+
+.ocean-card {
+  /* legacy alias */
+  background: var(--surfaceColor, inherit);
+  border: 1px solid var(--borderColor, inherit);
+}

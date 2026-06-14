@@ -212,13 +212,13 @@
   <!-- Quick Navigation Sidebar -->
   <div class="shrink-0 lg:w-48">
     <div
-      class="sticky top-6 p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
-      <h3 class="mb-3 text-sm font-semibold text-zinc-600 dark:text-zinc-400">Quick Jump</h3>
+      class="sticky top-6 p-4 rounded-xl border bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+      <h3 class="mb-3 text-sm font-semibold text-muted-foreground">Quick Jump</h3>
       <div class="space-y-2">
         {#each subjects.filter((subject) => assessmentCodes.has(subject.code)) as subject}
           <a
             href="#subject-{subject.code}"
-            class="flex gap-2 items-center px-3 py-2 rounded-lg transition-all duration-300 cursor-pointer hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
+            class="flex gap-2 items-center px-3 py-2 rounded-lg transition-all duration-300 cursor-pointer hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 text-foreground hover:text-zinc-900 dark:hover:text-white"
             onclick={(e) => scrollToSubject(e, subject.code)}>
             <div
               class="w-2 h-2 rounded-full"
@@ -239,18 +239,18 @@
     <!-- Change to Latest Year Banner -->
     {#if showChangeYearButton}
       <div
-        class="p-4 rounded-xl border backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
+        class="p-4 rounded-xl border bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50">
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center gap-3">
-            <Icon src={Calendar} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <Icon src={Calendar} class="w-5 h-5 text-muted-foreground" />
             <div>
-              <p class="text-sm font-medium text-zinc-900 dark:text-white">
+              <p class="text-sm font-medium text-foreground">
                 <T
                   key="assessments.no_assessments_for_year"
                   fallback={`No assessments for ${selectedYear?.toString() || ''}`}
                   values={{ year: selectedYear?.toString() || '' }} />
               </p>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">
+              <p class="text-xs text-muted-foreground">
                 <T key="assessments.other_years_available" fallback="Other years are available" />
               </p>
             </div>
@@ -279,10 +279,10 @@
                     class="w-3 h-3 rounded-full"
                     style="background-color: {subject.colour || '#8e8e8e'}">
                   </div>
-                  <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
+                  <h3 class="text-base font-bold sm:text-lg text-foreground">
                     {subject.title}
                   </h3>
-                  <span class="text-sm text-zinc-600 dark:text-zinc-400">({subject.code})</span>
+                  <span class="text-sm text-muted-foreground">({subject.code})</span>
                   {#if activeSubjects && activeSubjects.some((as: any) => as.code === subject.code)}
                     <Badge variant="success" size="xs">Active</Badge>
                   {/if}
@@ -316,7 +316,7 @@
               {@const isExpanded = expandedSubjects[subject.code] || false}
               <div class="px-4 pt-4 pb-2">
                 <div class="flex items-center justify-between mb-1">
-                  <span class="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  <span class="text-xs font-medium text-muted-foreground">
                     Weighted Grade Prediction
                   </span>
                   <button
@@ -324,7 +324,7 @@
                     onclick={() => {
                       showDisclaimer = true;
                     }}
-                    class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400">
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-muted-foreground">
                     <Icon src={InformationCircle} class="w-3 h-3" />
                     <span>Disclaimer</span>
                   </button>
@@ -367,19 +367,19 @@
                 </button>
                 {#if isExpanded}
                   <div
-                    class="mt-2 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700">
-                    <div class="mb-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                    class="mt-2 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-border">
+                    <div class="mb-2 text-xs font-semibold text-muted-foreground">
                       Assessment Breakdown:
                     </div>
                     <div class="space-y-2">
                       {#each prediction.assessments as assessment}
                         <div
-                          class="flex justify-between items-center p-2 rounded bg-white dark:bg-zinc-800">
+                          class="flex justify-between items-center p-2 rounded bg-card">
                           <div class="flex-1 min-w-0">
-                            <div class="text-sm font-medium text-zinc-900 dark:text-white truncate">
+                            <div class="text-sm font-medium text-foreground truncate">
                               {assessment.title}
                             </div>
-                            <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                            <div class="text-xs text-muted-foreground">
                               Weight: {assessment.weighting}%
                             </div>
                           </div>
@@ -392,10 +392,10 @@
                         </div>
                       {/each}
                     </div>
-                    <div class="mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                    <div class="mt-3 pt-2 border-t border-border">
                       <div class="flex justify-between items-center text-xs">
-                        <span class="text-zinc-600 dark:text-zinc-400">Total Weight:</span>
-                        <span class="font-semibold text-zinc-900 dark:text-white">
+                        <span class="text-muted-foreground">Total Weight:</span>
+                        <span class="font-semibold text-foreground">
                           {prediction.totalWeight}%
                         </span>
                       </div>
@@ -428,14 +428,14 @@
     showDisclaimer = false;
   }}>
   <div class="px-8 pb-8">
-    <div class="space-y-4 text-zinc-700 dark:text-zinc-300">
+    <div class="space-y-4 text-foreground">
       <p class="text-sm leading-relaxed">
-        <strong class="text-zinc-900 dark:text-white">Important:</strong> The weighted grade predictions
+        <strong class="text-foreground">Important:</strong> The weighted grade predictions
         displayed are estimates based on released assessment marks and their weightings extracted from
         assessment PDFs.
       </p>
       <p class="text-sm leading-relaxed">
-        <strong class="text-zinc-900 dark:text-white">We cannot guarantee:</strong>
+        <strong class="text-foreground">We cannot guarantee:</strong>
       </p>
       <ul class="ml-6 space-y-2 text-sm list-disc">
         <li>That all assessments have been accounted for</li>
@@ -448,7 +448,7 @@
         indicator of your final grade. Always consult with your teachers or official grade reports
         for accurate information about your academic performance.
       </p>
-      <div class="pt-4 mt-4 border-t border-zinc-200 dark:border-zinc-700">
+      <div class="pt-4 mt-4 border-t border-border">
         <Button
           variant="primary"
           onclick={() => {

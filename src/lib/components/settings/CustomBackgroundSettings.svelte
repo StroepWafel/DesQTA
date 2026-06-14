@@ -145,10 +145,10 @@
 <div class="p-4 space-y-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
   <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
     <div>
-      <h4 class="text-sm font-semibold text-zinc-900 dark:text-white">
+      <h4 class="text-sm font-semibold text-foreground">
         <T key="settings.custom_background" fallback="Custom Background Image" />
       </h4>
-      <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+      <p class="text-xs text-muted-foreground mt-1">
         <T
           key="settings.custom_background_description"
           fallback="Use your own image behind the app, similar to the BetterSEQTA extension." />
@@ -211,7 +211,7 @@
       </button>
     {/if}
     {#if saving}
-      <span class="inline-flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400">
+      <span class="inline-flex items-center gap-1 text-sm text-muted-foreground">
         <Icon src={ArrowPath} class="w-4 h-4 animate-spin" />
         Saving...
       </span>
@@ -228,7 +228,7 @@
         bind:value={fit}
         disabled={!hasImage || uploading}
         onchange={persistSettings}
-        class="px-3 py-2 rounded-lg border bg-white dark:bg-zinc-900/50 text-zinc-900 dark:text-white border-zinc-300/50 dark:border-zinc-700/50 focus:outline-none focus:ring-2 accent-ring">
+        class="px-3 py-2 rounded-lg border bg-white dark:bg-zinc-900/50 text-foreground border-zinc-300/50 dark:border-zinc-700/50 focus:outline-none focus:ring-2 accent-ring">
         <option value="cover">Cover</option>
         <option value="contain">Contain</option>
         <option value="fill">Fill</option>

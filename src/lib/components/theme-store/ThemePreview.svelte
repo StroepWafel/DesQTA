@@ -165,7 +165,7 @@
     }}>
     <button
       type="button"
-      class="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-default"
+      class="absolute inset-0 bg-black/50 cursor-default"
       aria-label="Close preview"
       onclick={onClose}
       transition:fade={{ duration: 300 }}></button>
@@ -184,18 +184,18 @@
       }}>
       <!-- Header -->
       <div
-        class="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
+        class="flex items-center justify-between p-6 border-b border-border">
         <div>
-          <h2 id="theme-preview-title" class="text-2xl font-bold text-zinc-900 dark:text-white">
+          <h2 id="theme-preview-title" class="text-2xl font-bold text-foreground">
             {theme.name}
           </h2>
-          <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+          <p class="text-sm text-muted-foreground mt-1">
             by {theme.author} • v{theme.version}
           </p>
         </div>
         <button
           type="button"
-          class="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-all duration-200 transform hover:scale-110 active:scale-95"
+          class="p-2 rounded-lg hover:surface-muted text-muted-foreground transition-all duration-200 transform hover:scale-110 active:scale-95"
           onclick={onClose}
           aria-label="Close">
           <Icon src={XMark} class="w-6 h-6" />
@@ -220,14 +220,14 @@
             {#if screenshots.length > 1}
               <button
                 type="button"
-                class="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm hover:bg-white dark:hover:bg-zinc-800 text-zinc-900 dark:text-white shadow-lg transition-all duration-200 transform hover:scale-110 active:scale-95"
+                class="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-card hover:bg-white dark:hover:bg-zinc-800 text-foreground shadow-lg transition-all duration-200 transform hover:scale-110 active:scale-95"
                 onclick={prevScreenshot}
                 aria-label="Previous screenshot">
                 <Icon src={ChevronLeft} class="w-6 h-6" />
               </button>
               <button
                 type="button"
-                class="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm hover:bg-white dark:hover:bg-zinc-800 text-zinc-900 dark:text-white shadow-lg transition-all duration-200 transform hover:scale-110 active:scale-95"
+                class="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-card hover:bg-white dark:hover:bg-zinc-800 text-foreground shadow-lg transition-all duration-200 transform hover:scale-110 active:scale-95"
                 onclick={nextScreenshot}
                 aria-label="Next screenshot">
                 <Icon src={ChevronRight} class="w-6 h-6" />
@@ -248,7 +248,7 @@
 
               <!-- Counter -->
               <div
-                class="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white text-sm">
+                class="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/50 text-white text-sm">
                 {currentScreenshot + 1} / {screenshots.length}
               </div>
             {/if}
@@ -268,15 +268,15 @@
       </div>
 
       <!-- Footer -->
-      <div class="p-6 border-t border-zinc-200 dark:border-zinc-700">
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{theme.description}</p>
+      <div class="p-6 border-t border-border">
+        <p class="text-sm text-muted-foreground mb-4">{theme.description}</p>
 
         <!-- Stats -->
         <div class="flex items-center gap-6 mb-4 text-sm">
           {#if theme.rating_count > 0}
             <div class="flex items-center gap-1">
               <Icon src={Star} class="w-4 h-4 text-yellow-500 fill-current" />
-              <span class="text-zinc-900 dark:text-white font-medium">
+              <span class="text-foreground font-medium">
                 {theme.rating_average.toFixed(1)}
               </span>
               <span class="text-zinc-500">({theme.rating_count})</span>
@@ -284,10 +284,10 @@
           {:else}
             <div class="text-zinc-500 text-sm">No ratings yet</div>
           {/if}
-          <div class="text-zinc-600 dark:text-zinc-400">
+          <div class="text-muted-foreground">
             {theme.download_count.toLocaleString()} downloads
           </div>
-          <div class="text-zinc-600 dark:text-zinc-400">{theme.favorite_count} favorites</div>
+          <div class="text-muted-foreground">{theme.favorite_count} favorites</div>
         </div>
 
         <!-- Rating/Review Section -->
@@ -295,15 +295,15 @@
           {#if !showRatingForm && !theme.user_rating}
             <button
               type="button"
-              class="w-full mb-4 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+              class="w-full mb-4 px-4 py-2 text-sm font-medium text-foreground bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
               onclick={() => (showRatingForm = true)}>
               <Icon src={Star} class="w-4 h-4" />
               Rate & Review
             </button>
           {:else if showRatingForm || theme.user_rating}
             <div
-              class="mb-4 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
-              <h3 class="text-sm font-semibold text-zinc-900 dark:text-white mb-3">
+              class="mb-4 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-border">
+              <h3 class="text-sm font-semibold text-foreground mb-3">
                 {theme.user_rating ? 'Your Rating' : 'Rate this theme'}
               </h3>
 
@@ -325,7 +325,7 @@
                   </button>
                 {/each}
                 {#if userRating > 0}
-                  <span class="ml-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  <span class="ml-2 text-sm text-muted-foreground">
                     {userRating}
                     {userRating === 1 ? 'star' : 'stars'}
                   </span>
@@ -336,7 +336,7 @@
               <textarea
                 placeholder="Write a review (optional)..."
                 bind:value={reviewComment}
-                class="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-none"
+                class="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded-lg text-foreground placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-none"
                 rows="3"></textarea>
 
               <!-- Actions -->
@@ -357,7 +357,7 @@
                 </button>
                 <button
                   type="button"
-                  class="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-lg transition-all duration-200"
+                  class="px-4 py-2 text-sm font-medium text-foreground bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-lg transition-all duration-200"
                   onclick={() => {
                     showRatingForm = false;
                     userRating = 0;
@@ -370,7 +370,7 @@
           {/if}
         {:else}
           <div
-            class="mb-4 p-3 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/30 rounded-lg text-center">
+            class="mb-4 p-3 text-xs text-muted-foreground bg-zinc-50 dark:bg-zinc-800/30 rounded-lg text-center">
             <a
               href="https://accounts.betterseqta.org"
               target="_blank"

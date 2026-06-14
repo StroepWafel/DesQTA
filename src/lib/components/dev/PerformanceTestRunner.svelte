@@ -348,16 +348,16 @@
 <div class="w-full max-w-6xl mx-auto p-6">
   <!-- Header -->
   <div class="mb-8">
-    <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+    <h1 class="text-2xl font-medium text-foreground sm:text-3xl mb-2">
       Performance Test Runner
     </h1>
-    <p class="text-zinc-600 dark:text-zinc-400">
+    <p class="text-muted-foreground">
       Run comprehensive performance benchmarks to identify bottlenecks and detect memory leaks.
     </p>
   </div>
 
   <!-- Tabs -->
-  <div class="flex space-x-1 mb-6 border-b border-zinc-200 dark:border-zinc-700">
+  <div class="flex space-x-1 mb-6 border-b border-border">
     {#each [{ id: 'tests', label: 'Tests' }, { id: 'results', label: 'Results' }, { id: 'history', label: 'History' }] as tab}
       <button
         class="px-4 py-2 text-sm font-medium transition-colors"
@@ -432,7 +432,7 @@
       {#if isRunning}
         <div class="mb-6 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg" transition:slide>
           <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span class="text-sm font-medium text-foreground">
               {currentSuite}
             </span>
             <span class="text-sm text-zinc-500">{Math.round(progress)}%</span>
@@ -478,7 +478,7 @@
               'relative p-4 border-2 rounded-xl cursor-pointer transition-all',
               selectedCategories.has(category.id)
                 ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/10'
-                : 'border-zinc-200 dark:border-zinc-700',
+                : 'border-border',
               isRunning ? 'opacity-50' : '',
             ]}
           >
@@ -494,10 +494,10 @@
                 <Icon src={category.icon} class="w-5 h-5" />
               </div>
               <div class="ml-3 flex-1">
-                <h3 class="font-medium text-zinc-900 dark:text-white">
+                <h3 class="font-medium text-foreground">
                   {category.name}
                 </h3>
-                <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                <p class="text-sm text-muted-foreground mt-1">
                   {category.description}
                 </p>
               </div>
@@ -515,7 +515,7 @@
   {#if activeTab === 'results'}
     <div transition:fade>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+        <h2 class="text-lg font-semibold text-foreground">
           Test Results
         </h2>
         <div class="flex gap-2">
@@ -539,14 +539,14 @@
       </div>
 
       {#if results.length === 0}
-        <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+        <div class="text-center py-12 text-muted-foreground">
           <Icon src={CpuChip} class="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No results yet. Run some tests to see performance metrics.</p>
         </div>
       {:else}
         <div class="space-y-4">
           {#each results as result, i}
-            <div class="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <div class="p-4 bg-card rounded-lg border border-border">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center">
                   {#if result.passed}
@@ -554,7 +554,7 @@
                   {:else}
                     <Icon src={XCircle} class="w-5 h-5 text-red-500 mr-2" />
                   {/if}
-                  <span class="font-medium text-zinc-900 dark:text-white">
+                  <span class="font-medium text-foreground">
                     {result.benchmarkId}
                   </span>
                 </div>
@@ -572,19 +572,19 @@
                 </div>
                 <div>
                   <span class="text-zinc-500">Score</span>
-                  <p class="font-medium text-zinc-900 dark:text-white">
+                  <p class="font-medium text-foreground">
                     {result.overallScore}/100
                   </p>
                 </div>
                 <div>
                   <span class="text-zinc-500">Device</span>
-                  <p class="font-medium text-zinc-900 dark:text-white">
+                  <p class="font-medium text-foreground">
                     {result.deviceClass}
                   </p>
                 </div>
                 <div>
                   <span class="text-zinc-500">Metrics</span>
-                  <p class="font-medium text-zinc-900 dark:text-white">
+                  <p class="font-medium text-foreground">
                     {result.metrics.length}
                   </p>
                 </div>
@@ -592,14 +592,14 @@
 
               {#if result.metrics.length > 0}
                 <details class="mt-3">
-                  <summary class="text-sm text-zinc-600 dark:text-zinc-400 cursor-pointer hover:text-zinc-900 dark:hover:text-white">
+                  <summary class="text-sm text-muted-foreground cursor-pointer hover:text-zinc-900 dark:hover:text-white">
                     View {result.metrics.length} Metrics
                   </summary>
                   <div class="mt-2 space-y-1 max-h-48 overflow-y-auto text-xs">
                     {#each result.metrics.slice(0, 20) as metric}
                       <div class="flex justify-between py-1 px-2 bg-zinc-50 dark:bg-zinc-900 rounded">
-                        <span class="text-zinc-600 dark:text-zinc-400">{metric.name}</span>
-                        <span class="font-mono text-zinc-900 dark:text-white">
+                        <span class="text-muted-foreground">{metric.name}</span>
+                        <span class="font-mono text-foreground">
                           {metric.value.toFixed(2)}{metric.unit}
                         </span>
                       </div>
@@ -623,7 +623,7 @@
   {#if activeTab === 'history'}
     <div transition:fade>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+        <h2 class="text-lg font-semibold text-foreground">
           Benchmark History
         </h2>
         <button
@@ -635,7 +635,7 @@
       </div>
 
       {#if $benchmarkHistory.length === 0}
-        <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+        <div class="text-center py-12 text-muted-foreground">
           <Icon src={CircleStack} class="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No benchmark history available.</p>
         </div>
@@ -650,7 +650,7 @@
                   <div class="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
                 {/if}
                 <div>
-                  <p class="font-medium text-zinc-900 dark:text-white text-sm">
+                  <p class="font-medium text-foreground text-sm">
                     {run.benchmarkId}
                   </p>
                   <p class="text-xs text-zinc-500">
@@ -660,14 +660,14 @@
               </div>
               <div class="flex items-center gap-4">
                 <div class="text-right">
-                  <p class="text-sm font-medium text-zinc-900 dark:text-white">
+                  <p class="text-sm font-medium text-foreground">
                     {run.overallScore}/100
                   </p>
                   <p class="text-xs text-zinc-500">
                     {run.metrics.length} metrics
                   </p>
                 </div>
-                <div class="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700 px-2 py-1 rounded">
+                <div class="text-xs text-muted-foreground bg-zinc-200 dark:bg-zinc-700 px-2 py-1 rounded">
                   {run.deviceClass}
                 </div>
               </div>

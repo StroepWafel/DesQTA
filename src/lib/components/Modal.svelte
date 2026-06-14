@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { fade, scale } from 'svelte/transition';
+  import { fade, fly } from 'svelte/transition';
   import { Icon, XMark } from 'svelte-hero-icons';
   import type { Snippet } from 'svelte';
   import { Button } from '$lib/components/ui';
   import { _ } from '../i18n';
+  import { tooltip } from '$lib/actions/tooltip';
+  import { portal } from '$lib/actions/portal';
 
   interface Props {
     open: boolean;
@@ -38,15 +40,11 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    if (closeOnEscape && e.key === 'Escape') {
-      closeModal();
-    }
+    if (closeOnEscape && e.key === 'Escape') closeModal();
   }
 
   function handleBackdropClick() {
-    if (closeOnBackdrop) {
-      closeModal();
-    }
+    if (closeOnBackdrop) closeModal();
   }
 </script>
 
@@ -54,44 +52,42 @@
 
 {#if open}
   <div
-    class="flex fixed inset-x-0 top-16 bottom-0 z-50 justify-center items-center p-6 mobile-modal-inset"
-    style="background-color: transparent;"
+    use:portal
+    class="flex fixed inset-x-0 top-16 bottom-0 z-[300] justify-center items-center p-6 mobile-modal-inset"
     role="dialog"
     aria-modal="true"
     aria-label={ariaLabel}
-    transition:fade={{ duration: 250, easing: (t) => t * (2 - t) }}>
+    transition:fade={{ duration: 180, easing: (t) => t * (2 - t) }}>
     <div
-      class="fixed inset-x-0 top-16 bottom-0 backdrop-blur-md bg-black/40 mobile-modal-inset"
+      class="fixed inset-x-0 top-16 bottom-0 bg-foreground/40 mobile-modal-inset"
       onclick={handleBackdropClick}
       onkeydown={handleKeydown}
       role="button"
       tabindex="0">
     </div>
     <div
-      class="overflow-hidden relative w-full {maxWidth} {maxHeight} {className} rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/90 border-zinc-200/60 dark:bg-zinc-900/90 dark:border-zinc-700/60"
-      style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);"
+      class="overflow-hidden relative w-full {maxWidth} {maxHeight} {className} rounded-2xl border border-border shadow-[0_24px_56px_-16px_rgba(0,0,0,0.22),0_4px_12px_-4px_rgba(0,0,0,0.08)] bg-card text-card-foreground"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
       role="button"
       tabindex="0"
       aria-label={ariaLabel}
-      transition:scale={{ duration: 250, start: 0.9, easing: (t) => t * (2 - t) }}>
+      transition:fly={{ y: 8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
       {#if showCloseButton}
-        <div class="absolute top-6 right-6 z-10">
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={XMark}
+        <div class="absolute top-4 right-4 z-10">
+          <button
             onclick={closeModal}
-            ariaLabel={$_('modal.close_modal') || 'Close modal'}
-            class="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-105 active:scale-95" />
+            aria-label={$_('modal.close_modal') || 'Close modal'}
+            use:tooltip={$_('modal.close_modal') || 'Close'}
+            class="inline-flex items-center justify-center h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1">
+            <Icon src={XMark} size="18" />
+          </button>
         </div>
       {/if}
 
       {#if title}
-        <div class="px-8 pt-8 pb-4">
-          <h2
-            class="text-2xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300">
+        <div class="px-6 sm:px-8 pt-6 sm:pt-7 pb-4">
+          <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
             {title}
           </h2>
         </div>

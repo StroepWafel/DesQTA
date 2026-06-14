@@ -71,7 +71,7 @@
 </script>
 
 <div class="w-full">
-  <div class="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">{label}</div>
+  <div class="mb-2 text-sm font-medium text-foreground">{label}</div>
   <svg
     bind:this={svgRef}
     class="w-full"

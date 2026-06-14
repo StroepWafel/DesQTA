@@ -204,23 +204,23 @@
   <div class="p-6">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Select Timetable Slot</h2>
+      <h2 class="text-2xl font-bold text-foreground">Select Timetable Slot</h2>
       <div class="flex items-center gap-2">
         <button
           class="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
           onclick={prevWeek}
           disabled={loading}>
-          <Icon src={ChevronLeft} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+          <Icon src={ChevronLeft} class="w-5 h-5 text-muted-foreground" />
         </button>
         <span
-          class="text-sm font-medium text-zinc-700 dark:text-zinc-300 min-w-[200px] text-center">
+          class="text-sm font-medium text-foreground min-w-[200px] text-center">
           {weekRangeLabel()}
         </span>
         <button
           class="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
           onclick={nextWeek}
           disabled={loading}>
-          <Icon src={ChevronRight} class="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+          <Icon src={ChevronRight} class="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
     </div>
@@ -236,21 +236,21 @@
         {#each ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as dayName, dayIdx}
           <div class="flex flex-col">
             <div
-              class="text-center font-semibold text-sm text-zinc-700 dark:text-zinc-300 mb-2 py-2 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+              class="text-center font-semibold text-sm text-foreground mb-2 py-2 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
               {dayName}
             </div>
             <div class="space-y-2 min-h-[400px]">
               {#each getLessonsForDay(dayIdx) as lesson}
                 <div class="flex flex-col gap-2">
                   <button
-                    class="w-full p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-[1.02] text-left"
+                    class="w-full p-3 rounded-lg border border-border bg-card hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all duration-200 transform hover:scale-[1.02] text-left"
                     onclick={() => selectSlot(lesson)}>
                     <div class="flex items-start justify-between mb-1">
                       <div class="flex-1">
-                        <div class="text-sm font-semibold text-zinc-900 dark:text-white mb-1">
+                        <div class="text-sm font-semibold text-foreground mb-1">
                           {getSubjectName(lesson)}
                         </div>
-                        <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                        <div class="flex items-center gap-2 text-xs text-muted-foreground">
                           <div class="flex items-center gap-1">
                             <Icon src={Clock} class="w-3 h-3" />
                             <span
@@ -262,7 +262,7 @@
                     </div>
                     {#if lesson.room || lesson.staff}
                       <div
-                        class="flex items-center gap-3 mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                        class="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                         {#if lesson.room}
                           <div class="flex items-center gap-1">
                             <Icon src={MapPin} class="w-3 h-3" />
@@ -279,7 +279,7 @@
                     {/if}
                   </button>
                   <button
-                    class="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400"
+                    class="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-border bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-muted-foreground"
                     onclick={(e) => {
                       e.stopPropagation();
                       const dateStr = lesson.date || (lesson.from || '').split('T')[0];

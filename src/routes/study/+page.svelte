@@ -666,15 +666,18 @@
 </script>
 
 <div
-  class="container max-w-none w-full p-5 mx-auto flex flex-col h-full gap-6"
+  class="container mx-auto flex h-full w-full max-w-none flex-col gap-6 p-5"
   in:fade={{ duration: 400, easing: quintOut }}>
   <!-- Header: matches analytics/directory/assessments -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shrink-0" in:fly={{ y: -30, duration: 500, easing: quintOut }}>
-    <div>
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between shrink-0" in:fly={{ y: -8, duration: 250, easing: quintOut }}>
+    <div class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        Focus
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
         <T key="navigation.study" fallback="Study" />
       </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground max-w-2xl">
         <T
           key="study.page_description"
           fallback="Plan, track, and focus on your upcoming work." />
@@ -690,7 +693,7 @@
         class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'quizzes'
           ? 'accent-bg text-white border-transparent'
-          : 'bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
+          : 'bg-white/80 dark:bg-zinc-800/80 border-border text-foreground hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
         onclick={() => (activeTab = 'quizzes')}
         role="tab"
         aria-selected={activeTab === 'quizzes'}
@@ -702,7 +705,7 @@
         class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'tasks'
           ? 'accent-bg text-white border-transparent'
-          : 'bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
+          : 'bg-white/80 dark:bg-zinc-800/80 border-border text-foreground hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
         onclick={() => (activeTab = 'tasks')}
         role="tab"
         aria-selected={activeTab === 'tasks'}
@@ -714,7 +717,7 @@
         class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-hidden focus:ring-2 accent-ring {activeTab ===
         'notes'
           ? 'accent-bg text-white border-transparent'
-          : 'bg-white/80 dark:bg-zinc-800/80 border-zinc-200/50 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
+          : 'bg-white/80 dark:bg-zinc-800/80 border-border text-foreground hover:bg-white/90 dark:hover:bg-zinc-800/90'}"
         onclick={() => (activeTab = 'notes')}
         role="tab"
         aria-selected={activeTab === 'notes'}
@@ -723,7 +726,7 @@
         <T key="study.notes" fallback="Notes" />
       </button>
     </div>
-  </div>
+  </header>
 
   <!-- Main Content Area -->
   <div class="flex-1 min-h-0">
@@ -748,7 +751,7 @@
         <!-- Left Column: Tasks content -->
         <div class="lg:col-span-2 flex flex-col min-h-0">
           <div
-            class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col"
+            class="flex-1 bg-card rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col"
             in:fly={{ y: 20, duration: 300, delay: 200, easing: quintOut }}
             out:fly={{ y: -20, duration: 200, easing: cubicOut }}>
             <!-- Modern Header with inline controls -->
@@ -757,7 +760,7 @@
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <!-- Left side: Title and New Task -->
                 <div class="flex items-center gap-4">
-                  <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <h2 class="text-lg font-semibold text-foreground">
                     <T key="study.tasks" fallback="Tasks" />
                   </h2>
                   <button
@@ -772,7 +775,7 @@
                 <div class="flex items-center gap-3">
                   <!-- Filter Selector -->
                   <select
-                    class="px-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90"
+                    class="px-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 border border-border text-foreground focus:outline-hidden focus:ring-2 accent-ring text-sm font-medium transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90"
                     bind:value={filter}>
                     <option value="all"><T key="study.filter_all" fallback="All Tasks" /></option>
                     <option value="today"
@@ -786,7 +789,7 @@
                   <!-- Search -->
                   <div class="relative">
                     <input
-                      class="w-48 pl-9 pr-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90"
+                      class="w-48 pl-9 pr-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 border border-border text-foreground placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90"
                       placeholder={$_('study.search_tasks') || 'Search tasks...'}
                       bind:value={query} />
                     <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400">
@@ -796,7 +799,7 @@
 
                   <!-- Sort Selector -->
                   <select
-                    class="px-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90"
+                    class="px-3 py-2 rounded-lg bg-white/80 dark:bg-zinc-800/80 border border-border text-foreground focus:outline-hidden focus:ring-2 accent-ring text-sm transition-all duration-200 hover:bg-white/90 dark:hover:bg-zinc-800/90"
                     bind:value={sortBy}>
                     <option value="due">{$_('study.sort_due_date') || 'Due Date'}</option>
                     <option value="priority">{$_('study.sort_priority') || 'Priority'}</option>
@@ -807,7 +810,7 @@
 
               <!-- Task count -->
               <div class="mt-2 flex items-center justify-between">
-                <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                <span class="text-sm text-muted-foreground">
                   <T
                     key="study.task_count"
                     fallback={`${filteredSortedTodos.length} tasks`}
@@ -820,14 +823,14 @@
             <div class="flex-1 min-h-0 p-4 overflow-y-auto">
               <div class="space-y-3">
                 {#if filteredSortedTodos.length === 0}
-                  <div class="text-center py-10 text-zinc-500 dark:text-zinc-400">
+                  <div class="text-center py-10 text-muted-foreground">
                     <T key="study.no_tasks_match" fallback="No tasks match your filters." />
                   </div>
                 {/if}
 
                 {#each filteredSortedTodos as todo (todo.id)}
                   <div
-                    class="rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-800/40 backdrop-blur-sm p-4 transition-all duration-200 hover:bg-white/80 dark:hover:bg-zinc-800/60 hover:border-zinc-300/60 dark:hover:border-zinc-600/60 hover:shadow-lg {completingTasks.has(
+                    class="rounded-xl border border-border bg-white/60 dark:bg-zinc-800/40 p-4 transition-all duration-200 hover:bg-white/80 dark:hover:bg-zinc-800/60 hover:border-zinc-300/60 dark:hover:border-zinc-600/60 hover:shadow-lg {completingTasks.has(
                       todo.id,
                     )
                       ? 'completion-animation'
@@ -851,7 +854,7 @@
                         <div class="flex-1 min-w-0">
                           <div
                             class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <div class="truncate text-zinc-900 dark:text-white font-medium pr-2">
+                            <div class="truncate text-foreground font-medium pr-2">
                               {todo.title || $_('study.untitled_task') || 'Untitled task'}
                             </div>
                             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
@@ -860,7 +863,7 @@
                                   todo.priority,
                                 )}">{todo.priority ?? 'medium'}</span>
                               <button
-                                class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
+                                class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-foreground transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
                                 onclick={() => (editMode[todo.id] = true)}
                                 ><T key="study.edit" fallback="Edit" /></button>
                               <button
@@ -917,7 +920,7 @@
                             {todo.description}
                           </div>
                           {#if (todo.subtasks ?? []).length}
-                            <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            <div class="mt-2 text-xs text-muted-foreground">
                               <T
                                 key="study.subtasks_progress"
                                 fallback={`${(todo.subtasks ?? []).filter((s) => s.completed).length}/${todo.subtasks?.length || 0} subtasks done`}
@@ -954,12 +957,12 @@
                         <div class="flex-1 min-w-0">
                           <div class="flex items-center gap-2">
                             <input
-                              class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-base font-medium"
+                              class="flex-1 px-3 py-2 rounded-lg bg-card border border-zinc-300 dark:border-zinc-700 text-foreground placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-base font-medium"
                               placeholder={$_('study.task_title') || 'Task title'}
                               bind:value={todo.title} />
                             <div class="flex flex-col gap-1">
                               <select
-                                class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm"
+                                class="px-3 py-2 rounded-lg bg-card border border-zinc-300 dark:border-zinc-700 text-foreground focus:outline-hidden focus:ring-2 accent-ring text-sm"
                                 bind:value={todo.priority}
                                 onchange={() => updateField(todo.id, 'priority', todo.priority)}>
                                 <option value="low">{$_('study.priority_low') || 'Low'}</option>
@@ -976,7 +979,7 @@
                           <div class="mt-2 grid grid-cols-1 gap-2">
                             <div class="relative">
                               <input
-                                class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
+                                class="w-full px-3 py-2 rounded-lg bg-card border border-zinc-300 dark:border-zinc-700 text-foreground placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
                                 placeholder={$_('study.related_subject') || 'Related subject'}
                                 bind:value={todo.related_subject}
                                 oninput={(e) => {
@@ -988,7 +991,7 @@
                                   setTimeout(() => (showSubjectDropdown[todo.id] = false), 150)} />
                               {#if showSubjectDropdown[todo.id]}
                                 <div
-                                  class="absolute z-20 mt-1 w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md max-h-56 overflow-auto">
+                                  class="absolute z-20 mt-1 w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card shadow-md max-h-56 overflow-auto">
                                   {#each subjects.filter( (s) => (subjectQuery[todo.id] ?? todo.related_subject ?? '')
                                         .toLowerCase()
                                         .split(' ')
@@ -1006,7 +1009,7 @@
                                         class="mr-2 inline-block w-2 h-2 rounded-full"
                                         style="background-color: {subjectColours[s.code] ||
                                           '#8e8e8e'}"></span>
-                                      <span class="flex-1 text-zinc-900 dark:text-white"
+                                      <span class="flex-1 text-foreground"
                                         >{s.code} — {s.title}</span>
                                     </button>
                                   {/each}
@@ -1015,7 +1018,7 @@
                             </div>
                             <div class="relative">
                               <input
-                                class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
+                                class="w-full px-3 py-2 rounded-lg bg-card border border-zinc-300 dark:border-zinc-700 text-foreground placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
                                 placeholder={$_('study.related_assessment') || 'Related assessment'}
                                 bind:value={todo.related_assessment}
                                 oninput={(e) => {
@@ -1030,7 +1033,7 @@
                                   )} />
                               {#if showAssessmentDropdown[todo.id]}
                                 <div
-                                  class="absolute z-20 mt-1 w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-md max-h-64 overflow-auto">
+                                  class="absolute z-20 mt-1 w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card shadow-md max-h-64 overflow-auto">
                                   {#each assessmentsAll
                                     .filter((a) => {
                                       const q = (assessmentQuery[todo.id] ?? todo.related_assessment ?? '').toLowerCase();
@@ -1062,11 +1065,11 @@
                                           a.colour ||
                                           '#8e8e8e'}"></span>
                                       <div class="flex-1 overflow-hidden">
-                                        <div class="text-zinc-900 dark:text-white truncate">
+                                        <div class="text-foreground truncate">
                                           {a.title}
                                         </div>
                                         <div
-                                          class="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                                          class="text-xs text-muted-foreground truncate">
                                           {a.code} • {new Date(a.due).toLocaleDateString()}
                                         </div>
                                       </div>
@@ -1078,11 +1081,11 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <input
                                 type="date"
-                                class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm"
+                                class="px-3 py-2 rounded-lg bg-card border border-zinc-300 dark:border-zinc-700 text-foreground focus:outline-hidden focus:ring-2 accent-ring text-sm"
                                 bind:value={todo.due_date} />
                               <input
                                 type="time"
-                                class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm"
+                                class="px-3 py-2 rounded-lg bg-card border border-zinc-300 dark:border-zinc-700 text-foreground focus:outline-hidden focus:ring-2 accent-ring text-sm"
                                 bind:value={todo.due_time} />
                             </div>
                             <!-- Live preview for due date/time -->
@@ -1104,7 +1107,7 @@
                               </div>
                             {/if}
                             <input
-                              class="px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring text-sm"
+                              class="px-3 py-2 rounded-lg bg-card border border-zinc-300 dark:border-zinc-700 text-foreground focus:outline-hidden focus:ring-2 accent-ring text-sm"
                               placeholder={$_('study.tags_comma_separated') ||
                                 'Tags (comma separated)'}
                               value={(todo.tags ?? []).join(', ')}
@@ -1122,7 +1125,7 @@
                           <div class="mt-3">
                             <textarea
                               rows="3"
-                              class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 accent-ring transition-all duration-200 ease-in-out resize-none"
+                              class="w-full px-3 py-2 rounded-lg bg-card border border-zinc-300 dark:border-zinc-700 text-foreground focus:outline-hidden focus:ring-2 accent-ring transition-all duration-200 ease-in-out resize-none"
                               placeholder={$_('study.description') || 'Description'}
                               bind:value={todo.description}
                               style="transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);"
@@ -1130,7 +1133,7 @@
                             <div class="mt-3 space-y-2">
                               <div
                                 class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
+                                <h3 class="text-sm font-medium text-foreground">
                                   <T key="study.subtasks" fallback="Subtasks" />
                                 </h3>
                                 <div
@@ -1140,13 +1143,13 @@
                                     onclick={() => addSubtask(todo.id)}
                                     >+ <T key="study.add" fallback="Add" /></button>
                                   <button
-                                    class="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
+                                    class="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-foreground transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring"
                                     onclick={() => markAllSubtasksDone(todo.id)}
                                     >✓ <T key="study.all" fallback="All" /></button>
                                 </div>
                               </div>
                               {#if (todo.subtasks ?? []).length === 0}
-                                <div class="text-sm text-zinc-500 dark:text-zinc-400">
+                                <div class="text-sm text-muted-foreground">
                                   <T key="study.no_subtasks_yet" fallback="No subtasks yet." />
                                 </div>
                               {:else}
@@ -1161,7 +1164,7 @@
                                         aria-label={$_('study.toggle_subtask') ||
                                           'Toggle subtask'} />
                                       <input
-                                        class="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm"
+                                        class="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-card border border-zinc-300 dark:border-zinc-700 text-foreground placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring text-sm"
                                         bind:value={sub.title}
                                         onblur={() => {
                                           const list = (todo.subtasks ?? []).map((s) =>
@@ -1180,7 +1183,7 @@
 
                           <div class="mt-4 flex items-center justify-center sm:justify-end gap-2">
                             <button
-                              class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring w-full sm:w-auto"
+                              class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-foreground transition-all duration-200 hover:scale-105 focus:outline-hidden focus:ring-2 accent-ring w-full sm:w-auto"
                               onclick={() => {
                                 editMode[todo.id] = false;
                                 saveTodos();
@@ -1201,15 +1204,15 @@
           class="flex flex-col gap-6 min-h-0"
           in:fly={{ x: 50, duration: 500, delay: 200, easing: quintOut }}>
           <div
-            class="flex-1 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col">
+            class="flex-1 bg-card rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden flex flex-col">
             <!-- Header -->
             <div
               class="px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
               <div class="flex items-center justify-between">
-                <h2 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
+                <h2 class="text-base sm:text-lg font-semibold text-foreground">
                   <T key="study.upcoming_assessments" fallback="Upcoming Assessments" />
                 </h2>
-                <span class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400"
+                <span class="text-xs sm:text-sm text-muted-foreground"
                   >{upcomingAssessments.length}</span>
               </div>
             </div>
@@ -1226,7 +1229,7 @@
                 <div class="space-y-3">
                   {#each upcomingAssessments as a (a.id)}
                     <div
-                      class="relative flex items-start gap-3 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-800/40 backdrop-blur-sm p-3 transition-all duration-200 hover:bg-white/80 dark:hover:bg-zinc-800/60 hover:shadow-lg"
+                      class="relative flex items-start gap-3 rounded-xl border border-border bg-white/60 dark:bg-zinc-800/40 p-3 transition-all duration-200 hover:bg-white/80 dark:hover:bg-zinc-800/60 hover:shadow-lg"
                       in:fly={{
                         x: 20,
                         duration: 300,
@@ -1247,10 +1250,10 @@
                             : 'bg-emerald-500'}"></span>
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between gap-2">
-                          <div class="truncate text-zinc-900 dark:text-white font-medium">
+                          <div class="truncate text-foreground font-medium">
                             {a.title}
                           </div>
-                          <div class="text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                          <div class="text-xs text-muted-foreground whitespace-nowrap">
                             {a.due_date}{a.due_time ? ` • ${a.due_time}` : ''}
                           </div>
                         </div>
@@ -1265,13 +1268,13 @@
                         </div>
                       </div>
                       <button
-                        class="px-2 py-1 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring">
+                        class="px-2 py-1 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 text-foreground transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 accent-ring">
                         <T key="study.open" fallback="Open" />
                       </button>
                     </div>
                   {/each}
                   {#if upcomingAssessments.length === 0}
-                    <div class="text-center py-6 text-zinc-500 dark:text-zinc-400">
+                    <div class="text-center py-6 text-muted-foreground">
                       <T key="study.no_upcoming_assessments" fallback="No upcoming assessments." />
                     </div>
                   {/if}
@@ -1281,17 +1284,17 @@
 
             <!-- Study Tips -->
             <div
-              class="shrink-0 backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden"
+              class="shrink-0 bg-card rounded-xl sm:rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden"
               in:fly={{ y: 30, duration: 500, delay: 400, easing: quintOut }}>
               <!-- Header -->
               <div
                 class="px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
                 <div class="flex items-center justify-between">
-                  <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <h2 class="text-lg font-semibold text-foreground">
                     <T key="study.study_tip" fallback="Study Tip" />
                   </h2>
                   <button
-                    class="px-3 py-1.5 text-xs rounded-lg bg-white/80 dark:bg-zinc-700/80 backdrop-blur-sm text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 transition-all duration-200 hover:scale-105 border border-zinc-200/50 dark:border-zinc-600/50"
+                    class="px-3 py-1.5 text-xs rounded-lg bg-white/80 dark:bg-zinc-700/80 text-foreground hover:bg-white dark:hover:bg-zinc-700 transition-all duration-200 hover:scale-105 border border-zinc-200/50 dark:border-zinc-600/50"
                     onclick={() => (currentStudyTip = getRandomStudyTip())}
                     aria-label={$_('study.get_new_tip') || 'Get new study tip'}>
                     <T key="study.new_tip" fallback="New Tip" />

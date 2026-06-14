@@ -50,7 +50,9 @@
   import SidebarSettingsDialog from '../../lib/components/SidebarSettingsDialog.svelte';
   import LanguageSelector from '../../lib/components/LanguageSelector.svelte';
   import Card from '../../lib/components/ui/Card.svelte';
+  import { Button } from '../../lib/components/ui';
   import T from '../../lib/components/T.svelte';
+  import { fade } from 'svelte/transition';
   import { _ } from '../../lib/i18n';
   import { logger } from '../../utils/logger';
   import { goto, beforeNavigate } from '$app/navigation';
@@ -65,6 +67,7 @@
   import { setZoom } from '../../lib/utils/zoom';
   import { CacheManager } from '../../utils/cacheManager';
   import { performanceTester, type TestResults } from '../../lib/services/performanceTesting';
+  import { dashboardExportService } from '../../lib/services/dashboardExportService';
   import Modal from '../../lib/components/Modal.svelte';
   import ProfilePictureCropModal from '../../lib/components/ProfilePictureCropModal.svelte';
   import CustomBackgroundSettings from '../../lib/components/settings/CustomBackgroundSettings.svelte';
@@ -124,6 +127,7 @@
   let cloudBaseUrlError: string | null = null;
   let cloudBaseUrlChanged = false;
   let performanceTestRunning = $state(false);
+  let dqdashExtractRunning = $state(false);
   let checkingUpdates = $state(false);
   let updateAvailable = $state(false);
   let updateVersion = $state('');
@@ -857,6 +861,53 @@ The Company reserves the right to terminate your access to the Service at any ti
     pendingNavigationUrl = null;
   }
 
+  function discardChanges() {
+    if (!initialSettings || !hasUnsavedChanges()) return;
+    shortcuts = structuredClone(initialSettings.shortcuts);
+    feeds = structuredClone(initialSettings.feeds);
+    weatherEnabled = initialSettings.weatherEnabled;
+    weatherCity = initialSettings.weatherCity;
+    weatherCountry = initialSettings.weatherCountry;
+    remindersEnabled = initialSettings.remindersEnabled;
+    autoDismissMessageNotifications = initialSettings.autoDismissMessageNotifications;
+    forceUseLocation = initialSettings.forceUseLocation;
+    disableSchoolPicture = initialSettings.disableSchoolPicture;
+    enhancedAnimations = initialSettings.enhancedAnimations;
+    geminiApiKey = initialSettings.geminiApiKey;
+    cerebrasApiKey = initialSettings.cerebrasApiKey;
+    aiProvider = initialSettings.aiProvider;
+    aiIntegrationsEnabled = initialSettings.aiIntegrationsEnabled;
+    lessonSummaryAnalyserEnabled = initialSettings.lessonSummaryAnalyserEnabled;
+    quizGeneratorEnabled = initialSettings.quizGeneratorEnabled;
+    autoCollapseSidebar = initialSettings.autoCollapseSidebar;
+    autoExpandSidebarHover = initialSettings.autoExpandSidebarHover;
+    globalSearchEnabled = initialSettings.globalSearchEnabled;
+    minimizeToTray = initialSettings.minimizeToTray;
+    devSensitiveInfoHider = initialSettings.devSensitiveInfoHider;
+    devForceOfflineMode = initialSettings.devForceOfflineMode;
+    acceptedCloudEula = initialSettings.acceptedCloudEula;
+    syncCloudPfp = initialSettings.syncCloudPfp;
+    sendAnonymousUsageStatistics = initialSettings.sendAnonymousUsageStatistics;
+    separateRssFeed = initialSettings.separateRssFeed;
+    dashboardTodayScheduleFitWidth = initialSettings.dashboardTodayScheduleFitWidth;
+    zoomLevel = initialSettings.zoomLevel;
+    biometricEnabled = initialSettings.biometricEnabled;
+    accentColor.set(initialSettings.accentColor);
+    theme.set(initialSettings.theme as 'light' | 'dark' | 'system');
+    setZoom(initialSettings.zoomLevel);
+    saveSuccess = false;
+    saveError = '';
+  }
+
+  let dirty = $derived(hasUnsavedChanges());
+
+  function jumpToSection(id: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    activeJumpId = id;
+  }
+
   let removeMountListeners: (() => void) | null = null;
 
   onMount(async () => {
@@ -1076,6 +1127,21 @@ The Company reserves the right to terminate your access to the Service at any ti
     }
   }
 
+  async function extractDqDashToJson() {
+    if (dqdashExtractRunning) return;
+    dqdashExtractRunning = true;
+    try {
+      const outputPath = await dashboardExportService.extractDqDashToJson();
+      if (!outputPath) return;
+      toastStore.success(`Exported JSON to ${outputPath}`);
+    } catch (error) {
+      console.error('Failed to extract .DQDash:', error);
+      toastStore.error('Failed to extract .DQDash to JSON');
+    } finally {
+      dqdashExtractRunning = false;
+    }
+  }
+
   async function openPerformanceTestsFolder() {
     try {
       const performanceDir = await invoke<string>('get_performance_tests_directory');
@@ -1115,42 +1181,121 @@ The Company reserves the right to terminate your access to the Service at any ti
       resettingOnboarding = false;
     }
   }
+
+  // Index <section> → h2 labels for the right-hand jump rail.
+  let jumpItems = $state<{ id: string; label: string }[]>([]);
+  let activeJumpId = $state('');
+
+  function settingsSectionIndex(node: HTMLElement) {
+    let scrollSpy: IntersectionObserver | undefined;
+
+    const buildIndex = () => {
+      const sections = Array.from(node.querySelectorAll('section'));
+      const items: { id: string; label: string }[] = [];
+      for (let i = 0; i < sections.length; i++) {
+        const sec = sections[i] as HTMLElement;
+        const h2 = sec.querySelector('h2');
+        if (!h2) continue;
+        let id = sec.id;
+        if (!id) {
+          id = `settings-section-${i}`;
+          sec.id = id;
+        }
+        const label = (h2.textContent || '').trim().replace(/\s+/g, ' ');
+        if (label.length === 0) continue;
+        items.push({ id, label });
+      }
+      jumpItems = items;
+      if (!activeJumpId && items.length > 0) activeJumpId = items[0].id;
+
+      scrollSpy?.disconnect();
+      scrollSpy = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((e) => e.isIntersecting)
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+          const top = visible[0]?.target as HTMLElement | undefined;
+          if (top?.id) activeJumpId = top.id;
+        },
+        { rootMargin: '-12% 0px -55% 0px', threshold: [0, 0.15, 0.4, 0.75] },
+      );
+      for (const sec of sections) scrollSpy.observe(sec);
+    };
+
+    buildIndex();
+    const observer = new MutationObserver(() => buildIndex());
+    observer.observe(node, { childList: true, subtree: true });
+    return {
+      destroy() {
+        observer.disconnect();
+        scrollSpy?.disconnect();
+      },
+    };
+  }
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto">
-  <div
-    class="flex sticky top-0 z-20 flex-col gap-4 justify-between items-start px-6 py-4 mb-8 rounded-xl border-b backdrop-blur-md sm:flex-row sm:items-center animate-fade-in-up bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800">
-    <h1 class="px-2 py-1 text-xl font-bold rounded-lg sm:text-2xl">
-      <T key="navigation.settings" fallback="Settings" />
-    </h1>
-    <div class="flex flex-col gap-2 items-start w-full sm:flex-row sm:items-center sm:w-auto">
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6" in:fade={{ duration: 250 }}>
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div class="flex flex-col gap-1.5 min-w-0">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        Configuration
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+        <T key="navigation.settings" fallback="Settings" />
+      </h1>
+      <p class="text-sm text-muted-foreground max-w-2xl">
+        <T
+          key="settings.page_description"
+          fallback="Preferences, appearance, sync, and app behaviour." />
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-2 shrink-0 sm:items-end">
       {#if saveSuccess}
-        <span class="text-sm text-green-400 animate-fade-in sm:text-base">
+        <span class="text-sm text-emerald-500">
           <T key="settings.saved" fallback="Saved!" />
         </span>
       {/if}
       {#if saveError}
-        <span class="text-sm text-red-400 animate-fade-in sm:text-base">{saveError}</span>
+        <span class="text-sm text-destructive">{saveError}</span>
       {/if}
-      <div class="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
-        <button
-          class="px-6 py-2 w-full text-white rounded-lg shadow-lg transition-all duration-200 bg-accent-500 sm:w-auto hover:from-green-700 hover:to-green-600 focus:ring-2 focus:ring-green-400 active:scale-95 hover:scale-105 playful"
-          onclick={() => saveSettings()}
-          disabled={saving}>
-          {#if saving}
-            <div class="flex gap-2 justify-center items-center">
-              <div
-                class="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white">
-              </div>
-              <span><T key="settings.saving" fallback="Saving..." /></span>
-            </div>
-          {:else}
-            <T key="settings.save_changes" fallback="Save Changes" />
-          {/if}
-        </button>
+      <div class="flex flex-col gap-2 w-full sm:w-auto sm:min-w-[11rem]">
+        <Button
+          variant="primary"
+          fullWidth
+          loading={saving}
+          disabled={saving}
+          onclick={() => saveSettings()}>
+          <T key="settings.save_changes" fallback="Save Changes" />
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          disabled={!dirty || saving}
+          onclick={discardChanges}>
+          <T key="settings.discard_changes" fallback="Discard" />
+        </Button>
       </div>
     </div>
-  </div>
+  </header>
+
+  {#if !loading && jumpItems.length > 0}
+    <nav
+      class="lg:hidden flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none]"
+      aria-label={$_('settings.section_jump', { default: 'Jump to section' })}>
+      {#each jumpItems as item (item.id)}
+        <button
+          type="button"
+          onclick={() => jumpToSection(item.id)}
+          class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 {activeJumpId ===
+          item.id
+            ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400'
+            : 'bg-surface-muted text-muted-foreground hover:text-foreground'}">
+          {item.label}
+        </button>
+      {/each}
+    </nav>
+  {/if}
 
   <ProfilePictureCropModal
     open={showCropModal}
@@ -1159,28 +1304,29 @@ The Company reserves the right to terminate your access to the Service at any ti
     oncancel={closeCropModal} />
 
   {#if loading}
-    <div class="flex justify-center items-center py-12 animate-fade-in">
+    <div class="flex justify-center items-center py-12">
       <div class="flex flex-col gap-4 items-center">
         <div
-          class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-indigo-500/30 border-t-indigo-500">
+          class="w-8 h-8 rounded-full border-4 animate-spin sm:w-10 sm:h-10 border-accent-500/30 border-t-accent-500">
         </div>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
+        <p class="text-sm text-muted-foreground sm:text-base">
           <T key="settings.loading_settings" fallback="Loading settings..." />
         </p>
       </div>
     </div>
   {:else}
-    <div class="space-y-6 sm:space-y-8">
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+      <div class="settings-sections flex-1 min-w-0 flex flex-col gap-6" use:settingsSectionIndex>
       {#if showDevSettings}
         <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+          class="settings-section-card">
+          <div class="settings-section-header">
             <h2 class="text-base font-semibold sm:text-lg">Developer Settings</h2>
             <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               Developer options for debugging and testing
             </p>
           </div>
-          <div class="p-4 sm:p-6">
+          <div class="settings-section-body p-4 sm:p-6">
             <div class="space-y-6">
               <div class="flex gap-3 items-center">
                 <input
@@ -1208,11 +1354,38 @@ The Company reserves the right to terminate your access to the Service at any ti
                 </label>
               </div>
 
-              <div class="pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
+              <div class="pt-6 border-t border-border">
+                <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
+                  Dashboard layouts
+                </h3>
+                <p class="text-xs text-muted-foreground mb-4">
+                  Pick a <span class="font-mono">.DQDash</span> file and write pretty JSON beside it
+                  (same folder, same name, <span class="font-mono">.json</span> extension). Use the
+                  <span class="font-mono">layout</span> object for
+                  <span class="font-mono">src/lib/dashboards/bundled/</span> presets.
+                </p>
+                <button
+                  type="button"
+                  class="flex gap-2 items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 border-zinc-300/70 dark:border-zinc-700/70 text-zinc-800 dark:text-white bg-zinc-100/60 dark:bg-zinc-800/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/40 focus:outline-hidden focus:ring-2 focus:ring-offset-2 accent-ring active:scale-95 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onclick={extractDqDashToJson}
+                  disabled={dqdashExtractRunning}>
+                  {#if dqdashExtractRunning}
+                    <div
+                      class="w-4 h-4 rounded-full border-2 animate-spin border-zinc-400/30 border-t-zinc-400">
+                    </div>
+                    <span>Extracting…</span>
+                  {:else}
+                    <Icon src={DocumentText} class="w-4 h-4" />
+                    <span>Extract .DQDash to JSON</span>
+                  {/if}
+                </button>
+              </div>
+
+              <div class="pt-6 border-t border-border">
                 <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
                   Performance Testing
                 </h3>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
+                <p class="text-xs text-muted-foreground mb-4">
                   Run automated performance testing across all pages. This will navigate through
                   each page, collect performance metrics including load times, errors, and resource
                   usage, then save the results as JSON files in your AppData directory.
@@ -1250,9 +1423,9 @@ The Company reserves the right to terminate your access to the Service at any ti
       <!-- Cloud Sync Section -->
       <section
         data-onboarding="cloud-sync"
-        class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/30 dark:border-zinc-800/30">
-          <h2 class="text-base font-semibold sm:text-lg text-zinc-500 dark:text-zinc-400">
+        class="settings-section-card relative">
+        <div class="settings-section-header">
+          <h2 class="text-base font-semibold sm:text-lg text-muted-foreground">
             <T key="settings.cloud_sync" fallback="Cloud Sync" />
           </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
@@ -1261,14 +1434,14 @@ The Company reserves the right to terminate your access to the Service at any ti
               fallback="Sync your settings across devices with BetterSEQTA Plus account cloud syncing" />
           </p>
         </div>
-        <div class="relative p-4 sm:p-6">
+        <div class="settings-section-body relative p-4 sm:p-6">
           {#if cloudUserLoading}
             <div class="p-4 rounded-lg bg-zinc-200/60 dark:bg-zinc-700/30 animate-fade-in">
               <div class="flex gap-3 items-center">
                 <div
                   class="w-6 h-6 rounded-full border-2 animate-spin border-zinc-400/30 border-t-zinc-400">
                 </div>
-                <span class="text-sm text-zinc-500 dark:text-zinc-400"
+                <span class="text-sm text-muted-foreground"
                   ><T
                     key="settings.loading_account_status"
                     fallback="Loading account status..." /></span>
@@ -1278,9 +1451,9 @@ The Company reserves the right to terminate your access to the Service at any ti
             {#if !acceptedCloudEula}
               <!-- EULA gate overlay -->
               <div
-                class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 rounded-xl backdrop-blur-xs bg-black/40">
+                class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 rounded-xl bg-black/40">
                 <div
-                  class="p-5 w-full max-w-xl rounded-xl border shadow-lg bg-white/95 dark:bg-zinc-900/95 border-zinc-300/50 dark:border-zinc-800/50 text-zinc-800 dark:text-white">
+                  class="p-5 w-full max-w-xl rounded-xl border shadow-lg bg-card border-zinc-300/50 dark:border-zinc-800/50 text-zinc-800 dark:text-white">
                   <h3 class="mb-2 text-base font-semibold sm:text-lg">
                     <T key="settings.accept_cloud_eula" fallback="Accept BetterSEQTA Cloud EULA" />
                   </h3>
@@ -1325,10 +1498,10 @@ The Company reserves the right to terminate your access to the Service at any ti
                       </div>
                     </div>
                     <div>
-                      <p class="text-sm font-medium text-zinc-900 dark:text-white">
+                      <p class="text-sm font-medium text-foreground">
                         {cloudUser.displayName || cloudUser.username}
                       </p>
-                      <p class="text-xs text-zinc-500 dark:text-zinc-400">@{cloudUser.username}</p>
+                      <p class="text-xs text-muted-foreground">@{cloudUser.username}</p>
                       <p
                         class="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -1344,12 +1517,12 @@ The Company reserves the right to terminate your access to the Service at any ti
                     Manage
                   </button>
                 </div>
-                <p class="px-5 pb-5 text-xs text-zinc-500 dark:text-zinc-400">
+                <p class="px-5 pb-5 text-xs text-muted-foreground">
                   Settings sync automatically. Upload or download manually across devices.
                 </p>
                 <div class="px-5 pb-5 pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60">
                   <label
-                    class="flex cursor-pointer gap-3 items-center text-sm text-zinc-700 dark:text-zinc-300">
+                    class="flex cursor-pointer gap-3 items-center text-sm text-foreground">
                     <input
                       type="checkbox"
                       class="w-4 h-4 rounded accent-blue-600"
@@ -1361,14 +1534,14 @@ The Company reserves the right to terminate your access to the Service at any ti
                         fallback="Use BetterSEQTA cloud profile picture as local picture" />
                     </span>
                   </label>
-                  <p class="mt-1 ml-7 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p class="mt-1 ml-7 text-xs text-muted-foreground">
                     <T
                       key="settings.sync_cloud_pfp_description"
                       fallback="Download and keep your cloud avatar in sync with the app header." />
                   </p>
                   <label
                     data-onboarding="analytics-optin"
-                    class="flex cursor-pointer gap-3 items-center text-sm text-zinc-700 dark:text-zinc-300">
+                    class="flex cursor-pointer gap-3 items-center text-sm text-foreground">
                     <input
                       type="checkbox"
                       class="w-4 h-4 rounded accent-blue-600"
@@ -1380,7 +1553,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                         fallback="Send anonymous usage statistics" />
                     </span>
                   </label>
-                  <p class="mt-1 ml-7 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p class="mt-1 ml-7 text-xs text-muted-foreground">
                     <T
                       key="settings.send_anonymous_usage_statistics_description"
                       fallback="Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected." />
@@ -1398,10 +1571,10 @@ The Company reserves the right to terminate your access to the Service at any ti
                       <Icon src={CloudArrowUp} class="w-7 h-7 text-zinc-400 dark:text-zinc-500" />
                     </div>
                     <div>
-                      <p class="text-sm font-medium text-zinc-900 dark:text-white">
+                      <p class="text-sm font-medium text-foreground">
                         Sync Settings Across Devices
                       </p>
-                      <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                      <p class="text-xs text-muted-foreground">
                         <a
                           href="https://accounts.betterseqta.org/register"
                           target="_blank"
@@ -1415,7 +1588,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   </div>
                   <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <label
-                      class="flex cursor-pointer gap-2 items-center text-xs text-zinc-600 dark:text-zinc-400">
+                      class="flex cursor-pointer gap-2 items-center text-xs text-muted-foreground">
                       <input
                         id="accept-eula-loggedout"
                         type="checkbox"
@@ -1435,7 +1608,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <div class="px-5 pb-5 pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60">
                   <label
                     data-onboarding="analytics-optin"
-                    class="flex cursor-pointer gap-3 items-center text-sm text-zinc-700 dark:text-zinc-300">
+                    class="flex cursor-pointer gap-3 items-center text-sm text-foreground">
                     <input
                       type="checkbox"
                       class="w-4 h-4 rounded accent-blue-600"
@@ -1447,7 +1620,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                         fallback="Send anonymous usage statistics" />
                     </span>
                   </label>
-                  <p class="mt-1 ml-7 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p class="mt-1 ml-7 text-xs text-muted-foreground">
                     <T
                       key="settings.send_anonymous_usage_statistics_description"
                       fallback="Help improve DesQTA by sharing anonymous usage data (e.g. daily active use). No personal data is collected." />
@@ -1461,9 +1634,9 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Personal Settings -->
       <section
-        class="overflow-hidden relative rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/30 dark:border-zinc-800/30">
-          <h2 class="text-base font-semibold sm:text-lg text-zinc-500 dark:text-zinc-400">
+        class="settings-section-card relative">
+        <div class="settings-section-header">
+          <h2 class="text-base font-semibold sm:text-lg text-muted-foreground">
             <T key="settings.personal_settings" fallback="Personal Settings" />
           </h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
@@ -1472,15 +1645,15 @@ The Company reserves the right to terminate your access to the Service at any ti
               fallback="Customize your personal profile and preferences" />
           </p>
         </div>
-        <div class="relative p-4 sm:p-6">
+        <div class="settings-section-body relative p-4 sm:p-6">
           <!-- Custom Profile Picture -->
           <div class="space-y-4">
             <div class="flex items-start justify-between">
               <div class="flex-1">
-                <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
+                <h3 class="text-sm font-medium text-foreground">
                   <T key="settings.custom_profile_picture" fallback="Custom Profile Picture" />
                 </h3>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                <p class="text-xs text-muted-foreground mt-1">
                   <T
                     key="settings.profile_picture_description"
                     fallback="Upload a custom profile picture that will appear in the app header" />
@@ -1511,7 +1684,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   class="hidden"
                   bind:this={fileInput} />
                 <button
-                  class="px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95"
+                  class="px-3 py-1 text-xs font-medium text-foreground bg-card border border-zinc-300 dark:border-zinc-600 rounded-lg transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95"
                   onclick={() => fileInput?.click()}
                   disabled={uploading}>
                   {uploading
@@ -1522,13 +1695,13 @@ The Company reserves the right to terminate your access to the Service at any ti
             </div>
 
             <!-- Language Preference -->
-            <div class="space-y-4 pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
+            <div class="space-y-4 pt-6 border-t border-border">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
-                  <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
+                  <h3 class="text-sm font-medium text-foreground">
                     <T key="settings.language" fallback="Language" />
                   </h3>
-                  <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                  <p class="text-xs text-muted-foreground mt-1">
                     <T
                       key="settings.language_description"
                       fallback="Choose your preferred language for the DesQTA interface" />
@@ -1545,8 +1718,8 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Homepage Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+        class="settings-section-card">
+        <div class="settings-section-header">
           <h2 class="text-base font-semibold sm:text-lg">
             <T key="settings.homepage" fallback="Homepage" />
           </h2>
@@ -1554,7 +1727,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             <T key="settings.homepage_description" fallback="Customize your homepage experience" />
           </p>
         </div>
-        <div class="p-4 space-y-6 sm:p-6">
+        <div class="settings-section-body p-4 space-y-6 sm:p-6">
           <!-- Widget Settings -->
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">
@@ -1640,8 +1813,8 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Dashboard Shortcuts Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-150 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+        class="settings-section-card">
+        <div class="settings-section-header">
           <h2 class="text-base font-semibold sm:text-lg">
             <T key="settings.dashboard_shortcuts" fallback="Dashboard Shortcuts" />
           </h2>
@@ -1651,7 +1824,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               fallback="Configure quick access shortcuts that appear on your dashboard" />
           </p>
         </div>
-        <div class="p-4 space-y-6 sm:p-6">
+        <div class="settings-section-body p-4 space-y-6 sm:p-6">
           <div class="space-y-3">
             <h3 class="text-sm font-semibold sm:text-base">
               <T
@@ -1698,7 +1871,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <div class="flex flex-col gap-1 w-full sm:w-32">
                       <label
                         for="shortcut-name-{idx}"
-                        class="text-xs text-zinc-600 dark:text-zinc-400">
+                        class="text-xs text-muted-foreground">
                         <T key="common.name" fallback="Name" />
                       </label>
                       <input
@@ -1710,7 +1883,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <div class="flex flex-col gap-1 w-full sm:w-16">
                       <label
                         for="shortcut-icon-{idx}"
-                        class="text-xs text-zinc-600 dark:text-zinc-400">
+                        class="text-xs text-muted-foreground">
                         <T key="settings.icon" fallback="Icon" />
                       </label>
                       <input
@@ -1722,7 +1895,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <div class="flex flex-col gap-1 w-full sm:flex-1">
                       <label
                         for="shortcut-url-{idx}"
-                        class="text-xs text-zinc-600 dark:text-zinc-400">
+                        class="text-xs text-muted-foreground">
                         <T key="settings.url" fallback="URL" />
                       </label>
                       <input
@@ -1743,7 +1916,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 {/each}
               {/key}
               {#if shortcuts.length === 0}
-                <div class="py-8 text-center text-zinc-600 dark:text-zinc-400 animate-fade-in">
+                <div class="py-8 text-center text-muted-foreground animate-fade-in">
                   <div class="mb-3 text-4xl opacity-50">⚡</div>
                   <p class="text-sm">
                     <T
@@ -1770,8 +1943,8 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Appearance Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+        class="settings-section-card">
+        <div class="settings-section-header">
           <h2 class="text-base font-semibold sm:text-lg">
             <T key="settings.appearance" fallback="Appearance" />
           </h2>
@@ -1779,7 +1952,7 @@ The Company reserves the right to terminate your access to the Service at any ti
             <T key="settings.appearance_description" fallback="Customize how DesQTA looks" />
           </p>
         </div>
-        <div class="p-4 space-y-6 sm:p-6">
+        <div class="settings-section-body p-4 space-y-6 sm:p-6">
           <!-- Theme Settings -->
           <div>
             <h3 class="mb-3 text-sm font-semibold sm:text-base sm:mb-4">
@@ -1813,7 +1986,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <T key="common.reset" fallback="Reset" />
                   </button>
                 </div>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400">
+                <p class="text-xs text-muted-foreground">
                   <T
                     key="settings.accent_color_description"
                     fallback="This color will be used throughout the app for buttons, links, and other interactive elements." />
@@ -1853,43 +2026,46 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <T key="settings.system" fallback="System" />
                   </button>
                 </div>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400">
+                <p class="text-xs text-muted-foreground">
                   <T
                     key="settings.theme_mode_description"
                     fallback="Choose between light mode, dark mode, or follow your system preference." />
                 </p>
                 <CustomBackgroundSettings />
 
-                <div class="mt-4 flex flex-col items-center">
-                  <button
-                    type="button"
-                    data-onboarding="theme-store"
-                    onclick={() => {
-                      console.log('Navigating to theme store...');
-                      console.log('Current URL:', window.location.href);
-
-                      // Try multiple navigation methods
-                      try {
-                        goto('/settings/theme-store');
-                      } catch (e) {
-                        console.warn('goto failed, trying window.location:', e);
-                        window.location.href = '/settings/theme-store';
-                      }
-
-                      setTimeout(() => {
-                        console.log('After navigation URL:', window.location.href);
-                        console.log('Page pathname:', window.location.pathname);
-                      }, 100);
-                    }}
-                    class="px-6 py-2 text-center text-white rounded-lg shadow-xs transition-all duration-200 accent-bg hover:accent-bg-hover focus:ring-2 accent-ring active:scale-95 hover:scale-105">
-                    <T key="settings.open_theme_store" fallback="Open Theme Store" />
-                  </button>
-                  <p class="mt-2 text-xs text-center text-zinc-600 dark:text-zinc-400">
-                    <T
-                      key="settings.theme_store_description"
-                      fallback="Browse and install custom themes for DesQTA" />
-                  </p>
-                </div>
+                <!-- Large card-style entry to the Theme Store. Replaces the
+                     small text button so this critical entry point is hard to
+                     miss. -->
+                <a
+                  href="/settings/theme-store"
+                  data-onboarding="theme-store"
+                  onclick={(e) => {
+                    e.preventDefault();
+                    try {
+                      goto('/settings/theme-store');
+                    } catch {
+                      window.location.href = '/settings/theme-store';
+                    }
+                  }}
+                  class="mt-4 block p-5 rounded-xl border border-border bg-card hover:border-border-strong hover:bg-surface-muted transition-colors duration-150 group">
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="shrink-0 w-12 h-12 rounded-lg bg-accent-500/12 text-accent-600 flex items-center justify-center text-2xl">
+                      ✨
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h3 class="text-base font-semibold text-foreground">
+                        <T key="settings.open_theme_store" fallback="Theme store" />
+                      </h3>
+                      <p class="text-sm text-muted-foreground">
+                        <T
+                          key="settings.theme_store_description"
+                          fallback="Browse community themes and apply with one click." />
+                      </p>
+                    </div>
+                    <span class="text-muted-foreground group-hover:text-foreground transition-colors">→</span>
+                  </div>
+                </a>
               </div>
             </div>
           </div>
@@ -1912,7 +2088,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
                   >Auto-collapse sidebar when navigating</label>
               </div>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">
+              <p class="text-xs text-muted-foreground">
                 When enabled, the sidebar will automatically collapse when you click on a page link,
                 giving you more space for content.
               </p>
@@ -1927,7 +2103,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
                   >Auto-expand sidebar on hover</label>
               </div>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">
+              <p class="text-xs text-muted-foreground">
                 When enabled and the sidebar is collapsed, hovering near the left edge will
                 temporarily expand the sidebar for easy navigation.
               </p>
@@ -1938,7 +2114,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   <Icon src={Bars3} class="w-5 h-5" />
                   <T key="settings.customize_sidebar" fallback="Customize Sidebar" />
                 </button>
-                <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+                <p class="mt-2 text-xs text-muted-foreground">
                   Reorder pages, organize with folders, and manage favorites.
                 </p>
               </div>
@@ -1953,7 +2129,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   class="text-sm font-medium cursor-pointer text-zinc-800 sm:text-base dark:text-zinc-200"
                   >Enable global search</label>
               </div>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">
+              <p class="text-xs text-muted-foreground">
                 When enabled, you can use Ctrl+K to open a global search that searches across all
                 your content, courses, and assessments.
               </p>
@@ -1973,7 +2149,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                     fallback="Keep app running in system tray when closed" />
                 </label>
               </div>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">
+              <p class="text-xs text-muted-foreground">
                 <T
                   key="settings.minimize_to_tray_description"
                   fallback="When enabled, closing the window hides DesQTA to the system tray. When disabled, closing the window fully quits the app." />
@@ -2010,8 +2186,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       <!-- Security (biometric) - only when platform supports it -->
       {#if supportsBiometric}
         <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-          <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+          class="settings-section-card">
+          <div class="settings-section-header">
             <h2 class="text-base font-semibold sm:text-lg">
               <T key="settings.security" fallback="Security" />
             </h2>
@@ -2021,7 +2197,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 fallback="Protect your app with biometric authentication" />
             </p>
           </div>
-          <div class="p-4 sm:p-6">
+          <div class="settings-section-body p-4 sm:p-6">
             <div
               class="flex flex-col gap-4 p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
               <div class="flex gap-3 items-center">
@@ -2044,13 +2220,13 @@ The Company reserves the right to terminate your access to the Service at any ti
                     fallback="Unlock with biometrics (Face ID, Touch ID, fingerprint, Windows Hello)" /></label>
               </div>
               {#if biometricToggleLoading}
-                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                <p class="text-xs text-muted-foreground">
                   <T key="settings.biometric_verifying" fallback="Verifying biometric..." />
                 </p>
               {:else if biometricToggleError}
                 <p class="text-xs text-red-500 dark:text-red-400">{biometricToggleError}</p>
               {/if}
-              <p id="biometric-desc" class="text-xs text-zinc-500 dark:text-zinc-400">
+              <p id="biometric-desc" class="text-xs text-muted-foreground">
                 <T
                   key="settings.biometric_enabled_description"
                   fallback="Require biometric authentication when opening the app" />
@@ -2062,8 +2238,8 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Zoom Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+        class="settings-section-card">
+        <div class="settings-section-header">
           <h2 class="text-base font-semibold sm:text-lg">
             <T key="settings.zoom" fallback="Interface Zoom" />
           </h2>
@@ -2073,7 +2249,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               fallback="Adjust the size of interface elements (50%–200%)" />
           </p>
         </div>
-        <div class="p-4 sm:p-6">
+        <div class="settings-section-body p-4 sm:p-6">
           <div
             class="flex flex-col gap-4 p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
             <div class="flex gap-4 items-center">
@@ -2089,7 +2265,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 <Icon src={Minus} class="w-5 h-5" />
               </button>
               <span
-                class="text-sm font-medium text-zinc-900 dark:text-white min-w-[4rem] text-center">
+                class="text-sm font-medium text-foreground min-w-[4rem] text-center">
                 {Math.round(zoomLevel * 100)}%
               </span>
               <button
@@ -2119,8 +2295,8 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Notification Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+        class="settings-section-card">
+        <div class="settings-section-header">
           <h2 class="text-base font-semibold sm:text-lg">
             <T key="settings.notifications" fallback="Notifications" />
           </h2>
@@ -2130,7 +2306,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               fallback="Manage your notification preferences" />
           </p>
         </div>
-        <div class="p-4 sm:p-6">
+        <div class="settings-section-body p-4 sm:p-6">
           <div
             class="flex flex-col gap-4 p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
             <div class="flex gap-3 items-center">
@@ -2168,14 +2344,14 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- RSS Feeds Settings -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-200 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+        class="settings-section-card">
+        <div class="settings-section-header">
           <h2 class="text-base font-semibold sm:text-lg">RSS Feeds</h2>
           <p class="text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
             Manage your news and content feeds that appear in your DMs
           </p>
         </div>
-        <div class="p-4 space-y-6 sm:p-6">
+        <div class="settings-section-body p-4 space-y-6 sm:p-6">
           <!-- Separate RSS Feed Setting -->
           <div
             class="flex justify-between items-center p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50">
@@ -2226,13 +2402,13 @@ The Company reserves the right to terminate your access to the Service at any ti
                     </div>
                     <div class="flex gap-2 items-center">
                       <button
-                        class="p-2 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:text-blue-400 hover:bg-zinc-200 dark:hover:bg-zinc-700/50"
+                        class="p-2 rounded-lg transition-colors text-muted-foreground hover:text-blue-400 hover:bg-zinc-200 dark:hover:bg-zinc-700/50"
                         title="Test Feed"
                         onclick={() => testFeed(feed.url)}>
                         <Icon src={ArrowPath} class="w-5 h-5" />
                       </button>
                       <button
-                        class="p-2 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:text-red-400 hover:bg-zinc-200 dark:hover:bg-zinc-700/50"
+                        class="p-2 rounded-lg transition-colors text-muted-foreground hover:text-red-400 hover:bg-zinc-200 dark:hover:bg-zinc-700/50"
                         title="Remove Feed"
                         onclick={() => removeFeed(idx)}>
                         <Icon src={Trash} class="w-5 h-5" />
@@ -2242,7 +2418,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                 </div>
               {/each}
               {#if feeds.length === 0}
-                <div class="py-8 text-center text-zinc-600 dark:text-zinc-400 animate-fade-in">
+                <div class="py-8 text-center text-muted-foreground animate-fade-in">
                   <Icon src={Rss} class="mx-auto mb-3 w-12 h-12 opacity-50" />
                   <p class="text-sm">No feeds added yet</p>
                   <p class="mt-1 text-xs">Add your first RSS feed to get started</p>
@@ -2255,8 +2431,8 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- AI Features -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-100 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+        class="settings-section-card">
+        <div class="settings-section-header">
           <h2 class="text-base font-semibold sm:text-lg">
             <T key="settings.ai_features" fallback="AI Features" />
           </h2>
@@ -2266,7 +2442,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               fallback="Enable AI-powered features by providing your free Gemini API key." />
           </p>
         </div>
-        <div class="p-4 space-y-4 sm:p-6">
+        <div class="settings-section-body p-4 space-y-4 sm:p-6">
           <div class="flex gap-3 items-center">
             <input
               id="ai-integrations-enabled"
@@ -2315,7 +2491,7 @@ The Company reserves the right to terminate your access to the Service at any ti
                   <select
                     id="ai-provider"
                     bind:value={aiProvider}
-                    class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500">
+                    class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-500">
                     <option value="gemini">Gemini</option>
                     <option value="cerebras">Cerebras</option>
                   </select>
@@ -2330,13 +2506,13 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <input
                       id="gemini-api-key"
                       type="text"
-                      class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       placeholder={$_('settings.gemini_placeholder') ||
                         'Paste your Gemini API key here'}
                       bind:value={geminiApiKey}
                       autocomplete="off"
                       spellcheck="false" />
-                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                    <p class="mt-1 text-xs text-muted-foreground">
                       Get your API key from
                       <a
                         href="https://aistudio.google.com"
@@ -2357,13 +2533,13 @@ The Company reserves the right to terminate your access to the Service at any ti
                     <input
                       id="cerebras-api-key"
                       type="text"
-                      class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      class="px-3 py-2 w-full bg-white rounded-sm border border-zinc-300/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 text-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       placeholder={$_('settings.cerebras_placeholder') ||
                         'Paste your Cerebras API key here'}
                       bind:value={cerebrasApiKey}
                       autocomplete="off"
                       spellcheck="false" />
-                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                    <p class="mt-1 text-xs text-muted-foreground">
                       Get your API key from
                       <a
                         href="https://cloud.cerebras.ai"
@@ -2383,8 +2559,8 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Plugins Section -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
-        <div class="px-4 py-4 border-b sm:px-6 border-zinc-300/50 dark:border-zinc-800/50">
+        class="settings-section-card">
+        <div class="settings-section-header">
           <h2 class="text-base font-semibold sm:text-lg">
             <T key="settings.plugins" fallback="Plugins" />
           </h2>
@@ -2394,7 +2570,7 @@ The Company reserves the right to terminate your access to the Service at any ti
               fallback="Enhance your DesQTA experience with plugins" />
           </p>
         </div>
-        <div class="p-4 sm:p-6">
+        <div class="settings-section-body p-4 sm:p-6">
           <div class="p-4 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 animate-fade-in">
             <p class="mb-4 text-xs text-zinc-600 sm:text-sm dark:text-zinc-400">
               <T
@@ -2413,8 +2589,8 @@ The Company reserves the right to terminate your access to the Service at any ti
       <!-- Check for Updates (Desktop only) -->
       {#if isDesktop}
         <section
-          class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-green-700/50 animate-fade-in-up">
-          <div class="p-4 sm:p-6">
+          class="settings-section-card">
+          <div class="settings-section-body p-4 sm:p-6">
             <div class="flex justify-between items-center mb-4">
               <div>
                 <h2 class="text-base font-semibold sm:text-lg">Updates</h2>
@@ -2466,7 +2642,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Redo Onboarding -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-purple-700/50 animate-fade-in-up">
+        class="settings-section-card">
         <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">
@@ -2498,7 +2674,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- What's New button -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="settings-section-card">
         <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">
@@ -2522,7 +2698,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Troubleshooting button -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-blue-700/50 animate-fade-in-up">
+        class="settings-section-card">
         <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">Troubleshooting</h2>
@@ -2541,7 +2717,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 
       <!-- Cache Management -->
       <section
-        class="overflow-hidden rounded-xl border shadow-xl backdrop-blur-xs transition-all duration-300 delay-300 bg-white/80 dark:bg-zinc-900/50 sm:rounded-2xl border-zinc-300/50 dark:border-zinc-800/50 hover:shadow-2xl hover:border-red-700/50 animate-fade-in-up">
+        class="settings-section-card">
         <div class="flex justify-between items-center p-4 sm:p-6">
           <div>
             <h2 class="text-base font-semibold sm:text-lg">Cache Management</h2>
@@ -2559,6 +2735,32 @@ The Company reserves the right to terminate your access to the Service at any ti
           </button>
         </div>
       </section>
+    </div>
+
+      {#if jumpItems.length > 0}
+        <aside
+          class="hidden lg:block w-52 xl:w-56 shrink-0 sticky top-6 self-start"
+          aria-label={$_('settings.section_jump', { default: 'Jump to section' })}>
+          <Card padding="sm" class="flex flex-col gap-1">
+            <p class="px-2 py-1 text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+              <T key="settings.section_jump" fallback="Sections" />
+            </p>
+            <nav class="flex flex-col gap-0.5 max-h-[calc(100vh-8rem)] overflow-y-auto [scrollbar-gutter:stable]">
+              {#each jumpItems as item (item.id)}
+                <button
+                  type="button"
+                  onclick={() => jumpToSection(item.id)}
+                  class="w-full text-left px-2.5 py-2 rounded-lg text-sm transition-colors duration-150 truncate {activeJumpId ===
+                  item.id
+                    ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-surface-muted'}">
+                  {item.label}
+                </button>
+              {/each}
+            </nav>
+          </Card>
+        </aside>
+      {/if}
     </div>
   {/if}
 </div>
@@ -2588,7 +2790,7 @@ The Company reserves the right to terminate your access to the Service at any ti
 {#if showEulaModal}
   <div class="flex fixed inset-0 z-50 justify-center items-center mobile-modal-inset">
     <div
-      class="absolute inset-0 backdrop-blur-xs bg-black/50 mobile-modal-inset"
+      class="absolute inset-0 bg-black/50 mobile-modal-inset"
       role="button"
       tabindex="0"
       onclick={() => (showEulaModal = false)}
@@ -2630,7 +2832,7 @@ The Company reserves the right to terminate your access to the Service at any ti
   closeOnEscape={true}
   onclose={handleCancelLeave}>
   <div class="px-8 pb-8">
-    <p class="mb-6 text-zinc-600 dark:text-zinc-400">
+    <p class="mb-6 text-muted-foreground">
       <T
         key="settings.unsaved_changes_message"
         fallback="You have unsaved changes. Are you sure you want to leave? Your changes will be lost." />
@@ -2660,6 +2862,43 @@ The Company reserves the right to terminate your access to the Service at any ti
 </Modal>
 
 <style>
+  .settings-section-card {
+    scroll-margin-top: 1.5rem;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+
+  .settings-section-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  @media (min-width: 640px) {
+    .settings-section-header {
+      padding: 1rem 1.5rem;
+    }
+  }
+
+  .settings-section-header :global(h2) {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+
+  @media (min-width: 640px) {
+    .settings-section-header :global(h2) {
+      font-size: 1.125rem;
+    }
+  }
+
+  .settings-section-header :global(p) {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+  }
+
   @keyframes fade-in-up {
     0% {
       opacity: 0;

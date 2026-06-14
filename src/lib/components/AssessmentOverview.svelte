@@ -122,8 +122,8 @@
       <div 
         class="p-4 rounded-xl border dark:bg-zinc-800 bg-zinc-200 dark:border-zinc-700 border-zinc-200 transition-all duration-300 ease-in-out hover:shadow-md"
         in:fly={{ y: 10, duration: 300, delay: 100, easing: cubicOut }}>
-        <h2 class="text-lg font-semibold mb-3 text-zinc-900 dark:text-white">Expected Rating</h2>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+        <h2 class="text-lg font-semibold mb-3 text-foreground">Expected Rating</h2>
+        <p class="text-sm text-muted-foreground mb-4">
           Rate how difficult you expect this assessment to be.
         </p>
         <div class="flex items-center gap-4">
@@ -198,8 +198,8 @@
         <div class="w-16 h-16 mb-4 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center transition-all duration-300 hover:scale-110">
           <Icon src={DocumentText} class="w-8 h-8 text-zinc-400 transition-transform duration-200" />
         </div>
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">No Resources Available</h3>
-        <p class="text-zinc-600 dark:text-zinc-400">
+        <h3 class="text-lg font-semibold text-foreground mb-2">No Resources Available</h3>
+        <p class="text-muted-foreground">
           This assessment doesn't have any attached resources or files.
         </p>
       </div>

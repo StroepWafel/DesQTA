@@ -34,6 +34,7 @@
   import { cloudUserStore } from '../services/cloudAuthService';
   import { _ } from '../i18n';
   import T from './T.svelte';
+  import { tooltip } from '$lib/actions/tooltip';
 
   interface Props {
     sidebarOpen: boolean;
@@ -135,6 +136,27 @@
   const isMacOS =
     (import.meta as any).env?.TAURI_ENV_PLATFORM === 'darwin' ||
     (import.meta as any).env?.TAURI_ENV_PLATFORM === 'macos';
+
+  const headerTip = { placement: 'bottom' as const, delay: 350 };
+  const toggleSidebarTip = $derived({
+    ...headerTip,
+    text: $_('header.toggle_sidebar') || 'Toggle sidebar',
+  });
+  const cloudSignedInTip = $derived({
+    ...headerTip,
+    text: $_('header.cloud_sync_active_tooltip') || 'Cloud sync active — open Settings to manage sync',
+  });
+  const cloudSignedOutTip = $derived({
+    ...headerTip,
+    text: $_('header.cloud_sync_inactive_tooltip') || 'Cloud sync inactive — click to sign in via Settings',
+  });
+  const notificationsTip = $derived({
+    ...headerTip,
+    text: $_('header.notifications') || 'Notifications',
+  });
+  const minimizeTip = $derived({ ...headerTip, text: $_('header.minimize') || 'Minimize' });
+  const maximizeTip = $derived({ ...headerTip, text: $_('header.maximize') || 'Maximize' });
+  const closeTip = $derived({ ...headerTip, text: $_('header.close') || 'Close' });
 
   const pages = [
     { nameKey: 'navigation.dashboard', path: '/dashboard' },
@@ -488,15 +510,14 @@
 </script>
 
 <header
-  class="flex justify-between items-center px-3 pr-2 w-full h-16 relative z-999999 theme-bg {isFullscreen || isMobile
-    ? isMobile
-      ? 'rounded-b-2xl'
-      : ''
-    : sidebarOpen
-      ? 'rounded-tr-2xl'
-      : 'rounded-t-2xl'} {isMacOS && !isMobile ? 'pl-4' : ''}"
-  data-tauri-drag-region>
-  <div class="flex items-center space-x-4">
+  class="flex relative justify-between items-center px-3 pr-2 w-full h-16 z-[200] theme-bg border-b border-border-subtle {isMobile ? 'rounded-b-2xl' : ''} {isMacOS && !isMobile ? 'pl-4' : ''}">
+  <!-- Drag hit-area sits behind controls so buttons/links receive hover + click on Windows -->
+  <div
+    class="absolute inset-0 z-0"
+    data-tauri-drag-region
+    aria-hidden="true">
+  </div>
+  <div class="relative z-10 flex items-center space-x-4">
     <!-- macOS: Traffic lights + app icon on left -->
     {#if isMacOS && !isMobile}
       <div class="flex items-center gap-3 shrink-0">
@@ -505,17 +526,20 @@
           <button
             class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#ff5f57] hover:bg-[#ff7b73] active:scale-95"
             onclick={() => appWindow.close()}
-            aria-label={$_('header.close', { default: 'Close' })}>
+            aria-label={$_('header.close', { default: 'Close' })}
+            use:tooltip={$_('header.close', { default: 'Close' })}>
           </button>
           <button
             class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#febc2e] hover:bg-[#fecf5a] active:scale-95"
             onclick={() => appWindow.minimize()}
-            aria-label={$_('header.minimize', { default: 'Minimize' })}>
+            aria-label={$_('header.minimize', { default: 'Minimize' })}
+            use:tooltip={$_('header.minimize', { default: 'Minimize' })}>
           </button>
           <button
             class="flex justify-center items-center w-3 h-3 rounded-full transition-all duration-200 bg-[#28c840] hover:bg-[#4dd35a] active:scale-95"
             onclick={() => appWindow.toggleMaximize()}
-            aria-label={$_('header.maximize', { default: 'Maximize' })}>
+            aria-label={$_('header.maximize', { default: 'Maximize' })}
+            use:tooltip={$_('header.maximize', { default: 'Maximize' })}>
           </button>
         </div>
         <!-- App icon -->
@@ -525,18 +549,19 @@
     <!-- Hamburger: desktop only (mobile uses bottom nav "More" tab) -->
     {#if !isMobile}
       <button
-        class="flex justify-center items-center w-10 h-10 rounded-xl transition-all duration-200 ease-in-out transform bg-white hover:accent-bg dark:bg-zinc-800 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
+        class="flex justify-center items-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
         onclick={onToggleSidebar}
-        aria-label={$_('header.toggle_sidebar', { default: 'Toggle sidebar' })}>
-        <Icon src={Bars3} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 dark:hover:text-white" />
+        aria-label={$_('header.toggle_sidebar', { default: 'Toggle sidebar' })}
+        use:tooltip={toggleSidebarTip}>
+        <Icon src={Bars3} class="w-5 h-5" />
       </button>
     {/if}
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center gap-3">
       {#if !isMacOS || isMobile}
-        <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="w-8 h-8 invert dark:invert-0 {isMobile ? 'w-7 h-7' : ''}" />
+        <img src="/betterseqta-dark-icon.png" alt="DesQTA" class="invert dark:invert-0 {isMobile ? 'w-7 h-7' : 'w-7 h-7'}" />
       {/if}
       <h1
-        class="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-300 {isMobile ? 'text-lg' : ''}">
+        class="text-lg font-semibold tracking-tight text-foreground {isMobile ? 'text-base' : ''}">
         DesQTA
       </h1>
       {#if !isMobile}
@@ -548,13 +573,13 @@
       {/if}
     </div>
   </div>
-  <div class="flex flex-1 justify-center">
+  <div class="relative z-10 flex flex-1 justify-center min-w-0">
     {#if globalSearchEnabled}
       <GlobalSearch />
     {/if}
   </div>
 
-  <div class="flex items-center space-x-2">
+  <div class="relative z-10 flex items-center gap-1">
     <!-- Always show UserDropdown when in app (allows Sign out when session invalid) -->
     <UserDropdown
       userInfo={userInfo}
@@ -570,35 +595,37 @@
       {#if $cloudUserStore}
         <a
           href="/settings"
-          class="flex relative justify-center items-center rounded-xl border transition-all duration-200 ease-in-out transform size-12 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
-          aria-label={$_('header.cloud_signed_in', { default: 'Signed in to BetterSEQTA Plus' })}>
-          <Icon src={CloudArrowUp} class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          class="flex relative justify-center items-center w-10 h-10 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
+          aria-label={$_('header.cloud_signed_in', { default: 'Signed in to BetterSEQTA Plus' })}
+          use:tooltip={cloudSignedInTip}>
+          <Icon src={CloudArrowUp} class="w-5 h-5" />
         </a>
       {:else}
         <button
           type="button"
-          class="flex relative justify-center items-center rounded-xl border transition-all duration-200 ease-in-out transform size-12 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
+          class="flex relative justify-center items-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
           aria-label={$_('header.cloud_not_signed_in', { default: 'Not signed in to BetterSEQTA Plus' })}
+          use:tooltip={cloudSignedOutTip}
           onclick={() => (showCloudSignOutInfo = !showCloudSignOutInfo)}>
           <span class="relative inline-flex justify-center items-center">
-            <Icon src={CloudArrowUp} class="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+            <Icon src={CloudArrowUp} class="w-5 h-5" />
             <Icon
               src={NoSymbol}
-              class="absolute w-4 h-4 text-red-500 dark:text-red-400 pointer-events-none"
+              class="absolute w-4 h-4 text-destructive pointer-events-none"
               aria-hidden="true" />
           </span>
         </button>
         {#if showCloudSignOutInfo}
           <div
-            class="absolute right-0 z-50 mt-2 w-72 rounded-xl border shadow-2xl backdrop-blur-xl bg-white/95 dark:bg-zinc-900/95 border-zinc-200/60 dark:border-zinc-700/60 p-4"
-            transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}
+            class="absolute right-0 z-50 mt-2 w-72 rounded-xl border border-border bg-popover text-popover-foreground shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] p-4"
+            transition:fly={{ y: -4, duration: 150, opacity: 0, easing: (t) => t * (2 - t) }}
             style="transform-origin: top right;">
-            <p class="text-sm text-zinc-700 dark:text-zinc-300 mb-4">
+            <p class="text-sm text-foreground mb-4">
               <T key="header.cloud_signed_out_message" fallback="You're signed out of BetterSEQTA Plus. Sign in via Settings to sync your data across devices." />
             </p>
             <a
               href="/settings"
-              class="flex justify-center items-center gap-2 w-full px-4 py-2 text-sm font-medium text-white rounded-lg transition-all duration-200 accent-bg hover:scale-[1.02] active:scale-95"
+              class="flex justify-center items-center gap-2 w-full h-10 px-4 text-sm font-medium text-white rounded-lg transition-colors duration-150 bg-accent-500 hover:bg-accent-600"
               onclick={() => (showCloudSignOutInfo = false)}>
               <T key="header.cloud_go_to_settings" fallback="Go to Settings" />
             </a>
@@ -609,12 +636,14 @@
 
     <div class="relative notification-dropdown">
       <button
-        class="flex relative justify-center items-center rounded-xl border transition-all duration-200 ease-in-out transform size-12 bg-white/60 border-zinc-200/40 hover:accent-bg dark:bg-zinc-800/60 dark:border-zinc-700/40 focus:outline-hidden focus:ring-2 accent-ring hover:scale-105 active:scale-95 playful"
-        onclick={toggleNotifications}>
-        <Icon src={Bell} class="w-5 h-5 text-zinc-700 dark:text-zinc-300 hover:text-white" />
+        class="flex relative justify-center items-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
+        onclick={toggleNotifications}
+        aria-label={$_('header.notifications', { default: 'Notifications' })}
+        use:tooltip={notificationsTip}>
+        <Icon src={Bell} class="w-5 h-5" />
         {#if unreadNotifications > 0}
           <span
-            class="flex absolute -top-1 -right-1 justify-center items-center px-1 translate-x-[calc(50%-3px)] h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+            class="flex absolute -top-0.5 -right-0.5 justify-center items-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white bg-destructive rounded-full">
             {unreadNotifications}
           </span>
         {/if}
@@ -622,63 +651,55 @@
 
       {#if showNotifications}
         <div
-          class="overflow-y-auto absolute right-0 z-50 mt-2 w-96 max-h-96 rounded-xl border shadow-2xl backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 border-white/20 dark:border-zinc-700/40"
-          transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}
+          class="overflow-hidden absolute right-0 z-50 mt-2 w-96 rounded-xl border border-border bg-popover text-popover-foreground shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)]"
+          transition:fly={{ y: -4, duration: 150, opacity: 0, easing: (t) => t * (2 - t) }}
           style="transform-origin: top right;">
-          <div class="p-4 border-b border-zinc-200 dark:border-zinc-700">
+          <div class="p-4 border-b border-border-subtle">
             <div class="flex justify-between items-center">
-              <h3
-                class="text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
-                <Icon src={Bell} class="w-5 h-5 opacity-80" />
+              <h3 class="text-sm font-semibold uppercase tracking-[0.06em] text-muted-foreground flex items-center gap-2">
+                <Icon src={Bell} class="w-4 h-4" />
                 Notifications
               </h3>
               <button
-                class="transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1"
+                class="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 onclick={clearNotifications}>
-                <Icon src={XMark} class="w-4 h-4" />
+                <Icon src={XMark} class="w-3.5 h-3.5" />
                 Clear all
               </button>
             </div>
           </div>
 
-          <div class="p-2">
+          <div class="p-2 max-h-96 overflow-y-auto">
             {#if loadingNotifications}
               <div class="flex justify-center items-center py-8">
-                <div
-                  class="w-6 h-6 rounded-full border-2 animate-spin border-accent/30 border-t-accent">
-                </div>
+                <div class="w-5 h-5 rounded-full border-2 animate-spin border-accent-500/30 border-t-accent-500"></div>
               </div>
             {:else if notifications.length === 0}
-              <div class="py-8 text-center text-zinc-500 dark:text-zinc-400">
-                <Icon src={Bell} class="mx-auto mb-2 w-12 h-12 opacity-50" />
-                <p>No notifications</p>
+              <div class="py-10 text-center text-muted-foreground">
+                <Icon src={Bell} class="mx-auto mb-3 w-10 h-10 opacity-50" />
+                <p class="text-sm">No notifications</p>
               </div>
             {:else}
               {#each notifications as notification (notification.notificationID)}
                 <button
                   type="button"
-                  class="p-3 w-full text-left rounded-lg transition-all duration-200 ease-in-out transform cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01] active:scale-[0.99]"
+                  class="p-3 w-full text-left rounded-lg transition-colors duration-100 cursor-pointer hover:bg-surface-muted"
                   aria-label={getNotificationTitle(notification)}
-                  onclick={() => handleNotificationClick(notification)}
-                  onkeydown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      handleNotificationClick(notification);
-                    }
-                  }}>
+                  onclick={() => handleNotificationClick(notification)}>
                   <div class="flex gap-3">
-                    <div class="shrink-0 mt-1.5">
-                      <Icon src={getNotificationIcon(notification)} class="w-4 h-4 text-accent" />
+                    <div class="shrink-0 mt-1">
+                      <Icon src={getNotificationIcon(notification)} class="w-4 h-4 text-accent-500" />
                     </div>
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium truncate text-zinc-900 dark:text-white">
+                      <p class="text-sm font-medium truncate text-foreground">
                         {getNotificationTitle(notification)}
                       </p>
                       {#if getNotificationSubtitle(notification)}
-                        <p class="mt-1 text-xs truncate text-zinc-600 dark:text-zinc-400">
+                        <p class="mt-0.5 text-xs truncate text-muted-foreground">
                           {getNotificationSubtitle(notification)}
                         </p>
                       {/if}
-                      <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                      <p class="mt-1 text-[11px] text-muted-foreground/80">
                         {formatNotificationTime(notification.timestamp)}
                       </p>
                     </div>
@@ -693,26 +714,27 @@
 
     <!-- Window Controls - Desktop Only (hidden on macOS, we use traffic lights on left) -->
     {#if !isMobile && !isMacOS}
-      <div class="flex items-center ml-4 space-x-2">
+      <div class="flex items-center ml-3 gap-1">
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
+          class="flex justify-center items-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150"
           onclick={() => appWindow.minimize()}
-          aria-label={$_('header.minimize', { default: 'Minimize' })}>
-          <Icon src={Minus} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          aria-label={$_('header.minimize', { default: 'Minimize' })}
+          use:tooltip={minimizeTip}>
+          <Icon src={Minus} class="w-4 h-4" />
         </button>
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:scale-105 active:scale-95 playful"
+          class="flex justify-center items-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150"
           onclick={() => appWindow.toggleMaximize()}
-          aria-label={$_('header.maximize', { default: 'Maximize' })}>
-          <Icon src={Square2Stack} class="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          aria-label={$_('header.maximize', { default: 'Maximize' })}
+          use:tooltip={maximizeTip}>
+          <Icon src={Square2Stack} class="w-4 h-4" />
         </button>
         <button
-          class="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-200 ease-in-out transform group hover:bg-red-500 hover:scale-105 active:scale-95 playful"
+          class="flex justify-center items-center w-8 h-8 rounded-md text-muted-foreground hover:text-white hover:bg-destructive transition-colors duration-150 group"
           onclick={() => appWindow.close()}
-          aria-label={$_('header.close', { default: 'Close' })}>
-          <Icon
-            src={XMark}
-            class="w-4 h-4 transition duration-200 text-zinc-600 dark:text-zinc-400 group-hover:text-white" />
+          aria-label={$_('header.close', { default: 'Close' })}
+          use:tooltip={closeTip}>
+          <Icon src={XMark} class="w-4 h-4" />
         </button>
       </div>
     {/if}
@@ -722,69 +744,55 @@
   {/if}
   {#if showNotificationsModal}
     <div
-      class="fixed inset-0 z-9999999 flex items-center justify-center bg-black/40 backdrop-blur-xs mobile-modal-inset"
+      class="fixed inset-0 z-9999999 flex items-center justify-center bg-foreground/40 mobile-modal-inset"
       role="dialog"
       aria-modal="true"
       aria-label={$_('header.notifications') || 'Notifications'}
       tabindex="0"
-      onclick={() => {
-        showNotificationsModal = false;
-      }}
-      onkeydown={(e) => {
-        if (e.key === 'Escape') showNotificationsModal = false;
-      }}>
+      onclick={() => { showNotificationsModal = false; }}
+      onkeydown={(e) => { if (e.key === 'Escape') showNotificationsModal = false; }}>
       <div
-        class="flex relative flex-col p-0 mx-auto w-full max-w-xl rounded-2xl border shadow-2xl backdrop-blur-xl pointer-events-auto bg-white/70 dark:bg-zinc-900/80 border-white/20 dark:border-zinc-700/40 animate-in"
+        class="flex relative flex-col p-0 mx-auto w-full max-w-xl rounded-2xl border border-border bg-card text-card-foreground shadow-[0_24px_56px_-16px_rgba(0,0,0,0.22),0_4px_12px_-4px_rgba(0,0,0,0.08)] pointer-events-auto animate-in"
         role="document">
-        <div
-          class="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Notifications</h3>
+        <div class="flex justify-between items-center p-4 border-b border-border-subtle">
+          <h3 class="text-sm font-semibold uppercase tracking-[0.06em] text-muted-foreground">Notifications</h3>
           <button
-            class="px-3 py-1 ml-2 text-base font-semibold rounded-lg transition-all duration-200 ease-in-out transform bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600 hover:scale-105 active:scale-95"
-            onclick={() => {
-              showNotificationsModal = false;
-            }}>
+            class="h-8 px-3 text-sm font-medium rounded-md transition-colors duration-150 bg-surface-muted text-foreground hover:bg-surface-3"
+            onclick={() => { showNotificationsModal = false; }}>
             Close
           </button>
         </div>
         <div class="p-2 max-h-[70vh] overflow-y-auto mobile-modal-max-h">
           {#if loadingNotifications}
             <div class="flex justify-center items-center py-8">
-              <div
-                class="w-6 h-6 rounded-full border-2 animate-spin border-accent/30 border-t-accent">
-              </div>
+              <div class="w-5 h-5 rounded-full border-2 animate-spin border-accent-500/30 border-t-accent-500"></div>
             </div>
           {:else if sortedNotifications.length === 0}
-            <div class="py-8 text-center text-zinc-500 dark:text-zinc-400">
-              <Icon src={Bell} class="mx-auto mb-2 w-12 h-12 opacity-50" />
-              <p>No notifications</p>
+            <div class="py-10 text-center text-muted-foreground">
+              <Icon src={Bell} class="mx-auto mb-3 w-10 h-10 opacity-50" />
+              <p class="text-sm">No notifications</p>
             </div>
           {:else}
             {#each sortedNotifications as notification (notification.notificationID)}
               <button
                 type="button"
-                class="p-3 w-full text-left rounded-lg transition-all duration-200 ease-in-out transform cursor-pointer hover:bg-white/40 dark:hover:bg-zinc-700/40 hover:scale-[1.01] active:scale-[0.99]"
+                class="p-3 w-full text-left rounded-lg transition-colors duration-100 cursor-pointer hover:bg-surface-muted"
                 aria-label={getNotificationTitle(notification)}
-                onclick={() => handleNotificationClick(notification)}
-                onkeydown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleNotificationClick(notification);
-                  }
-                }}>
+                onclick={() => handleNotificationClick(notification)}>
                 <div class="flex gap-3">
-                  <div class="shrink-0 mt-1.5">
-                    <Icon src={getNotificationIcon(notification)} class="w-4 h-4 text-accent" />
+                  <div class="shrink-0 mt-1">
+                    <Icon src={getNotificationIcon(notification)} class="w-4 h-4 text-accent-500" />
                   </div>
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium truncate text-zinc-900 dark:text-white">
+                    <p class="text-sm font-medium truncate text-foreground">
                       {getNotificationTitle(notification)}
                     </p>
                     {#if getNotificationSubtitle(notification)}
-                      <p class="mt-1 text-xs truncate text-zinc-600 dark:text-zinc-400">
+                      <p class="mt-0.5 text-xs truncate text-muted-foreground">
                         {getNotificationSubtitle(notification)}
                       </p>
                     {/if}
-                    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                    <p class="mt-1 text-[11px] text-muted-foreground/80">
                       {formatNotificationTime(notification.timestamp)}
                     </p>
                   </div>

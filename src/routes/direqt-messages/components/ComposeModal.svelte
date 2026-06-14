@@ -314,13 +314,13 @@
   onclose={closeModal}
   maxWidth="w-[95vw] sm:w-[90vw]"
   maxHeight="max-h-[90vh]"
-  className="rounded-2xl max-w-none shadow-2xl flex flex-col border border-white/20 dark:border-zinc-700/40 overflow-hidden h-[85vh] sm:h-[88vh] p-0 backdrop-blur-xl bg-white/80 dark:bg-zinc-900/80"
+  className="rounded-2xl max-w-none shadow-2xl flex flex-col border border-white/20 dark:border-zinc-700/40 overflow-hidden h-[85vh] sm:h-[88vh] p-0 bg-card"
   showCloseButton={false}
   ariaLabel="Compose message">
   <!-- Header -->
   <div
     class="flex justify-between items-center px-5 py-4 border-b sm:rounded-t-2xl border-zinc-200/60 dark:border-zinc-700/60 bg-transparent">
-    <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+    <h2 class="text-xl font-semibold text-foreground">
       <T key="messages.compose_message" fallback="Compose message" />
     </h2>
     <button
@@ -393,11 +393,11 @@
               class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700 [scrollbar-gutter:stable]"
               transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
               {#if loadingStudents}
-                <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
+                <div class="p-3 text-center text-muted-foreground">
                   <T key="messages.loading_students" fallback="Loading students..." />
                 </div>
               {:else if filteredStudents.length === 0}
-                <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
+                <div class="p-3 text-center text-muted-foreground">
                   {studentSearchQuery
                     ? $_('messages.no_matching_students') || 'No matching students'
                     : $_('messages.type_to_search_students') || 'Type to search students'}
@@ -405,7 +405,7 @@
               {:else}
                 {#each filteredStudents as student}
                   <button
-                    class="flex items-start gap-3 px-4 py-2 w-full text-left text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99]"
+                    class="flex items-start gap-3 px-4 py-2 w-full text-left text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99]"
                     onclick={() =>
                       addRecipient(
                         student.id,
@@ -421,7 +421,7 @@
                     {/if}
                     <div class="min-w-0">
                       <div class="truncate font-medium">{student.xx_display}</div>
-                      <div class="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                      <div class="mt-0.5 text-xs text-muted-foreground truncate">
                         Year {student.year}
                         {#if student.rollgroup}
                           · Class {student.rollgroup}
@@ -468,11 +468,11 @@
             class="overflow-y-auto absolute z-10 mt-1 w-full max-h-72 bg-white rounded-lg border shadow-lg border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700 [scrollbar-gutter:stable]"
             transition:fly={{ y: -8, duration: 200, opacity: 0, easing: (t) => t * (2 - t) }}>
             {#if loadingStaff}
-              <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
+              <div class="p-3 text-center text-muted-foreground">
                 <T key="messages.loading_staff" fallback="Loading staff..." />
               </div>
             {:else if filteredStaff.length === 0}
-              <div class="p-3 text-center text-zinc-600 dark:text-zinc-400">
+              <div class="p-3 text-center text-muted-foreground">
                 {staffSearchQuery
                   ? $_('messages.no_matching_staff') || 'No matching staff'
                   : $_('messages.type_to_search_staff') || 'Type to search staff'}
@@ -480,7 +480,7 @@
             {:else}
               {#each filteredStaff as teacher}
                 <button
-                  class="px-4 py-2 w-full text-left text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99]"
+                  class="px-4 py-2 w-full text-left text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99]"
                   onclick={() => addRecipient(teacher.id, teacher.xx_display, true)}>
                   <div class="font-medium truncate">{teacher.xx_display}</div>
                 </button>
@@ -525,20 +525,20 @@
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
                   <span class="font-medium truncate">{recipient.name}</span>
-                  <span class="text-xs text-zinc-600 dark:text-zinc-400"
+                  <span class="text-xs text-muted-foreground"
                     >{recipient.staff
                       ? $_('messages.staff') || 'Staff'
                       : $_('messages.student') || 'Student'}</span>
                 </div>
                 {#if recipient.meta}
-                  <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                  <div class="text-xs text-muted-foreground truncate">
                     {recipient.meta}
                   </div>
                 {/if}
               </div>
               <button
                 onclick={() => removeRecipient(i)}
-                class="ml-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95"
+                class="ml-1 text-muted-foreground hover:text-zinc-900 dark:hover:text-white transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95"
                 aria-label={$_('messages.remove_recipient') || 'Remove recipient'}>×</button>
             </div>
           {/each}
@@ -581,8 +581,8 @@
               class="flex items-center gap-2 px-2 py-1.5 text-xs rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-300/50 dark:border-zinc-700/50 transition-all duration-200 ease-in-out"
               in:fly={{ y: -8, duration: 200, easing: cubicInOut }}
               out:fly={{ y: -8, duration: 150, easing: cubicInOut }}>
-              <Icon src={PaperClip} class="w-3 h-3 text-zinc-600 dark:text-zinc-400 shrink-0" />
-              <span class="flex-1 min-w-0 truncate text-zinc-700 dark:text-zinc-300"
+              <Icon src={PaperClip} class="w-3 h-3 text-muted-foreground shrink-0" />
+              <span class="flex-1 min-w-0 truncate text-foreground"
                 >{file.filename}</span>
               {#if file.size}
                 <span class="text-zinc-500 dark:text-zinc-500 shrink-0"

@@ -87,8 +87,8 @@ function applyInlineStyles(
   return text;
 }
 
-const HEADING_CLASS = 'font-bold text-zinc-900 dark:text-white';
-const PROSE_CLASS = 'text-zinc-700 dark:text-zinc-300';
+const HEADING_CLASS = 'font-bold text-foreground';
+const PROSE_CLASS = 'text-foreground';
 
 export function renderDraftJSText(content: DraftJSContent): string {
   const entityMap = content.entityMap || {};
@@ -376,21 +376,25 @@ export function formatLessonDate(
     const tm = labels?.tomorrow ?? 'Tomorrow';
     const y = labels?.yesterday ?? 'Yesterday';
 
-    if (diffDays === 0) {
-      return t;
-    } else if (diffDays === 1) {
-      return tm;
-    } else if (diffDays === -1) {
-      return y;
-    } else if (diffDays > 1 && diffDays <= 7) {
-      return date.toLocaleDateString(loc, { weekday: 'long' });
-    } else {
+    // Combined label: "Today · 17 Sep" / "Yesterday · 16 Sep" / "Mon 18 Sep".
+    // Users wanted the date number visible alongside the relative label so e.g.
+    // two consecutive lessons don't both just say "Yesterday".
+    const dayMonth = date.toLocaleDateString(loc, { day: 'numeric', month: 'short' });
+    if (diffDays === 0) return `${t} \u00b7 ${dayMonth}`;
+    if (diffDays === 1) return `${tm} \u00b7 ${dayMonth}`;
+    if (diffDays === -1) return `${y} \u00b7 ${dayMonth}`;
+    if (Math.abs(diffDays) <= 7) {
       return date.toLocaleDateString(loc, {
+        weekday: 'short',
         day: 'numeric',
         month: 'short',
-        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
       });
     }
+    return date.toLocaleDateString(loc, {
+      day: 'numeric',
+      month: 'short',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+    });
   } catch (error) {
     return dateString;
   }

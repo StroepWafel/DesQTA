@@ -39,6 +39,14 @@
   import { idbCacheGet } from '../../services/idb';
   import { platformStore } from '$lib/stores/platform';
 
+  const searchTooltip = $derived({
+    text: $platformStore.isMac
+      ? $_('header.quick_search_tooltip_mac') || 'Quick search (⌘K)'
+      : $_('header.quick_search_tooltip') || 'Quick search (Ctrl+K)',
+    placement: 'bottom' as const,
+    delay: 350,
+  });
+
   const dispatch = createEventDispatcher();
 
   // Core stores
@@ -1318,12 +1326,13 @@
 </script>
 
 <!-- Header search trigger -->
-<div class="flex-1 flex justify-center" data-tauri-drag-region>
+<div class="relative z-10 flex-1 flex justify-center min-w-0">
   <Button
     variant="ghost"
     onclick={openModal}
     ariaLabel={$platformStore.isMac ? 'Open global search (⌘K)' : 'Open global search (Ctrl+K)'}
-    class="group relative max-w-72 w-full px-5 py-2 rounded-xl bg-white/20 dark:bg-zinc-800/40 border border-accent text-accent font-semibold shadow-md backdrop-blur-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 flex items-center justify-between
+    tooltip={searchTooltip}
+    class="group relative max-w-72 w-full px-5 py-2 rounded-xl bg-white/20 dark:bg-zinc-800/40 border border-accent text-accent font-semibold shadow-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 flex items-center justify-between
     sm:max-w-72 sm:px-5 sm:w-full md:max-w-60 md:px-4 lg:max-w-72 lg:px-5
     max-lg:max-w-12 max-lg:px-0 max-lg:justify-center max-lg:w-10 max-lg:h-10">
     <div class="flex items-center gap-3 min-w-0 max-lg:gap-0 max-lg:justify-center">

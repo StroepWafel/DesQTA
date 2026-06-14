@@ -473,7 +473,7 @@
 </script>
 
 <div
-  class="h-full flex flex-col backdrop-blur-xs bg-white/80 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden">
+  class="h-full flex flex-col bg-card rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl overflow-hidden">
   <!-- Header -->
   <div
     class="shrink-0 px-4 py-3 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/30">
@@ -482,7 +482,7 @@
         {#if currentFolderPath.length > 0}
           <!-- Back button -->
           <button
-            class="p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+            class="p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800/80 border border-border text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
             onclick={navigateBack}
             title="Back">
             <Icon src={ChevronLeft} class="w-4 h-4" />
@@ -490,10 +490,10 @@
         {/if}
 
         <div class="flex flex-col">
-          <h3 class="text-sm font-semibold text-zinc-900 dark:text-white">Notes Explorer</h3>
+          <h3 class="text-sm font-semibold text-foreground">Notes Explorer</h3>
           {#if currentFolderPath.length > 0}
             <!-- Breadcrumb navigation -->
-            <div class="flex items-center text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <div class="flex items-center text-xs text-muted-foreground mt-0.5">
               <button
                 class="hover:text-zinc-700 dark:hover:text-zinc-300"
                 onclick={() => {
@@ -520,13 +520,13 @@
 
       <div class="flex items-center gap-2">
         <button
-          class="p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+          class="p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800/80 border border-border text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
           onclick={() => createNoteInFolder()}
           title="New Note">
           <Icon src={Plus} class="w-4 h-4" />
         </button>
         <button
-          class="p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+          class="p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800/80 border border-border text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
           onclick={() => openCreateFolderModal()}
           title="New Folder">
           <Icon src={FolderPlus} class="w-4 h-4" />
@@ -566,7 +566,7 @@
         </button>
       </div>
     {:else if fileTree.length === 0}
-      <div class="p-4 text-center text-zinc-500 dark:text-zinc-400">
+      <div class="p-4 text-center text-muted-foreground">
         <Icon src={FolderOpen} class="w-8 h-8 mx-auto mb-2 opacity-50" />
         <p class="text-sm">No notes found</p>
         <button
@@ -584,7 +584,7 @@
             <div
               class="flex flex-col items-center p-4 rounded-lg hover:bg-white/60 dark:hover:bg-zinc-800/40 cursor-pointer transition-all duration-200 group {selectedNoteId ===
                 item.name && item.item_type === 'file'
-                ? 'bg-white/80 dark:bg-zinc-800/60 border border-zinc-200/50 dark:border-zinc-700/50'
+                ? 'bg-white/80 dark:bg-zinc-800/60 border border-border'
                 : ''} {dragOverFolder === item.path
                 ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-600'
                 : ''} {draggedItem?.path === item.path ? 'opacity-50' : ''}"
@@ -611,11 +611,11 @@
                   src={item.item_type === 'folder' ? FolderOpen : Document}
                   class="w-12 h-12 {item.item_type === 'folder'
                     ? 'text-blue-500 dark:text-blue-400'
-                    : 'text-zinc-500 dark:text-zinc-400'}" />
+                    : 'text-muted-foreground'}" />
               </div>
 
               <!-- Item name -->
-              <span class="text-xs text-zinc-900 dark:text-white text-center truncate w-full">
+              <span class="text-xs text-foreground text-center truncate w-full">
                 {item.name}
               </span>
 
@@ -652,25 +652,25 @@
   <div
     bind:this={contextMenuElement}
     use:portalAction
-    class="fixed z-50 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-40 context-menu"
+    class="fixed z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-40 context-menu"
     style="left: {adjustedX}px; top: {adjustedY}px; pointer-events: auto;"
     in:fly={{ y: -10, duration: 200, easing: quintOut }}>
     {#if contextMenu?.item.item_type === 'folder'}
       <button
-        class="w-full px-3 py-2 text-left text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
+        class="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
         onclick={() => contextMenu && createNoteInFolder(contextMenu.item.path)}>
         <Icon src={Plus} class="w-4 h-4" />
         New Note Here
       </button>
       <button
-        class="w-full px-3 py-2 text-left text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
+        class="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
         onclick={() => contextMenu && openCreateFolderModal(contextMenu.item.path)}>
         <Icon src={FolderPlus} class="w-4 h-4" />
         New Subfolder
       </button>
-      <div class="border-t border-zinc-200 dark:border-zinc-700 my-1"></div>
+      <div class="border-t border-border my-1"></div>
       <button
-        class="w-full px-3 py-2 text-left text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
+        class="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
         onclick={() => contextMenu && openRenameModal(contextMenu.item)}>
         <Icon src={PencilSquare} class="w-4 h-4" />
         Rename
@@ -688,12 +688,12 @@
       </button>
     {:else}
       <button
-        class="w-full px-3 py-2 text-left text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
+        class="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
         onclick={() => contextMenu && openMoveNoteModal(contextMenu.item)}>
         <Icon src={FolderOpen} class="w-4 h-4" />
         Move to folder
       </button>
-      <div class="border-t border-zinc-200 dark:border-zinc-700 my-1"></div>
+      <div class="border-t border-border my-1"></div>
       <button
         class="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
         onclick={(e) => {
@@ -712,7 +712,7 @@
 <!-- Move Note Modal -->
 {#if showMoveNoteModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs mobile-modal-inset"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 mobile-modal-inset"
     transition:fly={{ y: 50, duration: 200 }}
     role="button"
     tabindex="0"
@@ -723,15 +723,15 @@
       if (e.key === 'Escape') showMoveNoteModal = null;
     }}>
     <div
-      class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-md"
+      class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-border w-full max-w-md"
       transition:scale={{ duration: 200, start: 0.95 }}
       role="document"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}>
       <!-- Modal Header -->
       <div
-        class="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Move Note</h3>
+        class="flex items-center justify-between p-6 border-b border-border">
+        <h3 class="text-lg font-semibold text-foreground">Move Note</h3>
         <button
           class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-200 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
           onclick={() => (showMoveNoteModal = null)}>
@@ -741,14 +741,14 @@
 
       <!-- Modal Body -->
       <div class="p-6 max-h-96 overflow-y-auto">
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+        <p class="text-sm text-muted-foreground mb-4">
           Move "{showMoveNoteModal.name || 'Untitled Note'}" to:
         </p>
 
         <div class="space-y-2">
           <!-- Root folder option -->
           <button
-            class="w-full flex items-center px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all duration-200 accent-ring"
+            class="w-full flex items-center px-3 py-2 text-sm rounded-lg border border-border text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all duration-200 accent-ring"
             onclick={() => moveNoteToFolder([])}>
             <Icon src={FolderOpen} class="w-4 h-4 mr-3" />
             <span class="flex-1 text-left">Root</span>
@@ -756,7 +756,7 @@
 
           {#each folders as folder (folder.id)}
             <button
-              class="w-full flex items-center px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all duration-200 accent-ring"
+              class="w-full flex items-center px-3 py-2 text-sm rounded-lg border border-border text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all duration-200 accent-ring"
               onclick={() => {
                 const folderPath = folder.path.split('/').filter((p) => p.length > 0);
                 moveNoteToFolder(folderPath);
@@ -769,7 +769,7 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="flex justify-end p-6 border-t border-zinc-200 dark:border-zinc-700">
+      <div class="flex justify-end p-6 border-t border-border">
         <button
           class="px-4 py-2 text-sm rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors duration-200"
           onclick={() => (showMoveNoteModal = null)}>
@@ -783,7 +783,7 @@
 <!-- Delete Confirmation Modal -->
 {#if showDeleteModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs mobile-modal-inset"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 mobile-modal-inset"
     transition:fly={{ y: 50, duration: 200 }}
     role="button"
     tabindex="0"
@@ -794,15 +794,15 @@
       if (e.key === 'Escape') showDeleteModal = null;
     }}>
     <div
-      class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-md"
+      class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-border w-full max-w-md"
       transition:scale={{ duration: 200, start: 0.95 }}
       role="document"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}>
       <!-- Modal Header -->
       <div
-        class="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+        class="flex items-center justify-between p-6 border-b border-border">
+        <h3 class="text-lg font-semibold text-foreground">
           Delete {showDeleteModal.item_type === 'folder' ? 'Folder' : 'Note'}?
         </h3>
         <button
@@ -814,8 +814,8 @@
 
       <!-- Modal Body -->
       <div class="p-6">
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-          Are you sure you want to delete <strong class="text-zinc-900 dark:text-white"
+        <p class="text-sm text-muted-foreground mb-2">
+          Are you sure you want to delete <strong class="text-foreground"
             >"{showDeleteModal.name}"</strong
           >?
         </p>
@@ -829,7 +829,7 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="flex justify-end gap-3 p-6 border-t border-zinc-200 dark:border-zinc-700">
+      <div class="flex justify-end gap-3 p-6 border-t border-border">
         <button
           class="px-4 py-2 text-sm rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors duration-200"
           onclick={() => (showDeleteModal = null)}>
@@ -848,20 +848,20 @@
 <!-- Create Folder Modal -->
 {#if showCreateFolderModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm mobile-modal-inset"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 mobile-modal-inset"
     in:fly={{ y: 20, duration: 300, easing: quintOut }}>
     <div
-      class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-xl p-6 w-full max-w-md mx-4">
-      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Create New Folder</h3>
+      class="bg-card rounded-xl border border-border shadow-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold text-foreground mb-4">Create New Folder</h3>
       <input
         type="text"
         bind:value={newFolderName}
         placeholder="Folder name"
-        class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
+        class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 text-foreground placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
         onkeydown={(e) => e.key === 'Enter' && createFolder()} />
       <div class="flex items-center justify-end gap-3 mt-6">
         <button
-          class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+          class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
           onclick={() => {
             showCreateFolderModal = false;
             newFolderName = '';
@@ -882,22 +882,22 @@
 <!-- Rename Modal -->
 {#if showRenameModal && renamingItem}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm mobile-modal-inset"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 mobile-modal-inset"
     in:fly={{ y: 20, duration: 300, easing: quintOut }}>
     <div
-      class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-xl p-6 w-full max-w-md mx-4">
-      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
+      class="bg-card rounded-xl border border-border shadow-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold text-foreground mb-4">
         Rename {renamingItem.item_type === 'folder' ? 'Folder' : 'Note'}
       </h3>
       <input
         type="text"
         bind:value={newItemName}
         placeholder={renamingItem.item_type === 'folder' ? 'Folder name' : 'Note name'}
-        class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
+        class="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 text-foreground placeholder-zinc-400 focus:outline-hidden focus:ring-2 accent-ring"
         onkeydown={(e) => e.key === 'Enter' && renameItem()} />
       <div class="flex items-center justify-end gap-3 mt-6">
         <button
-          class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+          class="px-4 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
           onclick={() => {
             showRenameModal = false;
             renamingItem = null;

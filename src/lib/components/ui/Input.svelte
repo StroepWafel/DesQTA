@@ -66,10 +66,11 @@
     rightAction,
   }: Props = $props();
 
+  // Lo-fi input: 1px border, generous height, calm focus ring
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-4 py-3 text-base',
+    sm: 'h-9 px-3 text-sm',
+    md: 'h-11 px-3.5 text-sm',
+    lg: 'h-12 px-4 text-base',
   };
 
   const iconSizes = {
@@ -86,14 +87,14 @@
 
   let inputClasses = $derived(
     [
-      'w-full border rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-1',
+      'w-full border rounded-lg transition-colors duration-150 focus:outline-none focus-visible:outline-none focus:ring-2 focus:ring-offset-0',
       hasError
-        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-        : 'border-zinc-300 dark:border-zinc-600 focus:border-accent-500 focus:ring-accent-500',
-      'bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100',
-      'placeholder-zinc-400 dark:placeholder-zinc-500',
+        ? 'border-destructive/60 focus:border-destructive focus:ring-destructive/30'
+        : 'border-border focus:border-accent-500 focus:ring-accent-500/40 hover:border-border-strong',
+      'bg-surface-2 text-foreground',
+      'placeholder:text-muted-foreground/70',
       disabled ? 'opacity-50 cursor-not-allowed' : '',
-      readonly ? 'bg-zinc-50 dark:bg-zinc-700' : '',
+      readonly ? 'bg-surface-muted' : '',
       hasLeftIcon ? 'pl-10' : '',
       hasRightIcon ? 'pr-10' : '',
       sizes[size],
@@ -105,9 +106,9 @@
 
   let labelClasses = $derived(
     [
-      'block text-sm font-medium mb-1',
-      hasError ? 'text-red-700 dark:text-red-400' : 'text-zinc-700 dark:text-zinc-300',
-      required ? "after:content-['*'] after:ml-0.5 after:text-red-500" : '',
+      'block text-xs font-medium mb-1.5 uppercase tracking-[0.06em]',
+      hasError ? 'text-destructive' : 'text-muted-foreground',
+      required ? "after:content-['*'] after:ml-0.5 after:text-destructive after:normal-case" : '',
     ]
       .filter(Boolean)
       .join(' '),
@@ -124,7 +125,7 @@
   <div class="relative">
     {#if hasLeftIcon}
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Icon src={leftIcon} size={iconSizes[size]} class="text-zinc-400 dark:text-zinc-500" />
+        <Icon src={leftIcon} size={iconSizes[size]} class="text-muted-foreground" />
       </div>
     {/if}
 
@@ -155,18 +156,18 @@
         {#if rightAction}
           {@render rightAction()}
         {:else if rightIcon}
-          <Icon src={rightIcon} size={iconSizes[size]} class="text-zinc-400 dark:text-zinc-500" />
+          <Icon src={rightIcon} size={iconSizes[size]} class="text-muted-foreground" />
         {/if}
       </div>
     {/if}
   </div>
 
   {#if error}
-    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+    <p class="mt-1.5 text-xs text-destructive">
       {error}
     </p>
   {:else if hint}
-    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+    <p class="mt-1.5 text-xs text-muted-foreground">
       {hint}
     </p>
   {/if}

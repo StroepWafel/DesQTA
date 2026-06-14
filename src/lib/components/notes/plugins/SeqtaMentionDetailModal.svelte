@@ -313,7 +313,7 @@
         <div class="flex items-start justify-between gap-4 mb-3">
           <div class="flex-1">
             <div class="flex items-center gap-3 mb-2">
-              <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">{title}</h2>
+              <h2 class="text-2xl font-bold text-foreground">{title}</h2>
               {#if badge}
                 <span
                   class="px-2.5 py-1 rounded-lg text-xs font-medium {badge.color} {badge.bgColor}">
@@ -321,7 +321,7 @@
                 </span>
               {/if}
             </div>
-            <p class="text-lg text-zinc-600 dark:text-zinc-400">{subtitle}</p>
+            <p class="text-lg text-muted-foreground">{subtitle}</p>
           </div>
         </div>
 
@@ -338,24 +338,24 @@
 
       <!-- Details Section -->
       <div class="space-y-4 mb-6">
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Details</h3>
+        <h3 class="text-lg font-semibold text-foreground">Details</h3>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {#if mentionData.data.dueDate || mentionData.data.due}
             <div
-              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border">
               <Icon
                 src={Clock}
-                class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 flex-shrink-0" />
+                class="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div>
-                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">
+                <div class="text-xs font-medium text-muted-foreground mb-0.5">
                   Due Date
                 </div>
-                <div class="text-sm font-medium text-zinc-900 dark:text-white">
+                <div class="text-sm font-medium text-foreground">
                   {formatDate(mentionData.data.dueDate || mentionData.data.due)}
                 </div>
                 {#if mentionData.data.dueDate || mentionData.data.due}
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  <div class="text-xs text-muted-foreground mt-0.5">
                     {formatTime(mentionData.data.dueDate || mentionData.data.due)}
                   </div>
                 {/if}
@@ -365,15 +365,15 @@
 
           {#if mentionData.data.teacher}
             <div
-              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border">
               <Icon
                 src={User}
-                class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 flex-shrink-0" />
+                class="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div>
-                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">
+                <div class="text-xs font-medium text-muted-foreground mb-0.5">
                   Teacher
                 </div>
-                <div class="text-sm font-medium text-zinc-900 dark:text-white">
+                <div class="text-sm font-medium text-foreground">
                   {mentionData.data.teacher}
                 </div>
               </div>
@@ -382,13 +382,13 @@
 
           {#if mentionData.data.room}
             <div
-              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border">
               <Icon
                 src={MapPin}
-                class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 flex-shrink-0" />
+                class="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div>
-                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Room</div>
-                <div class="text-sm font-medium text-zinc-900 dark:text-white">
+                <div class="text-xs font-medium text-muted-foreground mb-0.5">Room</div>
+                <div class="text-sm font-medium text-foreground">
                   {mentionData.data.room}
                 </div>
               </div>
@@ -397,15 +397,15 @@
 
           {#if mentionData.data.subject || mentionData.data.code || mentionData.data.subjectName}
             <div
-              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border">
               <Icon
                 src={AcademicCap}
-                class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" />
+                class="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
               <div>
-                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">
+                <div class="text-xs font-medium text-muted-foreground mb-0.5">
                   Subject
                 </div>
-                <div class="text-sm font-medium text-zinc-900 dark:text-white">
+                <div class="text-sm font-medium text-foreground">
                   {mentionData.data.subjectName ||
                     mentionData.data.subject ||
                     mentionData.data.code}
@@ -416,11 +416,11 @@
 
           {#if mentionData.data.from || mentionData.data.from12}
             <div
-              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
-              <Icon src={Clock} class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" />
+              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border">
+              <Icon src={Clock} class="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
               <div>
-                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Time</div>
-                <div class="text-sm font-medium text-zinc-900 dark:text-white">
+                <div class="text-xs font-medium text-muted-foreground mb-0.5">Time</div>
+                <div class="text-sm font-medium text-foreground">
                   {mentionData.data.from12 || formatTime(mentionData.data.from)} - {mentionData.data
                     .until12 || formatTime(mentionData.data.until)}
                 </div>
@@ -430,13 +430,13 @@
 
           {#if mentionData.data.date}
             <div
-              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border">
               <Icon
                 src={Calendar}
-                class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" />
+                class="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
               <div>
-                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Date</div>
-                <div class="text-sm font-medium text-zinc-900 dark:text-white">
+                <div class="text-xs font-medium text-muted-foreground mb-0.5">Date</div>
+                <div class="text-sm font-medium text-foreground">
                   {formatDate(mentionData.data.date)}
                 </div>
               </div>
@@ -447,12 +447,12 @@
         <!-- Description -->
         {#if mentionData.data.description || mentionData.data.content}
           <div
-            class="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
-            <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+            class="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border">
+            <div class="text-xs font-medium text-muted-foreground mb-2">
               {mentionType === 'notice' ? 'Content' : 'Description'}
             </div>
             <div
-              class="text-sm text-zinc-900 dark:text-white whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none">
+              class="text-sm text-foreground whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none">
               {#if mentionType === 'notice' && mentionData.data.content}
                 {@html mentionData.data.content}
               {:else}
@@ -465,11 +465,11 @@
         <!-- Notice Author -->
         {#if mentionData.data.author && mentionType === 'notice'}
           <div
-            class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
-            <Icon src={User} class="w-5 h-5 text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" />
+            class="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border">
+            <Icon src={User} class="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Author</div>
-              <div class="text-sm font-medium text-zinc-900 dark:text-white">
+              <div class="text-xs font-medium text-muted-foreground mb-0.5">Author</div>
+              <div class="text-sm font-medium text-foreground">
                 {mentionData.data.author}
               </div>
             </div>
@@ -479,20 +479,20 @@
         <!-- Timetable Lessons -->
         {#if mentionData.data.lessons && mentionData.data.lessons.length > 0}
           <div>
-            <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+            <div class="text-xs font-medium text-muted-foreground mb-2">
               Upcoming Lessons
             </div>
             <div class="space-y-2">
               {#each mentionData.data.lessons.slice(0, 5) as lesson}
                 <div
-                  class="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+                  class="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border">
                   <div class="flex items-center gap-3">
                     <Icon src={Calendar} class="w-4 h-4 text-zinc-400" />
                     <div>
-                      <div class="text-sm font-medium text-zinc-900 dark:text-white">
+                      <div class="text-sm font-medium text-foreground">
                         {formatDate(lesson.date)}
                       </div>
-                      <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                      <div class="text-xs text-muted-foreground">
                         {lesson.from} - {lesson.until}
                         {#if lesson.room}
                           • Room {lesson.room}
@@ -530,14 +530,14 @@
 
       <!-- Related Items -->
       {#if relatedItems.length > 0}
-        <div class="pt-6 border-t border-zinc-200 dark:border-zinc-700">
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Related Items</h3>
+        <div class="pt-6 border-t border-border">
+          <h3 class="text-lg font-semibold text-foreground mb-4">Related Items</h3>
           <div class="space-y-2">
             {#each relatedItems.slice(0, 5) as item}
               <div
                 role="button"
                 tabindex="0"
-                class="flex items-center justify-between p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                class="flex items-center justify-between p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-border hover:surface-muted transition-colors cursor-pointer"
                 onclick={() => {
                   mentionId = item.id;
                   mentionType = item.type;
@@ -556,8 +556,8 @@
                   }
                 }}>
                 <div>
-                  <div class="text-sm font-medium text-zinc-900 dark:text-white">{item.title}</div>
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400">{item.subtitle}</div>
+                  <div class="text-sm font-medium text-foreground">{item.title}</div>
+                  <div class="text-xs text-muted-foreground">{item.subtitle}</div>
                 </div>
                 <Icon src={Link} class="w-4 h-4 text-zinc-400" />
               </div>
@@ -567,7 +567,7 @@
       {/if}
     {:else}
       <div class="text-center py-12">
-        <p class="text-zinc-500 dark:text-zinc-400">Failed to load mention details</p>
+        <p class="text-muted-foreground">Failed to load mention details</p>
       </div>
     {/if}
   </div>

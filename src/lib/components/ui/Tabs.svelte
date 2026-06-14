@@ -18,7 +18,7 @@
     fullWidth?: boolean;
     class?: string;
     onTabChange?: (tabId: string) => void;
-    children?: Snippet<[string]>; // activeTab
+    children?: Snippet<[string]>;
   }
 
   let {
@@ -35,36 +35,35 @@
   function handleTabClick(tab: Tab) {
     if (tab.disabled) return;
     activeTab = tab.id;
-    if (onTabChange) {
-      onTabChange(tab.id);
-    }
+    if (onTabChange) onTabChange(tab.id);
   }
 
+  // Lo-fi tabs: editorial underline style is the default look.
   const variants = {
     default: {
-      container: 'border-b border-zinc-200 dark:border-zinc-700',
-      tab: 'border-b-2 border-transparent hover:border-zinc-300 dark:hover:border-zinc-600',
-      active: 'border-accent-500 text-accent-600 dark:text-accent-400',
-      inactive: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+      container: 'border-b border-border',
+      tab: 'border-b-2 border-transparent hover:text-foreground',
+      active: 'border-accent-500 text-accent-600',
+      inactive: 'text-muted-foreground'
     },
     pills: {
-      container: 'bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1',
-      tab: 'rounded-md transition-all duration-200',
-      active: 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-xs',
-      inactive: 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-zinc-700/50'
+      container: 'bg-surface-muted rounded-lg p-1 gap-1',
+      tab: 'rounded-md transition-colors duration-150',
+      active: 'bg-card text-foreground border border-border',
+      inactive: 'text-muted-foreground hover:text-foreground hover:bg-surface-2'
     },
     underline: {
       container: '',
-      tab: 'border-b-2 border-transparent',
-      active: 'border-accent-500 text-accent-600 dark:text-accent-400',
-      inactive: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600'
+      tab: 'border-b-2 border-transparent transition-colors duration-150',
+      active: 'border-accent-500 text-accent-600',
+      inactive: 'text-muted-foreground hover:text-foreground hover:border-border'
     }
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base'
+    sm: 'px-3 py-2 text-sm',
+    md: 'px-4 py-2.5 text-sm',
+    lg: 'px-5 py-3 text-base'
   };
 
   let containerClasses = $derived([
@@ -75,7 +74,7 @@
   ].filter(Boolean).join(' '));
 
   let tabClasses = $derived((tab: Tab) => [
-    'inline-flex items-center gap-2 font-medium cursor-pointer transition-all duration-200',
+    'inline-flex items-center gap-2 font-medium cursor-pointer transition-colors duration-150',
     fullWidth ? 'flex-1 justify-center' : '',
     sizes[size],
     variants[variant].tab,
@@ -85,7 +84,7 @@
 </script>
 
 <div>
-  <nav class={containerClasses}>
+  <div class={containerClasses} role="tablist">
     {#each tabs as tab}
       <button
         class={tabClasses(tab)}
@@ -97,23 +96,21 @@
         {#if tab.icon}
           <Icon src={tab.icon} size="16" />
         {/if}
-        
+
         <span>{tab.label}</span>
-        
+
         {#if tab.badge}
-          <span class="ml-2 bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-full px-2 py-0.5 text-xs">
+          <span class="ml-1.5 bg-surface-3 text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] font-semibold border border-border-subtle">
             {tab.badge}
           </span>
         {/if}
       </button>
     {/each}
-  </nav>
-  
+  </div>
+
   {#if children}
-    <div class="mt-4">
+    <div class="mt-6">
       {@render children(activeTab)}
     </div>
   {/if}
 </div>
-
-

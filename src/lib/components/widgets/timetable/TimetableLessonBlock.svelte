@@ -112,10 +112,10 @@
 <button
   bind:this={blockElement}
   type="button"
-  class="lesson-block flex flex-col justify-start rounded-xl border-l-4 shadow-lg bg-white dark:bg-zinc-800 group cursor-pointer select-none w-full text-left min-w-0 transition-[box-shadow] duration-200 {densityClasses} {isGrid
-    ? 'lesson-grid relative min-h-0 max-h-full h-full overflow-hidden hover:shadow-lg'
-    : 'lesson-panel hover-scale-panel min-h-[54px] h-full hover:shadow-xl active:scale-[0.98]'}"
-  style="border-color: {lesson.colour}; --border-color: {lesson.colour}; --text-scale: {gridTextScale};"
+  class="lesson-block flex flex-col justify-start rounded-lg border border-border-subtle border-l-4 shadow-sm bg-card group cursor-pointer select-none w-full text-left min-w-0 transition-[box-shadow,border-color] duration-200 {densityClasses} {isGrid
+    ? 'lesson-grid relative min-h-0 max-h-full h-full overflow-hidden hover:shadow-md hover:border-border-strong'
+    : 'lesson-panel hover-scale-panel min-h-[54px] h-full hover:shadow-md hover:border-border-strong active:scale-[0.99]'}"
+  style="border-left-color: {lesson.colour}; --border-color: {lesson.colour}; --text-scale: {gridTextScale};"
   class:active
   class:overlap
   onclick={handleClick}
@@ -124,46 +124,46 @@
   {#if isGrid}
     {#if slotKindLabel}
       <p
-        class="grid-kind text-[9px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 truncate shrink-0 leading-tight mb-0.5">
+        class="grid-kind text-[9px] font-semibold uppercase tracking-wide text-muted-foreground truncate shrink-0 leading-tight mb-0.5">
         {slotKindLabel}
       </p>
     {/if}
     <h3
-      class="grid-title font-bold text-zinc-900 dark:text-white min-w-0 overflow-hidden shrink-0 leading-tight mb-0.5 {titleClampGrid}">
+      class="grid-title font-bold text-foreground min-w-0 overflow-hidden shrink-0 leading-tight mb-0.5 {titleClampGrid}">
       {lesson.description}
     </h3>
     {#if showGridTime}
       <p
-        class="grid-time font-mono font-semibold text-zinc-700 dark:text-zinc-300 text-[10px] sm:text-[11px] shrink-0 leading-tight whitespace-nowrap mb-0.5">
+        class="grid-time font-mono font-semibold text-foreground text-[10px] sm:text-[11px] shrink-0 leading-tight whitespace-nowrap mb-0.5">
         {lesson.from} – {lesson.until}
       </p>
     {/if}
     {#if showGridTeacher && lesson.staff}
       <span
-        class="grid-meta text-zinc-600 dark:text-zinc-400 text-[10px] sm:text-xs min-w-0 shrink-0 leading-tight mb-0.5 {metaClamp}">
+        class="grid-meta text-muted-foreground text-[10px] sm:text-xs min-w-0 shrink-0 leading-tight mb-0.5 {metaClamp}">
         {lesson.staff}
       </span>
     {/if}
     {#if showGridRoom && lesson.room}
-      <span class="grid-meta text-zinc-600 dark:text-zinc-400 text-[10px] sm:text-xs min-w-0 shrink leading-tight {metaClamp}">
+      <span class="grid-meta text-muted-foreground text-[10px] sm:text-xs min-w-0 shrink leading-tight {metaClamp}">
         {formatRoomLabel(lesson.room)}
       </span>
     {/if}
   {:else}
     {#if slotKindLabel}
       <p
-        class="text-[9px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 truncate shrink-0 leading-tight mb-0.5">
+        class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground truncate shrink-0 leading-tight mb-0.5">
         {slotKindLabel}
       </p>
     {/if}
     <div class="flex justify-between gap-2 items-start min-h-0 shrink-0 mb-0.5 overflow-hidden">
       <h3
-        class="font-bold text-zinc-900 dark:text-white flex-1 min-w-0 overflow-hidden leading-tight {titleClampPanel}">
+        class="font-bold text-foreground flex-1 min-w-0 overflow-hidden leading-tight {titleClampPanel}">
         {lesson.description}
       </h3>
       {#if !overlap}
         <span
-          class="font-mono font-semibold text-zinc-700 dark:text-zinc-300 text-[10px] sm:text-xs shrink-0 leading-tight whitespace-nowrap">
+          class="font-mono font-semibold text-foreground text-[10px] sm:text-xs shrink-0 leading-tight whitespace-nowrap">
           {lesson.from} – {lesson.until}
         </span>
       {/if}
@@ -173,13 +173,13 @@
       <div class="flex flex-col gap-0.5 mb-0.5 min-h-0 shrink overflow-hidden">
         {#if showTeacher && lesson.staff}
           <span
-            class="text-zinc-600 dark:text-zinc-400 text-[11px] sm:text-xs min-w-0 leading-tight {metaClamp}">
+            class="text-muted-foreground text-[11px] sm:text-xs min-w-0 leading-tight {metaClamp}">
             {lesson.staff}
           </span>
         {/if}
         {#if showRoom && lesson.room}
           <span
-            class="text-zinc-600 dark:text-zinc-400 text-[11px] sm:text-xs min-w-0 leading-tight {metaClamp}">
+            class="text-muted-foreground text-[11px] sm:text-xs min-w-0 leading-tight {metaClamp}">
             {formatRoomLabel(lesson.room)}
           </span>
         {/if}
@@ -189,7 +189,7 @@
 
   {#if showAttendance && lesson.attendanceTitle && lesson.attendanceTitle.trim() && !isGrid}
     <div
-      class="lesson-attendance mt-1 border-t border-zinc-200 dark:border-zinc-700 pt-1 shrink-0 min-h-0 overflow-hidden">
+      class="lesson-attendance mt-1 border-t border-border pt-1 shrink-0 min-h-0 overflow-hidden">
       <span class="text-xs italic text-amber-600 dark:text-amber-400 line-clamp-2">
         {lesson.attendanceTitle}
       </span>

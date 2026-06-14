@@ -98,7 +98,7 @@
 
 <div class="flex flex-col flex-1 w-full min-h-0 overflow-hidden">
   <!-- Search and Filters -->
-  <div class="flex flex-col gap-3 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50">
+  <div class="flex flex-col gap-3 px-4 py-3 border-b border-border bg-zinc-50/50 dark:bg-zinc-900/50">
     <div class="flex gap-2 items-center">
       <div class="relative flex-1">
         <Icon
@@ -121,12 +121,12 @@
 
     {#if showFilters}
       <div
-        class="flex flex-wrap gap-2 p-3 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+        class="flex flex-wrap gap-2 p-3 rounded-xl bg-card border border-border"
         transition:fade={{ duration: 200 }}>
         <!-- Subject Filter -->
         <select
           bind:value={filterSubject}
-          class="px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-accent-500">
+          class="px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-card text-foreground border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-accent-500">
           <option value="">All Subjects</option>
           {#each uniqueSubjects as subject}
             <option value={subject}>{subject}</option>
@@ -136,7 +136,7 @@
         <!-- Day Filter -->
         <select
           bind:value={filterDay}
-          class="px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-accent-500">
+          class="px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 bg-card text-foreground border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-accent-500">
           <option value="">All Days</option>
           {#each dayLabels as dayLabel, dayIdx}
             <option value={dayIdx}>{dayLabel}</option>
@@ -173,7 +173,7 @@
         {#each groupedLessons as [dateStr, dayLessons], groupIndex}
           <div transition:fade={{ duration: 200, delay: groupIndex * 50 }}>
             <h3
-              class="text-lg font-bold text-zinc-900 dark:text-white mb-3 sticky top-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm py-2 z-10">
+              class="text-lg font-bold text-foreground mb-3 sticky top-0 bg-card py-2 z-10">
               {formatLessonDate(dateStr)}
             </h3>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

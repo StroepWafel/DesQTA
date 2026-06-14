@@ -223,6 +223,10 @@
     "notifications": "Notifications",
     "cloud_signed_in": "Signed in to BetterSEQTA Plus",
     "cloud_not_signed_in": "Not signed in to BetterSEQTA Plus",
+    "cloud_sync_active_tooltip": "Cloud sync active — open Settings to manage sync",
+    "cloud_sync_inactive_tooltip": "Cloud sync inactive — click to sign in via Settings",
+    "quick_search_tooltip": "Quick search (Ctrl+K)",
+    "quick_search_tooltip_mac": "Quick search (⌘K)",
     "cloud_signed_out_message": "You're signed out of BetterSEQTA Plus. Sign in via Settings to sync your data across devices.",
     "cloud_go_to_settings": "Go to Settings",
     "notification_forum_subtitle": "New messages or comments"
@@ -384,7 +388,14 @@
     "no_lessons_today": "No lessons today!",
     "enjoy_free_time": "Enjoy your free time or check your other tasks.",
     "view_assessment": "View Assessment",
-    "view_course": "View Course"
+    "view_course": "View Course",
+    "edit_dashboard": "Customize widget layout",
+    "done_editing": "Save layout and exit edit mode",
+    "add_widget": "Add a widget to the dashboard",
+    "templates": "Apply or save layout templates",
+    "export_layout": "Export layout as a .DQDash file",
+    "import_layout": "Import a .DQDash layout file",
+    "reset_layout": "Reset dashboard to the default layout"
   },
   "courses": {
     "page_description": "Browse courses and access lesson content",
@@ -475,6 +486,9 @@
     "board_view": "Board View",
     "calendar_view": "Calendar View",
     "gantt_view": "Gantt View",
+    "gantt_show_completed": "Show completed",
+    "gantt_days": "Days",
+    "gantt_duration_hint": "Days to work on task (sets start date)",
     "loading": "Loading assessments...",
     "no_assessments_year": "No assessments for {year}!",
     "try_different_year": "Try selecting a different year.",
@@ -715,6 +729,9 @@
     "saved": "Saved!",
     "saving": "Saving...",
     "save_changes": "Save Changes",
+    "discard_changes": "Discard",
+    "section_jump": "Sections",
+    "page_description": "Preferences, appearance, sync, and app behaviour.",
     "loading_settings": "Loading settings...",
     "personal_preferences": "Personal Preferences",
     "cloud_sync": "Cloud Sync",
@@ -921,7 +938,8 @@
     "showing_assessments": "Showing {start} to {end} of {total} assessments",
     "rows_per_page": "Rows per page:",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "view_assessment": "View assessment"
   },
   "portals": {
     "description": "Access external portals and resources",
@@ -1052,6 +1070,7 @@
     "all": "All",
     "loading": "Loading notices...",
     "no_notices_found": "No notices found for the selected criteria.",
+    "no_notices_message": "No notices found for the selected criteria.",
     "view_all": "View all",
     "no_notices_today": "No notices available today."
   },

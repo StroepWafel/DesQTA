@@ -20,3 +20,29 @@
   box-shadow: 0 2px 6px rgba(100, 116, 139, 0.15);
 }
 
+/* Lofi UI universal surface hooks */
+.surface,
+.surface-raised {
+  background: var(--surfaceColor, var(--card, inherit));
+  border-color: var(--borderColor, var(--border, inherit));
+}
+
+.surface-inset {
+  background: var(--backgroundColor, var(--background, inherit));
+  border-color: var(--borderColor, var(--border, inherit));
+}
+
+.surface-muted,
+.surface-btn-secondary {
+  background: var(--surfaceColor, var(--muted, inherit));
+}
+
+.surface-btn-primary {
+  background: var(--primaryColor, var(--accent-color-value, #3b82f6));
+}
+
+.nordic-card {
+  /* legacy alias */
+  background: var(--surfaceColor, inherit);
+  border: 1px solid var(--borderColor, inherit);
+}

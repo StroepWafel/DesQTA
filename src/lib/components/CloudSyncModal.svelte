@@ -357,7 +357,7 @@
     transition:fade={{ duration: 200 }}>
     <!-- Backdrop -->
     <div
-      class="absolute inset-0 bg-black/50 backdrop-blur-xs"
+      class="absolute inset-0 bg-black/50 "
       role="button"
       tabindex="0"
       on:click={closeModal}
@@ -366,12 +366,12 @@
 
     <!-- Modal -->
     <div
-      class="relative w-full max-w-md bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-700"
+      class="relative w-full max-w-md bg-card rounded-xl shadow-2xl border border-border"
       transition:fly={{ y: 20, duration: 200 }}>
       <!-- Header -->
       <div
-        class="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
-        <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">Cloud Sync</h2>
+        class="flex items-center justify-between p-6 border-b border-border">
+        <h2 class="text-lg font-semibold text-foreground">Cloud Sync</h2>
         <button
           class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-200"
           on:click={closeModal}>
@@ -407,7 +407,7 @@
             <div>
               <label
                 for="email"
-                class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                class="block text-sm font-medium text-foreground mb-1">
                 Email
               </label>
               <input
@@ -415,12 +415,12 @@
                 type="email"
                 bind:value={email}
                 placeholder="email@example.com"
-                class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors duration-200" />
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded-lg text-foreground placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors duration-200" />
             </div>
             <div>
               <label
                 for="password"
-                class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                class="block text-sm font-medium text-foreground mb-1">
                 Password
               </label>
               <input
@@ -428,11 +428,11 @@
                 type="password"
                 bind:value={password}
                 placeholder="••••••••"
-                class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded-lg text-foreground placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
                 on:keydown={(e) => e.key === 'Enter' && authenticate()} />
             </div>
 
-            <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <p class="mt-2 text-xs text-muted-foreground">
               <a
                 href="https://accounts.betterseqta.org/register"
                 target="_blank"
@@ -463,7 +463,7 @@
             <!-- Divider -->
             <div class="flex items-center gap-3 my-3">
               <div class="flex-1 h-px bg-zinc-300 dark:bg-zinc-600"></div>
-              <span class="text-xs text-zinc-500 dark:text-zinc-400">or</span>
+              <span class="text-xs text-muted-foreground">or</span>
               <div class="flex-1 h-px bg-zinc-300 dark:bg-zinc-600"></div>
             </div>
 

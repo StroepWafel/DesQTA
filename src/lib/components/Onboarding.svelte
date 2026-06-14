@@ -383,7 +383,7 @@
     style={tooltipStyle}
     transition:scale={{ duration: 300, easing: cubicInOut }}>
     <div
-      class="bg-white dark:bg-zinc-800 rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-700 p-6 max-w-md w-[90vw] sm:w-[400px]">
+      class="bg-card rounded-lg shadow-2xl border border-border p-6 max-w-md w-[90vw] sm:w-[400px]">
       <!-- Header -->
       <div class="flex items-start justify-between mb-4">
         <div class="flex items-start gap-3 flex-1">
@@ -400,19 +400,19 @@
           </div>
           <div class="flex-1 min-w-0">
             {#if steps[currentStep].id === 'analytics' && $analyticsCrunching}
-              <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+              <h2 class="text-xl font-bold text-foreground mb-2">
                 <T key="onboarding.analytics_crunching" fallback="Hold on, crunching the numbers" />
               </h2>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <p class="text-sm text-muted-foreground">
                 <T
                   key="onboarding.analytics_crunching_desc"
                   fallback="Your grade data is syncing. This will only take a moment." />
               </p>
             {:else}
-              <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+              <h2 class="text-xl font-bold text-foreground mb-2">
                 <T key={steps[currentStep].titleKey} fallback={steps[currentStep].titleFallback} />
               </h2>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <p class="text-sm text-muted-foreground">
                 <T key={steps[currentStep].descKey} fallback={steps[currentStep].descFallback} />
               </p>
             {/if}
@@ -438,7 +438,7 @@
             </div>
           {/each}
         </div>
-        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-2 text-center">
+        <p class="text-xs text-muted-foreground mt-2 text-center">
           {$_('onboarding.step_x_of_y', {
             default: `Step ${currentStep + 1} of ${steps.length}`,
             values: { current: currentStep + 1, total: steps.length },
@@ -450,14 +450,14 @@
       <div class="flex items-center justify-between gap-3">
         <button
           onclick={skipOnboarding}
-          class="min-h-[44px] px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-all duration-200">
+          class="min-h-[44px] px-4 py-2 text-sm text-muted-foreground hover:text-zinc-900 dark:hover:text-zinc-200 transition-all duration-200">
           <T key="onboarding.skip_tour" fallback="Skip tour" />
         </button>
         <div class="flex items-center gap-3">
           <button
             onclick={prevStep}
             disabled={currentStep === 0}
-            class="flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+            class="flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
             <Icon src={ChevronLeft} class="w-4 h-4" />
             <span><T key="common.back" fallback="Back" /></span>
           </button>

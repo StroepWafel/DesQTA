@@ -109,23 +109,24 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
-  <div class="flex justify-between items-start">
-    <div>
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
-        <T key="navigation.reports" fallback="Reports" />
-      </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
-        <T key="reports.description" fallback="Download your academic reports" />
-      </p>
-    </div>
-  </div>
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6">
+  <header class="flex flex-col gap-1.5">
+    <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+      Academic
+    </p>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+      <T key="navigation.reports" fallback="Reports" />
+    </h1>
+    <p class="text-sm text-muted-foreground max-w-2xl">
+      <T key="reports.description" fallback="Download your academic reports" />
+    </p>
+  </header>
   {#if loading}
     <div class="flex flex-col justify-center items-center py-24">
       <div
         class="w-16 h-16 rounded-full border-4 animate-spin border-indigo-500/30 border-t-indigo-500">
       </div>
-      <p class="mt-4 text-zinc-600 dark:text-zinc-400">
+      <p class="mt-4 text-muted-foreground">
         <T key="reports.loading" fallback="Loading reports..." />
       </p>
     </div>
@@ -135,7 +136,7 @@
         class="flex justify-center items-center w-20 h-20 text-3xl bg-linear-to-br from-red-500 to-red-600 rounded-full shadow-xs animate-gradient">
         ⚠️
       </div>
-      <p class="mt-4 text-xl text-zinc-700 dark:text-zinc-300">{error}</p>
+      <p class="mt-4 text-xl text-foreground">{error}</p>
     </div>
   {:else if reports.length === 0}
     <EmptyState
@@ -163,13 +164,13 @@
             </div>
             <div class="flex flex-col flex-1 justify-center items-center py-12">
               <div
-                class="mb-2 text-2xl font-extrabold text-center text-zinc-900 dark:text-white animate-fade-in">
+                class="mb-2 text-2xl font-extrabold text-center text-foreground animate-fade-in">
                 {report.types}
               </div>
             </div>
             <div class="px-6 pb-6">
               <div
-                class="text-xs font-semibold text-center opacity-80 text-zinc-900 dark:text-white animate-fade-in">
+                class="text-xs font-semibold text-center opacity-80 text-foreground animate-fade-in">
                 {formatDate(report.created_date)}
               </div>
               <button

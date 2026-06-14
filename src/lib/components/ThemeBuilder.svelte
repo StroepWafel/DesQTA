@@ -901,17 +901,17 @@
 
 <!-- Theme Builder Sidebar Content (single scrollable form, no stepper) -->
 <div
-  class="flex flex-col h-full w-full max-w-xl bg-white dark:bg-zinc-900 shadow-xl border-l border-zinc-200 dark:border-zinc-700 pt-16">
+  class="flex flex-col h-full w-full max-w-xl bg-white dark:bg-zinc-900 shadow-xl border-l border-border pt-16">
   <!-- Header -->
   <div
-    class="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700 bg-linear-to-r from-indigo-50 to-purple-50 dark:from-zinc-800 dark:to-zinc-800">
+    class="flex items-center justify-between p-6 border-b border-border bg-linear-to-r from-indigo-50 to-purple-50 dark:from-zinc-800 dark:to-zinc-800">
     <div class="flex items-center gap-3">
       <div class="p-2 rounded-lg bg-linear-to-r from-indigo-500 to-purple-600 text-white">
         <Icon src={Swatch} class="w-6 h-6" />
       </div>
       <div>
-        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Theme Builder</h2>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400">
+        <h2 class="text-2xl font-bold text-foreground">Theme Builder</h2>
+        <p class="text-sm text-muted-foreground">
           Create and customize your perfect theme
         </p>
       </div>
@@ -936,12 +936,12 @@
   <div class="flex-1 overflow-y-auto p-6 space-y-10">
     <!-- Basic Info Section -->
     <section>
-      <h3 class="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Basic Information</h3>
+      <h3 class="text-lg font-semibold mb-4 text-foreground">Basic Information</h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label
-            class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+            class="block text-sm font-medium text-foreground mb-2"
             for="themeName">
             Theme Name <span class="text-red-500">*</span>
           </label>
@@ -950,15 +950,15 @@
             id="themeName"
             bind:value={themeName}
             placeholder="my-awesome-theme"
-            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white" />
-          <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-card text-foreground" />
+          <p class="text-xs text-muted-foreground mt-1">
             Lowercase letters, numbers, hyphens, and underscores only
           </p>
         </div>
 
         <div>
           <label
-            class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+            class="block text-sm font-medium text-foreground mb-2"
             for="themeDisplayName">
             Display Name <span class="text-red-500">*</span>
           </label>
@@ -967,12 +967,12 @@
             id="themeDisplayName"
             bind:value={themeDisplayName}
             placeholder="My Awesome Theme"
-            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white" />
+            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-card text-foreground" />
         </div>
 
         <div class="md:col-span-2">
           <label
-            class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+            class="block text-sm font-medium text-foreground mb-2"
             for="themeDescription">
             Description <span class="text-red-500">*</span>
           </label>
@@ -981,13 +981,13 @@
             bind:value={themeDescription}
             placeholder="A beautiful theme with..."
             rows="3"
-            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white resize-none transition-all duration-200 ease-in-out"
+            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-card text-foreground resize-none transition-all duration-200 ease-in-out"
             style="transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);"></textarea>
         </div>
 
         <div>
           <label
-            class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+            class="block text-sm font-medium text-foreground mb-2"
             for="themeAuthor">
             Author <span class="text-red-500">*</span>
           </label>
@@ -996,19 +996,19 @@
             id="themeAuthor"
             bind:value={themeAuthor}
             placeholder="Your Name"
-            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white" />
+            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-card text-foreground" />
         </div>
 
         <div>
           <label
-            class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+            class="block text-sm font-medium text-foreground mb-2"
             for="themeCategory">
             Category
           </label>
           <select
             id="themeCategory"
             bind:value={themeCategory}
-            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white">
+            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-card text-foreground">
             {#each categories as category}
               <option value={category}
                 >{category.charAt(0).toUpperCase() + category.slice(1)}</option>
@@ -1020,7 +1020,7 @@
       <!-- Tags -->
       <div class="mt-6">
         <label
-          class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+          class="block text-sm font-medium text-foreground mb-2"
           for="newTagInput">Tags</label>
 
         <div class="flex flex-wrap gap-2 mb-3">
@@ -1044,7 +1044,7 @@
             id="newTagInput"
             bind:value={newTag}
             placeholder="Add a tag..."
-            class="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+            class="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-card text-foreground"
             onkeydown={handleTagKeydown} />
           <button
             type="button"
@@ -1055,12 +1055,12 @@
         </div>
 
         <div class="flex flex-wrap gap-1">
-          <span class="text-xs text-zinc-500 dark:text-zinc-400 mr-2">Quick add:</span>
+          <span class="text-xs text-muted-foreground mr-2">Quick add:</span>
           {#each commonTags as tag}
             <button
               type="button"
               onclick={() => addCommonTag(tag)}
-              class="text-xs px-2 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 rounded-sm hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+              class="text-xs px-2 py-1 bg-zinc-100 dark:bg-zinc-700 text-muted-foreground rounded-sm hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
               disabled={themeTags.includes(tag)}>
               {tag}
             </button>
@@ -1071,7 +1071,7 @@
 
     <!-- Colors Section -->
     <section>
-      <h3 class="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Colors & Background</h3>
+      <h3 class="text-lg font-semibold mb-4 text-foreground">Colors & Background</h3>
 
       <!-- Accent Color -->
       <div class="mb-6">
@@ -1084,7 +1084,7 @@
             class="w-12 h-12 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 cursor-pointer" />
           <div class="flex-1">
             <label
-              class="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              class="block text-sm font-medium text-foreground"
               for="accent-color">
               Primary Accent Color
             </label>
@@ -1092,7 +1092,7 @@
               type="text"
               id="accent-color-text"
               bind:value={themeConfig.settings.defaultAccentColor}
-              class="w-full text-xs px-2 py-1 border border-zinc-300 dark:border-zinc-600 rounded-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white" />
+              class="w-full text-xs px-2 py-1 border border-zinc-300 dark:border-zinc-600 rounded-sm bg-card text-foreground" />
           </div>
         </div>
       </div>
@@ -1110,7 +1110,7 @@
                 class="w-12 h-12 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 cursor-pointer" />
               <div class="flex-1">
                 <label
-                  class="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  class="block text-sm font-medium text-foreground"
                   for={property + '-color'}>
                   {property
                     .replace('--', '')
@@ -1121,7 +1121,7 @@
                   type="text"
                   id={property + '-text'}
                   bind:value={themeConfig.customProperties[property]}
-                  class="w-full text-xs px-2 py-1 border border-zinc-300 dark:border-zinc-600 rounded-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white" />
+                  class="w-full text-xs px-2 py-1 border border-zinc-300 dark:border-zinc-600 rounded-sm bg-card text-foreground" />
               </div>
             </div>
           {/each}
@@ -1164,12 +1164,12 @@
 
     <!-- Typography Section -->
     <section>
-      <h3 class="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Typography</h3>
+      <h3 class="text-lg font-semibold mb-4 text-foreground">Typography</h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="relative">
           <label
-            class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+            class="block text-sm font-medium text-foreground mb-2"
             for="primaryFont">
             Primary Font
           </label>
@@ -1189,11 +1189,11 @@
                   (e.target as HTMLInputElement).value,
                 );
               }}
-              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-card text-foreground"
               style="font-family: {themeConfig.fonts.primary}" />
             {#if showFontDropdown}
               <div
-                class="absolute z-20 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg max-h-56 overflow-auto">
+                class="absolute z-20 mt-1 w-full bg-card border border-border rounded-lg shadow-lg max-h-56 overflow-auto">
                 {#each filteredFonts() as opt}
                   <button
                     type="button"
@@ -1204,7 +1204,7 @@
                   </button>
                 {/each}
                 {#if filteredFonts().length === 0}
-                  <div class="px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400">No matches</div>
+                  <div class="px-3 py-2 text-sm text-muted-foreground">No matches</div>
                 {/if}
               </div>
             {/if}
@@ -1229,7 +1229,7 @@
             }}
             class="p-3 text-left bg-white dark:bg-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-600 transition-colors border border-zinc-200 dark:border-zinc-600">
             <div class="font-medium">Modern Sans</div>
-            <div class="text-sm text-zinc-600 dark:text-zinc-400">Inter, clean and readable</div>
+            <div class="text-sm text-muted-foreground">Inter, clean and readable</div>
           </button>
           <button
             type="button"
@@ -1239,7 +1239,7 @@
             }}
             class="p-3 text-left bg-white dark:bg-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-600 transition-colors border border-zinc-200 dark:border-zinc-600">
             <div class="font-medium">Classic Serif</div>
-            <div class="text-sm text-zinc-600 dark:text-zinc-400">
+            <div class="text-sm text-muted-foreground">
               Georgia, traditional and elegant
             </div>
           </button>
@@ -1249,7 +1249,7 @@
 
     <!-- Features Section -->
     <section>
-      <h3 class="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Features</h3>
+      <h3 class="text-lg font-semibold mb-4 text-foreground">Features</h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {#each Object.entries(themeConfig.features) as [feature, enabled]}
@@ -1267,16 +1267,16 @@
               }}
           {@const description = featureDescriptions[feature] || 'Theme feature'}
           <label
-            class="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
+            class="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg hover:surface-muted transition-colors cursor-pointer">
             <input
               type="checkbox"
               bind:checked={themeConfig.features[feature as keyof typeof themeConfig.features]}
               class="w-5 h-5 text-indigo-600 rounded-sm focus:ring-indigo-500" />
             <div>
-              <div class="font-medium text-zinc-900 dark:text-white">
+              <div class="font-medium text-foreground">
                 {feature.charAt(0).toUpperCase() + feature.slice(1).replace(/([A-Z])/g, ' $1')}
               </div>
-              <div class="text-sm text-zinc-600 dark:text-zinc-400">
+              <div class="text-sm text-muted-foreground">
                 {description}
               </div>
             </div>
@@ -1287,13 +1287,13 @@
 
     <!-- Animations Section -->
     <section>
-      <h3 class="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Animations</h3>
+      <h3 class="text-lg font-semibold mb-4 text-foreground">Animations</h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {#each Object.entries(themeConfig.animations) as [animType, animValue]}
           <div>
             <label
-              class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+              class="block text-sm font-medium text-foreground mb-2"
               for={animType + 'Animation'}>
               {animType.charAt(0).toUpperCase() + animType.slice(1)}
             </label>
@@ -1302,7 +1302,7 @@
               id={animType + 'Animation'}
               bind:value={themeConfig.animations[animType as keyof typeof themeConfig.animations]}
               placeholder="Animation value"
-              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white" />
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-card text-foreground" />
           </div>
         {/each}
       </div>
@@ -1310,14 +1310,14 @@
 
     <!-- Custom Properties Section -->
     <section>
-      <h3 class="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Custom Properties</h3>
+      <h3 class="text-lg font-semibold mb-4 text-foreground">Custom Properties</h3>
       <!-- ... Custom CSS variables ... -->
     </section>
   </div>
 
   <!-- Sticky Footer Actions -->
   <div
-    class="flex items-center justify-between p-6 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 sticky bottom-0 z-10">
+    class="flex items-center justify-between p-6 border-t border-border bg-zinc-50 dark:bg-zinc-800/50 sticky bottom-0 z-10">
     <div class="flex items-center gap-2"></div>
 
     <div class="flex items-center gap-2">
@@ -1325,7 +1325,7 @@
         type="button"
         onclick={saveTheme}
         disabled={isSaving || !canSaveApplyValid()}
-        class="flex items-center gap-2 px-6 py-2 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors disabled:cursor-not-allowed">
+        class="flex items-center gap-2 px-6 py-2 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-foreground rounded-lg transition-colors disabled:cursor-not-allowed">
         <Icon src={BookmarkSquare} class="w-4 h-4" />
         {isSaving ? 'Saving...' : 'Save'}
       </button>
@@ -1343,10 +1343,10 @@
 <!-- Load Theme Modal -->
 {#if showLoadThemeModal}
   <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 mobile-modal-inset" transition:fade>
-    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl w-full max-w-md" transition:scale>
+    <div class="bg-card rounded-xl shadow-2xl w-full max-w-md" transition:scale>
       <div class="p-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Load Existing Theme</h3>
+          <h3 class="text-lg font-semibold text-foreground">Load Existing Theme</h3>
           <button
             type="button"
             onclick={() => (showLoadThemeModal = false)}
@@ -1363,7 +1363,7 @@
           </div>
         {:else if availableThemes.length === 0}
           <div class="text-center py-8">
-            <div class="text-zinc-500 dark:text-zinc-400 mb-2">No custom themes found</div>
+            <div class="text-muted-foreground mb-2">No custom themes found</div>
             <div class="text-sm text-zinc-400 dark:text-zinc-500">
               Create a theme or import one to get started
             </div>
@@ -1375,8 +1375,8 @@
                 type="button"
                 onclick={() => loadThemeIntoBuilder(theme)}
                 class="w-full p-3 text-left rounded-lg border border-zinc-200 dark:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors">
-                <div class="font-medium text-zinc-900 dark:text-white">{theme}</div>
-                <div class="text-sm text-zinc-500 dark:text-zinc-400">Custom theme</div>
+                <div class="font-medium text-foreground">{theme}</div>
+                <div class="text-sm text-muted-foreground">Custom theme</div>
               </button>
             {/each}
           </div>
@@ -1386,7 +1386,7 @@
           <button
             type="button"
             onclick={() => (showLoadThemeModal = false)}
-            class="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors">
+            class="px-4 py-2 text-muted-foreground hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors">
             Cancel
           </button>
         </div>

@@ -222,13 +222,16 @@
   });
 </script>
 
-<div class="container max-w-none w-full p-5 mx-auto space-y-6">
-  <div class="flex justify-between items-start">
-    <div>
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+<div class="container mx-auto w-full max-w-none p-5 sm:p-8 flex flex-col gap-6">
+  <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div class="flex flex-col gap-1.5">
+      <p class="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+        School
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
         <T key="navigation.notices" fallback="Notices" />
       </h1>
-      <p class="text-zinc-600 dark:text-zinc-400">
+      <p class="text-sm text-muted-foreground max-w-2xl">
         <T key="notices.description" fallback="View notices and announcements" />
       </p>
     </div>
@@ -237,9 +240,9 @@
         type="date"
         value={formatDate(selectedDate)}
         onchange={updateDate}
-        class="px-4 py-2 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors duration-200" />
+        class="h-10 px-3 bg-card rounded-lg border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500 hover:border-border-strong transition-colors duration-150 nums-tabular" />
     </div>
-  </div>
+  </header>
 
   <!-- Label filter dropdown (same style as analytics) -->
   {#if labels.length > 0}
@@ -247,7 +250,7 @@
       <div class="relative" use:clickOutside={() => (showLabelDropdown = false)}>
         <button
           type="button"
-          class="flex gap-2 items-center min-h-[44px] w-44 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring transition-all duration-200"
+          class="flex gap-2 items-center min-h-[44px] w-44 px-3 py-2 rounded-lg border border-border bg-card text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 accent-ring transition-all duration-200"
           onclick={() => (showLabelDropdown = !showLabelDropdown)}
           aria-expanded={showLabelDropdown}
           aria-haspopup="listbox">
@@ -262,7 +265,7 @@
         </button>
         {#if showLabelDropdown}
           <div
-            class="absolute left-0 z-50 mt-2 w-56 max-h-48 overflow-y-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1"
+            class="absolute left-0 z-50 mt-2 w-56 max-h-48 overflow-y-auto rounded-lg border border-border bg-white dark:bg-zinc-900 shadow-lg py-1"
             role="listbox"
             transition:fly={{ y: -6, duration: 150, easing: cubicOut }}>
             <button
@@ -271,7 +274,7 @@
               aria-selected={selectedLabel === null}
               class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {selectedLabel === null
                 ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
-                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+                : 'text-foreground hover:surface-muted'}"
               onclick={async () => {
                 selectedLabel = null;
                 showLabelDropdown = false;
@@ -291,7 +294,7 @@
                 aria-selected={isSelected}
                 class="flex gap-2 items-center w-full px-3 py-2 text-left text-sm transition-colors {isSelected
                   ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400 font-medium'
-                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+                  : 'text-foreground hover:surface-muted'}"
                 onclick={async () => {
                   selectedLabel = label.id;
                   showLabelDropdown = false;

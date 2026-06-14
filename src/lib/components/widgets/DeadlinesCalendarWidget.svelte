@@ -1,12 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fade, scale } from 'svelte/transition';
-  import { cubicInOut } from 'svelte/easing';
   import { seqtaFetch } from '../../../utils/netUtil';
   import { cache } from '../../../utils/cache';
-  import { Icon, CalendarDays, ChevronLeft, ChevronRight } from 'svelte-hero-icons';
+  import { Icon, Calendar, ChevronLeft, ChevronRight, ListBullet } from 'svelte-hero-icons';
   import { goto } from '$app/navigation';
   import { logger } from '../../../utils/logger';
+  import WidgetCard from '../dashboard/WidgetCard.svelte';
 
   interface Props {
     widget?: any;
@@ -22,14 +21,25 @@
     code: string;
     due: string;
     colour: string;
+    status?: string;
   }
 
   const studentId = 69;
   let assessments = $state<Assessment[]>([]);
   let loading = $state(true);
   let currentDate = $state(new Date());
+  let view = $state<'list' | 'calendar'>('list');
   let daysToShow = $derived(parseInt(settings.daysToShow || '14'));
   let showCompleted = $derived(settings.showCompleted || false);
+
+  // Sync initial view from settings (only once, then user can toggle)
+  let viewSyncedFromSettings = $state(false);
+  $effect(() => {
+    if (!viewSyncedFromSettings && settings.view) {
+      view = settings.view === 'calendar' ? 'calendar' : 'list';
+      viewSyncedFromSettings = true;
+    }
+  });
 
   function getDaysInMonth(date: Date): number {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -44,7 +54,6 @@
     const firstDay = getFirstDayOfMonth(currentDate);
     const daysInMonth = getDaysInMonth(currentDate);
 
-    // Add empty days for alignment
     for (let i = 0; i < firstDay; i++) {
       days.push({
         date: new Date(currentDate.getFullYear(), currentDate.getMonth(), -i),
@@ -52,7 +61,6 @@
       });
     }
 
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const dayAssessments = assessments.filter((a) => {
@@ -74,12 +82,21 @@
     try {
       const cachedData = cache.get<{ assessments: any[] }>('upcoming_assessments_data');
       if (cachedData) {
-        assessments = cachedData.assessments.filter((a) => {
-          const dueDate = new Date(a.due);
-          const now = new Date();
-          const diffDays = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-          return diffDays >= 0 && diffDays <= daysToShow;
-        });
+        assessments = cachedData.assessments
+          .filter((a: any) => {
+            if (!showCompleted && a.status === 'MARKS_RELEASED') return false;
+            return true;
+          })
+          .map((a: any) => ({
+            id: a.id ?? a.assessmentID,
+            title: a.title,
+            subject: a.subject,
+            code: a.code,
+            due: a.due,
+            colour: a.colour || '#8e8e8e',
+            status: a.status,
+          }))
+          .sort((a: any, b: any) => (a.due < b.due ? -1 : 1));
         loading = false;
         return;
       }
@@ -91,22 +108,22 @@
       });
 
       const allAssessments = JSON.parse(assessmentsRes).payload || [];
-      const now = new Date();
 
       assessments = allAssessments
         .filter((a: any) => {
-          const dueDate = new Date(a.due);
-          const diffDays = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-          return diffDays >= 0 && diffDays <= daysToShow;
+          if (!showCompleted && a.status === 'MARKS_RELEASED') return false;
+          return true;
         })
         .map((a: any) => ({
-          id: a.id || a.assessmentID,
+          id: a.id ?? a.assessmentID,
           title: a.title,
           subject: a.subject,
           code: a.code,
           due: a.due,
           colour: a.colour || '#8e8e8e',
-        }));
+          status: a.status,
+        }))
+        .sort((a: any, b: any) => (a.due < b.due ? -1 : 1));
     } catch (e) {
       logger.error(
         'DeadlinesCalendarWidget',
@@ -139,6 +156,31 @@
     goto(`/assessments?code=${assessment.code}&date=${dateStr}&year=${year}`);
   }
 
+  // List view: items in next `daysToShow` days
+  const listItems = $derived.by(() => {
+    const now = new Date();
+    return assessments.filter((a) => {
+      const dueDate = new Date(a.due);
+      const diff = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return diff >= -1 && diff <= daysToShow;
+    });
+  });
+
+  function formatDue(due: string): string {
+    const d = new Date(due);
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  function daysFromNow(due: string): string {
+    const d = new Date(due);
+    const now = new Date();
+    const diff = Math.floor((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return 'Overdue';
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    return `in ${diff} days`;
+  }
+
   const days = $derived(getDaysArray());
   const isToday = (date: Date) => {
     const today = new Date();
@@ -154,121 +196,130 @@
   });
 </script>
 
-<div class="flex flex-col h-full min-h-0">
-  <div
-    class="flex items-center justify-between mb-3 sm:mb-4 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-    in:fade={{ duration: 200, delay: 0 }}
-    style="transform-origin: center center;">
-    <div class="flex items-center gap-2">
-      <div
-        class="transition-all duration-300"
-        in:scale={{ duration: 300, delay: 100, easing: cubicInOut, start: 0.8 }}>
-        <Icon
-          src={CalendarDays}
-          class="w-4 h-4 sm:w-5 sm:h-5 text-accent-600 dark:text-accent-400 transition-all duration-300" />
-      </div>
-      <h3
-        class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white transition-all duration-300"
-        in:fade={{ duration: 300, delay: 150 }}>
-        Deadlines Calendar
-      </h3>
-    </div>
-    <div class="flex items-center gap-1 sm:gap-2">
+<WidgetCard
+  icon={Calendar}
+  title="Deadlines"
+  {loading}
+  empty={!loading && view === 'list' && listItems.length === 0}
+  emptyTitle="Nothing coming up"
+  emptyMessage="Enjoy the calm."
+  emptyIcon={Calendar}>
+  {#snippet headerAction()}
+    <div class="flex items-center gap-1">
       <button
-        onclick={prevMonth}
-        class="p-1 sm:p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95"
-        aria-label="Previous month">
-        <Icon src={ChevronLeft} class="w-3 h-3 sm:w-4 sm:h-4" />
+        type="button"
+        onclick={() => (view = 'list')}
+        aria-pressed={view === 'list'}
+        class="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 {view === 'list' ? 'text-foreground bg-surface-muted' : ''}"
+        aria-label="List view"
+        title="List view">
+        <Icon src={ListBullet} class="w-4 h-4" />
       </button>
       <button
-        onclick={goToToday}
-        class="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-105 active:scale-95">
-        Today
-      </button>
-      <button
-        onclick={nextMonth}
-        class="p-1 sm:p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-110 active:scale-95"
-        aria-label="Next month">
-        <Icon src={ChevronRight} class="w-3 h-3 sm:w-4 sm:h-4" />
+        type="button"
+        onclick={() => (view = 'calendar')}
+        aria-pressed={view === 'calendar'}
+        class="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150 {view === 'calendar' ? 'text-foreground bg-surface-muted' : ''}"
+        aria-label="Calendar view"
+        title="Calendar view">
+        <Icon src={Calendar} class="w-4 h-4" />
       </button>
     </div>
-  </div>
+  {/snippet}
 
-  {#if loading}
-    <div
-      class="flex flex-col items-center justify-center flex-1 py-6 sm:py-8 min-h-0"
-      in:fade={{ duration: 300, easing: cubicInOut }}>
-      <div
-        class="w-6 h-6 sm:w-8 sm:h-8 border-4 border-accent-600 border-t-transparent rounded-full animate-spin mb-2 transition-all duration-300"
-        in:scale={{ duration: 400, easing: cubicInOut, start: 0.5 }}>
-      </div>
-      <p
-        class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 transition-all duration-300"
-        in:fade={{ duration: 300, delay: 100 }}>
-        Loading...
-      </p>
+  {#if view === 'list'}
+    <div class="h-full overflow-y-auto -mx-1 px-1 space-y-1.5">
+      {#each listItems as a}
+        <button
+          onclick={() => handleAssessmentClick(a)}
+          class="w-full text-left p-3 rounded-lg border border-border-subtle hover:border-border-strong hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
+          title={a.title}>
+          <div class="flex items-start gap-3">
+            <span
+              class="w-1 self-stretch rounded-full shrink-0"
+              style="background-color: {a.colour}"
+              aria-hidden="true"></span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline justify-between gap-2 mb-0.5">
+                <p class="text-[10px] uppercase tracking-[0.08em] font-semibold text-muted-foreground truncate">
+                  {a.subject}
+                </p>
+                <p class="text-[11px] text-muted-foreground shrink-0 nums-tabular">
+                  {daysFromNow(a.due)}
+                </p>
+              </div>
+              <p class="text-sm font-medium text-foreground line-clamp-2">{a.title}</p>
+              <p class="text-[11px] text-muted-foreground mt-0.5 nums-tabular">
+                {formatDue(a.due)}
+              </p>
+            </div>
+          </div>
+        </button>
+      {/each}
     </div>
   {:else}
-    <div
-      class="flex-1 overflow-y-auto min-h-0 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
-      in:fade={{ duration: 400, delay: 100 }}>
-      <!-- Month Header -->
-      <div
-        class="mb-2 text-center transition-all duration-300"
-        in:fade={{ duration: 300, delay: 150 }}
-        style="transform-origin: center center;">
-        <h4 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
+    <div class="h-full flex flex-col">
+      <div class="flex items-center justify-between mb-2 shrink-0">
+        <h4 class="text-sm font-semibold tracking-tight text-foreground">
           {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
         </h4>
+        <div class="flex items-center gap-1">
+          <button
+            onclick={prevMonth}
+            class="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150"
+            aria-label="Previous month">
+            <Icon src={ChevronLeft} class="w-3.5 h-3.5" />
+          </button>
+          <button
+            onclick={goToToday}
+            class="h-7 px-2 text-[11px] font-medium uppercase tracking-[0.06em] rounded-md text-foreground hover:bg-surface-muted transition-colors duration-150">
+            Today
+          </button>
+          <button
+            onclick={nextMonth}
+            class="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors duration-150"
+            aria-label="Next month">
+            <Icon src={ChevronRight} class="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
-      <!-- Calendar Grid -->
-      <div class="grid grid-cols-7 gap-1 text-xs sm:text-sm">
-        <!-- Day headers -->
-        {#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day, i}
-          <div
-            class="p-1 sm:p-2 text-center font-semibold text-zinc-600 dark:text-zinc-400 transition-all duration-300"
-            in:fade={{ duration: 200, delay: 200 + i * 30 }}>
-            {day}
-          </div>
-        {/each}
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        <div class="grid grid-cols-7 gap-1 text-xs">
+          {#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day}
+            <div class="p-1 text-center font-semibold uppercase tracking-[0.06em] text-[10px] text-muted-foreground">
+              {day}
+            </div>
+          {/each}
 
-        <!-- Calendar days -->
-        {#each days as { date, assessments: dayAssessments }, i}
-          <div
-            class="min-h-[50px] sm:min-h-[60px] p-1 rounded-lg border border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-md hover:scale-[1.02] transform {isToday(
-              date,
-            )
-              ? 'bg-accent-100/90 dark:bg-accent-900/30 backdrop-blur-sm border-accent-500 shadow-sm'
-              : 'bg-white/50 dark:bg-zinc-900/30'}"
-            in:fade={{ duration: 200, delay: 250 + i * 10 }}
-            style="transform-origin: center center;">
+          {#each days as { date, assessments: dayAssessments }}
             <div
-              class="text-xs font-medium mb-1 {isToday(date)
-                ? 'text-accent-600 dark:text-accent-400'
-                : 'text-zinc-600 dark:text-zinc-400'}">
-              {date.getDate()}
+              class="min-h-[44px] p-1 rounded-md border border-border-subtle text-left {isToday(date)
+                ? 'bg-accent-500/10 border-accent-500/40'
+                : 'bg-card'}">
+              <div class="text-[10px] font-semibold nums-tabular {isToday(date) ? 'text-accent-600' : 'text-muted-foreground'}">
+                {date.getDate()}
+              </div>
+              <div class="space-y-0.5 mt-0.5">
+                {#each dayAssessments.slice(0, 2) as assessment}
+                  <button
+                    onclick={() => handleAssessmentClick(assessment)}
+                    class="w-full px-1 py-0.5 text-[10px] rounded text-white truncate text-left"
+                    style="background-color: {assessment.colour}"
+                    title={assessment.title}>
+                    {assessment.title}
+                  </button>
+                {/each}
+                {#if dayAssessments.length > 2}
+                  <div class="text-[10px] text-muted-foreground">
+                    +{dayAssessments.length - 2}
+                  </div>
+                {/if}
+              </div>
             </div>
-            <div class="space-y-1">
-              {#each dayAssessments.slice(0, 2) as assessment, j}
-                <button
-                  onclick={() => handleAssessmentClick(assessment)}
-                  class="w-full px-1 sm:px-1.5 py-0.5 text-xs rounded text-white truncate transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-105 active:scale-95 shadow-sm backdrop-blur-sm"
-                  style="background-color: {assessment.colour}"
-                  title={assessment.title}
-                  in:fade={{ duration: 200, delay: 300 + j * 50 }}>
-                  {assessment.title}
-                </button>
-              {/each}
-              {#if dayAssessments.length > 2}
-                <div class="text-xs text-zinc-500 dark:text-zinc-500">
-                  +{dayAssessments.length - 2} more
-                </div>
-              {/if}
-            </div>
-          </div>
-        {/each}
+          {/each}
+        </div>
       </div>
     </div>
   {/if}
-</div>
+</WidgetCard>

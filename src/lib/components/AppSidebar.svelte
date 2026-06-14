@@ -4,6 +4,7 @@
   import { Icon, XMark, ChevronDown, ChevronRight, Star, Folder } from 'svelte-hero-icons';
   import { _ } from '../i18n';
   import T from './T.svelte';
+  import { ariaTooltip } from '$lib/actions/tooltip';
   import { onMount, onDestroy } from 'svelte';
   import { slide, fade } from 'svelte/transition';
   import { cubicInOut } from 'svelte/easing';
@@ -176,16 +177,21 @@
     navigateToPage(nextIndex);
   }
 
+  // Sidebar density preset, persisted to settings.
+  let density = $state<'compact' | 'comfortable' | 'spacious'>('comfortable');
+
   // Load sidebar configuration
   const loadSidebarConfig = async () => {
     try {
       const settings = await invoke<any>('get_settings_subset', {
-        keys: ['sidebar_folders', 'sidebar_favorites', 'menu_order'],
+        keys: ['sidebar_folders', 'sidebar_favorites', 'menu_order', 'sidebar_density'],
       });
       folders = (settings.sidebar_folders || []).sort(
         (a: SidebarFolder, b: SidebarFolder) => a.order - b.order,
       );
       favorites = settings.sidebar_favorites || [];
+      const raw = settings.sidebar_density as string | undefined;
+      if (raw === 'compact' || raw === 'comfortable' || raw === 'spacious') density = raw;
 
       // Parse combined order from menu_order (supports "folder:ID" format)
       const menuOrder = settings.menu_order as string[] | undefined;
@@ -279,10 +285,18 @@
     }
   });
 
+  function handleDensityEvent(e: Event) {
+    const next = (e as CustomEvent).detail as string;
+    if (next === 'compact' || next === 'comfortable' || next === 'spacious') {
+      density = next;
+    }
+  }
+
   onMount(() => {
     if (asideElement) {
       asideElement.addEventListener('wheel', handleWheel, { passive: false });
     }
+    window.addEventListener('desqta:sidebar-density', handleDensityEvent);
     loadSidebarConfig();
   });
 
@@ -290,12 +304,32 @@
     if (asideElement) {
       asideElement.removeEventListener('wheel', handleWheel);
     }
+    window.removeEventListener('desqta:sidebar-density', handleDensityEvent);
   });
+
+  const navItemBase =
+    'flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden';
+
+  function navItemClass(isActive: boolean, minHeight = true) {
+    const size = minHeight ? ' min-h-[44px]' : '';
+    return isActive
+      ? `${navItemBase}${size} bg-accent text-white !text-white`
+      : `${navItemBase}${size} text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300`;
+  }
+
+  function navIconClass(isActive: boolean) {
+    return `w-6 h-6 shrink-0 ${isActive ? 'text-white' : 'text-zinc-600 dark:text-zinc-400'}`;
+  }
+
+  function navLabelClass(isActive: boolean) {
+    return isActive
+      ? 'text-white !text-white truncate'
+      : 'text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300 truncate';
+  }
 </script>
 
 <aside
   bind:this={asideElement}
-  data-sidebar-root
   class="transition-[width,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden sm:relative contain-[layout] {isFullscreen
     ? ''
     : 'rounded-bl-2xl'}"
@@ -318,15 +352,17 @@
   class:sm:z-auto={sidebarOpen}>
   <!-- Nav: fixed header + scrollable body for reliable mobile scroll -->
   <nav
-    class="absolute top-0 right-0 w-full sm:w-64 h-full min-h-0 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
+    data-density={density}
+    class="appsidebar-nav absolute top-0 right-0 w-full sm:w-64 h-full min-h-0 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent">
     <!-- Fixed header (non-scrolling) -->
     <div class="shrink-0 p-3 pt-3 pb-0 sm:py-px">
       <!-- Mobile Close Button -->
       <div class="flex justify-end sm:hidden mb-4">
         <button
           onclick={handleCloseSidebar}
-          class="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
-          aria-label={$_('navigation.close_sidebar', { default: 'Close sidebar' })}>
+          class="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+          aria-label={$_('navigation.close_sidebar', { default: 'Close sidebar' })}
+          use:ariaTooltip>
           <Icon src={XMark} class="w-5 h-5" />
         </button>
       </div>
@@ -369,18 +405,9 @@
                 <a
                   href={item.path}
                   onclick={(e) => handleNavClick(e, item.path)}
-                  class="flex gap-4 items-center text-md px-3 py-3 ml-4 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
-                    ? 'bg-accent text-white !text-white'
-                    : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}">
-                  <Icon
-                    src={item.icon}
-                    class="w-6 h-6 {isActive
-                      ? 'text-white'
-                      : 'text-zinc-600 dark:text-zinc-400'}" />
-                  <span
-                    class={isActive
-                      ? 'text-white !text-white'
-                      : 'text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300'}>
+                  class="{navItemClass(isActive)} ml-4">
+                  <Icon src={item.icon} class={navIconClass(isActive)} />
+                  <span class={navLabelClass(isActive)}>
                     <T key={item.labelKey} fallback={item.labelKey} />
                   </span>
                 </a>
@@ -399,16 +426,9 @@
               <a
                 href={item.path}
                 onclick={(e) => handleNavClick(e, item.path)}
-                class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] {isActive
-                  ? 'bg-accent text-white !text-white'
-                  : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}">
-                <Icon
-                  src={item.icon}
-                  class="w-6 h-6 {isActive ? 'text-white' : 'text-zinc-600 dark:text-zinc-400'}" />
-                <span
-                  class={isActive
-                    ? 'text-white !text-white'
-                    : 'text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300'}>
+                class={navItemClass(isActive)}>
+                <Icon src={item.icon} class={navIconClass(isActive)} />
+                <span class={navLabelClass(isActive)}>
                   <T key={item.labelKey} fallback={item.labelKey} />
                 </span>
               </a>
@@ -417,14 +437,11 @@
               {@const folderItems = getFolderItems(folder)}
               {#if folderItems.length > 0}
                 <div class="space-y-0 w-full">
-                  <!-- Folder Header (styled exactly like nav item) -->
                   <button
                     onclick={() => toggleFolder(folder.id)}
-                    class="w-full flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden min-h-[44px] text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300">
-                    <!-- Folder Icon (always Heroicon Folder) -->
+                    class="w-full {navItemClass(false)}">
                     <Icon src={Folder} class="w-6 h-6 shrink-0 text-zinc-600 dark:text-zinc-400" />
 
-                    <!-- Folder Name -->
                     <span
                       class="flex-1 min-w-0 text-left text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300">
                       {folder.name}
@@ -435,7 +452,6 @@
                       {/if}
                     </span>
 
-                    <!-- Chevron Icon (to the right) -->
                     <div
                       class="shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] {isFolderCollapsed(
                         folder.id,
@@ -446,7 +462,6 @@
                     </div>
                   </button>
 
-                  <!-- Folder Items (with smooth expand/collapse) -->
                   {#if !isFolderCollapsed(folder.id)}
                     <div
                       transition:slide={{ duration: 300, easing: cubicInOut }}
@@ -459,19 +474,10 @@
                         <a
                           href={item.path}
                           onclick={(e) => handleNavClick(e, item.path)}
-                          class="flex gap-4 items-center text-md px-3 py-3 font-medium rounded-xl transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] focus:outline-hidden {isActive
-                            ? 'bg-accent text-white !text-white'
-                            : 'text-zinc-900 dark:text-zinc-300 hover:bg-accent-200 hover:text-zinc-900 dark:hover:bg-accent-600 dark:hover:text-white !text-zinc-900 dark:!text-zinc-300'}"
+                          class={navItemClass(isActive, false)}
                           in:fade={{ duration: 200, delay: itemIndex * 30 }}>
-                          <Icon
-                            src={item.icon}
-                            class="w-6 h-6 {isActive
-                              ? 'text-white'
-                              : 'text-zinc-600 dark:text-zinc-400'}" />
-                          <span
-                            class={isActive
-                              ? 'text-white !text-white'
-                              : 'text-zinc-900 dark:text-zinc-300 !text-zinc-900 dark:!text-zinc-300'}>
+                          <Icon src={item.icon} class={navIconClass(isActive)} />
+                          <span class={navLabelClass(isActive)}>
                             <T key={item.labelKey} fallback={item.labelKey} />
                           </span>
                         </a>
@@ -487,3 +493,36 @@
     </div>
   </nav>
 </aside>
+
+<style>
+  /* Three density presets applied via data-density on the nav root. Targets nav
+     items (anchors and folder header buttons) so all three states share styling
+     elsewhere. Use !important where Tailwind utility classes would otherwise win. */
+  :global(.appsidebar-nav[data-density="compact"] a),
+  :global(.appsidebar-nav[data-density="compact"] button) {
+    min-height: 36px !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    font-size: 0.875rem !important;
+    gap: 0.625rem !important;
+  }
+  :global(.appsidebar-nav[data-density="compact"] svg) {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+  }
+
+  /* comfortable = default (text-base, min-h 44px, w-6 icons) */
+
+  :global(.appsidebar-nav[data-density="spacious"] a),
+  :global(.appsidebar-nav[data-density="spacious"] button) {
+    min-height: 52px !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    font-size: 1.0625rem !important;
+    gap: 1rem !important;
+  }
+  :global(.appsidebar-nav[data-density="spacious"] svg) {
+    width: 1.375rem !important;
+    height: 1.375rem !important;
+  }
+</style>

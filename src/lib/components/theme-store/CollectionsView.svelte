@@ -67,7 +67,7 @@
       <div class="mb-6">
         <div class="flex items-center gap-3 mb-2">
           <Icon src={RectangleStack} class="w-6 h-6 accent-text" />
-          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">{collection.name}</h2>
+          <h2 class="text-2xl font-bold text-foreground">{collection.name}</h2>
           {#if collection.featured}
             <span class="px-2 py-1 text-xs font-medium bg-yellow-500 text-white rounded-full">
               Featured
@@ -75,9 +75,9 @@
           {/if}
         </div>
         {#if collection.description}
-          <p class="text-zinc-600 dark:text-zinc-400">{collection.description}</p>
+          <p class="text-muted-foreground">{collection.description}</p>
         {/if}
-        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+        <p class="text-sm text-muted-foreground mt-1">
           {collection.theme_count}
           {collection.theme_count === 1 ? 'theme' : 'themes'}
         </p>
@@ -106,7 +106,7 @@
           {/each}
         </div>
       {:else}
-        <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+        <div class="text-center py-12 text-muted-foreground">
           No themes in this collection yet.
         </div>
       {/if}

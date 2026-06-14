@@ -90,9 +90,11 @@
   });
 </script>
 
-<div class="space-y-6">
+<!-- min-w-0 + max-w-full so the inner overflow-x-auto stays inside the parent
+     flex/grid cell and doesn't push the page sideways. -->
+<div class="space-y-6 min-w-0 max-w-full">
   <div
-    class="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-zinc-300/20 dark:scrollbar-track-zinc-800/10">
+    class="flex overflow-x-auto gap-4 pb-4 min-w-0 max-w-full scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-zinc-300/20 dark:scrollbar-track-zinc-800/10">
     {#key assessmentsKey}
       {#if groupBy === 'subject'}
         {#each subjects.filter((subject) => assessmentsBySubject.has(subject.code)) as subject, columnIndex}
@@ -100,14 +102,14 @@
             class="shrink-0 w-72 sm:w-80 board-column-animate"
             style="animation-delay: {columnIndex * 100}ms;">
             <div
-              class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
+              class="p-4 mb-4 rounded-xl border border-l-8 bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-300/50 dark:border-zinc-700/50"
               style="border-color: {subject.colour || '#8e8e8e'};">
               <div class="flex justify-between items-start">
                 <div>
-                  <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
+                  <h3 class="text-base font-bold sm:text-lg text-foreground">
                     {subject.title}
                   </h3>
-                  <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p class="text-sm text-muted-foreground">
                     {subject.code}
                     {#if activeSubjects && activeSubjects.some((as: any) => as.code === subject.code)}
                       <Badge variant="success" size="xs" class="ml-2">Active</Badge>
@@ -131,11 +133,11 @@
             class="shrink-0 w-72 sm:w-80 board-column-animate"
             style="animation-delay: {columnIndex * 100}ms;">
             <div
-              class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-zinc-800/50 border-zinc-700/50">
-              <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
+              class="p-4 mb-4 rounded-xl border border-l-8 bg-zinc-800/50 border-zinc-700/50">
+              <h3 class="text-base font-bold sm:text-lg text-foreground">
                 {month}
               </h3>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <p class="text-sm text-muted-foreground">
                 {monthAssessments.length} assessment{monthAssessments.length === 1 ? '' : 's'}
               </p>
             </div>
@@ -154,15 +156,15 @@
             class="shrink-0 w-72 sm:w-80 board-column-animate"
             style="animation-delay: {columnIndex * 100}ms;">
             <div
-              class="p-4 mb-4 rounded-xl border border-l-8 backdrop-blur-xs bg-zinc-800/50 border-zinc-700/50"
+              class="p-4 mb-4 rounded-xl border border-l-8 bg-zinc-800/50 border-zinc-700/50"
               style="border-color: {getStatusBadge(
                 statusAssessments[0].status,
                 statusAssessments[0].due,
               ).color};">
-              <h3 class="text-base font-bold sm:text-lg text-zinc-900 dark:text-white">
+              <h3 class="text-base font-bold sm:text-lg text-foreground">
                 {status}
               </h3>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              <p class="text-sm text-muted-foreground">
                 {statusAssessments.length} assessment{statusAssessments.length === 1 ? '' : 's'}
               </p>
             </div>

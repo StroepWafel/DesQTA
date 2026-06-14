@@ -83,20 +83,6 @@ async function autoSyncToCloud(patch: Record<string, unknown>): Promise<void> {
 }
 
 export async function saveSettingsWithQueue(patch: Record<string, unknown>): Promise<void> {
-  if (patch.dashboard_widgets_layout) {
-    try {
-      const layout = JSON.parse(patch.dashboard_widgets_layout as string);
-      const widgets = layout?.widgets || [];
-      if (widgets.length === 1 && widgets[0]?.id === 'timetable-page-widget') {
-        console.log('Skipping cloud sync for temporary timetable page widget');
-        await invoke('save_settings_merge', { patch });
-        return;
-      }
-    } catch {
-      // If parsing fails, continue with normal flow
-    }
-  }
-
   try {
     await invoke('save_settings_merge', { patch });
 
